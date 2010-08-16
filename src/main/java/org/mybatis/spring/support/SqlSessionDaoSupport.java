@@ -38,13 +38,13 @@ import org.springframework.util.Assert;
  * <pre class="code">
  *   <bean id="baseDAO" abstract="true" lazy-init="true">
  *     <constructor-arg>
- *       <bean class="org.springframework.orm.ibatis3.SqlSessionTemplate">
+ *       <bean class="org.mybatis.springSqlSessionTemplate">
  *         <constructor-arg ref="sqlSessionFactory" />
  *       </bean>
  *     </constructor-arg>
  *   </bean>
  * 
- *   <bean id="testDao" parent="baseDAO" class="org.springframework.orm.ibatis3.support.SqlSessionDaoSupport" />
+ *   <bean id="testDao" parent="baseDAO" class="org.mybatis.springsupport.SqlSessionDaoSupport" />
  * </pre>
  *
  * @see #setSqlSessionFactory

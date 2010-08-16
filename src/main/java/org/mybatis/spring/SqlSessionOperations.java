@@ -30,7 +30,7 @@ import org.apache.ibatis.session.RowBounds;
  * methods. Users are strongly encouraged to read the MyBatis javadocs
  * for details on the semantics of those methods.
  *
- * @see org.springframework.orm.ibatis3.SqlSessionTemplate
+ * @see org.mybatis.springSqlSessionTemplate
  * @see org.apache.ibatis.session.SqlSession
  * @version $Id$
  */

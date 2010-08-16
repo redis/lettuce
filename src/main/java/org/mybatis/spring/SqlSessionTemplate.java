@@ -68,7 +68,7 @@ import org.springframework.util.Assert;
  * @see SqlSessionFactoryBean#setDataSource
  * @see org.apache.ibatis.session.SqlSessionFactory#getConfiguration()
  * @see org.apache.ibatis.session.SqlSession
- * @see org.springframework.orm.ibatis3.SqlSessionOperations
+ * @see org.mybatis.springSqlSessionOperations
  * @version $Id$
  */
 @SuppressWarnings({ "unchecked", "deprecation" })

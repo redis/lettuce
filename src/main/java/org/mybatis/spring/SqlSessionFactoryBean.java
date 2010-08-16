@@ -44,10 +44,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * {@link org.springframework.beans.factory.FactoryBean} that creates an iBatis
+ * {@link org.springframework.beans.factory.FactoryBean} that creates an MyBatis
  * {@link org.apache.ibatis.session.SqlSessionFactory}. This is the usual way to set up a shared
  * MyBatis SqlSessionFactory in a Spring application context; the SqlSessionFactory can then be
- * passed to iBatis-based DAOs via dependency injection.
+ * passed to MyBatis-based DAOs via dependency injection.
  *
  * Either {@link org.springframework.jdbc.datasource.DataSourceTransactionManager} or
  * {@link org.springframework.transaction.jta.JtaTransactionManager} can be used for transaction
@@ -60,8 +60,8 @@ import org.springframework.util.ObjectUtils;
  *
  * @see #setConfigLocation
  * @see #setDataSource
- * @see org.springframework.orm.ibatis3.SqlSessionTemplate#setSqlSessionFactory
- * @see org.springframework.orm.ibatis3.SqlSessionTemplate#setDataSource
+ * @see org.mybatis.springSqlSessionTemplate#setSqlSessionFactory
+ * @see org.mybatis.springSqlSessionTemplate#setDataSource
  * @version $Id$
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean {
@@ -176,9 +176,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * @see #setDataSource
      * @see #setTransactionFactoryProperties(java.util.Properties)
      * @see org.apache.ibatis.transaction.TransactionFactory
-     * @see org.springframework.orm.ibatis3.transaction.SpringManagedTransactionFactory
+     * @see org.mybatis.springtransaction.SpringManagedTransactionFactory
      * @see org.apache.ibatis.transaction.Transaction
-     * @see org.springframework.orm.ibatis3.SqlSessionUtils#getSqlSession(SqlSessionFactory,
+     * @see org.mybatis.springSqlSessionUtils#getSqlSession(SqlSessionFactory,
      *      DataSource, org.apache.ibatis.session.ExecutorType)
      */
     public void setTransactionFactoryClass(Class<TransactionFactory> transactionFactoryClass) {
@@ -284,7 +284,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
             }
         } else if (logger.isDebugEnabled()) {
-            logger.debug("Property 'mapperLocations' was not specified, only iBatis mapper files specified in the config xml were loaded");
+            logger.debug("Property 'mapperLocations' was not specified, only MyBatis mapper files specified in the config xml were loaded");
         }
 
         return sqlSessionFactoryBuilder.build(configuration);

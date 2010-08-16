@@ -66,7 +66,7 @@ public final class SqlSessionUtils {
      *
      * @throws TransientDataAccessResourceException if a transaction is active and the
      *             SqlSessionFactory is not using a SpringManagedTransactionFactory
-     * @see org.springframework.orm.ibatis3.transaction.SpringManagedTransactionFactory
+     * @see org.mybatis.springtransaction.SpringManagedTransactionFactory
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, DataSource dataSource, ExecutorType executorType) {
         // either return the existing SqlSession or create a new one
