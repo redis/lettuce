@@ -73,7 +73,9 @@ public final class SqlSessionUtils {
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
         if (holder != null && holder.isSynchronizedWithTransaction()) {
-            logger.debug("Fetching SqlSession from current transaction");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching SqlSession from current transaction");
+            }
             holder.requested();
             return holder.getSqlSession();
         }
@@ -88,7 +90,9 @@ public final class SqlSessionUtils {
             throw new CannotGetJdbcConnectionException("Could not get JDBC Connection for SqlSession", sqle);
         }
 
-        logger.debug("Creating SqlSession from SqlSessionFactory");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Creating SqlSession from SqlSessionFactory");
+        }
 
         // assume either DataSourceTransactionManager or the underlying
         // connection pool already dealt with enabling auto commit.
@@ -113,7 +117,9 @@ public final class SqlSessionUtils {
                         "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
             }
 
-            logger.debug("Registering transaction synchronization for SqlSession");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Registering transaction synchronization for SqlSession");
+            }
             holder = new SqlSessionHolder(session);
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
             TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder,
@@ -192,12 +198,16 @@ public final class SqlSessionUtils {
                         // in BaseExecutor which will be redundant with SpringManagedTransaction
                         // since we already know that commit on the Connection is being handled
                         holder.getSqlSession().commit(false);
-                        logger.debug("Transaction synchronization commited SqlSession");
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Transaction synchronization commited SqlSession");
+                        }
                     }
                 }
                 else {
                     holder.getSqlSession().rollback(false);
-                    logger.debug("Transaction synchronization rolled back SqlSession");
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization rolled back SqlSession");
+                    }
                 }
             }
             finally {
@@ -205,7 +215,9 @@ public final class SqlSessionUtils {
                     TransactionSynchronizationManager.unbindResource(sessionFactory);
                     holder.getSqlSession().close();
                     holder.reset();
-                    logger.debug("Transaction synchronization closed SqlSession");
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization closed SqlSession");
+                    }
                 }
             }
         }
