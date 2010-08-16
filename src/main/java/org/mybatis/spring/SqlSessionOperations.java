@@ -53,22 +53,19 @@ public interface SqlSessionOperations {
      * @see org.apache.ibatis.session.SqlSession#selectList(String, Object)
      * @throws org.springframework.dao.DataAccessException in case of errors
      */
-    @SuppressWarnings("unchecked")
-    List selectList(String statement);
+    <T> List<T> selectList(String statement);
 
     /**
      * @see org.apache.ibatis.session.SqlSession#selectList(String, Object)
      * @throws org.springframework.dao.DataAccessException in case of errors
      */
-    @SuppressWarnings("unchecked")
-    List selectList(String statement, Object parameter);
+    <T> List<T> selectList(String statement, Object parameter);
 
     /**
      * @see org.apache.ibatis.session.SqlSession#selectList(String, Object, org.apache.ibatis.session.RowBounds)
      * @throws org.springframework.dao.DataAccessException in case of errors
      */
-    @SuppressWarnings("unchecked")
-    List selectList(String statement, Object parameter, RowBounds rowBounds);
+    <T> List<T> selectList(String statement, Object parameter, RowBounds rowBounds);
 
     /**
      * @see org.apache.ibatis.session.SqlSession#select(String, Object, org.apache.ibatis.session.ResultHandler)
@@ -123,4 +120,5 @@ public interface SqlSessionOperations {
      * @throws org.springframework.dao.DataAccessException in case of errors
      */
     <T> T getMapper(Class<T> type);
+
 }

@@ -38,17 +38,17 @@ import org.springframework.util.Assert;
  * DataAccessExceptions, following the <code>org.springframework.dao</code> exception hierarchy.
  * Uses the same {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
  * {@link org.springframework.jdbc.core.JdbcTemplate}.
- * 
+ *
  * <p>
  * The main method of this class executes a callback that implements a data access action.
  * Furthermore, this class provides numerous convenience methods that mirror
  * {@link org.apache.ibatis.session.SqlSession}'s execution methods.
- * 
+ *
  * <p>
  * It is generally recommended to use the convenience methods on this template for plain
  * query/insert/update/delete operations. However, for more complex operations like batch updates, a
  * custom SqlSessionCallback must be implemented, usually as anonymous inner class. For example:
- * 
+ *
  * <pre class="code">
  * getSqlSessionTemplate().execute(new SqlSessionCallback&lt;Object&gt;() {
  *     public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
@@ -58,13 +58,13 @@ import org.springframework.util.Assert;
  *     }
  * }, ExecutorType.BATCH);
  * </pre>
- * 
+ *
  * The template needs a SqlSessionFactory to create SqlSessions, passed in via the
  * "sqlSessionFactory" property. A Spring context typically uses a {@link SqlSessionFactoryBean} to
  * build the SqlSessionFactory. The template can additionally be configured with a DataSource for
  * fetching Connections, although this is not necessary since a DataSource is specified for the
  * SqlSessionFactory itself (through configured Environment).
- * 
+ *
  * @author Putthibong Boonbong
  * @see #execute
  * @see #setSqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory)
@@ -74,7 +74,7 @@ import org.springframework.util.Assert;
  * @see org.springframework.orm.ibatis3.SqlSessionOperations
  * @version $Id$
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "deprecation" })
 public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperations {
 
     private SqlSessionFactory sqlSessionFactory;
@@ -157,17 +157,17 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
-    public List selectList(String statement) {
+    public <T> List<T> selectList(String statement) {
         return selectList(statement, null);
     }
 
-    public List selectList(String statement, Object parameter) {
+    public <T> List<T> selectList(String statement, Object parameter) {
         return selectList(statement, parameter, RowBounds.DEFAULT);
     }
 
-    public List selectList(final String statement, final Object parameter, final RowBounds rowBounds) {
-        return execute(new SqlSessionCallback<List>() {
-            public List doInSqlSession(SqlSession sqlSession) {
+    public <T> List<T> selectList(final String statement, final Object parameter, final RowBounds rowBounds) {
+        return execute(new SqlSessionCallback<List<T>>() {
+            public List<T> doInSqlSession(SqlSession sqlSession) {
                 return sqlSession.selectList(statement, parameter, rowBounds);
             }
         });
