@@ -28,13 +28,13 @@ import org.springframework.util.Assert;
  * DAO needs is an SqlSessionFactory. This class also supports passing in an SqlSessionTemplate if a
  * custom DataSource or ExceptionTranslator is needed for a specific DAO.
  * <p>
- * 
+ *
  * By default, each DAO gets its own SqlSessionTemplate which holds the SqlSessionFactory.
  * SqlSessionTemplate is thread safe, so a single instance cannot be shared by all DAOs; there
  * should also be a small memory savings by doing this. To support a shared template, this class has
  * a constructor that accepts an SqlSessionTemplate. This pattern can be used in Spring
  * configuration files as follows:
- * 
+ *
  * <pre class="code">
  *   <bean id="baseDAO" abstract="true" lazy-init="true">
  *     <constructor-arg>
@@ -46,7 +46,7 @@ import org.springframework.util.Assert;
  * 
  *   <bean id="testDao" parent="baseDAO" class="org.springframework.orm.ibatis3.support.SqlSessionDaoSupport" />
  * </pre>
- * 
+ *
  * @author Putthibong Boonbong
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate
