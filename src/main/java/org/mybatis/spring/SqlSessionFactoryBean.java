@@ -24,10 +24,10 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.session.Configuration;
@@ -254,8 +254,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 logger.debug("Parsed configuration file: '" + configLocation + "'");
             }
         } else {
-            if (logger.isInfoEnabled()) {
-                logger.info("Property 'configLocation' not specified, using default iBatis Configuration");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Property 'configLocation' not specified, using default iBatis Configuration");
             }
             configuration = new Configuration();
         }
