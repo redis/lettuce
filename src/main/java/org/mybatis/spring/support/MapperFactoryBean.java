@@ -25,10 +25,8 @@ import org.springframework.util.Assert;
 
 /**
  * BeanFactory that enables injection of iBatis Mapper Interfaces.
- * 
- * @author Eduardo Macarrón
- * @since 3.0
- * @see org.springframework.orm.ibatis3.SqlSessionTemplate
+ *
+ * @see SqlSessionTemplate
  * @version $Id$
  */
 public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {

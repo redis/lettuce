@@ -25,12 +25,11 @@ import org.apache.ibatis.session.RowBounds;
  * implemented by {@link SqlSessionTemplate}. Not often used, but a useful
  * option to enhance testability, as it can easily be mocked or stubbed.
  *
- * <p>Defines SqlSessionTemplate's convenience methods that mirror
+ * Defines SqlSessionTemplate's convenience methods that mirror
  * the iBatis {@link org.apache.ibatis.session.SqlSession}'s execution
- * methods. Users are strongly encouraged to read the iBatis javadocs
+ * methods. Users are strongly encouraged to read the MyBatis javadocs
  * for details on the semantics of those methods.
  *
- * @author Putthibong Boonbong
  * @see org.springframework.orm.ibatis3.SqlSessionTemplate
  * @see org.apache.ibatis.session.SqlSession
  * @version $Id$

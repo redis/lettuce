@@ -26,7 +26,6 @@ import org.apache.ibatis.session.SqlSession;
  * with {@link SqlSessionTemplate}'s <code>execute</code> method,
  * assumably often as anonymous classes within a method implementation.
  *
- * @author Putthibong Boonbong
  * @see SqlSessionTemplate
  * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
  * @version $Id$

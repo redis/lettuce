@@ -47,11 +47,10 @@ import org.springframework.util.Assert;
  *   <bean id="testDao" parent="baseDAO" class="org.springframework.orm.ibatis3.support.SqlSessionDaoSupport" />
  * </pre>
  *
- * @author Putthibong Boonbong
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate
- * @see org.springframework.orm.ibatis3.SqlSessionTemplate
- * @see org.springframework.orm.ibatis3.SqlSessionTemplate#setExceptionTranslator
+ * @see SqlSessionTemplate
+ * @see SqlSessionTemplate#setExceptionTranslator
  * @version $Id$
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {

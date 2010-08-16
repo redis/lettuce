@@ -33,18 +33,16 @@ import org.springframework.jdbc.support.JdbcAccessor;
 import org.springframework.util.Assert;
 
 /**
- * Helper class that simplifies data access via the iBatis
+ * Helper class that simplifies data access via the MyBatis
  * {@link org.apache.ibatis.session.SqlSession} API, converting checked SQLExceptions into unchecked
  * DataAccessExceptions, following the <code>org.springframework.dao</code> exception hierarchy.
  * Uses the same {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
  * {@link org.springframework.jdbc.core.JdbcTemplate}.
  *
- * <p>
  * The main method of this class executes a callback that implements a data access action.
  * Furthermore, this class provides numerous convenience methods that mirror
  * {@link org.apache.ibatis.session.SqlSession}'s execution methods.
  *
- * <p>
  * It is generally recommended to use the convenience methods on this template for plain
  * query/insert/update/delete operations. However, for more complex operations like batch updates, a
  * custom SqlSessionCallback must be implemented, usually as anonymous inner class. For example:
@@ -65,7 +63,6 @@ import org.springframework.util.Assert;
  * fetching Connections, although this is not necessary since a DataSource is specified for the
  * SqlSessionFactory itself (through configured Environment).
  *
- * @author Putthibong Boonbong
  * @see #execute
  * @see #setSqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory)
  * @see SqlSessionFactoryBean#setDataSource

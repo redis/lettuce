@@ -20,7 +20,7 @@ import org.springframework.transaction.support.ResourceHolderSupport;
 
 /**
  * 
- * @@version $Id$
+ * @version $Id$
  */
 public final class SqlSessionHolder extends ResourceHolderSupport {
 

@@ -36,7 +36,7 @@ import org.springframework.util.Assert;
 
 /**
  * note this class does not translate IBatisException to DataSourceException
- * since iBATIS now uses runtime exceptions
+ * since MyBatis now uses runtime exceptions
  *
  * @version $Id$
  */
@@ -63,11 +63,9 @@ public final class SqlSessionUtils {
     /**
      * Create a new SqlSession if there is no active transaction or an SqlSession is not
      * synchronized with the current transaction. Return the transactional SqlSession otherwise.
-     * <p>
-     * 
+     *
      * @throws TransientDataAccessResourceException if a transaction is active and the
      *             SqlSessionFactory is not using a SpringManagedTransactionFactory
-     * 
      * @see org.springframework.orm.ibatis3.transaction.SpringManagedTransactionFactory
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, DataSource dataSource, ExecutorType executorType) {
