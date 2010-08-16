@@ -85,8 +85,7 @@ public final class SqlSessionUtils {
 
         try {
             con = transactionAware ? dataSource.getConnection() : DataSourceUtils.getConnection(dataSource);
-        }
-        catch (SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new CannotGetJdbcConnectionException("Could not get JDBC Connection for SqlSession", sqle);
         }
 
@@ -138,8 +137,7 @@ public final class SqlSessionUtils {
             if (session != null) {
                 session.close();
             }
-        }
-        else {
+        } else {
             holder.released();
             // assume transaction synchronization will actually close session
         }
@@ -177,7 +175,6 @@ public final class SqlSessionUtils {
         @Override
         public void suspend() {
             TransactionSynchronizationManager.unbindResource(sessionFactory);
-
         }
 
         @Override
@@ -202,15 +199,13 @@ public final class SqlSessionUtils {
                             logger.debug("Transaction synchronization commited SqlSession");
                         }
                     }
-                }
-                else {
+                } else {
                     holder.getSqlSession().rollback(false);
                     if (logger.isDebugEnabled()) {
                         logger.debug("Transaction synchronization rolled back SqlSession");
                     }
                 }
-            }
-            finally {
+            } finally {
                 if (!holder.isOpen()) {
                     TransactionSynchronizationManager.unbindResource(sessionFactory);
                     holder.getSqlSession().close();

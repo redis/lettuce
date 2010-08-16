@@ -55,12 +55,10 @@ public class SpringManagedTransaction implements Transaction {
 
             if (handler instanceof ConnectionLogger) {
                 nonLoggingConnection = ((ConnectionLogger) handler).getConnection();
-            }
-            else {
+            } else {
                 nonLoggingConnection = connection;
             }
-        }
-        else {
+        } else {
             nonLoggingConnection = connection;
         }
 

@@ -144,8 +144,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             // access code won't see properly exposed transactions (i.e.
             // transactions for the target DataSource).
             this.dataSource = ((TransactionAwareDataSourceProxy) dataSource).getTargetDataSource();
-        }
-        else {
+        } else {
             this.dataSource = dataSource;
         }
     }
@@ -247,14 +246,12 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 // this will be overwritten below regardless
                 xmlConfigBuilder = new XMLConfigBuilder(reader, null, configurationProperties);
                 configuration = xmlConfigBuilder.parse();
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                 throw new NestedIOException("Failed to parse config resource: " + configLocation, ex.getCause());
             }
 
             logger.debug("Parsed configuration file: '" + configLocation + "'");
-        }
-        else {
+        } else {
             logger.info("Property 'configLocation' not specified, using default iBatis Configuration");
             configuration = new Configuration();
         }
@@ -274,15 +271,13 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     Reader reader = new InputStreamReader(mapperLocation.getInputStream());
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, mapperLocation.toString(), sqlFragments);
                     xmlMapperBuilder.parse();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
                 }
 
                 logger.debug("Parsed mapper file: '" + mapperLocation + "'");
             }
-        }
-        else {
+        } else {
             logger.debug("Property 'mapperLocations' was not specified, only iBatis mapper files specified in the config xml were loaded");
         }
 

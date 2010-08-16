@@ -133,11 +133,9 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 
         try {
             return action.doInSqlSession(sqlSession);
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             throw wrapException(t);
-        }
-        finally {
+        } finally {
             SqlSessionUtils.closeSqlSession(sqlSession, this.sqlSessionFactory);
         }
     }
@@ -228,11 +226,9 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
                             public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
                                 try {
                                     return method.invoke(sqlSession.getMapper(type), args);
-                                }
-                                catch (java.lang.reflect.InvocationTargetException e) {
+                                } catch (java.lang.reflect.InvocationTargetException e) {
                                     throw wrapException(e.getCause());
-                                }
-                                catch (Exception e) {
+                                } catch (Exception e) {
                                     throw new MybatisSystemException("SqlSession operation", e);
                                 }
                             }
