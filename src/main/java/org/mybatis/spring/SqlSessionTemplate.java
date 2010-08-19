@@ -22,7 +22,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.exceptions.IbatisException;
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
@@ -68,10 +68,10 @@ import org.springframework.util.Assert;
  * @see SqlSessionFactoryBean#setDataSource
  * @see org.apache.ibatis.session.SqlSessionFactory#getConfiguration()
  * @see org.apache.ibatis.session.SqlSession
- * @see org.mybatis.springSqlSessionOperations
+ * @see org.mybatis.spring.SqlSessionOperations
  * @version $Id$
  */
-@SuppressWarnings({ "unchecked", "deprecation" })
+@SuppressWarnings({ "unchecked" })
 public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperations {
 
     private SqlSessionFactory sqlSessionFactory;
@@ -93,12 +93,12 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
-    @Override
     /**
      * Returns either the DataSource explicitly set for this template of the one specified by the SqlSessionFactory's Environment.
-     * 
+     *
      * @see org.apache.ibatis.mapping.Environment
      */
+    @Override
     public DataSource getDataSource() {
         DataSource ds = super.getDataSource();
         return (ds != null ? ds : this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource());
@@ -119,7 +119,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 
     /**
      * Execute the given data access action on a Executor.
-     * 
+     *
      * @param action callback object that specifies the data access action
      * @param executorType SIMPLE, REUSE, BATCH
      * @return a result object returned by the action, or <code>null</code>
@@ -229,7 +229,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
                                 } catch (java.lang.reflect.InvocationTargetException e) {
                                     throw wrapException(e.getCause());
                                 } catch (Exception e) {
-                                    throw new MybatisSystemException("SqlSession operation", e);
+                                    throw new MyBatisSystemException("SqlSession operation", e);
                                 }
                             }
                         });
@@ -238,16 +238,16 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     }
 
     public DataAccessException wrapException(Throwable t) {
-        if (t instanceof IbatisException) {
+        if (t instanceof PersistenceException) {
             if (t.getCause() instanceof SQLException) {
                 return getExceptionTranslator().translate("SqlSession operation", null, (SQLException) t.getCause());
             } else {
-                return new MybatisSystemException("SqlSession operation", t);
+                return new MyBatisSystemException("SqlSession operation", t);
             }
         } else if (t instanceof DataAccessException) {
             return (DataAccessException) t;
         } else {
-            return new MybatisSystemException("SqlSession operation", t);
+            return new MyBatisSystemException("SqlSession operation", t);
         }
     }
 

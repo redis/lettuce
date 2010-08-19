@@ -38,6 +38,7 @@ import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.NestedIOException;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.util.Assert;
@@ -60,8 +61,8 @@ import org.springframework.util.ObjectUtils;
  *
  * @see #setConfigLocation
  * @see #setDataSource
- * @see org.mybatis.springSqlSessionTemplate#setSqlSessionFactory
- * @see org.mybatis.springSqlSessionTemplate#setDataSource
+ * @see org.mybatis.spring.SqlSessionTemplate#setSqlSessionFactory
+ * @see org.mybatis.spring.SqlSessionTemplate#setDataSource
  * @version $Id$
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean {
@@ -89,18 +90,18 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     public SqlSessionFactoryBean() {}
 
     /**
-     * Set the location of the iBatis SqlSessionFactory config file. A typical value is
-     * "WEB-INF/ibatis-configuration.xml".
+     * Set the location of the MyBatis SqlSessionFactory config file. A typical value is
+     * "WEB-INF/mybatis-configuration.xml".
      */
     public void setConfigLocation(Resource configLocation) {
         this.configLocation = configLocation;
     }
 
     /**
-     * Set locations of iBatis mapper files that are going to be merged into the SqlSessionFactory
+     * Set locations of MyBatis mapper files that are going to be merged into the SqlSessionFactory
      * configuration at runtime.
      *
-     * This is an alternative to specifying "&lt;sqlmapper&gt;" entries in an iBatis config file.
+     * This is an alternative to specifying "&lt;sqlmapper&gt;" entries in an MyBatis config file.
      * This property being based on Spring's resource abstraction also allows for specifying
      * resource patterns here: e.g. "/sqlmap/*-mapper.xml".
      */
@@ -162,7 +163,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * Set the iBatis TransactionFactory class to use. Default is
+     * Set the MyBatis TransactionFactory class to use. Default is
      * <code>SpringManagedTransactionFactory</code>.
      *
      * The default SpringManagedTransactionFactory should be appropriate for all cases: be it Spring
@@ -170,15 +171,15 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * operations will execute SQL statements non-transactionally.
      *
      * <b>It is strongly recommended to use the default TransactionFactory.</b> If not used, any
-     * attempt at getting an SqlSession through Spring's iBatis framework will throw an exception if
+     * attempt at getting an SqlSession through Spring's MyBatis framework will throw an exception if
      * a transaction is active.
      *
      * @see #setDataSource
      * @see #setTransactionFactoryProperties(java.util.Properties)
      * @see org.apache.ibatis.transaction.TransactionFactory
-     * @see org.mybatis.springtransaction.SpringManagedTransactionFactory
+     * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
      * @see org.apache.ibatis.transaction.Transaction
-     * @see org.mybatis.springSqlSessionUtils#getSqlSession(SqlSessionFactory,
+     * @see org.mybatis.spring.SqlSessionUtils#getSqlSession(SqlSessionFactory,
      *      DataSource, org.apache.ibatis.session.ExecutorType)
      */
     public void setTransactionFactoryClass(Class<TransactionFactory> transactionFactoryClass) {
@@ -189,7 +190,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * Set properties to be passed to the TransactionFactory instance used by this
      * SqlSessionFactory.
      *
-     * As of iBatis 3.0.0, these properties are <em>ignored</em> by the provided
+     * As of MyBatis 3.0.x, these properties are <em>ignored</em> by the provided
      * <code>TransactionFactory</code> implementations.
      *
      * @see org.apache.ibatis.transaction.TransactionFactory#setProperties(java.util.Properties)
@@ -201,7 +202,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * <b>NOTE:</b> This class <em>overrides</em> any Environment you have set in the iBatis config
+     * <b>NOTE:</b> This class <em>overrides</em> any Environment you have set in the MyBatis config
      * file. This is used only as a placeholder name. The default value is
      * <code>SqlSessionFactoryBean.class.getSimpleName()</code>.
      *
@@ -222,12 +223,12 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     /**
      * Build a SqlSessionFactory instance.
      *
-     * The default implementation uses the standard iBatis {@link XMLConfigBuilder} API to build a
+     * The default implementation uses the standard MyBatis {@link XMLConfigBuilder} API to build a
      * SqlSessionFactory instance based on an Reader.
      *
      * @see org.apache.ibatis.builder.xml.XMLConfigBuilder#parse()
      *
-     * @return
+     * @return SqlSessionFactory
      *
      * @throws IOException if loading the config file failed
      * @throws IllegalAccessException
@@ -242,8 +243,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         if (configLocation != null) {
             try {
                 Reader reader = new InputStreamReader(configLocation.getInputStream());
-                // null environment causes the configuration to use the default
-                // this will be overwritten below regardless
+                // Null environment causes the configuration to use the default.
+                // This will be overwritten below regardless.
                 xmlConfigBuilder = new XMLConfigBuilder(reader, null, configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (IOException ex) {
@@ -255,7 +256,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             }
         } else {
             if (logger.isDebugEnabled()) {
-                logger.debug("Property 'configLocation' not specified, using default iBatis Configuration");
+                logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
             }
             configuration = new Configuration();
         }
@@ -271,9 +272,27 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             Map<String, XNode> sqlFragments = new HashMap<String, XNode>();
 
             for (Resource mapperLocation : mapperLocations) {
+            	// MyBatis hold a Map using "resource" name as a key.
+            	// If a mapper file is loaded, it searches for a mapper interface type.
+            	// If the type is found then it tries to load again the mapper file looking for this:
+                //
+            	//   String xmlResource = type.getName().replace('.', '/') + ".xml";
+                //
+            	// So if a mapper interface exists resource cannot be an absolute path.
+            	// Otherwise MyBatis will throw an exception because
+            	// it will load both a mapper interface and the mapper xml file,
+            	// and throw an exception telling that a mapperStatement cannot be loaded twice.
+            	String path;
+            	if (mapperLocation instanceof ClassPathResource) {
+            		path = ClassPathResource.class.cast(mapperLocation).getPath();
+            	} else {
+            		// this won't work if there is also a mapper interface in classpath
+                    path = mapperLocation.getURI().getPath();
+            	}
+
                 try {
                     Reader reader = new InputStreamReader(mapperLocation.getInputStream());
-                    XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, mapperLocation.toString(), sqlFragments);
+                    XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, path, sqlFragments);
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);

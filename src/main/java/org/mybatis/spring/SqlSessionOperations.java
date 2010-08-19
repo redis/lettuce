@@ -21,16 +21,16 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
- * Interface that specifies a basic set of iBatis SqlSession operations,
+ * Interface that specifies a basic set of MyBatis SqlSession operations,
  * implemented by {@link SqlSessionTemplate}. Not often used, but a useful
  * option to enhance testability, as it can easily be mocked or stubbed.
  *
  * Defines SqlSessionTemplate's convenience methods that mirror
- * the iBatis {@link org.apache.ibatis.session.SqlSession}'s execution
+ * the MyBatis {@link org.apache.ibatis.session.SqlSession}'s execution
  * methods. Users are strongly encouraged to read the MyBatis javadocs
  * for details on the semantics of those methods.
  *
- * @see org.mybatis.springSqlSessionTemplate
+ * @see org.mybatis.spring.SqlSessionTemplate
  * @see org.apache.ibatis.session.SqlSession
  * @version $Id$
  */

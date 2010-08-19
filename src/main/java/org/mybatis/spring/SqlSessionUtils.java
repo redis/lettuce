@@ -35,8 +35,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.Assert;
 
 /**
- * note this class does not translate IBatisException to DataSourceException
- * since MyBatis now uses runtime exceptions
+ * Note: This class does not translate PersistenceException to DataSourceException
+ * since MyBatis now uses runtime exceptions.
  *
  * @version $Id$
  */
@@ -66,7 +66,7 @@ public final class SqlSessionUtils {
      *
      * @throws TransientDataAccessResourceException if a transaction is active and the
      *             SqlSessionFactory is not using a SpringManagedTransactionFactory
-     * @see org.mybatis.springtransaction.SpringManagedTransactionFactory
+     * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, DataSource dataSource, ExecutorType executorType) {
         // either return the existing SqlSession or create a new one
@@ -81,19 +81,19 @@ public final class SqlSessionUtils {
         }
 
         boolean transactionAware = (dataSource instanceof TransactionAwareDataSourceProxy);
-        Connection con;
+        Connection conn;
 
         try {
-            con = transactionAware ? dataSource.getConnection() : DataSourceUtils.getConnection(dataSource);
-        } catch (SQLException sqle) {
-            throw new CannotGetJdbcConnectionException("Could not get JDBC Connection for SqlSession", sqle);
+            conn = transactionAware ? dataSource.getConnection() : DataSourceUtils.getConnection(dataSource);
+        } catch (SQLException e) {
+            throw new CannotGetJdbcConnectionException("Could not get JDBC Connection for SqlSession", e);
         }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Creating SqlSession from SqlSessionFactory");
         }
 
-        // assume either DataSourceTransactionManager or the underlying
+        // Assume either DataSourceTransactionManager or the underlying
         // connection pool already dealt with enabling auto commit.
         // This may not be a good assumption, but the overhead of checking
         // connection.getAutoCommit() again may be expensive (?) in some drivers
@@ -102,16 +102,17 @@ public final class SqlSessionUtils {
         // of DSTxMgr, but to do that we would need to be able to call
         // ConnectionHolder.isTransactionActive(), which is protected and not
         // visible to this class.
-        SqlSession session = sessionFactory.openSession(executorType, con);
+        SqlSession session = sessionFactory.openSession(executorType, conn);
 
         // Register session holder and bind it to enable synchronization.
-        // Note the DataSource should be synchronized with the transaction
+        //
+        // Note: The DataSource should be synchronized with the transaction
         // either through DataSourceTxMgr or another tx synchronization.
         // Further assume that if an exception is thrown, whatever started the transaction will
         // handle closing / rolling back the Connection associated with the SqlSession.
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             if (!(sessionFactory.getConfiguration().getEnvironment().getTransactionFactory() instanceof SpringManagedTransactionFactory)
-                    && DataSourceUtils.isConnectionTransactional(con, dataSource)) {
+                    && DataSourceUtils.isConnectionTransactional(conn, dataSource)) {
                 throw new TransientDataAccessResourceException(
                         "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
             }
@@ -121,8 +122,7 @@ public final class SqlSessionUtils {
             }
             holder = new SqlSessionHolder(session);
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
-            TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder,
-                    sessionFactory, dataSource));
+            TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory, dataSource));
             holder.setSynchronizedWithTransaction(true);
             holder.requested();
         }
@@ -139,7 +139,7 @@ public final class SqlSessionUtils {
             }
         } else {
             holder.released();
-            // assume transaction synchronization will actually close session
+            // Assume transaction synchronization will actually close session.
         }
     }
 
@@ -157,8 +157,7 @@ public final class SqlSessionUtils {
         private final SqlSessionHolder holder;
         private final SqlSessionFactory sessionFactory;
 
-        public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory,
-                DataSource dataSource) {
+        public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory, DataSource dataSource) {
             Assert.notNull(holder);
             Assert.notNull(sessionFactory);
 
@@ -185,18 +184,18 @@ public final class SqlSessionUtils {
         @Override
         public void afterCompletion(int status) {
             // Connection commit or rollback will be handled by ConnectionSynchronization or
-            // DataSourceTransactionManager
+            // DataSourceTransactionManager.
             try {
-                // do not call commit unless there is really a transaction; no need to commit if
-                // just tx synchronization is active
+                // Do not call commit unless there is really a transaction; no need to commit if
+                // just tx synchronization is active.
                 if ((status == STATUS_COMMITTED)) {
                     if (TransactionSynchronizationManager.isActualTransactionActive()) {
-                        // false here on commit or rollback prevents a call to Transaction.commit()
+                        // False here on commit or rollback prevents a call to Transaction.commit()
                         // in BaseExecutor which will be redundant with SpringManagedTransaction
-                        // since we already know that commit on the Connection is being handled
+                        // since we already know that commit on the Connection is being handled.
                         holder.getSqlSession().commit(false);
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Transaction synchronization commited SqlSession");
+                            logger.debug("Transaction synchronization committed SqlSession");
                         }
                     }
                 } else {

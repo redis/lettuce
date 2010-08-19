@@ -24,7 +24,7 @@ import org.springframework.dao.support.DaoSupport;
 import org.springframework.util.Assert;
 
 /**
- * Convenient super class for iBATIS SqlSession data access objects. In the usual case, all that a
+ * Convenient super class for MyBatis SqlSession data access objects. In the usual case, all that a
  * DAO needs is an SqlSessionFactory. This class also supports passing in an SqlSessionTemplate if a
  * custom DataSource or ExceptionTranslator is needed for a specific DAO.
  * <p>
@@ -38,13 +38,13 @@ import org.springframework.util.Assert;
  * <pre class="code">
  *   <bean id="baseDAO" abstract="true" lazy-init="true">
  *     <constructor-arg>
- *       <bean class="org.mybatis.springSqlSessionTemplate">
+ *       <bean class="org.mybatis.spring.SqlSessionTemplate">
  *         <constructor-arg ref="sqlSessionFactory" />
  *       </bean>
  *     </constructor-arg>
  *   </bean>
  * 
- *   <bean id="testDao" parent="baseDAO" class="org.mybatis.springsupport.SqlSessionDaoSupport" />
+ *   <bean id="testDao" parent="baseDAO" class="org.mybatis.spring.support.SqlSessionDaoSupport" />
  * </pre>
  *
  * @see #setSqlSessionFactory

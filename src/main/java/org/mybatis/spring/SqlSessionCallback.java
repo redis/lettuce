@@ -21,7 +21,7 @@ import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.session.SqlSession;
 
 /**
- * Callback interface for data access code that works with the iBATIS
+ * Callback interface for data access code that works with the MyBatis
  * {@link Executor} interface. To be used
  * with {@link SqlSessionTemplate}'s <code>execute</code> method,
  * assumably often as anonymous classes within a method implementation.
@@ -48,10 +48,10 @@ public interface SqlSessionCallback<T> {
      * A thrown custom RuntimeException is treated as an application exception:
      * It gets propagated to the caller of the template.
      *
-     * @param sqlSession an active iBATIS SqlSession, passed-in as
-     * Executor interface here to avoid manual lifecycle handling
+     * @param sqlSession an active MyBatis SqlSession, passed-in as
+     * Executor interface here to avoid manual life-cycle handling
      * @return a result object, or <code>null</code> if none
-     * @throws SQLException if thrown by the iBATIS SQL Maps API
+     * @throws SQLException if thrown by the MyBatis SQL Maps API
      * @see SqlSessionTemplate#execute
      */
     T doInSqlSession(SqlSession sqlSession) throws SQLException;

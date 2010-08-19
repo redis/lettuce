@@ -13,18 +13,17 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.support;
+package org.mybatis.spring;
 
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 /**
- * BeanFactory that enables injection of iBatis Mapper Interfaces.
+ * BeanFactory that enables injection of MyBatis mapper interfaces.
  *
  * @see SqlSessionTemplate
  * @version $Id$
@@ -38,6 +37,8 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {
     private SqlSessionFactory sqlSessionFactory;
 
     private SqlSessionTemplate sqlSessionTemplate;
+
+    private boolean addToConfig = true;
 
     public MapperFactoryBean() {
         super();
@@ -59,18 +60,29 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {
         this.sqlSessionTemplate = sqlSessionTemplate;
     }
 
+    public void setAddToConfig(boolean addToConfig) {
+        this.addToConfig = addToConfig;
+    }
+
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(mapperInterface, "Property 'MapperInterface' is required");
 
         if (sqlSessionFactory == null && sqlSessionTemplate == null) {
             throw new IllegalArgumentException("Property 'sqlSessionFactory' is required");
-
         } else if (sqlSessionTemplate == null) {
             sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+        } else {
+            sqlSessionFactory = sqlSessionTemplate.getSqlSessionFactory();
         }
 
         if (dataSource != null) {
             sqlSessionTemplate.setDataSource(dataSource);
+        }
+
+        if (addToConfig) {
+            if (!sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
+                sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
+            }
         }
     }
 

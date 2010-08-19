@@ -49,7 +49,7 @@ public class SpringManagedTransaction implements Transaction {
 
         Connection nonLoggingConnection;
 
-        // unwrap the connection if it is a ConnectionLogger for use with Spring
+        // Unwrap the connection if it is a ConnectionLogger for use with Spring.
         if (Proxy.isProxyClass(connection.getClass())) {
             InvocationHandler handler = Proxy.getInvocationHandler(connection);
 
@@ -63,16 +63,17 @@ public class SpringManagedTransaction implements Transaction {
         }
 
         // This connection could have been created with any DataSource, not just the one that is
-        // registered in the iBatis Environment. So, rather than passing a DataSource into this
+        // registered in the MyBatis Environment. So, rather than passing a DataSource into this
         // Transaction, just check the bound resources for a DataSource and use that in the call to
         // isConnectionTransactional. If there is no DataSource bound, there is no Spring
         // transaction; if this Connection does not match the one in the current transaction, this
         // is a different Spring transactional context. In either case, this Transaction should
         // manage the connection. If there is a Spring transaction in progress, this Transaction
         // will no-op all methods.
-        // Note this also assumes that iBatis does not allow changing the Transaction or the
+        //
+        // Note: This also assumes that MyBatis does not allow changing the Transaction or the
         // Connection once an SqlSession has been created, which is consistent with the default
-        // implemenation.
+        // implementation.
         boolean manageConnection = true;
 
         for (Object o : TransactionSynchronizationManager.getResourceMap().keySet()) {
