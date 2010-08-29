@@ -73,15 +73,6 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <!-- FIXME remove the snapshot repository before the release!!! -->
-    <repositories>
-        <repository>
-            <id>mybatis-snapshot</id>
-            <name>MyBatis Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </repository>
-    </repositories>
-
     <developers>
         <developer>
             <id>clinton.begin</id>
@@ -461,7 +452,7 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
             <scope>compile</scope>
         </dependency>
 
