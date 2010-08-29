@@ -36,7 +36,7 @@
     <tx:annotation-driven transaction-manager="transactionManager" />
 
     <jdbc:embedded-database id="dataSource">
-        <jdbc:script location="classpath:sample/db.sql"/>
+        <jdbc:script location="classpath:sample/db.sql" />
     </jdbc:embedded-database>
 
     <bean id="fooService" class="sample.FooServiceImpl">
