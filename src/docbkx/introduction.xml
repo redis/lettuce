@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id$
+-->
+<chapter id="introduction">
+    <title>Introduction</title>
+
+    <section id="introduction.why-mybatis-guice">
+        <title>Why mybatis-spring - Motivation</title>
+        <para>
+            In our daily work we've been strongly using both
+            <ulink url="http://www.mybatis.org/">MyBatis Sql Mapper</ulink> and
+            <ulink url="http://code.google.com/p/google-guice/">Google Guice</ulink>
+            frameworks and once noticed we'd been continuosly repeating the same
+            code snippets in different projects, according to the DRY
+            <emphasis>don't repeat yourself</emphasis> principle, we started
+            realizing something that alleviate us the task to create our stuff.
+        </para>
+        <para>
+            Indeed, this small library intends to create the missing perfect glue
+            between the two popular frameworks, reducing the boilerplate and
+            redundant code that users have to write to configure and use MyBatis
+            into a Spring 3.X context.
+        </para>
+    </section>
+
+    <section id="introduction.requirements">
+        <title>Requirements</title>
+        <para>
+            Before starting reading the manual, it is very important you're
+            familiar with both MyBatis and Spring framework and therminology,
+            otherwise it would be very difficult to understand the described context.
+        </para>
+        <para>
+            Like MyBatis, mybatis-spring requires Java 5 or higher.
+        </para>
+    </section>
+
+    <section id="introduction.acks">
+        <title>Acknowledgements</title>
+        <para>
+            A special thanks goes to all the special people who made this project
+            a reality, above all Andrius Juozapaitis, Putthibong Boonbong,
+            Eduardo Maccarron and Raj Nagappan. Without them, that
+            project wouldn't exist.
+        </para>
+    </section>
+
+</chapter>
