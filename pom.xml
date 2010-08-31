@@ -387,6 +387,44 @@
             </plugin>
 
             <plugin>
+                <groupId>com.agilejava.docbkx</groupId>
+                <artifactId>docbkx-maven-plugin</artifactId>
+                <version>2.0.7</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.docbook</groupId>
+                        <artifactId>docbook-xml</artifactId>
+                        <version>4.4</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>produce pdf</id>
+                        <goals>
+                            <goal>generate-pdf</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <includes>index.xml</includes>
+                            <xincludeSupported>true</xincludeSupported>
+                            <sourceDirectory>${basedir}/src/docbkx</sourceDirectory>
+                            <foCustomization>${basedir}/src/docbkx/xsl/fopdf.xsl</foCustomization>
+                            <!-- use extensions -->
+                            <useExtensions>1</useExtensions>
+                            <highlightSource>1</highlightSource>
+                            <highlightDefaultLanguage />
+                            <!-- callouts -->
+                            <calloutsExtension>1</calloutsExtension>
+                            <postProcess>
+                                <move file="target/docbkx/pdf/index.pdf" tofile="target/docbkx/pdf/${project.artifactId}-${project.version}-reference.pdf" failonerror="false" />
+                            </postProcess>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.2-beta-5</version>
                 <executions>
@@ -401,6 +439,26 @@
                     <descriptors>
                         <descriptor>src/main/assembly/bundle.xml</descriptor>
                     </descriptors>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.googlecode.maven-gcu-plugin</groupId>
+                <artifactId>maven-gcu-plugin</artifactId>
+                <version>1.0</version>
+                <configuration>
+                    <failsOnError>true</failsOnError>
+                    <projectName>mybatis</projectName>
+                    <uploads>
+                         <upload>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}-bundle.zip</file>
+                            <summary>Google Guice bridge for Spring 3.X ${pom.version} release</summary>
+                            <labels>
+                                <label>Featured</label>
+                                <label>Type-Archive</label>
+                            </labels>
+                        </upload>
+                    </uploads>
                 </configuration>
             </plugin>
 
