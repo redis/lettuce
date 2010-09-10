@@ -462,7 +462,7 @@
                     <uploads>
                          <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}-bundle.zip</file>
-                            <summary>Google Guice bridge for Spring 3.X ${pom.version} release</summary>
+                            <summary>Google Guice bridge for Spring 3.X ${project.version} release</summary>
                             <labels>
                                 <label>Featured</label>
                                 <label>Type-Archive</label>
