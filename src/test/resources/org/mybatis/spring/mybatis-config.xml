@@ -23,6 +23,13 @@
 -->
 <configuration>
 
+    <settings>
+        <!-- changes from the defaults for testing -->
+        <setting name="cacheEnabled" value="false" />
+        <setting name="useGeneratedKeys" value="true" />
+        <setting name="defaultExecutorType" value="REUSE" />
+    </settings>
+
     <mappers>
         <mapper resource="org/mybatis/spring/TestDao.xml" />
     </mappers>

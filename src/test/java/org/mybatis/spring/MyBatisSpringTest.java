@@ -15,75 +15,52 @@
  */
 package org.mybatis.spring;
 
+import org.junit.Test;
+import org.junit.After;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
 
-import java.sql.SQLException;
-
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
+
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+
 import org.springframework.dao.TransientDataAccessResourceException;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.mockrunner.mock.jdbc.MockConnection;
-import com.mockrunner.mock.jdbc.MockResultSet;
 
 /**
  * 
- *
+ * 
  * @version $Id$
  */
-public class MyBatisSpringTest {
-
-    private static CountingMockDataSource DATA_SOURCE;
-
-    private static SqlSessionFactory SQL_SESSION_FACTORY;
-
-    private static SqlSessionTemplate SQL_SESSION_TEMPLATE;
-
-    private static ExecutorInterceptor EXECUTOR_INTERCEPTOR = new ExecutorInterceptor();
-
-    private static DataSourceTransactionManager TX_MANAGER;
-
-    private MockConnection connection;
+public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
     private SqlSession session;
 
-    @BeforeClass
-    public static void setup() throws Exception {
-        DATA_SOURCE = new CountingMockDataSource();
-
-        // create an SqlSessionFactory that will use SpringManagedTransactions
-        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
-        factoryBean.setMapperLocations(new Resource[]{new ClassPathResource(
-                "org/mybatis/spring/TestDao.xml")});
-        factoryBean.setDataSource(DATA_SOURCE);
-
-        SQL_SESSION_FACTORY = factoryBean.getObject();
-        SQL_SESSION_FACTORY.getConfiguration().addInterceptor(EXECUTOR_INTERCEPTOR);
-
-        SQL_SESSION_TEMPLATE = new SqlSessionTemplate(SQL_SESSION_FACTORY);
-
-        TX_MANAGER = new DataSourceTransactionManager(DATA_SOURCE);
+    @After
+    public void validateSessionClose() {
+        // assume if the Executor is closed, the Session is too
+        if ((session != null) && !executorInterceptor.isExecutorClosed()) {
+            session = null;
+            fail("SqlSession is not closed");
+        }
+        else {
+            session = null;
+        }
     }
 
-    // iBatis tests to make sure the iBatis API still works with SpringManagedTransaction
+    // ensure iBatis API still works with SpringManagedTransaction
     @Test
     public void testIbatisAPI() {
-        this.session = SQL_SESSION_FACTORY.openSession();
-        this.session.getMapper(TestDao.class).findTest();
-        this.session.close();
+        session = sqlSessionFactory.openSession();
+        session.getMapper(TestDao.class).findTest();
+        session.close();
 
         assertNoCommit();
         assertSingleConnection();
@@ -91,10 +68,10 @@ public class MyBatisSpringTest {
 
     @Test
     public void testIbatisAPIWithCommit() {
-        this.session = SQL_SESSION_FACTORY.openSession();
-        this.session.getMapper(TestDao.class).findTest();
-        this.session.commit(true);
-        this.session.close();
+        session = sqlSessionFactory.openSession();
+        session.getMapper(TestDao.class).findTest();
+        session.commit(true);
+        session.close();
 
         assertCommit();
         assertSingleConnection();
@@ -102,10 +79,10 @@ public class MyBatisSpringTest {
 
     @Test
     public void testIbatisAPIWithRollback() {
-        this.session = SQL_SESSION_FACTORY.openSession();
-        this.session.getMapper(TestDao.class).findTest();
-        this.session.rollback(true);
-        this.session.close();
+        session = sqlSessionFactory.openSession();
+        session.getMapper(TestDao.class).findTest();
+        session.rollback(true);
+        session.close();
 
         assertRollback();
         assertSingleConnection();
@@ -114,9 +91,9 @@ public class MyBatisSpringTest {
     // basic tests using SqlSessionUtils instead of using the iBatis API directly
     @Test
     public void testSpringAPI() {
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY);
-        this.session.getMapper(TestDao.class).findTest();
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertNoCommit();
         assertSingleConnection();
@@ -124,10 +101,10 @@ public class MyBatisSpringTest {
 
     @Test
     public void testSpringAPIWithCommit() {
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY);
-        this.session.getMapper(TestDao.class).findTest();
-        this.session.commit(true);
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
+        session.commit(true);
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertCommit();
         assertSingleConnection();
@@ -135,10 +112,10 @@ public class MyBatisSpringTest {
 
     @Test
     public void testSpringAPIWithRollback() {
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY);
-        this.session.getMapper(TestDao.class).findTest();
-        this.session.rollback(true);
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
+        session.rollback(true);
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertRollback();
         assertSingleConnection();
@@ -148,9 +125,9 @@ public class MyBatisSpringTest {
     public void testSpringAPIWithIbatisClose() {
         // This is a programming error and could lead to connection leak if there is a transaction
         // in progress. But, the API allows it, so make sure it at least works without a tx.
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY);
-        this.session.getMapper(TestDao.class).findTest();
-        this.session.close();
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
+        session.close();
 
         assertNoCommit();
         assertSingleConnection();
@@ -159,9 +136,9 @@ public class MyBatisSpringTest {
     @Test
     public void testWithSameDataSource() {
         // use the same DataSource the SqlSession is configured with
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, DATA_SOURCE);
-        this.session.getMapper(TestDao.class).findTest();
-        SqlSessionUtils.closeSqlSession(this.session, SQL_SESSION_FACTORY);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, dataSource);
+        session.getMapper(TestDao.class).findTest();
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertNoCommit();
         assertSingleConnection();
@@ -169,16 +146,107 @@ public class MyBatisSpringTest {
 
     @Test
     public void testWithDifferentDataSource() {
-        CountingMockDataSource ds = new CountingMockDataSource();
-        ds.setupConnection(connection);
+        try {
+            CountingMockDataSource ds = new CountingMockDataSource();
+            ds.setupConnection(createMockConnection());
 
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, ds);
-        this.session.getMapper(TestDao.class).findTest();
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds);
+            session.getMapper(TestDao.class).findTest();
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-        assertNoCommit();
-        assertEquals("should only call DataSource.getConnection() once", 1, ds.getConnectionCount());
-        assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, DATA_SOURCE.getConnectionCount());
+            assertNoCommit();
+            assertEquals("should only call DataSource.getConnection() once", 1, ds.getConnectionCount());
+            assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, dataSource
+                    .getConnectionCount());
+            assertConnectionClosed(ds.getMockConnection());
+        }
+        finally {
+            // null the connection since it was not used
+            // this avoids failing in validateConnectionClosed()
+            connection = null;
+        }
+    }
+
+    // Spring API should work with a iBatis TransactionFactories, as long as there is not a Spring
+    // TX is progress
+    @Test
+    public void testWithNonSpringTransactionFactory() {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        try {
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+            session.getMapper(TestDao.class).findTest();
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+            // users need to manually call commit, rollback and close, just like with normal iBatis
+            // API usage
+            assertNoCommit();
+            assertSingleConnection();
+        }
+        finally {
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
+    }
+
+    @Test(expected = TransientDataAccessResourceException.class)
+    public void testNonSpringTxFactoryWithTx() throws Exception {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        TransactionStatus status = null;
+
+        try {
+            status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+
+            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+        }
+        finally {
+            // rollback required to close connection
+            txManager.rollback(status);
+
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
+    }
+
+    // TODO should this pass?
+    /*
+     * this is an edge case - completly separate DataSource, non-Spring TXManager but with an
+     * existing Spring TX. Technically, this could be allowed, but the current implementation fails
+     * because DataSourceUtils.getConnection(DataSource) pulls _any_ Connection into the current tx.
+     * To fix, however, SqlSessionTemplate.execute() would need to run more checks
+     * (DataSourceUtils.isConnectionTransactional() and unwrapping TransactionAwareDataSourceProxy)
+     * which would increase the code path for all transactions.
+     */
+    @Test(expected = TransientDataAccessResourceException.class)
+    public void testNonSpringTxFactoryNonSpringDSWithTx() {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+
+        CountingMockDataSource mockDataSource = new CountingMockDataSource();
+        mockDataSource.setupConnection(createMockConnection());
+
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), mockDataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        TransactionStatus status = null;
+
+        try {
+            status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+
+            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+        }
+        finally {
+            // rollback required to close connection
+            txManager.rollback(status);
+
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
     }
 
     @Test
@@ -186,13 +254,13 @@ public class MyBatisSpringTest {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_SUPPORTS");
 
-        TransactionStatus status = TX_MANAGER.getTransaction(txDef);
+        TransactionStatus status = txManager.getTransaction(txDef);
 
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, DATA_SOURCE);
-        this.session.getMapper(TestDao.class).findTest();
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-        TX_MANAGER.commit(status);
+        txManager.commit(status);
 
         // SUPPORTS should just activate tx synchronization but not commits
         assertNoCommit();
@@ -204,13 +272,13 @@ public class MyBatisSpringTest {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 
-        TransactionStatus status = TX_MANAGER.getTransaction(txDef);
+        TransactionStatus status = txManager.getTransaction(txDef);
 
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, DATA_SOURCE);
-        this.session.getMapper(TestDao.class).findTest();
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-        TX_MANAGER.commit(status);
+        txManager.commit(status);
 
         assertCommit();
         assertSingleConnection();
@@ -221,23 +289,22 @@ public class MyBatisSpringTest {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 
-        TransactionStatus status = TX_MANAGER.getTransaction(txDef);
+        TransactionStatus status = txManager.getTransaction(txDef);
 
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, DATA_SOURCE);
-        this.session.getMapper(TestDao.class).findTest();
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestDao.class).findTest();
         // commit should no-op since there is an active transaction
-        // commit should only be called once in total
-        this.session.commit(true);
-        SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+        session.commit(true);
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-        TX_MANAGER.commit(status);
+        txManager.commit(status);
 
         // Connection should be commited once, but we explicity called commit on the SqlSession, so
         // it should be commited twice
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
         assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
-        assertEquals("should call commit on SqlSession", 2, EXECUTOR_INTERCEPTOR.getCommitCount());
-        assertEquals("should not call rollback on SqlSession", 0, EXECUTOR_INTERCEPTOR.getRollbackCount());
+        assertEquals("should call commit on SqlSession", 2, executorInterceptor.getCommitCount());
+        assertEquals("should not call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
 
         assertSingleConnection();
     }
@@ -252,21 +319,21 @@ public class MyBatisSpringTest {
         ds.addConnection(connection2);
 
         // session not in existing tx, should use first connection
-        this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, ds);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds);
 
         try {
             // this transaction should use another Connection
-            TX_MANAGER.setDataSource(ds);
-            TransactionStatus status = TX_MANAGER.getTransaction(new DefaultTransactionDefinition());
+            txManager.setDataSource(ds);
+            TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
 
             // all iBatis work happens during the tx, but should not be participating
-            this.session.getMapper(TestDao.class).findTest();
-            this.session.commit(true);
-            SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
+            session.getMapper(TestDao.class).findTest();
+            session.commit(true);
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
             // this should succeed
             // SpringManagedTransaction (from SqlSession.commit()) should not interfere with tx
-            TX_MANAGER.commit(status);
+            txManager.commit(status);
 
             // two transactions should have completed, each using their own Connection
             assertEquals("should call DataSource.getConnection() twice", 2, ds.getConnectionCount());
@@ -279,12 +346,15 @@ public class MyBatisSpringTest {
             assertEquals("should not call rollback on Connection 2", 0, connection2.getNumberRollbacks());
 
             // the SqlSession should have also commmited
-            assertEquals("should call commit on SqlSession", 1, EXECUTOR_INTERCEPTOR.getCommitCount());
-            assertEquals("should call rollback on SqlSession", 0, EXECUTOR_INTERCEPTOR.getRollbackCount());
+            assertEquals("should call commit on SqlSession", 1, executorInterceptor.getCommitCount());
+            assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
+
+            assertConnectionClosed(connection1);
+            assertConnectionClosed(connection2);
         }
         finally {
             // reset the txManager; keep other tests from potentially failing
-            TX_MANAGER.setDataSource(DATA_SOURCE);
+            txManager.setDataSource(dataSource);
 
             // null the connection since it was not used
             // this avoids failing in validateConnectionClosed()
@@ -302,27 +372,27 @@ public class MyBatisSpringTest {
         ds.addConnection(connection2);
 
         try {
-            TX_MANAGER.setDataSource(ds);
-            TransactionStatus status = TX_MANAGER.getTransaction(new DefaultTransactionDefinition());
+            txManager.setDataSource(ds);
+            TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
 
-            this.session = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, ds);
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds);
 
             // start a new tx while the other is in progress
             DefaultTransactionDefinition txRequiresNew = new DefaultTransactionDefinition();
             txRequiresNew.setPropagationBehaviorName("PROPAGATION_REQUIRES_NEW");
-            TransactionStatus status2 = TX_MANAGER.getTransaction(txRequiresNew);
+            TransactionStatus status2 = txManager.getTransaction(txRequiresNew);
 
-            SqlSession session2 = SqlSessionUtils.getSqlSession(SQL_SESSION_FACTORY, ds);
+            SqlSession session2 = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds);
 
             assertNotSame("getSqlSession() should not return suspended SqlSession", session, session2);
 
-            SqlSessionUtils.closeSqlSession(session2, SQL_SESSION_FACTORY);
-            TX_MANAGER.commit(status2);
+            SqlSessionUtils.closeSqlSession(session2, sqlSessionFactory);
+            txManager.commit(status2);
 
             // first tx should be resumed now and this should succeed
             session.getMapper(TestDao.class).findTest();
-            SqlSessionUtils.closeSqlSession(session, SQL_SESSION_FACTORY);
-            TX_MANAGER.commit(status);
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+            txManager.commit(status);
 
             // two transactions should have completed, each using their own Connection
             assertEquals("should call DataSource.getConnection() twice", 2, ds.getConnectionCount());
@@ -335,196 +405,19 @@ public class MyBatisSpringTest {
             assertEquals("should not call rollback on Connection 2", 0, connection2.getNumberRollbacks());
 
             // the SqlSession should have also commmited twice
-            assertEquals("should call commit on SqlSession", 2, EXECUTOR_INTERCEPTOR.getCommitCount());
-            assertEquals("should call rollback on SqlSession", 0, EXECUTOR_INTERCEPTOR.getRollbackCount());
-        } finally {
+            assertEquals("should call commit on SqlSession", 2, executorInterceptor.getCommitCount());
+            assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
+
+            assertConnectionClosed(connection1);
+            assertConnectionClosed(connection2);
+        }
+        finally {
             // reset the txManager; keep other tests from potentially failing
-            TX_MANAGER.setDataSource(DATA_SOURCE);
+            txManager.setDataSource(dataSource);
 
             // null the connection since it was not used
             // this avoids failing in validateConnectionClosed()
-            this.connection = null;
+            connection = null;
         }
     }
-
-    // these mapper tests should also cover SqlSessionTemplate since MapperFactoryBean uses it
-    @Test
-    public void testMapperFactoryBean() throws Exception {
-        MapperFactoryBean<TestDao> mapper = new MapperFactoryBean<TestDao>();
-        mapper.setMapperInterface(TestDao.class);
-        mapper.setSqlSessionTemplate(SQL_SESSION_TEMPLATE);
-        mapper.afterPropertiesSet();
-
-        TestDao finder = mapper.getObject();
-        finder.findTest();
-
-        assertNoCommit();
-        assertSingleConnection();
-    }
-
-    @Test
-    public void testMapperFactoryBeanWithDifferentDataSource() throws Exception {
-        CountingMockDataSource mockDataSource = new CountingMockDataSource();
-        mockDataSource.setupConnection(this.connection);
-
-        SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(SQL_SESSION_FACTORY);
-        sqlSessionTemplate.setDataSource(mockDataSource);
-
-        MapperFactoryBean<TestDao> mapper = new MapperFactoryBean<TestDao>();
-        mapper.setMapperInterface(TestDao.class);
-        mapper.setSqlSessionTemplate(sqlSessionTemplate);
-        mapper.afterPropertiesSet();
-
-        TestDao finder = mapper.getObject();
-        finder.findTest();
-
-        assertNoCommit();
-        assertEquals("should only call DataSource.getConnection() once", 1, mockDataSource.getConnectionCount());
-        assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, DATA_SOURCE
-                .getConnectionCount());
-    }
-
-    @Test
-    public void testMapperFactoryBeanWithTx() throws Exception {
-        MapperFactoryBean<TestDao> mapper = new MapperFactoryBean<TestDao>();
-        mapper.setMapperInterface(TestDao.class);
-        mapper.setSqlSessionTemplate(SQL_SESSION_TEMPLATE);
-        mapper.afterPropertiesSet();
-
-        TransactionStatus status = TX_MANAGER.getTransaction(new DefaultTransactionDefinition());
-
-        TestDao finder = mapper.getObject();
-        finder.findTest();
-
-        TX_MANAGER.commit(status);
-
-        assertCommit();
-        assertSingleConnection();
-    }
-
-    @Test
-    public void testMapperFactoryBeanWithNonSpringTransaction() throws Exception {
-        Environment original = SQL_SESSION_FACTORY.getConfiguration().getEnvironment();
-        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), DATA_SOURCE);
-        SQL_SESSION_FACTORY.getConfiguration().setEnvironment(nonSpring);
-
-        try {
-            MapperFactoryBean<TestDao> mapper = new MapperFactoryBean<TestDao>();
-            mapper.setMapperInterface(TestDao.class);
-            mapper.setSqlSessionTemplate(SQL_SESSION_TEMPLATE);
-            mapper.afterPropertiesSet();
-
-            TestDao finder = mapper.getObject();
-            finder.findTest();
-
-            assertNoCommit();
-            assertSingleConnection();
-        } finally {
-            SQL_SESSION_FACTORY.getConfiguration().setEnvironment(original);
-        }
-    }
-
-    @Test(expected = TransientDataAccessResourceException.class)
-    public void testMapperFactoryBeanWithTxAndNonSpringTransaction() throws Exception {
-        Environment original = SQL_SESSION_FACTORY.getConfiguration().getEnvironment();
-        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), DATA_SOURCE);
-        SQL_SESSION_FACTORY.getConfiguration().setEnvironment(nonSpring);
-
-        TransactionStatus status = null;
-
-        try {
-            SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(SQL_SESSION_FACTORY);
-            sqlSessionTemplate.setDataSource(DATA_SOURCE);
-
-            MapperFactoryBean<TestDao> mapper = new MapperFactoryBean<TestDao>();
-            mapper.setMapperInterface(TestDao.class);
-            mapper.setSqlSessionTemplate(sqlSessionTemplate);
-            mapper.afterPropertiesSet();
-
-            status = TX_MANAGER.getTransaction(new DefaultTransactionDefinition());
-
-            TestDao finder = mapper.getObject();
-            finder.findTest();
-        } finally {
-            // rollback required to close connection
-            TX_MANAGER.rollback(status);
-            SQL_SESSION_FACTORY.getConfiguration().setEnvironment(original);
-        }
-    }
-
-    private void assertNoCommit() {
-        assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
-        assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
-        assertEquals("should not call commit on SqlSession", 0, EXECUTOR_INTERCEPTOR.getCommitCount());
-        assertEquals("should not call rollback on SqlSession", 0, EXECUTOR_INTERCEPTOR.getRollbackCount());
-    }
-
-    private void assertCommit() {
-        assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
-        assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
-        assertEquals("should call commit on SqlSession", 1, EXECUTOR_INTERCEPTOR.getCommitCount());
-        assertEquals("should not call rollback on SqlSession", 0, EXECUTOR_INTERCEPTOR.getRollbackCount());
-    }
-
-    private void assertRollback() {
-        assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
-        assertEquals("should call rollback on Connection", 1, connection.getNumberRollbacks());
-        assertEquals("should not call commit on SqlSession", 0, EXECUTOR_INTERCEPTOR.getCommitCount());
-        assertEquals("should call rollback on SqlSession", 1, EXECUTOR_INTERCEPTOR.getRollbackCount());
-    }
-
-    private void assertSingleConnection() {
-        assertEquals("should only call DataSource.getConnection() once", 1, DATA_SOURCE.getConnectionCount());
-    }
-
-    private MockConnection createMockConnection() {
-        // this query must be the same as the query in TestDao.xml
-        MockResultSet rs = new MockResultSet("SELECT 1");
-        rs.addRow(new Object[]{1});
-
-        MockConnection con = new MockConnection();
-        con.getPreparedStatementResultSetHandler().prepareResultSet("SELECT 1", rs);
-
-        return con;
-    }
-
-    /*
-     * Setup a new Connection before each test since its closed state will need to be checked
-     * afterwards and there is no Connection.open().
-     */
-    @Before
-    public void setupConnection() {
-        this.connection = createMockConnection();
-        DATA_SOURCE.setupConnection(connection);
-    }
-
-    @Before
-    public void resetExecutorInterceptor() {
-        EXECUTOR_INTERCEPTOR.reset();
-    }
-
-    @Before
-    public void resetDataSource() {
-        DATA_SOURCE.reset();
-    }
-
-    @After
-    public void validateSessionClose() {
-        // assume if the Executor is closed, the Session is too
-        if ((this.session != null) && !EXECUTOR_INTERCEPTOR.isExecutorClosed()) {
-            fail("SqlSession is not closed");
-        }
-
-        this.session = null;
-    }
-
-    @After
-    public void validateConnectionClosed() throws SQLException {
-        if ((this.connection != null) && !this.connection.isClosed()) {
-            fail("Connection is not closed");
-        }
-
-        this.connection = null;
-    }
-
 }

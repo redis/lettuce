@@ -18,117 +18,209 @@ package org.mybatis.spring;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.sql.SQLException;
+import org.apache.ibatis.mapping.Environment;
 
-import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.After;
-import org.junit.Before;
+import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.mockrunner.mock.jdbc.MockConnection;
-import com.mockrunner.mock.jdbc.MockResultSet;
+import org.springframework.dao.TransientDataAccessResourceException;
+
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 /**
  * 
- *
+ * 
  * @version $Id$
  */
-public class MapperFactoryBeanTest {
+public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
-    private static ApplicationContext CTX;
-
-    private static CountingMockDataSource DATA_SOURCE;
-
-    private static ExecutorInterceptor EXECUTOR_INTERCEPTOR = new ExecutorInterceptor();
-
-    private MockConnection connection;
-
-    private SqlSession session;
+    private static SqlSessionTemplate sqlSessionTemplate;
 
     @BeforeClass
-    public static void setup() throws Exception {
-        CTX = new ClassPathXmlApplicationContext("org/mybatis/spring/application-context-test-MapperFactoryBean.xml");
-
-        DATA_SOURCE = CTX.getBean("dataSource", CountingMockDataSource.class);
-
-        SqlSessionFactory sqlSessionFactory = CTX.getBean("sqlSessionFactory", SqlSessionFactory.class);
-        sqlSessionFactory.getConfiguration().addInterceptor(EXECUTOR_INTERCEPTOR);
+    public static void setupSqlTemplate() {
+        sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
     }
 
-    // these mapper tests should also cover SqlSessionTemplate since MapperFactoryBean uses it
+    // test normal MapperFactoryBean usage
     @Test
-    public void testMapperFactoryBean() throws Exception {
-        TestDao testDao = CTX.getBean("testDao", TestDao.class);
-        Integer result = testDao.findTest();
-        assertEquals(Integer.valueOf(1), result);
+    public void testBasicUsage() throws Exception {
+        find();
 
         assertNoCommit();
         assertSingleConnection();
     }
 
-    private void assertNoCommit() {
-        assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
-        assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
-        assertEquals("should not call commit on SqlSession", 0, EXECUTOR_INTERCEPTOR.getCommitCount());
-        assertEquals("should not call rollback on SqlSession", 0, EXECUTOR_INTERCEPTOR.getRollbackCount());
+    @Test
+    public void testAddToConfigTrue() throws Exception {
+        // the default SqlSessionFactory in BaseMyBatis SpringTest is created with an explicitly set
+        // MapperLocations list, so create a new factory here that tests auto-loading the config
+        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+        // mapperLocations properties defaults to null
+        factoryBean.setDataSource(dataSource);
+
+        SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
+
+        find(new SqlSessionTemplate(sqlSessionFactory), true);
+        assertNoCommit();
+        assertSingleConnection();
     }
 
-    private void assertSingleConnection() {
-        assertEquals("should only call DataSource.getConnection() once", 1, DATA_SOURCE.getConnectionCount());
-    }
+    // will fail because TestDao's mapper config is never loaded
+    @Test(expected = org.apache.ibatis.binding.BindingException.class)
+    public void testAddToConfigFalse() throws Throwable {
+        try {
+            // the default SqlSessionFactory in BaseMyBatis SpringTest is created with an explicitly
+            // set
+            // MapperLocations list, so create a new factory here that tests auto-loading the config
+            SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+            // mapperLocations properties defaults to null
+            factoryBean.setDataSource(dataSource);
 
-    private MockConnection createMockConnection() {
-        // this query must be the same as the query in TestDao.xml
-        MockResultSet rs = new MockResultSet("SELECT 1");
-        rs.addRow(new Object[]{1});
+           SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
 
-        MockConnection con = new MockConnection();
-        con.getPreparedStatementResultSetHandler().prepareResultSet("SELECT 1", rs);
-
-        return con;
-    }
-
-    /*
-     * Setup a new Connection before each test since its closed state will need to be checked
-     * afterwards and there is no Connection.open().
-     */
-    @Before
-    public void setupConnection() {
-        connection = createMockConnection();
-        DATA_SOURCE.setupConnection(connection);
-    }
-
-    @Before
-    public void resetExecutorInterceptor() {
-        EXECUTOR_INTERCEPTOR.reset();
-    }
-
-    @Before
-    public void resetDataSource() {
-        DATA_SOURCE.reset();
-    }
-
-    @After
-    public void validateSessionClose() {
-        // assume if the Executor is closed, the Session is too
-        if ((this.session != null) && !EXECUTOR_INTERCEPTOR.isExecutorClosed()) {
-            fail("SqlSession is not closed");
+            find(new SqlSessionTemplate(sqlSessionFactory), false);
+            fail("TestDao's mapper xml should not be loaded");
         }
-
-        this.session = null;
-    }
-
-    @After
-    public void validateConnectionClosed() throws SQLException {
-        if ((this.connection != null) && !this.connection.isClosed()) {
-            fail("Connection is not closed");
+        catch (org.mybatis.spring.MyBatisSystemException mbse) {
+            // unwrap exception so the exact MyBatis exception can be tested
+            throw mbse.getCause();
         }
-
-        this.connection = null;
     }
 
+    @Test
+    public void testWithTx() throws Exception {
+        TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+        find();
+
+        txManager.commit(status);
+
+        assertCommit();
+        assertSingleConnection();
+    }
+
+    // SqlSessionTemplate should use explicity set DataSource, if there is one
+    @Test
+    public void testWithDifferentDataSource() throws Exception {
+        try {
+            CountingMockDataSource mockDataSource = new CountingMockDataSource();
+            mockDataSource.setupConnection(createMockConnection());
+
+            SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+            sqlSessionTemplate.setDataSource(mockDataSource);
+
+            find(sqlSessionTemplate);
+
+            assertNoCommit();
+            assertEquals("should only call DataSource.getConnection() once", 1, mockDataSource.getConnectionCount());
+            assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, dataSource
+                    .getConnectionCount());
+            assertConnectionClosed(mockDataSource.getMockConnection());
+        }
+        finally {
+            // null the connection since it was not used
+            // this avoids failing in validateConnectionClosed()
+            connection = null;
+        }
+    }
+
+    // MapperFactoryBeans should be usable outside of Spring TX, as long as a there is no active
+    // transaction
+    @Test
+    public void testWithNonSpringTransactionFactory() throws Exception {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        try {
+            find(new SqlSessionTemplate(sqlSessionFactory));
+
+            assertNoCommit();
+            assertSingleConnection();
+        }
+        finally {
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
+    }
+
+    // active transaction using the DataSource, but without a SpringTransactionFactory
+    // this should error
+    @Test(expected = TransientDataAccessResourceException.class)
+    public void testNonSpringTxMgrWithTx() throws Exception {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        TransactionStatus status = null;
+
+        try {
+            status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+            find();
+
+            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+        }
+        finally {
+            // rollback required to close connection
+            txManager.rollback(status);
+
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
+    }
+
+    // TODO should this pass?
+    // simlar to testNonSpringTxFactoryNonSpringDSWithTx() in MyBatisSpringTest
+    @Test(expected = TransientDataAccessResourceException.class)
+    public void testNonSpringWithTx() throws Exception {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+
+        CountingMockDataSource mockDataSource = new CountingMockDataSource();
+        mockDataSource.setupConnection(createMockConnection());
+
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), mockDataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+        sqlSessionTemplate.setDataSource(mockDataSource);
+
+        TransactionStatus status = null;
+
+        try {
+            status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+            find(sqlSessionTemplate);
+
+            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+        }
+        finally {
+            // rollback required to close connection
+            txManager.rollback(status);
+
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
+    }
+
+    private void find() throws Exception {
+        find(MapperFactoryBeanTest.sqlSessionTemplate, true);
+    }
+
+    private void find(SqlSessionTemplate sqlSessionTemplate) throws Exception {
+        find(sqlSessionTemplate, true);
+    }
+
+    private void find(SqlSessionTemplate sqlSessionTemplate, boolean addToConfig) throws Exception {
+        // recreate the mapper for each test since sqlSessionTemplate or the underlying
+        // SqlSessionFactory could change for each test
+        MapperFactoryBean<TestDao> mapper = new MapperFactoryBean<TestDao>();
+        mapper.setMapperInterface(TestDao.class);
+        mapper.setSqlSessionTemplate(sqlSessionTemplate);
+        mapper.setAddToConfig(addToConfig);
+        mapper.afterPropertiesSet();
+
+        mapper.getObject().findTest();
+    }
 }

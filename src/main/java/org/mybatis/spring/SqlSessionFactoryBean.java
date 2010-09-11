@@ -182,7 +182,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * @see org.mybatis.spring.SqlSessionUtils#getSqlSession(SqlSessionFactory,
      *      DataSource, org.apache.ibatis.session.ExecutorType)
      */
-    public void setTransactionFactoryClass(Class<TransactionFactory> transactionFactoryClass) {
+    public void setTransactionFactoryClass(Class<? extends TransactionFactory> transactionFactoryClass) {
         this.transactionFactoryClass = transactionFactoryClass;
     }
 
@@ -190,8 +190,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * Set properties to be passed to the TransactionFactory instance used by this
      * SqlSessionFactory.
      *
-     * As of MyBatis 3.0.x, these properties are <em>ignored</em> by the provided
-     * <code>TransactionFactory</code> implementations.
+     * The default SpringManagedTransactionFactory does not have any user configurable properties.
      *
      * @see org.apache.ibatis.transaction.TransactionFactory#setProperties(java.util.Properties)
      * @see org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
@@ -272,23 +271,27 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             Map<String, XNode> sqlFragments = new HashMap<String, XNode>();
 
             for (Resource mapperLocation : mapperLocations) {
-            	// MyBatis hold a Map using "resource" name as a key.
-            	// If a mapper file is loaded, it searches for a mapper interface type.
-            	// If the type is found then it tries to load again the mapper file looking for this:
+                if (mapperLocation == null) {
+                    continue;
+                }
+
+                // MyBatis holds a Map using "resource" name as a key.
+                // If a mapper file is loaded, it searches for a mapper interface type.
+                // If the type is found then it tries to load the mapper file again looking for this:
                 //
-            	//   String xmlResource = type.getName().replace('.', '/') + ".xml";
+                //   String xmlResource = type.getName().replace('.', '/') + ".xml";
                 //
-            	// So if a mapper interface exists resource cannot be an absolute path.
-            	// Otherwise MyBatis will throw an exception because
-            	// it will load both a mapper interface and the mapper xml file,
-            	// and throw an exception telling that a mapperStatement cannot be loaded twice.
-            	String path;
-            	if (mapperLocation instanceof ClassPathResource) {
-            		path = ClassPathResource.class.cast(mapperLocation).getPath();
-            	} else {
-            		// this won't work if there is also a mapper interface in classpath
+                // So if a mapper interface exists, resource cannot be an absolute path.
+                // Otherwise MyBatis will throw an exception because
+                // it will load both a mapper interface and the mapper xml file,
+                // and throw an exception telling that a mapperStatement cannot be loaded twice.
+                String path;
+                if (mapperLocation instanceof ClassPathResource) {
+                    path = ClassPathResource.class.cast(mapperLocation).getPath();
+                } else {
+                    // this won't work if there is also a mapper interface in classpath
                     path = mapperLocation.getURI().getPath();
-            	}
+                }
 
                 try {
                     Reader reader = new InputStreamReader(mapperLocation.getInputStream());

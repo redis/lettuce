@@ -136,7 +136,7 @@
 
         <contributor>
             <name>Hunter Presnall</name>
-            <email>angerclown@yahoo.com</email>
+            <email>hpresnall@gmail.com</email>
         </contributor>
 
         <contributor>
@@ -513,6 +513,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <spring.version>3.0.4.RELEASE</spring.version>
     </properties>
 
     <dependencies>
@@ -526,16 +527,43 @@
 
         <dependency>
             <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-asm</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
-            <version>3.0.3.RELEASE</version>
-            <scope>provided</scope>
+            <version>${spring.version}</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-context</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-aop</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>aopalliance</groupId>
+                    <artifactId>aopalliance</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>3.0.3.RELEASE</version>
-            <scope>provided</scope>
+            <version>${spring.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Test dependencies -->
@@ -548,14 +576,15 @@
 
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>3.0.3.RELEASE</version>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>3.0.3.RELEASE</version>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -606,12 +635,52 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>cglib-nodep</groupId>
                     <artifactId>cglib-nodep</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>jboss</groupId>
                     <artifactId>jboss-jee</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>struts</groupId>
+                    <artifactId>struts</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mockejb</groupId>
+                    <artifactId>mockejb</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>nekohtml</groupId>
+                    <artifactId>nekohtml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-validator</groupId>
+                    <artifactId>commons-validator</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-digester</groupId>
+                    <artifactId>commons-digester</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jdom</groupId>
+                    <artifactId>jdom</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
