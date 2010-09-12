@@ -181,8 +181,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * @see org.apache.ibatis.transaction.Transaction
      * @see org.mybatis.spring.SqlSessionUtils#getSqlSession(SqlSessionFactory,
      *      DataSource, org.apache.ibatis.session.ExecutorType)
+     * @param <TF> the MyBatis TransactionFactory type
+     * @param transactionFactoryClass the MyBatis TransactionFactory class to use
      */
-    public void setTransactionFactoryClass(Class<? extends TransactionFactory> transactionFactoryClass) {
+    public <TF extends TransactionFactory> void setTransactionFactoryClass(Class<TF> transactionFactoryClass) {
         this.transactionFactoryClass = transactionFactoryClass;
     }
 
