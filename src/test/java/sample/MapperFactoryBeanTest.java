@@ -36,7 +36,7 @@ public class MapperFactoryBeanTest {
 
     @Test
     public void testFactoryBean() throws Exception {
-        User user = service.getUser();
+        User user = this.service.doSomeBusinessStuff();
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getId(), "u1");
     }

@@ -15,16 +15,23 @@
  */
 package sample;
 
-import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
  * 
  *
  * @version $Id$
  */
-@Transactional
-public interface FooService {
+public class UserMapperTemplateImpl extends SqlSessionDaoSupport implements UserMapper {
 
-    User doSomeBusinessStuff();
+    public User getUser(User user) {
+        return (User) getSqlSessionTemplate().selectOne("sample.UserMapper.getUser", user);
+    }
+
+    public List<User> getUsers() {
+        return getSqlSessionTemplate().selectList("sample.UserMapper.getUser");
+    }
 
 }

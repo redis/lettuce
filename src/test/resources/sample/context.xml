@@ -40,7 +40,8 @@
     </jdbc:embedded-database>
 
     <bean id="fooService" class="sample.FooServiceImpl">
-        <property name="userMapper" ref="userMapper" />
+        <!--  inject 1, 2 or 3 -->
+        <property name="userMapper" ref="userMapper3" />
     </bean>
 
     <bean id="transactionManager"
@@ -50,12 +51,24 @@
 
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:sample/mybatis-config.xml" />
     </bean>
 
-    <bean id="userMapper"
-        class="org.mybatis.spring.MapperFactoryBean">
+    <!-- option1 extending SqlSessionDaoSupport -->
+    <bean id="userMapper1" class="sample.UserMapperTemplateImpl">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+
+    <!-- option2 use sqlSessionFactoryBean -->
+    <bean id="userMapper2" class="sample.UserMapperSqlSessionImpl">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+
+    <!-- option3 no DAO impl using injected mappers -->
+    <bean id="userMapper3" class="org.mybatis.spring.MapperFactoryBean">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
         <property name="mapperInterface" value="sample.UserMapper" />
+        <property name="addToConfig" value="false" /> <!-- usually this is not needed -->
     </bean>
 
 </beans>

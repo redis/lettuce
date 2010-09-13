@@ -15,8 +15,6 @@
  */
 package sample;
 
-import java.util.List;
-
 /**
  * 
  * @version $Id$
@@ -25,23 +23,15 @@ public class FooServiceImpl implements FooService {
 
     private UserMapper userMapper;
 
-    public UserMapper getUserMapper() {
-        return userMapper;
-    }
-
     public void setUserMapper(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
 
-    public User getUser() {
+    public User doSomeBusinessStuff() {
         User user = new User();
         user.setId("u1");
         user.setName("Pocoyo");
-        return userMapper.getUser(user);
-    }
-
-    public List<User> getUsers() {
-        return userMapper.getUsers();
+        return this.userMapper.getUser(user);
     }
 
 }
