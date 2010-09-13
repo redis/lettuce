@@ -249,7 +249,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 xmlConfigBuilder = new XMLConfigBuilder(reader, null, configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (IOException ex) {
-                throw new NestedIOException("Failed to parse config resource: " + configLocation, ex.getCause());
+                throw new NestedIOException("Failed to parse config resource: " + configLocation, ex);
             }
 
             if (logger.isDebugEnabled()) {
