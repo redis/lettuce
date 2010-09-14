@@ -32,12 +32,13 @@ import org.springframework.core.io.ClassPathResource;
 @Configuration
 public class SpringConfig {
 
-    private final DataSource dataSource;
+    private final PooledDataSource dataSource;
 
     private final SqlSessionFactory sessionFactory;
 
     public SpringConfig() throws Exception {
         this.dataSource = new PooledDataSource("org.hsqldb.jdbcDriver", "jdbc:hsqldb:file:mybatisspring", "sa", "");
+        this.dataSource.setDefaultAutoCommit(true);
 
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         factoryBean.setConfigLocation(new ClassPathResource("flavour/SpringMybatis.xml"));
