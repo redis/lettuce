@@ -227,7 +227,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
                                 try {
                                     return method.invoke(sqlSession.getMapper(type), args);
                                 } catch (java.lang.reflect.InvocationTargetException e) {
-                                    throw wrapException(e.getCause());
+                                    throw wrapException(e);
                                 } catch (Exception e) {
                                     throw new MyBatisSystemException("SqlSession operation", e);
                                 }
