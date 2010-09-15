@@ -23,12 +23,8 @@
 -->
 <mapper namespace="sample.UserMapper">
 
-    <select id="getUser" resultType="sample.User" parameterType="sample.User">
-        select * from users where id=#{id} and name=#{name}
-    </select>
-
-    <select id="getUsers" resultType="sample.User" >
-        select * from users
+    <select id="getUser" resultType="sample.User" parameterType="java.lang.String">
+        select * from users where id=#{value}
     </select>
 
 </mapper>

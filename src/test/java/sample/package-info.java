@@ -13,25 +13,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package sample;
 
 /**
- * Impl of the FooService.
+ * Sample for three usage scenarios.
+ * <ul>
+ * <li>Extending SqlSessionDaoSupport</li>
+ * <li>Using directly MyBatis API (SqlSession)</li>
+ * <li>Injecting Mappers (in fact this means that there is no DAO implementation)</li>
+ * </ul>
  *
- * FooService simply receives a userId and uses a mapper/dao to get a record from the database. .
- * 
  * @version $Id$
  */
-public class FooServiceImpl implements FooService {
-
-    private UserMapper userMapper;
-
-    public void setUserMapper(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
-
-    public User doSomeBusinessStuff(String userId) {
-        return this.userMapper.getUser(userId);
-    }
-
-}
+package sample;

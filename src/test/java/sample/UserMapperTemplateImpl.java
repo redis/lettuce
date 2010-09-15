@@ -15,23 +15,19 @@
  */
 package sample;
 
-import java.util.List;
-
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
- * 
+ * This DAO extends SqlSessionDaoSupport and uses SqlSessionTemplate instead of MyBatis API
+ * SqlSessions are handled by Spring.
+ * MyBatis exceptions are translated to Spring Data Exceptions.
  *
  * @version $Id$
  */
 public class UserMapperTemplateImpl extends SqlSessionDaoSupport implements UserMapper {
 
-    public User getUser(User user) {
-        return (User) getSqlSessionTemplate().selectOne("sample.UserMapper.getUser", user);
-    }
-
-    public List<User> getUsers() {
-        return getSqlSessionTemplate().selectList("sample.UserMapper.getUser");
+    public User getUser(String userId) {
+        return (User) getSqlSessionTemplate().selectOne("sample.UserMapper.getUser", userId);
     }
 
 }

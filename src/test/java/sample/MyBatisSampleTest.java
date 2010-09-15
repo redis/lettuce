@@ -23,20 +23,18 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
- * Example of MyBatis-Spring integration usage.
+ * Example of MyBatis-Spring integration usage
  *
  * @version $Id$
  */
 @ContextConfiguration(locations = {"classpath:sample/context.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
-public class MapperFactoryBeanTest {
+public class MyBatisSampleTest {
 
     @Autowired
     private FooService fooService1;
-
     @Autowired
     private FooService fooService2;
-
     @Autowired
     private FooService fooService3;
 
@@ -65,12 +63,11 @@ public class MapperFactoryBeanTest {
         Assert.assertNotNull(user);
         Assert.assertEquals("Pocoyo",user.getName());
     }
-
+    
     @Test
     public void testFooService3() throws Exception {
         User user = this.fooService3.doSomeBusinessStuff("u1");
         Assert.assertNotNull(user);
         Assert.assertEquals("Pocoyo",user.getName());
     }
-
 }

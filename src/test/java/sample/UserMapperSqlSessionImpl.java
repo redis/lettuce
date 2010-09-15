@@ -15,13 +15,11 @@
  */
 package sample;
 
-import java.util.List;
-
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
- * 
+ * This DAO is injected with a SqlSessionFactory that is used to get a SqlSession and call MyBatis API.
  *
  * @version $Id$
  */
@@ -33,19 +31,11 @@ public class UserMapperSqlSessionImpl implements UserMapper {
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
-    public User getUser(User user) {
+    public User getUser(String userId) {
         SqlSession session = sqlSessionFactory.openSession();
-        user = (User) session.selectOne("sample.UserMapper.getUser", user);
+        User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
         session.close();
         return user;
-    }
-
-    public List<User> getUsers() {
-        SqlSession session = sqlSessionFactory.openSession();
-        @SuppressWarnings("unchecked")
-        List<User> users = (List<User>) session.selectOne("sample.UserMapper.getUsers");
-        session.close();
-        return users;
     }
 
 }

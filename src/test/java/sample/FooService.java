@@ -18,13 +18,15 @@ package sample;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+ * FooService acts as a bussiness service. 
  * 
+ * All calls to any method of FooService are transactional.
  *
  * @version $Id$
  */
 @Transactional
 public interface FooService {
 
-    User doSomeBusinessStuff();
+    User doSomeBusinessStuff(String userId);
 
 }

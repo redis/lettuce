@@ -16,7 +16,7 @@
 package sample;
 
 /**
- * 
+ * A simple bean that holds User info.
  *
  * @version $Id$
  */

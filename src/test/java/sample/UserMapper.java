@@ -15,19 +15,14 @@
  */
 package sample;
 
-import java.util.List;
-
 /**
  * 
+ * Mapper/DAO inteface.
  *
  * @version $Id$
  */
 public interface UserMapper {
 
-    // @Select("select * from users where id=#{id} and name=#{name}")
-    User getUser(User user);
-
-    // @Select("select * from users")
-    List<User> getUsers();
+    User getUser(String userId);
 
 }
