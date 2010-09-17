@@ -44,5 +44,6 @@
     </bookinfo>
 
     <xi:include href="introduction.xml" />
+    <xi:include href="bootstrap.xml" />
 
 </book>
