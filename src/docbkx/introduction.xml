@@ -25,16 +25,15 @@
     <section id="introduction.why-mybatis-guice">
         <title>Why mybatis-spring - Motivation</title>
         <para>
-            In our daily work we've been strongly using both
-            <ulink url="http://www.mybatis.org/">MyBatis Sql Mapper</ulink> and
-            <ulink url="http://code.google.com/p/google-guice/">Google Guice</ulink>
-            frameworks and once noticed we'd been continuosly repeating the same
-            code snippets in different projects, according to the DRY
-            <emphasis>don't repeat yourself</emphasis> principle, we started
-            realizing something that alleviate us the task to create our stuff.
+            Every Spring user was impatiently waiting for the 3.X release, but unfortunately once released,
+            MyBatis users where terribly disappointed: their preferred SQL Mapping Framework was no more supported.
+            After many request of including the integration and a good number of patches submitted on the Spring Jira
+            <ulink url="https://jira.springsource.org/browse/SPR-5991">issue</ulink>, once the issue was accepted
+            but announced to be delaiyed, the MyBatis community thought it was time to reunite the interested people and
+            contributors and start the Spring integration made by the community itself.
         </para>
         <para>
-            Indeed, this small library intends to create the missing perfect glue
+            So, this small library intends to create the missing perfect glue
             between the two popular frameworks, reducing the boilerplate and
             redundant code that users have to write to configure and use MyBatis
             into a Spring 3.X context.
@@ -58,7 +57,7 @@
         <para>
             A special thanks goes to all the special people who made this project
             a reality, above all (in alphabetical order) Andrius Juozapaitis,
-            Eduardo Macarron, Hunter Presnall, Putthibong Boonbong and Raj Nagappan.
+            Eduardo Macarron, Giovanni Cuccu, Hunter Presnall, Putthibong Boonbong and Raj Nagappan.
             Without them, that project wouldn't exist.
         </para>
     </section>
