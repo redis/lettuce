@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id$
+-->
+<chapter id="using_api">
+    <title>Using MyBatis API</title>
+
+    <section id="using_api.main">
+        <title>Using MyBatis API</title>
+        <para>
+            You can also use directly MyBatis API. In this case you won't have any MyBatis-Spring Dependency and you
+            simply use a injected <literal>SqlSessionFactory</literal> on your DAOs:
+            <programlisting language="java"><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+
+    private SqlSessionFactory sqlSessionFactory;
+
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+    }
+
+    public User getUser(String userId) {
+        SqlSession session = sqlSessionFactory.openSession();
+        User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
+        session.close();
+        return user;
+    }
+
+}]]></programlisting>
+            This scenario also supports transaction but ther will be no exception translation.
+        </para>
+    </section>
+
+</chapter>
