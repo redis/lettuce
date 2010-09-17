@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id$
+-->
+<chapter id="mappers">
+    <title>Injecting Mappers</title>
+
+    <section id="mappers">
+        <title>Injecting Mappers</title>
+        <para>
+            The most interesting feature of MyBatis 3 is mappers. MyBatis-Spring lets you inject mappers on your service
+            beans. When using mappers there is no need to use MyBatis API (<literal>selectOne</literal>,
+            <literal>selectList</literal>, <literal>insert</literal>, <literal>update</literal>...) you simply call your
+            mappers as you have always called your DAOs.
+        </para>
+        <para>
+            This is the way you create a mapper:
+            <programlisting language="xml"><![CDATA[<bean id="userMapper3" class="org.mybatis.spring.MapperFactoryBean">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    <property name="mapperInterface" value="sample.UserMapper" />
+</bean>]]></programlisting>
+            When using mappers you don't need to set up mapper list on the <literal>mybatis-config.xml</literal> file
+            because mappers are able to register themselves to MyBatis during startup. If you don't want you mappers to
+            self-register set the <literal>addToConfig</literal> property to <literal>false</literal>.
+        </para>
+
+        <para>
+            You inject mappers directy on your business/service objets in the same way you usually inject DAOs:
+            <programlisting language="xml"><![CDATA[<bean id="fooService3" class="sample.FooServiceImpl">
+    <property name="userMapper" ref="userMapper3" />
+</bean>]]></programlisting>
+            With injected mappers your code will have no MyBatis-Spring dependencies and no MyBatis dependencies either.
+        </para>
+    </section>
+
+</chapter>
