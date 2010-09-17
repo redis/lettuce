@@ -22,7 +22,7 @@
 <chapter id="mappers">
     <title>Injecting Mappers</title>
 
-    <section id="mappers">
+    <section id="mappers.main">
         <title>Injecting Mappers</title>
         <para>
             The most interesting feature of MyBatis 3 is mappers. MyBatis-Spring lets you inject mappers on your service
