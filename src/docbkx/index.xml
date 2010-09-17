@@ -45,5 +45,6 @@
 
     <xi:include href="introduction.xml" />
     <xi:include href="bootstrap.xml" />
+    <xi:include href="templates_support.xml" />
 
 </book>

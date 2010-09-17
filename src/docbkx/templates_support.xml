@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id$
+-->
+<chapter id="templates_support">
+    <title>Using SqlSessionDaoTemplate and SqlSessionDaoSupport</title>
+
+    <section id="templates_support.template">
+        <title>SqlSessionDaoSupport</title>
+        <para>
+            SqlSessionDaoSupport is a support class that helps building DAOs with a very simple API, like in the sample
+            below:
+            <programlisting language="java"><![CDATA[public class UserMapperTemplateImpl
+        extends SqlSessionDaoSupport
+        implements UserMapper {
+
+    public User getUser(String userId) {
+        return (User) getSqlSessionTemplate().selectOne("sample.UserMapper.getUser", userId);
+    }
+
+}]]></programlisting>
+            As the example shows instead of using a <literal>SqlSession</literal> you just use
+            <literal>SqlSessionDaoTemplate</literal> to execute MyBatis methods (<literal>selectOne</literal>,
+            <literal>selectList</literal>...)
+        </para>
+    </section>
+
+    <section id="templates_support.support">
+        <title></title>
+        <para>
+            <literal>SqlSessionDaoTemplate</literal> is able to create a new <literal>SqlSession</literal> or get the
+            active <literal>SqlSession</literal> from current transaction. It also translates exceptions to Spring's
+            generic<literal>DataAccessException</literal> hierarchy.
+        </para>
+
+        <para>
+            The <literal>SqlSessionDaoTemplate</literal> offers a generic method, taking a custom
+            <literal>SqlSessionCallback</literal> as argument so that you can execute more than one method over a
+            <literal>SqlSession</literal>:
+            <programlisting language="java"><![CDATA[public void inserUser(final User user) {
+
+    getSqlSessionTemplate().execute(new SqlSessionCallback<Object>() {
+
+        public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
+            sqlSession.insert("sample.UserMapper.insertUser", user);
+            sqlSession.insert("sample.UserMapper.insertAccount", user.getId());
+            return null;
+        }
+
+    });
+
+}]]></programlisting>
+
+            A <literal>SqlSessionDaoTemplate</literal> can also be created using a <literal>SqlSessionFactory</literal>
+            as a constructor argument. In this case there is no need that you DAOs extends <literal>SqlSessionDaoSupport</literal>.
+        </para>
+    </section>
+
+</chapter>
