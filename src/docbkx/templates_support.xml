@@ -43,11 +43,11 @@
     </section>
 
     <section id="templates_support.support">
-        <title></title>
+        <title>SqlSessionDaoTemplate</title>
         <para>
             <literal>SqlSessionDaoTemplate</literal> is able to create a new <literal>SqlSession</literal> or get the
             active <literal>SqlSession</literal> from current transaction. It also translates exceptions to Spring's
-            generic<literal>DataAccessException</literal> hierarchy.
+            generic <literal>DataAccessException</literal> hierarchy.
         </para>
 
         <para>
