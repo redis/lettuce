@@ -27,9 +27,9 @@
     </properties>
 
     <body>
-        <release version="1.0" date="TBD" description="1.0.0 release">
-            <action dev="TBD" type="update">
-                First major release.
+        <release version="1.0.0-RC1" date="2010-09-22" description="1.0.0-RC1 release">
+            <action dev="simone.tripodi" type="update">
+                First RC release.
             </action>
         </release>
     </body>
