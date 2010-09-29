@@ -27,13 +27,11 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.mybatis</groupId>
     <artifactId>mybatis-spring</artifactId>
     <name>mybatis-spring</name>
     <description>An easy-to-use Spring3 bridge for MyBatis sql mapping framework.</description>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <url>http://www.mybatis.org/</url>
 
     <contributors>
         <contributor>
