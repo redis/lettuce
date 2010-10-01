@@ -20,34 +20,39 @@
     version: $Id$
 -->
 <chapter id="mappers">
-    <title>Injecting Mappers</title>
 
-    <section id="mappers.main">
-        <title>Injecting Mappers</title>
-        <para>
-            The most interesting feature of MyBatis 3 is mappers. MyBatis-Spring lets you inject mappers on your service
-            beans. When using mappers there is no need to use MyBatis API (<literal>selectOne</literal>,
-            <literal>selectList</literal>, <literal>insert</literal>, <literal>update</literal>...) you simply call your
-            mappers as you have always called your DAOs.
-        </para>
-        <para>
-            This is the way you create a mapper:
-            <programlisting language="xml"><![CDATA[<bean id="userMapper3" class="org.mybatis.spring.MapperFactoryBean">
+  <title>Injecting Mappers</title>
+
+  <section id="mappers.main">
+    <title>Injecting Mappers</title>
+    <para>
+      Mybatis-spring lets you inject mappers into your service
+      beans. When using mappers you simply call your
+      mappers as you have always called your DAOs, but this time you won´t need 
+      to code any DAO implementation because MyBatis will do it for you. 
+    </para>
+    <para>
+      With injected mappers your code will have no mybatis-spring dependencies and no MyBatis dependencies either.
+    </para>
+    <para>
+      This is the way you create a mapper:
+      <programlisting language="xml"><![CDATA[
+<bean id="userMapper3" class="org.mybatis.spring.MapperFactoryBean">
     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
     <property name="mapperInterface" value="sample.UserMapper" />
-</bean>]]></programlisting>
-            When using mappers you don't need to set up mapper list on the <literal>mybatis-config.xml</literal> file
-            because mappers are able to register themselves to MyBatis during startup. If you don't want you mappers to
-            self-register set the <literal>addToConfig</literal> property to <literal>false</literal>.
-        </para>
-
-        <para>
-            You inject mappers directy on your business/service objets in the same way you usually inject DAOs:
-            <programlisting language="xml"><![CDATA[<bean id="fooService3" class="sample.FooServiceImpl">
+</bean>]]>
+      </programlisting>
+      When using mappers you don't need to set up mapper list on the <literal>mybatis-config.xml</literal> file
+      because mappers are able to register themselves to MyBatis during startup. If you don't want you mappers to
+      self-register set the <literal>addToConfig</literal> property to <literal>false</literal>.
+    </para>
+    <para>
+      You inject mappers directly on your business/service objects in the same way you usually inject DAOs:
+      <programlisting language="xml"><![CDATA[
+<bean id="fooService3" class="sample.FooServiceImpl">
     <property name="userMapper" ref="userMapper3" />
-</bean>]]></programlisting>
-            With injected mappers your code will have no MyBatis-Spring dependencies and no MyBatis dependencies either.
-        </para>
-    </section>
-
+</bean>]]>
+      </programlisting>
+    </para>
+  </section>
 </chapter>

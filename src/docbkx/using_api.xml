@@ -20,14 +20,16 @@
     version: $Id$
 -->
 <chapter id="using_api">
-    <title>Using MyBatis API</title>
+  <title>Using MyBatis API</title>
 
-    <section id="using_api.main">
-        <title>Using MyBatis API</title>
-        <para>
-            You can also use directly MyBatis API. In this case you won't have any MyBatis-Spring Dependency and you
-            simply use a injected <literal>SqlSessionFactory</literal> on your DAOs:
-            <programlisting language="java"><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+  <section id="using_api.main">
+    <title>Using MyBatis API</title>
+    <para>
+      You can also use directly MyBatis API. In this case you won't have any MyBatis-Spring Dependency and you
+      simply use a injected <literal>SqlSessionFactory</literal> on your DAOs:
+    </para>
+    <programlisting language="java"><![CDATA[
+public class UserMapperSqlSessionImpl implements UserMapper {
 
     private SqlSessionFactory sqlSessionFactory;
 
@@ -41,10 +43,12 @@
         session.close();
         return user;
     }
-
-}]]></programlisting>
-            This scenario also supports transaction but ther will be no exception translation.
-        </para>
-    </section>
-
+}]]>
+    </programlisting>
+    <para>
+      In this scenario SqlSessions will not be reused within a transaction and there 
+      will be no exception translation. Spring transaction management will 
+      still work over the inner database connection.
+    </para>
+  </section>
 </chapter>

@@ -20,51 +20,71 @@
     version: $Id$
 -->
 <chapter id="bootstrap">
-    <title>Bootstrap</title>
+  <title>Bootstrap</title>
 
-    <section id="bootstrap.intro">
-        <title>Introduction</title>
-        <para>
-            MyBatis-Spring integration helps you to integrate your code seamlessly with Spring. Spring will load and
-            create necessary MyBatis classes for you. It will also inject working Mappers/Daos directly on your service
-            beans.
-        </para>
-    </section>
+  <section id="bootstrap.intro">
+    <title>Introduction</title>
+      <para>
+        Mybatis-spring integration helps you to integrate your code seamlessly with Spring. Spring will load and
+        create necessary MyBatis classes for you, will handle transactions and translate exceptions,  
+        and will also inject mappers into your service beans.
+      </para>
+  </section>
+    
+  <section id="bootstrap.installation">
+    <title>Installation</title>
+      <para>
+        To run mybatis-spring module you just need to include the
+        <literal>mybatis-spring-<?eval ${project.version}?>.jar</literal> 
+        file and its dependencies in the classpath.
+      </para>
+      <para>
+        If you are using Maven just add the following dependency
+        to your pom.xml :
+        <programlisting language="xml"><![CDATA[
+<dependency>
+    <groupId>org.mybatis</groupId>
+    <artifactId>mybatis-spring</artifactId>
+    <version>]]><?eval ${project.version}?><![CDATA[</version>
+</dependency>]]>
+      </programlisting>
+    </para>
+  </section>
+    
+  <section id="bootstrap.setup">
+    <title>Setting up a SqlSessionFactory</title>
+      <para>
+        As you already know, to use MyBatis you need to build a <literal>SqlSessionFactory</literal> from XML files.
+        Mybatis-spring will build a SqlSessionFactory for you during Spring startup.
 
-    <section id="bootstrap.setup">
-        <title>Setting up a SqlSessionFactory</title>
-        <para>
-            As you already know, to use MyBatis you need to build a <literal>SqlSessionFactory</literal> from XML files.
-            MyBatis-Spring will build a SqlSessionFactory for you during Spring startup.
+        The XML snippet below shows the configuration needed to build a <literal>SqlSessionFactoryBean</literal>:
 
-            The XML snippet below shows the configuration needed to build a <literal>SqlSessionFactoryBean</literal>:
-
-            <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <programlisting language="xml"><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
     <property name="dataSource" ref="dataSource" />
     <property name="configLocation" value="classpath:sample/mybatis-config.xml" />
-</bean>]]></programlisting>
+</bean>]]>
+        </programlisting>
 
-            Where <literal>mybatis-config.xml</literal> is the main configuration file for MyBatis.
-            Follows below a <literal>mybatis-config.xml</literal> sample, but please refeer to the MyBatis reference
-            manual to know more details about it:
+        Where <literal>mybatis-config.xml</literal> is the main configuration file for MyBatis.
+        Follows below a <literal>mybatis-config.xml</literal> sample, but please refeer to the MyBatis reference
+        manual to know more details about it:
 
-            <programlisting language="xml"><![CDATA[<configuration>
-
+        <programlisting language="xml"><![CDATA[
+<configuration>
     <settings>
         <setting name="cacheEnabled" value="false" />
         <setting name="useGeneratedKeys" value="true" />
         <setting name="defaultExecutorType" value="REUSE" />
     </settings>
 
+    <!-- this section is not needed with injected mappers -->
     <mappers>
         <mapper resource="sample/UserMapper.xml" />
     </mappers>
-
-</configuration>]]></programlisting>
-        </para>
-
-        Usually the main config file holds general configuration options and the mappers list. The mappers list is
-        optional if you are using injected mappers.
-    </section>
-
+</configuration>]]>
+      </programlisting>
+      Mapper list is not needed if you are using injected mappers.
+    </para>
+  </section>
 </chapter>

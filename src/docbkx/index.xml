@@ -21,32 +21,32 @@
 -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 
-    <bookinfo>
-        <title>MyBatis-Spring <?eval ${project.version}?> - Reference Documentation</title>
+  <bookinfo>
+    <title>MyBatis-Spring <?eval ${project.version}?> - Reference Documentation</title>
 
-        <authorgroup>
-            <author>
-                <firstname>The MyBatis Community</firstname>
-                <affiliation>
-                    <orgname>MyBatis.org</orgname>
-                </affiliation>
-            </author>
-        </authorgroup>
+    <authorgroup>
+      <author>
+        <firstname>The MyBatis Community</firstname>
+        <affiliation>
+          <orgname>MyBatis.org</orgname>
+        </affiliation>
+      </author>
+    </authorgroup>
 
-        <legalnotice>
-            <para>Copies of this document may be made for your own use
-                and for
-                distribution to others, provided that you do not charge any fee for such
-                copies and further provided that each copy contains this Copyright
-                Notice, whether distributed in print or electronically.
-            </para>
-        </legalnotice>
-    </bookinfo>
+    <legalnotice>
+      <para>Copies of this document may be made for your own use
+        and for
+        distribution to others, provided that you do not charge any fee for such
+        copies and further provided that each copy contains this Copyright
+        Notice, whether distributed in print or electronically.
+      </para>
+    </legalnotice>
+  </bookinfo>
 
-    <xi:include href="introduction.xml" />
-    <xi:include href="bootstrap.xml" />
-    <xi:include href="templates_support.xml" />
-    <xi:include href="mappers.xml" />
-    <xi:include href="using_api.xml" />
+  <xi:include href="introduction.xml" />
+  <xi:include href="bootstrap.xml" />
+  <xi:include href="mappers.xml" />
+  <xi:include href="templates_support.xml" />
+  <xi:include href="using_api.xml" />
 
 </book>
