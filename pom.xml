@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis-parent</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -40,11 +40,6 @@
         </contributor>
 
         <contributor>
-            <name>Eduardo Macarron</name>
-            <email>eduardo.macarron@gmail.com</email>
-        </contributor>
-
-        <contributor>
             <name>Giovanni Cuccu</name>
             <email>giovanni.cuccu@gmail.com</email>
         </contributor>
@@ -52,11 +47,6 @@
         <contributor>
             <name>Hunter Presnall</name>
             <email>hpresnall@gmail.com</email>
-        </contributor>
-
-        <contributor>
-            <name>Putthibong Boonbong</name>
-            <email>putthibongb@gmail.com</email>
         </contributor>
 
         <contributor>
