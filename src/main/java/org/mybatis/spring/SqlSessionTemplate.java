@@ -172,6 +172,10 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         select(statement, parameter, RowBounds.DEFAULT, handler);
     }
 
+    public void select(String statement, ResultHandler handler) {
+        select(statement, null, RowBounds.DEFAULT, handler);
+    }
+
     public void select(final String statement, final Object parameter, final RowBounds rowBounds,
                        final ResultHandler handler) {
         execute(new SqlSessionCallback<Object>() {

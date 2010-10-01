@@ -73,6 +73,12 @@ public interface SqlSessionOperations {
     void select(String statement, Object parameter, ResultHandler handler);
 
     /**
+     * @see org.apache.ibatis.session.SqlSession#select(String, org.apache.ibatis.session.ResultHandler)
+     * @throws org.springframework.dao.DataAccessException in case of errors
+     */
+    void select(String statement, ResultHandler handler);
+
+    /**
      * @see org.apache.ibatis.session.SqlSession#select(String, Object, org.apache.ibatis.session.RowBounds, org.apache.ibatis.session.ResultHandler)
      * @throws org.springframework.dao.DataAccessException in case of errors
      */
