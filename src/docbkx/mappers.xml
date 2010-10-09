@@ -35,22 +35,29 @@
       With injected mappers your code will have no mybatis-spring dependencies and no MyBatis dependencies either.
     </para>
     <para>
-      This is the way you create a mapper:
+      We have this simple mapper in our application. As you know a mapper is just an interface:
+      <programlisting language="java"><![CDATA[
+public interface UserMapper {
+    User getUser(String userId);
+}]]>
+      </programlisting>
+    </para>
+    <para>
+      This is the way you set up this mapper with mybatis-spring:
       <programlisting language="xml"><![CDATA[
-<bean id="userMapper3" class="org.mybatis.spring.MapperFactoryBean">
+<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
     <property name="mapperInterface" value="sample.UserMapper" />
 </bean>]]>
       </programlisting>
       When using mappers you don't need to set up mapper list on the <literal>mybatis-config.xml</literal> file
-      because mappers are able to register themselves to MyBatis during startup. If you don't want you mappers to
-      self-register set the <literal>addToConfig</literal> property to <literal>false</literal>.
+      because mappers are able to register themselves to MyBatis during startup.
     </para>
     <para>
-      You inject mappers directly on your business/service objects in the same way you usually inject DAOs:
+      Now your mapper is ready to be injected on your service objects:
       <programlisting language="xml"><![CDATA[
-<bean id="fooService3" class="sample.FooServiceImpl">
-    <property name="userMapper" ref="userMapper3" />
+<bean id="fooService" class="sample.FooServiceImpl">
+    <property name="userMapper" ref="userMapper" />
 </bean>]]>
       </programlisting>
     </para>

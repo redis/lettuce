@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<chapter id="sample">
+  <title>Code Sample</title>
+
+  <section id="sample.main">
+    <title>Code Sample</title>
+    <para>
+      You can have a look or check out a code sample from MyBatis repository on Google Code.
+      <itemizedlist>
+        <listitem>
+        <para>
+        <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/java/sample">Java code</ulink>
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/resources/sample">Config files</ulink>
+        </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+    <para>
+      To run the sample just run MyBatisSampleTest.java with JUnit 4.
+    </para>
+    <para>
+      <literal>FooService</literal> acts as a transactional service. It starts and ends a transaction when any 
+      of its methods is called. Have a look to <literal>FooService.java</literal> to see how transactional 
+      behaviour is configured with the <literal>@Transactional</literal> atribute.
+      This is just a sample, you can use any other way provided by Spring to demarcate your transactions. 
+    </para>
+      <programlisting language="java"><![CDATA[
+@Transactional
+public interface FooService {
+
+    User doSomeBusinessStuff(String userId);
+
+}]]>
+      </programlisting>
+    <para>
+      <literal>FooServiceImpl.java</literal> is the FooService implementation and it just uses Dao/Mappers that 
+      Spring has injected during startup. You will notice that your code does not need to call any Spring or Mybatis methods.
+    </para>
+      <programlisting language="java"><![CDATA[
+public class FooServiceImpl implements FooService {
+
+    private UserMapper userMapper;
+
+    public void setUserMapper(UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
+
+    public User doSomeBusinessStuff(String userId) {
+        return this.userMapper.getUser(userId);
+    }
+}
+]]>
+      </programlisting>
+    
+    <para>
+      The database access layer is been implemented in the three different ways explanied
+      in this manual. Have a look at <literal>UserMapper</literal>, 
+      <literal>UserMapperTemplateImpl.java</literal> and 
+      <literal>UserMapperSqlSessionImpl.java</literal>.
+      You will also find how to avoid coding any data access code by adding a 
+      <literal>MapperFactoryBean</literal> to your Spring 
+      <literal>applicationContext.xml</literal> file.
+    </para>
+  </section>
+</chapter>
