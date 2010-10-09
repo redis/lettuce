@@ -64,7 +64,7 @@
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-	<!-- beware that mapper-config.xml is needed is you don´t use injected mappers -->
+    <!-- beware that mapper-config.xml is not needed if you use injected mappers -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
     </bean>
