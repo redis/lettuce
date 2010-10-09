@@ -37,19 +37,21 @@ public class UserMapperSqlSessionImpl implements UserMapper {
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
-    SqlSession session = sqlSessionFactory.openSession();
-      try {
-        User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
-        return user;
-      } finally {
-        session.close();
+    public User getUser(String userId) {
+        SqlSession session = sqlSessionFactory.openSession();
+        try {
+          User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
+          return user;
+        } finally {
+          session.close();
+        }   
     }
 }]]>
     </programlisting>
     <para>
       In this scenario SqlSessions will not be reused within a transaction and there 
-      will be no exception translation. Spring transaction management will 
-      still work over the inner database connection.
+      will be no exception translation. 
+      Spring transaction management will still work over the inner database connection.
     </para>
   </section>
 </chapter>
