@@ -55,7 +55,7 @@
     <title>Setting up a SqlSessionFactory</title>
       <para>
         As you already know, to use MyBatis you need to build a <literal>SqlSessionFactory</literal>.
-        Mybatis-spring will build a SqlSessionFactory for you during Spring startup.
+        Mybatis-spring will build it for you during Spring startup.
 
         The XML snippet below shows the configuration needed to build a <literal>SqlSessionFactoryBean</literal>:
 
