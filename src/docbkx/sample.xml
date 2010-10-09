@@ -17,12 +17,12 @@
 -->
 
 <chapter id="sample">
-  <title>Code Sample</title>
+  <title>Sample Code</title>
 
   <section id="sample.main">
-    <title>Code Sample</title>
+    <title>Sample code</title>
     <para>
-      You can have a look or check out a code sample from MyBatis repository on Google Code.
+      You can have a look or check out sample code from MyBatis repository on Google Code.
       <itemizedlist>
         <listitem>
         <para>
@@ -42,7 +42,7 @@
     <para>
       <literal>FooService</literal> acts as a transactional service. It starts and ends a transaction when any 
       of its methods is called. Have a look to <literal>FooService.java</literal> to see how transactional 
-      behaviour is configured with the <literal>@Transactional</literal> atribute.
+      behaviour is configured with the <literal>@Transactional</literal> attribute.
       This is just a sample, you can use any other way provided by Spring to demarcate your transactions. 
     </para>
       <programlisting language="java"><![CDATA[
