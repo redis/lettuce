@@ -51,9 +51,8 @@ public interface SqlSessionCallback<T> {
      * @param sqlSession an active MyBatis SqlSession, passed-in as
      * Executor interface here to avoid manual life-cycle handling
      * @return a result object, or <code>null</code> if none
-     * @throws SQLException if thrown by the MyBatis SQL Maps API
      * @see SqlSessionTemplate#execute
      */
-    T doInSqlSession(SqlSession sqlSession) throws SQLException;
+    T doInSqlSession(SqlSession sqlSession);
 
 }

@@ -227,7 +227,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
                 new InvocationHandler() {
                     public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
                         return execute(new SqlSessionCallback<Object>() {
-                            public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
+                            public Object doInSqlSession(SqlSession sqlSession) {
                                 try {
                                     return method.invoke(sqlSession.getMapper(type), args);
                                 } catch (java.lang.reflect.InvocationTargetException e) {
