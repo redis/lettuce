@@ -26,7 +26,7 @@
     <title>Introduction</title>
       <para>
         Mybatis-spring integration helps you to integrate your code seamlessly with Spring. Spring will load and
-        create necessary MyBatis classes for you, will handle transactions and translate exceptions,  
+        create necessary MyBatis classes for you, will handle transactions, translate exceptions  
         and will also inject mappers into your service beans.
       </para>
   </section>
@@ -62,29 +62,17 @@
         <programlisting language="xml"><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
     <property name="dataSource" ref="dataSource" />
-    <property name="configLocation" value="classpath:sample/mybatis-config.xml" />
 </bean>]]>
         </programlisting>
-
-        Where <literal>mybatis-config.xml</literal> is the main configuration file for MyBatis.
-        Follows below a <literal>mybatis-config.xml</literal> sample, but please refeer to the MyBatis reference
-        manual to know more details about it:
-
+		As you see to set a <literal>SqlSessionFactory</literal> you will just need a datasource. 
+		You can also provide a <literal>mybatis-config.xml</literal> by seting the <literal>configLocation</literal> property:
         <programlisting language="xml"><![CDATA[
-<configuration>
-    <settings>
-        <setting name="cacheEnabled" value="false" />
-        <setting name="useGeneratedKeys" value="true" />
-        <setting name="defaultExecutorType" value="REUSE" />
-    </settings>
-
-    <!-- this section is not needed with injected mappers -->
-    <mappers>
-        <mapper resource="sample/UserMapper.xml" />
-    </mappers>
-</configuration>]]>
-      </programlisting>
-      Mapper list is not needed if you are using injected mappers.
+    <property name="configLocation" value="classpath:sample/mybatis-config.xml" />]]>
+        </programlisting>
+		
+		When using mybatis-spring you should not include the <literal>transactionManager</literal> 
+		and <literal>dataSource</literal> sections. Mapper list is also not needed
+        if you are using injected mappers.
     </para>
   </section>
 </chapter>

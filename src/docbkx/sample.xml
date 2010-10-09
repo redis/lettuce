@@ -54,7 +54,7 @@ public interface FooService {
 }]]>
       </programlisting>
     <para>
-      <literal>FooServiceImpl.java</literal> is the FooService implementation and it just uses Dao/Mappers that 
+      <literal>FooServiceImpl.java</literal> is the FooService implementation and it just uses DAOs/mappers that 
       Spring has injected during startup. You will notice that your code does not need to call any Spring or Mybatis methods.
     </para>
       <programlisting language="java"><![CDATA[
