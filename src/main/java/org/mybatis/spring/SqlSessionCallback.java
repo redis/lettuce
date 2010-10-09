@@ -15,8 +15,6 @@
  */
 package org.mybatis.spring;
 
-import java.sql.SQLException;
-
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.session.SqlSession;
 
