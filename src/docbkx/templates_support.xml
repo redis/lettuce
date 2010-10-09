@@ -60,7 +60,7 @@ public void insertUser(final User user) {
 
     getSqlSessionTemplate().execute(new SqlSessionCallback<Object>() {
 
-        public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
+        public Object doInSqlSession(SqlSession sqlSession) {
             sqlSession.insert("sample.UserMapper.insertUser", user);
             sqlSession.insert("sample.UserMapper.insertAccount", user.getId());
             return null;
