@@ -18,7 +18,7 @@ package sample;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * FooService acts as a bussiness service. 
+ * FooService acts as a business service. 
  * 
  * All calls to any method of FooService are transactional.
  *
