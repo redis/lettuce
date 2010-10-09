@@ -57,9 +57,9 @@
     <title>Acknowledgements</title>
     <para>
       A special thanks goes to all the special people who made this project
-      a reality. Hunter Presnall, Putthibong Boonbong who made all the hard coding, 
+      a reality. Hunter Presnall and Putthibong Boonbong who made all the hard coding, 
       Eduardo Macarron for the MapperFactoryBean and documentation, Andrius Juozapaitis,
-      Giovanni Cuccu, Raj Nagappan for their contributions and support and Simone Tripodi
+      Giovanni Cuccu and Raj Nagappan for their contributions and support and Simone Tripodi
       for finding them and bringing them all to the project ;) 
       Without them, that project wouldn't exist.
     </para>
