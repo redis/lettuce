@@ -37,11 +37,12 @@ public class UserMapperSqlSessionImpl implements UserMapper {
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
-    public User getUser(String userId) {
-        SqlSession session = sqlSessionFactory.openSession();
+    SqlSession session = sqlSessionFactory.openSession();
+      try {
         User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
-        session.close();
         return user;
+      } finally {
+        session.close();
     }
 }]]>
     </programlisting>
