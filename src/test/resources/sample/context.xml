@@ -64,9 +64,9 @@
         <property name="dataSource" ref="dataSource" />
     </bean>
 
+	<!-- beware that mapper-config.xml is needed is you don´t use injected mappers -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
-        <property name="configLocation" value="classpath:sample/mybatis-config.xml" />
     </bean>
 
     <!-- option1 extending SqlSessionDaoSupport -->
