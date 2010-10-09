@@ -74,13 +74,8 @@ public class FooServiceImpl implements FooService {
       </programlisting>
     
     <para>
-      The database access layer is been implemented in the three different ways explanied
-      in this manual. Have a look at <literal>UserMapper</literal>, 
-      <literal>UserMapperTemplateImpl.java</literal> and 
-      <literal>UserMapperSqlSessionImpl.java</literal>.
-      You will also find how to avoid coding any data access code by adding a 
-      <literal>MapperFactoryBean</literal> to your Spring 
-      <literal>applicationContext.xml</literal> file.
+      The database access layer has been implemented using the three different techniques explanied
+      in this manual. Have a look at <literal>context.xml</literal>.
     </para>
   </section>
 </chapter>

@@ -25,7 +25,7 @@
   <section id="using_api.main">
     <title>Using MyBatis API</title>
     <para>
-      You can also use directly MyBatis API. In this case you won't have any MyBatis-Spring Dependency and you
+      You can also use directly MyBatis API. In this case you won't have any mybatis-spring dependency and you
       simply use a injected <literal>SqlSessionFactory</literal> on your DAOs:
     </para>
     <programlisting language="java"><![CDATA[
