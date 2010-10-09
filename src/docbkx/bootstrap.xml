@@ -54,7 +54,7 @@
   <section id="bootstrap.setup">
     <title>Setting up a SqlSessionFactory</title>
       <para>
-        As you already know, to use MyBatis you need to build a <literal>SqlSessionFactory</literal> from XML files.
+        As you already know, to use MyBatis you need to build a <literal>SqlSessionFactory</literal>.
         Mybatis-spring will build a SqlSessionFactory for you during Spring startup.
 
         The XML snippet below shows the configuration needed to build a <literal>SqlSessionFactoryBean</literal>:
@@ -71,8 +71,8 @@
         </programlisting>
 		
 		When using mybatis-spring you should not include the <literal>transactionManager</literal> 
-		and <literal>dataSource</literal> sections. Mapper list is also not needed
-        if you are using injected mappers.
+		and <literal>dataSource</literal> sections in your <literal>mybatis-config.xml</literal>. 
+		Mapper list is also not needed when using injected mappers.
     </para>
   </section>
 </chapter>
