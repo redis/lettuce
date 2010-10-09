@@ -33,9 +33,11 @@ public class UserMapperSqlSessionImpl implements UserMapper {
 
     public User getUser(String userId) {
         SqlSession session = sqlSessionFactory.openSession();
-        User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
-        session.close();
-        return user;
+        try {
+          User user = (User) session.selectOne("sample.UserMapper.getUser", userId);
+          return user;
+        } finally {
+          session.close();
+        }   
     }
-
 }
