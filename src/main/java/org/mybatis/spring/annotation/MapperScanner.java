@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.MapperFactoryBean;
 import org.springframework.beans.BeansException;
@@ -33,7 +35,9 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * BeanDefinitionRegistryPostProcessor that searchs recursively 
@@ -47,11 +51,13 @@ import org.springframework.util.Assert;
 
 public class MapperScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
-    private String basePackage;
+    private static final Log logger = LogFactory.getLog(MapperScanner.class);
+
+    private String basePackages;
     private SqlSessionFactory sqlSessionFactory;
 
-    public void setBasePackage(String basePackage) {
-        this.basePackage = basePackage;
+    public void setBasePackage(String basePackages) {
+        this.basePackages = basePackages;
     }
 
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -60,8 +66,8 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     
 	public void afterPropertiesSet() throws Exception {
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        if (basePackage == null) {
-        	basePackage = "";
+        if (basePackages == null) {
+        	basePackages = "";
         }
 	}    
 
@@ -70,34 +76,45 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         try {
-        	Iterable<Class<?>> classes = searchForMappers(basePackage);
-        	
-            for (Class<?> mapperInterface : classes) {
-                BeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
-                MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
-                mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
-                mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface.getCanonicalName());
-                String name = mapperInterface.getAnnotation(Mapper.class).value();
-                if (name == null || "".equals(name)) {
-                    name = mapperInterface.getName(); 
+        	List<Class<?>> classes = searchForMappers();
+        	if (classes.size() == 0) {
+        	    logger.debug("No MyBatis mapper was found. Did you remember to annotate your mappers with @Mapper?");
+        	} else {	
+                for (Class<?> mapperInterface : classes) {
+                    BeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
+                    MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
+                    mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
+                    mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface.getCanonicalName());
+                    String name = mapperInterface.getAnnotation(Mapper.class).value();
+                    if (name == null || "".equals(name)) {
+                        name = mapperInterface.getName(); 
+                    }
+                    registry.registerBeanDefinition(name, beanDefinition);
                 }
-                registry.registerBeanDefinition(name, beanDefinition);
-            }
+        	}
         } catch (Exception e) {
             throw new MapperScannerException("Error while scanning for MyBatis mappers", e);
         }
     }
 
-    private List<Class<?>> searchForMappers(String packageName) throws ClassNotFoundException, IOException {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    	String path = packageName.replace('.', '/');        
-        Enumeration<URL> resources = classLoader.getResources(path);
-        List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();        
-        while (resources.hasMoreElements()) {
-        	File dir = new File(resources.nextElement().getFile());
-            searchForMappersInDirectory(dir, packageName, mapperInterfaces);
+    private List<Class<?>> searchForMappers() throws ClassNotFoundException, IOException {
+        
+        String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackages,
+                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+
+        List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();
+
+        for (String basePackage : basePackagesArray) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            String path = basePackage.replace('.', '/');
+            Enumeration<URL> resources = classLoader.getResources(path);
+            while (resources.hasMoreElements()) {
+                File dir = new File(resources.nextElement().getFile());
+                searchForMappersInDirectory(dir, basePackage, mapperInterfaces);
+            }
         }
         return mapperInterfaces;
+
     }
 
     private List<Class<?>> searchForMappersInDirectory(File directory, String packageName, List<Class<?>> mapperInterfaces) throws ClassNotFoundException {
