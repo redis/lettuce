@@ -53,11 +53,11 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     private static final Log logger = LogFactory.getLog(MapperScanner.class);
 
-    private String basePackages;
+    private String basePackage;
     private SqlSessionFactory sqlSessionFactory;
 
-    public void setBasePackage(String basePackages) {
-        this.basePackages = basePackages;
+    public void setBasePackage(String basePackage) {
+        this.basePackage = basePackage;
     }
 
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -66,8 +66,8 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        if (basePackages == null) {
-            basePackages = "";
+        if (basePackage == null) {
+            basePackage = "";
         }
     }
 
@@ -99,7 +99,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     private List<Class<?>> searchForMappers() throws ClassNotFoundException, IOException {
 
-        String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackages, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+        String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 
         List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();
 
