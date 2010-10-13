@@ -18,6 +18,11 @@ package org.mybatis.spring.annotation;
 
 import org.springframework.beans.BeansException;
 
+/**
+ * A BaseException for mapper scanner
+ * 
+ * @version $Id
+ */
 public class MapperScannerException extends BeansException {
 
 	private static final long serialVersionUID = -1545114220269710619L;
