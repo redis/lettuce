@@ -16,6 +16,7 @@
 package org.mybatis.spring;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.List;
@@ -78,12 +79,12 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 
     public SqlSessionTemplate() {}
 
-    public SqlSessionFactory getSqlSessionFactory() {
-        return sqlSessionFactory;
-    }
-
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         setSqlSessionFactory(sqlSessionFactory);
+    }
+
+    public SqlSessionFactory getSqlSessionFactory() {
+        return sqlSessionFactory;
     }
 
     /**
@@ -223,22 +224,21 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     }
 
     public <T> T getMapper(final Class<T> type) {
-        return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type},
-                new InvocationHandler() {
-                    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-                        return execute(new SqlSessionCallback<Object>() {
-                            public Object doInSqlSession(SqlSession sqlSession) {
-                                try {
-                                    return method.invoke(sqlSession.getMapper(type), args);
-                                } catch (java.lang.reflect.InvocationTargetException e) {
-                                    throw wrapException(e.getCause());
-                                } catch (Exception e) {
-                                    throw new MyBatisSystemException("SqlSession operation", e);
-                                }
-                            }
-                        });
+        return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, new InvocationHandler() {
+            public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+                return execute(new SqlSessionCallback<Object>() {
+                    public Object doInSqlSession(SqlSession sqlSession) {
+                        try {
+                            return method.invoke(sqlSession.getMapper(type), args);
+                        } catch (InvocationTargetException e) {
+                            throw wrapException(e.getCause());
+                        } catch (Exception e) {
+                            throw new MyBatisSystemException("SqlSession operation", e);
+                        }
                     }
                 });
+            }
+        });
     }
 
     public DataAccessException wrapException(Throwable t) {
