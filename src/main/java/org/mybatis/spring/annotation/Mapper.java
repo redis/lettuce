@@ -24,7 +24,8 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation to identify mapper interfaces for scanning
- * @version $Id$
+ * 
+ * @version $Id:
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
