@@ -100,11 +100,10 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     private List<Class<?>> searchForMappers() throws ClassNotFoundException, IOException {
 
         String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();
 
         for (String basePackage : basePackagesArray) {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             String path = basePackage.replace('.', '/');
             Enumeration<URL> resources = classLoader.getResources(path);
             while (resources.hasMoreElements()) {
@@ -116,7 +115,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     }
 
-    private List<Class<?>> searchForMappersInDirectory(File directory, String packageName, List<Class<?>> mapperInterfaces)
+    private void searchForMappersInDirectory(File directory, String packageName, List<Class<?>> mapperInterfaces)
             throws ClassNotFoundException {
         File[] files = directory.listFiles();
         for (File file : files) {
@@ -129,7 +128,6 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
                 }
             }
         }
-        return mapperInterfaces;
     }
 
 }
