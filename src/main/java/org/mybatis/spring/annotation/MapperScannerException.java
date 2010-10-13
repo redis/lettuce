@@ -19,7 +19,7 @@ package org.mybatis.spring.annotation;
 import org.springframework.beans.BeansException;
 
 /**
- * A BaseException for mapper scanner
+ * A BeansException for mapper scanner
  * 
  * @version $Id$
  */

@@ -84,7 +84,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
                     BeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
                     MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
                     mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
-                    mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface.getCanonicalName());
+                    mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
                     String name = mapperInterface.getAnnotation(Mapper.class).value();
                     if (name == null || "".equals(name)) {
                         name = mapperInterface.getName();
