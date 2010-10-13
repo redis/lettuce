@@ -21,7 +21,7 @@ import org.springframework.beans.BeansException;
 /**
  * A BaseException for mapper scanner
  * 
- * @version $Id
+ * @version $Id$
  */
 public class MapperScannerException extends BeansException {
 

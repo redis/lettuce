@@ -46,7 +46,7 @@ import org.springframework.util.StringUtils;
  *
  * @see org.apache.ibatis.session.SqlSessionFactory
  * @see org.mybatis.spring.MapperFactoryBean
- * @version $Id
+ * @version $Id$
  */
 
 public class MapperScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean {
