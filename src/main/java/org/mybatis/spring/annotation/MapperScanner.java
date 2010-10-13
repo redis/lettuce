@@ -76,21 +76,11 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         try {
-            List<Class<?>> classes = searchForMappers();
-            if (classes.size() == 0) {
+            List<Class<?>> mapperInterfaces = searchForMappers();
+            if (mapperInterfaces.size() == 0) {
                 logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
             } else {
-                for (Class<?> mapperInterface : classes) {
-                    BeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
-                    MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
-                    mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
-                    mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
-                    String name = mapperInterface.getAnnotation(Mapper.class).value();
-                    if (name == null || "".equals(name)) {
-                        name = mapperInterface.getName();
-                    }
-                    registry.registerBeanDefinition(name, beanDefinition);
-                }
+                registerMappers(registry, mapperInterfaces);
             }
         } catch (Exception e) {
             throw new MapperScannerException("Error while scanning for MyBatis mappers", e);
@@ -99,7 +89,8 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     private List<Class<?>> searchForMappers() throws ClassNotFoundException, IOException {
 
-        String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+        String[] basePackagesArray = 
+            StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();
 
@@ -122,7 +113,8 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
             if (file.isDirectory()) {
                 searchForMappersInDirectory(file, packageName + "." + file.getName(), mapperInterfaces);
             } else if (file.getName().endsWith(".class")) {
-                Class<?> candidate = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
+                Class<?> candidate = 
+                    Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
                 if (candidate.isAnnotationPresent(Mapper.class)) {
                     mapperInterfaces.add(candidate);
                 }
@@ -130,4 +122,18 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
         }
     }
 
+    private void registerMappers(BeanDefinitionRegistry registry, List<Class<?>> mapperInterfaces) {
+        for (Class<?> mapperInterface : mapperInterfaces) {
+            BeanDefinition beanDefinition = 
+                BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
+            MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
+            mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
+            mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
+            String name = mapperInterface.getAnnotation(Mapper.class).value();
+            if (name == null || "".equals(name)) {
+                name = mapperInterface.getName();
+            }
+            registry.registerBeanDefinition(name, beanDefinition);
+        }
+    }
 }
