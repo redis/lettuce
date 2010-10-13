@@ -66,25 +66,27 @@ public interface UserMapper {
   <section id="mappers.scanner">
     <title>Mapper scanning</title>
     <para>
-      There is no need to register all your mappers on your <literal>applicationContext.xml</literal>, you
-      can use the <literal>MapperScanner</literal> that search your classpath for your mappers and will set
+      There is no need to register all your mappers in your <literal>applicationContext.xml</literal>, you
+      can use a <literal>MapperScanner</literal> that will search your classpath for your mappers and will set
       them up.        
     </para>
     <para>
-      This is the way you set up a <literal>MapperScanner</literal>
+      This is the way you set up a <literal>MapperScanner</literal>:
       <programlisting language="xml"><![CDATA[
-	<bean class="org.mybatis.spring.annotation.MapperScanner">
-		<property name="basePackage" value="sample" />
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-	</bean>]]>
+<bean class="org.mybatis.spring.annotation.MapperScanner">
+    <property name="basePackage" value="sample" />
+    <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]>
       </programlisting>
-      <literal>basePackage</literal> is an optional property that lets you specify the base package were 
-      your mappers are. Mappers will be searched recursively starting in the specified package.
+      <literal>basePackage</literal> is an optional property that lets you set the base package were 
+      your mappers are. You can set more than one package using ; as a separator. 
+      Mappers will be searched in these packages and all their subpackages.
     </para>
     <para>
-      Mappers are just interfaces so to let MapperScanner identify them they must be annotated with
+      Mappers are just interfaces so to let <literal>MapperScanner</literal> identify them they must be annotated with
       <literal>@Mapper</literal> annotation.   
       <programlisting language="java"><![CDATA[
+import org.mybatis.spring.annotation.Mapper;
 @Mapper("userMapper")
 public interface UserMapper {
     User getUser(String userId);
@@ -93,7 +95,6 @@ public interface UserMapper {
       <literal>@Mapper</literal> annotation lets you specify a name for your bean. If you don´t provide a name it
       will be registered with its class name.
     </para>
-    
    </section>
   
 </chapter>
