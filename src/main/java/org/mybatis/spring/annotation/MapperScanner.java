@@ -40,7 +40,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * BeanDefinitionRegistryPostProcessor that searchs recursively 
+ * BeanDefinitionRegistryPostProcessor that searches recursively 
  * starting from a basePackage for interfaces with
  * org.mybatis.spring.annotation.Mapper annotation.
  *
