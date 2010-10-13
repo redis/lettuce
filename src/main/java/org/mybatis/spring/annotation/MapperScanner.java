@@ -66,9 +66,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        if (basePackage == null) {
-            basePackage = "";
-        }
+        Assert.notNull(basePackage, "Property 'basePackage' is required");
     }
 
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {

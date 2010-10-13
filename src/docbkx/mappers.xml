@@ -78,8 +78,8 @@ public interface UserMapper {
     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]>
       </programlisting>
-      <literal>basePackage</literal> is an optional property that lets you set the base package were 
-      your mappers are. You can set more than one package using ; as a separator. 
+      <literal>basePackage</literal> lets you set the base package where 
+      your mappers are. You can set more than one package using a semicolon as a separator. 
       Mappers will be searched in these packages and all their subpackages.
     </para>
     <para>
