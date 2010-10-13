@@ -25,14 +25,14 @@ import org.springframework.beans.BeansException;
  */
 public class MapperScannerException extends BeansException {
 
-	private static final long serialVersionUID = -1545114220269710619L;
-	
-	public MapperScannerException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
+    private static final long serialVersionUID = -1545114220269710619L;
 
-	public MapperScannerException(String msg) {
-		super(msg);
-	}
+    public MapperScannerException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public MapperScannerException(String msg) {
+        super(msg);
+    }
 
 }

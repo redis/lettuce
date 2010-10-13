@@ -63,23 +63,23 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
         this.sqlSessionFactory = sqlSessionFactory;
     }
-    
-	public void afterPropertiesSet() throws Exception {
+
+    public void afterPropertiesSet() throws Exception {
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         if (basePackages == null) {
-        	basePackages = "";
+            basePackages = "";
         }
-	}    
+    }
 
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
     }
 
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         try {
-        	List<Class<?>> classes = searchForMappers();
-        	if (classes.size() == 0) {
-        	    logger.debug("No MyBatis mapper was found. Did you remember to annotate your mappers with @Mapper?");
-        	} else {	
+            List<Class<?>> classes = searchForMappers();
+            if (classes.size() == 0) {
+                logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
+            } else {
                 for (Class<?> mapperInterface : classes) {
                     BeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
                     MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
@@ -87,20 +87,19 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
                     mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface.getCanonicalName());
                     String name = mapperInterface.getAnnotation(Mapper.class).value();
                     if (name == null || "".equals(name)) {
-                        name = mapperInterface.getName(); 
+                        name = mapperInterface.getName();
                     }
                     registry.registerBeanDefinition(name, beanDefinition);
                 }
-        	}
+            }
         } catch (Exception e) {
             throw new MapperScannerException("Error while scanning for MyBatis mappers", e);
         }
     }
 
     private List<Class<?>> searchForMappers() throws ClassNotFoundException, IOException {
-        
-        String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackages,
-                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+
+        String[] basePackagesArray = StringUtils.tokenizeToStringArray(basePackages, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 
         List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();
 
@@ -117,15 +116,16 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     }
 
-    private List<Class<?>> searchForMappersInDirectory(File directory, String packageName, List<Class<?>> mapperInterfaces) throws ClassNotFoundException {
+    private List<Class<?>> searchForMappersInDirectory(File directory, String packageName, List<Class<?>> mapperInterfaces)
+            throws ClassNotFoundException {
         File[] files = directory.listFiles();
         for (File file : files) {
             if (file.isDirectory()) {
                 searchForMappersInDirectory(file, packageName + "." + file.getName(), mapperInterfaces);
             } else if (file.getName().endsWith(".class")) {
-            	Class<?> candidate = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
-                if (candidate.isAnnotationPresent(Mapper.class)) {            	
-                	mapperInterfaces.add(candidate);
+                Class<?> candidate = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
+                if (candidate.isAnnotationPresent(Mapper.class)) {
+                    mapperInterfaces.add(candidate);
                 }
             }
         }
