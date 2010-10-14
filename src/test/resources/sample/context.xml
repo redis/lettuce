@@ -59,6 +59,10 @@
         <property name="userMapper" ref="userMapper3" />
     </bean>
 
+    <bean id="fooService4" class="sample.FooServiceImpl">
+        <property name="userMapper" ref="userMapper4" />
+    </bean>
+
     <bean id="transactionManager"
         class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource" />
@@ -69,19 +73,25 @@
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <!-- option1 injecting mappers (recommended) -->
+    <!-- option1 injecting mappers (recommended) --> 
     <bean id="userMapper1" class="org.mybatis.spring.MapperFactoryBean">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
         <property name="mapperInterface" value="sample.UserMapper" />
     </bean>
 
+    <!-- or you can scan for mappers -->     
+    <bean class="org.mybatis.spring.annotation.MapperScanner">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <property name="basePackage" value="sample" />
+    </bean>
+
     <!-- option2 extending SqlSessionDaoSupport -->
-    <bean id="userMapper2" class="sample.UserMapperTemplateImpl">
+    <bean id="userMapper3" class="sample.UserMapperTemplateImpl">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
     </bean>
 
     <!-- option3 using MyBatis API-->
-    <bean id="userMapper3" class="sample.UserMapperSqlSessionImpl">
+    <bean id="userMapper4" class="sample.UserMapperSqlSessionImpl">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
     </bean>
 

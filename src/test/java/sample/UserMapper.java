@@ -15,12 +15,18 @@
  */
 package sample;
 
+import org.mybatis.spring.annotation.Mapper;
+
 /**
  * 
- * Mapper/DAO inteface.
+ * A sample mapper
+ * @Mapper annotation is optional. It is just needed for mapper scanning
+ * value "userMapper2" is also optional, if no value is setted, the mapper will be
+ * registered in Spring with its classname "sample.UserMapper"
  *
  * @version $Id$
  */
+@Mapper("userMapper2")
 public interface UserMapper {
 
     User getUser(String userId);

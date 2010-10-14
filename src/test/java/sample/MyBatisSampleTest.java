@@ -37,6 +37,8 @@ public class MyBatisSampleTest {
     private FooService fooService2;
     @Autowired
     private FooService fooService3;
+    @Autowired
+    private FooService fooService4;
 
     public void setFooService1(FooService fooService1) {
         this.fooService1 = fooService1;
@@ -50,6 +52,10 @@ public class MyBatisSampleTest {
         this.fooService3 = fooService3;
     }
 
+    public void setFooService4(FooService fooService4) {
+        this.fooService4 = fooService4;
+    }
+    
     @Test
     public void testFooService1() throws Exception {
         User user = this.fooService1.doSomeBusinessStuff("u1");
@@ -70,4 +76,11 @@ public class MyBatisSampleTest {
         Assert.assertNotNull(user);
         Assert.assertEquals("Pocoyo",user.getName());
     }
+    
+    @Test
+    public void testFooService4() throws Exception {
+        User user = this.fooService4.doSomeBusinessStuff("u1");
+        Assert.assertNotNull(user);
+        Assert.assertEquals("Pocoyo",user.getName());
+    }    
 }
