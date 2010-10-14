@@ -78,6 +78,9 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     }
 
     private Set<Class<?>> searchForMappers() {
+        
+        logger.debug("Searching for MyBatis mappers");
+        
         String[] basePackagesArray = 
             StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
         ResolverUtil<Object> resolver = new ResolverUtil<Object>();
@@ -86,6 +89,9 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     }
 
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
+        
+        logger.debug("Registering MyBatis mappers");
+        
         for (Class<?> mapperInterface : mapperInterfaces) {
             BeanDefinition beanDefinition = 
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
@@ -93,7 +99,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
             mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
             String name = mapperInterface.getAnnotation(Mapper.class).value();
-            if (name == null || "".equals(name)) {
+            if (!StringUtils.hasLength(name)) {
                 name = mapperInterface.getName();
             }
             registry.registerBeanDefinition(name, beanDefinition);
