@@ -16,13 +16,9 @@
 
 package org.mybatis.spring.annotation;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.Set;
 
+import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -73,54 +69,23 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     }
 
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        try {
-            List<Class<?>> mapperInterfaces = searchForMappers();
-            if (mapperInterfaces.size() == 0) {
-                logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
-            } else {
-                registerMappers(registry, mapperInterfaces);
-            }
-        } catch (Exception e) {
-            throw new MapperScannerException("Error while scanning for MyBatis mappers", e);
+        Set<Class<?>> mapperInterfaces = searchForMappers();
+        if (mapperInterfaces.size() == 0) {
+            logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
+        } else {
+            registerMappers(registry, mapperInterfaces);
         }
     }
 
-    private List<Class<?>> searchForMappers() throws ClassNotFoundException, IOException {
-
+    private Set<Class<?>> searchForMappers() {
         String[] basePackagesArray = 
             StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        List<Class<?>> mapperInterfaces = new ArrayList<Class<?>>();
-
-        for (String basePackage : basePackagesArray) {
-            String path = basePackage.replace('.', '/');
-            Enumeration<URL> resources = classLoader.getResources(path);
-            while (resources.hasMoreElements()) {
-                File dir = new File(resources.nextElement().getFile());
-                searchForMappersInDirectory(dir, basePackage, mapperInterfaces);
-            }
-        }
-        return mapperInterfaces;
-
+        ResolverUtil<Object> resolver = new ResolverUtil<Object>();
+        resolver.findAnnotated(Mapper.class, basePackagesArray);
+        return resolver.getClasses();
     }
 
-    private void searchForMappersInDirectory(File directory, String packageName, List<Class<?>> mapperInterfaces)
-            throws ClassNotFoundException {
-        File[] files = directory.listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                searchForMappersInDirectory(file, packageName + "." + file.getName(), mapperInterfaces);
-            } else if (file.getName().endsWith(".class")) {
-                Class<?> candidate = 
-                    Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
-                if (candidate.isAnnotationPresent(Mapper.class)) {
-                    mapperInterfaces.add(candidate);
-                }
-            }
-        }
-    }
-
-    private void registerMappers(BeanDefinitionRegistry registry, List<Class<?>> mapperInterfaces) {
+    private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
         for (Class<?> mapperInterface : mapperInterfaces) {
             BeanDefinition beanDefinition = 
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
