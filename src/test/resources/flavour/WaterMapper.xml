@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org/DTD Mapper 3.0//EN"
-    "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--
     Copyright 2010 The myBatis Team
 
@@ -18,7 +19,7 @@
 -->
 
 <!--
-    version: $Id$
+    version: $Id: WaterMapper.xml 2442 2010-09-14 15:43:13Z simone.tripodi $
 -->
 <mapper namespace="flavour.WaterMapper">
 

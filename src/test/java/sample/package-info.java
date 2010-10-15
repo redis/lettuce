@@ -15,13 +15,14 @@
  */
 
 /**
- * Sample for three usage scenarios.
+ * Sample for four usage scenarios.
  * <ul>
  * <li>Extending SqlSessionDaoSupport</li>
- * <li>Using directly MyBatis API (SqlSession)</li>
- * <li>Injecting Mappers (in fact this means that there is no DAO implementation)</li>
+ * <li>Directly using MyBatis API (SqlSession)</li>
+ * <li>Injecting a Mapper interface manually in the Spring XML (proxy DAO implementation)</li>
+ * <li>Injecting a Mapper interface automatically using @Mapper annotations (proxy DAO implementation)</li>
  * </ul>
  *
- * @version $Id$
+ * @version $Id: package-info.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
 package sample;

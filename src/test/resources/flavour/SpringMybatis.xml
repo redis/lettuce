@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE configuration PUBLIC "-//ibatis.apache.org/DTD Config 3.0//EN"
-    "http://ibatis.apache.org/dtd/ibatis-3-config.dtd">
+<!DOCTYPE configuration
+    PUBLIC "-//www.mybatis.org//DTD Config 3.0//EN"
+    "http://www.mybatis.org/dtd/mybatis-3-config.dtd">
 <!--
     Copyright 2010 The myBatis Team
 
@@ -18,7 +19,7 @@
 -->
 
 <!--
-    version: $Id$
+    version: $Id: SpringMybatis.xml 2442 2010-09-14 15:43:13Z simone.tripodi $
 -->
 <configuration>
 
@@ -32,10 +33,5 @@
         <typeAlias alias="Water" type="flavour.Water" />
         <typeAlias alias="Flavour" type="flavour.Flavour" />
     </typeAliases>
-
-    <mappers>
-        <mapper resource="flavour/FlavourMapper.xml" />
-        <mapper resource="flavour/WaterMapper.xml" />
-    </mappers>
 
 </configuration>

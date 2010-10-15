@@ -27,7 +27,7 @@ import org.springframework.core.io.ClassPathResource;
 
 /**
  * 
- * @version $Id$
+ * @version $Id: SpringConfig.java 2443 2010-09-14 17:18:04Z simone.tripodi $
  */
 @Configuration
 public class SpringConfig {
@@ -37,7 +37,7 @@ public class SpringConfig {
     private final SqlSessionFactory sessionFactory;
 
     public SpringConfig() throws Exception {
-        this.dataSource = new PooledDataSource("org.hsqldb.jdbcDriver", "jdbc:hsqldb:file:mybatisspring", "sa", "");
+        this.dataSource = new PooledDataSource("org.hsqldb.jdbcDriver", "jdbc:hsqldb:mem:mybatisspring", "sa", "");
         this.dataSource.setDefaultAutoCommit(true);
 
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
