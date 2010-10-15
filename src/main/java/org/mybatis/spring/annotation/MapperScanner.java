@@ -21,7 +21,6 @@ import java.util.Set;
 import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.MapperFactoryBean;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
@@ -50,18 +49,18 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     private static final Log logger = LogFactory.getLog(MapperScanner.class);
 
     private String basePackage;
-    private SqlSessionFactory sqlSessionFactory;
+
+    private boolean addToConfig = true;
 
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
     }
 
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
+    public void setAddToConfig(boolean addToConfig) {
+        this.addToConfig = addToConfig;
     }
 
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         Assert.notNull(basePackage, "Property 'basePackage' is required");
     }
 
@@ -96,8 +95,8 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
             BeanDefinition beanDefinition = 
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
-            mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactory);
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
+            mutablePropertyValues.addPropertyValue("addToConfig", addToConfig);
             String name = mapperInterface.getAnnotation(Mapper.class).value();
             if (!StringUtils.hasLength(name)) {
                 name = mapperInterface.getName();

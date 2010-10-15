@@ -20,6 +20,7 @@ import javax.sql.DataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
 /**
@@ -34,8 +35,10 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {
 
     private Class<T> mapperInterface;
 
+    @Autowired(required=false)
     private SqlSessionFactory sqlSessionFactory;
 
+    @Autowired(required=false)
     private SqlSessionTemplate sqlSessionTemplate;
 
     private boolean addToConfig = true;

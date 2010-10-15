@@ -75,13 +75,12 @@
 
     <!-- option1 injecting mappers (recommended) --> 
     <bean id="userMapper1" class="org.mybatis.spring.MapperFactoryBean">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <!-- SqlSessionFactory property is autowired -->
         <property name="mapperInterface" value="sample.UserMapper" />
     </bean>
 
     <!-- or you can scan for mappers -->     
     <bean class="org.mybatis.spring.annotation.MapperScanner">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
         <property name="basePackage" value="sample" />
     </bean>
 
