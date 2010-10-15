@@ -20,71 +20,83 @@
     version: $Id$
 -->
 <chapter id="templates_support">
-
-  <title>Using SqlSessionDaoTemplate and SqlSessionDaoSupport</title>
+  <title>SqlSessionTemplate and SqlSessionDaoSupport</title>
 
   <section id="templates_support.template">
-    <title>SqlSessionDaoTemplate</title>
-    <para>
-      If you need to use MyBatis <literal>SqlSession</literal> you should use 
-      <literal>SqlSessionDaoTemplate</literal>. This object is able to create a new <literal>SqlSession</literal> 
-      or get the active <literal>SqlSession</literal> from current transaction. It also translates exceptions to Spring's
-      generic <literal>DataAccessException</literal> hierarchy.
-    </para>
-
-	<para>
-      A <literal>SqlSessionDaoTemplate</literal> can be created using a <literal>SqlSessionFactory</literal>
-      as a constructor argument. 
-      <programlisting language="java"><![CDATA[      
-SqlSessionDaoTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);]]>
-      </programlisting>
-    </para>
+    <title>SqlSessionTemplate</title>
 
     <para>
-      As the following snippet shows, instead of using a <literal>SqlSession</literal> you use
-      <literal>SqlSessionDaoTemplate</literal> to execute MyBatis methods (<literal>selectOne</literal>,
-      <literal>selectList</literal>...):
-      <programlisting language="java"><![CDATA[
-public User getUser(String userId) {
-    return (User) sessionTemplate.selectOne("sample.UserMapper.getUser", userId);
-}]]>
-      </programlisting>
+      <literal>SqlSessionTemplate</literal> is the heart of MyBatis-Spring.
+      This class is responsible for managing MyBatis
+      <literal>SqlSession</literal>s, calling MyBatis SQL methods and
+      translating exceptions. It is meant to be a drop-in replacement for
+      <literal>SqlSession</literal>. <literal>SqlSessionTemplate</literal>
+      should <emphasis>always</emphasis> be used instead of
+      <literal>SqlSession</literal> because the base MyBatis session cannot
+      participate in Spring transactions. Switching between the two classes in
+      the same application can cause data integrity issues.
+    </para>
+    
+    <para>
+      When calling SQL methods, inluding any method from Mappers returned from
+      <literal>getMapper()</literal>,  <literal>SqlSessionTemplate</literal>
+      will ensure that the <literal>SqlSession</literal> used is the one
+      associated with the current Spring transaction. In addition, it manages
+      the session lifecycle, including closing, commiting or rolling back as
+      necessary.
     </para>
 
     <para>
-      The <literal>SqlSessionDaoTemplate</literal> also offers a generic method, taking a custom
-      <literal>SqlSessionCallback</literal> as argument so that you can execute more than one method over a
-      <literal>SqlSession</literal>:
-      <programlisting language="java"><![CDATA[
-public void insertUser(final User user) {
+      It is usually not necessary to create or use a
+      <literal>SqlSessionTemplate</literal> directly. In most cases,
+      <literal>MapperFactoryBean</literal>, which uses a template internally,
+      will be all that is needed. When access to an
+      <literal>SqlSessionTemplate</literal> is needed, it can be created using
+      an <literal>SqlSessionFactory</literal> as a constructor argument.
 
-    getSqlSessionTemplate().execute(new SqlSessionCallback<Object>() {
+      <programlisting language="java"><![CDATA[SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);]]></programlisting>
+      Similarly, the template could be configured in a Spring XML file.
+    </para>
 
-        public Object doInSqlSession(SqlSession sqlSession) {
-            sqlSession.insert("sample.UserMapper.insertUser", user);
-            sqlSession.insert("sample.UserMapper.insertAccount", user.getId());
-            return null;
-        }
-    });
-}]]>
-      </programlisting>
+    <para>
+      In addition to all the SQL related methods in
+      <literal>SqlSession</literal>, <literal>SqlSessionTemplate</literal>
+      offers a generic <literal>execute</literal> method. This method takes a
+      custom <literal>SqlSessionCallback</literal> as an argument so that you
+      can execute more than one SQL method on a <literal>SqlSession</literal>:
+      <programlisting language="java"><![CDATA[public void insertUser(final User user) {
+
+  getSqlSessionTemplate().execute(new SqlSessionCallback<Object>() {
+    public Object doInSqlSession(SqlSession sqlSession) {
+      sqlSession.insert("sample.UserMapper.insertUser", user);
+      sqlSession.insert("sample.UserMapper.insertAccount", user.getAccount());
+      return null;
+    }
+  });
+}]]></programlisting>
 	</para>
   </section>
 
-  <section id="templates_support.sqlsessiondaosupport">
+  <section id="templates_support.daosupport">
     <title>SqlSessionDaoSupport</title>
     
     <para>
-      SqlSessionDaoSupport is a support class that simply builds a <literal>SqlSessionDaoTemplate</literal> for you so 
-      that you can use by calling <literal>getSqlSessionTemplate()</literal> as follows:
-      <programlisting language="java"><![CDATA[
-public class UserMapperDaoImpl extends SqlSessionDaoSupport implements UserMapper {
+      <literal>SqlSessionDaoSupport</literal> is a support class that builds a
+      <literal>SqlSessionTemplate</literal> for you. Calling
+      <literal>getSqlSessionTemplate()</literal> gives you access to the
+      template which can then be used to execute SQL methods, like the
+      following:
 
-    public User getUser(String userId) {
-        return (User) getSqlSessionTemplate().selectOne("sample.UserMapper.getUser", userId);
-    }
-}]]>
-      </programlisting>
+      <programlisting language="java"><![CDATA[public class UserMapperDaoImpl extends SqlSessionDaoSupport implements UserMapper {
+  public User getUser(String userId) {
+    return (User) getSqlSessionTemplate().selectOne("sample.UserMapper.getUser", userId);
+  }
+}]]></programlisting>
+
+      Usually <literal>MapperFactoryBean</literal> is preferred to this class,
+      since it requires no extra code. But, this class is useful if you need
+      to do other non-MyBatis work in your DAO classes which require concrete
+      implementations. 
 	</para>    
   </section>
 </chapter>

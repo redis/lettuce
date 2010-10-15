@@ -23,33 +23,39 @@
 
   <title>Introduction</title>
 
-  <section id="introduction.why-mybatis-guice">
-    <title>Why mybatis-spring - Motivation</title>
+  <section id="introduction.motivation">
+    <title>Motivation</title>
     <para>
-      Every Spring user was impatiently waiting for the 3.X release, but unfortunately once released,
-      MyBatis users where terribly disappointed: their preferred SQL Mapping Framework was no more supported.
-      After many request of including the integration and a good number of patches submitted on the Spring Jira
-      <ulink url="https://jira.springsource.org/browse/SPR-5991">issue</ulink>, once the issue was accepted
-      but announced to be delayed, the MyBatis community thought it was time to reunite the interested people and
-      contributors and start the Spring integration made by the community itself.
+      As of version 2, Spring only supports iBatis version 2. An attempt was
+      made to add MyBatis 3 support into Spring 3.0 (see the Spring Jira 
+      <ulink url="https://jira.springsource.org/browse/SPR-5991">issue</ulink>).
+      Unfortunately, Spring 3.0 development ended before MyBatis 3.0 was
+      officially released. Because the Spring team did not want to release with
+      code based on a non-released version of MyBatis, official Spring support
+      would have to wait until at least Spring 3.1. Given the interest in
+      Spring support for MyBatis, the MyBatis community decided it was time to
+      reunite the interested contributors and add Spring integration as a
+      community subproject of MyBatis instead.
     </para>
+
     <para>
-      So, this small library intends to create the missing perfect glue
-      between the two popular frameworks, reducing the boilerplate and
-      redundant code that users have to write to configure and use MyBatis
-      into a Spring 3.X context.
+      This small library creates the missing glue between the two popular
+      frameworks. It reduces boilerplate and redundant code needed to configure
+      and use MyBatis with Spring 3.X. It also transparently adds Spring
+      transaction support to MyBatis.
     </para>
   </section>
 
   <section id="introduction.requirements">
     <title>Requirements</title>
     <para>
-      Before starting reading the manual, it is very important you're
-      familiar with both MyBatis and Spring framework and terminology,
-      otherwise it would be very difficult to understand the described context.
+      Before starting with MyBatis-Spring integration, it is very important
+      that you are familiar with both MyBatis and Spring terminology. This
+      document does not attempt to provide background information or basic
+      setup and configuration tutorials for either MyBatis or Spring.
     </para>
     <para>
-      Like MyBatis, mybatis-spring requires Java 5 or higher.
+      Like MyBatis and Spring 3.0, MyBatis-Spring requires Java 5 or higher.
     </para>
   </section>
 
@@ -57,11 +63,12 @@
     <title>Acknowledgements</title>
     <para>
       A special thanks goes to all the special people who made this project
-      a reality. Hunter Presnall and Putthibong Boonbong who made all the hard coding, 
-      Eduardo Macarron for the MapperFactoryBean and documentation, Andrius Juozapaitis,
-      Giovanni Cuccu and Raj Nagappan for their contributions and support and Simone Tripodi
-      for finding them and bringing them all to the project ;) 
-      Without them, that project wouldn't exist.
+      a reality, Hunter Presnall and Putthibong Boonbong for all the hard
+      coding; Eduardo Macarron for the MapperFactoryBean and documentation;
+      Andrius Juozapaitis, Giovanni Cuccu and Raj Nagappan for their
+      contributions and support; and Simone Tripodi for finding everyone and
+      bringing them all back to the project under MyBatis ;)  Without them,
+      this project wouldn't exist.
     </para>
   </section>
 

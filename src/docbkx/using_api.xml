@@ -20,37 +20,44 @@
     version: $Id$
 -->
 <chapter id="using_api">
-  <title>Using MyBatis API</title>
+  <title>Using the MyBatis API</title>
 
-  <section id="using_api.main">
-    <title>Using MyBatis API</title>
-    <para>
-      You can also use directly MyBatis API. In this case you won't have any mybatis-spring dependency and you
-      simply use a injected <literal>SqlSessionFactory</literal> on your DAOs:
-    </para>
-    <programlisting language="java"><![CDATA[
-public class UserMapperSqlSessionImpl implements UserMapper {
+  <para>
+    With MyBatis-Spring, you can continue to directly use the MyBatis API.
+    Simply create an <literal>SqlSessionFactory</literal> in Spring using
+    <literal>SqlSessionFactoryBean</literal> and use the factory in your code.
+    In this case you will not have any MyBatis-Spring dependencies in your
+    code; simply use the injected <literal>SqlSessionFactory</literal> in your
+    DAOs:
 
-    private SqlSessionFactory sqlSessionFactory;
+    <programlisting language="java"><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+  // SqlSessionFactory would normally be set by SqlSessionDaoSupport
+  private SqlSessionFactory sqlSessionFactory;
 
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
-    }
+  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+    this.sqlSessionFactory = sqlSessionFactory;
+  }
 
-    public User getUser(String userId) {
-        SqlSession session = sqlSessionFactory.openSession();
-        try {
-          return (User) session.selectOne("sample.UserMapper.getUser", userId);
-        } finally {
-          session.close();
-        }   
-    }
-}]]>
-    </programlisting>
-    <para>
-      In this scenario SqlSessions will not be reused within a transaction and there 
-      will be no exception translation. 
-      Spring transaction management will still work over the inner database connection.
-    </para>
-  </section>
+  public User getUser(String userId) {
+    // note standard MyBatis API usage - opening and closing the session manually
+    SqlSession session = sqlSessionFactory.openSession();
+
+    try {
+      return (User) session.selectOne("sample.UserMapper.getUser", userId);
+    } finally {
+      session.close();
+    }   
+  }
+}]]></programlisting>
+  </para>
+
+  <para>
+    Note that this usage will <emphasis>not</emphasis> participate in any
+    Spring transactions. Further, if the SqlSession is using a
+    <literal>DataSource</literal> that is also being used by a Spring
+    transaction manager and there is currently a transaction in progress, this
+    code <emphasis>will</emphasis> throw an exception. For this reason, if you
+    must use this style of access, you should not use a Spring transactional
+    database connection.
+  </para>
 </chapter>

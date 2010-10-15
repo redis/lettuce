@@ -19,63 +19,69 @@
 <chapter id="sample">
   <title>Sample Code</title>
 
-  <section id="sample.main">
-    <title>Sample code</title>
-    <para>
-      You can have a look or check out sample code from MyBatis repository on Google Code.
-      <itemizedlist>
-        <listitem>
+  <para>
+    You can check out the sample code from the MyBatis repository on Google Code.
+
+    <itemizedlist>
+      <listitem>
         <para>
-        <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/java/sample">Java code</ulink>
+          <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/java/sample">Java code</ulink>
         </para>
-        </listitem>
-        <listitem>
+      </listitem>
+      <listitem>
         <para>
-        <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/resources/sample">Config files</ulink>
+          <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/resources/sample">Config files</ulink>
         </para>
-        </listitem>
-      </itemizedlist>
-    </para>
-    <para>
-      To run the sample just run MyBatisSampleTest.java with JUnit 4.
-    </para>
-    <para>
-      <literal>FooService</literal> acts as a transactional service. It starts and ends a transaction when any 
-      of its methods is called. Have a look to <literal>FooService.java</literal> to see how transactional 
-      behaviour is configured with the <literal>@Transactional</literal> attribute.
-      This is just a sample, you can use any other way provided by Spring to demarcate your transactions. 
-    </para>
-      <programlisting language="java"><![CDATA[
-@Transactional
+      </listitem>
+    </itemizedlist>
+  </para>
+  <para>
+    To run the sample just run MyBatisSampleTest.java with JUnit 4.
+  </para>
+  <para>
+    The sample code has one service interface, <literal>FooService</literal>,
+    that acts as a transactional service. It starts and ends a transaction
+    when any of its methods is called. 
+
+    <programlisting language="java"><![CDATA[@Transactional
 public interface FooService {
 
-    User doSomeBusinessStuff(String userId);
+  User doSomeBusinessStuff(String userId);
 
-}]]>
-      </programlisting>
-    <para>
-      <literal>FooServiceImpl.java</literal> is the FooService implementation and it just uses DAOs/mappers that 
-      Spring has injected during startup. You will notice that your code does not need to call any Spring or Mybatis methods.
-    </para>
-      <programlisting language="java"><![CDATA[
-public class FooServiceImpl implements FooService {
+}]]></programlisting>
 
-    private UserMapper userMapper;
+    Notice that transactional behaviour is configured with the
+    <literal>@Transactional</literal> attribute. This is not required; any
+    other way provided by Spring can be used to demarcate your transactions. 
+  </para>
 
-    public void setUserMapper(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
+  <para>
+    <literal>FooServiceImpl.java</literal> is the FooService implementation
+    and it just uses DAOs/mappers that Spring has injected during startup.
+    You will notice that your code does not need to call any Spring or
+    MyBatis methods.
 
-    public User doSomeBusinessStuff(String userId) {
-        return this.userMapper.getUser(userId);
-    }
-}
-]]>
-      </programlisting>
-    
-    <para>
-      The database access layer has been implemented using the three different techniques explanied
-      in this manual. Have a look at <literal>context.xml</literal>.
-    </para>
-  </section>
+    <programlisting language="java"><![CDATA[public class FooServiceImpl implements FooService {
+
+  private UserMapper userMapper;
+
+  public void setUserMapper(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
+
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
+}]]></programlisting>
+  </para>
+
+  <para>
+    The database access layer has been implemented using the four different
+    techniques explanied in this manual: with
+    <literal>MapperFactoryBean</literal> (both directly and through
+    <literal>MapperScanner</literal>), with
+    <literal>SqlSessionDaoSupport</literal> and with a DAO implemented using
+    the base MyBatis API. Please see <literal>context.xml</literal> for the
+    full Spring configuration.
+  </para>
 </chapter>

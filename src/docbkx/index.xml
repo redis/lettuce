@@ -34,8 +34,7 @@
     </authorgroup>
 
     <legalnotice>
-      <para>Copies of this document may be made for your own use
-        and for
+      <para>Copies of this document may be made for your own use and for
         distribution to others, provided that you do not charge any fee for such
         copies and further provided that each copy contains this Copyright
         Notice, whether distributed in print or electronically.
@@ -44,7 +43,9 @@
   </bookinfo>
 
   <xi:include href="introduction.xml" />
-  <xi:include href="bootstrap.xml" />
+  <xi:include href="getting_started.xml" />
+  <xi:include href="factorybean.xml" />
+  <xi:include href="transactions.xml" />
   <xi:include href="mappers.xml" />
   <xi:include href="templates_support.xml" />
   <xi:include href="using_api.xml" />

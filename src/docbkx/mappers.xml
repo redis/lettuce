@@ -20,80 +20,129 @@
     version: $Id$
 -->
 <chapter id="mappers">
+  <title>MapperFactoryBean</title>
+        
+  <para>
+    Rather than code data access objects (DAOs) manually, Mybatis-Spring
+    provides a dynamic proxy implmentation:
+    <literal>MapperFactoryBean</literal>. This class lets you inject data
+    mapper interfaces directly into your service beans. When using mappers you
+    simply call them as you have always  called your DAOs, but you won't need
+    to code any DAO implementation because MyBatis-Spring will create a proxy
+    for you. 
+  </para>
 
-  <title>Injecting Mappers</title>
+  <para>
+    With injected mappers your code will have no direct dependencies on MyBatis,
+    Spring or MyBatis-Spring. The proxy that
+    <literal>MapperFactoryBean</literal> creates handles opening and closing the
+    session as well as translating any exceptions into Spring
+    <literal>DataAccessExceptions</literal>. In addition, the proxy will
+    start a new Spring transaction if required or participate in an existing
+    one if necessary. 
+  </para>
 
-  <section id="mappers.main">
+  <section id="mappers.setup">
+    <title>Setup</title>
+    <para>
+      A data mapper interface is added to Spring like the following:
+
+      <programlisting><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+  <property name="mapperInterface" value="sample.UserMapper" />
+</bean>]]></programlisting>
+    </para>
+
+    <para>
+      <literal>MapperFactoryBean</literal> creates a proxy class that
+      implements <literal>UserMapper</literal> and injects it into the
+      application. Because a proxy is created at runtime, the specified Mapper
+      <emphasis>must</emphasis> be an interface, not an implementation class.
+    </para>
+    
+    <para>
+      If the UserMapper has a corresponding MyBatis XML mapper file, it will be
+      parsed automatically by the <literal>MapperFactoryBean</literal> if the
+      XML file is in the same classpath location as the Mapper class. There
+      is no need to specify the mapper in a MyBatis configuration file unless
+      the mapper XML files are in a different location. See the
+      SqlSessionFactoryBean's 
+      <link linkend="factorybean.configlocation">configLocation</link>
+      property for more information.
+    </para>
+
+    <para>
+      Note that while MapperFactoryBean requires either an
+      <literal>SqlSessionFactory</literal> or a
+      <literal>SqlSessionTemplate</literal>. These will be autowired by Spring
+      so neither needs to be set explictly.
+    </para>
+  </section>
+  <section id="mappers.inject">
     <title>Injecting Mappers</title>
+
     <para>
-      Mybatis-spring lets you inject mappers into your service
-      beans. When using mappers you simply call your
-      mappers as you have always called your DAOs, but this time you won´t need 
-      to code any DAO implementation because MyBatis will do it for you. 
-    </para>
-    <para>
-      With injected mappers your code will have no mybatis-spring dependencies and no MyBatis dependencies either.
-    </para>
-    <para>
-      We have this simple mapper in our application. As you know a mapper is just an interface:
-      <programlisting language="java"><![CDATA[
-public interface UserMapper {
-    User getUser(String userId);
-}]]>
-      </programlisting>
-    </para>
-    <para>
-      This is the way you set up this mapper with mybatis-spring:
-      <programlisting language="xml"><![CDATA[
-<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
-    <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-    <property name="mapperInterface" value="sample.UserMapper" />
-</bean>]]>
-      </programlisting>
-      When using mappers you don't need to set up mapper list on the <literal>mybatis-config.xml</literal> file
-      because mappers are able to register themselves to MyBatis during startup.
-    </para>
-    <para>
-      Now your mapper is ready to be injected on your service objects:
-      <programlisting language="xml"><![CDATA[
-<bean id="fooService" class="sample.FooServiceImpl">
-    <property name="userMapper" ref="userMapper" />
-</bean>]]>
-      </programlisting>
-    </para>
+       You can inject mappers directly on your business/service objects in the
+       same way you inject any other Spring bean:
+
+       <programlisting language="xml"><![CDATA[<bean id="fooService" class="sample.FooServiceImpl">
+  <property name="userMapper" ref="userMapper" />
+</bean>]]></programlisting>
+
+       This bean can be used directly in application logic:
+      
+      <programlisting><![CDATA[public class FooService {
+  private UserMapper userMapper;
+
+  ...
+
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
+}]]></programlisting>
+
+       Notice that there are no SqlSession or MyBatis references in this code.
+       Nor is there any need to create, open or close the session. If there is
+       a Spring transaction in progress, the session will also be committed or
+       rolledback when the transaction completes. 
+     </para>
   </section>
   
   <section id="mappers.scanner">
-    <title>Mapper scanning</title>
+    <title>Mapper Scanning</title>
     <para>
-      There is no need to register all your mappers in your <literal>applicationContext.xml</literal>, you
-      can use a <literal>MapperScanner</literal> that will search your classpath for your mappers and will set
-      them up.        
+      There is no need to register all your mappers in the Spring XML file.
+      Instead, you can use a <literal>MapperScanner</literal> that will search
+      your classpath for your mappers set them up automatically.        
     </para>
+
     <para>
-      This is the way you set up a <literal>MapperScanner</literal>:
-      <programlisting language="xml"><![CDATA[
-<bean class="org.mybatis.spring.annotation.MapperScanner">
-    <property name="basePackage" value="sample" />
-    <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-</bean>]]>
-      </programlisting>
-      <literal>basePackage</literal> lets you set the base package where 
-      your mappers are. You can set more than one package using a semicolon as a separator. 
-      Mappers will be searched in these packages and all their subpackages.
+      To set up a <literal>MapperScanner</literal> add the following to the
+      Spring configuration:
+      <programlisting language="xml"><![CDATA[<bean class="org.mybatis.spring.annotation.MapperScanner">
+  <property name="basePackage" value="sample" />
+</bean>]]></programlisting>
+
+      The <literal>basePackage</literal> property lets you set the base package
+      for your mapper interface files. You can set more than one package by
+      using a semicolon or comma as a separator. Mappers will be searched
+      recursively starting in the specified package(s).
     </para>
+
     <para>
-      Mappers are just interfaces so to let <literal>MapperScanner</literal> identify them they must be annotated with
+      To enable <literal>MapperScanner</literal> to identify your mapper
+      classes they <emphasis>must</emphasis> be annotated with the
       <literal>@Mapper</literal> annotation.   
-      <programlisting language="java"><![CDATA[
-import org.mybatis.spring.annotation.Mapper;
+
+      <programlisting language="java"><![CDATA[import org.mybatis.spring.annotation.Mapper;
+
 @Mapper("userMapper")
 public interface UserMapper {
     User getUser(String userId);
-}]]>
-      </programlisting>
-      <literal>@Mapper</literal> annotation lets you specify a name for your bean. If you don´t provide a name it
-      will be registered with its class name.
+}]]></programlisting>
+
+      The <literal>@Mapper</literal> annotation also lets you specify a name
+      for your bean. If you don't provide a name it will be registered with its
+      class name.
     </para>
    </section>
   

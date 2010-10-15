@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id$
+-->
+<chapter id="getting_started">
+  <title>Getting Started</title>
+
+  <section id="getting_started.intro">
+    <title>Introduction</title>
+    <para>
+      MyBatis-Spring helps you integrate your MyBatis code  seamlessly with
+      Spring. Using the classes in this library, Spring will load the necessary
+      MyBatis factory and session classes for you. This library also provides
+      an easy way to inject MyBatis data mappers into your service beans.
+      Finally, MyBatis-Spring will handle transactions and translate MyBatis
+      exceptions into Spring DataAccessExceptions.
+    </para>
+  </section>
+    
+  <section id="getting_started.installation">
+    <title>Installation</title>
+    <para>
+      To use the MyBatis-Spring module, you just need to include the
+      <literal>mybatis-spring-<?eval ${project.version}?>.jar</literal> 
+      file and its dependencies in the classpath.
+    </para>
+    <para>
+      If you are using Maven just add the following dependency
+      to your pom.xml:
+      <programlisting language="xml"><![CDATA[<dependency>
+  <groupId>org.mybatis</groupId>
+  <artifactId>mybatis-spring</artifactId>
+  <version>]]><?eval ${project.version}?><![CDATA[</version>
+</dependency>]]></programlisting>
+    </para>
+  </section>
+    
+  <section id="getting_started.setup">
+    <title>Quick Setup</title>
+    <para>
+      To use MyBatis with Spring you need at least two things defined in the
+      Spring application context: an <literal>SqlSessionFactory</literal> and
+      at least one data mapper class.
+    </para>
+    
+    <para>
+      In MyBatis-Spring, an <literal>SqlSessionFactoryBean</literal> is used to
+      create an <literal>SqlSessionFactory</literal>. To configure the
+      factory bean, put the following in the Spring XML configuration file:
+
+      <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></programlisting>
+    </para>
+
+    <para>
+      Notice that the <literal>SqlSessionFactory</literal> requires a
+      DataSource. This can be any DataSource and should be configured just like
+      any other Spring database connection.
+    </para>
+
+   <para>
+      Assume you have a data mapper class defined like the following:
+
+      <programlisting language="java"><![CDATA[public interface UserMapper {
+
+  @Select("SELECT * FROM user WHERE id = #{userId}")
+  User getUser(String userId);
+
+} ]]></programlisting>
+
+      This interface is added to Spring using a
+      <literal>MapperFactoryBean</literal> like the following:
+
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+  <property name="mapperInterface" value="sample.UserMapper" />
+</bean>]]></programlisting>
+
+      Note that the mapper class specified <emphasis>must</emphasis> be an
+      interface, not an actual implementation class. In this example,
+      annotations are used to specify the SQL, but a MyBatis mapper XML file
+      could also be used.
+    </para>
+
+    <para>
+       Once configured, you can inject mappers directly into your
+       business/service objects in the same way you inject any other Spring
+       bean. The <literal>MapperFactoryBean</literal> handles creating an
+       SqlSession as well as closing it. If there is a Spring transaction in
+       progress, the session will also be committed or rolledback when the
+       transaction completes. Finally,any exceptions will be translated into
+       Spring <literal>DataAccessException</literal>s.
+     </para>
+     
+     <para>
+       Calling MyBatis data methods is now only one line of code:
+       <programlisting language="java"><![CDATA[User user = userMapper.getUser(userId);]]></programlisting>
+     </para>
+
+  </section>
+</chapter>

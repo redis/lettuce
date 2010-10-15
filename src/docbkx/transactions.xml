@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id$
+-->
+<chapter id="transactions">
+  <title>Transactions</title>
+
+  <para>
+    One of the primary reasons for using MyBatis-Spring is that it allows
+    MyBatis to participate in Spring transactions. Rather than create a new
+    transaction manager specific to MyBatis, MyBatis-Spring leverages the
+    existing <literal>DataSourceTransactionManager</literal> in Spring.
+  </para>
+
+  <para>
+    To enable Spring transaction processing, simply create a
+    <literal>DataSourceTransactionManager</literal> as you normally would in
+    your Spring XML configuration file:
+    
+    <programlisting language="xml"><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></programlisting>
+    
+    Note that the <literal>DataSource</literal> specified for the transaction
+    manager <emphasis>must</emphasis> be the same one that is used to create
+    the <literal>SqlSessionFactoryBean</literal> or transaction management will
+    not work.
+  </para>
+
+  <para>
+    Once the <literal>DataSourceTransactionManager</literal> is configured, you
+    can configure transactions in Spring as you normally would. Both
+    <literal>@Transactional</literal> annotations as well as AOP style
+    configurations are supported. A single <literal>SqlSession</literal>
+    object will be created and used for the duration of the transaction. This
+    session will be committed or rolledback as appropriate when then
+    transaction completes.
+  </para>
+
+  <para>
+    MyBatis-Spring will transparently manage transactions once they are set up.
+    There is no need for additional code in your DAO classes.
+  </para>
+</chapter>
