@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis-parent</artifactId>
-        <version>1.0.1</version>
+        <version>3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -66,9 +66,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.0</version>
                 <configuration>
-                    <arguments>-Psonatype-oss-release,docbook,bundle,gupload</arguments>
+                    <arguments>-Prelease,docbook,bundle,gupload</arguments>
                 </configuration>
             </plugin>
         </plugins>
