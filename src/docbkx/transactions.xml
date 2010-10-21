@@ -51,7 +51,7 @@
       To enable Spring transaction processing, simply create a
       <literal>DataSourceTransactionManager</literal> in your Spring XML
       configuration file:
-    
+
       <programlisting language="xml"><![CDATA[<bean id="transactionManager"
     class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
   <property name="dataSource" ref="dataSource" />
@@ -64,7 +64,7 @@
       obtained through JNDI lookups.
     </para>
 
-    <para>    
+    <para>
       Note that the <literal>DataSource</literal> specified for the transaction
       manager <emphasis>must</emphasis> be the same one that is used to create
       the <literal>SqlSessionFactoryBean</literal> or transaction management will

@@ -21,7 +21,7 @@
 -->
 <chapter id="mappers">
   <title>MapperFactoryBean</title>
-        
+
   <para>
     Rather than code data access objects (DAOs) manually, Mybatis-Spring
     provides a dynamic proxy implmentation:
@@ -58,7 +58,7 @@
       application. Because a proxy is created at runtime, the specified Mapper
       <emphasis>must</emphasis> be an interface, not an implementation class.
     </para>
-    
+
     <para>
       If the UserMapper has a corresponding MyBatis XML mapper file, it will be
       parsed automatically by the <literal>MapperFactoryBean</literal> if the
@@ -77,6 +77,7 @@
       so neither needs to be set explictly.
     </para>
   </section>
+
   <section id="mappers.inject">
     <title>Injecting Mappers</title>
 
@@ -89,7 +90,7 @@
 </bean>]]></programlisting>
 
        This bean can be used directly in application logic:
-      
+
       <programlisting language="java"><![CDATA[public class FooService {
   private UserMapper userMapper;
 
@@ -106,7 +107,7 @@
        rolledback when the transaction completes. 
      </para>
   </section>
-  
+
   <section id="mappers.scanner">
     <title>Mapper Scanning</title>
     <para>
@@ -143,5 +144,5 @@ public interface UserMapper {
       class name.
     </para>
    </section>
-  
+
 </chapter>

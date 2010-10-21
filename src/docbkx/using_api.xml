@@ -46,7 +46,7 @@
       return (User) session.selectOne("sample.UserMapper.getUser", userId);
     } finally {
       session.close();
-    }   
+    }
   }
 }]]></programlisting>
   </para>

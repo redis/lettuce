@@ -36,7 +36,7 @@
       participate in Spring transactions. Switching between the two classes in
       the same application can cause data integrity issues.
     </para>
-    
+
     <para>
       When calling SQL methods, inluding any method from Mappers returned from
       <literal>getMapper()</literal>,  <literal>SqlSessionTemplate</literal>
@@ -73,12 +73,12 @@
     }
   });
 }]]></programlisting>
-	</para>
+    </para>
   </section>
 
   <section id="templates_support.daosupport">
     <title>SqlSessionDaoSupport</title>
-    
+
     <para>
       <literal>SqlSessionDaoSupport</literal> is a support class that builds a
       <literal>SqlSessionTemplate</literal> for you. Calling
@@ -96,6 +96,6 @@
       since it requires no extra code. But, this class is useful if you need
       to do other non-MyBatis work in your DAO and concrete classes are
       required.
-	</para>    
+    </para>
   </section>
 </chapter>

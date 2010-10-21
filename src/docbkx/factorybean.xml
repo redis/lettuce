@@ -27,10 +27,10 @@
     <literal>SqlSessionFactoryBuilder</literal>. In MyBatis-Spring,
     <literal>SqlSessionFactoryBean</literal> is used instead.
   </para>
-  
+
   <section id="factorybean.setup">
     <title>Setup</title>
-  
+
     <para>
       To create the factory bean, put the following in the Spring XML
       configuration file:
@@ -86,7 +86,7 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
       <literal>SqlSessionFactoryBean</literal> creates its own, custom MyBatis
       <literal>Environment</literal> with these values set as required.
     </para>
-    
+
     <para>
       Another reason to require a config file is if the MyBatis mapper XML
       files are not in the same classpath location as the mapper classes. With
@@ -111,6 +111,6 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
 
       This will load all the MyBatis mapper XML files in the
       sample.config.mappers package and its subpackages from the classpath.
-    </para>    
+    </para>
   </section>
 </chapter>
