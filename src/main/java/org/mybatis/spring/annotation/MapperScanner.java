@@ -69,7 +69,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         Set<Class<?>> mapperInterfaces = searchForMappers();
-        if (mapperInterfaces.size() == 0) {
+        if (mapperInterfaces.isEmpty()) {
             if (logger.isDebugEnabled()) {
                 logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
             }
