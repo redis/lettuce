@@ -106,7 +106,7 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
 
      <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
-  <property name="mapperLocations" value="classpath:sample/config/mappers/**/*.xml" />
+  <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
 </bean>]]></programlisting>
 
       This will load all the MyBatis mapper XML files in the
