@@ -52,8 +52,8 @@ import org.springframework.util.ObjectUtils;
  *
  * Either {@link org.springframework.jdbc.datasource.DataSourceTransactionManager} or
  * {@link org.springframework.transaction.jta.JtaTransactionManager} can be used for transaction
- * demarcation in combination with a SqlSessionFactory, with JTA only necessary for transactions
- * which span multiple databases.
+ * demarcation in combination with a SqlSessionFactory. JTA should be used for transactions
+ * which span multiple databases or when container managed transactions (CMT) are being used.
  *
  * Allows for specifying a DataSource at the SqlSessionFactory level. This is preferable to per-DAO
  * DataSource references, as it allows for lazy loading and avoids repeated DataSource references in

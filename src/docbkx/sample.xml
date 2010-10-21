@@ -45,9 +45,7 @@
 
     <programlisting language="java"><![CDATA[@Transactional
 public interface FooService {
-
   User doSomeBusinessStuff(String userId);
-
 }]]></programlisting>
 
     Notice that transactional behaviour is configured with the
@@ -62,7 +60,6 @@ public interface FooService {
     MyBatis methods.
 
     <programlisting language="java"><![CDATA[public class FooServiceImpl implements FooService {
-
   private UserMapper userMapper;
 
   public void setUserMapper(UserMapper userMapper) {

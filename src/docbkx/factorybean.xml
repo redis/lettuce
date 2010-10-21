@@ -23,7 +23,7 @@
   <title>SqlSessionFactoryBean</title>
 
   <para>
-    In base MyBatis, the session factory would be built using
+    In base MyBatis, the session factory can be built using
     <literal>SqlSessionFactoryBuilder</literal>. In MyBatis-Spring,
     <literal>SqlSessionFactoryBean</literal> is used instead.
   </para>

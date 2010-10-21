@@ -80,10 +80,8 @@
       Assume you have a data mapper class defined like the following:
 
       <programlisting language="java"><![CDATA[public interface UserMapper {
-
   @Select("SELECT * FROM user WHERE id = #{userId}")
   User getUser(String userId);
-
 } ]]></programlisting>
 
       This interface is added to Spring using a

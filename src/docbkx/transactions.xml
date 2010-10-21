@@ -30,23 +30,8 @@
   </para>
 
   <para>
-    To enable Spring transaction processing, simply create a
-    <literal>DataSourceTransactionManager</literal> as you normally would in
-    your Spring XML configuration file:
-    
-    <programlisting language="xml"><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-  <property name="dataSource" ref="dataSource" />
-</bean>]]></programlisting>
-    
-    Note that the <literal>DataSource</literal> specified for the transaction
-    manager <emphasis>must</emphasis> be the same one that is used to create
-    the <literal>SqlSessionFactoryBean</literal> or transaction management will
-    not work.
-  </para>
-
-  <para>
-    Once the <literal>DataSourceTransactionManager</literal> is configured, you
-    can configure transactions in Spring as you normally would. Both
+    Once a Spring PlatformTransactionManager is configured, you can configure
+    transactions in Spring as you normally would. Both
     <literal>@Transactional</literal> annotations as well as AOP style
     configurations are supported. A single <literal>SqlSession</literal>
     object will be created and used for the duration of the transaction. This
@@ -58,4 +43,65 @@
     MyBatis-Spring will transparently manage transactions once they are set up.
     There is no need for additional code in your DAO classes.
   </para>
+
+  <section  id="transactions.datasource">
+    <title>Standard Configuration</title>
+
+    <para>
+      To enable Spring transaction processing, simply create a
+      <literal>DataSourceTransactionManager</literal> in your Spring XML
+      configuration file:
+    
+      <programlisting language="xml"><![CDATA[<bean id="transactionManager"
+    class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></programlisting>
+    </para>
+
+    <para>
+      The DataSource specified can be any JDBC DataSource you would normally
+      use with Spring. This includes connection pools as well as DataSources
+      obtained through JNDI lookups.
+    </para>
+
+    <para>    
+      Note that the <literal>DataSource</literal> specified for the transaction
+      manager <emphasis>must</emphasis> be the same one that is used to create
+      the <literal>SqlSessionFactoryBean</literal> or transaction management will
+      not work.
+    </para>
+  </section>
+
+  <section id="transactions.cmt">
+    <title>Container Managed Transactions</title>
+
+    <para>
+      If you are using a JEE container and would like Spring to participate in
+      container managed transactions (CMT), then Spring should be configured
+      with a <literal>JtaTransactionManager</literal> or one of its container
+      specific subclasses. The easiest way to do this is to use the Spring
+      transaction namespace:
+
+      <programlisting language="xml"><![CDATA[<tx:jta-transaction-manager />]]></programlisting>
+
+      In this configuration, MyBatis will behave like any other Spring
+      transactional resource configured with CMT. Spring will automatically use
+      any existing container transaction and attach an SqlSession to it. If no
+      transaction is started and one is needed based on the transaction
+      configuration, Spring will start a new container managed transaction.
+    </para>
+
+    <para>
+      Note that if you want to use CMT and do <emphasis>not</emphasis> want to
+      use Spring transaction management, you <emphasis>must</emphasis>
+      configure the SqlSessionFactoryBean to use the base MyBatis
+      <literal>ManagedTransactionFactory</literal>:
+
+      <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
+  <property name="dataSource" ref="dataSource" /> 
+  <property name="transactionFactoryClass"
+    value="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
+</bean>]]></programlisting>
+    </para>
+  </section>
 </chapter>

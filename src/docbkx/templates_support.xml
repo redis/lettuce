@@ -65,7 +65,6 @@
       custom <literal>SqlSessionCallback</literal> as an argument so that you
       can execute more than one SQL method on a <literal>SqlSession</literal>:
       <programlisting language="java"><![CDATA[public void insertUser(final User user) {
-
   getSqlSessionTemplate().execute(new SqlSessionCallback<Object>() {
     public Object doInSqlSession(SqlSession sqlSession) {
       sqlSession.insert("sample.UserMapper.insertUser", user);
@@ -95,8 +94,8 @@
 
       Usually <literal>MapperFactoryBean</literal> is preferred to this class,
       since it requires no extra code. But, this class is useful if you need
-      to do other non-MyBatis work in your DAO classes which require concrete
-      implementations. 
+      to do other non-MyBatis work in your DAO and concrete classes are
+      required.
 	</para>    
   </section>
 </chapter>

@@ -47,7 +47,7 @@
     <para>
       A data mapper interface is added to Spring like the following:
 
-      <programlisting><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="sample.UserMapper" />
 </bean>]]></programlisting>
     </para>
@@ -90,7 +90,7 @@
 
        This bean can be used directly in application logic:
       
-      <programlisting><![CDATA[public class FooService {
+      <programlisting language="java"><![CDATA[public class FooService {
   private UserMapper userMapper;
 
   ...
@@ -112,7 +112,7 @@
     <para>
       There is no need to register all your mappers in the Spring XML file.
       Instead, you can use a <literal>MapperScanner</literal> that will search
-      your classpath for your mappers set them up automatically.        
+      your classpath for your mappers and set them up automatically.        
     </para>
 
     <para>
@@ -133,9 +133,7 @@
       classes they <emphasis>must</emphasis> be annotated with the
       <literal>@Mapper</literal> annotation.   
 
-      <programlisting language="java"><![CDATA[import org.mybatis.spring.annotation.Mapper;
-
-@Mapper("userMapper")
+      <programlisting language="java"><![CDATA[@Mapper("userMapper")
 public interface UserMapper {
     User getUser(String userId);
 }]]></programlisting>
