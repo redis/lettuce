@@ -71,7 +71,9 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
         Set<Class<?>> mapperInterfaces = searchForMappers();
         if (mapperInterfaces.isEmpty()) {
             if (logger.isDebugEnabled()) {
-                logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
+                logger.debug("No MyBatis mapper was found in '"
+                        + this.basePackage
+                        + "' package. Make sure your mappers are annotated with @Mapper");
             }
         } else {
             registerMappers(registry, mapperInterfaces);
@@ -80,7 +82,9 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     private Set<Class<?>> searchForMappers() {
         if (logger.isDebugEnabled()) {
-            logger.debug("Searching for MyBatis mappers");
+            logger.debug("Searching for MyBatis mappers in '"
+                        + this.basePackage
+                        + "' package");
         }
 
         String[] basePackagesArray = 
@@ -92,7 +96,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
 
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Registering MyBatis mappers");
+            logger.debug("Registering MyBatis mappers " + mapperInterfaces);
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
