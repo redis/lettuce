@@ -34,6 +34,12 @@
             <action type="update">
                 Added the MapperScanner.
             </action>
+            <action type="update">
+                Add operation select(String, ResultHandler) to SqlSessionTemplate
+            </action>
+            <action type="fix">
+                SqlSessionCallback.doInSqlSession should not throw SqlException
+            </action>
         </release>
 
         <release version="1.0.0-RC1" date="2010-09-22" description="1.0.0-RC1 release">
