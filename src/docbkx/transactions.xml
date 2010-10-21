@@ -65,7 +65,7 @@
     </para>
 
     <para>
-      Note that the <literal>DataSource</literal> specified for the transaction
+      Note that the DataSource specified for the transaction
       manager <emphasis>must</emphasis> be the same one that is used to create
       the <literal>SqlSessionFactoryBean</literal> or transaction management will
       not work.
@@ -86,7 +86,7 @@
 
       In this configuration, MyBatis will behave like any other Spring
       transactional resource configured with CMT. Spring will automatically use
-      any existing container transaction and attach an SqlSession to it. If no
+      any existing container transaction and attach an <literal>SqlSession</literal> to it. If no
       transaction is started and one is needed based on the transaction
       configuration, Spring will start a new container managed transaction.
     </para>
@@ -94,7 +94,7 @@
     <para>
       Note that if you want to use CMT and do <emphasis>not</emphasis> want to
       use Spring transaction management, you <emphasis>must</emphasis>
-      configure the SqlSessionFactoryBean to use the base MyBatis
+      configure the <literal>SqlSessionFactoryBean</literal> to use the base MyBatis
       <literal>ManagedTransactionFactory</literal>:
 
       <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 

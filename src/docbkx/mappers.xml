@@ -65,13 +65,13 @@
       XML file is in the same classpath location as the Mapper class. There
       is no need to specify the mapper in a MyBatis configuration file unless
       the mapper XML files are in a different location. See the
-      SqlSessionFactoryBean's 
+      <literal>SqlSessionFactoryBean</literal>'s 
       <link linkend="factorybean.configlocation">configLocation</link>
       property for more information.
     </para>
 
     <para>
-      Note that while MapperFactoryBean requires either an
+      Note that while <literal>MapperFactoryBean</literal> requires either an
       <literal>SqlSessionFactory</literal> or a
       <literal>SqlSessionTemplate</literal>. These will be autowired by Spring
       so neither needs to be set explictly.
@@ -101,7 +101,7 @@
   }
 }]]></programlisting>
 
-       Notice that there are no SqlSession or MyBatis references in this code.
+       Notice that there are no <literal>SqlSession</literal> or MyBatis references in this code.
        Nor is there any need to create, open or close the session. If there is
        a Spring transaction in progress, the session will also be committed or
        rolledback when the transaction completes. 

@@ -53,7 +53,7 @@
 
   <para>
     Note that this usage will <emphasis>not</emphasis> participate in any
-    Spring transactions. Further, if the SqlSession is using a
+    Spring transactions. Further, if the <literal>SqlSession</literal> is using a
     <literal>DataSource</literal> that is also being used by a Spring
     transaction manager and there is currently a transaction in progress, this
     code <emphasis>will</emphasis> throw an exception. For this reason, if you
