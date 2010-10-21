@@ -75,7 +75,7 @@
 
     <properties>
         <findbugs.onlyAnalyze>org.mybatis.spring.*</findbugs.onlyAnalyze>
-        <spring.version>3.0.4.RELEASE</spring.version>
+        <spring.version>3.0.5.RELEASE</spring.version>
     </properties>
 
     <dependencies>
