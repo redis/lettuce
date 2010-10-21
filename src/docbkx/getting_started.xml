@@ -33,7 +33,7 @@
       exceptions into Spring DataAccessExceptions.
     </para>
   </section>
-    
+
   <section id="getting_started.installation">
     <title>Installation</title>
     <para>
@@ -51,7 +51,7 @@
 </dependency>]]></programlisting>
     </para>
   </section>
-    
+
   <section id="getting_started.setup">
     <title>Quick Setup</title>
     <para>
@@ -59,7 +59,7 @@
       Spring application context: an <literal>SqlSessionFactory</literal> and
       at least one data mapper class.
     </para>
-    
+
     <para>
       In MyBatis-Spring, an <literal>SqlSessionFactoryBean</literal> is used to
       create an <literal>SqlSessionFactory</literal>. To configure the
@@ -81,7 +81,7 @@
 
       <programlisting language="java"><![CDATA[public interface UserMapper {
   @Select("SELECT * FROM user WHERE id = #{userId}")
-  User getUser(String userId);
+  User getUser(@Param("userId") String userId);
 } ]]></programlisting>
 
       This interface is added to Spring using a
@@ -106,7 +106,7 @@
        transaction completes. Finally,any exceptions will be translated into
        Spring <literal>DataAccessException</literal>s.
      </para>
-     
+
      <para>
        Calling MyBatis data methods is now only one line of code:
        <programlisting language="java"><![CDATA[User user = userMapper.getUser(userId);]]></programlisting>
