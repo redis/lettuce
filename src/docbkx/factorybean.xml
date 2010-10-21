@@ -42,7 +42,7 @@
       Note that <literal>SqlSessionFactoryBean</literal> implements Spring's
       <literal>FactoryBean</literal> interface (see section 3.8 of the Spring
       documentation). This means that the bean Spring ultimately creates is
-      <emphasis>not</emphasis> the SqlSessionFactoryBean itself, but what the
+      <emphasis>not</emphasis> the <literal>SqlSessionFactoryBean</literal> itself, but what the
       factory returns as a result of the <literal>getObject()</literal> call on
       the factory. In this case, Spring will build an
       <literal>SqlSessionFactory</literal> for you at application startup and
