@@ -70,16 +70,19 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         Set<Class<?>> mapperInterfaces = searchForMappers();
         if (mapperInterfaces.size() == 0) {
-            logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
+            if (logger.isDebugEnabled()) {
+                logger.debug("No MyBatis mapper was found. Make sure your mappers are annotated with @Mapper");
+            }
         } else {
             registerMappers(registry, mapperInterfaces);
         }
     }
 
     private Set<Class<?>> searchForMappers() {
-        
-        logger.debug("Searching for MyBatis mappers");
-        
+        if (logger.isDebugEnabled()) {
+            logger.debug("Searching for MyBatis mappers");
+        }
+
         String[] basePackagesArray = 
             StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
         ResolverUtil<Object> resolver = new ResolverUtil<Object>();
@@ -88,9 +91,10 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
     }
 
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
-        
-        logger.debug("Registering MyBatis mappers");
-        
+        if (logger.isDebugEnabled()) {
+            logger.debug("Registering MyBatis mappers");
+        }
+
         for (Class<?> mapperInterface : mapperInterfaces) {
             BeanDefinition beanDefinition = 
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
@@ -104,4 +108,5 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
             registry.registerBeanDefinition(name, beanDefinition);
         }
     }
+
 }
