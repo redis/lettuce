@@ -22,17 +22,14 @@
 <chapter id="getting_started">
   <title>Getting Started</title>
 
-  <section id="getting_started.intro">
-    <title>Introduction</title>
-    <para>
-      MyBatis-Spring helps you integrate your MyBatis code  seamlessly with
-      Spring. Using the classes in this library, Spring will load the necessary
-      MyBatis factory and session classes for you. This library also provides
-      an easy way to inject MyBatis data mappers into your service beans.
-      Finally, MyBatis-Spring will handle transactions and translate MyBatis
-      exceptions into Spring DataAccessExceptions.
-    </para>
-  </section>
+  <para>
+    MyBatis-Spring helps you integrate your MyBatis code seamlessly with
+    Spring. Using the classes in this library, Spring will load the necessary
+    MyBatis factory and session classes for you. This library also provides
+    an easy way to inject MyBatis data mappers into your service beans.
+    Finally, MyBatis-Spring will handle transactions and translate MyBatis
+    exceptions into Spring DataAccessExceptions.
+  </para>
 
   <section id="getting_started.installation">
     <title>Installation</title>
