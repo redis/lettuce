@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis-parent</artifactId>
-        <version>3</version>
+        <version>4</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -71,6 +71,7 @@
     <properties>
         <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.annotation.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
         <spring.version>3.0.5.RELEASE</spring.version>
+        <clirr.comparisonVersion>1.0.0-RC1</clirr.comparisonVersion>
     </properties>
 
     <dependencies>
