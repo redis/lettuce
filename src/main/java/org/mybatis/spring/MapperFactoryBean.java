@@ -68,7 +68,7 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {
     }
 
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(mapperInterface, "Property 'MapperInterface' is required");
+        Assert.notNull(mapperInterface, "Property 'mapperInterface' is required");
 
         if (sqlSessionFactory == null && sqlSessionTemplate == null) {
             throw new IllegalArgumentException("Property 'sqlSessionFactory' is required");
@@ -82,10 +82,8 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {
             sqlSessionTemplate.setDataSource(dataSource);
         }
 
-        if (addToConfig) {
-            if (!sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
-                sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
-            }
+        if (addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
+            sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
         }
     }
 
