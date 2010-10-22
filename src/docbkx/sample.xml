@@ -78,7 +78,7 @@ public interface FooService {
     <literal>MapperFactoryBean</literal> (both directly and through
     <literal>MapperScanner</literal>), with
     <literal>SqlSessionDaoSupport</literal> and with a DAO implemented using
-    the base MyBatis API. Please see <literal>context.xml</literal> for the
+    the base MyBatis API. Please see <literal>applicationContext.xml</literal> for the
     full Spring configuration.
   </para>
 </chapter>
