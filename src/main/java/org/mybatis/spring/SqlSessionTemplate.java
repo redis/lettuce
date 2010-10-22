@@ -107,10 +107,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 
     @Override
     public void afterPropertiesSet() {
-        if (this.sqlSessionFactory == null) {
-            throw new IllegalArgumentException("Property 'sqlSessionFactory' is required");
-        }
-
+        Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         super.afterPropertiesSet();
     }
 
