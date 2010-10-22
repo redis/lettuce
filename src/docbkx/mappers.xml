@@ -29,7 +29,7 @@
     mapper interfaces directly into your service beans. When using mappers you
     simply call them as you have always  called your DAOs, but you won't need
     to code any DAO implementation because MyBatis-Spring will create a proxy
-    for you. 
+    for you.
   </para>
 
   <para>
