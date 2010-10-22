@@ -55,17 +55,17 @@ import org.springframework.util.Assert;
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
-    private SqlSessionTemplate sessionTemplate;
+    private SqlSessionTemplate sqlSessionTemplate;
 
     private boolean externalTemplate;
 
     public SqlSessionDaoSupport() {
-        sessionTemplate = new SqlSessionTemplate();
+        sqlSessionTemplate = new SqlSessionTemplate();
         externalTemplate = false;
     }
 
     public SqlSessionDaoSupport(SqlSessionTemplate sessionTemplate) {
-        this.sessionTemplate = sessionTemplate;
+        this.sqlSessionTemplate = sessionTemplate;
         externalTemplate = true;
     }
 
@@ -79,7 +79,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      */
     public final void setDataSource(DataSource dataSource) {
         if (!this.externalTemplate) {
-            this.sessionTemplate.setDataSource(dataSource);
+            this.sqlSessionTemplate.setDataSource(dataSource);
         }
     }
 
@@ -87,7 +87,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      * Return the JDBC DataSource used by this DAO.
      */
     public final DataSource getDataSource() {
-        return this.sessionTemplate.getDataSource();
+        return this.sqlSessionTemplate.getDataSource();
     }
 
     /**
@@ -97,10 +97,10 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      * 
      * @see #setSqlSessionTemplate
      */
-    @Autowired
+    @Autowired(required=false)
     public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
         if (!this.externalTemplate) {
-            this.sessionTemplate.setSqlSessionFactory(sessionFactory);
+            this.sqlSessionTemplate.setSqlSessionFactory(sessionFactory);
         }
     }
 
@@ -108,7 +108,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      * Return the SqlSessionFactory that this DAO uses.
      */
     public final SqlSessionFactory getSqlSessionFactory() {
-        return this.sessionTemplate.getSqlSessionFactory();
+        return this.sqlSessionTemplate.getSqlSessionFactory();
     }
 
     /**
@@ -117,8 +117,9 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      * 
      * @see #setSqlSessionFactory
      */
+    @Autowired(required=false)
     public final void setSqlSessionTemplate(SqlSessionTemplate sessionTemplate) {
-        this.sessionTemplate = sessionTemplate;
+        this.sqlSessionTemplate = sessionTemplate;
         this.externalTemplate = true;
     }
 
@@ -127,12 +128,12 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      * explicitly.
      */
     public final SqlSessionTemplate getSqlSessionTemplate() {
-        return this.sessionTemplate;
+        return this.sqlSessionTemplate;
     }
 
     protected void checkDaoConfig() {
-        Assert.notNull(sessionTemplate, "Property 'SqlSessionTemplate' is required");
-        this.sessionTemplate.afterPropertiesSet();
+        Assert.notNull(sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
+        this.sqlSessionTemplate.afterPropertiesSet();
     }
 
 }
