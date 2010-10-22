@@ -32,13 +32,19 @@
                 Improved documentation manual.
             </action>
             <action type="update">
-                Added the MapperScanner.
+                Issue 130: Component Scan for Mappers
             </action>
             <action type="update">
-                Add operation select(String, ResultHandler) to SqlSessionTemplate
+                Issue 116: Add operation select(String, ResultHandler):void
             </action>
             <action type="fix">
-                SqlSessionCallback.doInSqlSession should not throw SqlException
+                Issue 154: SqlSessionCallback.doInSqlSession should not throw SqlException
+            </action>
+            <action type="fix">
+                Issue 153: Close InputStreamReader after read configuration files.
+            </action>
+            <action type="update">
+				Issue 151: Rename package in test-resources and remove package 'flavour'.            
             </action>
         </release>
 
