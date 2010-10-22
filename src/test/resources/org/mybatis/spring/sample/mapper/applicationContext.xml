@@ -65,7 +65,7 @@
 
     <!-- or you can scan for mappers -->
     <bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
-        <property name="basePackage" value="org.mybatis.spring.sample" />
+        <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
     </bean>
 
     <!-- option2 extending SqlSessionDaoSupport -->
