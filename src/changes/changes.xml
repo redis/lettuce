@@ -31,17 +31,17 @@
             <action type="update">
                 Improved documentation manual.
             </action>
-            <action type="update">
-                Issue 130: Component Scan for Mappers
+            <action type="update" issue="130">
+                Component Scan for Mappers.
             </action>
-            <action type="update">
-                Issue 116: Add operation select(String, ResultHandler):void
+            <action type="update" issue="116">
+                Add operation select(String, ResultHandler):void.
+            </action>
+            <action type="fix" issue="154">
+                SqlSessionCallback.doInSqlSession should not throw SqlException.
             </action>
             <action type="fix">
-                Issue 154: SqlSessionCallback.doInSqlSession should not throw SqlException
-            </action>
-            <action type="fix">
-                Minor code fixes 
+                Minor code fixes.
             </action>
         </release>
 
