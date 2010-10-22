@@ -101,13 +101,13 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
     public void checkDaoConfig() {
         Assert.notNull(mapperInterface, "Property 'mapperInterface' is required");
         Assert.notNull(sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
-
+       
+        sqlSessionTemplate.afterPropertiesSet();
+        
         SqlSessionFactory sqlSessionFactory = sqlSessionTemplate.getSqlSessionFactory();
         if (addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
             sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
         }
-        
-        sqlSessionTemplate.afterPropertiesSet();
     }
 
     public T getObject() throws Exception {
