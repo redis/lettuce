@@ -96,13 +96,16 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Registering MyBatis mappers " + mapperInterfaces);
+            logger.debug("Registering MyBatis mappers");
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
             BeanDefinition beanDefinition =
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Registering MyBatis mapper with '" + mapperInterface + "' mapperInterface");
+            }            
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
             mutablePropertyValues.addPropertyValue("addToConfig", addToConfig);
             String name = mapperInterface.getAnnotation(Mapper.class).value();
