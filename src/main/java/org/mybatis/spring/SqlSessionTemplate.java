@@ -84,6 +84,12 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         afterPropertiesSet();
     }
 
+    public SqlSessionTemplate(DataSource dataSource, SqlSessionFactory sqlSessionFactory) {
+        setSqlSessionFactory(sqlSessionFactory);
+        setDataSource(dataSource);
+        afterPropertiesSet();
+    }
+    
     public SqlSessionFactory getSqlSessionFactory() {
         return sqlSessionFactory;
     }
