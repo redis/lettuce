@@ -67,7 +67,7 @@ import org.springframework.util.ObjectUtils;
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean {
 
-    protected final Log logger = LogFactory.getLog(getClass());
+    private final Log logger = LogFactory.getLog(getClass());
 
     private Resource configLocation;
 
