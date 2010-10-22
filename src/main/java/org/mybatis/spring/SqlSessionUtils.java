@@ -129,7 +129,7 @@ public final class SqlSessionUtils {
             }
             holder = new SqlSessionHolder(session);
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
-            TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory, dataSource));
+            TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
             holder.setSynchronizedWithTransaction(true);
             holder.requested();
         }
@@ -164,7 +164,7 @@ public final class SqlSessionUtils {
         private final SqlSessionHolder holder;
         private final SqlSessionFactory sessionFactory;
 
-        public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory, DataSource dataSource) {
+        public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory) {
             Assert.notNull(holder);
             Assert.notNull(sessionFactory);
 
