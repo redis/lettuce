@@ -47,9 +47,9 @@
     <para>
       A data mapper interface is added to Spring like the following:
 
-      <programlisting language="xml"><![CDATA[<![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
-</bean>]]>]]></programlisting>
+</bean>]]></programlisting>
     </para>
 
     <para>
@@ -85,9 +85,9 @@
        You can inject mappers directly on your business/service objects in the
        same way you inject any other Spring bean:
 
-       <programlisting language="xml"><![CDATA[<![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+       <programlisting language="xml"><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
-</bean>]]>]]></programlisting>
+</bean>]]></programlisting>
 
        This bean can be used directly in application logic:
 
@@ -101,25 +101,26 @@
   }
 }]]></programlisting>
 
-       Notice that there are no <literal>SqlSession</literal> or MyBatis references in this code.
-       Nor is there any need to create, open or close the session. If there is
-       a Spring transaction in progress, the session will also be committed or
-       rolledback when the transaction completes. 
+       Notice that there are no <literal>SqlSession</literal> or MyBatis
+       references in this code.  Nor is there any need to create, open or close
+       the session. If there is a Spring transaction in progress, the session
+       will also be committed or rolledback when the transaction completes. 
      </para>
   </section>
 
-  <section id="mappers.scanner">
-    <title>Mapper Scanning</title>
+  <section id="mappers.autoconfig">
+    <title>Automatic Configuration</title>
     <para>
       There is no need to register all your mappers in the Spring XML file.
-      Instead, you can use a <literal>MapperScanner</literal> that will search
-      your classpath for your mappers and set them up automatically.        
+      Instead, you can use a <literal>MapperScannerPostProcessor</literal> that
+      will search your classpath for your mappers and set them up
+      automatically.        
     </para>
 
     <para>
-      To set up a <literal>MapperScanner</literal> add the following to the
-      Spring configuration:
-      <programlisting language="xml"><![CDATA[<bean class="org.mybatis.spring.annotation.MapperScanner">
+      To set up a <literal>MapperScannerPostProcessor</literal> add the
+      following to the Spring configuration:
+      <programlisting language="xml"><![CDATA[<bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
   <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></programlisting>
 
@@ -130,8 +131,8 @@
     </para>
 
     <para>
-      To enable <literal>MapperScanner</literal> to identify your mapper
-      classes they <emphasis>must</emphasis> be annotated with the
+      To enable <literal>MapperScannerPostProcessor</literal> to identify your
+      mapper classes they <emphasis>must</emphasis> be annotated with the
       <literal>@Mapper</literal> annotation.   
 
       <programlisting language="java"><![CDATA[@Mapper("userMapper")

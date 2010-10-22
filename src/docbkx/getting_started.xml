@@ -86,7 +86,7 @@
 
       <programlisting language="xml"><![CDATA[<![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
-</bean>]]>]]></programlisting>
+</bean>]]></programlisting>
 
       Note that the mapper class specified <emphasis>must</emphasis> be an
       interface, not an actual implementation class. In this example,
