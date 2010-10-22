@@ -280,7 +280,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         if (!ObjectUtils.isEmpty(mapperLocations)) {
             Map<String, XNode> sqlFragments = new HashMap<String, XNode>();
 
-            Reader reader = null;
             for (Resource mapperLocation : mapperLocations) {
                 if (mapperLocation == null) {
                     continue;
@@ -304,6 +303,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     path = mapperLocation.getURI().getPath();
                 }
 
+                Reader reader = null;
                 try {
                     reader = new InputStreamReader(mapperLocation.getInputStream());
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, path, sqlFragments);
@@ -323,8 +323,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     logger.debug("Parsed mapper file: '" + mapperLocation + "'");
                 }
             }
-        } else if (logger.isDebugEnabled()) {
-            logger.debug("Property 'mapperLocations' was not specified, only MyBatis mapper files specified in the config xml were loaded");
+        } else {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Property 'mapperLocations' was not specified, only MyBatis mapper files specified in the config xml were loaded");
+            }
         }
 
         return sqlSessionFactoryBuilder.build(configuration);
