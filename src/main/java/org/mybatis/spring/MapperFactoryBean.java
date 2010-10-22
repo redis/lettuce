@@ -19,8 +19,8 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.support.DaoSupport;
 import org.springframework.util.Assert;
 
 /**
@@ -29,62 +29,106 @@ import org.springframework.util.Assert;
  * @see SqlSessionTemplate
  * @version $Id$
  */
-public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean {
-
-    private DataSource dataSource;
+public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T>  {
 
     private Class<T> mapperInterface;
 
-    @Autowired(required=false)
-    private SqlSessionFactory sqlSessionFactory;
-
-    @Autowired(required=false)
-    private SqlSessionTemplate sqlSessionTemplate;
-
     private boolean addToConfig = true;
 
+    private SqlSessionTemplate sqlSessionTemplate;
+
+    private boolean externalTemplate;
+
     public MapperFactoryBean() {
-        super();
+        sqlSessionTemplate = new SqlSessionTemplate();
+        externalTemplate = false;
     }
 
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public MapperFactoryBean(SqlSessionTemplate sessionTemplate) {
+        this.sqlSessionTemplate = sessionTemplate;
+        externalTemplate = true;
+    }
+
+    /**
+     * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a
+     * shared DataSource.
+     * <p>
+     * This is a no-op if an external SqlSessionTemplate has been set.
+     * 
+     * @see #setSqlSessionFactory
+     */
+    public final void setDataSource(DataSource dataSource) {
+        if (!this.externalTemplate) {
+            this.sqlSessionTemplate.setDataSource(dataSource);
+        }
+    }
+
+    /**
+     * Return the JDBC DataSource used by this DAO.
+     */
+    public final DataSource getDataSource() {
+        return this.sqlSessionTemplate.getDataSource();
+    }
+
+    /**
+     * Set the SqlSessionFactory to work with.
+     * <p>
+     * This is a no-op if an external SqlSessionTemplate has been set.
+     * 
+     * @see #setSqlSessionTemplate
+     */
+    @Autowired(required=false)
+    public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
+        if (!this.externalTemplate) {
+            this.sqlSessionTemplate.setSqlSessionFactory(sessionFactory);
+        }
+    }
+
+    /**
+     * Return the SqlSessionFactory that this DAO uses.
+     */
+    public final SqlSessionFactory getSqlSessionFactory() {
+        return this.sqlSessionTemplate.getSqlSessionFactory();
+    }
+
+    /**
+     * Set the SqlSessionTemplate for this DAO explicitly, as an alternative to specifying a
+     * SqlSessionFactory.
+     * 
+     * @see #setSqlSessionFactory
+     */
+    @Autowired(required=false)
+    public final void setSqlSessionTemplate(SqlSessionTemplate sessionTemplate) {
+        this.sqlSessionTemplate = sessionTemplate;
+        this.externalTemplate = true;
+    }
+
+    /**
+     * Return the SqlSessionTemplate for this DAO, pre-initialized with the SqlSessionFactory or set
+     * explicitly.
+     */
+    public final SqlSessionTemplate getSqlSessionTemplate() {
+        return this.sqlSessionTemplate;
     }
 
     public void setMapperInterface(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
     }
 
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
-    }
-
-    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSessionTemplate = sqlSessionTemplate;
-    }
-
     public void setAddToConfig(boolean addToConfig) {
         this.addToConfig = addToConfig;
     }
 
-    public void afterPropertiesSet() throws Exception {
+    public void checkDaoConfig() {
         Assert.notNull(mapperInterface, "Property 'mapperInterface' is required");
+        Assert.notNull(sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
 
-        if (sqlSessionFactory == null && sqlSessionTemplate == null) {
-            throw new IllegalArgumentException("Property 'sqlSessionFactory' is required");
-        } else if (sqlSessionTemplate == null) {
-            sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-        } else {
-            sqlSessionFactory = sqlSessionTemplate.getSqlSessionFactory();
-        }
-
-        if (dataSource != null) {
-            sqlSessionTemplate.setDataSource(dataSource);
-        }
-
+        SqlSessionFactory sqlSessionFactory = sqlSessionTemplate.getSqlSessionFactory();
         if (addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
             sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
         }
+        
+        sqlSessionTemplate.afterPropertiesSet();
     }
 
     public T getObject() throws Exception {
