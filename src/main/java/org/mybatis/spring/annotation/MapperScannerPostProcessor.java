@@ -44,9 +44,9 @@ import org.springframework.util.StringUtils;
  * @version $Id$
  */
 
-public class MapperAnnotationBeanPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
+public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
-    private static final Log logger = LogFactory.getLog(MapperAnnotationBeanPostProcessor.class);
+    private static final Log logger = LogFactory.getLog(MapperScannerPostProcessor.class);
 
     private String basePackage;
 
