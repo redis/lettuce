@@ -64,7 +64,7 @@
     </bean>
 
     <!-- or you can scan for mappers -->
-    <bean class="org.mybatis.spring.annotation.MapperScanner">
+    <bean class="org.mybatis.spring.annotation.MapperAnnotationBeanPostProcessor">
         <property name="basePackage" value="org.mybatis.spring.sample" />
     </bean>
 

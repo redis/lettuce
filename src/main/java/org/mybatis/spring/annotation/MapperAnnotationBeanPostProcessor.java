@@ -44,9 +44,9 @@ import org.springframework.util.StringUtils;
  * @version $Id$
  */
 
-public class MapperScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean {
+public class MapperAnnotationBeanPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
-    private static final Log logger = LogFactory.getLog(MapperScanner.class);
+    private static final Log logger = LogFactory.getLog(MapperAnnotationBeanPostProcessor.class);
 
     private String basePackage;
 
@@ -100,7 +100,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor, Initi
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
-            BeanDefinition beanDefinition = 
+            BeanDefinition beanDefinition =
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
