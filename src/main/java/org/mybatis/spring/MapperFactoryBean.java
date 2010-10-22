@@ -35,11 +35,19 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
 
     private boolean addToConfig = true;
 
-    private SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate();
+    private SqlSessionTemplate sqlSessionTemplate;
 
     private boolean externalTemplate;
 
-    public MapperFactoryBean() {}
+    public MapperFactoryBean() {
+        sqlSessionTemplate = new SqlSessionTemplate();
+        externalTemplate = false;
+    }
+
+    public MapperFactoryBean(SqlSessionTemplate sessionTemplate) {
+        this.sqlSessionTemplate = sessionTemplate;
+        externalTemplate = true;
+    }
 
     /**
      * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a
