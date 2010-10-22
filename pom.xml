@@ -69,7 +69,7 @@
     </build>
 
     <properties>
-        <findbugs.onlyAnalyze>org.mybatis.spring.*</findbugs.onlyAnalyze>
+        <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.annotation.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
         <spring.version>3.0.5.RELEASE</spring.version>
     </properties>
 
