@@ -105,7 +105,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering MyBatis mapper with '" + mapperInterface + "' mapperInterface");
-            }            
+            }
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
             mutablePropertyValues.addPropertyValue("addToConfig", addToConfig);
             String name = mapperInterface.getAnnotation(Mapper.class).value();
