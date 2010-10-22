@@ -17,6 +17,7 @@ package org.mybatis.spring;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.transaction.support.ResourceHolderSupport;
+import org.springframework.util.Assert;
 
 /**
  * 
@@ -24,15 +25,15 @@ import org.springframework.transaction.support.ResourceHolderSupport;
  */
 public final class SqlSessionHolder extends ResourceHolderSupport {
 
-    private final SqlSession session;
+    private final SqlSession sqlSession;
 
-    public SqlSessionHolder(SqlSession session) {
-        assert session != null;
-        this.session = session;
+    public SqlSessionHolder(SqlSession sqlSession) {
+        Assert.notNull(sqlSession, "SqlSession must not be null");
+        this.sqlSession = sqlSession;
     }
 
     public SqlSession getSqlSession() {
-        return session;
+        return sqlSession;
     }
 
 }
