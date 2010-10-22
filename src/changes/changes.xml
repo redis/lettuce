@@ -41,10 +41,7 @@
                 Issue 154: SqlSessionCallback.doInSqlSession should not throw SqlException
             </action>
             <action type="fix">
-                Issue 153: Close InputStreamReader after read configuration files.
-            </action>
-            <action type="update">
-				Issue 151: Rename package in test-resources and remove package 'flavour'.            
+                Minor code fixes 
             </action>
         </release>
 
