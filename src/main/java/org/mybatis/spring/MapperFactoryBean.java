@@ -35,19 +35,11 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
 
     private boolean addToConfig = true;
 
-    private SqlSessionTemplate sqlSessionTemplate;
+    private SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate();
 
     private boolean externalTemplate;
 
-    public MapperFactoryBean() {
-        sqlSessionTemplate = new SqlSessionTemplate();
-        externalTemplate = false;
-    }
-
-    public MapperFactoryBean(SqlSessionTemplate sessionTemplate) {
-        this.sqlSessionTemplate = sessionTemplate;
-        externalTemplate = true;
-    }
+    public MapperFactoryBean() {}
 
     /**
      * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a
@@ -61,13 +53,6 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
         if (!this.externalTemplate) {
             this.sqlSessionTemplate.setDataSource(dataSource);
         }
-    }
-
-    /**
-     * Return the JDBC DataSource used by this DAO.
-     */
-    public final DataSource getDataSource() {
-        return this.sqlSessionTemplate.getDataSource();
     }
 
     /**
@@ -85,13 +70,6 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
     }
 
     /**
-     * Return the SqlSessionFactory that this DAO uses.
-     */
-    public final SqlSessionFactory getSqlSessionFactory() {
-        return this.sqlSessionTemplate.getSqlSessionFactory();
-    }
-
-    /**
      * Set the SqlSessionTemplate for this DAO explicitly, as an alternative to specifying a
      * SqlSessionFactory.
      * 
@@ -101,14 +79,6 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
     public final void setSqlSessionTemplate(SqlSessionTemplate sessionTemplate) {
         this.sqlSessionTemplate = sessionTemplate;
         this.externalTemplate = true;
-    }
-
-    /**
-     * Return the SqlSessionTemplate for this DAO, pre-initialized with the SqlSessionFactory or set
-     * explicitly.
-     */
-    public final SqlSessionTemplate getSqlSessionTemplate() {
-        return this.sqlSessionTemplate;
     }
 
     public void setMapperInterface(Class<T> mapperInterface) {
