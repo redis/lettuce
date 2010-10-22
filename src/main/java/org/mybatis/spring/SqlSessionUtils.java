@@ -195,7 +195,7 @@ public final class SqlSessionUtils {
             try {
                 // Do not call commit unless there is really a transaction; no need to commit if
                 // just tx synchronization is active.
-                if ((status == STATUS_COMMITTED)) {
+                if ((STATUS_COMMITTED == status)) {
                     if (TransactionSynchronizationManager.isActualTransactionActive()) {
                         // False here on commit or rollback prevents a call to Transaction.commit()
                         // in BaseExecutor which will be redundant with SpringManagedTransaction
