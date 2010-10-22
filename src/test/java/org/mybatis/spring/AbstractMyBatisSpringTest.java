@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals;
  */
 public abstract class AbstractMyBatisSpringTest {
 
-    protected static CountingMockDataSource dataSource = new CountingMockDataSource();;
+    protected static CountingMockDataSource dataSource = new CountingMockDataSource();
 
     protected static SqlSessionFactory sqlSessionFactory;
 
@@ -95,8 +95,7 @@ public abstract class AbstractMyBatisSpringTest {
             if ((connection != null) && !connection.isClosed()) {
                 fail("Connection is not closed");
             }
-        }
-        catch (SQLException sqle) {
+        } catch (SQLException sqle) {
             fail("cannot call Connection.isClosed() " + sqle.getMessage());
         }
     }

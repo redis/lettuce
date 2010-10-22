@@ -35,8 +35,6 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.mockrunner.mock.jdbc.MockConnection;
 
 /**
- * 
- * 
  * @version $Id$
  */
 public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
@@ -49,15 +47,14 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         if ((session != null) && !executorInterceptor.isExecutorClosed()) {
             session = null;
             fail("SqlSession is not closed");
-        }
-        else {
+        } else {
             session = null;
         }
     }
 
-    // ensure iBatis API still works with SpringManagedTransaction
+    // ensure MyBatis API still works with SpringManagedTransaction
     @Test
-    public void testIbatisAPI() {
+    public void testMyBatisAPI() {
         session = sqlSessionFactory.openSession();
         session.getMapper(TestMapper.class).findTest();
         session.close();
@@ -67,7 +64,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     }
 
     @Test
-    public void testIbatisAPIWithCommit() {
+    public void testMyBatisAPIWithCommit() {
         session = sqlSessionFactory.openSession();
         session.getMapper(TestMapper.class).findTest();
         session.commit(true);
@@ -78,7 +75,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     }
 
     @Test
-    public void testIbatisAPIWithRollback() {
+    public void testMyBatisAPIWithRollback() {
         session = sqlSessionFactory.openSession();
         session.getMapper(TestMapper.class).findTest();
         session.rollback(true);
@@ -88,7 +85,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         assertSingleConnection();
     }
 
-    // basic tests using SqlSessionUtils instead of using the iBatis API directly
+    // basic tests using SqlSessionUtils instead of using the MyBatis API directly
     @Test
     public void testSpringAPI() {
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
@@ -122,7 +119,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     }
 
     @Test
-    public void testSpringAPIWithIbatisClose() {
+    public void testSpringAPIWithMyBatisClose() {
         // This is a programming error and could lead to connection leak if there is a transaction
         // in progress. But, the API allows it, so make sure it at least works without a tx.
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
@@ -159,15 +156,14 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, dataSource
                     .getConnectionCount());
             assertConnectionClosed(ds.getMockConnection());
-        }
-        finally {
+        } finally {
             // null the connection since it was not used
             // this avoids failing in validateConnectionClosed()
             connection = null;
         }
     }
 
-    // Spring API should work with a iBatis TransactionFactories, as long as there is not a Spring
+    // Spring API should work with a MyBatis TransactionFactories, as long as there is not a Spring
     // TX is progress
     @Test
     public void testWithNonSpringTransactionFactory() {
@@ -180,12 +176,11 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             session.getMapper(TestMapper.class).findTest();
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-            // users need to manually call commit, rollback and close, just like with normal iBatis
+            // users need to manually call commit, rollback and close, just like with normal MyBatis
             // API usage
             assertNoCommit();
             assertSingleConnection();
-        }
-        finally {
+        } finally {
             sqlSessionFactory.getConfiguration().setEnvironment(original);
         }
     }
@@ -204,8 +199,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
 
             fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
-        }
-        finally {
+        } finally {
             // rollback required to close connection
             txManager.rollback(status);
 
@@ -240,8 +234,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
 
             fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
-        }
-        finally {
+        } finally {
             // rollback required to close connection
             txManager.rollback(status);
 
@@ -326,7 +319,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             txManager.setDataSource(ds);
             TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
 
-            // all iBatis work happens during the tx, but should not be participating
+            // all MyBatis work happens during the tx, but should not be participating
             session.getMapper(TestMapper.class).findTest();
             session.commit(true);
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
@@ -351,8 +344,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
             assertConnectionClosed(connection1);
             assertConnectionClosed(connection2);
-        }
-        finally {
+        } finally {
             // reset the txManager; keep other tests from potentially failing
             txManager.setDataSource(dataSource);
 
@@ -410,8 +402,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
             assertConnectionClosed(connection1);
             assertConnectionClosed(connection2);
-        }
-        finally {
+        } finally {
             // reset the txManager; keep other tests from potentially failing
             txManager.setDataSource(dataSource);
 

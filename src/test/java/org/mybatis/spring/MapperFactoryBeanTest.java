@@ -32,8 +32,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 /**
- * 
- * 
  * @version $Id$
  */
 public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
@@ -80,12 +78,11 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
             // mapperLocations properties defaults to null
             factoryBean.setDataSource(dataSource);
 
-           SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
+            SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
 
             find(new SqlSessionTemplate(sqlSessionFactory), false);
             fail("TestDao's mapper xml should not be loaded");
-        }
-        catch (org.mybatis.spring.MyBatisSystemException mbse) {
+        } catch (MyBatisSystemException mbse) {
             // unwrap exception so the exact MyBatis exception can be tested
             throw mbse.getCause();
         }
@@ -120,8 +117,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
             assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, dataSource
                     .getConnectionCount());
             assertConnectionClosed(mockDataSource.getMockConnection());
-        }
-        finally {
+        } finally {
             // null the connection since it was not used
             // this avoids failing in validateConnectionClosed()
             connection = null;
@@ -141,8 +137,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
             assertNoCommit();
             assertSingleConnection();
-        }
-        finally {
+        } finally {
             sqlSessionFactory.getConfiguration().setEnvironment(original);
         }
     }
@@ -163,8 +158,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
             find();
 
             fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
-        }
-        finally {
+        } finally {
             // rollback required to close connection
             txManager.rollback(status);
 
@@ -195,8 +189,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
             find(sqlSessionTemplate);
 
             fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
-        }
-        finally {
+        } finally {
             // rollback required to close connection
             txManager.rollback(status);
 
