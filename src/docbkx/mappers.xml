@@ -47,9 +47,9 @@
     <para>
       A data mapper interface is added to Spring like the following:
 
-      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
-  <property name="mapperInterface" value="sample.UserMapper" />
-</bean>]]></programlisting>
+      <programlisting language="xml"><![CDATA[<![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+</bean>]]>]]></programlisting>
     </para>
 
     <para>
@@ -85,9 +85,9 @@
        You can inject mappers directly on your business/service objects in the
        same way you inject any other Spring bean:
 
-       <programlisting language="xml"><![CDATA[<bean id="fooService" class="sample.FooServiceImpl">
+       <programlisting language="xml"><![CDATA[<![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
-</bean>]]></programlisting>
+</bean>]]>]]></programlisting>
 
        This bean can be used directly in application logic:
 
@@ -120,7 +120,7 @@
       To set up a <literal>MapperScanner</literal> add the following to the
       Spring configuration:
       <programlisting language="xml"><![CDATA[<bean class="org.mybatis.spring.annotation.MapperScanner">
-  <property name="basePackage" value="sample" />
+  <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></programlisting>
 
       The <literal>basePackage</literal> property lets you set the base package

@@ -43,7 +43,7 @@
     SqlSession session = sqlSessionFactory.openSession();
 
     try {
-      return (User) session.selectOne("sample.UserMapper.getUser", userId);
+      return (User) session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
     } finally {
       session.close();
     }

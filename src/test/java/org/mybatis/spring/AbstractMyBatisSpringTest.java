@@ -19,8 +19,6 @@ import java.sql.SQLException;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 
-import org.mybatis.spring.SqlSessionFactoryBean;
-
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -57,7 +55,7 @@ public abstract class AbstractMyBatisSpringTest {
     public static void setupBase() throws Exception {
         // create an SqlSessionFactory that will use SpringManagedTransactions
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
-        factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestDao.xml") });
+        factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
         // note running without SqlSessionFactoryBean.configLocation set => default configuration
         factoryBean.setDataSource(dataSource);
 

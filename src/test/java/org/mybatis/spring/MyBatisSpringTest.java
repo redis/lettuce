@@ -59,7 +59,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testIbatisAPI() {
         session = sqlSessionFactory.openSession();
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         session.close();
 
         assertNoCommit();
@@ -69,7 +69,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testIbatisAPIWithCommit() {
         session = sqlSessionFactory.openSession();
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         session.commit(true);
         session.close();
 
@@ -80,7 +80,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testIbatisAPIWithRollback() {
         session = sqlSessionFactory.openSession();
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         session.rollback(true);
         session.close();
 
@@ -92,7 +92,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testSpringAPI() {
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertNoCommit();
@@ -102,7 +102,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testSpringAPIWithCommit() {
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         session.commit(true);
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
@@ -113,7 +113,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testSpringAPIWithRollback() {
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         session.rollback(true);
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
@@ -126,7 +126,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         // This is a programming error and could lead to connection leak if there is a transaction
         // in progress. But, the API allows it, so make sure it at least works without a tx.
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         session.close();
 
         assertNoCommit();
@@ -137,7 +137,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     public void testWithSameDataSource() {
         // use the same DataSource the SqlSession is configured with
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory, dataSource);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertNoCommit();
@@ -151,7 +151,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             ds.setupConnection(createMockConnection());
 
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds);
-            session.getMapper(TestDao.class).findTest();
+            session.getMapper(TestMapper.class).findTest();
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
             assertNoCommit();
@@ -177,7 +177,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         try {
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-            session.getMapper(TestDao.class).findTest();
+            session.getMapper(TestMapper.class).findTest();
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
             // users need to manually call commit, rollback and close, just like with normal iBatis
@@ -257,7 +257,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         TransactionStatus status = txManager.getTransaction(txDef);
 
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         txManager.commit(status);
@@ -275,7 +275,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         TransactionStatus status = txManager.getTransaction(txDef);
 
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         txManager.commit(status);
@@ -292,7 +292,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         TransactionStatus status = txManager.getTransaction(txDef);
 
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestDao.class).findTest();
+        session.getMapper(TestMapper.class).findTest();
         // commit should no-op since there is an active transaction
         session.commit(true);
         SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
@@ -327,7 +327,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
 
             // all iBatis work happens during the tx, but should not be participating
-            session.getMapper(TestDao.class).findTest();
+            session.getMapper(TestMapper.class).findTest();
             session.commit(true);
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
@@ -390,7 +390,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             txManager.commit(status2);
 
             // first tx should be resumed now and this should succeed
-            session.getMapper(TestDao.class).findTest();
+            session.getMapper(TestMapper.class).findTest();
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
             txManager.commit(status);
 

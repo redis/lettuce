@@ -12,13 +12,7 @@
 --    See the License for the specific language governing permissions and
 --    limitations under the License.
 
---    version: $Id$
-
-create table users (
-    id varchar(80) not null,
-    name varchar(80) not null,
-    constraint pk_user primary key (id)
-);
+--    version: $Id: db.sql 2398 2010-08-29 15:16:24Z simone.tripodi $
 
 insert into users VALUES ( 'u1',  'Pocoyo' );
 insert into users VALUES ( 'u2',  'Pato'   );

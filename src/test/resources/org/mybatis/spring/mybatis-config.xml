@@ -31,7 +31,7 @@
     </settings>
 
     <mappers>
-        <mapper resource="org/mybatis/spring/TestDao.xml" />
+        <mapper resource="org/mybatis/spring/TestMapper.xml" />
     </mappers>
 
 </configuration>

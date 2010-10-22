@@ -16,14 +16,14 @@
 -->
 
 <!--
-    This is a sample context two show three different ways to integrate with Spring.
+    This is a org.mybatis.spring.sample context two show three different ways to integrate with Spring.
     There are three beans that act as business services: FooService1, FooService2 and FooService3
     Each one is injected with a mapper coded in a different way 
     UserMapper1 extends SqlSessionDaoSupport
     UserMapper2 uses directly MyBatis API to create, use and close SqlSession
     UserMapper3 has no implementation. The implementation is build on the fly by MyBatis.
 
-    version: $Id$
+    version: $Id: context.xml 2717 2010-10-15 15:37:00Z eduardo.macarron $
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -44,27 +44,11 @@
     <tx:annotation-driven />
 
     <jdbc:embedded-database id="dataSource">
-        <jdbc:script location="classpath:sample/db.sql" />
+        <jdbc:script location="classpath:org/mybatis/spring/sample/mapper/database-schema.sql"/>
+        <jdbc:script location="classpath:org/mybatis/spring/sample/mapper/database-test-data.sql"/>
     </jdbc:embedded-database>
 
-    <bean id="fooService1" class="sample.FooServiceImpl">
-        <property name="userMapper" ref="userMapper1" />
-    </bean>
-
-    <bean id="fooService2" class="sample.FooServiceImpl">
-        <property name="userMapper" ref="userMapper2" />
-    </bean>
-
-    <bean id="fooService3" class="sample.FooServiceImpl">
-        <property name="userMapper" ref="userMapper3" />
-    </bean>
-
-    <bean id="fooService4" class="sample.FooServiceImpl">
-        <property name="userMapper" ref="userMapper4" />
-    </bean>
-
-    <bean id="transactionManager"
-        class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
@@ -73,25 +57,41 @@
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <!-- option1 injecting mappers (recommended) --> 
-    <bean id="userMapper1" class="org.mybatis.spring.MapperFactoryBean">
+    <!-- option1 injecting mappers (recommended) -->
+    <bean id="userMapperBean" class="org.mybatis.spring.MapperFactoryBean">
         <!-- SqlSessionFactory property is autowired -->
-        <property name="mapperInterface" value="sample.UserMapper" />
+        <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
     </bean>
 
-    <!-- or you can scan for mappers -->     
+    <!-- or you can scan for mappers -->
     <bean class="org.mybatis.spring.annotation.MapperScanner">
-        <property name="basePackage" value="sample" />
+        <property name="basePackage" value="org.mybatis.spring.sample" />
     </bean>
 
     <!-- option2 extending SqlSessionDaoSupport -->
-    <bean id="userMapper3" class="sample.UserMapperTemplateImpl">
+    <bean id="userMapperDaoSupport" class="org.mybatis.spring.sample.mapper.UserMapperTemplateImpl">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
     </bean>
 
     <!-- option3 using MyBatis API-->
-    <bean id="userMapper4" class="sample.UserMapperSqlSessionImpl">
+    <bean id="userMapperSqlSession" class="org.mybatis.spring.sample.mapper.UserMapperSqlSessionImpl">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+
+    <bean id="fooServiceWithMapperFactoryBean" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+        <property name="userMapper" ref="userMapperBean" />
+    </bean>
+
+    <bean id="fooServiceWithMapperAnnotation" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+        <property name="userMapper" ref="userMapper" />
+    </bean>
+
+    <bean id="fooServiceWithDaoSupport" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+        <property name="userMapper" ref="userMapperDaoSupport" />
+    </bean>
+
+    <bean id="fooServiceWithSqlSession" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+        <property name="userMapper" ref="userMapperSqlSession" />
     </bean>
 
 </beans>

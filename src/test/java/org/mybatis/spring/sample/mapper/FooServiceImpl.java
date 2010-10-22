@@ -13,14 +13,14 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package sample;
+package org.mybatis.spring.sample.mapper;
 
 /**
  * Impl of the FooService.
  *
  * FooService simply receives a userId and uses a mapper/dao to get a record from the database. .
  * 
- * @version $Id$
+ * @version $Id: FooServiceImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
 public class FooServiceImpl implements FooService {
 

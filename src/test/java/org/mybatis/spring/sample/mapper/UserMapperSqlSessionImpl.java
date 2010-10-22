@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package sample;
+package org.mybatis.spring.sample.mapper;
 
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -21,7 +21,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 /**
  * This DAO is injected with a SqlSessionFactory that is used to get a SqlSession and call MyBatis API.
  *
- * @version $Id$
+ * @version $Id: UserMapperSqlSessionImpl.java 2658 2010-10-09 22:03:48Z eduardo.macarron $
  */
 public class UserMapperSqlSessionImpl implements UserMapper {
 
@@ -34,7 +34,7 @@ public class UserMapperSqlSessionImpl implements UserMapper {
     public User getUser(String userId) {
         SqlSession session = sqlSessionFactory.openSession();
         try {
-          return (User) session.selectOne("sample.UserMapper.getUser", userId);
+          return (User) session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
         } finally {
           session.close();
         }   

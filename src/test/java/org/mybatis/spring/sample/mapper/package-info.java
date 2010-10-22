@@ -13,22 +13,16 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package sample;
-
-import org.mybatis.spring.annotation.Mapper;
 
 /**
- * 
- * A sample mapper
- * @Mapper annotation is optional. It is just needed for mapper scanning
- * value "userMapper2" is also optional, if no value is setted, the mapper will be
- * registered in Spring with its classname "sample.UserMapper"
+ * Sample for four usage scenarios.
+ * <ul>
+ * <li>Extending SqlSessionDaoSupport</li>
+ * <li>Directly using MyBatis API (SqlSession)</li>
+ * <li>Injecting a Mapper interface manually in the Spring XML (proxy DAO implementation)</li>
+ * <li>Injecting a Mapper interface automatically using @Mapper annotations (proxy DAO implementation)</li>
+ * </ul>
  *
- * @version $Id$
+ * @version $Id: package-info.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
-@Mapper("userMapper2")
-public interface UserMapper {
-
-    User getUser(String userId);
-
-}
+package org.mybatis.spring.sample.mapper;

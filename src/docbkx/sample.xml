@@ -25,12 +25,12 @@
     <itemizedlist>
       <listitem>
         <para>
-          <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/java/sample">Java code</ulink>
+          <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/java/org/mybatis/spring/sample">Java code</ulink>
         </para>
       </listitem>
       <listitem>
         <para>
-          <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/resources/sample">Config files</ulink>
+          <ulink url="http://code.google.com/p/mybatis/source/browse/#svn/sub-projects/mybatis-spring/trunk/src/test/resources/org/mybatis/spring/sample">Config files</ulink>
         </para>
       </listitem>
     </itemizedlist>

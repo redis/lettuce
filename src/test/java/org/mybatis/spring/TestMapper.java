@@ -13,20 +13,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package flavour;
+package org.mybatis.spring;
 
 /**
  * 
+ *
  * @version $Id$
  */
-public interface FlavourMapper {
+public interface TestMapper {
 
-    int create(Flavour flavour);
-
-    Flavour retrieve(int id);
-
-    int update(Flavour flavour);
-
-    int delete(int id);
+    int findTest();
 
 }

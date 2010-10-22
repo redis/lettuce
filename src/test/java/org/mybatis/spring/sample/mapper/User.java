@@ -13,56 +13,43 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package flavour;
+package org.mybatis.spring.sample.mapper;
 
 /**
- * 
- * @version $Id$
+ * A simple bean that holds User info.
+ *
+ * @version $Id: User.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
-public class Water {
+public class User {
 
-    private int id;
+    private String id;
 
-    private int size;
+    private String name;
 
-    private int flavourId;
-
-    private Flavour flavour;
-
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public int getSize() {
-        return size;
+    public String getName() {
+        return name;
     }
 
-    public void setSize(int size) {
-        this.size = size;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getFlavourId() {
-        return flavourId;
-    }
-
-    public void setFlavourId(int flavourId) {
-        this.flavourId = flavourId;
-    }
-
-    public Flavour getFlavour() {
-        return flavour;
-    }
-
-    public void setFlavour(Flavour flavour) {
-        this.flavour = flavour;
-    }
-
-    public String getFlavourName() {
-        return getFlavour().getName();
+    public String toString() {
+        StringBuilder buf = new StringBuilder(30);
+        buf.append( "{" );
+        buf.append( id );
+        buf.append( ", " );
+        buf.append( name );
+        buf.append( "}" );
+        return buf.toString();
     }
 
 }

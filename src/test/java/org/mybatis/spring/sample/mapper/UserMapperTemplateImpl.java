@@ -13,43 +13,21 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package sample;
+package org.mybatis.spring.sample.mapper;
+
+import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
- * A simple bean that holds User info.
+ * This DAO extends SqlSessionDaoSupport and uses SqlSessionTemplate instead of MyBatis API
+ * SqlSessions are handled by Spring.
+ * MyBatis exceptions are translated to Spring Data Exceptions.
  *
- * @version $Id$
+ * @version $Id: UserMapperTemplateImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
-public class User {
+public class UserMapperTemplateImpl extends SqlSessionDaoSupport implements UserMapper {
 
-    private String id;
-
-    private String name;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String toString() {
-        StringBuilder buf = new StringBuilder(30);
-        buf.append( "{" );
-        buf.append( id );
-        buf.append( ", " );
-        buf.append( name );
-        buf.append( "}" );
-        return buf.toString();
+    public User getUser(String userId) {
+        return (User) getSqlSessionTemplate().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
     }
 
 }

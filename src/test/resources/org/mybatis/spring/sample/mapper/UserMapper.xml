@@ -19,11 +19,11 @@
 -->
 
 <!--
-    version: $Id$
+    version: $Id: UserMapper.xml 2444 2010-09-15 07:38:37Z simone.tripodi $
 -->
-<mapper namespace="sample.UserMapper">
+<mapper namespace="org.mybatis.spring.sample.mapper.UserMapper">
 
-    <select id="getUser" resultType="sample.User" parameterType="java.lang.String">
+    <select id="getUser" resultType="org.mybatis.spring.sample.mapper.User" parameterType="java.lang.String">
         select * from users where id=#{value}
     </select>
 
