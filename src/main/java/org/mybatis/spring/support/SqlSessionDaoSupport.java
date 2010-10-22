@@ -55,19 +55,9 @@ import org.springframework.util.Assert;
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
-    private SqlSessionTemplate sqlSessionTemplate;
+    private SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate();
 
     private boolean externalTemplate;
-
-    public SqlSessionDaoSupport() {
-        sqlSessionTemplate = new SqlSessionTemplate();
-        externalTemplate = false;
-    }
-
-    public SqlSessionDaoSupport(SqlSessionTemplate sessionTemplate) {
-        this.sqlSessionTemplate = sessionTemplate;
-        externalTemplate = true;
-    }
 
     /**
      * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a

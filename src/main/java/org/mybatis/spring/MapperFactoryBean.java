@@ -35,19 +35,9 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
 
     private boolean addToConfig = true;
 
-    private SqlSessionTemplate sqlSessionTemplate;
+    private SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate();
 
     private boolean externalTemplate;
-
-    public MapperFactoryBean() {
-        sqlSessionTemplate = new SqlSessionTemplate();
-        externalTemplate = false;
-    }
-
-    public MapperFactoryBean(SqlSessionTemplate sessionTemplate) {
-        this.sqlSessionTemplate = sessionTemplate;
-        externalTemplate = true;
-    }
 
     /**
      * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a
@@ -89,10 +79,21 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
         this.externalTemplate = true;
     }
 
+    /**
+     * Set the MyBatis mapper interface
+     * 
+     * @param mapperInterface
+     */
     public void setMapperInterface(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
     }
 
+    /**
+     * By default mapppers register themselves to MyBatis but this can be 
+     * avoided setting addToConfig to false
+     * 
+     * @param addToConfig
+     */
     public void setAddToConfig(boolean addToConfig) {
         this.addToConfig = addToConfig;
     }
