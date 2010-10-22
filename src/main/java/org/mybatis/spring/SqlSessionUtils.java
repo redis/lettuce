@@ -44,6 +44,13 @@ public final class SqlSessionUtils {
 
     private static final Log logger = LogFactory.getLog(SqlSessionUtils.class);
 
+    /**
+     * This class can't be instantiated, exposes static utility methods only.
+     */
+    private SqlSessionUtils() {
+        // do nothing
+    }
+
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory) {
         DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
         ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
