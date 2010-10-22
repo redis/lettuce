@@ -19,8 +19,8 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.support.DaoSupport;
 import org.springframework.util.Assert;
 
 /**
@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  * @see SqlSessionTemplate
  * @version $Id$
  */
-public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T>  {
+public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean  {
 
     private Class<T> mapperInterface;
 
@@ -98,7 +98,7 @@ public class MapperFactoryBean <T> extends DaoSupport implements FactoryBean<T> 
         this.addToConfig = addToConfig;
     }
 
-    public void checkDaoConfig() {
+    public void afterPropertiesSet() throws Exception {
         Assert.notNull(mapperInterface, "Property 'mapperInterface' is required");
         Assert.notNull(sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
        
