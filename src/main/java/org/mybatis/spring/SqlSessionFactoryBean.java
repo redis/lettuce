@@ -242,14 +242,22 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         Configuration configuration;
 
         if (configLocation != null) {
+            Reader reader = null;
             try {
-                Reader reader = new InputStreamReader(configLocation.getInputStream());
+                reader = new InputStreamReader(configLocation.getInputStream());
                 // Null environment causes the configuration to use the default.
                 // This will be overwritten below regardless.
                 xmlConfigBuilder = new XMLConfigBuilder(reader, null, configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (IOException ex) {
                 throw new NestedIOException("Failed to parse config resource: " + configLocation, ex);
+            } finally {
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (IOException ignored) {
+                    }
+                }
             }
 
             if (logger.isDebugEnabled()) {
@@ -272,6 +280,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         if (!ObjectUtils.isEmpty(mapperLocations)) {
             Map<String, XNode> sqlFragments = new HashMap<String, XNode>();
 
+            Reader reader = null;
             for (Resource mapperLocation : mapperLocations) {
                 if (mapperLocation == null) {
                     continue;
@@ -296,11 +305,18 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
 
                 try {
-                    Reader reader = new InputStreamReader(mapperLocation.getInputStream());
+                    reader = new InputStreamReader(mapperLocation.getInputStream());
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, path, sqlFragments);
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
+                } finally {
+                    if (reader != null) {
+                        try {
+                            reader.close();
+                        } catch (IOException ignored) {
+                        }
+                    }
                 }
 
                 if (logger.isDebugEnabled()) {
