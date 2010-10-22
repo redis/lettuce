@@ -46,7 +46,7 @@ import org.springframework.util.StringUtils;
 
 public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
-    private Log logger = LogFactory.getLog(this.getClass());
+    private final Log logger = LogFactory.getLog(this.getClass());
 
     private String basePackage;
 
