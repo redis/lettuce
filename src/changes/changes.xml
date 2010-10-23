@@ -32,16 +32,16 @@
                 Improved documentation manual.
             </action>
             <action type="update" issue="130">
-                Component Scan for Mappers.
+                Component Scan for Mappers
             </action>
             <action type="update" issue="116">
-                Add operation select(String, ResultHandler):void.
+                Add operation select(String, ResultHandler)
             </action>
             <action type="fix" issue="154">
                 SqlSessionCallback.doInSqlSession should not throw SqlException.
             </action>
-            <action type="fix">
-                Minor code fixes.
+            <action type="fix" issue="156">
+	            getExceptionTranslator() may not be called in mybatis-spring
             </action>
         </release>
 
