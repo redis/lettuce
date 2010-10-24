@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring;
 
+import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -82,9 +83,9 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
 
         this.sqlSessionTemplate.afterPropertiesSet();
 
-        SqlSessionFactory sqlSessionFactory = this.sqlSessionTemplate.getSqlSessionFactory();
-        if (this.addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
-            sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
+        Configuration configuration = this.sqlSessionTemplate.getSqlSessionFactory().getConfiguration();
+        if (this.addToConfig && !configuration.hasMapper(mapperInterface)) {
+            configuration.addMapper(mapperInterface);
         }
     }
 
