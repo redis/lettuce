@@ -43,7 +43,7 @@ import org.springframework.util.Assert;
  * @see SqlSessionTemplate
  * @version $Id$
  */
-public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean  {
+public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
 
     private Class<T> mapperInterface;
 
@@ -52,7 +52,7 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean  
     private SqlSessionTemplate sqlSessionTemplate;
 
     private boolean externalTemplate;
-    
+
     @Autowired(required = false)
     public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
         if (!this.externalTemplate) {
@@ -77,9 +77,9 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean  
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
         Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
-       
+
         this.sqlSessionTemplate.afterPropertiesSet();
-        
+
         SqlSessionFactory sqlSessionFactory = this.sqlSessionTemplate.getSqlSessionFactory();
         if (this.addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
             sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
