@@ -31,17 +31,23 @@
             <action type="update">
                 Improved documentation manual.
             </action>
-            <action type="update" issue="130">
-                Component Scan for Mappers
-            </action>
             <action type="update" issue="116">
                 Add operation select(String, ResultHandler)
+            </action>
+            <action type="update" issue="130">
+                Component Scan for Mappers
             </action>
             <action type="fix" issue="154">
                 SqlSessionCallback.doInSqlSession should not throw SqlException.
             </action>
             <action type="fix" issue="156">
 	            getExceptionTranslator() may not be called in mybatis-spring
+            </action>
+            <action type="fix" issue="157">
+	            Setting a specific datasource for one mapper does not work
+            </action>
+            <action type="fix" issue="160">
+	            mybatis-spring should not let changing the executor type during a tx
             </action>
         </release>
 
