@@ -23,6 +23,8 @@ import org.springframework.util.Assert;
 
 /**
  * BeanFactory that enables injection of MyBatis mapper interfaces.
+ * It can be setted up with a SqlSessionFactory or a preconfigured SqlSessionTemplate.
+ * <p> 
  * Sample configuration:
  *
  * <pre class="code">
@@ -36,7 +38,7 @@ import org.springframework.util.Assert;
  *   </bean>
  *   
  *   <bean id="anotherMapper" parent="baseMapper">
- *     <property name="mapperInterface" value="my.package.MyAnootherMapperInterface" />
+ *     <property name="mapperInterface" value="my.package.MyAnotherMapperInterface" />
  *   </bean>
  * }
  * </pre>
