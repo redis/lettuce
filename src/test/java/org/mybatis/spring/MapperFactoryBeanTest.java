@@ -96,7 +96,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     }
 
     // SqlSessionTemplate should use explicity set DataSource, if there is one
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testWithDifferentDataSource() throws Exception {
         try {
             CountingMockDataSource mockDataSource = new CountingMockDataSource();

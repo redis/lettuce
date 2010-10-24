@@ -93,7 +93,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 
     @Override
     public void setDataSource(DataSource dataSource) {
-        throw new IllegalArgumentException("Datasource change is not allowed. SqlSessionFactory datasource must be used");
+        throw new UnsupportedOperationException("Datasource change is not allowed. SqlSessionFactory datasource must be used");
     }
     
     @Override
