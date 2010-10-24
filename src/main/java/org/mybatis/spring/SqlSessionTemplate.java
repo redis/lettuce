@@ -88,9 +88,6 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         return sqlSessionFactory;
     }
 
-    /**
-     * Sets the SqlSessionFactory this template will use when creating SqlSessions.
-     */
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
         this.sqlSessionFactory = sqlSessionFactory;
     }
@@ -100,11 +97,6 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         throw new IllegalArgumentException("Datasource change is not allowed. SqlSessionFactory datasource must be used");
     }
     
-    /**
-     * Returns either the DataSource explicitly set for this template of the one specified by the SqlSessionFactory's Environment.
-     *
-     * @see org.apache.ibatis.mapping.Environment
-     */
     @Override
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
