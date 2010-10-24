@@ -15,19 +15,14 @@
  */
 package org.mybatis.spring;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.apache.ibatis.mapping.Environment;
-
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import org.springframework.dao.TransientDataAccessResourceException;
-
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
@@ -101,7 +96,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     }
 
     // SqlSessionTemplate should use explicity set DataSource, if there is one
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testWithDifferentDataSource() throws Exception {
         try {
             CountingMockDataSource mockDataSource = new CountingMockDataSource();
@@ -110,13 +105,8 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
             SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
             sqlSessionTemplate.setDataSource(mockDataSource);
 
-            find(sqlSessionTemplate);
+            fail("should not be able to change the datasource");
 
-            assertNoCommit();
-            assertEquals("should only call DataSource.getConnection() once", 1, mockDataSource.getConnectionCount());
-            assertEquals("should not call DataSource.getConnection() on SqlSession DataSource", 0, dataSource
-                    .getConnectionCount());
-            assertConnectionClosed(mockDataSource.getMockConnection());
         } finally {
             // null the connection since it was not used
             // this avoids failing in validateConnectionClosed()
@@ -179,7 +169,6 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
         SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-        sqlSessionTemplate.setDataSource(mockDataSource);
 
         TransactionStatus status = null;
 

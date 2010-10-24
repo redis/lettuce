@@ -15,8 +15,6 @@
  */
 package org.mybatis.spring;
 
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -51,65 +49,27 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean  
 
     private boolean addToConfig = true;
 
-    private SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate();
+    private SqlSessionTemplate sqlSessionTemplate;
 
     private boolean externalTemplate;
-
-    /**
-     * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a
-     * shared DataSource.
-     * <p>
-     * This is a no-op if an external SqlSessionTemplate has been set.
-     * 
-     * @see #setSqlSessionFactory
-     */
-    public final void setDataSource(DataSource dataSource) {
-        if (!this.externalTemplate) {
-            this.sqlSessionTemplate.setDataSource(dataSource);
-        }
-    }
-
-    /**
-     * Set the SqlSessionFactory to work with.
-     * <p>
-     * This is a no-op if an external SqlSessionTemplate has been set.
-     * 
-     * @see #setSqlSessionTemplate
-     */
-    @Autowired(required=false)
+    
+    @Autowired(required = false)
     public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
         if (!this.externalTemplate) {
-            this.sqlSessionTemplate.setSqlSessionFactory(sessionFactory);
+            this.sqlSessionTemplate = new SqlSessionTemplate(sessionFactory);
         }
     }
 
-    /**
-     * Set the SqlSessionTemplate for this DAO explicitly, as an alternative to specifying a
-     * SqlSessionFactory.
-     * 
-     * @see #setSqlSessionFactory
-     */
-    @Autowired(required=false)
+    @Autowired(required = false)
     public final void setSqlSessionTemplate(SqlSessionTemplate sessionTemplate) {
         this.sqlSessionTemplate = sessionTemplate;
         this.externalTemplate = true;
     }
 
-    /**
-     * Set the MyBatis mapper interface
-     * 
-     * @param mapperInterface
-     */
     public void setMapperInterface(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
     }
 
-    /**
-     * By default mapppers register themselves to MyBatis but this can be 
-     * avoided setting addToConfig to false
-     * 
-     * @param addToConfig
-     */
     public void setAddToConfig(boolean addToConfig) {
         this.addToConfig = addToConfig;
     }

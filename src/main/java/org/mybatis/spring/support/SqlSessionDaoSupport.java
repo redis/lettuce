@@ -15,8 +15,6 @@
  */
 package org.mybatis.spring.support;
 
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,21 +28,23 @@ import org.springframework.util.Assert;
  * <p>
  *
  * By default, each DAO gets its own SqlSessionTemplate which holds the SqlSessionFactory.
- * SqlSessionTemplate is thread safe, so a single instance cannot be shared by all DAOs; there
+ * SqlSessionTemplate is thread safe, so a single instance can be shared by all DAOs; there
  * should also be a small memory savings by doing this. To support a shared template, this class has
  * a constructor that accepts an SqlSessionTemplate. This pattern can be used in Spring
  * configuration files as follows:
  *
  * <pre class="code">
+ * {@code
+ *   <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+ *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ *   </bean>
+ *   
  *   <bean id="baseDAO" abstract="true" lazy-init="true">
- *     <constructor-arg>
- *       <bean class="org.mybatis.spring.SqlSessionTemplate">
- *         <constructor-arg ref="sqlSessionFactory" />
- *       </bean>
- *     </constructor-arg>
+ *     <property name="sqlSessionTemplate" ref="sqlSesionTemplate" />
  *   </bean>
  * 
  *   <bean id="testDao" parent="baseDAO" class="org.mybatis.spring.support.SqlSessionDaoSupport" />
+ * }
  * </pre>
  *
  * @see #setSqlSessionFactory
@@ -55,68 +55,27 @@ import org.springframework.util.Assert;
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
-    private SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate();
+    private SqlSessionTemplate sqlSessionTemplate;
 
     private boolean externalTemplate;
-
-    /**
-     * Set the JDBC DataSource to be used by this DAO. Not required: The SqlSessionFactory defines a
-     * shared DataSource.
-     * <p>
-     * This is a no-op if an external SqlSessionTemplate has been set.
-     * 
-     * @see #setSqlSessionFactory
-     */
-    public final void setDataSource(DataSource dataSource) {
-        if (!this.externalTemplate) {
-            this.sqlSessionTemplate.setDataSource(dataSource);
-        }
-    }
-
-    /**
-     * Return the JDBC DataSource used by this DAO.
-     */
-    public final DataSource getDataSource() {
-        return this.sqlSessionTemplate.getDataSource();
-    }
-
-    /**
-     * Set the SqlSessionFactory to work with.
-     * <p>
-     * This is a no-op if an external SqlSessionTemplate has been set.
-     * 
-     * @see #setSqlSessionTemplate
-     */
-    @Autowired(required=false)
+    
+    @Autowired(required = false)
     public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
         if (!this.externalTemplate) {
-            this.sqlSessionTemplate.setSqlSessionFactory(sessionFactory);
+            this.sqlSessionTemplate = new SqlSessionTemplate(sessionFactory);
         }
     }
 
-    /**
-     * Return the SqlSessionFactory that this DAO uses.
-     */
     public final SqlSessionFactory getSqlSessionFactory() {
         return this.sqlSessionTemplate.getSqlSessionFactory();
     }
 
-    /**
-     * Set the SqlSessionTemplate for this DAO explicitly, as an alternative to specifying a
-     * SqlSessionFactory.
-     * 
-     * @see #setSqlSessionFactory
-     */
-    @Autowired(required=false)
-    public final void setSqlSessionTemplate(SqlSessionTemplate sessionTemplate) {
-        this.sqlSessionTemplate = sessionTemplate;
+    @Autowired(required = false)
+    public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSessionTemplate = sqlSessionTemplate;
         this.externalTemplate = true;
     }
 
-    /**
-     * Return the SqlSessionTemplate for this DAO, pre-initialized with the SqlSessionFactory or set
-     * explicitly.
-     */
     public final SqlSessionTemplate getSqlSessionTemplate() {
         return this.sqlSessionTemplate;
     }

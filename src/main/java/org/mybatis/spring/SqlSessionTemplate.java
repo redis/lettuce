@@ -84,12 +84,6 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         afterPropertiesSet();
     }
 
-    public SqlSessionTemplate(DataSource dataSource, SqlSessionFactory sqlSessionFactory) {
-        setSqlSessionFactory(sqlSessionFactory);
-        setDataSource(dataSource);
-        afterPropertiesSet();
-    }
-    
     public SqlSessionFactory getSqlSessionFactory() {
         return sqlSessionFactory;
     }
@@ -101,6 +95,11 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
+    @Override
+    public void setDataSource(DataSource dataSource) {
+        throw new IllegalArgumentException("Datasource change is not allowed. SqlSessionFactory datasource must be used");
+    }
+    
     /**
      * Returns either the DataSource explicitly set for this template of the one specified by the SqlSessionFactory's Environment.
      *
@@ -108,8 +107,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
      */
     @Override
     public DataSource getDataSource() {
-        DataSource ds = super.getDataSource();
-        return (ds != null ? ds : this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource());
+        return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
     }
 
     @Override
