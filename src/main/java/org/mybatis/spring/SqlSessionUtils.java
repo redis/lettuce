@@ -83,6 +83,12 @@ public final class SqlSessionUtils {
             if (logger.isDebugEnabled()) {
                 logger.debug("Fetching SqlSession from current transaction");
             }
+            
+            if (!holder.getExecutorType().equals(executorType)) {
+                throw new TransientDataAccessResourceException(
+                        "cannot change the ExecutorType when there is an existing transaction");
+            }
+
             holder.requested();
             return holder.getSqlSession();
         }
@@ -127,7 +133,7 @@ public final class SqlSessionUtils {
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering transaction synchronization for SqlSession");
             }
-            holder = new SqlSessionHolder(session);
+            holder = new SqlSessionHolder(session, executorType);
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
             TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
             holder.setSynchronizedWithTransaction(true);

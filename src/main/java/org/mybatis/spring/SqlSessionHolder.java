@@ -16,6 +16,8 @@
 package org.mybatis.spring;
 
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.ExecutorType;
+
 import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.util.Assert;
 
@@ -26,14 +28,21 @@ import org.springframework.util.Assert;
 public final class SqlSessionHolder extends ResourceHolderSupport {
 
     private final SqlSession sqlSession;
+    private final ExecutorType executorType;
 
-    public SqlSessionHolder(SqlSession sqlSession) {
+    public SqlSessionHolder(SqlSession sqlSession, ExecutorType executorType) {
         Assert.notNull(sqlSession, "SqlSession must not be null");
+        Assert.notNull(executorType, "ExecutorType must not be null");
         this.sqlSession = sqlSession;
+        this.executorType = executorType;
     }
 
     public SqlSession getSqlSession() {
         return sqlSession;
+    }
+
+    public ExecutorType getExecutorType() {
+        return executorType;
     }
 
 }

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
 
 import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
@@ -239,6 +240,64 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             txManager.rollback(status);
 
             sqlSessionFactory.getConfiguration().setEnvironment(original);
+        }
+    }
+
+    @Test(expected = TransientDataAccessResourceException.class)
+    public void testChangeExecutorTypeInTx() throws Exception {
+        TransactionStatus status = null;
+
+        try {
+            status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+
+            fail("should not be able to change the Executor type during an existing transaction");
+        } finally {
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+            
+            // rollback required to close connection
+            txManager.rollback(status);
+        }
+    }
+
+    @Test
+    public void testChangeExecutorTypeInTxRequiresNew() throws Exception {
+        MockConnection connection1 = createMockConnection();
+        MockConnection connection2 = createMockConnection();
+
+        final PooledMockDataSource ds = new PooledMockDataSource();
+        ds.addConnection(connection1);
+        ds.addConnection(connection2);
+
+        try {
+            txManager.setDataSource(ds);
+            TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
+
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds);
+
+            // start a new tx while the other is in progress
+            DefaultTransactionDefinition txRequiresNew = new DefaultTransactionDefinition();
+            txRequiresNew.setPropagationBehaviorName("PROPAGATION_REQUIRES_NEW");
+            TransactionStatus status2 = txManager.getTransaction(txRequiresNew);
+
+            SqlSession session2 = SqlSessionUtils.getSqlSession(sqlSessionFactory, ds, ExecutorType.BATCH);
+
+            SqlSessionUtils.closeSqlSession(session2, sqlSessionFactory);
+            txManager.rollback(status2);
+
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+            txManager.rollback(status);
+
+        } finally {
+            // reset the txManager; keep other tests from potentially failing
+            txManager.setDataSource(dataSource);
+
+            // null the connection since it was not used
+            // this avoids failing in validateConnectionClosed()
+            connection = null;
         }
     }
 

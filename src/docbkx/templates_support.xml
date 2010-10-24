@@ -74,6 +74,20 @@
   });
 }]]></programlisting>
     </para>
+
+    <para>
+      Note that the <literal>execute</literal> method can also accept a
+      <literal>ExecutorType</literal> parameter. This can be used if the
+      desired execution method differs from the default set for the
+      SqlSessionFactory. This will mostly be useful for performing batch SQL
+      queries using <literal>ExecutorType.BATCH</literal>. The only caveat to
+      this form of the method is that there <emphasis>cannot</emphasis> be an
+      existing transaction running with a different ExecutorType when this
+      method is called. Either ensure that calls to
+      <literal>execute(SqlSessionCallback, ExecutorType)</literal> run in a
+      separate transaction, with PROPAGATION_REQUIRES_NEW or with completely
+      outside of a transaction.
+    </para>
   </section>
 
   <section id="templates_support.daosupport">
@@ -88,7 +102,8 @@
 
       <programlisting language="java"><![CDATA[public class UserMapperDaoImpl extends SqlSessionDaoSupport implements UserMapper {
   public User getUser(String userId) {
-    return (User) getSqlSessionTemplate().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return (User) getSqlSessionTemplate()
+        .selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></programlisting>
 
