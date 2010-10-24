@@ -56,15 +56,15 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
     private boolean externalTemplate;
 
     @Autowired(required = false)
-    public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
         if (!this.externalTemplate) {
-            this.sqlSessionTemplate = new SqlSessionTemplate(sessionFactory);
+            this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
         }
     }
 
     @Autowired(required = false)
-    public final void setSqlSessionTemplate(SqlSessionTemplate sessionTemplate) {
-        this.sqlSessionTemplate = sessionTemplate;
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSessionTemplate = sqlSessionTemplate;
         this.externalTemplate = true;
     }
 

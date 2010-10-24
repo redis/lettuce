@@ -60,9 +60,9 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
     private boolean externalTemplate;
     
     @Autowired(required = false)
-    public final void setSqlSessionFactory(SqlSessionFactory sessionFactory) {
+    public final void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
         if (!this.externalTemplate) {
-            this.sqlSessionTemplate = new SqlSessionTemplate(sessionFactory);
+            this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
         }
     }
 
@@ -81,7 +81,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
     }
 
     protected void checkDaoConfig() {
-        Assert.notNull(sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
+        Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
         this.sqlSessionTemplate.afterPropertiesSet();
     }
 
