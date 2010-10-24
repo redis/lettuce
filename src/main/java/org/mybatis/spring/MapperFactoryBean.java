@@ -25,7 +25,23 @@ import org.springframework.util.Assert;
 
 /**
  * BeanFactory that enables injection of MyBatis mapper interfaces.
+ * Sample configuration:
  *
+ * <pre class="code">
+ * {@code
+ *   <bean id="baseMapper" class="org.mybatis.spring.MapperFactoryBean" abstract="true" lazy-init="true">
+ *     <property name="sqlSessionFactory" ref="sqlSesionFactory" />
+ *   </bean>
+ * 
+ *   <bean id="oneMapper" parent="baseMapper">
+ *     <property name="mapperInterface" value="my.package.MyMapperInterface" />
+ *   </bean>
+ *   
+ *   <bean id="anotherMapper" parent="baseMapper">
+ *     <property name="mapperInterface" value="my.package.MyAnootherMapperInterface" />
+ *   </bean>
+ * }
+ * </pre>
  * @see SqlSessionTemplate
  * @version $Id$
  */
@@ -99,23 +115,23 @@ public class MapperFactoryBean <T> implements FactoryBean<T>, InitializingBean  
     }
 
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(mapperInterface, "Property 'mapperInterface' is required");
-        Assert.notNull(sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
+        Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
+        Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
        
-        sqlSessionTemplate.afterPropertiesSet();
+        this.sqlSessionTemplate.afterPropertiesSet();
         
-        SqlSessionFactory sqlSessionFactory = sqlSessionTemplate.getSqlSessionFactory();
-        if (addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
+        SqlSessionFactory sqlSessionFactory = this.sqlSessionTemplate.getSqlSessionFactory();
+        if (this.addToConfig && !sqlSessionFactory.getConfiguration().hasMapper(mapperInterface)) {
             sqlSessionFactory.getConfiguration().addMapper(mapperInterface);
         }
     }
 
     public T getObject() throws Exception {
-        return sqlSessionTemplate.getMapper(mapperInterface);
+        return this.sqlSessionTemplate.getMapper(mapperInterface);
     }
 
     public Class<T> getObjectType() {
-        return mapperInterface;
+        return this.mapperInterface;
     }
 
     public boolean isSingleton() {

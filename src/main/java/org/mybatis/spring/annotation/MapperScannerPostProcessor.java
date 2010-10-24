@@ -61,7 +61,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     }
 
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(basePackage, "Property 'basePackage' is required");
+        Assert.notNull(this.basePackage, "Property 'basePackage' is required");
     }
 
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
@@ -88,7 +88,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         }
 
         String[] basePackagesArray = 
-            StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+            StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
         ResolverUtil<Object> resolver = new ResolverUtil<Object>();
         resolver.findAnnotated(Mapper.class, basePackagesArray);
         return resolver.getClasses();
@@ -107,7 +107,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
                 logger.debug("Registering MyBatis mapper with '" + mapperInterface + "' mapperInterface");
             }
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
-            mutablePropertyValues.addPropertyValue("addToConfig", addToConfig);
+            mutablePropertyValues.addPropertyValue("addToConfig", this.addToConfig);
             String name = mapperInterface.getAnnotation(Mapper.class).value();
             if (!StringUtils.hasLength(name)) {
                 name = mapperInterface.getName();
