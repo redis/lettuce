@@ -72,7 +72,6 @@ import org.springframework.util.Assert;
  * @see org.mybatis.spring.SqlSessionOperations
  * @version $Id$
  */
-@SuppressWarnings({ "unchecked" })
 public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperations {
 
     private SqlSessionFactory sqlSessionFactory;
@@ -155,6 +154,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         return selectList(statement, parameter, RowBounds.DEFAULT);
     }
 
+    @SuppressWarnings({ "unchecked" })
     public <T> List<T> selectList(final String statement, final Object parameter, final RowBounds rowBounds) {
         return execute(new SqlSessionCallback<List<T>>() {
             public List<T> doInSqlSession(SqlSession sqlSession) {
@@ -217,8 +217,9 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    @SuppressWarnings({ "unchecked" })
     public <T> T getMapper(final Class<T> type) {
-        return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, new InvocationHandler() {
+        return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type }, new InvocationHandler() {
             public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
                 return execute(new SqlSessionCallback<Object>() {
                     public Object doInSqlSession(SqlSession sqlSession) {
