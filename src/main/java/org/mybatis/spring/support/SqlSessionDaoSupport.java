@@ -57,13 +57,9 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
 
     private SqlSessionTemplate sqlSessionTemplate;
 
-    private boolean externalTemplate;
-    
     @Autowired(required = false)
     public final void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        if (!this.externalTemplate) {
-            this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-        }
+        this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
     }
 
     public final SqlSessionFactory getSqlSessionFactory() {
@@ -73,7 +69,6 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
     @Autowired(required = false)
     public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
         this.sqlSessionTemplate = sqlSessionTemplate;
-        this.externalTemplate = true;
     }
 
     public final SqlSessionTemplate getSqlSessionTemplate() {
