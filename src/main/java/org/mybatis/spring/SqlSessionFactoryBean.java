@@ -103,7 +103,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      *
      * This is an alternative to specifying "&lt;sqlmapper&gt;" entries in an MyBatis config file.
      * This property being based on Spring's resource abstraction also allows for specifying
-     * resource patterns here: e.g. "/sqlmap/*-mapper.xml".
+     * resource patterns here: e.g. "classpath*:sqlmap/*-mapper.xml".
      */
     public void setMapperLocations(Resource[] mapperLocations) {
         this.mapperLocations = mapperLocations;
