@@ -115,6 +115,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         // sqlSessionFactory or sqlSesionTemplate is null and its required
         // seems that this awful piece of code solves the problem
         // it looks for SqlSessionTemplate or SqlSessionFactoryBean (notice it is not SqlSessionFactory)
+        // and if it finds any of them it pseudo-injects it into the new BeanDefinition
         BeanDefinition sqlSessionFactoryBeanBeanDefinition = null;
         BeanDefinition sqlSessionTemplateBeanDefinition = null;
         for (String beanDefinitionName : registry.getBeanDefinitionNames()) {
