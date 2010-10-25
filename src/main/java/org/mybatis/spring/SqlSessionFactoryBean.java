@@ -297,7 +297,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 // and throw an exception telling that a mapperStatement cannot be loaded twice.
                 String path;
                 if (mapperLocation instanceof ClassPathResource) {
-                    path = ClassPathResource.class.cast(mapperLocation).getPath();
+                    path = ((ClassPathResource) mapperLocation).getPath();
                 } else {
                     // this won't work if there is also a mapper interface in classpath
                     path = mapperLocation.toString();
