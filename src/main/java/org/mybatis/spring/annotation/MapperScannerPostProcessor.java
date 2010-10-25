@@ -43,7 +43,6 @@ import org.springframework.util.StringUtils;
  * @see org.mybatis.spring.MapperFactoryBean
  * @version $Id$
  */
-
 public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
     private final Log logger = LogFactory.getLog(this.getClass());
@@ -60,13 +59,23 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         this.addToConfig = addToConfig;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.basePackage, "Property 'basePackage' is required");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        // not needed in this version
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         Set<Class<?>> mapperInterfaces = searchForMappers();
         if (mapperInterfaces.isEmpty()) {
