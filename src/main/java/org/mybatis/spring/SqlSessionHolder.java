@@ -15,11 +15,9 @@
  */
 package org.mybatis.spring;
 
-import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.ExecutorType;
-
+import org.apache.ibatis.session.SqlSession;
 import org.springframework.transaction.support.ResourceHolderSupport;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
