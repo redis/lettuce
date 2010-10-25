@@ -15,21 +15,18 @@
  */
 package org.mybatis.spring.transaction;
 
-import org.apache.ibatis.transaction.TransactionFactory;
-import org.apache.ibatis.transaction.Transaction;
-
+import java.sql.Connection;
 import java.util.Properties;
 
-import java.sql.Connection;
+import org.apache.ibatis.transaction.Transaction;
+import org.apache.ibatis.transaction.TransactionFactory;
 
 /**
- * Creates a SpringManagedTransaction
+ * Creates a {@link SpringManagedTransaction}.
  *
  * @version $Id$
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {
-
-    public SpringManagedTransactionFactory() {}
 
     /**
      * {@inheritDoc}
