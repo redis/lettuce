@@ -115,12 +115,12 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         // sqlSessionFactory or sqlSesionTemplate is null and its required
         // seems that this awful piece of code solves the problem
         // it looks for SqlSessionTemplate or SqlSessionFactoryBean (notice it is not SqlSessionFactory)
-        BeanDefinition sqlSessionFactoryBeanDefinition = null;
+        BeanDefinition sqlSessionFactoryBeanBeanDefinition = null;
         BeanDefinition sqlSessionTemplateBeanDefinition = null;
         for (String beanDefinitionName : registry.getBeanDefinitionNames()) {
             BeanDefinition bd = registry.getBeanDefinition(beanDefinitionName);
             if (SqlSessionFactoryBean.class.getName().equals(bd.getBeanClassName())) {
-                sqlSessionFactoryBeanDefinition = bd;
+                sqlSessionFactoryBeanBeanDefinition = bd;
             } else if (SqlSessionTemplate.class.getName().equals(bd.getBeanClassName())) {
                 sqlSessionTemplateBeanDefinition = bd;
             }
@@ -137,8 +137,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
             if (sqlSessionTemplateBeanDefinition != null) {
                 mutablePropertyValues.addPropertyValue("sqlSessionTemplate", sqlSessionTemplateBeanDefinition);                
-            } else if (sqlSessionFactoryBeanDefinition != null) {
-                mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactoryBeanDefinition);
+            } else if (sqlSessionFactoryBeanBeanDefinition != null) {
+                mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactoryBeanBeanDefinition);
             }
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
             mutablePropertyValues.addPropertyValue("addToConfig", this.addToConfig);
