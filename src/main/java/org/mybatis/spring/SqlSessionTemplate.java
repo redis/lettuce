@@ -91,22 +91,39 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setDataSource(DataSource dataSource) {
         throw new UnsupportedOperationException("Datasource change is not allowed. SqlSessionFactory datasource must be used");
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterPropertiesSet() {
         Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         super.afterPropertiesSet();
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param <T>
+     * @param action
+     * @return
+     * @throws DataAccessException
+     */
     public <T> T execute(SqlSessionCallback<T> action) throws DataAccessException {
         return execute(action, this.sqlSessionFactory.getConfiguration().getDefaultExecutorType());
     }
@@ -134,10 +151,16 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Object selectOne(String statement) {
         return selectOne(statement, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Object selectOne(final String statement, final Object parameter) {
         return execute(new SqlSessionCallback<Object>() {
             public Object doInSqlSession(SqlSession sqlSession) {
@@ -146,14 +169,23 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public <T> List<T> selectList(String statement) {
         return selectList(statement, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public <T> List<T> selectList(String statement, Object parameter) {
         return selectList(statement, parameter, RowBounds.DEFAULT);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings({ "unchecked" })
     public <T> List<T> selectList(final String statement, final Object parameter, final RowBounds rowBounds) {
         return execute(new SqlSessionCallback<List<T>>() {
@@ -163,14 +195,23 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void select(String statement, Object parameter, ResultHandler handler) {
         select(statement, parameter, RowBounds.DEFAULT, handler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void select(String statement, ResultHandler handler) {
         select(statement, null, RowBounds.DEFAULT, handler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void select(final String statement, final Object parameter, final RowBounds rowBounds,
                        final ResultHandler handler) {
         execute(new SqlSessionCallback<Object>() {
@@ -181,10 +222,16 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int insert(String statement) {
         return insert(statement, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int insert(final String statement, final Object parameter) {
         return execute(new SqlSessionCallback<Integer>() {
             public Integer doInSqlSession(SqlSession sqlSession) {
@@ -193,10 +240,16 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int update(String statement) {
         return update(statement, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int update(final String statement, final Object parameter) {
         return execute(new SqlSessionCallback<Integer>() {
             public Integer doInSqlSession(SqlSession sqlSession) {
@@ -205,10 +258,16 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int delete(String statement) {
         return delete(statement, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int delete(final String statement, final Object parameter) {
         return execute(new SqlSessionCallback<Integer>() {
             public Integer doInSqlSession(SqlSession sqlSession) {
@@ -217,6 +276,9 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings({ "unchecked" })
     public <T> T getMapper(final Class<T> type) {
         return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type }, new InvocationHandler() {

@@ -22,12 +22,14 @@ import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.util.Assert;
 
 /**
- * 
+ * TODO fill me
+ *
  * @version $Id$
  */
 public final class SqlSessionHolder extends ResourceHolderSupport {
 
     private final SqlSession sqlSession;
+
     private final ExecutorType executorType;
 
     public SqlSessionHolder(SqlSession sqlSession, ExecutorType executorType) {

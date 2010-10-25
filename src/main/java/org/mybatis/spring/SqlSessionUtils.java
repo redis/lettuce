@@ -167,7 +167,9 @@ public final class SqlSessionUtils {
     }
 
     private static final class SqlSessionSynchronization extends TransactionSynchronizationAdapter {
+
         private final SqlSessionHolder holder;
+
         private final SqlSessionFactory sessionFactory;
 
         public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory) {
@@ -178,22 +180,34 @@ public final class SqlSessionUtils {
             this.sessionFactory = sessionFactory;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public int getOrder() {
             // order right after any Connection synchronization
             return DataSourceUtils.CONNECTION_SYNCHRONIZATION_ORDER + 1;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void suspend() {
             TransactionSynchronizationManager.unbindResource(sessionFactory);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void resume() {
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void afterCompletion(int status) {
             // Connection commit or rollback will be handled by ConnectionSynchronization or

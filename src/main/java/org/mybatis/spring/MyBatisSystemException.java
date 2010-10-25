@@ -20,7 +20,6 @@ import org.springframework.dao.UncategorizedDataAccessException;
 /**
  * MyBatis specific subclass of UncategorizedDataAccessException, for MyBatis system errors that do
  * not match any concrete <code>org.springframework.dao</code> exceptions.
- * <p>
  *
  * In MyBatis 3 <code>org.apache.ibatis.exceptions.PersistenceException</code> is a <code>RuntimeException</code>,
  * but using this wrapper class to bring everything under a single hierarchy will be easier for client code to

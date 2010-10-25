@@ -77,6 +77,9 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
         this.addToConfig = addToConfig;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
         Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
@@ -89,14 +92,23 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public T getObject() throws Exception {
         return this.sqlSessionTemplate.getMapper(mapperInterface);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Class<T> getObjectType() {
         return this.mapperInterface;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public boolean isSingleton() {
         return true;
     }

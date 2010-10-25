@@ -23,17 +23,26 @@ import java.util.Properties;
 import java.sql.Connection;
 
 /**
- * 
+ * TODO fill me
+ *
  * @version $Id$
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {
 
     public SpringManagedTransactionFactory() {}
 
+    /**
+     * {@inheritDoc}
+     */
     public Transaction newTransaction(Connection conn, boolean autoCommit) {
         return new SpringManagedTransaction(conn);
     }
 
-    public void setProperties(Properties props) {}
+    /**
+     * {@inheritDoc}
+     */
+    public void setProperties(Properties props) {
+        // not needed in this version
+    }
 
 }

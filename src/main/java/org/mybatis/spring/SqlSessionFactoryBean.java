@@ -332,6 +332,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         return sqlSessionFactoryBuilder.build(configuration);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public SqlSessionFactory getObject() throws Exception {
         if (sqlSessionFactory == null) {
             afterPropertiesSet();
@@ -340,10 +343,16 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         return sqlSessionFactory;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Class<? extends SqlSessionFactory> getObjectType() {
         return sqlSessionFactory == null ? SqlSessionFactory.class : sqlSessionFactory.getClass();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public boolean isSingleton() {
         return true;
     }

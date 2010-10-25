@@ -33,7 +33,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * 
+ * TODO fill me
+ *
  * @version $Id$
  */
 public class SpringManagedTransaction implements Transaction {
@@ -85,22 +86,34 @@ public class SpringManagedTransaction implements Transaction {
         this.shouldManageConnection = manageConnection;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Connection getConnection() {
         return connection;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void commit() throws SQLException {
         if (shouldManageConnection) {
             connection.commit();
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void rollback() throws SQLException {
         if (shouldManageConnection) {
             connection.rollback();
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void close() throws SQLException {
         if (shouldManageConnection) {
             connection.close();
