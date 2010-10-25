@@ -173,8 +173,8 @@ public final class SqlSessionUtils {
         private final SqlSessionFactory sessionFactory;
 
         public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory) {
-            Assert.notNull(holder);
-            Assert.notNull(sessionFactory);
+            Assert.notNull(holder, "Parameter 'holder' must be not null");
+            Assert.notNull(sessionFactory, "Parameter 'sessionFactory' must be not null");
 
             this.holder = holder;
             this.sessionFactory = sessionFactory;
