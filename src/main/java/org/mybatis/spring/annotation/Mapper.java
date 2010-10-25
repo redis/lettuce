@@ -33,8 +33,9 @@ import java.lang.annotation.Target;
 public @interface Mapper {
 
     /**
-     * Value indicates the component name. If there is not any the class name will be used
-     * @return component name, optional
+     * Value indicates the component name. If there is not any the class name will be used.
+     *
+     * @return component name, optional.
      */
     String value() default "";
 
