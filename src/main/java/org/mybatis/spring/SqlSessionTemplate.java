@@ -30,6 +30,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.JdbcAccessor;
 import org.springframework.util.Assert;
 
@@ -117,7 +118,8 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     }
 
     /**
-     * TODO fill me
+     * Execute the given data access action with the proper SqlSession (got from current transaction or 
+     * a new one)
      *
      * @param <T>
      * @param action
@@ -298,7 +300,14 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
         });
     }
 
-    public DataAccessException wrapException(Throwable t) {
+    /**
+     * Translates MyBatis exceptions into Spring DataAccessExceptions.
+     * It uses {@link JdbcTemplate#getExceptionTranslator} for the SqlException translation
+     * 
+     * @param t 
+     * @return a Spring DataAccessException
+     */
+    protected DataAccessException wrapException(Throwable t) {
         if (t instanceof PersistenceException) {
             if (t.getCause() instanceof SQLException) {
                 return getExceptionTranslator().translate("SqlSession operation", null, (SQLException) t.getCause());

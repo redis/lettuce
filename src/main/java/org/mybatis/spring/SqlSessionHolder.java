@@ -19,10 +19,14 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.ExecutorType;
 
 import org.springframework.transaction.support.ResourceHolderSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
- * TODO fill me
+ * Used to keep current SqlSession in TransactionSynchronizationManager.
+ * The SqlSessionFactory that created that SqlSession is used as a key.
+ * ExecutorType is also keeped to be able to check if the user is trying to change it 
+ * during a TX (that is not allowed) and throw a Exception in that case.
  *
  * @version $Id$
  */

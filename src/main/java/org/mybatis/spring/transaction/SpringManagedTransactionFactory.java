@@ -23,7 +23,7 @@ import java.util.Properties;
 import java.sql.Connection;
 
 /**
- * TODO fill me
+ * Creates a SpringManagedTransaction
  *
  * @version $Id$
  */

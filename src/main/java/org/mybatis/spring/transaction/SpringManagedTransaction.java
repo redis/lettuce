@@ -33,7 +33,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * TODO fill me
+ * MyBatis has two TransactionManagers out of the box: The JdbcTransactionManager and the 
+ * ExternalTransactionManager. When MyBatis runs under a Spring transaction none of them
+ * will work well because JDBCTransactionManager would commit/rollback/close and it should not.
+ * And ExternalTransactionManager would close the connection and it should not.
+ * SpringManagedTransaction looks if the current connection is been managed by Spring. In that case
+ * it will not commit/rollback/close. Otherwise it will behave like JdbcTransactionManager
  *
  * @version $Id$
  */
