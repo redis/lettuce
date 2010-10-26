@@ -41,16 +41,16 @@
                 SqlSessionCallback.doInSqlSession should not throw SqlException.
             </action>
             <action type="fix" issue="156">
-	            getExceptionTranslator() may not be called in mybatis-spring
+                getExceptionTranslator() may not be called in mybatis-spring
             </action>
             <action type="fix" issue="157">
-	            Setting a specific datasource for one mapper does not work
+                Setting a specific datasource for one mapper does not work
             </action>
             <action type="fix" issue="160">
-	            mybatis-spring should not let changing the executor type during a tx
+                mybatis-spring should not let changing the executor type during a tx
             </action>
             <action type="fix" issue="161">
-	            mapperLocations does not work for xml files inside JARs
+                mapperLocations does not work for xml files inside JARs
             </action>
         </release>
 
