@@ -109,7 +109,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         if (logger.isDebugEnabled()) {
             logger.debug("Registering MyBatis mappers");
         }
-        
+
         // seems that MapperScanner does not work if there is also a MapperFactoryBean on the same context
         // the problem is that autowiring does not work and a Exception is thrown indicating that a either 
         // sqlSessionFactory or sqlSesionTemplate is null and its required
@@ -126,7 +126,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
                 sqlSessionTemplateBeanDefinition = bd;
             }
         }
-        
+
         for (Class<?> mapperInterface : mapperInterfaces) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering MyBatis mapper with '" 
