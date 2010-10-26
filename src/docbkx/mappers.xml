@@ -64,7 +64,7 @@
       parsed automatically by the <literal>MapperFactoryBean</literal> if the
       XML file is in the same classpath location as the Mapper class. There
       is no need to specify the mapper in a MyBatis configuration file unless
-      the mapper XML files are in a different location. See the
+      the mapper XML files are in a different classpath location. See the
       <literal>SqlSessionFactoryBean</literal>'s 
       <literal><link linkend="factorybean.configlocation">configLocation</link></literal>
       property for more information.
