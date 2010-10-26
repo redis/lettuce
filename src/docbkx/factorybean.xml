@@ -67,7 +67,8 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
 
     <para>
       <literal>SqlSessionFactory</literal> has a single required property, the
-      JDBC DataSource. This can be any DataSource and should be configured just
+      JDBC <literal>DataSource</literal>. This can be any 
+      <literal>DataSource</literal> and should be configured just
       like any other Spring database connection.
     </para>
 

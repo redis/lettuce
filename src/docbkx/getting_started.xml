@@ -69,8 +69,8 @@
 
     <para>
       Notice that the <literal>SqlSessionFactory</literal> requires a
-      DataSource. This can be any DataSource and should be configured just like
-      any other Spring database connection.
+      <literal>DataSource</literal>. This can be any <literal>DataSource</literal>
+      and should be configured just like any other Spring database connection.
     </para>
 
    <para>

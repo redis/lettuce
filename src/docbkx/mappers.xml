@@ -66,7 +66,7 @@
       is no need to specify the mapper in a MyBatis configuration file unless
       the mapper XML files are in a different location. See the
       <literal>SqlSessionFactoryBean</literal>'s 
-      <link linkend="factorybean.configlocation">configLocation</link>
+      <literal><link linkend="factorybean.configlocation">configLocation</link></literal>
       property for more information.
     </para>
 
@@ -74,10 +74,12 @@
       Note that while <literal>MapperFactoryBean</literal> requires either an
       <literal>SqlSessionFactory</literal> or an
       <literal>SqlSessionTemplate</literal>. These can be set through the
-      respective sqlSessionFactory or sqlSessionTemplate properties or they can
-      be autowired by Spring. If both properties are set, the SqlSessionFactory
-      is ignored, since the SqlSessionTemplate is required to have a session
-      factory set; that factory will be used by MapperFactoryBean.
+      respective <literal>sqlSessionFactory</literal> or 
+      <literal>sqlSessionTemplate</literal> properties or they can
+      be autowired by Spring. If both properties are set, the 
+      <literal>SqlSessionFactory</literal> is ignored, since the 
+      <literal>SqlSessionTemplate</literal> is required to have a session
+      factory set; that factory will be used by <literal>MapperFactoryBean</literal>.
     </para>
   </section>
 

@@ -59,13 +59,14 @@
     </para>
 
     <para>
-      The DataSource specified can be any JDBC DataSource you would normally
-      use with Spring. This includes connection pools as well as DataSources
+      The <literal>DataSource</literal> specified can be any JDBC 
+      <literal>DataSource</literal> you would normally
+      use with Spring. This includes connection pools as well as <literal>DataSource</literal>s
       obtained through JNDI lookups.
     </para>
 
     <para>
-      Note that the DataSource specified for the transaction
+      Note that the <literal>DataSource</literal> specified for the transaction
       manager <emphasis>must</emphasis> be the same one that is used to create
       the <literal>SqlSessionFactoryBean</literal> or transaction management will
       not work.
