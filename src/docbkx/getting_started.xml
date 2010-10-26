@@ -84,7 +84,7 @@
       This interface is added to Spring using a
       <literal>MapperFactoryBean</literal> like the following:
 
-      <programlisting language="xml"><![CDATA[<![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
 </bean>]]></programlisting>
 
