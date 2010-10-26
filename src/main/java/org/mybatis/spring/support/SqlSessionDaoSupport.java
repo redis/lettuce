@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
  *   <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
  *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
  *   </bean>
- *   
+ *
  *   <bean id="baseDAO" abstract="true" lazy-init="true">
  *     <property name="sqlSessionTemplate" ref="sqlSesionTemplate" />
  *   </bean>

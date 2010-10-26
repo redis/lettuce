@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
  *   <bean id="oneMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyMapperInterface" />
  *   </bean>
- *   
+ *
  *   <bean id="anotherMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyAnotherMapperInterface" />
  *   </bean>
