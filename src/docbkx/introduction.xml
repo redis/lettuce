@@ -63,11 +63,11 @@
     <title>Acknowledgements</title>
     <para>
       A special thanks goes to all the special people who made this project
-      a reality, Hunter Presnall and Putthibong Boonbong for all the hard
-      coding; Eduardo Macarron for the MapperFactoryBean and documentation;
+      a reality (in alphabetical order): Eduardo Macarron, Hunter Presnall 
+      and Putthibong Boonbong for the coding, testing and documentation; 
       Andrius Juozapaitis, Giovanni Cuccu and Raj Nagappan for their
       contributions and support; and Simone Tripodi for finding everyone and
-      bringing them all back to the project under MyBatis ;)  Without them,
+      bringing them all back to the project under MyBatis ;) Without them,
       this project wouldn't exist.
     </para>
   </section>

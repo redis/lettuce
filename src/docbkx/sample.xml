@@ -76,7 +76,7 @@ public interface FooService {
     The database access layer has been implemented using the four different
     techniques explanied in this manual: with
     <literal>MapperFactoryBean</literal> (both directly and through
-    <literal>MapperScanner</literal>), with
+    <literal>MapperScannerPostProcessor</literal>), with
     <literal>SqlSessionDaoSupport</literal> and with a DAO implemented using
     the base MyBatis API. Please see <literal>applicationContext.xml</literal> for the
     full Spring configuration.
