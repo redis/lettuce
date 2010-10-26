@@ -62,9 +62,7 @@
     <para>
       If the UserMapper has a corresponding MyBatis XML mapper file, it will be
       parsed automatically by the <literal>MapperFactoryBean</literal>.
-      There is no need to include the <literal>&lt;mappers&gt;</literal> 
-      section in the MyBatis configuration file. 
-      Remember that mapper XML file <emphasis>must</emphasis> be in the same classpath 
+      In this case the mapper XML file <emphasis>must</emphasis> be in the same classpath 
       location as the Mapper class. 
     </para>
 
