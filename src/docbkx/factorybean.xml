@@ -112,5 +112,12 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
       This will load all the MyBatis mapper XML files in the
       sample.config.mappers package and its subpackages from the classpath.
     </para>
+
+    <para>
+      One property that may be required in an environment with container
+      managed transactions is <literal>transactionFactoryClass</literal>.
+      Please see the relevant section in the
+      <link linkend="transactions.cmt">Transactions</link> chapter.
+    </para>
   </section>
 </chapter>

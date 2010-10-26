@@ -72,9 +72,12 @@
 
     <para>
       Note that while <literal>MapperFactoryBean</literal> requires either an
-      <literal>SqlSessionFactory</literal> or a
-      <literal>SqlSessionTemplate</literal>. These will be autowired by Spring
-      so neither needs to be set explictly.
+      <literal>SqlSessionFactory</literal> or an
+      <literal>SqlSessionTemplate</literal>. These can be set through the
+      respective sqlSessionFactory or sqlSessionTemplate properties or they can
+      be autowired by Spring. If both properties are set, the SqlSessionFactory
+      is ignored, since the SqlSessionTemplate is required to have a session
+      factory set; that factory will be used by MapperFactoryBean.
     </para>
   </section>
 

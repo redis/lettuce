@@ -94,8 +94,8 @@
     <title>SqlSessionDaoSupport</title>
 
     <para>
-      <literal>SqlSessionDaoSupport</literal> is a support class that builds a
-      <literal>SqlSessionTemplate</literal> for you. Calling
+      <literal>SqlSessionDaoSupport</literal> is an abstract support class that
+      builds a <literal>SqlSessionTemplate</literal> for you. Calling
       <literal>getSqlSessionTemplate()</literal> gives you access to the
       template which can then be used to execute SQL methods, like the
       following:
@@ -111,6 +111,25 @@
       since it requires no extra code. But, this class is useful if you need
       to do other non-MyBatis work in your DAO and concrete classes are
       required.
+    </para>
+
+    <para>
+      <literal>SqlSessionDaoSupport</literal> is configured similarly to
+      <literal>MapperFactoryBean</literal>. It requires either an
+      <literal>sqlSessionFactory</literal> or an
+      <literal>sqlSessionTemplate</literal> property to be set. These can be
+      set explicitly or autowired by Spring. If both properties are set, the
+      SqlSessionFactory is ignored.
+    </para>
+
+    <para>
+      Assuming a class <literal>UserMapperImpl</literal> that subclasses
+      <literal>SqlSessionDaoSupport</literal>, it can be configured in Spring
+      like the following:
+
+      <programlisting language="xml"><![CDATA[<bean id="userMapperImpl" class="sample.UserMapperImpl">
+  <!-- SqlSessionFactory property is autowired -->
+</bean>]]></programlisting>
     </para>
   </section>
 </chapter>
