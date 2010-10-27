@@ -116,23 +116,34 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         // seems that this awful piece of code solves the problem
         // it looks for SqlSessionTemplate or SqlSessionFactoryBean (notice it is not SqlSessionFactory)
         // and if it finds any of them it pseudo-injects it into the new BeanDefinition
+        if (logger.isDebugEnabled()) {
+            logger.debug("Searching for SqlSessionTemplate or SqlSessionFactoryBean");
+        }
+
         BeanDefinition sqlSessionFactoryBeanBeanDefinition = null;
         BeanDefinition sqlSessionTemplateBeanDefinition = null;
         for (String beanDefinitionName : registry.getBeanDefinitionNames()) {
             BeanDefinition bd = registry.getBeanDefinition(beanDefinitionName);
             if (SqlSessionFactoryBean.class.getName().equals(bd.getBeanClassName())) {
                 sqlSessionFactoryBeanBeanDefinition = bd;
+                if (logger.isDebugEnabled()) {
+                    logger.debug("SqlSessionFactoryBean found [" + sqlSessionFactoryBeanBeanDefinition + "]");
+                }
             } else if (SqlSessionTemplate.class.getName().equals(bd.getBeanClassName())) {
                 sqlSessionTemplateBeanDefinition = bd;
+                if (logger.isDebugEnabled()) {
+                    logger.debug("SqlSessionTemplate found [" + sqlSessionTemplateBeanDefinition + "]");
+                }
             }
+        }
+        
+        if (sqlSessionFactoryBeanBeanDefinition == null 
+                && sqlSessionTemplateBeanDefinition == null
+                && logger.isDebugEnabled()) {
+            logger.debug("Neither SqlSessionFactoryBean nor SqlSessionTemplate were found");
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Registering MyBatis mapper with '" 
-                        + mapperInterface 
-                        + "' mapperInterface");
-            }
             BeanDefinition beanDefinition =
                 BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
@@ -147,6 +158,13 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             if (!StringUtils.hasLength(name)) {
                 name = mapperInterface.getName();
             }
+            
+            if (logger.isDebugEnabled()) {
+                logger.debug("Registering MyBatis mapper with '" 
+                        + name + "' name and '" 
+                        + mapperInterface.getName() + "' mapperInterface");
+            }
+            
             registry.registerBeanDefinition(name, beanDefinition);
         }
     }
