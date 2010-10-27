@@ -89,8 +89,8 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
     </para>
 
     <para>
-      Another reason to require a config file is to specify the location of the MyBatis 
-      mapper XML files in case you are not using injected mappers. With
+      Another reason to require a config file is if the MyBatis mapper XML
+      files are not in the same classpath location as the mapper classes. With
       this configuration, there are two options. This first is to manually
       specify the classpath of the XML files using a
       <literal>&lt;mappers&gt;</literal> section in the MyBatis config
