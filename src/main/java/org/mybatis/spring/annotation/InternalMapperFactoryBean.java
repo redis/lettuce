@@ -23,12 +23,12 @@ import org.mybatis.spring.MapperFactoryBean;
 * but if there are other MapperFactoryBeans defined in the context their 
 * BeanDefinitions are created before the MapperScanner is executed. 
 * It seems that the MapperFactoryBean's bean definition created by the MapperScanner 
-* is not the same * that the one created by Spring. That makes autowire fail and Spring 
+* is not the same that the one created by Spring. That makes autowire fail and Spring 
 * will throw an Exception indicating that a either sqlSessionFactory or sqlSessionTemplate 
 * is null and its required.
 * <p>
 * Seems that the problem is solved if another factory bean class is registered
-* because bean definitions will not collide.
+* because bean definitions will be different and will not collide.
 * <p> 
 * So this class just extends MapperFactoryBean and does nothing more.
 * <p> 
