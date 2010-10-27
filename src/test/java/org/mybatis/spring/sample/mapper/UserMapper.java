@@ -21,7 +21,7 @@ import org.mybatis.spring.annotation.Mapper;
  * 
  * A org.mybatis.spring.sample mapper
  * @Mapper annotation is optional. It is just needed for mapper scanning
- * value "userMapper" is also optional, if no value is setted, the mapper will be
+ * value "userMapper" is also optional, if no value is set, the mapper will be
  * registered in Spring with its classname "org.mybatis.spring.sample.mapper.UserMapper"
  *
  * @version $Id: UserMapper.java 2697 2010-10-14 13:04:41Z eduardo.macarron $

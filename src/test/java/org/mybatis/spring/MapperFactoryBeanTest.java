@@ -95,7 +95,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         assertSingleConnection();
     }
 
-    // SqlSessionTemplate should use explicity set DataSource, if there is one
+    // SqlSessionTemplate should use explicitly set DataSource, if there is one
     @Test(expected = UnsupportedOperationException.class)
     public void testWithDifferentDataSource() throws Exception {
         try {
@@ -157,7 +157,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     }
 
     // TODO should this pass?
-    // simlar to testNonSpringTxFactoryNonSpringDSWithTx() in MyBatisSpringTest
+    // similar to testNonSpringTxFactoryNonSpringDSWithTx() in MyBatisSpringTest
     @Test(expected = TransientDataAccessResourceException.class)
     public void testNonSpringWithTx() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();

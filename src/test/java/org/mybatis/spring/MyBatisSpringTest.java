@@ -210,7 +210,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
     // TODO should this pass?
     /*
-     * this is an edge case - completly separate DataSource, non-Spring TXManager but with an
+     * this is an edge case - completely separate DataSource, non-Spring TXManager but with an
      * existing Spring TX. Technically, this could be allowed, but the current implementation fails
      * because DataSourceUtils.getConnection(DataSource) pulls _any_ Connection into the current tx.
      * To fix, however, SqlSessionTemplate.execute() would need to run more checks
@@ -351,8 +351,8 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         txManager.commit(status);
 
-        // Connection should be commited once, but we explicity called commit on the SqlSession, so
-        // it should be commited twice
+        // Connection should be committed once, but we explicitly called commit on the SqlSession, so
+        // it should be committed twice
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
         assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
         assertEquals("should call commit on SqlSession", 2, executorInterceptor.getCommitCount());
@@ -390,14 +390,14 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             // two transactions should have completed, each using their own Connection
             assertEquals("should call DataSource.getConnection() twice", 2, ds.getConnectionCount());
 
-            // both connections and should be commited
+            // both connections and should be committed
             assertEquals("should call commit on Connection 1", 1, connection1.getNumberCommits());
             assertEquals("should not call rollback on Connection 1", 0, connection1.getNumberRollbacks());
 
             assertEquals("should call commit on Connection 2", 1, connection2.getNumberCommits());
             assertEquals("should not call rollback on Connection 2", 0, connection2.getNumberRollbacks());
 
-            // the SqlSession should have also commmited
+            // the SqlSession should have also committed
             assertEquals("should call commit on SqlSession", 1, executorInterceptor.getCommitCount());
             assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
 
@@ -448,14 +448,14 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             // two transactions should have completed, each using their own Connection
             assertEquals("should call DataSource.getConnection() twice", 2, ds.getConnectionCount());
 
-            // both connections and should be commited
+            // both connections and should be committed
             assertEquals("should call commit on Connection 1", 1, connection1.getNumberCommits());
             assertEquals("should not call rollback on Connection 1", 0, connection1.getNumberRollbacks());
 
             assertEquals("should call commit on Connection 2", 1, connection2.getNumberCommits());
             assertEquals("should not call rollback on Connection 2", 0, connection2.getNumberRollbacks());
 
-            // the SqlSession should have also commmited twice
+            // the SqlSession should have also committed twice
             assertEquals("should call commit on SqlSession", 2, executorInterceptor.getCommitCount());
             assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
 
