@@ -40,7 +40,7 @@ import org.springframework.util.Assert;
  *   </bean>
  *
  *   <bean id="baseDAO" abstract="true" lazy-init="true">
- *     <property name="sqlSessionTemplate" ref="sqlSesionTemplate" />
+ *     <property name="sqlSessionTemplate" ref="sqlSessionTemplate" />
  *   </bean>
  * 
  *   <bean id="testDao" parent="baseDAO" class="org.mybatis.spring.support.SqlSessionDaoSupport" />

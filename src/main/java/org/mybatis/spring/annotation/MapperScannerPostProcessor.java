@@ -112,7 +112,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
         // seems that MapperScanner does not work if there is also a MapperFactoryBean on the same context
         // the problem is that autowiring does not work and a Exception is thrown indicating that a either 
-        // sqlSessionFactory or sqlSesionTemplate is null and its required
+        // sqlSessionFactory or sqlSessionTemplate is null and its required
         // seems that this awful piece of code solves the problem
         // it looks for SqlSessionTemplate or SqlSessionFactoryBean (notice it is not SqlSessionFactory)
         // and if it finds any of them it pseudo-injects it into the new BeanDefinition

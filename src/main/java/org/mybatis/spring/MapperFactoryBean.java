@@ -24,14 +24,14 @@ import org.springframework.util.Assert;
 
 /**
  * BeanFactory that enables injection of MyBatis mapper interfaces.
- * It can be setted up with a SqlSessionFactory or a preconfigured SqlSessionTemplate.
+ * It can be set up with a SqlSessionFactory or a pre-configured SqlSessionTemplate.
  * <p> 
  * Sample configuration:
  *
  * <pre class="code">
  * {@code
  *   <bean id="baseMapper" class="org.mybatis.spring.MapperFactoryBean" abstract="true" lazy-init="true">
- *     <property name="sqlSessionFactory" ref="sqlSesionFactory" />
+ *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
  *   </bean>
  * 
  *   <bean id="oneMapper" parent="baseMapper">
