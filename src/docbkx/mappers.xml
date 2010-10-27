@@ -109,7 +109,7 @@
        Notice that there are no <literal>SqlSession</literal> or MyBatis
        references in this code.  Nor is there any need to create, open or close
        the session. If there is a Spring transaction in progress, the session
-       will also be committed or rolledback when the transaction completes. 
+       will also be committed or rollbacked when the transaction completes. 
      </para>
   </section>
 

@@ -35,7 +35,7 @@
       would have to wait until at least Spring 3.1. Given the interest in
       Spring support for MyBatis, the MyBatis community decided it was time to
       reunite the interested contributors and add Spring integration as a
-      community subproject of MyBatis instead.
+      community sub-project of MyBatis instead.
     </para>
 
     <para>

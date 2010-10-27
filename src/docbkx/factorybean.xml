@@ -47,7 +47,7 @@
       the factory. In this case, Spring will build an
       <literal>SqlSessionFactory</literal> for you at application startup and
       store it with the name <literal>sqlSessionFactory</literal>. In Java, the
-      equilavelent code would be:
+      equivalent code would be:
 
       <programlisting language="java"><![CDATA[SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
 SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
@@ -111,7 +111,7 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></programlisting>
 </bean>]]></programlisting>
 
       This will load all the MyBatis mapper XML files in the
-      sample.config.mappers package and its subpackages from the classpath.
+      sample.config.mappers package and its sub-packages from the classpath.
     </para>
 
     <para>

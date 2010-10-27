@@ -35,7 +35,7 @@
     <literal>@Transactional</literal> annotations as well as AOP style
     configurations are supported. A single <literal>SqlSession</literal>
     object will be created and used for the duration of the transaction. This
-    session will be committed or rolledback as appropriate when then
+    session will be committed or rollbacked as appropriate when then
     transaction completes.
   </para>
 

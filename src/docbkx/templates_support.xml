@@ -38,11 +38,11 @@
     </para>
 
     <para>
-      When calling SQL methods, inluding any method from Mappers returned from
+      When calling SQL methods, including any method from Mappers returned from
       <literal>getMapper()</literal>,  <literal>SqlSessionTemplate</literal>
       will ensure that the <literal>SqlSession</literal> used is the one
       associated with the current Spring transaction. In addition, it manages
-      the session lifecycle, including closing, commiting or rolling back as
+      the session life-cycle, including closing, committing or rolling back as
       necessary.
     </para>
 
