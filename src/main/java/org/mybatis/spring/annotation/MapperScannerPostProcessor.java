@@ -116,10 +116,6 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         // seems that this awful piece of code solves the problem
         // it looks for SqlSessionTemplate or SqlSessionFactoryBean (notice it is not SqlSessionFactory)
         // and if it finds any of them it pseudo-injects it into the new BeanDefinition
-        if (logger.isDebugEnabled()) {
-            logger.debug("Searching for SqlSessionTemplate or SqlSessionFactoryBean");
-        }
-
         BeanDefinition sqlSessionFactoryBeanBeanDefinition = null;
         BeanDefinition sqlSessionTemplateBeanDefinition = null;
         for (String beanDefinitionName : registry.getBeanDefinitionNames()) {
