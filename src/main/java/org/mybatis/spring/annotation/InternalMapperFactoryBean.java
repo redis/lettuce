@@ -16,6 +16,8 @@
 
 package org.mybatis.spring.annotation;
 
+import org.mybatis.spring.MapperFactoryBean;
+
 /**
 * MapperScanner does not work if there is also a MapperFactoryBean on the same context
 * the problem is that autowiring does not work and a Exception is thrown indicating that a either 
@@ -27,6 +29,6 @@ package org.mybatis.spring.annotation;
 * @version $Id$
 */
 
-public class InternalMapperFactoryBean<T> extends org.mybatis.spring.MapperFactoryBean<T> {
+public class InternalMapperFactoryBean<T> extends MapperFactoryBean<T> {
 
 }
