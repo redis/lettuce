@@ -24,7 +24,7 @@
 
   <para>
     Rather than code data access objects (DAOs) manually, Mybatis-Spring
-    provides a dynamic proxy implmentation:
+    provides a dynamic proxy implementation:
     <literal>MapperFactoryBean</literal>. This class lets you inject data
     mapper interfaces directly into your service beans. When using mappers you
     simply call them as you have always  called your DAOs, but you won't need
