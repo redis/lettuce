@@ -19,22 +19,22 @@ package org.mybatis.spring.annotation;
 import org.mybatis.spring.MapperFactoryBean;
 
 /**
-* MapperScanner registers new mappers creating new MapperFactoryBeans 
-* but if there are other MapperFactoryBeans defined in the context their 
-* BeanDefinitions are created before the MapperScanner is executed. 
-* It seems that the MapperFactoryBean's bean definition created by the MapperScanner 
-* is not the same that the one created by Spring. That makes autowire fail and Spring 
-* will throw an Exception indicating that a either sqlSessionFactory or sqlSessionTemplate 
-* is null and its required.
+* {@link MapperScannerPostProcessor} registers new mappers creating new {@link MapperFactoryBean}s 
+* but if there are other {@link MapperFactoryBean}s defined in the context their 
+* bean definitions are created before the {@link MapperScannerPostProcessor} is executed. 
+* It seems that the {@link MapperFactoryBean}'s bean definition created by the {@link MapperScannerPostProcessor}
+* is not the same that the one created by Spring. That makes autowire fail and an
+* exception will be thrown indicating that sqlSessionFactory property is null and its required.
 * <p>
 * Seems that the problem is solved if another factory bean class is registered
 * because bean definitions will be different and will not collide.
 * <p> 
-* So this class just extends MapperFactoryBean and does nothing more.
+* So this class just extends {@link MapperFactoryBean} and does nothing more.
 * <p> 
-* This class is only for the MapperScanner and should never be used by final users.
+* This class is only for the {@link MapperScannerPostProcessor} and should never be used by final users.
 * 
 * @see org.mybatis.spring.MapperFactoryBean
+* @see org.mybatis.spring.annotation.MapperScannerPostProcessor
 * @version $Id$
 */
 
