@@ -22,6 +22,9 @@ package org.mybatis.spring.annotation;
 * sqlSessionFactory or sqlSessionTemplate is null and its required
 * Seems that the problem is solved if another different factory bean class is registered
 * So this class just extends MapperFactoryBean and does nothing more
+* 
+* @see org.mybatis.spring.MapperFactoryBean
+* @version $Id$
 */
 
 public class InternalMapperFactoryBean<T> extends org.mybatis.spring.MapperFactoryBean<T> {
