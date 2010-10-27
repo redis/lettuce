@@ -20,10 +20,10 @@ import org.mybatis.spring.MapperFactoryBean;
 
 /**
 * MapperScanner does not work if there is also a MapperFactoryBean on the same context
-* the problem is that autowiring does not work and a Exception is thrown indicating that a either 
-* sqlSessionFactory or sqlSessionTemplate is null and its required
+* the problem is that autowiring fails and Spring throws an Exception indicating that a either 
+* sqlSessionFactory or sqlSessionTemplate is null and its required.
 * Seems that the problem is solved if another different factory bean class is registered
-* So this class just extends MapperFactoryBean and does nothing more
+* so this class just extends MapperFactoryBean and does nothing more
 * 
 * @see org.mybatis.spring.MapperFactoryBean
 * @version $Id$
