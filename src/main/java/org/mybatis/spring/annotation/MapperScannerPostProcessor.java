@@ -21,9 +21,6 @@ import java.util.Set;
 import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
-import org.mybatis.spring.MapperFactoryBean;
-import org.mybatis.spring.SqlSessionFactoryBean;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.InitializingBean;
@@ -110,44 +107,10 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             logger.debug("Registering MyBatis mappers");
         }
 
-        // seems that MapperScanner does not work if there is also a MapperFactoryBean on the same context
-        // the problem is that autowiring does not work and a Exception is thrown indicating that a either 
-        // sqlSessionFactory or sqlSessionTemplate is null and its required
-        // seems that this awful piece of code solves the problem
-        // it looks for SqlSessionTemplate or SqlSessionFactoryBean (notice it is not SqlSessionFactory)
-        // and if it finds any of them it pseudo-injects it into the new BeanDefinition
-        BeanDefinition sqlSessionFactoryBeanBeanDefinition = null;
-        BeanDefinition sqlSessionTemplateBeanDefinition = null;
-        for (String beanDefinitionName : registry.getBeanDefinitionNames()) {
-            BeanDefinition bd = registry.getBeanDefinition(beanDefinitionName);
-            if (SqlSessionFactoryBean.class.getName().equals(bd.getBeanClassName())) {
-                sqlSessionFactoryBeanBeanDefinition = bd;
-                if (logger.isDebugEnabled()) {
-                    logger.debug("SqlSessionFactoryBean found [" + sqlSessionFactoryBeanBeanDefinition + "]");
-                }
-            } else if (SqlSessionTemplate.class.getName().equals(bd.getBeanClassName())) {
-                sqlSessionTemplateBeanDefinition = bd;
-                if (logger.isDebugEnabled()) {
-                    logger.debug("SqlSessionTemplate found [" + sqlSessionTemplateBeanDefinition + "]");
-                }
-            }
-        }
-        
-        if (sqlSessionFactoryBeanBeanDefinition == null 
-                && sqlSessionTemplateBeanDefinition == null
-                && logger.isDebugEnabled()) {
-            logger.debug("Neither SqlSessionFactoryBean nor SqlSessionTemplate were found");
-        }
-
         for (Class<?> mapperInterface : mapperInterfaces) {
             BeanDefinition beanDefinition =
-                BeanDefinitionBuilder.genericBeanDefinition(MapperFactoryBean.class).getBeanDefinition();
+                BeanDefinitionBuilder.genericBeanDefinition(InternalMapperFactoryBean.class).getBeanDefinition();
             MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
-            if (sqlSessionTemplateBeanDefinition != null) {
-                mutablePropertyValues.addPropertyValue("sqlSessionTemplate", sqlSessionTemplateBeanDefinition);                
-            } else if (sqlSessionFactoryBeanBeanDefinition != null) {
-                mutablePropertyValues.addPropertyValue("sqlSessionFactory", sqlSessionFactoryBeanBeanDefinition);
-            }
             mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
             mutablePropertyValues.addPropertyValue("addToConfig", this.addToConfig);
             String name = mapperInterface.getAnnotation(Mapper.class).value();
