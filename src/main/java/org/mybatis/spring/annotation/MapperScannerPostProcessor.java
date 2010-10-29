@@ -52,7 +52,7 @@ import org.springframework.util.StringUtils;
  * will fail. 
  * <p>
  * Configuration sample:
- * </p>
+ * <p>
  * <pre class="code">
  * {@code
  *   <bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
