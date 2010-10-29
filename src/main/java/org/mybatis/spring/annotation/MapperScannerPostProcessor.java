@@ -22,9 +22,7 @@ import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -35,8 +33,33 @@ import org.springframework.util.StringUtils;
 
 /**
  * BeanDefinitionRegistryPostProcessor that searches recursively 
- * starting from a basePackage for interfaces with
- * org.mybatis.spring.annotation.Mapper annotation.
+ * starting from a basePackage for interfaces with {@link Mapper} annotation.
+ * <p>
+ * It is usually used with autowire enabled so all the beans it creates are 
+ * automatically autowired to business beans/services.
+ * <p>
+ * It there is more than one DataSource/SqlSessionFactory in the application
+ * autowire cannot be used. In this case you can specify the 
+ * {@link SqlSessionFactory} or {@link SqlSessionTemplate} to use.
+ * <p>
+ * When specifiying any of these beans notice that <b>bean names</b> must be
+ * used instead of real references. It has to be this way because 
+ * the MapperScannerPostProcessor runs very early in the Spring startup process
+ * and some other post processors have not started yet (like PropertyPlaceholderConfigurer)
+ * and if they are needed (for example to setup the datasource) the start process
+ * will fail. 
+ * <p>
+ * Configuration sample:
+ * </p>
+ * <pre class="code">
+ * {@code
+ *   <bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
+ *       <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
+ *       <!-- optional, notice that "value" is used, not "ref" -->
+ *       <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+ *   </bean>
+ * }
+ * </pre> 
  *
  * @see org.apache.ibatis.session.SqlSessionFactory
  * @see org.mybatis.spring.MapperFactoryBean
@@ -47,8 +70,12 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     private final Log logger = LogFactory.getLog(this.getClass());
 
     private String basePackage;
-
+    
     private boolean addToConfig = true;
+
+    private String sqlSessionTemplateBeanName;
+    
+    private String sqlSessionFactoryBeanName;
 
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
@@ -56,6 +83,14 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
     public void setAddToConfig(boolean addToConfig) {
         this.addToConfig = addToConfig;
+    }
+
+    public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
+        this.sqlSessionTemplateBeanName = sqlSessionTemplateName;
+    }
+
+    public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
+        this.sqlSessionFactoryBeanName = sqlSessionFactoryName;
     }
 
     /**
@@ -108,11 +143,15 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
-            BeanDefinition beanDefinition =
-                BeanDefinitionBuilder.genericBeanDefinition(InternalMapperFactoryBean.class).getBeanDefinition();
-            MutablePropertyValues mutablePropertyValues = beanDefinition.getPropertyValues();
-            mutablePropertyValues.addPropertyValue("mapperInterface", mapperInterface);
-            mutablePropertyValues.addPropertyValue("addToConfig", this.addToConfig);
+            BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(InternalMapperFactoryBean.class);
+            beanDefinitionBuilder.addPropertyValue("mapperInterface", mapperInterface);
+            beanDefinitionBuilder.addPropertyValue("addToConfig", this.addToConfig);
+            if (StringUtils.hasLength(sqlSessionFactoryBeanName)) {
+                beanDefinitionBuilder.addPropertyReference("sqlSessionFactory", this.sqlSessionFactoryBeanName);
+            }
+            if (StringUtils.hasLength(sqlSessionTemplateBeanName)) {
+                beanDefinitionBuilder.addPropertyReference("sqlSessionTemplate", this.sqlSessionTemplateBeanName);
+            }                
             String name = mapperInterface.getAnnotation(Mapper.class).value();
             if (!StringUtils.hasLength(name)) {
                 name = mapperInterface.getName();
@@ -124,7 +163,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
                         + mapperInterface.getName() + "' mapperInterface");
             }
             
-            registry.registerBeanDefinition(name, beanDefinition);
+            registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
         }
     }
 
