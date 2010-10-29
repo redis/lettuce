@@ -148,10 +148,10 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(InternalMapperFactoryBean.class);
             beanDefinitionBuilder.addPropertyValue("mapperInterface", mapperInterface);
             beanDefinitionBuilder.addPropertyValue("addToConfig", this.addToConfig);
-            if (StringUtils.hasLength(sqlSessionFactoryBeanName)) {
+            if (StringUtils.hasLength(this.sqlSessionFactoryBeanName)) {
                 beanDefinitionBuilder.addPropertyReference("sqlSessionFactory", this.sqlSessionFactoryBeanName);
             }
-            if (StringUtils.hasLength(sqlSessionTemplateBeanName)) {
+            if (StringUtils.hasLength(this.sqlSessionTemplateBeanName)) {
                 beanDefinitionBuilder.addPropertyReference("sqlSessionTemplate", this.sqlSessionTemplateBeanName);
             }                
             String name = mapperInterface.getAnnotation(Mapper.class).value();
