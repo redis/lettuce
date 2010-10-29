@@ -33,20 +33,22 @@ import org.springframework.util.StringUtils;
 
 /**
  * BeanDefinitionRegistryPostProcessor that searches recursively 
- * starting from a basePackage for interfaces with {@link Mapper} annotation.
+ * starting from a basePackage for interfaces with {@link Mapper} annotation
+ * and registers MapperFactoryBeans.
  * <p>
  * It is usually used with autowire enabled so all the beans it creates are 
- * automatically autowired to business beans/services.
+ * automatically autowired with the proper {@link SqlSessionFactory} or 
+ * {@link SqlSessionTemplate} 
  * <p>
- * It there is more than one DataSource/SqlSessionFactory in the application
- * autowire cannot be used. In this case you can specify the 
+ * It there is more than one DataSource or {@link SqlSessionFactory} in the application
+ * autowire cannot be used. In this case you can specify 
  * {@link SqlSessionFactory} or {@link SqlSessionTemplate} to use.
  * <p>
  * When specifying any of these beans notice that <b>bean names</b> must be
  * used instead of real references. It has to be this way because 
  * the MapperScannerPostProcessor runs very early in the Spring startup process
  * and some other post processors have not started yet (like PropertyPlaceholderConfigurer)
- * and if they are needed (for example to setup the datasource) the start process
+ * and if they are needed (for example to setup the DataSource) the start process
  * will fail. 
  * <p>
  * Configuration sample:
