@@ -42,7 +42,7 @@ import org.springframework.util.StringUtils;
  * autowire cannot be used. In this case you can specify the 
  * {@link SqlSessionFactory} or {@link SqlSessionTemplate} to use.
  * <p>
- * When specifiying any of these beans notice that <b>bean names</b> must be
+ * When specifying any of these beans notice that <b>bean names</b> must be
  * used instead of real references. It has to be this way because 
  * the MapperScannerPostProcessor runs very early in the Spring startup process
  * and some other post processors have not started yet (like PropertyPlaceholderConfigurer)
