@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring.annotation;
 
 import java.util.Set;
@@ -72,11 +71,11 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     private final Log logger = LogFactory.getLog(this.getClass());
 
     private String basePackage;
-    
+
     private boolean addToConfig = true;
 
     private String sqlSessionTemplateBeanName;
-    
+
     private String sqlSessionFactoryBeanName;
 
     public void setBasePackage(String basePackage) {
@@ -153,18 +152,18 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             }
             if (StringUtils.hasLength(this.sqlSessionTemplateBeanName)) {
                 beanDefinitionBuilder.addPropertyReference("sqlSessionTemplate", this.sqlSessionTemplateBeanName);
-            }                
+            }
             String name = mapperInterface.getAnnotation(Mapper.class).value();
             if (!StringUtils.hasLength(name)) {
                 name = mapperInterface.getName();
             }
-            
+
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering MyBatis mapper with '" 
                         + name + "' name and '" 
                         + mapperInterface.getName() + "' mapperInterface");
             }
-            
+
             registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
         }
     }

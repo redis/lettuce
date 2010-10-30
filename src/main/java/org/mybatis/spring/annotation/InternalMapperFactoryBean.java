@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring.annotation;
 
 import org.mybatis.spring.MapperFactoryBean;
@@ -37,7 +36,6 @@ import org.mybatis.spring.MapperFactoryBean;
 * @see org.mybatis.spring.annotation.MapperScannerPostProcessor
 * @version $Id$
 */
-
 public class InternalMapperFactoryBean<T> extends MapperFactoryBean<T> {
 
 }
