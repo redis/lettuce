@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
 /**
  * Annotation to identify mapper interfaces for scanning
  *
+ * @see MapperScannerPostProcessor
  * @version $Id$
  */
 @Target(ElementType.TYPE)
