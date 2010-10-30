@@ -109,7 +109,7 @@
        Notice that there are no <literal>SqlSession</literal> or MyBatis
        references in this code.  Nor is there any need to create, open or close
        the session. If there is a Spring transaction in progress, the session
-       will also be committed or rollbacked when the transaction completes. 
+       will also be committed or rolled back when the transaction completes. 
      </para>
   </section>
 
@@ -133,6 +133,19 @@
       for your mapper interface files. You can set more than one package by
       using a semicolon or comma as a separator. Mappers will be searched
       recursively starting in the specified package(s).
+    </para>
+    
+    <para>
+      Notice that there is no need to specify a <literal>SqlSessionFactory</literal> or 
+      <literal>SqlSessionTemplate</literal> because the <literal>MapperScannerPostProcessor</literal> 
+      will create <literal>MapperFactoryBean</literal>s that will be autowired. But if you are
+      using more than one <literal>DataSource</literal> autowire may not work for you. In this case
+      you can use the <literal>sqlSessionFactoryBeanName</literal> or 
+      <literal>sqlSessionTemplateBeanName</literal> properties to set the right bean name to use. 
+      This is how it is configured, notice that bean names are required, not bean references, thus
+      the <literal>value</literal> attribute is used instead of the usual <literal>ref</literal>:
+<programlisting language="xml"><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+]]></programlisting>
     </para>
 
     <para>

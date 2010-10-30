@@ -99,7 +99,7 @@
        business/service objects in the same way you inject any other Spring
        bean. The <literal>MapperFactoryBean</literal> handles creating an
        <literal>SqlSession</literal> as well as closing it. If there is a Spring transaction in
-       progress, the session will also be committed or rollbacked when the
+       progress, the session will also be committed or rolled back when the
        transaction completes. Finally, any exceptions will be translated into
        Spring <literal>DataAccessException</literal>s.
      </para>
