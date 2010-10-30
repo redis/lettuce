@@ -16,12 +16,14 @@
 -->
 
 <!--
-    This is a org.mybatis.spring.sample context two show three different ways to integrate with Spring.
-    There are three beans that act as business services: FooService1, FooService2 and FooService3
-    Each one is injected with a mapper coded in a different way 
-    UserMapper1 extends SqlSessionDaoSupport
-    UserMapper2 uses directly MyBatis API to create, use and close SqlSession
-    UserMapper3 has no implementation. The implementation is build on the fly by MyBatis.
+    This is a org.mybatis.spring.sample context two show four different ways to integrate with Spring.
+    FooService* are beans that act as business services. All them implements FooService that is
+    annotated as Transactional.
+    Each one is injected with a mapper coded/created in a different way 
+    userMapperBean is created with a MapperFactoryBean (has no implementation)
+    userMapper is searched and registered by the MapperScannerPostProcessor (has no implementation)
+    userMapperDaoSupport extends SqlSessionDaoSupport
+    userMapperSqlSession uses directly MyBatis API (has no transaction support)
 
     version: $Id: context.xml 2717 2010-10-15 15:37:00Z eduardo.macarron $
 -->
@@ -39,7 +41,7 @@
      http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd"
      default-autowire="byName">
 
-	<!-- enable autowire (mandatory if using MapperScannerPostProcessor -->
+	<!-- enable autowire (optional) ->
     <context:annotation-config />
 
 	<!-- enable transaction demarcation with annotations -->
@@ -72,12 +74,12 @@
         <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
     </bean>
 
-    <!-- option2 extending SqlSessionDaoSupport -->
+    <!-- extending SqlSessionDaoSupport -->
     <bean id="userMapperDaoSupport" class="org.mybatis.spring.sample.mapper.UserMapperTemplateImpl">
         <!-- SqlSessionFactory property is autowired -->
     </bean>
 
-    <!-- option3 using MyBatis API-->
+    <!-- using MyBatis API-->
     <bean id="userMapperSqlSession" class="org.mybatis.spring.sample.mapper.UserMapperSqlSessionImpl">
         <!-- SqlSessionFactory property is autowired -->
     </bean>
