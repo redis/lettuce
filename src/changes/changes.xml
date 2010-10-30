@@ -52,6 +52,9 @@
             <action type="fix" issue="161">
                 mapperLocations does not work for xml files inside JARs
             </action>
+            <action type="fix" issue="162">
+                Use a reference to SqlSessionFactory in MapperScanner
+            </action>
         </release>
 
         <release version="1.0.0-RC1" date="2010-09-22" description="1.0.0-RC1 release">
