@@ -304,7 +304,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
      * Translates MyBatis exceptions into Spring DataAccessExceptions.
      * It uses {@link JdbcTemplate#getExceptionTranslator} for the SqlException translation
      * 
-     * @param t 
+     * @param t the exception has to be converted to DataAccessException.
      * @return a Spring DataAccessException
      */
     protected DataAccessException wrapException(Throwable t) {
