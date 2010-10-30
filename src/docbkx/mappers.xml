@@ -142,8 +142,9 @@
       using more than one <literal>DataSource</literal> autowire may not work for you. In this case
       you can use the <literal>sqlSessionFactoryBeanName</literal> or 
       <literal>sqlSessionTemplateBeanName</literal> properties to set the right bean name to use. 
-      This is how it is configured, notice that bean names are required, not bean references, thus
-      the <literal>value</literal> attribute is used instead of the usual <literal>ref</literal>:
+      This is how it is configured, note that <emphasis>bean names</emphasis> are required, 
+      not bean references, thus the <literal>value</literal> attribute is used instead of the 
+      usual <literal>ref</literal>:
 <programlisting language="xml"><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
 ]]></programlisting>
     </para>
