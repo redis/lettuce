@@ -127,7 +127,7 @@
       <literal>SqlSessionDaoSupport</literal>, it can be configured in Spring
       like the following:
 
-      <programlisting language="xml"><![CDATA[<bean id="userMapperImpl" class="sample.UserMapperImpl">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
     </para>
