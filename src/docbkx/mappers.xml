@@ -49,6 +49,7 @@
 
       <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
     </para>
 
@@ -138,7 +139,7 @@
     <para>
       Notice that there is no need to specify a <literal>SqlSessionFactory</literal> or 
       <literal>SqlSessionTemplate</literal> because the <literal>MapperScannerPostProcessor</literal> 
-      will create <literal>MapperFactoryBean</literal>s that will be autowired. But if you are
+      will create <literal>MapperFactoryBean</literal>s that can be autowired. But if you are
       using more than one <literal>DataSource</literal> autowire may not work for you. In this case
       you can use the <literal>sqlSessionFactoryBeanName</literal> or 
       <literal>sqlSessionTemplateBeanName</literal> properties to set the right bean name to use. 

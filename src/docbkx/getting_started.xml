@@ -86,6 +86,7 @@
 
       <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
 
       Note that the mapper class specified <emphasis>must</emphasis> be an

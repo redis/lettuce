@@ -128,7 +128,7 @@
       like the following:
 
       <programlisting language="xml"><![CDATA[<bean id="userMapperImpl" class="sample.UserMapperImpl">
-  <!-- SqlSessionFactory property is autowired -->
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
     </para>
   </section>
