@@ -22,30 +22,11 @@ import org.springframework.dao.support.DaoSupport;
 import org.springframework.util.Assert;
 
 /**
- * Convenient super class for MyBatis SqlSession data access objects. In the usual case, all that a
- * DAO needs is an SqlSessionFactory. This class also supports passing in an SqlSessionTemplate if a
- * custom DataSource or ExceptionTranslator is needed for a specific DAO.
+ * Convenient super class for MyBatis SqlSession data access objects. 
+ * It gives you access to the template which can then be used to execute SQL methods.
  * <p>
- *
- * By default, each DAO gets its own SqlSessionTemplate which holds the SqlSessionFactory.
- * SqlSessionTemplate is thread safe, so a single instance can be shared by all DAOs; there
- * should also be a small memory savings by doing this. To support a shared template, this class has
- * a constructor that accepts an SqlSessionTemplate. This pattern can be used in Spring
- * configuration files as follows:
- *
- * <pre class="code">
- * {@code
- *   <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
- *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
- *   </bean>
- *
- *   <bean id="baseDAO" abstract="true" lazy-init="true">
- *     <property name="sqlSessionTemplate" ref="sqlSessionTemplate" />
- *   </bean>
- * 
- *   <bean id="testDao" parent="baseDAO" class="org.mybatis.spring.support.SqlSessionDaoSupport" />
- * }
- * </pre>
+ * This class needs a SqlSessionTemplate or a SqlSessionFactory. 
+ * If both are set the SqlSessionFactory will be ignored.
  *
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate
