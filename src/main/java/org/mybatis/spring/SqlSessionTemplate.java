@@ -40,16 +40,17 @@ import org.springframework.util.Assert;
  * DataAccessExceptions, following the <code>org.springframework.dao</code> exception hierarchy.
  * Uses the same {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
  * {@link org.springframework.jdbc.core.JdbcTemplate}.
- *
+ * <p>
  * The main method of this class executes a callback that implements a data access action.
  * Furthermore, this class provides numerous convenience methods that mirror
  * {@link org.apache.ibatis.session.SqlSession}'s execution methods.
- *
+ * <p>
  * It is generally recommended to use the convenience methods on this template for plain
  * query/insert/update/delete operations. However, for more complex operations like batch updates, a
  * custom SqlSessionCallback must be implemented, usually as anonymous inner class. For example:
  *
  * <pre class="code">
+ * {@code
  * getSqlSessionTemplate().execute(new SqlSessionCallback&lt;Object&gt;() {
  *     public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
  *         sqlSession.getMapper(MyMapper.class).update(parameterObject);
@@ -57,13 +58,24 @@ import org.springframework.util.Assert;
  *         return null;
  *     }
  * }, ExecutorType.BATCH);
+ * }
  * </pre>
  *
  * The template needs a SqlSessionFactory to create SqlSessions, passed in via the
- * "sqlSessionFactory" property. A Spring context typically uses a {@link SqlSessionFactoryBean} to
- * build the SqlSessionFactory. The template can additionally be configured with a DataSource for
- * fetching Connections, although this is not necessary since a DataSource is specified for the
- * SqlSessionFactory itself (through configured Environment).
+ * "sqlSessionFactory" property or as a constructor argument.
+ * <p>
+ * SqlSessionTemplate is thread safe, so a single instance can be shared by all DAOs; there
+ * should also be a small memory savings by doing this. To support a shared template, this class has
+ * a constructor that accepts an SqlSessionTemplate. This pattern can be used in Spring
+ * configuration files as follows:
+ *
+ * <pre class="code">
+ * {@code
+ *   <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+ *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ *   </bean>
+ * }
+ * </pre>
  *
  * @see #execute
  * @see #setSqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory)
@@ -75,15 +87,35 @@ import org.springframework.util.Assert;
  */
 public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperations {
 
-    private final SqlSessionFactory sqlSessionFactory;
+    private SqlSessionFactory sqlSessionFactory;
+
+    /**
+     * This constructor is left here to enable the creation of the SqlSessionTemplate
+     * using this xml in the applicationContext.xml. Otherwise constructor should be used
+     * and that will not match how other mybatis-spring beans are created.
+     * 
+     * <pre class="code">
+     * {@code
+     * <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+     *   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+     * </bean>
+     * }
+     * </pre>
+     */
+    public SqlSessionTemplate() {
+    }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
-        Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        this.sqlSessionFactory = sqlSessionFactory;
+        setSqlSessionFactory(sqlSessionFactory);
+        afterPropertiesSet();
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
         return sqlSessionFactory;
+    }
+
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
     }
 
     /**
@@ -100,6 +132,15 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     @Override
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void afterPropertiesSet() {
+        Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
+        super.afterPropertiesSet();
     }
 
     /**
@@ -207,7 +248,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 //            }
 //        });
 //    }
-
+    
     /**
      * {@inheritDoc}
      */
