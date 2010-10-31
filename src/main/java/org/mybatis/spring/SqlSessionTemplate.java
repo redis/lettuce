@@ -65,8 +65,7 @@ import org.springframework.util.Assert;
  * "sqlSessionFactory" property or as a constructor argument.
  * <p>
  * SqlSessionTemplate is thread safe, so a single instance can be shared by all DAOs; there
- * should also be a small memory savings by doing this. To support a shared template, this class has
- * a constructor that accepts an SqlSessionTemplate. This pattern can be used in Spring
+ * should also be a small memory savings by doing this. This pattern can be used in Spring
  * configuration files as follows:
  *
  * <pre class="code">
