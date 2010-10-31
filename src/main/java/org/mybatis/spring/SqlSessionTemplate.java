@@ -188,15 +188,41 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings({ "unchecked" })
     public <T> List<T> selectList(final String statement, final Object parameter, final RowBounds rowBounds) {
         return execute(new SqlSessionCallback<List<T>>() {
+            @SuppressWarnings({ "unchecked" })
             public List<T> doInSqlSession(SqlSession sqlSession) {
                 return sqlSession.selectList(statement, parameter, rowBounds);
             }
         });
     }
 
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public <K, T> Map<K, T> selectMap(final String statement, final String mapKey) {
+//        return selectMap(statement, null, mapKey);
+//    }
+//
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public <K, T> Map<K, T> selectMap(final String statement, final Object parameter, final String mapKey) {
+//        return selectMap(statement, null, mapKey, RowBounds.DEFAULT);
+//    }
+//
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public <K, T> Map<K, T> selectMap(final String statement, final Object parameter, final String mapKey, final RowBounds rowBounds) {
+//        return execute(new SqlSessionCallback<Map<K, T>>() {
+//            @SuppressWarnings("unchecked")
+//            public Map<K, T> doInSqlSession(SqlSession sqlSession) {
+//                return sqlSession.selectMap(statement, parameter, mapKey, rowBounds);
+//            }
+//        });
+//    }
+    
     /**
      * {@inheritDoc}
      */
@@ -281,7 +307,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings("unchecked")
     public <T> T getMapper(final Class<T> type) {
         return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type }, new InvocationHandler() {
             public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {

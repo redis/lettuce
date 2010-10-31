@@ -66,6 +66,24 @@ public interface SqlSessionOperations {
      */
     <T> List<T> selectList(String statement, Object parameter, RowBounds rowBounds);
 
+//    /**
+//     * @see org.apache.ibatis.session.SqlSession#selectMap(String statement, String mapKey)
+//     * @throws org.springframework.dao.DataAccessException in case of errors
+//     */
+//    <K, T> Map<K, T> selectMap(String statement, String mapKey);
+//
+//    /**
+//     * @see org.apache.ibatis.session.SqlSession#selectMap(String statement, Object parameter, String mapKey)
+//     * @throws org.springframework.dao.DataAccessException in case of errors
+//     */
+//    <K, T> Map<K, T> selectMap(String statement, Object parameter, String mapKey);
+//
+//    /**
+//     * @see org.apache.ibatis.session.SqlSession#selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds)
+//     * @throws org.springframework.dao.DataAccessException in case of errors
+//     */
+//    <K, T> Map<K, T> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds);
+
     /**
      * @see org.apache.ibatis.session.SqlSession#select(String, Object, org.apache.ibatis.session.ResultHandler)
      * @throws org.springframework.dao.DataAccessException in case of errors
