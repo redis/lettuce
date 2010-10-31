@@ -75,11 +75,11 @@ import org.springframework.util.Assert;
  */
 public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperations {
 
-    private SqlSessionFactory sqlSessionFactory;
+    private final SqlSessionFactory sqlSessionFactory;
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
+        Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         this.sqlSessionFactory = sqlSessionFactory;
-        afterPropertiesSet();
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
@@ -100,15 +100,6 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     @Override
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void afterPropertiesSet() {
-        Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        super.afterPropertiesSet();
     }
 
     /**
@@ -216,7 +207,7 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
 //            }
 //        });
 //    }
-    
+
     /**
      * {@inheritDoc}
      */
