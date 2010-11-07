@@ -116,8 +116,9 @@ public abstract class AbstractMyBatisSpringTest {
      * afterwards and there is no Connection.open().
      */
     @Before
-    public void setupConnection() {
+    public void setupConnection() throws SQLException {
         connection = createMockConnection();
+        connection.close(); // set initial status to closed
         dataSource.setupConnection(connection);
     }
 
