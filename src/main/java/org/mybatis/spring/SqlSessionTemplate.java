@@ -77,7 +77,7 @@ public class SqlSessionTemplate implements SqlSession {
     private final SqlSessionFactory sqlSessionFactory;
     private final ExecutorType executorType;
     private final SqlSession sqlSessionProxy;
-    private SQLExceptionTranslator exceptionTranslator;    
+    private SQLExceptionTranslator exceptionTranslator;
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
@@ -85,33 +85,31 @@ public class SqlSessionTemplate implements SqlSession {
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        
+
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
-        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());        
-        this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
-                SqlSessionFactory.class.getClassLoader(),
-                new Class[] { SqlSession.class }, 
-                new SqlSessionInterceptor());
-        
+        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
+        this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(SqlSessionFactory.class.getClassLoader(),
+                new Class[] { SqlSession.class }, new SqlSessionInterceptor());
+
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
         return sqlSessionFactory;
     }
-    
+
     public ExecutorType getExecutorType() {
         return executorType;
     }
 
     public SQLExceptionTranslator getExceptionTranslator() {
         return this.exceptionTranslator;
-    }    
-    
+    }
+
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
-    }    
-    
+    }
+
     /**
      * Translates MyBatis exceptions into Spring DataAccessExceptions.
      * It uses {@link JdbcTemplate#getExceptionTranslator} for the SqlException translation
@@ -125,43 +123,18 @@ public class SqlSessionTemplate implements SqlSession {
         } else if (t instanceof UndeclaredThrowableException) {
             t = ((UndeclaredThrowableException) t).getUndeclaredThrowable();
         }
-        
+
         if (t instanceof PersistenceException) {
             if (t.getCause() instanceof SQLException) {
-                return this.exceptionTranslator.translate(
-                        "SqlSession operation", 
-                        null, 
-                        (SQLException) t.getCause());
+                return this.exceptionTranslator.translate("SqlSession operation", null, (SQLException) t.getCause());
             }
         } else if (t instanceof DataAccessException) {
             return (DataAccessException) t;
-        } 
-         
+        }
+
         return new MyBatisSystemException("SqlSession operation", t);
     }
 
-    /**
-     * Proxy needed to route Mapper method calls to the proper SqlSession got
-     * from String's Transaction Manager
-     * 
-     */
-    private class SqlSessionInterceptor implements InvocationHandler {
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
-                    SqlSessionTemplate.this.sqlSessionFactory, 
-                    SqlSessionTemplate.this.executorType);
-            try {
-                return method.invoke(sqlSession, args);
-            } catch (Throwable t) {
-                throw translateException(t);
-            } finally {
-                SqlSessionUtils.closeSqlSession(
-                        sqlSession, 
-                        SqlSessionTemplate.this.sqlSessionFactory);
-            }
-        }
-    }
-        
     /**
      * {@inheritDoc}
      */
@@ -321,6 +294,26 @@ public class SqlSessionTemplate implements SqlSession {
      */
     public Connection getConnection() {
         return sqlSessionProxy.getConnection();
+    }
+
+    /**
+     * Proxy needed to route Mapper method calls to the proper SqlSession got
+     * from String's Transaction Manager
+     * 
+     */
+    private class SqlSessionInterceptor implements InvocationHandler {
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
+                    SqlSessionTemplate.this.sqlSessionFactory,
+                    SqlSessionTemplate.this.executorType);
+            try {
+                return method.invoke(sqlSession, args);
+            } catch (Throwable t) {
+                throw translateException(t);
+            } finally {
+                SqlSessionUtils.closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+            }
+        }
     }
 
 }

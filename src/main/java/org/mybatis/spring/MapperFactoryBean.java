@@ -79,7 +79,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
      * {@inheritDoc}
      */
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSession' are required");        
+        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSession' are required");
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
 
         Configuration configuration = this.sqlSession.getConfiguration();

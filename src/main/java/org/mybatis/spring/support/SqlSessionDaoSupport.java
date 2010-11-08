@@ -56,7 +56,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
     public final SqlSession getSqlSession() {
         return this.sqlSession;
     }
-    
+
     /**
      * {@inheritDoc}
      */
