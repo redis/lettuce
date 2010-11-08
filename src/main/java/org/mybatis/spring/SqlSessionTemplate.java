@@ -84,15 +84,16 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
+        Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
+        
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
+        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());        
         this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
                 SqlSessionFactory.class.getClassLoader(),
                 new Class[] { SqlSession.class }, 
                 new SqlSessionInterceptor());
         
-        Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
