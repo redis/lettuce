@@ -35,7 +35,8 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.JdbcAccessor;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.util.Assert;
 
 /**
@@ -71,11 +72,12 @@ import org.springframework.util.Assert;
  * @see org.apache.ibatis.session.SqlSession
  * @version $Id$
  */
-public class SqlSessionTemplate extends JdbcAccessor implements SqlSession {
+public class SqlSessionTemplate implements SqlSession {
 
     private final SqlSessionFactory sqlSessionFactory;
     private final ExecutorType executorType;
     private final SqlSession sqlSessionProxy;
+    private SQLExceptionTranslator exceptionTranslator;    
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
@@ -89,7 +91,8 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSession {
                 new Class[] { SqlSession.class }, 
                 new SqlSessionInterceptor());
         
-        afterPropertiesSet();
+        Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
+        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
@@ -100,33 +103,62 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSession {
         return executorType;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setDataSource(DataSource dataSource) {
-        // don´t know why but in my test Spring tries to autowire this!!
-        // throw new UnsupportedOperationException(
-        //        "Datasource change is not allowed. SqlSessionFactory datasource must be used");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
     }
-
+    
     /**
-     * {@inheritDoc}
+     * Translates MyBatis exceptions into Spring DataAccessExceptions.
+     * It uses {@link JdbcTemplate#getExceptionTranslator} for the SqlException translation
+     * 
+     * @param t the exception has to be converted to DataAccessException.
+     * @return a Spring DataAccessException
      */
-    @Override
-    public void afterPropertiesSet() {
-        Assert.notNull(this.sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        super.afterPropertiesSet();
+    protected DataAccessException translateException(Throwable t) {
+        if (t instanceof InvocationTargetException) {
+            t = ((InvocationTargetException) t).getTargetException();
+        } else if (t instanceof UndeclaredThrowableException) {
+            t = ((UndeclaredThrowableException) t).getUndeclaredThrowable();
+        }
+        
+        if (t instanceof PersistenceException) {
+            if (t.getCause() instanceof SQLException) {
+                return this.exceptionTranslator.translate(
+                        "SqlSession operation", 
+                        null, 
+                        (SQLException) t.getCause());
+            }
+        } else if (t instanceof DataAccessException) {
+            return (DataAccessException) t;
+        } 
+         
+        return new MyBatisSystemException("SqlSession operation", t);
     }
 
+    /**
+     * Proxy needed to route Mapper method calls to the proper SqlSession got
+     * from String's Transaction Manager
+     * 
+     */
+    private class SqlSessionInterceptor implements InvocationHandler {
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
+                    sqlSessionFactory, 
+                    executorType);
+            try {
+                return method.invoke(sqlSession, args);
+            } catch (Throwable t) {
+                throw translateException(t);
+            } finally {
+                SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
+            }
+        }
+    }
+    
+    public synchronized void getExceptionTranslator() {
+        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
+    }    
+    
     /**
      * {@inheritDoc}
      */
@@ -286,49 +318,6 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSession {
      */
     public Connection getConnection() {
         return sqlSessionProxy.getConnection();
-    }
-
-    /**
-     * Translates MyBatis exceptions into Spring DataAccessExceptions.
-     * It uses {@link JdbcTemplate#getExceptionTranslator} for the SqlException translation
-     * 
-     * @param t the exception has to be converted to DataAccessException.
-     * @return a Spring DataAccessException
-     */
-    protected DataAccessException translateException(Throwable t) {
-        if (t instanceof InvocationTargetException) {
-            t = ((InvocationTargetException) t).getTargetException();
-        } else if (t instanceof UndeclaredThrowableException) {
-            t = ((UndeclaredThrowableException) t).getUndeclaredThrowable();
-        }
-        
-        if (t instanceof PersistenceException) {
-            if (t.getCause() instanceof SQLException) {
-                return getExceptionTranslator().translate(
-                        "SqlSession operation", 
-                        null, 
-                        (SQLException) t.getCause());
-            }
-        } else if (t instanceof DataAccessException) {
-            return (DataAccessException) t;
-        } 
-         
-        return new MyBatisSystemException("SqlSession operation", t);
-    }
-
-    private class SqlSessionInterceptor implements InvocationHandler {
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
-                    sqlSessionFactory, 
-                    executorType);
-            try {
-                return method.invoke(sqlSession, args);
-            } catch (Throwable t) {
-                throw translateException(t);
-            } finally {
-                SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
-            }
-        }
     }
 
 }
