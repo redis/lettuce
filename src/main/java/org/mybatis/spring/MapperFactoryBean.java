@@ -84,8 +84,6 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
         Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
 
-        this.sqlSessionTemplate.afterPropertiesSet();
-
         Configuration configuration = this.sqlSessionTemplate.getSqlSessionFactory().getConfiguration();
         if (this.addToConfig && !configuration.hasMapper(mapperInterface)) {
             configuration.addMapper(mapperInterface);

@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring.support;
 
+import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,26 +48,21 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
         }
     }
     
-    public final SqlSessionFactory getSqlSessionFactory() {
-        return this.sqlSessionTemplate.getSqlSessionFactory();
-    }
-
     @Autowired(required = false)
     public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
         this.sqlSessionTemplate = sqlSessionTemplate;
         this.externalTemplate = true;
     }
 
-    public final SqlSessionTemplate getSqlSessionTemplate() {
+    public final SqlSession getSqlSession() {
         return this.sqlSessionTemplate;
     }
-
+    
     /**
      * {@inheritDoc}
      */
     protected void checkDaoConfig() {
         Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
-        this.sqlSessionTemplate.afterPropertiesSet();
     }
 
 }

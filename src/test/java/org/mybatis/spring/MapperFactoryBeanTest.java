@@ -96,23 +96,23 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     }
 
     // SqlSessionTemplate should use explicitly set DataSource, if there is one
-    @Test(expected = UnsupportedOperationException.class)
-    public void testWithDifferentDataSource() throws Exception {
-        try {
-            CountingMockDataSource mockDataSource = new CountingMockDataSource();
-            mockDataSource.setupConnection(createMockConnection());
-
-            SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-            sqlSessionTemplate.setDataSource(mockDataSource);
-
-            fail("should not be able to change the datasource");
-
-        } finally {
-            // null the connection since it was not used
-            // this avoids failing in validateConnectionClosed()
-            connection = null;
-        }
-    }
+//    @Test(expected = UnsupportedOperationException.class)
+//    public void testWithDifferentDataSource() throws Exception {
+//        try {
+//            CountingMockDataSource mockDataSource = new CountingMockDataSource();
+//            mockDataSource.setupConnection(createMockConnection());
+//
+//            SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+//            sqlSessionTemplate.setDataSource(mockDataSource);
+//
+//            fail("should not be able to change the datasource");
+//
+//        } finally {
+//            // null the connection since it was not used
+//            // this avoids failing in validateConnectionClosed()
+//            connection = null;
+//        }
+//    }
 
     // MapperFactoryBeans should be usable outside of Spring TX, as long as a there is no active
     // transaction

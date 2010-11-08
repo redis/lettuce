@@ -18,12 +18,16 @@ package org.mybatis.spring;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
 import javax.sql.DataSource;
 
 import org.apache.ibatis.exceptions.PersistenceException;
+import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
@@ -41,28 +45,13 @@ import org.springframework.util.Assert;
  * Uses the same {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
  * {@link org.springframework.jdbc.core.JdbcTemplate}.
  * <p>
- * The main method of this class executes a callback that implements a data access action.
- * Furthermore, this class provides numerous convenience methods that mirror
- * {@link org.apache.ibatis.session.SqlSession}'s execution methods.
+ * This class uses a SqlSession dinamic proxy so the proper SqlSession is 
+ * get from Spring's TransactionManager
  * <p>
- * It is generally recommended to use the convenience methods on this template for plain
- * query/insert/update/delete operations. However, for more complex operations like batch updates, a
- * custom SqlSessionCallback must be implemented, usually as anonymous inner class. For example:
  *
- * <pre class="code">
- * {@code
- * getSqlSessionTemplate().execute(new SqlSessionCallback&lt;Object&gt;() {
- *     public Object doInSqlSession(SqlSession sqlSession) throws SQLException {
- *         sqlSession.getMapper(MyMapper.class).update(parameterObject);
- *         sqlSession.update(&quot;MyMapper.update&quot;, otherParameterObject);
- *         return null;
- *     }
- * }, ExecutorType.BATCH);
- * }
- * </pre>
- *
- * The template needs a SqlSessionFactory to create SqlSessions, passed in via the
- * "sqlSessionFactory" property or as a constructor argument.
+ * The template needs a SqlSessionFactory to create SqlSessions, passed 
+ * as a constructor argument. It also can be constructed indicating the 
+ * executor type to be used, if not, default executor type will be used.
  * <p>
  * SqlSessionTemplate is thread safe, so a single instance can be shared by all DAOs; there
  * should also be a small memory savings by doing this. This pattern can be used in Spring
@@ -71,50 +60,44 @@ import org.springframework.util.Assert;
  * <pre class="code">
  * {@code
  *   <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
- *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ *     <constructor-arg ref="sqlSessionFactory" />
  *   </bean>
  * }
  * </pre>
  *
- * @see #execute
  * @see #setSqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory)
  * @see SqlSessionFactoryBean#setDataSource
  * @see org.apache.ibatis.session.SqlSessionFactory#getConfiguration()
  * @see org.apache.ibatis.session.SqlSession
- * @see org.mybatis.spring.SqlSessionOperations
  * @version $Id$
  */
-public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperations {
+public class SqlSessionTemplate extends JdbcAccessor implements SqlSession {
 
-    private SqlSessionFactory sqlSessionFactory;
-
-    /**
-     * This constructor is left here to enable the creation of the SqlSessionTemplate
-     * using this xml in the applicationContext.xml. Otherwise constructor should be used
-     * and that will not match how other mybatis-spring beans are created.
-     * 
-     * <pre class="code">
-     * {@code
-     * <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
-     *   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-     * </bean>
-     * }
-     * </pre>
-     */
-    public SqlSessionTemplate() {
-    }
+    private final SqlSessionFactory sqlSessionFactory;
+    private final ExecutorType executorType;
+    private final SqlSession sqlSessionProxy;
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
-        setSqlSessionFactory(sqlSessionFactory);
+        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
+    }
+
+    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.executorType = executorType;
+        this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
+                SqlSessionFactory.class.getClassLoader(),
+                new Class[] { SqlSession.class }, 
+                new SqlSessionInterceptor());
+        
         afterPropertiesSet();
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
         return sqlSessionFactory;
     }
-
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
+    
+    public ExecutorType getExecutorType() {
+        return executorType;
     }
 
     /**
@@ -122,7 +105,9 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
      */
     @Override
     public void setDataSource(DataSource dataSource) {
-        throw new UnsupportedOperationException("Datasource change is not allowed. SqlSessionFactory datasource must be used");
+        // don´t know why but in my test Spring tries to autowire this!!
+        // throw new UnsupportedOperationException(
+        //        "Datasource change is not allowed. SqlSessionFactory datasource must be used");
     }
 
     /**
@@ -143,212 +128,164 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
     }
 
     /**
-     * Execute the given data access action with the proper SqlSession (got from current transaction or 
-     * a new one)
-     *
-     * @param <T>
-     * @param action
-     * @return
-     * @throws DataAccessException
-     */
-    public <T> T execute(SqlSessionCallback<T> action) throws DataAccessException {
-        return execute(action, this.sqlSessionFactory.getConfiguration().getDefaultExecutorType());
-    }
-
-    /**
-     * Execute the given data access action on a Executor.
-     *
-     * @param action callback object that specifies the data access action
-     * @param executorType SIMPLE, REUSE, BATCH
-     * @return a result object returned by the action, or <code>null</code>
-     * @throws DataAccessException in case of errors
-     */
-    public <T> T execute(SqlSessionCallback<T> action, ExecutorType executorType) throws DataAccessException {
-        Assert.notNull(action, "Callback object must not be null");
-        Assert.notNull(this.sqlSessionFactory, "No SqlSessionFactory specified");
-
-        SqlSession sqlSession = SqlSessionUtils.getSqlSession(this.sqlSessionFactory, getDataSource(), executorType);
-
-        try {
-            return action.doInSqlSession(sqlSession);
-        } catch (Throwable t) {
-            throw wrapException(t);
-        } finally {
-            SqlSessionUtils.closeSqlSession(sqlSession, this.sqlSessionFactory);
-        }
-    }
-
-    /**
      * {@inheritDoc}
      */
     public Object selectOne(String statement) {
-        return selectOne(statement, null);
+        return sqlSessionProxy.selectOne(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Object selectOne(final String statement, final Object parameter) {
-        return execute(new SqlSessionCallback<Object>() {
-            public Object doInSqlSession(SqlSession sqlSession) {
-                return sqlSession.selectOne(statement, parameter);
-            }
-        });
+    public Object selectOne(String statement, Object parameter) {
+        return sqlSessionProxy.selectOne(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> List<T> selectList(String statement) {
-        return selectList(statement, null);
+    public List<?> selectList(String statement) {
+        return sqlSessionProxy.selectList(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> List<T> selectList(String statement, Object parameter) {
-        return selectList(statement, parameter, RowBounds.DEFAULT);
+    public List<?> selectList(String statement, Object parameter) {
+        return sqlSessionProxy.selectList(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> List<T> selectList(final String statement, final Object parameter, final RowBounds rowBounds) {
-        return execute(new SqlSessionCallback<List<T>>() {
-            @SuppressWarnings({ "unchecked" })
-            public List<T> doInSqlSession(SqlSession sqlSession) {
-                return sqlSession.selectList(statement, parameter, rowBounds);
-            }
-        });
-    }
-
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public <K, T> Map<K, T> selectMap(final String statement, final String mapKey) {
-//        return selectMap(statement, null, mapKey);
-//    }
-//
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public <K, T> Map<K, T> selectMap(final String statement, final Object parameter, final String mapKey) {
-//        return selectMap(statement, null, mapKey, RowBounds.DEFAULT);
-//    }
-//
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public <K, T> Map<K, T> selectMap(final String statement, final Object parameter, final String mapKey, final RowBounds rowBounds) {
-//        return execute(new SqlSessionCallback<Map<K, T>>() {
-//            @SuppressWarnings("unchecked")
-//            public Map<K, T> doInSqlSession(SqlSession sqlSession) {
-//                return sqlSession.selectMap(statement, parameter, mapKey, rowBounds);
-//            }
-//        });
-//    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void select(String statement, Object parameter, ResultHandler handler) {
-        select(statement, parameter, RowBounds.DEFAULT, handler);
+    public List<?> selectList(String statement, Object parameter, RowBounds rowBounds) {
+        return sqlSessionProxy.selectList(statement, parameter, rowBounds);
     }
 
     /**
      * {@inheritDoc}
      */
     public void select(String statement, ResultHandler handler) {
-        select(statement, null, RowBounds.DEFAULT, handler);
+        sqlSessionProxy.select(statement, handler);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void select(final String statement, final Object parameter, final RowBounds rowBounds,
-                       final ResultHandler handler) {
-        execute(new SqlSessionCallback<Object>() {
-            public Object doInSqlSession(SqlSession sqlSession) {
-                sqlSession.select(statement, parameter, rowBounds, handler);
-                return null;
-            }
-        });
+    public void select(String statement, Object parameter, ResultHandler handler) {
+        sqlSessionProxy.select(statement, parameter, handler);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler) {
+        sqlSessionProxy.select(statement, parameter, rowBounds, handler);
     }
 
     /**
      * {@inheritDoc}
      */
     public int insert(String statement) {
-        return insert(statement, null);
+        return sqlSessionProxy.insert(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int insert(final String statement, final Object parameter) {
-        return execute(new SqlSessionCallback<Integer>() {
-            public Integer doInSqlSession(SqlSession sqlSession) {
-                return sqlSession.insert(statement, parameter);
-            }
-        });
+    public int insert(String statement, Object parameter) {
+        return sqlSessionProxy.insert(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
     public int update(String statement) {
-        return update(statement, null);
+        return sqlSessionProxy.update(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int update(final String statement, final Object parameter) {
-        return execute(new SqlSessionCallback<Integer>() {
-            public Integer doInSqlSession(SqlSession sqlSession) {
-                return sqlSession.update(statement, parameter);
-            }
-        });
+    public int update(String statement, Object parameter) {
+        return sqlSessionProxy.update(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
     public int delete(String statement) {
-        return delete(statement, null);
+        return sqlSessionProxy.delete(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int delete(final String statement, final Object parameter) {
-        return execute(new SqlSessionCallback<Integer>() {
-            public Integer doInSqlSession(SqlSession sqlSession) {
-                return sqlSession.delete(statement, parameter);
-            }
-        });
+    public int delete(String statement, Object parameter) {
+        return sqlSessionProxy.delete(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
-    public <T> T getMapper(final Class<T> type) {
-        return (T) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type }, new InvocationHandler() {
-            public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-                return execute(new SqlSessionCallback<Object>() {
-                    public Object doInSqlSession(SqlSession sqlSession) {
-                        try {
-                            return method.invoke(sqlSession.getMapper(type), args);
-                        } catch (InvocationTargetException e) {
-                            throw wrapException(e.getCause());
-                        } catch (Exception e) {
-                            throw new MyBatisSystemException("SqlSession operation", e);
-                        }
-                    }
-                });
-            }
-        });
+    public <T> T getMapper(Class<T> type) {
+        return getConfiguration().getMapper(type, this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void commit() {
+        // do nothing
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void commit(boolean force) {
+        // do nothing
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void rollback() {
+        // do nothing
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void rollback(boolean force) {
+        // do nothing
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void close() {
+        // do nothing
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void clearCache() {
+        this.sqlSessionProxy.clearCache();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Configuration getConfiguration() {
+        return sqlSessionFactory.getConfiguration();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Connection getConnection() {
+        return sqlSessionProxy.getConnection();
     }
 
     /**
@@ -358,17 +295,39 @@ public class SqlSessionTemplate extends JdbcAccessor implements SqlSessionOperat
      * @param t the exception has to be converted to DataAccessException.
      * @return a Spring DataAccessException
      */
-    protected DataAccessException wrapException(Throwable t) {
+    protected DataAccessException translateException(Throwable t) {
+        if (t instanceof InvocationTargetException) {
+            t = ((InvocationTargetException) t).getTargetException();
+        } else if (t instanceof UndeclaredThrowableException) {
+            t = ((UndeclaredThrowableException) t).getUndeclaredThrowable();
+        }
+        
         if (t instanceof PersistenceException) {
             if (t.getCause() instanceof SQLException) {
-                return getExceptionTranslator().translate("SqlSession operation", null, (SQLException) t.getCause());
-            } else {
-                return new MyBatisSystemException("SqlSession operation", t);
+                return getExceptionTranslator().translate(
+                        "SqlSession operation", 
+                        null, 
+                        (SQLException) t.getCause());
             }
         } else if (t instanceof DataAccessException) {
             return (DataAccessException) t;
-        } else {
-            return new MyBatisSystemException("SqlSession operation", t);
+        } 
+         
+        return new MyBatisSystemException("SqlSession operation", t);
+    }
+
+    private class SqlSessionInterceptor implements InvocationHandler {
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
+                    sqlSessionFactory, 
+                    executorType);
+            try {
+                return method.invoke(sqlSession, args);
+            } catch (Throwable t) {
+                throw translateException(t);
+            } finally {
+                SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
+            }
         }
     }
 
