@@ -148,14 +148,16 @@ public class SqlSessionTemplate implements SqlSession {
     private class SqlSessionInterceptor implements InvocationHandler {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
-                    sqlSessionFactory, 
-                    executorType);
+                    SqlSessionTemplate.this.sqlSessionFactory, 
+                    SqlSessionTemplate.this.executorType);
             try {
                 return method.invoke(sqlSession, args);
             } catch (Throwable t) {
                 throw translateException(t);
             } finally {
-                SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
+                SqlSessionUtils.closeSqlSession(
+                        sqlSession, 
+                        SqlSessionTemplate.this.sqlSessionFactory);
             }
         }
     }

@@ -194,7 +194,7 @@ public final class SqlSessionUtils {
          */
         @Override
         public void suspend() {
-            TransactionSynchronizationManager.unbindResource(sessionFactory);
+            TransactionSynchronizationManager.unbindResource(this.sessionFactory);
         }
 
         /**
@@ -202,7 +202,7 @@ public final class SqlSessionUtils {
          */
         @Override
         public void resume() {
-            TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+            TransactionSynchronizationManager.bindResource(this.sessionFactory, this.holder);
         }
 
         /**
@@ -220,22 +220,22 @@ public final class SqlSessionUtils {
                         // False here on commit or rollback prevents a call to Transaction.commit()
                         // in BaseExecutor which will be redundant with SpringManagedTransaction
                         // since we already know that commit on the Connection is being handled.
-                        holder.getSqlSession().commit(false);
+                        this.holder.getSqlSession().commit(false);
                         if (logger.isDebugEnabled()) {
                             logger.debug("Transaction synchronization committed SqlSession");
                         }
                     }
                 } else {
-                    holder.getSqlSession().rollback(false);
+                    this.holder.getSqlSession().rollback(false);
                     if (logger.isDebugEnabled()) {
                         logger.debug("Transaction synchronization rolled back SqlSession");
                     }
                 }
             } finally {
-                if (!holder.isOpen()) {
-                    TransactionSynchronizationManager.unbindResource(sessionFactory);
-                    holder.getSqlSession().close();
-                    holder.reset();
+                if (!this.holder.isOpen()) {
+                    TransactionSynchronizationManager.unbindResource(this.sessionFactory);
+                    this.holder.getSqlSession().close();
+                    this.holder.reset();
                     if (logger.isDebugEnabled()) {
                         logger.debug("Transaction synchronization closed SqlSession");
                     }
