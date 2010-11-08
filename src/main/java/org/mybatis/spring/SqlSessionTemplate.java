@@ -104,9 +104,13 @@ public class SqlSessionTemplate implements SqlSession {
         return executorType;
     }
 
+    public SQLExceptionTranslator getExceptionTranslator() {
+        return this.exceptionTranslator;
+    }    
+    
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
-    }
+    }    
     
     /**
      * Translates MyBatis exceptions into Spring DataAccessExceptions.
@@ -155,11 +159,7 @@ public class SqlSessionTemplate implements SqlSession {
             }
         }
     }
-    
-    public synchronized void getExceptionTranslator() {
-        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
-    }    
-    
+        
     /**
      * {@inheritDoc}
      */
