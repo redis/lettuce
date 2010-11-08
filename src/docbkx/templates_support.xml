@@ -118,8 +118,7 @@
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></programlisting>
 	  
-	  Inject the template to you bean:
-
+	  Inject the template into your bean:
       <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperImpl">
   <property name="sqlSession" ref="sqlSession" />
 </bean>]]></programlisting>  
