@@ -23,12 +23,12 @@
   <title>Obtaining a SqlSession</title>
   
   <para>
-    In MyBatis you use the <literal>SqlSessionFactoryBean</literal> to create <literal>SqlSession</literal>s. 
-    Then you use it to execute your mapped statements, commit or rollback transactions and finally you close it. 
+    In MyBatis you use the <literal>SqlSessionFactoryBean</literal> to create an <literal>SqlSession</literal>. 
+    Once you have it you use it to execute your mapped statements, commit or rollback transactions and finally, 
+    when it is no longer needed, you close it. 
     With MyBatis-Spring you don´t need to use <literal>SqlSessionFactoryBean</literal> because 
-    MyBatis-Spring will inject a thread safe <literal>SqlSession</literal> ready to accept calls to mapper methods. 
-    You don´t have to commit, rollback or close it because it will be done automatically. 
-     
+    your beans will be injected with thread safe <literal>SqlSession</literal> that you won´t even
+    need to commit, rollback or close because that will automatically be done for you.
   </para>  
   
   <section id="templates_support.daosupport">
@@ -90,7 +90,7 @@
     </para> 
       
     <para>
-      It implements <literal>SqlSession</literal> so that you will use it in the same way you would 
+      It implements <literal>SqlSession</literal> so that you can use it in the same way you would 
       use a MyBatis <literal>SqlSession</literal>. <literal>SqlSessionTemplate</literal> should 
       <emphasis>always</emphasis> be used instead of <literal>SqlSession</literal> because the base MyBatis 
       <literal>SqlSession</literal> cannot participate in Spring transactions and is not thread safe. 
@@ -118,7 +118,7 @@
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></programlisting>
 	  
-	  Inyect the template to you bean:
+	  Inject the template to you bean:
 
       <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperImpl">
   <property name="sqlSession" ref="sqlSession" />
