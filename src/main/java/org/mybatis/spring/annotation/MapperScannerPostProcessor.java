@@ -74,7 +74,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
     private boolean addToConfig = true;
 
-    private String sqlSessionTemplateBeanName;
+    private String sqlSessionBeanName;
 
     private String sqlSessionFactoryBeanName;
 
@@ -86,8 +86,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         this.addToConfig = addToConfig;
     }
 
-    public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
-        this.sqlSessionTemplateBeanName = sqlSessionTemplateName;
+    public void setSqlSessionBeanName(String sqlSessionName) {
+        this.sqlSessionBeanName = sqlSessionName;
     }
 
     public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
@@ -150,8 +150,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             if (StringUtils.hasLength(this.sqlSessionFactoryBeanName)) {
                 beanDefinitionBuilder.addPropertyReference("sqlSessionFactory", this.sqlSessionFactoryBeanName);
             }
-            if (StringUtils.hasLength(this.sqlSessionTemplateBeanName)) {
-                beanDefinitionBuilder.addPropertyReference("sqlSessionTemplate", this.sqlSessionTemplateBeanName);
+            if (StringUtils.hasLength(this.sqlSessionBeanName)) {
+                beanDefinitionBuilder.addPropertyReference("sqlSession", this.sqlSessionBeanName);
             }
             String name = mapperInterface.getAnnotation(Mapper.class).value();
             if (!StringUtils.hasLength(name)) {

@@ -16,6 +16,7 @@
 package org.mybatis.spring;
 
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -49,24 +50,21 @@ import org.springframework.util.Assert;
 public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
 
     private Class<T> mapperInterface;
-
     private boolean addToConfig = true;
-
-    private SqlSessionTemplate sqlSessionTemplate;
-
-    private boolean externalTemplate;
+    private SqlSession sqlSession;
+    private boolean externalSqlSession;
 
     @Autowired(required = false)
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        if (!this.externalTemplate) {
-            this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+        if (!this.externalSqlSession) {
+            this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
         }
     }
 
     @Autowired(required = false)
-    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSessionTemplate = sqlSessionTemplate;
-        this.externalTemplate = true;
+    public void setSqlSession(SqlSession sqlSession) {
+        this.sqlSession = sqlSession;
+        this.externalSqlSession = true;
     }
 
     public void setMapperInterface(Class<T> mapperInterface) {
@@ -82,9 +80,9 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
      */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
-        Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
+        Assert.notNull(this.sqlSession, "Property 'sqlSession' is required");
 
-        Configuration configuration = this.sqlSessionTemplate.getSqlSessionFactory().getConfiguration();
+        Configuration configuration = this.sqlSession.getConfiguration();
         if (this.addToConfig && !configuration.hasMapper(mapperInterface)) {
             configuration.addMapper(mapperInterface);
         }
@@ -94,7 +92,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
      * {@inheritDoc}
      */
     public T getObject() throws Exception {
-        return this.sqlSessionTemplate.getMapper(mapperInterface);
+        return this.sqlSession.getMapper(mapperInterface);
     }
 
     /**

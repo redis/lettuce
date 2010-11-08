@@ -37,32 +37,31 @@ import org.springframework.util.Assert;
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
-    private SqlSessionTemplate sqlSessionTemplate;
-
-    private boolean externalTemplate;
+    private SqlSession sqlSession;
+    private boolean externalSqlSession;
 
     @Autowired(required = false)
     public final void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        if (!this.externalTemplate) {
-            this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+        if (!this.externalSqlSession) {
+            this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
         }
     }
-    
+
     @Autowired(required = false)
-    public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSessionTemplate = sqlSessionTemplate;
-        this.externalTemplate = true;
+    public final void setSqlSession(SqlSession sqlSession) {
+        this.sqlSession = sqlSession;
+        this.externalSqlSession = true;
     }
 
     public final SqlSession getSqlSession() {
-        return this.sqlSessionTemplate;
+        return this.sqlSession;
     }
     
     /**
      * {@inheritDoc}
      */
     protected void checkDaoConfig() {
-        Assert.notNull(this.sqlSessionTemplate, "Property 'sqlSessionTemplate' is required");
+        Assert.notNull(this.sqlSession, "Property 'sqlSession' is required");
     }
 
 }
