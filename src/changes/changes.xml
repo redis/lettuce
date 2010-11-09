@@ -27,7 +27,13 @@
     </properties>
 
     <body>
-        <release version="1.0.0-RC2" date="TBD" description="1.0.0-RC2 release">
+        <release version="1.0.0-RC3" date="TBD" description="1.0.0-RC3 release">
+            <action type="update" issue="166">
+				Avoid one Proxy creation when using injected mappers
+            </action>
+        </release>
+        
+        <release version="1.0.0-RC2" date="2010-10-31" description="1.0.0-RC2 release">
             <action type="update">
                 Improved documentation manual.
             </action>
