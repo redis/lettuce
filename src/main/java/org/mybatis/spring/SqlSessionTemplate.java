@@ -57,16 +57,19 @@ import org.springframework.util.Assert;
  * DAOs; there should also be a small memory savings by doing this. This pattern
  * can be used in Spring configuration files as follows:
  * 
- * <pre class="code"> {@code <bean id="sqlSessionTemplate"
- * class="org.mybatis.spring.SqlSessionTemplate"> <constructor-arg
- * ref="sqlSessionFactory" /> </bean> * } </pre>
+ * <pre class="code">
+ * {@code 
+ * <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate"> 
+ *   <constructor-arg ref="sqlSessionFactory" /> 
+ * </bean>
+ * }
+ * </pre>
  * 
  * @see SqlSessionFactory
  * @see SqlSession
  * @see SQLExceptionTranslator
  * @see ExecutorType
- * @version $Id: SqlSessionTemplate.java 3103 2010-11-08 18:32:21Z
- *          eduardo.macarron $
+ * @version $Id$
  */
 public class SqlSessionTemplate implements SqlSession {
 
