@@ -37,21 +37,18 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
-import org.springframework.jdbc.support.SQLStateSQLExceptionTranslator;
 import org.springframework.util.Assert;
 
 /**
- * Helper class that simplifies data access via the MyBatis
- * {@link org.apache.ibatis.session.SqlSession} API, converting checked
- * SQLExceptions into unchecked DataAccessExceptions, following the
+ * Thread safe Spring managed {@link SqlSession}
+ * <p>
+ * It converts SQLExceptions into unchecked DataAccessExceptions, following the
  * <code>org.springframework.dao</code> exception hierarchy. Uses the same
- * {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
- * {@link org.springframework.jdbc.core.JdbcTemplate}.
+ * {@link SQLExceptionTranslator} mechanism as {@link JdbcTemplate}.
  * <p>
- * This class uses a SqlSession dinamic proxy so the proper SqlSession is get
- * from Spring's TransactionManager
+ * Gets the right {@link SqlSession} from Spring
+ * {@link TransactionSynchronizationManager} It also works if its not Tx active.
  * <p>
- * 
  * The template needs a SqlSessionFactory to create SqlSessions, passed as a
  * constructor argument. It also can be constructed indicating the executor type
  * to be used, if not, default executor type will be used.
@@ -64,10 +61,10 @@ import org.springframework.util.Assert;
  * class="org.mybatis.spring.SqlSessionTemplate"> <constructor-arg
  * ref="sqlSessionFactory" /> </bean> * } </pre>
  * 
- * @see #setSqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory)
- * @see SqlSessionFactoryBean#setDataSource
- * @see org.apache.ibatis.session.SqlSessionFactory#getConfiguration()
- * @see org.apache.ibatis.session.SqlSession
+ * @see SqlSessionFactory
+ * @see SqlSession
+ * @see SQLExceptionTranslator
+ * @see ExecutorType
  * @version $Id: SqlSessionTemplate.java 3103 2010-11-08 18:32:21Z
  *          eduardo.macarron $
  */
@@ -111,7 +108,8 @@ public class SqlSessionTemplate implements SqlSession {
         this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(SqlSessionFactory.class.getClassLoader(),
                 new Class[] { SqlSession.class }, new SqlSessionInterceptor());
 
-        // the exception translator creation can be delayed until the first SqlException is thrown
+        // the exception translator creation can be delayed until the first
+        // SqlException is thrown
         if (!this.exceptionTranslatorLazyInit) {
             getExceptionTranslator();
         }
