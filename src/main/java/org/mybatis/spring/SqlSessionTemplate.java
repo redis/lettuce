@@ -98,7 +98,7 @@ public class SqlSessionTemplate implements SqlSession {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), null, true);
     }
 
-    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
+    private SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
             SQLExceptionTranslator exceptionTranslator, boolean exceptionTranslatorLazyInit) {
 
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
