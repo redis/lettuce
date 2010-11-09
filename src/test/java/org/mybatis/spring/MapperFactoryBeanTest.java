@@ -199,7 +199,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         // SqlSessionFactory could change for each test
         MapperFactoryBean<TestMapper> mapper = new MapperFactoryBean<TestMapper>();
         mapper.setMapperInterface(TestMapper.class);
-        mapper.setSqlSession(sqlSessionTemplate);
+        mapper.setSqlSessionTemplate(sqlSessionTemplate);
         mapper.setAddToConfig(addToConfig);
         mapper.afterPropertiesSet();
 
