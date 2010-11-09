@@ -61,7 +61,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
      * {@inheritDoc}
      */
     protected void checkDaoConfig() {
-        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSession' are required");
+        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");
     }
 
 }

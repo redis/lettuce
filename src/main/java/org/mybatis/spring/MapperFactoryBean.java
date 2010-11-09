@@ -62,8 +62,8 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
     }
 
     @Autowired(required = false)
-    public void setSqlSessionTemplate(SqlSessionTemplate sqlSession) {
-        this.sqlSession = sqlSession;
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSession = sqlSessionTemplate;
         this.externalSqlSession = true;
     }
 
@@ -79,7 +79,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
      * {@inheritDoc}
      */
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSession' are required");
+        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
 
         Configuration configuration = this.sqlSession.getConfiguration();
