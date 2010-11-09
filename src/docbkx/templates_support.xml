@@ -134,10 +134,9 @@
       default set for the <literal>SqlSessionFactory</literal>. The only caveat to
       this form of the method is that there <emphasis>cannot</emphasis> be an
       existing transaction running with a different ExecutorType when this
-      method is called. Either ensure that calls to
-      <literal>execute(SqlSessionCallback, ExecutorType)</literal> run in a
-      separate transaction, with PROPAGATION_REQUIRES_NEW or with completely
-      outside of a transaction.
+      method is called. Either ensure that calls to <literal>SqlSessionTemplate</literal>s
+      with different executor types run in a separate transaction, with 
+      PROPAGATION_REQUIRES_NEW or with completely outside of a transaction.
     </para>
   </section>
 
