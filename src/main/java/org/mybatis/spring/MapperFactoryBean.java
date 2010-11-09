@@ -62,7 +62,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
     }
 
     @Autowired(required = false)
-    public void setSqlSession(SqlSession sqlSession) {
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSession) {
         this.sqlSession = sqlSession;
         this.externalSqlSession = true;
     }

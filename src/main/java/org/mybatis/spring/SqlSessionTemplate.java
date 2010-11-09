@@ -37,40 +37,39 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLStateSQLExceptionTranslator;
 import org.springframework.util.Assert;
 
 /**
  * Helper class that simplifies data access via the MyBatis
- * {@link org.apache.ibatis.session.SqlSession} API, converting checked SQLExceptions into unchecked
- * DataAccessExceptions, following the <code>org.springframework.dao</code> exception hierarchy.
- * Uses the same {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
+ * {@link org.apache.ibatis.session.SqlSession} API, converting checked
+ * SQLExceptions into unchecked DataAccessExceptions, following the
+ * <code>org.springframework.dao</code> exception hierarchy. Uses the same
+ * {@link org.springframework.jdbc.support.SQLExceptionTranslator} mechanism as
  * {@link org.springframework.jdbc.core.JdbcTemplate}.
  * <p>
- * This class uses a SqlSession dinamic proxy so the proper SqlSession is 
- * get from Spring's TransactionManager
+ * This class uses a SqlSession dinamic proxy so the proper SqlSession is get
+ * from Spring's TransactionManager
  * <p>
- *
- * The template needs a SqlSessionFactory to create SqlSessions, passed 
- * as a constructor argument. It also can be constructed indicating the 
- * executor type to be used, if not, default executor type will be used.
+ * 
+ * The template needs a SqlSessionFactory to create SqlSessions, passed as a
+ * constructor argument. It also can be constructed indicating the executor type
+ * to be used, if not, default executor type will be used.
  * <p>
- * SqlSessionTemplate is thread safe, so a single instance can be shared by all DAOs; there
- * should also be a small memory savings by doing this. This pattern can be used in Spring
- * configuration files as follows:
- *
- * <pre class="code">
- * {@code
- *   <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
- *     <constructor-arg ref="sqlSessionFactory" />
- *   </bean>
- * }
- * </pre>
- *
+ * SqlSessionTemplate is thread safe, so a single instance can be shared by all
+ * DAOs; there should also be a small memory savings by doing this. This pattern
+ * can be used in Spring configuration files as follows:
+ * 
+ * <pre class="code"> {@code <bean id="sqlSessionTemplate"
+ * class="org.mybatis.spring.SqlSessionTemplate"> <constructor-arg
+ * ref="sqlSessionFactory" /> </bean> * } </pre>
+ * 
  * @see #setSqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory)
  * @see SqlSessionFactoryBean#setDataSource
  * @see org.apache.ibatis.session.SqlSessionFactory#getConfiguration()
  * @see org.apache.ibatis.session.SqlSession
- * @version $Id$
+ * @version $Id: SqlSessionTemplate.java 3103 2010-11-08 18:32:21Z
+ *          eduardo.macarron $
  */
 public class SqlSessionTemplate implements SqlSession {
 
@@ -78,20 +77,44 @@ public class SqlSessionTemplate implements SqlSession {
     private final ExecutorType executorType;
     private final SqlSession sqlSessionProxy;
     private SQLExceptionTranslator exceptionTranslator;
+    private boolean exceptionTranslatorLazyInit;
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
     }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
+        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), true);
+    }
+
+    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
+            SQLExceptionTranslator exceptionTranslator) {
+        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), exceptionTranslator,
+                false);
+    }
+
+    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
+            boolean exceptionTranslatorLazyInit) {
+        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), null, true);
+    }
+
+    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
+            SQLExceptionTranslator exceptionTranslator, boolean exceptionTranslatorLazyInit) {
+
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
+        Assert.notNull(sqlSessionFactory, "Property 'executorType' is required");
 
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
-        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
+        this.exceptionTranslator = exceptionTranslator;
+        this.exceptionTranslatorLazyInit = exceptionTranslatorLazyInit;
         this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(SqlSessionFactory.class.getClassLoader(),
                 new Class[] { SqlSession.class }, new SqlSessionInterceptor());
 
+        // the exception translator creation can be delayed until the first SqlException is thrown
+        if (!this.exceptionTranslatorLazyInit) {
+            getExceptionTranslator();
+        }
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
@@ -102,7 +125,18 @@ public class SqlSessionTemplate implements SqlSession {
         return executorType;
     }
 
-    public SQLExceptionTranslator getExceptionTranslator() {
+    /**
+     * Return the exception translator for this instance.
+     * <p>
+     * Creates a default {@link SQLErrorCodeSQLExceptionTranslator} for the
+     * specified DataSource.
+     * 
+     * @see #getDataSource()
+     */
+    public synchronized SQLExceptionTranslator getExceptionTranslator() {
+        if (this.exceptionTranslator == null) {
+            this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
+        }
         return this.exceptionTranslator;
     }
 
@@ -110,11 +144,21 @@ public class SqlSessionTemplate implements SqlSession {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
     }
 
+    public void setLazyInit(boolean lazyInit) {
+        this.exceptionTranslatorLazyInit = lazyInit;
+    }
+
+    public boolean isLazyInit() {
+        return this.exceptionTranslatorLazyInit;
+    }
+
     /**
-     * Translates MyBatis exceptions into Spring DataAccessExceptions.
-     * It uses {@link JdbcTemplate#getExceptionTranslator} for the SqlException translation
+     * Translates MyBatis exceptions into Spring DataAccessExceptions. It uses
+     * {@link JdbcTemplate#getExceptionTranslator} for the SqlException
+     * translation
      * 
-     * @param t the exception has to be converted to DataAccessException.
+     * @param t
+     *            the exception has to be converted to DataAccessException.
      * @return a Spring DataAccessException
      */
     protected DataAccessException translateException(Throwable t) {
@@ -126,7 +170,7 @@ public class SqlSessionTemplate implements SqlSession {
 
         if (t instanceof PersistenceException) {
             if (t.getCause() instanceof SQLException) {
-                return this.exceptionTranslator.translate("SqlSession operation", null, (SQLException) t.getCause());
+                return getExceptionTranslator().translate("SqlSession operation", null, (SQLException) t.getCause());
             }
         } else if (t instanceof DataAccessException) {
             return (DataAccessException) t;
@@ -303,8 +347,7 @@ public class SqlSessionTemplate implements SqlSession {
      */
     private class SqlSessionInterceptor implements InvocationHandler {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
-                    SqlSessionTemplate.this.sqlSessionFactory,
+            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(SqlSessionTemplate.this.sqlSessionFactory,
                     SqlSessionTemplate.this.executorType);
             try {
                 return method.invoke(sqlSession, args);
