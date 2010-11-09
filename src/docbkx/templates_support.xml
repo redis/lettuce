@@ -28,7 +28,7 @@
     when it is no longer needed, you close it. 
     With MyBatis-Spring you don´t need to use <literal>SqlSessionFactoryBean</literal> because 
     your beans will be injected with thread safe <literal>SqlSession</literal> that you won't even
-    need to commit, rollback or close because that will automatically be done for you.
+    need to commit, rollback or close it because that will automatically be done for you.
   </para>  
   
   <section id="templates_support.daosupport">
