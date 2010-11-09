@@ -53,6 +53,13 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
         this.externalSqlSession = true;
     }
 
+    /**
+     * Users should use this method to get a SqlSession to call its statement methods
+     * This is SqlSession is managed by spring. Users should not commit/rollback/close it
+     * because it will be automatically done.
+     * 
+     * @return Spring managed thread safe SqlSession 
+     */
     public final SqlSession getSqlSession() {
         return this.sqlSession;
     }
