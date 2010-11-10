@@ -54,7 +54,7 @@ import org.springframework.util.Assert;
  * to be used, if not, default executor type will be used.
  * <p>
  * Exception translation can be changed overriding {@link #getExceptionTranslator()}
- * or 
+ * or {@link #translateException(Throwable)} 
  * <p>
  * SqlSessionTemplate is thread safe, so a single instance can be shared by all
  * DAOs; there should also be a small memory savings by doing this. This pattern
