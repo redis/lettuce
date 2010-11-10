@@ -21,6 +21,7 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.List;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
@@ -283,7 +284,12 @@ public class SqlSessionTemplate implements SqlSession {
             try {
                 return method.invoke(sqlSession, args);
             } catch (Throwable t) {
-                throw exceptionTranslator.translateException(ExceptionUtil.unwrapThrowable(t));
+                Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
+                if (unwrapped instanceof PersistenceException) {
+                    throw exceptionTranslator.translateException((PersistenceException) unwrapped);
+                } else {
+                    throw unwrapped;
+                }
             } finally {
                 SqlSessionUtils.closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
             }

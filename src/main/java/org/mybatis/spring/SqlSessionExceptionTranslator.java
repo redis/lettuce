@@ -16,6 +16,7 @@
 
 package org.mybatis.spring;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 
 /**
@@ -26,6 +27,6 @@ import org.apache.ibatis.session.SqlSession;
  */
 public interface SqlSessionExceptionTranslator {
     
-    RuntimeException translateException(Throwable t);
+    RuntimeException translateException(PersistenceException e);
 
 }
