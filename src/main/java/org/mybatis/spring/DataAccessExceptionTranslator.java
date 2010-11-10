@@ -62,9 +62,9 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
     /**
      * {@inheritDoc}
      */
-   public RuntimeException translateException(PersistenceException e) {
+   public RuntimeException translateException(PersistenceException e, String statement) {
         if (e.getCause() instanceof SQLException) {
-            return getExceptionTranslator().translate("SqlSession operation", null, (SQLException) e.getCause());
+            return getExceptionTranslator().translate("SqlSession operation", statement, (SQLException) e.getCause());
         } else {
             return new MyBatisSystemException("SqlSession operation", e);
         }

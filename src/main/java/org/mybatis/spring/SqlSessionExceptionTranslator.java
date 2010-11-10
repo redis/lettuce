@@ -27,6 +27,6 @@ import org.apache.ibatis.session.SqlSession;
  */
 public interface SqlSessionExceptionTranslator {
     
-    RuntimeException translateException(PersistenceException e);
+    RuntimeException translateException(PersistenceException e, String statement);
 
 }
