@@ -178,98 +178,98 @@ public class SqlSessionTemplate implements SqlSession {
      * {@inheritDoc}
      */
     public Object selectOne(String statement) {
-        return sqlSessionProxy.selectOne(statement);
+        return this.sqlSessionProxy.selectOne(statement);
     }
 
     /**
      * {@inheritDoc}
      */
     public Object selectOne(String statement, Object parameter) {
-        return sqlSessionProxy.selectOne(statement, parameter);
+        return this.sqlSessionProxy.selectOne(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
     public List<?> selectList(String statement) {
-        return sqlSessionProxy.selectList(statement);
+        return this.sqlSessionProxy.selectList(statement);
     }
 
     /**
      * {@inheritDoc}
      */
     public List<?> selectList(String statement, Object parameter) {
-        return sqlSessionProxy.selectList(statement, parameter);
+        return this.sqlSessionProxy.selectList(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
     public List<?> selectList(String statement, Object parameter, RowBounds rowBounds) {
-        return sqlSessionProxy.selectList(statement, parameter, rowBounds);
+        return this.sqlSessionProxy.selectList(statement, parameter, rowBounds);
     }
 
     /**
      * {@inheritDoc}
      */
     public void select(String statement, ResultHandler handler) {
-        sqlSessionProxy.select(statement, handler);
+        this.sqlSessionProxy.select(statement, handler);
     }
 
     /**
      * {@inheritDoc}
      */
     public void select(String statement, Object parameter, ResultHandler handler) {
-        sqlSessionProxy.select(statement, parameter, handler);
+        this.sqlSessionProxy.select(statement, parameter, handler);
     }
 
     /**
      * {@inheritDoc}
      */
     public void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler) {
-        sqlSessionProxy.select(statement, parameter, rowBounds, handler);
+        this.sqlSessionProxy.select(statement, parameter, rowBounds, handler);
     }
 
     /**
      * {@inheritDoc}
      */
     public int insert(String statement) {
-        return sqlSessionProxy.insert(statement);
+        return this.sqlSessionProxy.insert(statement);
     }
 
     /**
      * {@inheritDoc}
      */
     public int insert(String statement, Object parameter) {
-        return sqlSessionProxy.insert(statement, parameter);
+        return this.sqlSessionProxy.insert(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
     public int update(String statement) {
-        return sqlSessionProxy.update(statement);
+        return this.sqlSessionProxy.update(statement);
     }
 
     /**
      * {@inheritDoc}
      */
     public int update(String statement, Object parameter) {
-        return sqlSessionProxy.update(statement, parameter);
+        return this.sqlSessionProxy.update(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
     public int delete(String statement) {
-        return sqlSessionProxy.delete(statement);
+        return this.sqlSessionProxy.delete(statement);
     }
 
     /**
      * {@inheritDoc}
      */
     public int delete(String statement, Object parameter) {
-        return sqlSessionProxy.delete(statement, parameter);
+        return this.sqlSessionProxy.delete(statement, parameter);
     }
 
     /**
@@ -325,14 +325,14 @@ public class SqlSessionTemplate implements SqlSession {
      * {@inheritDoc}
      */
     public Configuration getConfiguration() {
-        return sqlSessionFactory.getConfiguration();
+        return this.sqlSessionFactory.getConfiguration();
     }
 
     /**
      * {@inheritDoc}
      */
     public Connection getConnection() {
-        return sqlSessionProxy.getConnection();
+        return this.sqlSessionProxy.getConnection();
     }
 
     /**
