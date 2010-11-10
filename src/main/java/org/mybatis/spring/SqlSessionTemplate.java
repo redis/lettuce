@@ -53,6 +53,9 @@ import org.springframework.util.Assert;
  * constructor argument. It also can be constructed indicating the executor type
  * to be used, if not, default executor type will be used.
  * <p>
+ * Exception translation can be changed overriding {@link #getExceptionTranslator()}
+ * or 
+ * <p>
  * SqlSessionTemplate is thread safe, so a single instance can be shared by all
  * DAOs; there should also be a small memory savings by doing this. This pattern
  * can be used in Spring configuration files as follows:
@@ -84,32 +87,22 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
-        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), true);
-    }
-
-    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
-            SQLExceptionTranslator exceptionTranslator) {
-        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), exceptionTranslator,
-                false);
+        this(sqlSessionFactory, executorType, true);
     }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
             boolean exceptionTranslatorLazyInit) {
-        this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType(), null, true);
-    }
-
-    protected SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
-            SQLExceptionTranslator exceptionTranslator, boolean exceptionTranslatorLazyInit) {
 
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         Assert.notNull(sqlSessionFactory, "Property 'executorType' is required");
 
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
-        this.exceptionTranslator = exceptionTranslator;
         this.exceptionTranslatorLazyInit = exceptionTranslatorLazyInit;
-        this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(SqlSessionFactory.class.getClassLoader(),
-                new Class[] { SqlSession.class }, new SqlSessionInterceptor());
+        this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
+                SqlSessionFactory.class.getClassLoader(),
+                new Class[] { SqlSession.class }, 
+                new SqlSessionInterceptor());
 
         // the exception translator creation can be delayed until the first
         // SqlException is thrown
@@ -129,12 +122,13 @@ public class SqlSessionTemplate implements SqlSession {
     /**
      * Return the exception translator for this instance.
      * <p>
-     * Creates a default {@link SQLErrorCodeSQLExceptionTranslator} for the
+     * Sets by default {@link SQLErrorCodeSQLExceptionTranslator} for the
      * specified DataSource.
+     * This can be overridden if other translation is wanted
      * 
      * @see #getDataSource()
      */
-    public synchronized SQLExceptionTranslator getExceptionTranslator() {
+    protected synchronized SQLExceptionTranslator getExceptionTranslator() {
         if (this.exceptionTranslator == null) {
             this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
         }
@@ -154,15 +148,15 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     /**
-     * Translates MyBatis exceptions into Spring DataAccessExceptions. It uses
+     * By default translates MyBatis exceptions into Spring DataAccessExceptions. It uses
      * {@link JdbcTemplate#getExceptionTranslator} for the SqlException
      * translation
+     * It can be overridden if other translation is wanted
      * 
-     * @param t
-     *            the exception has to be converted to DataAccessException.
-     * @return a Spring DataAccessException
+     * @param t the exception has to be converted
+     * @return a converted exception
      */
-    protected DataAccessException translateException(Throwable t) {
+    protected RuntimeException translateException(Throwable t) {
         if (t instanceof InvocationTargetException) {
             t = ((InvocationTargetException) t).getTargetException();
         } else if (t instanceof UndeclaredThrowableException) {
@@ -348,7 +342,8 @@ public class SqlSessionTemplate implements SqlSession {
      */
     private class SqlSessionInterceptor implements InvocationHandler {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(SqlSessionTemplate.this.sqlSessionFactory,
+            final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
+                    SqlSessionTemplate.this.sqlSessionFactory,
                     SqlSessionTemplate.this.executorType);
             try {
                 return method.invoke(sqlSession, args);
