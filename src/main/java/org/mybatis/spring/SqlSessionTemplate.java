@@ -86,7 +86,6 @@ public class SqlSessionTemplate implements SqlSession {
 
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         Assert.notNull(executorType, "Property 'executorType' is required");
-        Assert.notNull(exceptionTranslator, "Property 'exceptionTranslator' is required");
 
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
@@ -285,7 +284,7 @@ public class SqlSessionTemplate implements SqlSession {
                 return method.invoke(sqlSession, args);
             } catch (Throwable t) {
                 Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
-                if (unwrapped instanceof PersistenceException) {
+                if (exceptionTranslator != null && unwrapped instanceof PersistenceException) {
                     String statement = null;
                     if (args.length > 0 && args[0] instanceof String) {
                         statement = (String) args[0];
