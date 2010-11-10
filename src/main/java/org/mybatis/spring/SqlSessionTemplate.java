@@ -21,8 +21,6 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.List;
 
-import javax.sql.DataSource;
-
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
