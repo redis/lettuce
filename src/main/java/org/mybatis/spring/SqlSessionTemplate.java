@@ -16,45 +16,35 @@
 package org.mybatis.spring;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.exceptions.PersistenceException;
+import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
-import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
  * Thread safe Spring managed {@link SqlSession}
  * <p>
- * It converts SQLExceptions into unchecked DataAccessExceptions, following the
- * <code>org.springframework.dao</code> exception hierarchy. Uses the same
- * {@link SQLExceptionTranslator} mechanism as {@link JdbcTemplate}.
- * <p>
- * Gets the right {@link SqlSession} from Spring
- * {@link TransactionSynchronizationManager} It also works if its not Tx active.
+ * Gets the right {@link SqlSession} from Spring {@link TransactionSynchronizationManager} 
+ * It also works if its not Tx active.
  * <p>
  * The template needs a SqlSessionFactory to create SqlSessions, passed as a
  * constructor argument. It also can be constructed indicating the executor type
  * to be used, if not, default executor type will be used.
  * <p>
- * Exception translation can be changed overriding {@link #getExceptionTranslator()}
- * or {@link #translateException(Throwable)} 
+ * It converts SQLExceptions into unchecked DataAccessExceptions, using
+ * by default the {@link DataAccessExceptionTranslator}
  * <p>
  * SqlSessionTemplate is thread safe, so a single instance can be shared by all
  * DAOs; there should also be a small memory savings by doing this. This pattern
@@ -70,45 +60,43 @@ import org.springframework.util.Assert;
  * 
  * @see SqlSessionFactory
  * @see SqlSession
- * @see SQLExceptionTranslator
  * @see ExecutorType
+ * @see DataAccessExceptionTranslator
+ * @see SqlSessionExceptionTranslator
  * @version $Id$
  */
 public class SqlSessionTemplate implements SqlSession {
 
-    private final SqlSessionFactory sqlSessionFactory;
-    private final ExecutorType executorType;
-    private final SqlSession sqlSessionProxy;
-    private SQLExceptionTranslator exceptionTranslator;
-    private boolean exceptionTranslatorLazyInit;
+    private SqlSessionFactory sqlSessionFactory;
+    private ExecutorType executorType;
+    private SqlSession sqlSessionProxy;
+    private SqlSessionExceptionTranslator exceptionTranslator;
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
     }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
-        this(sqlSessionFactory, executorType, true);
+        this(sqlSessionFactory, executorType, 
+                new DataAccessExceptionTranslator(
+                        sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), true));
     }
 
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
-            boolean exceptionTranslatorLazyInit) {
+            SqlSessionExceptionTranslator exceptionTranslator) {
 
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         Assert.notNull(executorType, "Property 'executorType' is required");
+        Assert.notNull(exceptionTranslator, "Property 'exceptionTranslator' is required");
 
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
-        this.exceptionTranslatorLazyInit = exceptionTranslatorLazyInit;
+        this.exceptionTranslator = exceptionTranslator;
         this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
                 SqlSessionFactory.class.getClassLoader(),
                 new Class[] { SqlSession.class }, 
                 new SqlSessionInterceptor());
 
-        // the exception translator creation can be delayed until the first
-        // SqlException is thrown
-        if (!this.exceptionTranslatorLazyInit) {
-            getExceptionTranslator();
-        }
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
@@ -119,55 +107,8 @@ public class SqlSessionTemplate implements SqlSession {
         return this.executorType;
     }
     
-    public boolean isExceptionTranslatorLazyInit() {
-        return this.exceptionTranslatorLazyInit;
-    }
-
-    /**
-     * Return the exception translator for this instance.
-     * <p>
-     * Sets by default {@link SQLErrorCodeSQLExceptionTranslator} for the
-     * specified DataSource.
-     * This can be overridden if other translation is wanted
-     * 
-     * @see #getDataSource()
-     */
-    protected synchronized SQLExceptionTranslator getExceptionTranslator() {
-        if (this.exceptionTranslator == null) {
-            this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(getDataSource());
-        }
-        return this.exceptionTranslator;
-    }
-
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
-    }
-
-    /**
-     * By default translates MyBatis exceptions into Spring DataAccessExceptions. It uses
-     * {@link JdbcTemplate#getExceptionTranslator} for the SqlException
-     * translation
-     * It can be overridden if other translation is wanted
-     * 
-     * @param t the exception has to be converted
-     * @return a converted exception
-     */
-    protected RuntimeException translateException(Throwable t) {
-        if (t instanceof InvocationTargetException) {
-            t = ((InvocationTargetException) t).getTargetException();
-        } else if (t instanceof UndeclaredThrowableException) {
-            t = ((UndeclaredThrowableException) t).getUndeclaredThrowable();
-        }
-
-        if (t instanceof PersistenceException) {
-            if (t.getCause() instanceof SQLException) {
-                return getExceptionTranslator().translate("SqlSession operation", null, (SQLException) t.getCause());
-            }
-        } else if (t instanceof DataAccessException) {
-            return (DataAccessException) t;
-        }
-
-        return new MyBatisSystemException("SqlSession operation", t);
     }
 
     /**
@@ -344,7 +285,7 @@ public class SqlSessionTemplate implements SqlSession {
             try {
                 return method.invoke(sqlSession, args);
             } catch (Throwable t) {
-                throw translateException(t);
+                throw exceptionTranslator.translateException(ExceptionUtil.unwrapThrowable(t));
             } finally {
                 SqlSessionUtils.closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
             }
