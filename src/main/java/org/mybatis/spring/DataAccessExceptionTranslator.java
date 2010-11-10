@@ -58,7 +58,10 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
         return this.exceptionTranslator;
     }
 
-    public RuntimeException translateException(Throwable t) {
+    /**
+     * {@inheritDoc}
+     */
+   public RuntimeException translateException(Throwable t) {
 
         if (t instanceof PersistenceException) {
             if (t.getCause() instanceof SQLException) {
