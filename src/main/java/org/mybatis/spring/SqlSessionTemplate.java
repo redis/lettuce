@@ -94,7 +94,7 @@ public class SqlSessionTemplate implements SqlSession {
             boolean exceptionTranslatorLazyInit) {
 
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-        Assert.notNull(sqlSessionFactory, "Property 'executorType' is required");
+        Assert.notNull(executorType, "Property 'executorType' is required");
 
         this.sqlSessionFactory = sqlSessionFactory;
         this.executorType = executorType;
