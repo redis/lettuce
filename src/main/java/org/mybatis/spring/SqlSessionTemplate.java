@@ -118,6 +118,10 @@ public class SqlSessionTemplate implements SqlSession {
     public ExecutorType getExecutorType() {
         return this.executorType;
     }
+    
+    public boolean isExceptionTranslatorLazyInit() {
+        return this.exceptionTranslatorLazyInit;
+    }
 
     /**
      * Return the exception translator for this instance.
@@ -137,14 +141,6 @@ public class SqlSessionTemplate implements SqlSession {
 
     public DataSource getDataSource() {
         return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
-    }
-
-    public void setLazyInit(boolean lazyInit) {
-        this.exceptionTranslatorLazyInit = lazyInit;
-    }
-
-    public boolean isLazyInit() {
-        return this.exceptionTranslatorLazyInit;
     }
 
     /**
