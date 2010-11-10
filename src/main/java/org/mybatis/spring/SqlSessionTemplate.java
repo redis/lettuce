@@ -112,11 +112,11 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
-        return sqlSessionFactory;
+        return this.sqlSessionFactory;
     }
 
     public ExecutorType getExecutorType() {
-        return executorType;
+        return this.executorType;
     }
 
     /**
