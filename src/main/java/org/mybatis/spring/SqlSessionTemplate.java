@@ -106,9 +106,9 @@ public class SqlSessionTemplate implements SqlSession {
     public ExecutorType getExecutorType() {
         return this.executorType;
     }
-    
-    public DataSource getDataSource() {
-        return this.sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
+
+    public SqlSessionExceptionTranslator getExceptionTranslator() {
+        return this.exceptionTranslator;
     }
 
     /**
