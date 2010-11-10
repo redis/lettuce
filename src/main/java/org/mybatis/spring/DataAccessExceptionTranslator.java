@@ -35,6 +35,7 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  *
  * @see DataAccessException
  * @see SqlSession
+ * @version $Id$
  */
 public class DataAccessExceptionTranslator implements SqlSessionExceptionTranslator {
 
