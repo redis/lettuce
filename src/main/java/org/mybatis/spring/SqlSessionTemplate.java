@@ -284,12 +284,13 @@ public class SqlSessionTemplate implements SqlSession {
                 return method.invoke(sqlSession, args);
             } catch (Throwable t) {
                 Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
-                if (exceptionTranslator != null && unwrapped instanceof PersistenceException) {
+                if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
                     String statement = null;
                     if (args.length > 0 && args[0] instanceof String) {
                         statement = (String) args[0];
                     }
-                    throw exceptionTranslator.translateException((PersistenceException) unwrapped, statement);
+                    throw SqlSessionTemplate.this.exceptionTranslator.translateException(
+                            (PersistenceException) unwrapped, statement);
                 } else {
                     throw unwrapped;
                 }
