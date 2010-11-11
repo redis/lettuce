@@ -20,7 +20,8 @@ import java.util.Set;
 import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
-import org.springframework.beans.BeansException;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -69,13 +70,10 @@ import org.springframework.util.StringUtils;
 public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
     private final Log logger = LogFactory.getLog(this.getClass());
-
+    
     private String basePackage;
-
     private boolean addToConfig = true;
-
     private String sqlSessionTemplateBeanName;
-
     private String sqlSessionFactoryBeanName;
 
     public void setBasePackage(String basePackage) {
@@ -104,14 +102,14 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     /**
      * {@inheritDoc}
      */
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
         // not needed in this version
     }
 
     /**
      * {@inheritDoc}
      */
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
         Set<Class<?>> mapperInterfaces = searchForMappers();
         if (mapperInterfaces.isEmpty()) {
             if (logger.isDebugEnabled()) {

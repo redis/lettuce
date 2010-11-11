@@ -39,15 +39,13 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  */
 public class DataAccessExceptionTranslator implements SqlSessionExceptionTranslator {
 
-    private boolean exceptionTranslatorLazyInit;
     private DataSource dataSource;
     private SQLExceptionTranslator exceptionTranslator;
 
     public DataAccessExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
-        this.exceptionTranslatorLazyInit = exceptionTranslatorLazyInit;
         this.dataSource = dataSource;
 
-        if (!this.exceptionTranslatorLazyInit) {
+        if (!exceptionTranslatorLazyInit) {
             getExceptionTranslator();
         }
     }
