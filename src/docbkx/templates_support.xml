@@ -20,24 +20,28 @@
     version: $Id$
 -->
 <chapter id="templates_support">
-  <title>Obtaining a SqlSession</title>
+  <title>Using an SqlSession</title>
   
   <para>
-    In MyBatis you use the <literal>SqlSessionFactoryBean</literal> to create an <literal>SqlSession</literal>. 
-    Once you have it you use it to execute your mapped statements, commit or rollback transactions and finally, 
-    when it is no longer needed, you close it. 
-    With MyBatis-Spring you don´t need to use <literal>SqlSessionFactoryBean</literal> because 
-    your beans will be injected with thread safe <literal>SqlSession</literal> that you won't even
-    need to commit, rollback or close it because that will automatically be done for you.
+    In MyBatis you use the <literal>SqlSessionFactory</literal> to create an
+    <literal>SqlSession</literal>. Once you have a session, you use it to
+    execute your mapped statements, commit or rollback connections and
+    finally, when it is no longer needed, you close the session. With
+    MyBatis-Spring you don't need to use <literal>SqlSessionFactory</literal>
+    directly because your beans can be injected with a thread safe
+    <literal>SqlSession</literal> that automatically commits, rollbacks and
+    closes the session based on Spring's transaction configuration.
   </para>  
   
   <section id="templates_support.daosupport">
     <title>SqlSessionDaoSupport</title>
 
     <para>
-      <literal>SqlSessionDaoSupport</literal> is an abstract support class that provides you with a 
-      <literal>SqlSession</literal>. Calling <literal>getSqlSession()</literal> you will get a thread 
-      safe <literal>SqlSession</literal> which can then be used to execute SQL methods, like the following:
+      <literal>SqlSessionDaoSupport</literal> is an abstract support class that
+      provides you with a <literal>SqlSession</literal>. Calling 
+      <literal>getSqlSession()</literal> you will get a thread 
+      safe <literal>SqlSession</literal> which can then be used to execute SQL
+      methods, like the following:
 
       <programlisting language="java"><![CDATA[public class UserMapperDaoImpl extends SqlSessionDaoSupport implements UserMapper {
   public User getUser(String userId) {
@@ -76,33 +80,39 @@
 
     <para>
       <literal>SqlSessionTemplate</literal> is the heart of MyBatis-Spring.
-      This class is responsible for managing MyBatis <literal>SqlSession</literal>s, 
+      This class is responsible for managing MyBatis <literal>SqlSessions</literal>, 
       calling MyBatis SQL methods and translating exceptions.
+      <literal>SqlSessionTemplate</literal> is thread safe and can be shared
+      by multiple DAOs.
     </para>
     
     <para>
-      When calling SQL methods, including any method from Mappers returned from
+      When calling SQL methods, including any method from Mappers returned by
       <literal>getMapper()</literal>, <literal>SqlSessionTemplate</literal>
       will ensure that the <literal>SqlSession</literal> used is the one
       associated with the current Spring transaction. In addition, it manages
-      the session life-cycle, including closing, committing or rolling back as
-      necessary.      
+      the session life-cycle, including closing, committing or rolling back the
+      session as necessary.
     </para> 
       
     <para>
-      <literal>SqlSessionTemplate</literal> implements <literal>SqlSession</literal> and is 
-      meant to be a drop-in replacement for MyBatis <literal>SqlSession</literal>. 
-      <literal>SqlSessionTemplate</literal> should <emphasis>always</emphasis> be used instead of 
-      <literal>SqlSession</literal> because the base MyBatis <literal>SqlSession</literal> cannot 
-      participate in Spring transactions and is not thread safe. Switching between the two classes 
-      in the same application can cause data integrity issues.
+      <literal>SqlSessionTemplate</literal> implements
+      <literal>SqlSession</literal> and is meant to be a drop-in replacement
+      for MyBatis <literal>SqlSession</literal>.
+      <literal>SqlSessionTemplate</literal> should <emphasis>always</emphasis>
+      be used instead of <literal>SqlSession</literal> because the base MyBatis
+      <literal>SqlSession</literal> cannot participate in Spring transactions
+      and is not thread safe. Switching between the two classes in the same
+      application can cause data integrity issues.
     </para>
 
     <para>
-      It is usually not necessary to create or use a <literal>SqlSessionTemplate</literal> directly. 
-      In most cases, <literal>MapperFactoryBean</literal>, which uses a template internally,
-      will be all that is needed. When access to an <literal>SqlSessionTemplate</literal> is needed, 
-      it can be created using an <literal>SqlSessionFactory</literal> as a constructor argument.
+      It is usually not necessary to create or use a
+      <literal>SqlSessionTemplate</literal> directly. In most cases,
+      <literal>MapperFactoryBean</literal>, which uses a template internally,
+      will be all that is needed. When access to an
+      <literal>SqlSessionTemplate</literal> is needed, it can be created using
+      an <literal>SqlSessionFactory</literal> as a constructor argument.
 
       <programlisting language="java"><![CDATA[SqlSession sqlSsession = new SqlSessionTemplate(sqlSessionFactory);]]></programlisting>
       
@@ -110,16 +120,18 @@
     </para>
 
     <para>
-	  <literal>SqlSessionTemplate</literal> has also a constructor that gets an <literal>ExecutorType</literal> 
-	  as an argument so you can construct, for example, a batch <literal>SqlSession</literal>.
-	  putting the following in Spring's applicationContext.xml:  
+      <literal>SqlSessionTemplate</literal> has also a constructor that takes
+      an <literal>ExecutorType</literal> as an argument. This allows you to
+      construct, for example, a batch <literal>SqlSession</literal> but using
+	  the following in Spring's configuration xml:  
       <programlisting language="xml"><![CDATA[
 <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></programlisting>
 	  
-	  And now all your statements will be batched:
+      Now all your statements will be batched so the following could be coded
+      in a DAO
       <programlisting language="java"><![CDATA[
  public void insertUsers(User[] users) {
    SqlSession sqlSession = getSqlSession();
@@ -130,13 +142,14 @@
     </para>
 
     <para>
-      Note that this method should be used if the desired execution method differs from the 
-      default set for the <literal>SqlSessionFactory</literal>. The only caveat to
-      this form of the method is that there <emphasis>cannot</emphasis> be an
-      existing transaction running with a different ExecutorType when this
-      method is called. Either ensure that calls to <literal>SqlSessionTemplate</literal>s
-      with different executor types run in a separate transaction, with 
-      PROPAGATION_REQUIRES_NEW or with completely outside of a transaction.
+      Note that this configuration style only needs to be used if the desired
+      execution method differs from the default set for the
+      <literal>SqlSessionFactory</literal>. The caveat to this form is that
+      there <emphasis>cannot</emphasis> be an existing transaction running with
+      a different ExecutorType when this method is called. Either ensure that
+      calls to <literal>SqlSessionTemplate</literal>s with different executor
+      types run in a separate transaction, with PROPAGATION_REQUIRES_NEW or
+      completely outside of a transaction.
     </para>
   </section>
 

@@ -27,4 +27,9 @@
         SELECT 1
     </select>
 
+    <!-- invalid SQL used to test exception translation -->
+    <select id="findFail" resultType="int">
+        SELECT 'fail'
+    </select>
+
 </mapper>

@@ -29,25 +29,26 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
- * Thread safe Spring managed {@link SqlSession}
- * <p>
- * Gets the right {@link SqlSession} from Spring {@link TransactionSynchronizationManager} 
- * It also works if its not Tx active.
+ * Thread safe, Spring managed, {@link SqlSession} that works with Spring
+ * transaction management to ensure that that the actual SqlSession used is the
+ * one associated with the current Spring transaction. In addition, it manages
+ * the session life-cycle, including closing, committing or rolling back the
+ * session as necessary based on the Spring transaction configuration.
  * <p>
  * The template needs a SqlSessionFactory to create SqlSessions, passed as a
  * constructor argument. It also can be constructed indicating the executor type
- * to be used, if not, default executor type will be used.
+ * to be used, if not, the default executor type, defined in the session factory
+ * will be used.
  * <p>
- * It converts SQLExceptions into unchecked DataAccessExceptions, using
- * by default the {@link DataAccessExceptionTranslator}
+ * This template converts MyBatis PersistenceExceptions into unchecked
+ * DataAccessExceptions, using, by default, a {@link DataAccessExceptionTranslator}.
  * <p>
- * SqlSessionTemplate is thread safe, so a single instance can be shared by all
- * DAOs; there should also be a small memory savings by doing this. This pattern
- * can be used in Spring configuration files as follows:
+ * Because SqlSessionTemplate is thread safe, a single instance can be shared
+ * by all DAOs; there should also be a small memory savings by doing this. This
+ * pattern can be used in Spring configuration files as follows:
  * 
  * <pre class="code">
  * {@code 
@@ -273,7 +274,6 @@ public class SqlSessionTemplate implements SqlSession {
     /**
      * Proxy needed to route Mapper method calls to the proper SqlSession got
      * from String's Transaction Manager
-     * 
      */
     private class SqlSessionInterceptor implements InvocationHandler {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

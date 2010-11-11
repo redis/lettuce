@@ -15,9 +15,11 @@
  */
 package org.mybatis.spring.sample.mapper;
 
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.apache.ibatis.session.ExecutorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -39,6 +41,12 @@ public class MyBatisSampleTest {
     private FooService fooServiceWithDaoSupport;
     @Autowired
     private FooService fooServiceWithSqlSession;
+    @Autowired
+    private FooService fooServiceWithBatchDaoSupport;
+
+    // needed only to verify that the ExecutorType is BATCH
+    @Autowired
+    private UserMapperTemplateImpl batchUserMapperDaoSupport;
 
     public void setFooServiceWithMapperFactoryBean(FooService fooServiceWithMapperFactoryBean) {
         this.fooServiceWithMapperFactoryBean = fooServiceWithMapperFactoryBean;
@@ -55,32 +63,49 @@ public class MyBatisSampleTest {
     public void setFooServiceWithSqlSession(FooService fooServiceWithSqlSession) {
         this.fooServiceWithSqlSession = fooServiceWithSqlSession;
     }
-    
+
+    public void setFooServiceWithBatchDaoSupport(FooService fooServiceWithBatchSqlSession) {
+        this.fooServiceWithBatchDaoSupport = fooServiceWithBatchSqlSession;
+    }
+
+    public void setBatchUserMapperDaoSupport(UserMapperTemplateImpl batchUserMapperDaoSupport) {
+        this.batchUserMapperDaoSupport = batchUserMapperDaoSupport;
+    }
+
     @Test
     public void testFooServiceWithMapperFactoryBean() throws Exception {
         User user = this.fooServiceWithMapperFactoryBean.doSomeBusinessStuff("u1");
-        Assert.assertNotNull(user);
-        Assert.assertEquals("Pocoyo",user.getName());
+        assertNotNull(user);
+        assertEquals("Pocoyo", user.getName());
     }
 
     @Test
     public void testFooServiceWithMapperAnnotation() throws Exception {
         User user = this.fooServiceWithMapperAnnotation.doSomeBusinessStuff("u1");
-        Assert.assertNotNull(user);
-        Assert.assertEquals("Pocoyo",user.getName());
+        assertNotNull(user);
+        assertEquals("Pocoyo", user.getName());
     }
-    
+
     @Test
     public void testFooServiceWithDaoSupport() throws Exception {
         User user = this.fooServiceWithDaoSupport.doSomeBusinessStuff("u1");
-        Assert.assertNotNull(user);
-        Assert.assertEquals("Pocoyo",user.getName());
+        assertNotNull(user);
+        assertEquals("Pocoyo", user.getName());
     }
-    
+
     @Test
     public void testFooServiceWithSqlSession() throws Exception {
         User user = this.fooServiceWithSqlSession.doSomeBusinessStuff("u1");
-        Assert.assertNotNull(user);
-        Assert.assertEquals("Pocoyo",user.getName());
-    }    
+        assertNotNull(user);
+        assertEquals("Pocoyo", user.getName());
+    }
+
+    @Test
+    public void testFooServiceWithBatchSqlSession() throws Exception {
+        User user = this.fooServiceWithBatchDaoSupport.doSomeBusinessStuff("u1");
+        assertNotNull(user);
+        assertEquals("Pocoyo", user.getName());
+        assertEquals(ExecutorType.BATCH, ((SqlSessionTemplate) batchUserMapperDaoSupport.getSqlSession())
+                .getExecutorType());
+    }
 }

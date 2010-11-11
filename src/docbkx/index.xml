@@ -46,8 +46,8 @@
   <xi:include href="getting_started.xml" />
   <xi:include href="factorybean.xml" />
   <xi:include href="transactions.xml" />
-  <xi:include href="mappers.xml" />
   <xi:include href="templates_support.xml" />
+  <xi:include href="mappers.xml" />
   <xi:include href="using_api.xml" />
   <xi:include href="sample.xml" />
 

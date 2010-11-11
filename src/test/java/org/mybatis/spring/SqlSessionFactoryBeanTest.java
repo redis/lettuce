@@ -129,8 +129,8 @@ public final class SqlSessionFactoryBeanTest {
         assertTrue(factory.getConfiguration().isUseGeneratedKeys());
         assertSame(factory.getConfiguration().getDefaultExecutorType(), org.apache.ibatis.session.ExecutorType.REUSE);
 
-        // [org.mybatis.spring.TestMapper.findTest, findTest]
-        assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 2);
+        // [org.mybatis.spring.TestMapper.findTest, findTest, org.mybatis.spring.TestMapper.findFail, findFail]
+        assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 4);
 
         // [findTest-void, org.mybatis.spring.TestMapper.findTest-void]
         assertEquals(factory.getConfiguration().getResultMapNames().size(), 2);

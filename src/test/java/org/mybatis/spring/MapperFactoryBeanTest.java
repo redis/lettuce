@@ -81,6 +81,10 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
             // unwrap exception so the exact MyBatis exception can be tested
             throw mbse.getCause();
         }
+        finally {
+            // connection not used; force close to avoid failing in validateConnectionClosed()
+            connection.close();
+        }
     }
 
     @Test

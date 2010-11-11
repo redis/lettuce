@@ -16,10 +16,11 @@
 -->
 
 <!--
-    This is a org.mybatis.spring.sample context two show four different ways to integrate with Spring.
-    FooService* are beans that act as business services. All them implements FooService that is
-    annotated as Transactional.
-    Each one is injected with a mapper coded/created in a different way 
+    This is a org.mybatis.spring.sample context that shows four different ways
+    to integrate with Spring. FooService* are beans that act as business
+    services. All of the services implement FooService which is annotated as
+    @Transactional. Each one is injected with a mapper coded/created in a
+    different way: 
     userMapperBean is created with a MapperFactoryBean (has no implementation)
     userMapper is searched and registered by the MapperScannerPostProcessor (has no implementation)
     userMapperDaoSupport extends SqlSessionDaoSupport
@@ -79,6 +80,16 @@
         <!-- SqlSessionFactory property is autowired -->
     </bean>
 
+    <!-- extend SqlSessionDaoSupport, but use an SqlSessionTemplate with ExecutorType.BATCH  -->
+    <bean id="batchUserMapperDaoSupport" class="org.mybatis.spring.sample.mapper.UserMapperTemplateImpl">
+        <property name="sqlSessionTemplate">
+          <bean class="org.mybatis.spring.SqlSessionTemplate">
+            <constructor-arg index="0" ref="sqlSessionFactory" />
+            <constructor-arg index="1" value="BATCH" />
+          </bean>
+        </property>
+    </bean>
+
     <!-- using MyBatis API-->
     <bean id="userMapperSqlSession" class="org.mybatis.spring.sample.mapper.UserMapperSqlSessionImpl">
         <!-- SqlSessionFactory property is autowired -->
@@ -100,4 +111,7 @@
         <property name="userMapper" ref="userMapperSqlSession" />
     </bean>
 
+    <bean id="fooServiceWithBatchDaoSupport" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+        <property name="userMapper" ref="batchUserMapperDaoSupport" />
+    </bean>
 </beans>

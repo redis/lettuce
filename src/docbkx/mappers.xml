@@ -23,29 +23,30 @@
   <title>MapperFactoryBean</title>
 
   <para>
-    Rather than code data access objects (DAOs) manually, Mybatis-Spring
-    provides a dynamic proxy implementation:
-    <literal>MapperFactoryBean</literal>. This class lets you inject data
-    mapper interfaces directly into your service beans. When using mappers you
-    simply call them as you have always  called your DAOs, but you won't need
-    to code any DAO implementation because MyBatis-Spring will create a proxy
-    for you.
+    Rather than code data access objects (DAOs) manually using
+    <literal>SqlSessionDaoSupport</literal> or
+    <literal>SqlSessionTemplate</literal>, Mybatis-Spring provides a proxy
+    factory: <literal>MapperFactoryBean</literal>. This class lets you inject
+    data mapper interfaces directly into your service beans. When using mappers
+    you simply call them as you have always called your DAOs, but you won't
+    need to code any DAO implementation because MyBatis-Spring will create a
+    proxy for you.
   </para>
 
   <para>
-    With injected mappers your code will have no direct dependencies on MyBatis,
-    Spring or MyBatis-Spring. The proxy that
-    <literal>MapperFactoryBean</literal> creates handles opening and closing the
-    session as well as translating any exceptions into Spring
-    <literal>DataAccessExceptions</literal>. In addition, the proxy will
-    start a new Spring transaction if required or participate in an existing
-    one if necessary. 
+    With injected mappers your code will have no direct dependencies on
+    MyBatis, Spring or MyBatis-Spring. The proxy that
+    <literal>MapperFactoryBean</literal> creates handles opening and closing
+    the session as well as translating any exceptions into Spring
+    <literal>DataAccessExceptions</literal>. In addition, the proxy will start
+    a new Spring transaction if required or participate in an existing one if
+    it a transaction is active. 
   </para>
 
   <section id="mappers.setup">
     <title>Setup</title>
     <para>
-      A data mapper interface is added to Spring like the following:
+      A data mapper is added to Spring like the following:
 
       <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
@@ -66,7 +67,7 @@
       XML file is in the same classpath location as the Mapper class. There
       is no need to specify the mapper in a MyBatis configuration file unless
       the mapper XML files are in a different classpath location. See the
-      <literal>SqlSessionFactoryBean</literal>'s 
+      <literal>SqlSessionFactoryBean's</literal> 
       <literal><link linkend="factorybean.configlocation">configLocation</link></literal>
       property for more information.
     </para>
@@ -78,9 +79,10 @@
       respective <literal>sqlSessionFactory</literal> or 
       <literal>sqlSessionTemplate</literal> properties or they can
       be autowired by Spring. If both properties are set, the 
-      <literal>SqlSessionFactory</literal> is ignored, since the 
+      <literal>SqlSessionFactory</literal> is ignored. Since the 
       <literal>SqlSessionTemplate</literal> is required to have a session
-      factory set; that factory will be used by <literal>MapperFactoryBean</literal>.
+      factory set, that factory will be used by
+      <literal>MapperFactoryBean</literal>.
     </para>
   </section>
 
@@ -110,7 +112,8 @@
        Notice that there are no <literal>SqlSession</literal> or MyBatis
        references in this code.  Nor is there any need to create, open or close
        the session. If there is a Spring transaction in progress, the session
-       will also be committed or rolled back when the transaction completes. 
+       will also be committed when the transaction completes or or rolled back
+       if there is an error. 
      </para>
   </section>
 
@@ -137,17 +140,21 @@
     </para>
     
     <para>
-      Notice that there is no need to specify a <literal>SqlSessionFactory</literal> or 
-      <literal>SqlSessionTemplate</literal> because the <literal>MapperScannerPostProcessor</literal> 
-      will create <literal>MapperFactoryBean</literal>s that can be autowired. But if you are
-      using more than one <literal>DataSource</literal> autowire may not work for you. In this case
-      you can use the <literal>sqlSessionFactoryBeanName</literal> or 
-      <literal>sqlSessionTemplateBeanName</literal> properties to set the right bean name to use. 
-      This is how it is configured, note that <emphasis>bean names</emphasis> are required, 
-      not bean references, thus the <literal>value</literal> attribute is used instead of the 
-      usual <literal>ref</literal>:
-<programlisting language="xml"><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
-]]></programlisting>
+      Notice that there is no need to specify a
+      <literal>SqlSessionFactory</literal> or <literal>SqlSessionTemplate</literal>
+      because the <literal>MapperScannerPostProcessor</literal> 
+      will autowired <literal>MapperFactoryBeans</literal>. But, if you are
+      using more than one <literal>DataSource</literal>, autowiring may not
+      work. In this case you can use the
+      <literal>sqlSessionFactoryBeanName</literal> or 
+      <literal>sqlSessionTemplateBeanName</literal> properties to set the right
+      bean name to use. See below, for an example:
+
+      <programlisting language="xml"><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></programlisting>
+
+      Note that <emphasis>bean names</emphasis> are required, not bean
+      references, thus the <literal>value</literal> attribute is used instead
+      of the usual <literal>ref</literal> attribute.
     </para>
 
     <para>

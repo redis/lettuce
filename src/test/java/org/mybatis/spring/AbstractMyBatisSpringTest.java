@@ -101,7 +101,7 @@ public abstract class AbstractMyBatisSpringTest {
     }
 
     protected MockConnection createMockConnection() {
-        // this query must be the same as the query in TestDao.xml
+        // this query must be the same as the query in TestMapper.xml
         MockResultSet rs = new MockResultSet("SELECT 1");
         rs.addRow(new Object[] { 1 });
 
@@ -118,7 +118,6 @@ public abstract class AbstractMyBatisSpringTest {
     @Before
     public void setupConnection() throws SQLException {
         connection = createMockConnection();
-        connection.close(); // set initial status to closed
         dataSource.setupConnection(connection);
     }
 
