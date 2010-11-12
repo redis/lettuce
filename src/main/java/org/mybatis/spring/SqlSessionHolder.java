@@ -17,13 +17,15 @@ package org.mybatis.spring;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.transaction.support.ResourceHolderSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
- * Used to keep current SqlSession in TransactionSynchronizationManager.
- * The SqlSessionFactory that created that SqlSession is used as a key.
- * ExecutorType is also kept to be able to check if the user is trying to change it
+ * Used to keep current SqlSession in {@link TransactionSynchronizationManager}.
+ * The {@link SqlSessionFactory} that created that {@link SqlSession} is used as a key.
+ * {@link ExecutorType} is also kept to be able to check if the user is trying to change it
  * during a TX (that is not allowed) and throw a Exception in that case.
  *
  * @version $Id$

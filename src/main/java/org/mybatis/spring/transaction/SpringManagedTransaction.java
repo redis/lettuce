@@ -15,30 +15,28 @@
  */
 package org.mybatis.spring.transaction;
 
-import org.apache.ibatis.transaction.Transaction;
-
-import org.apache.ibatis.logging.jdbc.ConnectionLogger;
-
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-
-import org.springframework.util.Assert;
-
-import javax.sql.DataSource;
-
-import java.lang.reflect.Proxy;
 import java.lang.reflect.InvocationHandler;
-
+import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import javax.sql.DataSource;
+
+import org.apache.ibatis.logging.jdbc.ConnectionLogger;
+import org.apache.ibatis.transaction.Transaction;
+import org.apache.ibatis.transaction.jdbc.JdbcTransaction;
+import org.apache.ibatis.transaction.managed.ManagedTransaction;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.Assert;
+
 /**
- * MyBatis has two TransactionManagers out of the box: The JdbcTransactionManager and the 
- * ExternalTransactionManager. When MyBatis runs under a Spring transaction none of them
- * will work well because JDBCTransactionManager would commit/rollback/close and it should not.
- * And ExternalTransactionManager would close the connection and it should not.
- * SpringManagedTransaction looks if the current connection is been managed by Spring. In that case
- * it will not commit/rollback/close. Otherwise it will behave like JdbcTransactionManager
+ * MyBatis has two TransactionManagers out of the box: The {@link JdbcTransaction} and the 
+ * {@link ManagedTransaction}. When MyBatis runs under a Spring transaction none of them
+ * will work well because {@link JdbcTransaction} would commit/rollback/close and it should not.
+ * And {@link ManagedTransaction} would close the connection and it should not.
+ * {@link SpringManagedTransaction} looks if the current connection is been managed by Spring. In that case
+ * it will not commit/rollback/close. Otherwise it will behave like {@link JdbcTransaction}
  *
  * @version $Id$
  */

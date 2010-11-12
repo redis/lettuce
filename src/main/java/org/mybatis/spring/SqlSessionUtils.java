@@ -37,10 +37,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.Assert;
 
 /**
- * Note: This class does not translate PersistenceException to DataSourceException
- * since MyBatis now uses runtime exceptions.
+ * Handles MyBatis SqlSession life cycle. It can register and get SqlSessions from 
+ * Spring {@link TransactionSynchronizationManager}. Also works if no transaction is active.
  *
  * @version $Id$
+ * @see DataSourceUtils
+ * @see TransactionSynchronizationManager
  */
 public final class SqlSessionUtils {
 
@@ -57,13 +59,15 @@ public final class SqlSessionUtils {
      * Creates a new MyBatis {@link SqlSession} from the {@link SqlSessionFactory}
      * provided as a parameter and using its {@link DataSource} and {@link ExecutorType}
      *
-     * @param sessionFactory
-     * @return
+     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @return a MyBatis {@literal SqlSession}
+     * @throws TransientDataAccessResourceException if a transaction is active and the
+     *             {@literal SqlSessionFactory} is not using a {@literal SpringManagedTransactionFactory}
      */
-    public static SqlSession getSqlSession(SqlSessionFactory sessionFactory) {
-        DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
-        ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
-        return getSqlSession(sessionFactory, dataSource, executorType);
+    public static SqlSession getSqlSession(SqlSessionFactory sqlSessionFactory) {
+        DataSource dataSource = sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
+        ExecutorType executorType = sqlSessionFactory.getConfiguration().getDefaultExecutorType();
+        return getSqlSession(sqlSessionFactory, dataSource, executorType);
     }
 
     /**
@@ -71,9 +75,11 @@ public final class SqlSessionUtils {
      * the one holden into {@link SqlSessionFactory}. 
      * It is just for testing purposes. Using this can cause runtime errors.
      *
-     * @param sessionFactory
-     * @param dataSource
-     * @return
+     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @param dataSource overrides MyBatis {@literal SqlSessionFactory} {@literal DataSource}
+     * @return a MyBatis {@literal SqlSession}
+     * @throws TransientDataAccessResourceException if a transaction is active and the
+     *             {@link SqlSessionFactory} is not using a {@link SpringManagedTransactionFactory}
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, DataSource dataSource) {
         ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
@@ -85,9 +91,11 @@ public final class SqlSessionUtils {
      * using the {@link ExecutorType} provided as an argument and the {@link DataSource}
      * configured in the {@link SqlSessionFactory}
      *
-     * @param sessionFactory
-     * @param executorType
+     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @param executorType type of executor to use BATCH, REUSE, SIMPLE..
      * @return
+     * @throws TransientDataAccessResourceException if a transaction is active and the
+     *             {@link SqlSessionFactory} is not using a {@link SpringManagedTransactionFactory}
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType) {
         DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
@@ -102,7 +110,7 @@ public final class SqlSessionUtils {
      * the {@link DataSource} and creates a {@link SqlSession} with it. 
      *
      * @throws TransientDataAccessResourceException if a transaction is active and the
-     *             SqlSessionFactory is not using a SpringManagedTransactionFactory
+     *             {@link SqlSessionFactory} is not using a {@link SpringManagedTransactionFactory}
      * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, DataSource dataSource, ExecutorType executorType) {
@@ -197,9 +205,9 @@ public final class SqlSessionUtils {
     /**
      * Returns if the {@link SqlSession} passed as an argument is being managed by Spring
      *
-     * @param session
-     * @param sessionFactory
-     * @return
+     * @param session a MyBatis SqlSession to check
+     * @param sessionFactory the SqlSessionFactory which the SqlSession was built with
+     * @return true if session is transactional, otherwise false
      */
     public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
         if (sessionFactory == null) {
