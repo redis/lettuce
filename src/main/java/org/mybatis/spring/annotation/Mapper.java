@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to identify mapper interfaces for scanning
+ * Annotation to identify mapper interfaces for scanning.
  *
  * @see MapperScannerPostProcessor
  * @version $Id$
