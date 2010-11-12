@@ -34,6 +34,12 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
 
     private final ExecutorType executorType;
 
+    /**
+     * Creates a new holder instance.
+     *
+     * @param sqlSession the {@literal SqlSession} has to be hold.
+     * @param executorType the {@literal ExecutorType} has to be hold.
+     */
     public SqlSessionHolder(SqlSession sqlSession, ExecutorType executorType) {
         Assert.notNull(sqlSession, "SqlSession must not be null");
         Assert.notNull(executorType, "ExecutorType must not be null");
