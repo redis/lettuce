@@ -39,6 +39,8 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  */
 public class DataAccessExceptionTranslator implements SqlSessionExceptionTranslator {
 
+    private static final Object $LOCK = new Object();
+
     private final DataSource dataSource;
 
     private SQLExceptionTranslator exceptionTranslator;
@@ -63,7 +65,7 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
      */
    public RuntimeException translateException(PersistenceException e, String statement) {
         if (e.getCause() instanceof SQLException) {
-            synchronized (this.exceptionTranslator) {
+            synchronized ($LOCK) {
                 if (this.exceptionTranslator == null) {
                     this.initExceptionTranslator();
                 }
