@@ -95,15 +95,15 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public Connection getConnection() {
-        return connection;
+        return this.connection;
     }
 
     /**
      * {@inheritDoc}
      */
     public void commit() throws SQLException {
-        if (shouldManageConnection) {
-            connection.commit();
+        if (this.shouldManageConnection) {
+            this.connection.commit();
         }
     }
 
@@ -111,8 +111,8 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void rollback() throws SQLException {
-        if (shouldManageConnection) {
-            connection.rollback();
+        if (this.shouldManageConnection) {
+            this.connection.rollback();
         }
     }
 
@@ -120,8 +120,8 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void close() throws SQLException {
-        if (shouldManageConnection) {
-            connection.close();
+        if (this.shouldManageConnection) {
+            this.connection.close();
         }
     }
 
