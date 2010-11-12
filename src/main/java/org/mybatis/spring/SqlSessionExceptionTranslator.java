@@ -19,7 +19,7 @@ import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 
 /**
- * Translates exceptions returned from MyBatis SqlSession into RuntimeExceptions
+ * Translates exceptions returned from MyBatis SqlSession into RuntimeExceptions.
  *
  * @see SqlSession
  * @version $Id$
