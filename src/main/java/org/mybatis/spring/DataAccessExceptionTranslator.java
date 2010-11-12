@@ -56,7 +56,7 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
         this.dataSource = dataSource;
 
         if (!exceptionTranslatorLazyInit) {
-            this.initExceptionTranslator();
+            initExceptionTranslator();
         }
     }
 
@@ -68,7 +68,7 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
             if (this.exceptionTranslator == null) {
                 synchronized ($LOCK) {
                     if (this.exceptionTranslator == null) {
-                        this.initExceptionTranslator();
+                        initExceptionTranslator();
                     }
                 }
             }
