@@ -67,21 +67,42 @@ import org.springframework.util.Assert;
  */
 public class SqlSessionTemplate implements SqlSession {
 
-    private SqlSessionFactory sqlSessionFactory;
-    private ExecutorType executorType;
-    private SqlSession sqlSessionProxy;
-    private SqlSessionExceptionTranslator exceptionTranslator;
+    private final SqlSessionFactory sqlSessionFactory;
 
+    private final ExecutorType executorType;
+
+    private final SqlSession sqlSessionProxy;
+
+    private final SqlSessionExceptionTranslator exceptionTranslator;
+
+    /**
+     * TODO fill me
+     *
+     * @param sqlSessionFactory
+     */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param sqlSessionFactory
+     * @param executorType
+     */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
         this(sqlSessionFactory, executorType, 
                 new DataAccessExceptionTranslator(
                         sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), true));
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param sqlSessionFactory
+     * @param executorType
+     * @param exceptionTranslator
+     */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
             SqlSessionExceptionTranslator exceptionTranslator) {
 
@@ -95,7 +116,6 @@ public class SqlSessionTemplate implements SqlSession {
                 SqlSessionFactory.class.getClassLoader(),
                 new Class[] { SqlSession.class }, 
                 new SqlSessionInterceptor());
-
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
