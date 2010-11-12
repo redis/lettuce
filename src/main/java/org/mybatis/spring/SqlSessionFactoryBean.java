@@ -213,6 +213,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         this.environment = environment;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(dataSource, "Property 'dataSource' is required");
         Assert.notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
@@ -241,46 +244,47 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         XMLConfigBuilder xmlConfigBuilder;
         Configuration configuration;
 
-        if (configLocation != null) {
+        if (this.configLocation != null) {
             Reader reader = null;
             try {
-                reader = new InputStreamReader(configLocation.getInputStream());
+                reader = new InputStreamReader(this.configLocation.getInputStream());
                 // Null environment causes the configuration to use the default.
                 // This will be overwritten below regardless.
                 xmlConfigBuilder = new XMLConfigBuilder(reader, null, configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (IOException ex) {
-                throw new NestedIOException("Failed to parse config resource: " + configLocation, ex);
+                throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
             } finally {
                 if (reader != null) {
                     try {
                         reader.close();
                     } catch (IOException ignored) {
+                        // close quietly
                     }
                 }
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Parsed configuration file: '" + configLocation + "'");
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
             }
         } else {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
             }
             configuration = new Configuration();
         }
 
         TransactionFactory transactionFactory = this.transactionFactoryClass.newInstance(); // expose IllegalAccessException, InstantiationException
 
-        transactionFactory.setProperties(transactionFactoryProperties);
+        transactionFactory.setProperties(this.transactionFactoryProperties);
         Environment environment = new Environment(this.environment, transactionFactory, this.dataSource);
 
         configuration.setEnvironment(environment);
 
-        if (!ObjectUtils.isEmpty(mapperLocations)) {
+        if (!ObjectUtils.isEmpty(this.mapperLocations)) {
             Map<String, XNode> sqlFragments = new HashMap<String, XNode>();
 
-            for (Resource mapperLocation : mapperLocations) {
+            for (Resource mapperLocation : this.mapperLocations) {
                 if (mapperLocation == null) {
                     continue;
                 }
@@ -319,35 +323,35 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     }
                 }
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Parsed mapper file: '" + mapperLocation + "'");
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Parsed mapper file: '" + mapperLocation + "'");
                 }
             }
         } else {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Property 'mapperLocations' was not specified, only MyBatis mapper files specified in the config xml were loaded");
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Property 'mapperLocations' was not specified, only MyBatis mapper files specified in the config xml were loaded");
             }
         }
 
-        return sqlSessionFactoryBuilder.build(configuration);
+        return this.sqlSessionFactoryBuilder.build(configuration);
     }
 
     /**
      * {@inheritDoc}
      */
     public SqlSessionFactory getObject() throws Exception {
-        if (sqlSessionFactory == null) {
+        if (this.sqlSessionFactory == null) {
             afterPropertiesSet();
         }
 
-        return sqlSessionFactory;
+        return this.sqlSessionFactory;
     }
 
     /**
      * {@inheritDoc}
      */
     public Class<? extends SqlSessionFactory> getObjectType() {
-        return sqlSessionFactory == null ? SqlSessionFactory.class : sqlSessionFactory.getClass();
+        return this.sqlSessionFactory == null ? SqlSessionFactory.class : this.sqlSessionFactory.getClass();
     }
 
     /**
