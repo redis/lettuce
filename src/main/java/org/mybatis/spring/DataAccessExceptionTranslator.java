@@ -66,11 +66,7 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
    public RuntimeException translateException(PersistenceException e, String statement) {
         if (e.getCause() instanceof SQLException) {
             if (this.exceptionTranslator == null) {
-                synchronized ($LOCK) {
-                    if (this.exceptionTranslator == null) {
-                        initExceptionTranslator();
-                    }
-                }
+                initExceptionTranslator();
             }
             return this.exceptionTranslator.translate("SqlSession operation", statement, (SQLException) e.getCause());
         }
@@ -81,7 +77,12 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
     * Initializes the internal translator reference.
     */
    private void initExceptionTranslator() {
-       this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+       synchronized ($LOCK) {
+           // check again because more than one thread may be waiting for lock release
+           if (this.exceptionTranslator == null) {
+               this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+           }
+       }
    }
 
 }
