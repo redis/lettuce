@@ -27,11 +27,11 @@ import org.mybatis.spring.MapperFactoryBean;
 * <p>
 * Seems that the problem is solved if another factory bean class is registered
 * because bean definitions will be different and will not collide.
-* <p> 
+* <p>
 * So this class just extends {@link MapperFactoryBean} and does nothing more.
-* <p> 
+* <p>
 * This class is only for the {@link MapperScannerPostProcessor} and should never be used by final users.
-* 
+*
 * @see org.mybatis.spring.MapperFactoryBean
 * @see org.mybatis.spring.annotation.MapperScannerPostProcessor
 * @version $Id$
