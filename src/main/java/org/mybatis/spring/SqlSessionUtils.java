@@ -51,17 +51,37 @@ public final class SqlSessionUtils {
         // do nothing
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param sessionFactory
+     * @return
+     */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory) {
         DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
         ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
         return getSqlSession(sessionFactory, dataSource, executorType);
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param sessionFactory
+     * @param dataSource
+     * @return
+     */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, DataSource dataSource) {
         ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
         return getSqlSession(sessionFactory, dataSource, executorType);
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param sessionFactory
+     * @param executorType
+     * @return
+     */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType) {
         DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
         return getSqlSession(sessionFactory, dataSource, executorType);
@@ -143,6 +163,12 @@ public final class SqlSessionUtils {
         return session;
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param session
+     * @param sessionFactory
+     */
     public static void closeSqlSession(SqlSession session, SqlSessionFactory sessionFactory) {
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
@@ -156,6 +182,13 @@ public final class SqlSessionUtils {
         }
     }
 
+    /**
+     * TODO fill me
+     *
+     * @param session
+     * @param sessionFactory
+     * @return
+     */
     public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
         if (sessionFactory == null) {
             return false;
@@ -166,6 +199,9 @@ public final class SqlSessionUtils {
         return (holder != null) && (holder.getSqlSession() == session);
     }
 
+    /**
+     * TODO fill me
+     */
     private static final class SqlSessionSynchronization extends TransactionSynchronizationAdapter {
 
         private final SqlSessionHolder holder;
