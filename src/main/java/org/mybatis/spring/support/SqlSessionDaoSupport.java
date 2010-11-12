@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
     private SqlSession sqlSession;
+
     private boolean externalSqlSession;
 
     @Autowired(required = false)
