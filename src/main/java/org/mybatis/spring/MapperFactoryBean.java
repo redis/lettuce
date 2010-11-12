@@ -44,14 +44,18 @@ import org.springframework.util.Assert;
  *   </bean>
  * }
  * </pre>
+ *
  * @see SqlSessionTemplate
  * @version $Id$
  */
 public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
 
     private Class<T> mapperInterface;
+
     private boolean addToConfig = true;
+
     private SqlSession sqlSession;
+
     private boolean externalSqlSession;
 
     @Autowired(required = false)
