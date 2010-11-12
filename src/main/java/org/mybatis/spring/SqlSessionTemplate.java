@@ -29,6 +29,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.util.Assert;
 
 /**
@@ -76,7 +77,8 @@ public class SqlSessionTemplate implements SqlSession {
     private final SqlSessionExceptionTranslator exceptionTranslator;
 
     /**
-     * TODO fill me
+     * Constructs a Spring managed SqlSession with the {@link SqlSessionFactory} 
+     * passed as an argument.
      *
      * @param sqlSessionFactory
      */
@@ -85,7 +87,10 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     /**
-     * TODO fill me
+     * Constructs a Spring managed SqlSession with the {@link SqlSessionFactory} 
+     * passed as an argument and the given {@link ExecutorType}
+     * {@link ExecutorType} cannot be changed once the {@link SqlSessionTemplate}
+     * is constructed.
      *
      * @param sqlSessionFactory
      * @param executorType
@@ -97,7 +102,11 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     /**
-     * TODO fill me
+     * Constructs a Spring managed {@link SqlSession} with the given
+     * {@link SqlSessionFactory} and {@link ExecutorType}.
+     * A custom {@link SQLExceptionTranslator} can be provided as an 
+     * argument any {@link PersistenceException} thrown by MyBatis
+     * can be custom translated to a {@link RuntimeException}
      *
      * @param sqlSessionFactory
      * @param executorType
