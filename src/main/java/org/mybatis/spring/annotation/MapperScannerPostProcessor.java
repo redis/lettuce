@@ -32,24 +32,24 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * BeanDefinitionRegistryPostProcessor that searches recursively 
+ * BeanDefinitionRegistryPostProcessor that searches recursively
  * starting from a basePackage for interfaces with {@link Mapper} annotation
  * and registers MapperFactoryBeans.
  * <p>
- * It is usually used with autowire enabled so all the beans it creates are 
- * automatically autowired with the proper {@link SqlSessionFactory} or 
+ * It is usually used with autowire enabled so all the beans it creates are
+ * automatically autowired with the proper {@link SqlSessionFactory} or
  * {@link SqlSessionTemplate} 
  * <p>
  * It there is more than one DataSource or {@link SqlSessionFactory} in the application
- * autowire cannot be used. In this case you can specify 
+ * autowire cannot be used. In this case you can specify
  * {@link SqlSessionFactory} or {@link SqlSessionTemplate} to use.
  * <p>
  * When specifying any of these beans notice that <b>bean names</b> must be
- * used instead of real references. It has to be this way because 
+ * used instead of real references. It has to be this way because
  * the MapperScannerPostProcessor runs very early in the Spring startup process
  * and some other post processors have not started yet (like PropertyPlaceholderConfigurer)
  * and if they are needed (for example to setup the DataSource) the start process
- * will fail. 
+ * will fail.
  * <p>
  * Configuration sample:
  * <p>
@@ -61,7 +61,7 @@ import org.springframework.util.StringUtils;
  *       <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
  *   </bean>
  * }
- * </pre> 
+ * </pre>
  *
  * @see org.apache.ibatis.session.SqlSessionFactory
  * @see org.mybatis.spring.MapperFactoryBean
@@ -70,10 +70,13 @@ import org.springframework.util.StringUtils;
 public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostProcessor, InitializingBean {
 
     private final Log logger = LogFactory.getLog(this.getClass());
-    
+
     private String basePackage;
+
     private boolean addToConfig = true;
+
     private String sqlSessionTemplateBeanName;
+
     private String sqlSessionFactoryBeanName;
 
     public void setBasePackage(String basePackage) {
@@ -112,8 +115,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
         Set<Class<?>> mapperInterfaces = searchForMappers();
         if (mapperInterfaces.isEmpty()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("No MyBatis mapper was found in '"
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("No MyBatis mapper was found in '"
                         + this.basePackage
                         + "' package. Make sure your mappers are annotated with @Mapper");
             }
@@ -123,8 +126,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     }
 
     private Set<Class<?>> searchForMappers() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Searching for MyBatis mappers in '"
+        if (this.logger.isDebugEnabled()) {
+            this.logger.debug("Searching for MyBatis mappers in '"
                         + this.basePackage
                         + "' package");
         }
@@ -137,8 +140,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
     }
 
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Registering MyBatis mappers");
+        if (this.logger.isDebugEnabled()) {
+            this.logger.debug("Registering MyBatis mappers");
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
@@ -156,8 +159,8 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
                 name = mapperInterface.getName();
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Registering MyBatis mapper with '" 
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Registering MyBatis mapper with '" 
                         + name + "' name and '" 
                         + mapperInterface.getName() + "' mapperInterface");
             }
