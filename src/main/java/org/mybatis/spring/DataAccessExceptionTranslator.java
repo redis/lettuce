@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring;
 
 import java.sql.SQLException;
@@ -27,11 +26,12 @@ import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 
 /**
- * Default exception translator. 
- * Translates MyBatis SqlSession returned exception into a Spring 
+ * Default exception translator.
+ *
+ * Translates MyBatis SqlSession returned exception into a Spring
  * {@link DataAccessException} using Spring's {@link SQLExceptionTranslator}
- * Can load {@link SQLExceptionTranslator} eagerly of when the 
- * first exception is translated
+ * Can load {@link SQLExceptionTranslator} eagerly of when the
+ * first exception is translated.
  *
  * @see DataAccessException
  * @see SqlSession
@@ -39,22 +39,23 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  */
 public class DataAccessExceptionTranslator implements SqlSessionExceptionTranslator {
 
-    private DataSource dataSource;
+    private final DataSource dataSource;
+
     private SQLExceptionTranslator exceptionTranslator;
 
+    /**
+     * Creates a new {@literal DataAccessExceptionTranslator} instance.
+     *
+     * @param dataSource DataSource to use to find metadata and establish which error codes are usable.
+     * @param exceptionTranslatorLazyInit if true, the translator instantiates internal stuff only the first time will
+     *        have the need to translate exceptions.
+     */
     public DataAccessExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
         this.dataSource = dataSource;
 
         if (!exceptionTranslatorLazyInit) {
-            getExceptionTranslator();
+            this.initExceptionTranslator();
         }
-    }
-
-    private synchronized SQLExceptionTranslator getExceptionTranslator() {
-        if (this.exceptionTranslator == null) {
-            this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(dataSource);
-        }
-        return this.exceptionTranslator;
     }
 
     /**
@@ -62,10 +63,21 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
      */
    public RuntimeException translateException(PersistenceException e, String statement) {
         if (e.getCause() instanceof SQLException) {
-            return getExceptionTranslator().translate("SqlSession operation", statement, (SQLException) e.getCause());
-        } else {
-            return new MyBatisSystemException("SqlSession operation", e);
+            synchronized (this.exceptionTranslator) {
+                if (this.exceptionTranslator == null) {
+                    this.initExceptionTranslator();
+                }
+            }
+            return this.exceptionTranslator.translate("SqlSession operation", statement, (SQLException) e.getCause());
         }
+        return new MyBatisSystemException("SqlSession operation", e);
     }
+
+   /**
+    * Initializes the internal translator reference.
+    */
+   private void initExceptionTranslator() {
+       this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+   }
 
 }
