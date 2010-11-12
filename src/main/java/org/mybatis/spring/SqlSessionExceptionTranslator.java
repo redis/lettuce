@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring;
 
 import org.apache.ibatis.exceptions.PersistenceException;
@@ -21,12 +20,12 @@ import org.apache.ibatis.session.SqlSession;
 
 /**
  * Translates exceptions returned from MyBatis SqlSession into RuntimeExceptions
- * 
+ *
  * @see SqlSession
  * @version $Id$
  */
 public interface SqlSessionExceptionTranslator {
-    
+
     RuntimeException translateException(PersistenceException e, String statement);
 
 }
