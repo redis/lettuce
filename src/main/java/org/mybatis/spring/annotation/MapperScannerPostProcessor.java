@@ -160,7 +160,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             }
 
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Registering MyBatis mapper with '" 
+                this.logger.debug("Registering MyBatis mapper with '"
                         + name + "' name and '" 
                         + mapperInterface.getName() + "' mapperInterface");
             }
