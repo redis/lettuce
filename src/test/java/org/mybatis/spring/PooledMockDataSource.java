@@ -35,7 +35,7 @@ final class PooledMockDataSource extends MockDataSource {
     @Override
     public Connection getConnection() throws SQLException {
         if (connections.isEmpty()) {
-            throw new SQLException("Sorry, I runned out of connections");
+            throw new SQLException("Sorry, I ran out of connections");
         }
         ++this.connectionCount;
         return this.connections.removeLast();
