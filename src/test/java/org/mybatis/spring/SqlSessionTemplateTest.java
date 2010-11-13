@@ -130,7 +130,7 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     }
 
     @Test
-    public void testExceptionTranslation() {
+    public void testExceptionTranslationShouldThrowMyBatisSystemException() {
         try {
             sqlSessionTemplate.selectOne("undefined");
             fail("exception not thrown when expected");
@@ -141,6 +141,10 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
        catch (Throwable t) {
            fail("SqlSessionTemplate should translate MyBatis PersistenceExceptions");
        }
+    }
+
+    @Test
+    public void testExceptionTranslationShouldThrowDataAccessException() {
 
        // this query must be the same as the query in TestMapper.xml
        connection.getPreparedStatementResultSetHandler().prepareThrowsSQLException("SELECT 'fail'");
