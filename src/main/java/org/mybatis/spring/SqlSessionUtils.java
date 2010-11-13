@@ -59,7 +59,7 @@ public final class SqlSessionUtils {
      * Creates a new MyBatis {@link SqlSession} from the {@link SqlSessionFactory}
      * provided as a parameter and using its {@link DataSource} and {@link ExecutorType}
      *
-     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @param sqlSessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
      * @return a MyBatis {@literal SqlSession}
      * @throws TransientDataAccessResourceException if a transaction is active and the
      *             {@literal SqlSessionFactory} is not using a {@literal SpringManagedTransactionFactory}

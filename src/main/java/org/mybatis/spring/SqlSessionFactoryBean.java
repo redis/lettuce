@@ -61,8 +61,6 @@ import org.springframework.util.ObjectUtils;
  *
  * @see #setConfigLocation
  * @see #setDataSource
- * @see org.mybatis.spring.SqlSessionTemplate#setSqlSessionFactory
- * @see org.mybatis.spring.SqlSessionTemplate#setDataSource
  * @version $Id$
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean {
@@ -179,8 +177,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * @see org.apache.ibatis.transaction.TransactionFactory
      * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
      * @see org.apache.ibatis.transaction.Transaction
-     * @see org.mybatis.spring.SqlSessionUtils#getSqlSession(SqlSessionFactory,
-     *      DataSource, org.apache.ibatis.session.ExecutorType)
      * @param <TF> the MyBatis TransactionFactory type
      * @param transactionFactoryClass the MyBatis TransactionFactory class to use
      */

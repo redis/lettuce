@@ -32,7 +32,6 @@ import org.springframework.util.Assert;
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate
  * @see SqlSessionTemplate
- * @see SqlSessionTemplate#setExceptionTranslator
  * @version $Id$
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
