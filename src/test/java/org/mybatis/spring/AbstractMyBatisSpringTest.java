@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals;
  */
 public abstract class AbstractMyBatisSpringTest {
 
-    protected static CountingMockDataSource dataSource = new CountingMockDataSource();
+    protected static PooledMockDataSource dataSource = new PooledMockDataSource();
 
     protected static SqlSessionFactory sqlSessionFactory;
 
@@ -50,6 +50,8 @@ public abstract class AbstractMyBatisSpringTest {
     protected static DataSourceTransactionManager txManager;
 
     protected MockConnection connection;
+    
+    protected MockConnection connectionTwo;
 
     @BeforeClass
     public static void setupBase() throws Exception {
@@ -118,7 +120,9 @@ public abstract class AbstractMyBatisSpringTest {
     @Before
     public void setupConnection() throws SQLException {
         connection = createMockConnection();
-        dataSource.setupConnection(connection);
+        connectionTwo = createMockConnection();
+        dataSource.addConnection(connectionTwo);
+        dataSource.addConnection(connection);
     }
 
     @Before
