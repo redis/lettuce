@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import com.mockrunner.mock.jdbc.MockDataSource;
 
 /**
  * @version $Id$
@@ -166,7 +167,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     public void testNonSpringWithTx() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
-        CountingMockDataSource mockDataSource = new CountingMockDataSource();
+        MockDataSource mockDataSource = new MockDataSource();
         mockDataSource.setupConnection(createMockConnection());
 
         Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), mockDataSource);

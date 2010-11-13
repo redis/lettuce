@@ -18,16 +18,16 @@ package org.mybatis.spring;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
-
+import org.junit.After;
+import org.junit.Test;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-import org.junit.After;
-import org.junit.Test;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import com.mockrunner.mock.jdbc.MockDataSource;
 
 /**
  * @version $Id$
@@ -193,7 +193,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     public void testNonSpringTxFactoryNonSpringDSWithTx() {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
-        CountingMockDataSource mockDataSource = new CountingMockDataSource();
+        MockDataSource mockDataSource = new MockDataSource();
         mockDataSource.setupConnection(createMockConnection());
 
         Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), mockDataSource);
