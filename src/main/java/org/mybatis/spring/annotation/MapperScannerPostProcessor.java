@@ -180,7 +180,6 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         return candidates;
     }
 
-    @SuppressWarnings("unchecked")
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
         if (this.logger.isDebugEnabled()) {
             this.logger.debug("Registering MyBatis mappers");
@@ -188,15 +187,7 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
         // if no annotation was specified lets try with @Named to get the bean name
         if (annotation == null) {
-            try {
-                ClassLoader cl = MapperScannerPostProcessor.class.getClassLoader();
-                annotation = (Class<? extends Annotation>) cl.loadClass("javax.inject.Named");
-                if (logger.isDebugEnabled()) {
-                    logger.debug("JSR-330 'javax.inject.Named' annotation found");
-                }
-            } catch (ClassNotFoundException ex) {
-                // JSR-330 API not available
-            }
+            annotation = getNamedAnnotation();
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
@@ -236,4 +227,18 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
         return Introspector.decapitalize(shortClassName);
     }
 
+    @SuppressWarnings("unchecked")
+    private Class<? extends Annotation> getNamedAnnotation() {
+        Class<? extends Annotation> namedAnnotation = null;
+        try {
+            ClassLoader cl = MapperScannerPostProcessor.class.getClassLoader();
+            namedAnnotation = (Class<? extends Annotation>) cl.loadClass("javax.inject.Named");
+            if (logger.isDebugEnabled()) {
+                logger.debug("JSR-330 'javax.inject.Named' annotation found");
+            }
+        } catch (ClassNotFoundException ex) {
+            // JSR-330 API not available
+        }
+        return namedAnnotation;
+    }
 }
