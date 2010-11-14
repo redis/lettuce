@@ -15,9 +15,13 @@
  */
 package org.mybatis.spring.annotation;
 
+import java.beans.Introspector;
+import java.lang.annotation.Annotation;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.ibatis.io.ResolverUtil;
+import org.apache.ibatis.io.ResolverUtil.Test;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -28,7 +32,9 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -71,14 +77,18 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
     private final Log logger = LogFactory.getLog(this.getClass());
 
-    private String basePackage;
+    private String basePackage; // TODO should accept patterns
+    
+    private Class<?> superType;
+
+    private Class<? extends Annotation> annotation = Mapper.class; // TODO this should not be the default 
 
     private boolean addToConfig = true;
 
     private String sqlSessionTemplateBeanName;
 
     private String sqlSessionFactoryBeanName;
-
+    
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
     }
@@ -93,6 +103,14 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
     public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
         this.sqlSessionFactoryBeanName = sqlSessionFactoryName;
+    }
+
+    public void setSuperType(Class<?> superType) {
+        this.superType = superType;
+    }
+
+    public void setAnnotation(Class<? extends Annotation> annotation) {
+        this.annotation = annotation;
     }
 
     /**
@@ -134,14 +152,51 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
         String[] basePackagesArray = 
             StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-        ResolverUtil<Object> resolver = new ResolverUtil<Object>();
-        resolver.findAnnotated(Mapper.class, basePackagesArray);
-        return resolver.getClasses();
+        ResolverUtil<Object> resolverUtil = new ResolverUtil<Object>();
+        Test test = null;
+        if (this.superType != null) {
+            test = new ResolverUtil.IsA(superType);
+        } else if (this.annotation != null) {
+            test = new ResolverUtil.AnnotatedWith(annotation);            
+        } else {
+            test = new ResolverUtil.Test() {
+                public boolean matches(Class<?> type) {
+                    return type.isInterface() && type.getMethods().length > 0;
+                }
+            };
+        }
+        
+        for (String packageName : basePackagesArray) {
+            resolverUtil.find(test, packageName);
+        }
+
+        // isA() also returns the marker interface. 
+        // remove it if it has no methods
+        Set<Class<?>> candidates = resolverUtil.getClasses();
+        if (superType != null && superType.getMethods().length > 0) {
+            candidates.remove(superType);
+        }
+        
+        return candidates;
     }
 
+    @SuppressWarnings("unchecked")
     private void registerMappers(BeanDefinitionRegistry registry, Set<Class<?>> mapperInterfaces) {
         if (this.logger.isDebugEnabled()) {
             this.logger.debug("Registering MyBatis mappers");
+        }
+
+        // if no annotation was specified lets try with @Named to get the bean name
+        if (annotation == null) {
+            try {
+                ClassLoader cl = MapperScannerPostProcessor.class.getClassLoader();
+                annotation = (Class<? extends Annotation>) cl.loadClass("javax.inject.Named");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("JSR-330 'javax.inject.Named' annotation found");
+                }
+            } catch (ClassNotFoundException ex) {
+                // JSR-330 API not available
+            }
         }
 
         for (Class<?> mapperInterface : mapperInterfaces) {
@@ -154,10 +209,17 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
             if (StringUtils.hasLength(this.sqlSessionTemplateBeanName)) {
                 beanDefinitionBuilder.addPropertyReference("sqlSessionTemplate", this.sqlSessionTemplateBeanName);
             }
-            String name = mapperInterface.getAnnotation(Mapper.class).value();
-            if (!StringUtils.hasLength(name)) {
-                name = mapperInterface.getName();
-            }
+            
+            // Spring style default name 
+            String name = buildDefaultBeanName(mapperInterface.getName());
+            
+            if (annotation != null) {
+                Annotation namedAnnotation = mapperInterface.getAnnotation(annotation);
+                if (namedAnnotation != null) {
+                    Map<String, Object> annotationAtributes = AnnotationUtils.getAnnotationAttributes(namedAnnotation, true);
+                    name = (String) annotationAtributes.get("value");
+                }
+            }            
 
             if (this.logger.isDebugEnabled()) {
                 this.logger.debug("Registering MyBatis mapper with '"
@@ -167,6 +229,11 @@ public class MapperScannerPostProcessor implements BeanDefinitionRegistryPostPro
 
             registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
         }
+    }
+
+    private String buildDefaultBeanName(String name) {
+        String shortClassName = ClassUtils.getShortName(name);
+        return Introspector.decapitalize(shortClassName);
     }
 
 }
