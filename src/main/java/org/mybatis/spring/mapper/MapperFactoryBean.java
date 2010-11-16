@@ -29,13 +29,13 @@ import org.springframework.util.Assert;
  * SqlSessionFactory or a pre-configured SqlSessionTemplate.
  * <p>
  * Sample configuration:
- * 
+ *
  * <pre class="code">
  * {@code
  *   <bean id="baseMapper" class="org.mybatis.spring.mapper.MapperFactoryBean" abstract="true" lazy-init="true">
  *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
  *   </bean>
- * 
+ *
  *   <bean id="oneMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyMapperInterface" />
  *   </bean>
@@ -47,7 +47,7 @@ import org.springframework.util.Assert;
  * </pre>
  * <p>
  * Note that this factory can only inject <em>interfaces</em>, not concrete classes.
- * 
+ *
  * @see SqlSessionTemplate
  * @version $Id$
  */
@@ -90,8 +90,8 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
 
         Configuration configuration = this.sqlSession.getConfiguration();
-        if (this.addToConfig && !configuration.hasMapper(mapperInterface)) {
-            configuration.addMapper(mapperInterface);
+        if (this.addToConfig && !configuration.hasMapper(this.mapperInterface)) {
+            configuration.addMapper(this.mapperInterface);
         }
     }
 
@@ -99,7 +99,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T>, InitializingBean {
      * {@inheritDoc}
      */
     public T getObject() throws Exception {
-        return this.sqlSession.getMapper(mapperInterface);
+        return this.sqlSession.getMapper(this.mapperInterface);
     }
 
     /**
