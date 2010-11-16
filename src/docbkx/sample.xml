@@ -80,12 +80,13 @@ public interface FooService {
     The database access layer has been implemented using the some of the different
     techniques explained in this manual. 
     <literal>SampleBasicTest</literal> will show you the recommended and simplest configuration 
-    based on a MapperFactoryBean. 
+    based on a <literal>MapperFactoryBean</literal>. 
     <literal>SampleAutoTest</literal> shows a minimal xml configuration based on 
     component scanning and autowiring. 
     <literal>SampleSqlSessionTest</literal> will show you how to hand code
-    a DAO using a Spring managed SqlSession. 
-    And finally <literal>SampleBatchTest</literal> will show how to use a batch session. 
+    a DAO using a Spring managed <literal>SqlSession</literal>. 
+    And finally <literal>SampleBatchTest</literal> will show how to use a batch 
+    <literal>SqlSession</literal>. 
     Please have a look at the different <literal>applicationContext.xml</literal> 
     files to see MyBatis-Spring in action.
   </para>
