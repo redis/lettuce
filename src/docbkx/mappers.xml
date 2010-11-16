@@ -48,7 +48,7 @@
     <para>
       A data mapper is added to Spring like the following:
 
-      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.MapperFactoryBean">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
@@ -121,55 +121,45 @@
     <title>Automatic Configuration</title>
     <para>
       There is no need to register all your mappers in the Spring XML file.
-      Instead, you can use a <literal>MapperScannerPostProcessor</literal> that
-      will search your classpath for your mappers and set them up
-      automatically.        
+      Instead, you can use a <literal>MapperScannerConfigurer</literal> that
+      will search the classpath for your mappers and set them up
+      automatically as <literal>MapperFactoryBeans</literal>.
     </para>
 
     <para>
-      To set up a <literal>MapperScannerPostProcessor</literal> add the
+      To set up a <literal>MapperScannerConfigurer</literal> add the
       following to the Spring configuration:
-      <programlisting language="xml"><![CDATA[<bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
+      <programlisting language="xml"><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
   <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></programlisting>
 
       The <literal>basePackage</literal> property lets you set the base package
       for your mapper interface files. You can set more than one package by
-      using a semicolon or comma as a separator. Mappers will be searched
+      using a semicolon or comma as a separator. Mappers will be searched for
       recursively starting in the specified package(s).
     </para>
     
     <para>
       Notice that there is no need to specify a
       <literal>SqlSessionFactory</literal> or <literal>SqlSessionTemplate</literal>
-      because the <literal>MapperScannerPostProcessor</literal> 
-      will autowired <literal>MapperFactoryBeans</literal>. But, if you are
-      using more than one <literal>DataSource</literal>, autowiring may not
-      work. In this case you can use the
-      <literal>sqlSessionFactoryBeanName</literal> or 
-      <literal>sqlSessionTemplateBeanName</literal> properties to set the right
-      bean name to use. See below, for an example:
-
-      <programlisting language="xml"><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></programlisting>
-
-      Note that <emphasis>bean names</emphasis> are required, not bean
-      references, thus the <literal>value</literal> attribute is used instead
-      of the usual <literal>ref</literal> attribute.
+      because the <literal>MapperScannerConfigurer</literal> will autowire 
+      <literal>MapperFactoryBeans</literal>. But, if you are using more than
+      one <literal>DataSource</literal>, (thus, more than one
+      SqlSessionFactory), autowiring will not  work. In this case you can use
+      the <literal>sqlSessionFactoryBean</literal> or 
+      <literal>sqlSessionTemplateBean</literal> properties to set the right
+      factory / template.
     </para>
 
     <para>
-      To enable <literal>MapperScannerPostProcessor</literal> to identify your
-      mapper classes they <emphasis>must</emphasis> be annotated with the
-      <literal>@Mapper</literal> annotation.   
-
-      <programlisting language="java"><![CDATA[@Mapper("userMapper")
-public interface UserMapper {
-    User getUser(String userId);
-}]]></programlisting>
-
-      The <literal>@Mapper</literal> annotation also lets you specify a name
-      for your bean. If you don't provide a name it will be registered with its
-      class name.
+     <literal>MapperScannerConfigurer</literal> supports filtering the mappers
+     created by either specifying a marker interface or an annotation. The
+     <literal>annotationClass</literal> property specifies an annotation to
+     search for. The <literal>markerInterface</literal> property specifies a
+     parent interface to search for. If both properties are specified, mappers
+     are added for interfaces that match <emphasis>either</emphasis> criteria.
+     By default, these two properties are null, so all interfaces in the given
+     base package(s) will be loaded as mappers.
     </para>
    </section>
 

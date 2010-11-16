@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring;
+package org.mybatis.spring.mapper;
 
 import static org.junit.Assert.fail;
 
@@ -22,6 +22,12 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mybatis.spring.AbstractMyBatisSpringTest;
+import org.mybatis.spring.MyBatisSystemException;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.TestMapper;
+import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -99,25 +105,6 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         assertCommit();
         assertSingleConnection();
     }
-
-    // SqlSessionTemplate should use explicitly set DataSource, if there is one
-//    @Test(expected = UnsupportedOperationException.class)
-//    public void testWithDifferentDataSource() throws Exception {
-//        try {
-//            CountingMockDataSource mockDataSource = new CountingMockDataSource();
-//            mockDataSource.setupConnection(createMockConnection());
-//
-//            SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-//            sqlSessionTemplate.setDataSource(mockDataSource);
-//
-//            fail("should not be able to change the datasource");
-//
-//        } finally {
-//            // null the connection since it was not used
-//            // this avoids failing in validateConnectionClosed()
-//            connection = null;
-//        }
-//    }
 
     // MapperFactoryBeans should be usable outside of Spring TX, as long as a there is no active
     // transaction

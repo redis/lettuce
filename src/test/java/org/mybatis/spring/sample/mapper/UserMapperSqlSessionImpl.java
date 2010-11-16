@@ -17,6 +17,7 @@ package org.mybatis.spring.sample.mapper;
 
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.sample.User;
 
 /**
  * This DAO is injected with a SqlSessionFactory that is used to get a SqlSession and call MyBatis API.

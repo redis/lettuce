@@ -13,22 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring;
+package org.mybatis.spring.mapper;
 
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
 /**
- * BeanFactory that enables injection of MyBatis mapper interfaces.
- * It can be set up with a SqlSessionFactory or a pre-configured SqlSessionTemplate.
+ * BeanFactory that enables injection of MyBatis mapper interfaces. It can be set up with a
+ * SqlSessionFactory or a pre-configured SqlSessionTemplate.
  * <p>
  * Sample configuration:
- *
+ * 
  * <pre class="code">
  * {@code
  *   <bean id="baseMapper" class="org.mybatis.spring.MapperFactoryBean" abstract="true" lazy-init="true">
@@ -38,13 +39,15 @@ import org.springframework.util.Assert;
  *   <bean id="oneMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyMapperInterface" />
  *   </bean>
- *
+ * 
  *   <bean id="anotherMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyAnotherMapperInterface" />
  *   </bean>
  * }
  * </pre>
- *
+ * <p>
+ * Note that this factory can only inject <em>interfaces</em>, not concrete classes.
+ * 
  * @see SqlSessionTemplate
  * @version $Id$
  */

@@ -13,18 +13,28 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.sample.service;
 
 import org.mybatis.spring.sample.User;
+import org.mybatis.spring.sample.mapper.UserMapper;
 
 /**
- * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a
- * proxy implementation at Spring application startup.
+ * Impl of the FooService.
+ *
+ * FooService simply receives a userId and uses a mapper/dao to get a record from the database. .
  * 
- * @version $Id: UserMapper.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
+ * @version $Id: FooServiceImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
-public interface UserMapper {
+public class FooServiceImpl implements FooService {
 
-    User getUser(String userId);
+    private UserMapper userMapper;
+
+    public void setUserMapper(UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
+
+    public User doSomeBusinessStuff(String userId) {
+        return this.userMapper.getUser(userId);
+    }
 
 }

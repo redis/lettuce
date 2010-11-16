@@ -25,4 +25,4 @@
  *
  * @version $Id: package-info.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.sample;

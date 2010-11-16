@@ -23,7 +23,7 @@
 -->
 <mapper namespace="org.mybatis.spring.sample.mapper.UserMapper">
 
-    <select id="getUser" resultType="org.mybatis.spring.sample.mapper.User" parameterType="java.lang.String">
+    <select id="getUser" resultType="org.mybatis.spring.sample.User" parameterType="java.lang.String">
         select * from users where id=#{value}
     </select>
 

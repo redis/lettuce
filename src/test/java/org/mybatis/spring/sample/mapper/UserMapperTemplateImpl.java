@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring.sample.mapper;
 
+import org.mybatis.spring.sample.User;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**

@@ -13,18 +13,14 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.mapper.child;
 
-import org.mybatis.spring.sample.User;
+import org.mybatis.spring.mapper.MapperInterface;
 
-/**
- * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a
- * proxy implementation at Spring application startup.
- * 
- * @version $Id: UserMapper.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
- */
-public interface UserMapper {
+import org.springframework.stereotype.Component;
 
-    User getUser(String userId);
-
+@Component
+public interface MapperChildInterface extends MapperInterface {
+    // interface for MapperScannerPostProcessor tests
+    // tests subpackage search
 }

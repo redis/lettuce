@@ -13,20 +13,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.mapper;
 
-import org.springframework.transaction.annotation.Transactional;
-
-/**
- * FooService acts as a business service. 
- * 
- * All calls to any method of FooService are transactional.
- *
- * @version $Id: FooService.java 2654 2010-10-09 17:34:50Z eduardo.macarron $
- */
-@Transactional
-public interface FooService {
-
-    User doSomeBusinessStuff(String userId);
-
+public class MapperClass {
+    // child class for MapperScannerPostProcessor tests
+    // ensures classes are not loaded as MapperFactoryBeans
 }

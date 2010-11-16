@@ -22,7 +22,7 @@
     @Transactional. Each one is injected with a mapper coded/created in a
     different way: 
     userMapperBean is created with a MapperFactoryBean (has no implementation)
-    userMapper is searched and registered by the MapperScannerPostProcessor (has no implementation)
+    userMapper is searched and registered by the MapperScannerConfigurer (has no implementation)
     userMapperDaoSupport extends SqlSessionDaoSupport
     userMapperSqlSession uses directly MyBatis API (has no transaction support)
 
@@ -50,8 +50,8 @@
 
 	<!-- in-memory database and a datasource -->
     <jdbc:embedded-database id="dataSource">
-        <jdbc:script location="classpath:org/mybatis/spring/sample/mapper/database-schema.sql"/>
-        <jdbc:script location="classpath:org/mybatis/spring/sample/mapper/database-test-data.sql"/>
+        <jdbc:script location="classpath:org/mybatis/spring/sample/database-schema.sql"/>
+        <jdbc:script location="classpath:org/mybatis/spring/sample/database-test-data.sql"/>
     </jdbc:embedded-database>
 
 	<!-- transaction manager, use JtaTransactionManager for global tx -->
@@ -65,13 +65,13 @@
     </bean>
 
     <!-- directly injecting mappers (recommended) -->
-    <bean id="userMapperBean" class="org.mybatis.spring.MapperFactoryBean">
+    <bean id="userMapperBean" class="org.mybatis.spring.mapper.MapperFactoryBean">
         <!-- SqlSessionFactory property is autowired -->
         <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
     </bean>
 
     <!-- or you can scan for mappers and then inject them -->
-    <bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
     </bean>
 
@@ -95,23 +95,23 @@
         <!-- SqlSessionFactory property is autowired -->
     </bean>
 
-    <bean id="fooServiceWithMapperFactoryBean" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+    <bean id="fooServiceWithMapperFactoryBean" class="org.mybatis.spring.sample.service.FooServiceImpl">
         <property name="userMapper" ref="userMapperBean" />
     </bean>
 
-    <bean id="fooServiceWithMapperAnnotation" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+    <bean id="fooServiceWithMapperAnnotation" class="org.mybatis.spring.sample.service.FooServiceImpl">
         <property name="userMapper" ref="userMapper" />
     </bean>
 
-    <bean id="fooServiceWithDaoSupport" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+    <bean id="fooServiceWithDaoSupport" class="org.mybatis.spring.sample.service.FooServiceImpl">
         <property name="userMapper" ref="userMapperDaoSupport" />
     </bean>
 
-    <bean id="fooServiceWithSqlSession" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+    <bean id="fooServiceWithSqlSession" class="org.mybatis.spring.sample.service.FooServiceImpl">
         <property name="userMapper" ref="userMapperSqlSession" />
     </bean>
 
-    <bean id="fooServiceWithBatchDaoSupport" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+    <bean id="fooServiceWithBatchDaoSupport" class="org.mybatis.spring.sample.service.FooServiceImpl">
         <property name="userMapper" ref="batchUserMapperDaoSupport" />
     </bean>
 </beans>

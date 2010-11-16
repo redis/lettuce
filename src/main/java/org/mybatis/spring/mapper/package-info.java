@@ -15,8 +15,10 @@
  */
 
 /**
- * Contains the mapper scanning classes
+ * Contains classes for automatically building MyBatis mapper proxy classes at
+ * application startup.
  *
  * @version $Id$
  */
-package org.mybatis.spring.annotation;
+package org.mybatis.spring.mapper;
+

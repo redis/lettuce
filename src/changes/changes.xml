@@ -28,7 +28,11 @@
 
     <body>
         <release version="1.0.0-RC3" date="TBD" description="1.0.0-RC3 release">
-            <action type="update" issue="166">
+            <action type="update">
+                Reimplemented MapperScannerPostProcessor as MapperScannerConfigurer
+                which uses Spring component scanning
+            </action>
+            <action type="fix" issue="166">
 				Avoid one Proxy creation when using injected mappers
             </action>
         </release>
@@ -44,7 +48,7 @@
                 Component Scan for Mappers
             </action>
             <action type="fix" issue="154">
-                SqlSessionCallback.doInSqlSession should not throw SqlException.
+                SqlSessionCallback.doInSqlSession should not throw SqlException
             </action>
             <action type="fix" issue="156">
                 getExceptionTranslator() may not be called in mybatis-spring

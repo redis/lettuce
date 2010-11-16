@@ -13,12 +13,14 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.sample;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.sample.mapper.UserMapperTemplateImpl;
+import org.mybatis.spring.sample.service.FooService;
 import org.apache.ibatis.session.ExecutorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -29,7 +31,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  *
  * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
  */
-@ContextConfiguration(locations = {"classpath:org/mybatis/spring/sample/mapper/applicationContext.xml"})
+@ContextConfiguration(locations = {"classpath:org/mybatis/spring/sample/applicationContext.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
 public class MyBatisSampleTest {
 

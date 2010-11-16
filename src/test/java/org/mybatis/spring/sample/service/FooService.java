@@ -13,18 +13,21 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.sample.service;
 
 import org.mybatis.spring.sample.User;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a
- * proxy implementation at Spring application startup.
+ * FooService acts as a business service. 
  * 
- * @version $Id: UserMapper.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
+ * All calls to any method of FooService are transactional.
+ *
+ * @version $Id: FooService.java 2654 2010-10-09 17:34:50Z eduardo.macarron $
  */
-public interface UserMapper {
+@Transactional
+public interface FooService {
 
-    User getUser(String userId);
+    User doSomeBusinessStuff(String userId);
 
 }
