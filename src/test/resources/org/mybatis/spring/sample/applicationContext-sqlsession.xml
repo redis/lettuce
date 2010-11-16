@@ -54,7 +54,7 @@
     </bean>
 
     <!-- extending SqlSessionDaoSupport -->
-    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperTemplateImpl">
+    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperImpl">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />        
     </bean>
 

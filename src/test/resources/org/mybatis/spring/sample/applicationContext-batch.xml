@@ -56,7 +56,7 @@
     </bean>
 
     <!-- extend SqlSessionDaoSupport, but use an SqlSessionTemplate with ExecutorType.BATCH  -->
-    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperTemplateImpl">
+    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperImpl">
         <property name="sqlSessionTemplate">
           <bean class="org.mybatis.spring.SqlSessionTemplate">
             <constructor-arg index="0" ref="sqlSessionFactory" />

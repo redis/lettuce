@@ -25,7 +25,7 @@ import org.mybatis.spring.support.SqlSessionDaoSupport;
  *
  * @version $Id: UserMapperTemplateImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
-public class UserMapperTemplateImpl extends SqlSessionDaoSupport implements UserMapper {
+public class UserMapperImpl extends SqlSessionDaoSupport implements UserMapper {
 
     public User getUser(String userId) {
         return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);

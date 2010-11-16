@@ -53,12 +53,12 @@
 	<!-- enable transaction demarcation with annotations -->
     <tx:annotation-driven />
 
-    <!-- define the SqlSessionFactory beware that configLocation is not needed if you use MapperScannerConfigurer -->
+    <!-- define the SqlSessionFactory, notice that configLocation is not needed when you use MapperScannerConfigurer -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <!-- scan for mappers and let them be autowired-->
+    <!-- scan for mappers and let them be autowired -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
     </bean>

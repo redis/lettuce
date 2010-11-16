@@ -47,12 +47,12 @@
 	<!-- enable transaction demarcation with annotations -->
     <tx:annotation-driven />
 
-    <!-- define the SqlSessionFactory beware that configLocation is not needed if you use MapperFactoryBean -->
+    <!-- define the SqlSessionFactory, notice that configLocation is not needed when you use MapperFactoryBean -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <!-- directly injecting mappers (recommended) -->
+    <!-- directly injecting mappers (recommended), notice there is not UserMapperImpl needed -->
     <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
         <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />        
