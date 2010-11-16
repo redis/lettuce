@@ -19,8 +19,8 @@ import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
- * This DAO extends SqlSessionDaoSupport and uses SqlSessionTemplate instead of MyBatis API
- * SqlSessions are handled by Spring.
+ * This DAO extends SqlSessionDaoSupport and uses a Spring managed SqlSession instead of MyBatis one
+ * SqlSessions are handled by Spring so you don't need to open/close/commit/rollback them.
  * MyBatis exceptions are translated to Spring Data Exceptions.
  *
  * @version $Id: UserMapperTemplateImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $

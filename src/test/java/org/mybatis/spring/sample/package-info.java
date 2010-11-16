@@ -17,10 +17,10 @@
 /**
  * Sample for four usage scenarios.
  * <ul>
- * <li>Extending SqlSessionDaoSupport</li>
- * <li>Directly using MyBatis API (SqlSession)</li>
- * <li>Injecting a Mapper interface manually in the Spring XML (proxy DAO implementation)</li>
- * <li>Injecting a Mapper interface automatically using @Mapper annotations (proxy DAO implementation)</li>
+ * <li>Automatic configuration. Searching services and mappers and autowiring them</li>
+ * <li>Injecting a mapper interface manually in the Spring XML</li>
+ * <li>Extending SqlSessionDaoSupport to code your mapper implementation</li> 
+ * <li>Configuring a batch mapper</li> 
  * </ul>
  *
  * @version $Id: package-info.java 2444 2010-09-15 07:38:37Z simone.tripodi $
