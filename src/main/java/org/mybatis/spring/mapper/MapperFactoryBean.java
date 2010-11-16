@@ -32,7 +32,7 @@ import org.springframework.util.Assert;
  * 
  * <pre class="code">
  * {@code
- *   <bean id="baseMapper" class="org.mybatis.spring.MapperFactoryBean" abstract="true" lazy-init="true">
+ *   <bean id="baseMapper" class="org.mybatis.spring.mapper.MapperFactoryBean" abstract="true" lazy-init="true">
  *     <property name="sqlSessionFactory" ref="sqlSessionFactory" />
  *   </bean>
  * 
