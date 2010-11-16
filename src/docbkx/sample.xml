@@ -20,45 +20,49 @@
   <title>Sample Code</title>
 
   <para>
-    You can check out the sample code from the MyBatis repository on Google Code.
-
+    You can check out sample code from the MyBatis repository on Google Code.
     <itemizedlist>
       <listitem>
         <para>
-          <ulink url="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/test/java/org/mybatis/spring/sample/mapper/">Java code</ulink>
+          <ulink url="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/test/java/org/mybatis/spring/sample/">Java code</ulink>
         </para>
       </listitem>
       <listitem>
         <para>
-          <ulink url="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/test/resources/org/mybatis/spring/sample/mapper/">Config files</ulink>
+          <ulink url="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/test/resources/org/mybatis/spring/sample/">Config files</ulink>
         </para>
       </listitem>
     </itemizedlist>
   </para>
   <para>
-    To run the sample just run MyBatisSampleTest.java with JUnit 4.
+    Any of the samples can be run with JUnit 4.
   </para>
   <para>
-    The sample code has one service interface, <literal>FooService</literal>,
-    that acts as a transactional service. It starts and ends a transaction
-    when any of its methods is called. 
-
+    The sample code shows a typical design where a transactional service gets domain objects
+    from a data access layer.
+  </para>
+  <para>    
+    The service is composed by an interface <literal>FooService.java</literal>
+    and an implementation <literal>FooServiceImpl.java</literal>. This service is transactional
+    so a transaction is started when any of its methods is called and commited when 
+    the method ends without throwing a unchecked exception.
     <programlisting language="java"><![CDATA[@Transactional
 public interface FooService {
   User doSomeBusinessStuff(String userId);
 }]]></programlisting>
-
     Notice that transactional behaviour is configured with the
     <literal>@Transactional</literal> attribute. This is not required; any
     other way provided by Spring can be used to demarcate your transactions. 
   </para>
 
   <para>
-    <literal>FooServiceImpl.java</literal> is the FooService implementation
-    and it just uses DAOs/mappers that Spring has injected during startup.
-    You will notice that your code does not need to call any Spring or
-    MyBatis methods.
-
+    This service calls a data access layer built with MyBatis. This layer is composed
+    by a MyBatis mapper interface <literal>UserMapper.java</literal> and optionally 
+    by a implementation <literal>UserMapperImpl.java</literal> 
+  </para>
+  <para>
+    In all the samples the mapper is injected into the service bean so the service code
+    is just the following: 
     <programlisting language="java"><![CDATA[public class FooServiceImpl implements FooService {
   private UserMapper userMapper;
 
@@ -73,12 +77,16 @@ public interface FooService {
   </para>
 
   <para>
-    The database access layer has been implemented using the four different
-    techniques explained in this manual: with
-    <literal>MapperFactoryBean</literal> (both directly and through
-    <literal>MapperScannerConfigurer</literal>), with
-    <literal>SqlSessionDaoSupport</literal> and with a DAO implemented using
-    the base MyBatis API. Please see <literal>applicationContext.xml</literal> for the
-    full Spring configuration.
+    The database access layer has been implemented using the some of the different
+    techniques explained in this manual. 
+    <literal>SampleBasicTest</literal> will show you the recommended and simplest configuration 
+    based on a MapperFactoryBean. 
+    <literal>SampleAutoTest</literal> shows a minimal xml configuration based on 
+    component scanning and autowiring. 
+    <literal>SampleSqlSessionTest</literal> will show you how to hand code
+    a DAO using a Spring managed SqlSession. 
+    And finally <literal>SampleBatchTest</literal> will show how to use a batch session. 
+    Please have a look at the different <literal>applicationContext.xml</literal> 
+    files to see MyBatis-Spring in action.
   </para>
 </chapter>
