@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample;
+package org.mybatis.spring.sample.domain;
 
 /**
  * A simple bean that holds User info.

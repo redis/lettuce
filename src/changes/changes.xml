@@ -28,9 +28,8 @@
 
     <body>
         <release version="1.0.0-RC3" date="TBD" description="1.0.0-RC3 release">
-            <action type="update">
-                Reimplemented MapperScannerPostProcessor as MapperScannerConfigurer
-                which uses Spring component scanning
+            <action type="update" issue="176">
+                Mapper scanning should not rely on proprietary @Mapper annotation
             </action>
             <action type="fix" issue="166">
 				Avoid one Proxy creation when using injected mappers

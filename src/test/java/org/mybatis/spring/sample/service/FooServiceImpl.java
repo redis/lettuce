@@ -15,8 +15,10 @@
  */
 package org.mybatis.spring.sample.service;
 
-import org.mybatis.spring.sample.User;
+import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.mapper.UserMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * Impl of the FooService.
@@ -25,10 +27,12 @@ import org.mybatis.spring.sample.mapper.UserMapper;
  * 
  * @version $Id: FooServiceImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
+@Service
 public class FooServiceImpl implements FooService {
 
     private UserMapper userMapper;
 
+    @Autowired
     public void setUserMapper(UserMapper userMapper) {
         this.userMapper = userMapper;
     }

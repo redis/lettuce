@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.sample.mapper;
 
-import org.mybatis.spring.sample.User;
+import org.mybatis.spring.sample.domain.User;
 
 /**
  * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a

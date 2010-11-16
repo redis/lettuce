@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright 2010 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    This is a org.mybatis.spring.sample context that shows four different ways
+    to integrate with Spring. FooService* are beans that act as business
+    services. All of the services implement FooService which is annotated as
+    @Transactional. Each one is injected with a mapper coded/created in a
+    different way: 
+    userMapperBean is created with a MapperFactoryBean (has no implementation)
+    userMapper is searched and registered by the MapperScannerConfigurer (has no implementation)
+    userMapperDaoSupport extends SqlSessionDaoSupport
+    userMapperSqlSession uses directly MyBatis API (has no transaction support)
+
+    version: $Id: context.xml 2717 2010-10-15 15:37:00Z eduardo.macarron $
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:aop="http://www.springframework.org/schema/aop"
+     xmlns:tx="http://www.springframework.org/schema/tx"
+     xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+     xmlns:context="http://www.springframework.org/schema/context"
+     xsi:schemaLocation="
+     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+     http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd
+     http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+     http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd"
+     default-autowire="byName">
+
+	<!-- in-memory database and a datasource -->
+    <jdbc:embedded-database id="dataSource">
+        <jdbc:script location="classpath:org/mybatis/spring/sample/db/database-schema.sql"/>
+        <jdbc:script location="classpath:org/mybatis/spring/sample/db/database-test-data.sql"/>
+    </jdbc:embedded-database>
+
+	<!-- transaction manager, use JtaTransactionManager for global tx -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+</beans>

@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.sample.service;
 
-import org.mybatis.spring.sample.User;
+import org.mybatis.spring.sample.domain.User;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
