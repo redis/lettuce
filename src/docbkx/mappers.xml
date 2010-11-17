@@ -161,6 +161,20 @@
      By default, these two properties are null, so all interfaces in the given
      base package(s) will be loaded as mappers.
     </para>
+    
+    <para>
+     Discovered mappers will be named using Spring default naming strategy for
+     autodetected components (see Spring manual 3.14.4). 
+     That is, if no annotation is found, it will use the uncapitalized non-qualified class 
+     name of the mapper. But if either a @Component or a JSR-330 @Named annotation is 
+     found it will get the name from it.
+     Notice that for example you can configure <literal>annotationClass</literal>
+     to <literal>org.springframework.stereotype.Component</literal>,  
+     <literal>javax.inject.Named</literal> (if you have JSE 6) or to your own annoation
+     (that must be itself annotated) so the annotation will work both as a marker 
+     and as a name provider.
+    </para>
+    
    </section>
 
 </chapter>
