@@ -214,7 +214,7 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
                     ScannedGenericBeanDefinition definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
     
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Registering MyBatis mapper with '" 
+                        logger.debug("Creating MapperFactoryBean with '" 
                                 + holder.getBeanName() + "' name and '" 
                                 + definition.getBeanClassName() + "' mapperInterface");
                     }
