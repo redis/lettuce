@@ -56,7 +56,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
     @Test
     public void testAddToConfigTrue() throws Exception {
-        // the default SqlSessionFactory in BaseMyBatis SpringTest is created with an explicitly set
+        // the default SqlSessionFactory in AbstractMyBatisSpringTest is created with an explicitly set
         // MapperLocations list, so create a new factory here that tests auto-loading the config
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         // mapperLocations properties defaults to null
@@ -73,9 +73,9 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     @Test(expected = org.apache.ibatis.binding.BindingException.class)
     public void testAddToConfigFalse() throws Throwable {
         try {
-            // the default SqlSessionFactory in BaseMyBatis SpringTest is created with an explicitly
-            // set
-            // MapperLocations list, so create a new factory here that tests auto-loading the config
+            // the default SqlSessionFactory in AbstractMyBatisSpringTest is created with an explicitly
+            // set MapperLocations list, so create a new factory here that tests auto-loading the
+            // config
             SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
             // mapperLocations properties defaults to null
             factoryBean.setDataSource(dataSource);
@@ -87,8 +87,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         } catch (MyBatisSystemException mbse) {
             // unwrap exception so the exact MyBatis exception can be tested
             throw mbse.getCause();
-        }
-        finally {
+        } finally {
             // connection not used; force close to avoid failing in validateConnectionClosed()
             connection.close();
         }

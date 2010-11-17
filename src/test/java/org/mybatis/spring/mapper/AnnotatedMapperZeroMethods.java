@@ -15,8 +15,10 @@
  */
 package org.mybatis.spring.mapper;
 
-public interface MapperSubinterface extends MapperInterface {
-    // interface for MapperScannerPostProcessor tests
-    // ensures marker interface usage
-    // has no methods except parent methods
+import org.springframework.stereotype.Component;
+
+@Component
+public interface AnnotatedMapperZeroMethods {
+    // annotated interface for MapperScannerPostProcessor tests
+    // ensures annotated class usage with no methods
 }

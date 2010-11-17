@@ -15,15 +15,14 @@
  */
 package org.mybatis.spring.mapper;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -31,26 +30,22 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
+import org.springframework.core.type.ClassMetadata;
+import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
+import org.springframework.core.type.filter.TypeFilter;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
-import org.springframework.core.type.filter.RegexPatternTypeFilter;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
  * BeanfactoryPostProcessor that searches recursively starting from a base package for interfaces
- * and registers them as {@link MapperFactoryBean}. Note that only interfaces will be registered; concrete
- * classes will be ignored.
+ * and registers them as {@link MapperFactoryBean}. Note that only interfaces with at least one method will
+ * be registered; concrete classes will be ignored.
  * <p>
  * The <code>basePackage</code> property can contain more than one package name, separated by either
  * commas or semicolons.
- * <p>
- * This class supports filtering the mappers created by either specifying a marker interface or an
- * annotation. The <code>annotationClass</code> property specifies an annotation to search for. The
- * <code>markerInterface</code> property specifies a parent interface to search for. If both
- * properties are specified, mappers are added for interfaces that match <em>either</em> criteria.
- * By default, these two properties are null, so all interfaces in the given <code>basePackage</code>
- * are added as mappers.
  * <p>
  * This configurer is usually used with autowire enabled so all the beans it creates are
  * automatically autowired with the proper {@link SqlSessionFactory} or {@link SqlSessionTemplate}.
@@ -60,22 +55,29 @@ import org.springframework.util.StringUtils;
  * <p>
  * Configuration sample:
  * <p>
- *
+ * 
  * <pre class="code">
  * {@code
  *   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
  *       <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
+ *       <!-- optional unless there are multiple session factories defined -->
+ *       <property name="sqlSessionFactory" value="sqlSessionFactory" />
  *   </bean>
  * }
  * </pre>
  * <p>
- *
+ * This class supports filtering the mappers created by either specifying a marker interface or an
+ * annotation. The <code>annotationClass</code> property specifies an annotation to search for. The
+ * <code>markerInterface</code> property specifies a parent interface to search for. If both
+ * properties are specified, mappers are added for interfaces that match <em>either</em> criteria.
+ * By default, these two properties are null, so all interfaces in the given
+ * <code>basePackage</code> are added as mappers.
+ * 
  * @see org.mybatis.spring.mapper.MapperFactoryBean
+ * 
  * @version $Id$
  */
 public class MapperScannerConfigurer implements BeanFactoryPostProcessor, InitializingBean {
-
-    private static final Pattern ALL_INTERFACES = Pattern.compile(".*");
 
     private String basePackage;
 
@@ -105,12 +107,10 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
         this.markerInterface = superClass;
     }
 
-    @Autowired(required = false)
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
-    @Autowired(required = false)
     public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
         this.sqlSessionTemplate = sqlSessionTemplate;
     }
@@ -138,20 +138,13 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
             super(registry);
         }
 
-        /**
-         * Configures parent scanner to search for the right interfaces.
-         * It can search for all interfaces or just for those that extends a markerInterface or/and
-         * those annotated with the annotationClass
-         */
         @Override
         protected void registerDefaultFilters() {
             boolean acceptAllInterfaces = true;
 
             // if specified, use the given annotation and / or marker interface
-            // otherwise accept all interfaces in the base packages
             if (MapperScannerConfigurer.this.annotationClass != null) {
                 addIncludeFilter(new AnnotationTypeFilter(MapperScannerConfigurer.this.annotationClass));
-
                 acceptAllInterfaces = false;
             }
 
@@ -163,57 +156,69 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
                         return false;
                     }
                 });
-
                 acceptAllInterfaces = false;
             }
 
             if (acceptAllInterfaces) {
-                addIncludeFilter(new RegexPatternTypeFilter(MapperScannerConfigurer.ALL_INTERFACES));
+                // default include filter that accepts all classes
+                addIncludeFilter(new TypeFilter() {
+                    public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
+                            throws IOException {
+                        return true;
+                    }
+                });
             }
+
+            // always exclude interfaces with no methods
+            addExcludeFilter(new TypeFilter() {
+                public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
+                        throws IOException {
+                    ClassMetadata classMetadata = metadataReader.getClassMetadata();
+                    Class<?> candidateClass = null;
+
+                    try {
+                        candidateClass = getClass().getClassLoader().loadClass(classMetadata.getClassName());
+                    } catch (ClassNotFoundException ex) {
+                        return false;
+                    }
+
+                    // must have at least one method
+                    if (candidateClass.getMethods().length == 0) {
+                        return true;
+                    } else {
+                        // do not exclude
+                        return false;
+                    }
+                }
+            });
         }
 
-        /**
-         * Calls the parent search that will search and register all the candidates.
-         * Then the registered objects are post processed to set them as MapperFactoryBeans
-         */
         @Override
         protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
             Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
-            if (beanDefinitions.isEmpty()) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("No MyBatis mapper was found in '"
-                            + MapperScannerConfigurer.this.basePackage
-                            + "' package. Please check your configuration");
+            for (BeanDefinitionHolder holder : beanDefinitions) {
+                ScannedGenericBeanDefinition definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
+
+                logger.debug("creating MapperFactoryBean named '" + holder.getBeanName() + "' for class "
+                        + definition.getBeanClassName());
+
+                // the mapper interface is the original class of the bean
+                // but, the actual class of the bean is MapperFactoryBean
+                definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
+                definition.setBeanClass(MapperFactoryBean.class);
+
+                definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
+
+                // set explicitly if defined
+                if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
+                    definition.getPropertyValues().add("sqlSessionFactory",
+                            MapperScannerConfigurer.this.sqlSessionFactory);
                 }
-            } else {
 
-                for (BeanDefinitionHolder holder : beanDefinitions) {
-                    ScannedGenericBeanDefinition definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
-
-                    if (this.logger.isDebugEnabled()) {
-                        this.logger.debug("Registering MyBatis mapper with '" 
-                                + holder.getBeanName() + "' name and '" 
-                                + definition.getBeanClassName() + "' mapperInterface");
-                    }
-                    
-                    // the mapper interface is the original class of the bean
-                    // but, the actual class of the bean is MapperFactoryBean
-                    definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
-                    definition.setBeanClass(MapperFactoryBean.class);
-
-                    definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
-
-                    // set explicitly if defined
-                    if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
-                        definition.getPropertyValues().add("sqlSessionFactory",
-                                MapperScannerConfigurer.this.sqlSessionFactory);
-                    }
-
-                    if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
-                        definition.getPropertyValues().add("sqlSessionTemplate",
-                                MapperScannerConfigurer.this.sqlSessionTemplate);
-                    }
+                if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
+                    definition.getPropertyValues().add("sqlSessionTemplate",
+                            MapperScannerConfigurer.this.sqlSessionTemplate);
                 }
             }
 

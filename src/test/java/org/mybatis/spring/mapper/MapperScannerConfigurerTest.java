@@ -31,7 +31,6 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
-import org.mybatis.spring.mapper.child.MapperChildInterface;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
@@ -66,14 +65,12 @@ public class MapperScannerConfigurerTest {
 
     @After
     public void assertNoMapperClass() {
-        // MapperClass should always be ignored by MapperScannerPostProcessor
-        try {
-            applicationContext.getBean(MapperClass.class);
-            fail("Spring bean should not be defined for class " + MapperClass.class);
-        } catch (NoSuchBeanDefinitionException nsbde) {
-            // success
-        }
+        // concrete classes should always be ignored by MapperScannerPostProcessor
+        assertBeanNotLoaded("mapperClass");
 
+        // no method interfaces should be ignored too
+        assertBeanNotLoaded("package-info");
+        assertBeanNotLoaded("annotatedMapperZeroMethods");
     }
 
     @After
@@ -85,13 +82,11 @@ public class MapperScannerConfigurerTest {
     public void testInterfaceScan() {
         startContext();
 
-        // in most use cases, you would not want the marker interface to be a bean too
-        // but, for testing, it is easier to do this rather than create a different package to
-        // isolate the sub-interface
-        // regardless, the MapperInterface should exist, which is what we want
-        assertEquals("MapperInterface, MapperSubinterface & MapperChildInterface should all be loaded as beans", 3,
-                applicationContext.getBeanNamesForType(MapperInterface.class).length);
+        // all interfaces with methods should be loaded
         applicationContext.getBean("mapperInterface");
+        applicationContext.getBean("mapperSubinterface");
+        applicationContext.getBean("mapperChildInterface");
+        applicationContext.getBean("annotatedMapper");
     }
 
     @Test
@@ -101,11 +96,12 @@ public class MapperScannerConfigurerTest {
 
         startContext();
 
-        assertEquals("MapperSubinterface should be loaded as a bean", 1, applicationContext
-                .getBeanNamesForType(MapperSubinterface.class).length);
-        // 2 => MapperSubinterface & MapperChildInterface, since they are of MapperInterface type
-        assertEquals("MapperInterface should not be loaded as a bean", 2, applicationContext
-                .getBeanNamesForType(MapperInterface.class).length);
+        // only child inferfaces should be loaded
+        applicationContext.getBean("mapperSubinterface");
+        applicationContext.getBean("mapperChildInterface");
+
+        assertBeanNotLoaded("mapperInterface");
+        assertBeanNotLoaded("annotatedMapper");
     }
 
     @Test
@@ -115,19 +111,12 @@ public class MapperScannerConfigurerTest {
 
         startContext();
 
-        assertEquals("AnnotatedMapper should be loaded as a bean", 1, applicationContext
-                .getBeanNamesForType(AnnotatedMapper.class).length);
-        assertEquals("MapperChildInterface should be loaded as a bean", 1, applicationContext
-                .getBeanNamesForType(MapperChildInterface.class).length);
+        // only annotated mappers should be loaded
+        applicationContext.getBean("annotatedMapper");
+        applicationContext.getBean("mapperChildInterface");
 
-        try {
-            // test by name here sicne MapperChildInterface subclasses MapperInterface in addition
-            // to the annotation
-            applicationContext.getBean("mapperInterface");
-            fail("MapperInterface should not be loaded as a bean");
-        } catch (Exception e) {
-            // expected
-        }
+        assertBeanNotLoaded("mapperInterface");
+        assertBeanNotLoaded("mapperSubinterface");
     }
 
     @Test
@@ -139,13 +128,12 @@ public class MapperScannerConfigurerTest {
 
         startContext();
 
-        assertEquals("AnnotatedMapper should be loaded as a bean", 1, applicationContext
-                .getBeanNamesForType(AnnotatedMapper.class).length);
-        assertEquals("MapperSubinterface should be loaded as a bean", 1, applicationContext
-                .getBeanNamesForType(MapperSubinterface.class).length);
-        // 2 => MapperSubinterface & MapperChildInterface, since they are of MapperInterface type
-        assertEquals("MapperInterface should not be loaded as a bean", 2, applicationContext
-                .getBeanNamesForType(MapperInterface.class).length);
+        // everything should be loaded but the marker interface
+        applicationContext.getBean("annotatedMapper");
+        applicationContext.getBean("mapperSubinterface");
+        applicationContext.getBean("mapperChildInterface");
+
+        assertBeanNotLoaded("mapperInterface");
     }
 
     @Test
@@ -178,6 +166,15 @@ public class MapperScannerConfigurerTest {
         definition.setBeanClass(SqlSessionFactoryBean.class);
         definition.getPropertyValues().add("dataSource", new MockDataSource());
         applicationContext.registerBeanDefinition(name, definition);
+    }
+
+    private void assertBeanNotLoaded(String name) {
+        try {
+            applicationContext.getBean(name);
+            fail("Spring bean should not be defined for class " + name);
+        } catch (NoSuchBeanDefinitionException nsbde) {
+            // success
+        }
     }
 
 }

@@ -23,4 +23,6 @@ import org.springframework.stereotype.Component;
 public interface MapperChildInterface extends MapperInterface {
     // interface for MapperScannerPostProcessor tests
     // tests subpackage search
+    
+    public void childMethod();
 }
