@@ -55,7 +55,7 @@ import org.springframework.util.StringUtils;
  * <p>
  * Configuration sample:
  * <p>
- * 
+ *
  * <pre class="code">
  * {@code
  *   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
@@ -72,9 +72,8 @@ import org.springframework.util.StringUtils;
  * properties are specified, mappers are added for interfaces that match <em>either</em> criteria.
  * By default, these two properties are null, so all interfaces in the given
  * <code>basePackage</code> are added as mappers.
- * 
+ *
  * @see org.mybatis.spring.mapper.MapperFactoryBean
- * 
  * @version $Id$
  */
 public class MapperScannerConfigurer implements BeanFactoryPostProcessor, InitializingBean {
@@ -200,8 +199,12 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
             for (BeanDefinitionHolder holder : beanDefinitions) {
                 ScannedGenericBeanDefinition definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
 
-                logger.debug("creating MapperFactoryBean named '" + holder.getBeanName() + "' for class "
-                        + definition.getBeanClassName());
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("creating MapperFactoryBean named '"
+                            + holder.getBeanName()
+                            + "' for class "
+                            + definition.getBeanClassName());
+                }
 
                 // the mapper interface is the original class of the bean
                 // but, the actual class of the bean is MapperFactoryBean
