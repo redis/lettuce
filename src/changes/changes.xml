@@ -34,6 +34,9 @@
             <action type="fix" issue="166">
 				Avoid one Proxy creation when using injected mappers
             </action>
+            <action type="update" issue="163">
+				Add new selectMap methods to SqlSessionTemplate
+            </action>
         </release>
         
         <release version="1.0.0-RC2" date="2010-10-31" description="1.0.0-RC2 release">

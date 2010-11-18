@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.reflection.ExceptionUtil;
@@ -154,6 +155,27 @@ public class SqlSessionTemplate implements SqlSession {
      */
     public Object selectOne(String statement, Object parameter) {
         return this.sqlSessionProxy.selectOne(statement, parameter);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Map<?, ?> selectMap(String statement, String mapKey) {
+        return sqlSessionProxy.selectMap(statement, mapKey);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Map<?, ?> selectMap(String statement, Object parameter, String mapKey) {
+        return sqlSessionProxy.selectMap(statement, parameter, mapKey);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Map<?, ?> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+        return sqlSessionProxy.selectMap(statement, parameter, mapKey, rowBounds);
     }
 
     /**
