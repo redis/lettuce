@@ -161,21 +161,21 @@ public class SqlSessionTemplate implements SqlSession {
      * {@inheritDoc}
      */
     public Map<?, ?> selectMap(String statement, String mapKey) {
-        return sqlSessionProxy.selectMap(statement, mapKey);
+        return this.sqlSessionProxy.selectMap(statement, mapKey);
     }
 
     /**
      * {@inheritDoc}
      */
     public Map<?, ?> selectMap(String statement, Object parameter, String mapKey) {
-        return sqlSessionProxy.selectMap(statement, parameter, mapKey);
+        return this.sqlSessionProxy.selectMap(statement, parameter, mapKey);
     }
 
     /**
      * {@inheritDoc}
      */
     public Map<?, ?> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
-        return sqlSessionProxy.selectMap(statement, parameter, mapKey, rowBounds);
+        return this.sqlSessionProxy.selectMap(statement, parameter, mapKey, rowBounds);
     }
 
     /**
