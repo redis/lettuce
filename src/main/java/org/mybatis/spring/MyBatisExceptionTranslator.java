@@ -19,9 +19,8 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.exceptions.PersistenceException;
-import org.apache.ibatis.session.SqlSession;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 
@@ -34,10 +33,9 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  * first exception is translated.
  *
  * @see DataAccessException
- * @see SqlSession
  * @version $Id$
  */
-public class DataAccessExceptionTranslator implements SqlSessionExceptionTranslator {
+public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {
 
     private final Object $lock = new Object();
 
@@ -52,7 +50,7 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
      * @param exceptionTranslatorLazyInit if true, the translator instantiates internal stuff only the first time will
      *        have the need to translate exceptions.
      */
-    public DataAccessExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
+    public MyBatisExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
         this.dataSource = dataSource;
 
         if (!exceptionTranslatorLazyInit) {
@@ -63,17 +61,16 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
     /**
      * {@inheritDoc}
      */
-   public RuntimeException translateException(PersistenceException e, String statement) {
+    public DataAccessException translateExceptionIfPossible(RuntimeException e) {
         if (e.getCause() instanceof SQLException) {
             if (this.exceptionTranslator == null) {
                 synchronized (this.$lock) {
                     this.initExceptionTranslator();
                 }
             }
-
-            return this.exceptionTranslator.translate("SqlSession operation", statement, (SQLException) e.getCause());
+            return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
         }
-        return new MyBatisSystemException("SqlSession operation", e);
+        return new MyBatisSystemException(e.getMessage(), e);
     }
 
    /**
@@ -82,5 +79,4 @@ public class DataAccessExceptionTranslator implements SqlSessionExceptionTransla
    private void initExceptionTranslator() {
        this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
    }
-
 }

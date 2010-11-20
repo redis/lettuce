@@ -30,6 +30,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.util.Assert;
 
@@ -46,7 +47,7 @@ import org.springframework.util.Assert;
  * will be used.
  * <p>
  * This template converts MyBatis PersistenceExceptions into unchecked
- * DataAccessExceptions, using, by default, a {@link DataAccessExceptionTranslator}.
+ * DataAccessExceptions, using, by default, a {@link MyBatisExceptionTranslator}.
  * <p>
  * Because SqlSessionTemplate is thread safe, a single instance can be shared
  * by all DAOs; there should also be a small memory savings by doing this. This
@@ -63,7 +64,7 @@ import org.springframework.util.Assert;
  * @see SqlSessionFactory
  * @see SqlSession
  * @see ExecutorType
- * @see DataAccessExceptionTranslator
+ * @see MyBatisExceptionTranslator
  * @see SqlSessionExceptionTranslator
  * @version $Id$
  */
@@ -75,7 +76,7 @@ public class SqlSessionTemplate implements SqlSession {
 
     private final SqlSession sqlSessionProxy;
 
-    private final SqlSessionExceptionTranslator exceptionTranslator;
+    private final PersistenceExceptionTranslator exceptionTranslator;
 
     /**
      * Constructs a Spring managed SqlSession with the {@link SqlSessionFactory} 
@@ -98,7 +99,7 @@ public class SqlSessionTemplate implements SqlSession {
      */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
         this(sqlSessionFactory, executorType, 
-                new DataAccessExceptionTranslator(
+                new MyBatisExceptionTranslator(
                         sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), true));
     }
 
@@ -117,7 +118,7 @@ public class SqlSessionTemplate implements SqlSession {
      * @param exceptionTranslator
      */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
-            SqlSessionExceptionTranslator exceptionTranslator) {
+            PersistenceExceptionTranslator exceptionTranslator) {
 
         Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         Assert.notNull(executorType, "Property 'executorType' is required");
@@ -139,7 +140,7 @@ public class SqlSessionTemplate implements SqlSession {
         return this.executorType;
     }
 
-    public SqlSessionExceptionTranslator getExceptionTranslator() {
+    public PersistenceExceptionTranslator getExceptionTranslator() {
         return this.exceptionTranslator;
     }
 
@@ -342,15 +343,9 @@ public class SqlSessionTemplate implements SqlSession {
             } catch (Throwable t) {
                 Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
                 if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
-                    String statement = null;
-                    if (args.length > 0 && args[0] instanceof String) {
-                        statement = (String) args[0];
-                    }
-                    throw SqlSessionTemplate.this.exceptionTranslator.translateException(
-                            (PersistenceException) unwrapped, statement);
-                } else {
-                    throw unwrapped;
-                }
+                    unwrapped = SqlSessionTemplate.this.exceptionTranslator.translateExceptionIfPossible((PersistenceException) unwrapped);
+                } 
+                throw unwrapped;
             } finally {
                 SqlSessionUtils.closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
             }
