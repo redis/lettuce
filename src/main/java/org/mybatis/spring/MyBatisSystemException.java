@@ -31,8 +31,8 @@ public class MyBatisSystemException extends UncategorizedDataAccessException {
 
     private static final long serialVersionUID = -5284728621670758939L;
 
-    public MyBatisSystemException(String msg, Throwable cause) {
-        super(msg, cause);
+    public MyBatisSystemException(Throwable cause) {
+        super(null, cause);
     }
 
 }

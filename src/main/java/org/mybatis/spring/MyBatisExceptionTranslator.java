@@ -70,7 +70,7 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
             }
             return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
         }
-        return new MyBatisSystemException(e.getMessage(), e);
+        return new MyBatisSystemException(e);
     }
 
    /**
