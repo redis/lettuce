@@ -74,7 +74,7 @@
     </build>
 
     <properties>
-        <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.annotation.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
+        <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
         <spring.version>3.0.5.RELEASE</spring.version>
         <clirr.comparisonVersion>1.0.0-RC2</clirr.comparisonVersion>
         <gcu.product>Spring</gcu.product>
