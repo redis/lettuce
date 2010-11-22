@@ -65,7 +65,7 @@ import org.springframework.util.Assert;
  * @see SqlSession
  * @see ExecutorType
  * @see MyBatisExceptionTranslator
- * @see SqlSessionExceptionTranslator
+ * @see PersistenceExceptionTranslator
  * @version $Id$
  */
 public class SqlSessionTemplate implements SqlSession {
@@ -330,7 +330,7 @@ public class SqlSessionTemplate implements SqlSession {
      * Proxy needed to route MyBatis method calls to the proper SqlSession got
      * from String's Transaction Manager
      * It also unwraps exceptions thrown by {@link Method#invoke(Object, Object...)} to
-     * pass a {@link PersistenceException} to the {@link SqlSessionExceptionTranslator}
+     * pass a {@link PersistenceException} to the {@link PersistenceExceptionTranslator}
      * 
      */
     private class SqlSessionInterceptor implements InvocationHandler {
