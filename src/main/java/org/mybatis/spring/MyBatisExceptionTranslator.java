@@ -37,8 +37,6 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  */
 public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {
 
-    private final Object $lock = new Object();
-
     private final DataSource dataSource;
 
     private SQLExceptionTranslator exceptionTranslator;
@@ -63,11 +61,7 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
      */
     public DataAccessException translateExceptionIfPossible(RuntimeException e) {
         if (e.getCause() instanceof SQLException) {
-            if (this.exceptionTranslator == null) {
-                synchronized (this.$lock) {
-                    this.initExceptionTranslator();
-                }
-            }
+            this.initExceptionTranslator();
             return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
         }
         return new MyBatisSystemException(e);
@@ -76,8 +70,10 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
    /**
     * Initializes the internal translator reference.
     */
-   private void initExceptionTranslator() {
-       this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+   private synchronized void initExceptionTranslator() {
+       if (this.exceptionTranslator == null) {
+           this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+       }
    }
 
 }
