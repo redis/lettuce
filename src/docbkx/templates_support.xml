@@ -138,7 +138,7 @@
    for (User user : users) {
    	sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
    }
- };]]></programlisting>       
+ }]]></programlisting>       
     </para>
 
     <para>
