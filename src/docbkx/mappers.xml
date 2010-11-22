@@ -170,7 +170,7 @@
      found it will get the name from it.
      Notice that for example you can configure <literal>annotationClass</literal>
      to <literal>org.springframework.stereotype.Component</literal>,  
-     <literal>javax.inject.Named</literal> (if you have JSE 6) or to your own annoation
+     <literal>javax.inject.Named</literal> (if you have JSE 6) or to your own annotation
      (that must be itself annotated) so the annotation will work both as a marker 
      and as a name provider.
     </para>
