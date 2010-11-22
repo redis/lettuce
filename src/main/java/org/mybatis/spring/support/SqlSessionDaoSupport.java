@@ -23,10 +23,10 @@ import org.springframework.dao.support.DaoSupport;
 import org.springframework.util.Assert;
 
 /**
- * Convenient super class for MyBatis SqlSession data access objects. 
+ * Convenient super class for MyBatis SqlSession data access objects.
  * It gives you access to the template which can then be used to execute SQL methods.
  * <p>
- * This class needs a SqlSessionTemplate or a SqlSessionFactory. 
+ * This class needs a SqlSessionTemplate or a SqlSessionFactory.
  * If both are set the SqlSessionFactory will be ignored.
  *
  * @see #setSqlSessionFactory

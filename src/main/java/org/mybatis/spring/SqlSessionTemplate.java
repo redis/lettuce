@@ -330,8 +330,7 @@ public class SqlSessionTemplate implements SqlSession {
      * Proxy needed to route MyBatis method calls to the proper SqlSession got
      * from String's Transaction Manager
      * It also unwraps exceptions thrown by {@link Method#invoke(Object, Object...)} to
-     * pass a {@link PersistenceException} to the {@link PersistenceExceptionTranslator}
-     * 
+     * pass a {@link PersistenceException} to the {@link PersistenceExceptionTranslator}.
      */
     private class SqlSessionInterceptor implements InvocationHandler {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

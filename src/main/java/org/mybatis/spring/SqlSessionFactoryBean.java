@@ -217,7 +217,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         Assert.notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
         Assert.notNull(transactionFactoryClass, "Property 'transactionFactoryClass' is required");
 
-        sqlSessionFactory = buildSqlSessionFactory();
+        this.sqlSessionFactory = buildSqlSessionFactory();
     }
 
     /**
@@ -246,10 +246,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 reader = new InputStreamReader(this.configLocation.getInputStream());
                 // Null environment causes the configuration to use the default.
                 // This will be overwritten below regardless.
-                xmlConfigBuilder = new XMLConfigBuilder(reader, null, configurationProperties);
+                xmlConfigBuilder = new XMLConfigBuilder(reader, null, this.configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (IOException ex) {
-                throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
+                throw new NestedIOException("Failed to parse config resource: "
+                        + this.configLocation, ex);
             } finally {
                 if (reader != null) {
                     try {
@@ -261,7 +262,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             }
 
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
+                this.logger.debug("Parsed configuration file: '"
+                        + this.configLocation
+                        + "'");
             }
         } else {
             if (this.logger.isDebugEnabled()) {
@@ -309,7 +312,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, path, sqlFragments);
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
-                    throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
+                    throw new NestedIOException("Failed to parse mapping resource: '"
+                            + mapperLocation
+                            + "'", e);
                 } finally {
                     if (reader != null) {
                         try {
@@ -320,7 +325,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
 
                 if (this.logger.isDebugEnabled()) {
-                    this.logger.debug("Parsed mapper file: '" + mapperLocation + "'");
+                    this.logger.debug("Parsed mapper file: '"
+                            + mapperLocation
+                            + "'");
                 }
             }
         } else {

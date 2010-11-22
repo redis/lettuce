@@ -202,42 +202,44 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
         @Override
         protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
             Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
-            
+
             if (beanDefinitions.isEmpty()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("No MyBatis mapper was found in '"
                             + MapperScannerConfigurer.this.basePackage
                             + "' package. Please check your configuration");
                 }
-            } else {            
+            } else {
                 for (BeanDefinitionHolder holder : beanDefinitions) {
                     ScannedGenericBeanDefinition definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
-    
+
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Creating MapperFactoryBean with '" 
-                                + holder.getBeanName() + "' name and '" 
-                                + definition.getBeanClassName() + "' mapperInterface");
+                        logger.debug("Creating MapperFactoryBean with '"
+                                + holder.getBeanName()
+                                + "' name and '"
+                                + definition.getBeanClassName()
+                                + "' mapperInterface");
                     }
-                    
+
                     // the mapper interface is the original class of the bean
                     // but, the actual class of the bean is MapperFactoryBean
                     definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
                     definition.setBeanClass(MapperFactoryBean.class);
-    
+
                     definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
-    
+
                     if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
                         definition.getPropertyValues().add("sqlSessionFactory",
                                 MapperScannerConfigurer.this.sqlSessionFactory);
                     }
-    
+
                     if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
                         definition.getPropertyValues().add("sqlSessionTemplate",
                                 MapperScannerConfigurer.this.sqlSessionTemplate);
                     }
                 }
             }
-            
+
             return beanDefinitions;
         }
 
