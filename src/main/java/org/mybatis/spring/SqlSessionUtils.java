@@ -89,7 +89,7 @@ public final class SqlSessionUtils {
                 logger.debug("Fetching SqlSession from current transaction");
             }
 
-            if (!holder.getExecutorType().equals(executorType)) {
+            if (holder.getExecutorType() != executorType) {
                 throw new TransientDataAccessResourceException(
                         "cannot change the ExecutorType when there is an existing transaction");
             }
