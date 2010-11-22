@@ -28,6 +28,16 @@
 
     <body>
         <release version="1.0.0-RC3" date="TBD" description="1.0.0-RC3 release">
+            <action type="update">
+                The getSqlSessionTemplate() method in SqlSessionDaoSupport has been replaced by getSqlSession().
+            </action>
+            <action type="update">
+                MapperFactoryBean has been moved from org.mybatis.spring package to org.mybatis.spring.mapper.
+            </action>
+            <action type="update">
+                org.mybatis.spring.MapperScannerPostProcessor has been moved to
+                org.mybatis.spring.mapper.MapperScannerConfigurer. @Mapper annotation no longer exists.
+            </action>
             <action type="update" issue="176">
                 Mapper scanning should not rely on proprietary @Mapper annotation
             </action>
