@@ -27,7 +27,7 @@
     </properties>
 
     <body>
-        <release version="1.0.0-RC3" date="TBD" description="1.0.0-RC3 release">
+        <release version="1.0.0-RC3" date="2010-11-22" description="1.0.0-RC3 release">
             <action type="update">
                 The getSqlSessionTemplate() method in SqlSessionDaoSupport has been replaced by getSqlSession().
             </action>
