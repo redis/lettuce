@@ -140,7 +140,7 @@ public class SqlSessionTemplate implements SqlSession {
         return this.executorType;
     }
 
-    public PersistenceExceptionTranslator getExceptionTranslator() {
+    public PersistenceExceptionTranslator getPersistenceExceptionTranslator() {
         return this.exceptionTranslator;
     }
 
