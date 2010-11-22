@@ -88,7 +88,7 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
 
     private Class<? extends Annotation> annotationClass;
 
-    private Class<? extends Object> markerInterface;
+    private Class<?> markerInterface;
 
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
@@ -102,7 +102,7 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
         this.annotationClass = annotationClass;
     }
 
-    public void setMarkerInterface(Class<? extends Object> superClass) {
+    public void setMarkerInterface(Class<?> superClass) {
         this.markerInterface = superClass;
     }
 
