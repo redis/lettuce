@@ -19,6 +19,7 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
@@ -60,11 +61,15 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
      * {@inheritDoc}
      */
     public DataAccessException translateExceptionIfPossible(RuntimeException e) {
-        if (e.getCause() instanceof SQLException) {
-            this.initExceptionTranslator();
-            return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
+        if (e instanceof PersistenceException) {
+            if (e.getCause() instanceof SQLException) {
+                this.initExceptionTranslator();
+                return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
+            }
+            return new MyBatisSystemException(e);
+        } else {
+            return null;
         }
-        return new MyBatisSystemException(e);
     }
 
    /**
