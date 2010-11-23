@@ -41,13 +41,13 @@
      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
      http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
 
-	<!-- in-memory database and a datasource -->
+    <!-- in-memory database and a datasource -->
     <jdbc:embedded-database id="dataSource">
         <jdbc:script location="classpath:org/mybatis/spring/sample/db/database-schema.sql"/>
         <jdbc:script location="classpath:org/mybatis/spring/sample/db/database-test-data.sql"/>
     </jdbc:embedded-database>
 
-	<!-- transaction manager, use JtaTransactionManager for global tx -->
+    <!-- transaction manager, use JtaTransactionManager for global tx -->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource" />
     </bean>

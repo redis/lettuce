@@ -43,10 +43,10 @@
 
 	<import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
 
-	<!-- enable autowire (optional) -->
+    <!-- enable autowire (optional) -->
     <context:annotation-config />
 
-	<!-- enable transaction demarcation with annotations -->
+    <!-- enable transaction demarcation with annotations -->
     <tx:annotation-driven />
 
     <!-- define the MyBatis SqlSessionFactory -->

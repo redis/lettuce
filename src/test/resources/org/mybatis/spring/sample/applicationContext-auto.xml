@@ -41,16 +41,16 @@
      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
      http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
 
-	<!-- import datasource and transaction manager  -->
-	<import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
+    <!-- import datasource and transaction manager  -->
+    <import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
 
-	<!-- enable component scanning (beware that this does not enable mapper scanning!) -->    
+    <!-- enable component scanning (beware that this does not enable mapper scanning!) -->    
     <context:component-scan base-package="org.mybatis.spring.sample" />
 
-	<!-- enable autowire -->
+    <!-- enable autowire -->
     <context:annotation-config />
     
-	<!-- enable transaction demarcation with annotations -->
+    <!-- enable transaction demarcation with annotations -->
     <tx:annotation-driven />
 
     <!-- define the SqlSessionFactory, notice that configLocation is not needed when you use MapperScannerConfigurer -->
