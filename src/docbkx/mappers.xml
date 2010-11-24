@@ -20,7 +20,7 @@
     version: $Id$
 -->
 <chapter id="mappers">
-  <title>MapperFactoryBean</title>
+  <title>Injecting Mappers</title>
 
   <para>
     Rather than code data access objects (DAOs) manually using
@@ -43,8 +43,8 @@
     it a transaction is active. 
   </para>
 
-  <section id="mappers.setup">
-    <title>Setup</title>
+  <section id="mappers.mapperfactorybean">
+    <title>MapperFactoryBean</title>
     <para>
       A data mapper is added to Spring like the following:
 
@@ -84,10 +84,6 @@
       factory set, that factory will be used by
       <literal>MapperFactoryBean</literal>.
     </para>
-  </section>
-
-  <section id="mappers.inject">
-    <title>Injecting Mappers</title>
 
     <para>
        You can inject mappers directly on your business/service objects in the
@@ -117,8 +113,8 @@
      </para>
   </section>
 
-  <section id="mappers.autoconfig">
-    <title>Automatic Configuration</title>
+  <section id="mappers.mapperscannerconfigurer">
+    <title>MapperScannerConfigurer</title>
     <para>
       There is no need to register all your mappers in the Spring XML file.
       Instead, you can use a <literal>MapperScannerConfigurer</literal> that
