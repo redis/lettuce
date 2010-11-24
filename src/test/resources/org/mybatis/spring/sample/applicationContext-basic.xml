@@ -58,7 +58,7 @@
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />        
     </bean>
 
-    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
+    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceMapperImpl">
         <property name="userMapper" ref="userMapper" />
     </bean>
 </beans>

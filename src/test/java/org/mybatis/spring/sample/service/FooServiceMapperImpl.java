@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
  * @version $Id: FooServiceImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
  */
 @Service
-public class FooServiceImpl implements FooService {
+public class FooServiceMapperImpl implements FooService {
 
     private UserMapper userMapper;
 

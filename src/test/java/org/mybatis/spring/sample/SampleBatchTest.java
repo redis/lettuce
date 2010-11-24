@@ -20,8 +20,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.sample.dao.UserDaoImpl;
 import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.sample.mapper.UserMapperImpl;
 import org.mybatis.spring.sample.service.FooService;
 import org.apache.ibatis.session.ExecutorType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +44,7 @@ public class SampleBatchTest {
 
     // needed only to verify that the ExecutorType is BATCH
     @Autowired
-    private UserMapperImpl userMapperImpl;
+    private UserDaoImpl userMapperImpl;
     
     public void setFooService(FooService fooService) {
         this.fooService = fooService;

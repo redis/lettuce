@@ -54,12 +54,12 @@
     </bean>
 
     <!-- extending SqlSessionDaoSupport -->
-    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserMapperImpl">
+    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />        
     </bean>
 
 	<!-- define the service -->
-    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
-        <property name="userMapper" ref="userMapper" />
+    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceDaoImpl">
+        <property name="userDao" ref="userDao" />
     </bean>
 </beans>
