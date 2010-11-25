@@ -46,41 +46,31 @@
   </para>
 	<para>
 		The sample code shows a typical design where a transactional service gets
-		domain objects
-		from a data access layer.
+		domain objects from a data access layer.
   </para>
 	<para>
-		The service is composed by an interface
-		<literal>FooService.java</literal>
-		and an implementation
-		<literal>FooServiceImpl.java</literal>
-		. This service is transactional
-		so a transaction is started when any of its methods is called and
-		commited when
+		The service is composed by an interface <literal>FooService.java</literal>
+		and an implementation <literal>FooServiceImpl.java</literal>. This service is transactional
+		so a transaction is started when any of its methods is called and committed when
 		the method ends without throwing a unchecked exception.
 		<programlisting language="java"><![CDATA[@Transactional
 public interface FooService {
   User doSomeBusinessStuff(String userId);
 }]]></programlisting>
-		Notice that transactional behaviour is configured with the
-		<literal>@Transactional</literal>
-		attribute. This is not required; any
-		other way provided by Spring can be used to demarcate your transactions.
+		Notice that transactional behaviour is configured with the <literal>@Transactional</literal>
+		attribute. This is not required; any other way provided by Spring can be used to demarcate 
+		your transactions.
 	</para>
 
 	<para>
 		This service calls a data access layer built with MyBatis. This layer
-		is composed
-		by a MyBatis mapper interface
-		<literal>UserMapper.java</literal>
-		and optionally
-		by a implementation
-		<literal>UserMapperImpl.java</literal>
+		is composed by a MyBatis mapper interface <literal>UserMapper.java</literal>
+		and a DAO composed by an interface <literal>UserDao.java</literal>
+		and its corresponding implementation <literal>UserMapperImpl.java</literal>
 	</para>
 	<para>
-		In all the samples the mapper is injected into the service bean so the
-		service code
-		is just the following:
+		In all the samples the mapper/Dao is injected into the service bean so the
+		service code is just the following:
 		<programlisting language="java"><![CDATA[public class FooServiceImpl implements FooService {
   private UserMapper userMapper;
 
@@ -96,8 +86,7 @@ public interface FooService {
 
 	<para>
 		The database access layer has been implemented using the some of the
-		different
-		techniques explained in this manual.
+		different techniques explained in this manual.
 		<table>
 			<caption>Sample test classes</caption>
 			<thead>
@@ -113,8 +102,7 @@ public interface FooService {
 					</td>
 					<td>
 						Shows you the recommended and simplest configuration
-						based on a
-						<literal>MapperFactoryBean</literal>
+						based on a <literal>MapperFactoryBean</literal>
 					</td>
 				</tr>
 				<tr>
@@ -122,16 +110,15 @@ public interface FooService {
 						<literal>SampleAutoTest</literal>
 					</td>
 					<td>Shows a minimal xml configuration based on
-						component scanning
-						and autowiring</td>
+						component scanning and autowiring
+                    </td>
 				</tr>
 				<tr>
 					<td>
 						<literal>SampleSqlSessionTest</literal>
 					</td>
 					<td>
-						Shows how to hand code
-						a DAO using a Spring managed
+						Shows how to hand code a DAO using a Spring managed
 						<literal>SqlSession</literal>
 					</td>
 				</tr>
@@ -140,14 +127,12 @@ public interface FooService {
 						<literal>SampleBatchTest</literal>
 					</td>
 					<td>
-						Shows how to use a batch
-						<literal>SqlSession</literal>
+						Shows how to use a batch <literal>SqlSession</literal>
 					</td>
 				</tr>
 			</tbody>
 		</table>
-		Please have a look at the different
-		<literal>applicationContext.xml</literal>
+		Please have a look at the different <literal>applicationContext.xml</literal>
 		files to see MyBatis-Spring in action.
 	</para>
 </chapter>
