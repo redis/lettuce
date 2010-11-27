@@ -274,35 +274,35 @@ public class SqlSessionTemplate implements SqlSession {
      * {@inheritDoc}
      */
     public void commit() {
-        // do nothing
+        throw new UnsupportedOperationException("Manual commit is not allowed over a Spring managed SqlSessio");
     }
 
     /**
      * {@inheritDoc}
      */
     public void commit(boolean force) {
-        // do nothing
+        throw new UnsupportedOperationException("Manual commit is not allowed over a Spring managed SqlSessio");
     }
 
     /**
      * {@inheritDoc}
      */
     public void rollback() {
-        // do nothing
+        throw new UnsupportedOperationException("Manual rollback is not allowed over a Spring managed SqlSessio");
     }
 
     /**
      * {@inheritDoc}
      */
     public void rollback(boolean force) {
-        // do nothing
+        throw new UnsupportedOperationException("Manual rollback is not allowed over a Spring managed SqlSessio");
     }
 
     /**
      * {@inheritDoc}
      */
     public void close() {
-        // do nothing
+        throw new UnsupportedOperationException("Manual close is not allowed over a Spring managed SqlSessio");
     }
 
     /**

@@ -66,42 +66,33 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     }
 
     // commit should be a no-op
-    @Test
+    @Test(expected=UnsupportedOperationException.class)
     public void testCommit() throws SQLException {
-        sqlSessionTemplate.commit();
-        assertNoCommit();
-
-        sqlSessionTemplate.commit(true);
-        assertNoCommit();
-
-        sqlSessionTemplate.commit(false);
-        assertNoCommit();
-
-        connection.close();
+        try {
+            sqlSessionTemplate.commit();
+        } finally {
+            connection.close();    
+        }
     }
 
     // close should be a no-op
-    @Test
+    @Test(expected=UnsupportedOperationException.class)
     public void testClose() throws SQLException {
-        sqlSessionTemplate.close();
-        assertFalse(connection.isClosed());
-
-        connection.close();
+        try {
+            sqlSessionTemplate.close();
+        } finally {
+            connection.close();    
+        }
     }
 
     // rollback should be a no-op
-    @Test
+    @Test(expected=UnsupportedOperationException.class)
     public void testRollback() throws SQLException {
-        sqlSessionTemplate.rollback();
-        assertNoRollback();
-
-        sqlSessionTemplate.rollback(true);
-        assertNoRollback();
-
-        sqlSessionTemplate.rollback(false);
-        assertNoRollback();
-
-        connection.close();
+        try {
+            sqlSessionTemplate.rollback();
+        } finally {
+            connection.close();    
+        }
     }
 
     @Test
