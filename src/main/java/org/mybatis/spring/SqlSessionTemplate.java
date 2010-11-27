@@ -274,7 +274,7 @@ public class SqlSessionTemplate implements SqlSession {
      * {@inheritDoc}
      */
     public void commit() {
-        throw new UnsupportedOperationException("Manual commit is not allowed over a Spring managed SqlSessio");
+        throw new UnsupportedOperationException("Manual commit is not allowed over a Spring managed SqlSession");
     }
 
     /**
