@@ -155,11 +155,4 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
        }
     }
 
-    private void assertNoRollback() {
-        assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
-        assertEquals("should call rollback on Connection", 0, connection.getNumberRollbacks());
-        assertEquals("should not call commit on SqlSession", 0, executorInterceptor.getCommitCount());
-        assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
-    }
-
 }

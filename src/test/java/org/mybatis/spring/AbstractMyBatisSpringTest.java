@@ -88,6 +88,13 @@ public abstract class AbstractMyBatisSpringTest {
         assertEquals("should call rollback on SqlSession", 1, executorInterceptor.getRollbackCount());
     }
 
+    protected void assertNoRollback() {
+        assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
+        assertEquals("should call rollback on Connection", 0, connection.getNumberRollbacks());
+        assertEquals("should not call commit on SqlSession", 0, executorInterceptor.getCommitCount());
+        assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
+    }
+
     protected void assertSingleConnection() {
         assertEquals("should only call DataSource.getConnection() once", 1, dataSource.getConnectionCount());
     }
