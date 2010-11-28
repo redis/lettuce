@@ -249,10 +249,8 @@ public final class SqlSessionUtils {
             // DataSourceTransactionManager.
             // But, do cleanup the SqlSession / Executor, including flushing BATCH statements so
             // they are actually executed.
+            // SpringManagedTransaction will no-op the commit over the jdbc connection
             if (TransactionSynchronizationManager.isActualTransactionActive()) {
-                // false here on commit or rollback prevents a call to Transaction.commit()
-                // in BaseExecutor which will be redundant with SpringManagedTransaction
-                // since we already know that commit on the Connection is being handled.
                 try {
                     this.holder.getSqlSession().commit(false);
                 } catch (PersistenceException p) {
