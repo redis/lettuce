@@ -155,6 +155,10 @@ public final class SqlSessionUtils {
             TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
             holder.setSynchronizedWithTransaction(true);
             holder.requested();
+        } else {
+            if (logger.isDebugEnabled()) {
+                logger.debug("SqlSession was not registered for synchronization because synchronization is not active");
+            }            
         }
 
         return session;
@@ -195,7 +199,7 @@ public final class SqlSessionUtils {
         } else {
             try {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Transaction synchronization committing SqlSession");
+                    logger.debug("Closing no transactional SqlSession");
                 }
                 session.close();
             } catch (PersistenceException p) {
