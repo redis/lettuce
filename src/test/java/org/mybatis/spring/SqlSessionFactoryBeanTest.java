@@ -124,16 +124,14 @@ public final class SqlSessionFactoryBeanTest {
                 org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
 
         // properties explicitly set differently than the defaults in the config xml
-
         assertFalse(factory.getConfiguration().isCacheEnabled());
         assertTrue(factory.getConfiguration().isUseGeneratedKeys());
         assertSame(factory.getConfiguration().getDefaultExecutorType(), org.apache.ibatis.session.ExecutorType.REUSE);
 
-        // [org.mybatis.spring.TestMapper.findTest, findTest, org.mybatis.spring.TestMapper.findFail, findFail]
-        assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 4);
+        // for each statement in the xml file: org.mybatis.spring.TestMapper.xxx & xxx
+        assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 8);
 
-        // [findTest-void, org.mybatis.spring.TestMapper.findTest-void]
-        assertEquals(factory.getConfiguration().getResultMapNames().size(), 2);
+        assertEquals(factory.getConfiguration().getResultMapNames().size(), 4);
         assertEquals(factory.getConfiguration().getParameterMapNames().size(), 0);
     }
 

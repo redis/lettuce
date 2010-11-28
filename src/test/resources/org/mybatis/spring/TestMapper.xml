@@ -32,4 +32,11 @@
         SELECT 'fail'
     </select>
 
+    <insert id="insertTest">
+        INSERT #{test} INTO test
+    </insert>
+
+    <insert id="insertFail">
+        INSERT fail
+    </insert>
 </mapper>

@@ -45,6 +45,8 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     public void testGetConnection() throws java.sql.SQLException {
         java.sql.Connection con = sqlSessionTemplate.getConnection();
 
+        // outside of an explicit tx, getConnection() will start a tx, get an open connection then
+        // end the tx, which closes the connection
         assertTrue(con.isClosed());
     }
 
@@ -65,33 +67,30 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
         }
     }
 
-    // commit should be a no-op
-    @Test(expected=UnsupportedOperationException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testCommit() throws SQLException {
         try {
             sqlSessionTemplate.commit();
         } finally {
-            connection.close();    
+            connection.close();
         }
     }
 
-    // close should be a no-op
-    @Test(expected=UnsupportedOperationException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testClose() throws SQLException {
         try {
             sqlSessionTemplate.close();
         } finally {
-            connection.close();    
+            connection.close();
         }
     }
 
-    // rollback should be a no-op
-    @Test(expected=UnsupportedOperationException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testRollback() throws SQLException {
         try {
             sqlSessionTemplate.rollback();
         } finally {
-            connection.close();    
+            connection.close();
         }
     }
 
@@ -125,34 +124,29 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
         try {
             sqlSessionTemplate.selectOne("undefined");
             fail("exception not thrown when expected");
+        } catch (MyBatisSystemException mbse) {
+            // success
+        } catch (Throwable t) {
+            fail("SqlSessionTemplate should translate MyBatis PersistenceExceptions");
         }
-       catch (MyBatisSystemException mbse) {
-           // success
-       }
-       catch (Throwable t) {
-           fail("SqlSessionTemplate should translate MyBatis PersistenceExceptions");
-       }
     }
 
     @Test
     public void testExceptionTranslationShouldThrowDataAccessException() {
 
-       // this query must be the same as the query in TestMapper.xml
-       connection.getPreparedStatementResultSetHandler().prepareThrowsSQLException("SELECT 'fail'");
+        // this query must be the same as the query in TestMapper.xml
+        connection.getPreparedStatementResultSetHandler().prepareThrowsSQLException("SELECT 'fail'");
 
-       try {
-           sqlSessionTemplate.selectOne("org.mybatis.spring.TestMapper.findFail");
-           fail("exception not thrown when expected");
-       }
-       catch (MyBatisSystemException mbse) {
-           fail("SqlSessionTemplate should translate SQLExceptions into DataAccessExceptions");
-       }
-       catch (DataAccessException dae) {
-           // success
-       }
-       catch (Throwable t) {
-           fail("SqlSessionTemplate should translate MyBatis PersistenceExceptions");
-       }
+        try {
+            sqlSessionTemplate.selectOne("org.mybatis.spring.TestMapper.findFail");
+            fail("exception not thrown when expected");
+        } catch (MyBatisSystemException mbse) {
+            fail("SqlSessionTemplate should translate SQLExceptions into DataAccessExceptions");
+        } catch (DataAccessException dae) {
+            // success
+        } catch (Throwable t) {
+            fail("SqlSessionTemplate should translate MyBatis PersistenceExceptions");
+        }
     }
 
 }

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Test;
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -28,6 +29,7 @@ import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.mockrunner.mock.jdbc.MockDataSource;
+import com.mockrunner.mock.jdbc.MockPreparedStatement;
 
 /**
  * @version $Id$
@@ -56,6 +58,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         assertNoCommit();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     @Test
@@ -67,6 +70,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         assertCommit();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     @Test
@@ -78,6 +82,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         assertRollback();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     // basic tests using SqlSessionUtils instead of using the MyBatis API directly
@@ -89,6 +94,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         assertNoCommit();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     @Test
@@ -120,17 +126,6 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
         session.getMapper(TestMapper.class).findTest();
         session.close();
-
-        assertNoCommit();
-        assertSingleConnection();
-    }
-
-    @Test
-    public void testWithSameDataSource() {
-        // use the same DataSource the SqlSession is configured with
-        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getMapper(TestMapper.class).findTest();
-        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         assertNoCommit();
         assertSingleConnection();
@@ -229,7 +224,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             fail("should not be able to change the Executor type during an existing transaction");
         } finally {
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
-            
+
             // rollback required to close connection
             txManager.rollback(status);
         }
@@ -237,7 +232,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
     @Test
     public void testChangeExecutorTypeInTxRequiresNew() throws Exception {
-  
+
         try {
             txManager.setDataSource(dataSource);
             TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
@@ -422,5 +417,105 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             // this avoids failing in validateConnectionClosed()
             connection = null;
         }
+    }
+
+    @Test
+    public void testBatch() {
+        setupBatchStatements();
+
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+
+        session.getMapper(TestMapper.class).insertTest("test1");
+        session.getMapper(TestMapper.class).insertTest("test2");
+        session.getMapper(TestMapper.class).insertTest("test3");
+
+        // nothing should execute until commit
+        assertExecuteCount(0);
+
+        session.commit(true);
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+        assertCommit();
+        assertSingleConnection();
+        assertExecuteCount(3);
+    }
+
+    @Test
+    public void testBatchInTx() {
+        setupBatchStatements();
+
+        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+
+        TransactionStatus status = txManager.getTransaction(txDef);
+
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+
+        session.getMapper(TestMapper.class).insertTest("test1");
+        session.getMapper(TestMapper.class).insertTest("test2");
+        session.getMapper(TestMapper.class).insertTest("test3");
+
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+        txManager.commit(status);
+
+        assertCommit();
+        assertSingleConnection();
+        assertExecuteCount(3);
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void testBatchWithError() {
+        try {
+            setupBatchStatements();
+
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+
+            session.getMapper(TestMapper.class).insertTest("test1");
+            session.getMapper(TestMapper.class).insertTest("test2");
+            session.update("org.mybatis.spring.TestMapper.insertFail");
+            session.getMapper(TestMapper.class).insertTest("test3");
+
+            session.commit(true);
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+            assertCommit();
+            assertSingleConnection();
+            assertExecuteCount(4);
+        } finally {
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+        }
+    }
+
+    // TODO should this throw DataAccessException?
+    @Test(expected = PersistenceException.class)
+    public void testBatchInTxWithError() {
+        setupBatchStatements();
+
+        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+
+        TransactionStatus status = txManager.getTransaction(txDef);
+
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+
+        session.getMapper(TestMapper.class).insertTest("test1");
+        session.getMapper(TestMapper.class).insertTest("test2");
+        session.update("org.mybatis.spring.TestMapper.insertFail");
+        session.getMapper(TestMapper.class).insertTest("test3");
+
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+        txManager.commit(status);
+    }
+
+    private void setupBatchStatements() {
+        // these queries must be the same as the query in TestMapper.xml
+        connection.getPreparedStatementResultSetHandler().addPreparedStatement(
+                new MockPreparedStatement(connection, "INSERT ? INTO test"));
+
+        connection.getPreparedStatementResultSetHandler().prepareThrowsSQLException("INSERT fail");
+
     }
 }

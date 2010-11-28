@@ -52,6 +52,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
         assertNoCommit();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     @Test
@@ -67,6 +68,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         find(new SqlSessionTemplate(sqlSessionFactory), true);
         assertNoCommit();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     // will fail because TestDao's mapper config is never loaded
@@ -103,6 +105,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
         assertCommit();
         assertSingleConnection();
+        assertExecuteCount(1);
     }
 
     // MapperFactoryBeans should be usable outside of Spring TX, as long as a there is no active
@@ -118,6 +121,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
             assertNoCommit();
             assertSingleConnection();
+            assertExecuteCount(1);
         } finally {
             sqlSessionFactory.getConfiguration().setEnvironment(original);
         }
