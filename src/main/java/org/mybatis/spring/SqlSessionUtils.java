@@ -255,14 +255,15 @@ public final class SqlSessionUtils {
                 // since we already know that commit on the Connection is being handled.
                 try {
                     this.holder.getSqlSession().commit(false);
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Transaction synchronization committed SqlSession");
-                    }
                 } catch (PersistenceException p) {
                     if (this.holder.getPersistenceExceptionTranslator() != null) {
                         throw this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
                     }
                     throw p;
+                } finally {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization committed SqlSession");
+                    }
                 }
             }
         }
@@ -278,10 +279,13 @@ public final class SqlSessionUtils {
             // up the same internal resources as rollback.
             if (!this.holder.isOpen()) {
                 TransactionSynchronizationManager.unbindResource(this.sessionFactory);
-                this.holder.getSqlSession().close();
-                this.holder.reset();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Transaction synchronization closed SqlSession");
+                try {
+                    this.holder.getSqlSession().close();
+                } finally {
+                    this.holder.reset();
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization closed SqlSession");
+                    }
                 }
             }
         }
