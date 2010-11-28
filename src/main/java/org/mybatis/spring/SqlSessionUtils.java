@@ -90,6 +90,9 @@ public final class SqlSessionUtils {
             ExecutorType executorType, 
             PersistenceExceptionTranslator exceptionTranslator) {
         
+        Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
+        Assert.notNull(executorType, "No ExecutorType specified");
+
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
         if (holder != null && holder.isSynchronizedWithTransaction()) {
@@ -166,15 +169,15 @@ public final class SqlSessionUtils {
      * @param sessionFactory
      */
     public static void closeSqlSession(SqlSession session, SqlSessionFactory sessionFactory) {
+        Assert.notNull(session, "No SqlSession specified");
+        Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
+        
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
-        if ((holder == null) || (session != holder.getSqlSession())) {
-            if (session != null) {
-                session.close();
-            }
-        } else {
+        if ((holder != null) && (holder.getSqlSession() == session)) {
             holder.released();
-            // Assume transaction synchronization will actually close session.
+        } else {
+            session.close();
         }
     }
 
@@ -186,9 +189,8 @@ public final class SqlSessionUtils {
      * @return true if session is transactional, otherwise false
      */
     public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
-        if (sessionFactory == null) {
-            return false;
-        }
+        Assert.notNull(session, "No SqlSession specified");
+        Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
 
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
