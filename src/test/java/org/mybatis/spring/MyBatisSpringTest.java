@@ -18,16 +18,19 @@ package org.mybatis.spring;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
-import org.junit.After;
-import org.junit.Test;
+
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.junit.After;
+import org.junit.Test;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+
 import com.mockrunner.mock.jdbc.MockDataSource;
 import com.mockrunner.mock.jdbc.MockPreparedStatement;
 
@@ -219,7 +222,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
 
-            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
 
             fail("should not be able to change the Executor type during an existing transaction");
         } finally {
@@ -244,7 +247,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             txRequiresNew.setPropagationBehaviorName("PROPAGATION_REQUIRES_NEW");
             TransactionStatus status2 = txManager.getTransaction(txRequiresNew);
 
-            SqlSession session2 = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+            SqlSession session2 = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
 
             SqlSessionUtils.closeSqlSession(session2, sqlSessionFactory);
             txManager.rollback(status2);
@@ -423,7 +426,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     public void testBatch() {
         setupBatchStatements();
 
-        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
 
         session.getMapper(TestMapper.class).insertTest("test1");
         session.getMapper(TestMapper.class).insertTest("test2");
@@ -449,7 +452,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         TransactionStatus status = txManager.getTransaction(txDef);
 
-        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
 
         session.getMapper(TestMapper.class).insertTest("test1");
         session.getMapper(TestMapper.class).insertTest("test2");
@@ -469,7 +472,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         try {
             setupBatchStatements();
 
-            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
 
             session.getMapper(TestMapper.class).insertTest("test1");
             session.getMapper(TestMapper.class).insertTest("test2");
@@ -488,8 +491,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         }
     }
 
-    // TODO should this throw DataAccessException?
-    @Test(expected = PersistenceException.class)
+    @Test(expected = DataAccessException.class)
     public void testBatchInTxWithError() {
         setupBatchStatements();
 
@@ -498,7 +500,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         TransactionStatus status = txManager.getTransaction(txDef);
 
-        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH);
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
 
         session.getMapper(TestMapper.class).insertTest("test1");
         session.getMapper(TestMapper.class).insertTest("test2");

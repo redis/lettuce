@@ -85,8 +85,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private String environment = SqlSessionFactoryBean.class.getSimpleName();
 
-    public SqlSessionFactoryBean() {}
-
     /**
      * Set the location of the MyBatis SqlSessionFactory config file. A typical value is
      * "WEB-INF/mybatis-configuration.xml".

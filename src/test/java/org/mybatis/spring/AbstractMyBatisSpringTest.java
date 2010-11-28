@@ -21,6 +21,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.support.PersistenceExceptionTranslator;
 
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
@@ -49,10 +50,12 @@ public abstract class AbstractMyBatisSpringTest {
 
     protected static DataSourceTransactionManager txManager;
 
+    protected static PersistenceExceptionTranslator exceptionTranslator;
+
     protected MockConnection connection;
 
     protected MockConnection connectionTwo;
-
+    
     @BeforeClass
     public static void setupBase() throws Exception {
         // create an SqlSessionFactory that will use SpringManagedTransactions
@@ -60,6 +63,8 @@ public abstract class AbstractMyBatisSpringTest {
         factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
         // note running without SqlSessionFactoryBean.configLocation set => default configuration
         factoryBean.setDataSource(dataSource);
+        
+        exceptionTranslator = new MyBatisExceptionTranslator(dataSource, true);
 
         sqlSessionFactory = factoryBean.getObject();
         sqlSessionFactory.getConfiguration().addInterceptor(executorInterceptor);

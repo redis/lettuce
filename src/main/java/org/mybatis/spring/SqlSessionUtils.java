@@ -20,6 +20,7 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.ExecutorType;
@@ -27,6 +28,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.dao.TransientDataAccessResourceException;
+import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
@@ -59,14 +61,14 @@ public final class SqlSessionUtils {
      * Creates a new MyBatis {@link SqlSession} from the {@link SqlSessionFactory}
      * provided as a parameter and using its {@link DataSource} and {@link ExecutorType}
      *
-     * @param sqlSessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
      * @return a MyBatis {@literal SqlSession}
      * @throws TransientDataAccessResourceException if a transaction is active and the
      *             {@literal SqlSessionFactory} is not using a {@literal SpringManagedTransactionFactory}
      */
-    public static SqlSession getSqlSession(SqlSessionFactory sqlSessionFactory) {
-        ExecutorType executorType = sqlSessionFactory.getConfiguration().getDefaultExecutorType();
-        return getSqlSession(sqlSessionFactory, executorType);
+    public static SqlSession getSqlSession(SqlSessionFactory sessionFactory) {
+        ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
+        return getSqlSession(sessionFactory, executorType, null);
     }
 
     /**
@@ -76,12 +78,18 @@ public final class SqlSessionUtils {
      * If there is not an active transaction it gets a connection directly from 
      * the {@link DataSource} and creates a {@link SqlSession} with it. 
      *
+     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @param executorType The executor type of the SqlSession to create
+     * @param exceptionTranslator Optional. Translates SqlSession.commit() exceptions to Spring exceptions.
      * @throws TransientDataAccessResourceException if a transaction is active and the
      *             {@link SqlSessionFactory} is not using a {@link SpringManagedTransactionFactory}
      * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
      */
-    public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType) {
-        // either return the existing SqlSession or create a new one
+    public static SqlSession getSqlSession(
+            SqlSessionFactory sessionFactory, 
+            ExecutorType executorType, 
+            PersistenceExceptionTranslator exceptionTranslator) {
+        
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
         if (holder != null && holder.isSynchronizedWithTransaction()) {
@@ -91,7 +99,7 @@ public final class SqlSessionUtils {
 
             if (holder.getExecutorType() != executorType) {
                 throw new TransientDataAccessResourceException(
-                        "cannot change the ExecutorType when there is an existing transaction");
+                        "Cannot change the ExecutorType when there is an existing transaction");
             }
 
             holder.requested();
@@ -139,7 +147,7 @@ public final class SqlSessionUtils {
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering transaction synchronization for SqlSession");
             }
-            holder = new SqlSessionHolder(session, executorType);
+            holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
             TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
             holder.setSynchronizedWithTransaction(true);
@@ -245,9 +253,16 @@ public final class SqlSessionUtils {
                 // false here on commit or rollback prevents a call to Transaction.commit()
                 // in BaseExecutor which will be redundant with SpringManagedTransaction
                 // since we already know that commit on the Connection is being handled.
-                this.holder.getSqlSession().commit(false);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Transaction synchronization committed SqlSession");
+                try {
+                    this.holder.getSqlSession().commit(false);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization committed SqlSession");
+                    }
+                } catch (PersistenceException p) {
+                    if (this.holder.getPersistenceExceptionTranslator() != null) {
+                        throw this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
+                    }
+                    throw p;
                 }
             }
         }

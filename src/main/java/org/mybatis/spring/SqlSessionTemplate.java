@@ -336,7 +336,8 @@ public class SqlSessionTemplate implements SqlSession {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
                     SqlSessionTemplate.this.sqlSessionFactory,
-                    SqlSessionTemplate.this.executorType);
+                    SqlSessionTemplate.this.executorType,
+                    SqlSessionTemplate.this.exceptionTranslator);
             try {
                 return method.invoke(sqlSession, args);
             } catch (Throwable t) {

@@ -18,6 +18,7 @@ package org.mybatis.spring;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
@@ -35,6 +36,8 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
     private final SqlSession sqlSession;
 
     private final ExecutorType executorType;
+    
+    private final PersistenceExceptionTranslator exceptionTranslator;
 
     /**
      * Creates a new holder instance.
@@ -42,11 +45,16 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
      * @param sqlSession the {@literal SqlSession} has to be hold.
      * @param executorType the {@literal ExecutorType} has to be hold.
      */
-    public SqlSessionHolder(SqlSession sqlSession, ExecutorType executorType) {
+    public SqlSessionHolder(SqlSession sqlSession, 
+            ExecutorType executorType, 
+            PersistenceExceptionTranslator exceptionTranslator) {
+        
         Assert.notNull(sqlSession, "SqlSession must not be null");
         Assert.notNull(executorType, "ExecutorType must not be null");
+        
         this.sqlSession = sqlSession;
         this.executorType = executorType;
+        this.exceptionTranslator = exceptionTranslator;
     }
 
     public SqlSession getSqlSession() {
@@ -55,6 +63,10 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
 
     public ExecutorType getExecutorType() {
         return executorType;
+    }
+
+    public PersistenceExceptionTranslator getPersistenceExceptionTranslator() {
+        return exceptionTranslator;
     }
 
 }

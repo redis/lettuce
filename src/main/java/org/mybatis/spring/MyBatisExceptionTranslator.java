@@ -62,6 +62,11 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
      */
     public DataAccessException translateExceptionIfPossible(RuntimeException e) {
         if (e instanceof PersistenceException) {
+            // Batch exceptions come inside another PersistenceException
+            // recursion has a risk of infinite loop so better make another if
+            if (e.getCause() instanceof PersistenceException) {
+                e = (PersistenceException) e.getCause();
+            }
             if (e.getCause() instanceof SQLException) {
                 this.initExceptionTranslator();
                 return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
