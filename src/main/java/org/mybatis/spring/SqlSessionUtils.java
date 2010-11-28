@@ -252,16 +252,15 @@ public final class SqlSessionUtils {
             // SpringManagedTransaction will no-op the commit over the jdbc connection
             if (TransactionSynchronizationManager.isActualTransactionActive()) {
                 try {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization committing SqlSession");
+                    }
                     this.holder.getSqlSession().commit(false);
                 } catch (PersistenceException p) {
                     if (this.holder.getPersistenceExceptionTranslator() != null) {
                         throw this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
                     }
                     throw p;
-                } finally {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Transaction synchronization committed SqlSession");
-                    }
                 }
             }
         }
@@ -278,12 +277,12 @@ public final class SqlSessionUtils {
             if (!this.holder.isOpen()) {
                 TransactionSynchronizationManager.unbindResource(this.sessionFactory);
                 try {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Transaction synchronization closing SqlSession");
+                    }
                     this.holder.getSqlSession().close();
                 } finally {
                     this.holder.reset();
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Transaction synchronization closed SqlSession");
-                    }
                 }
             }
         }
