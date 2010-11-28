@@ -169,6 +169,22 @@ public final class SqlSessionUtils {
      * @param sessionFactory
      */
     public static void closeSqlSession(SqlSession session, SqlSessionFactory sessionFactory) {
+        closeSqlSession(session, sessionFactory, null);
+    }
+    
+    /**
+     * Checks if {@link SqlSession} passed as an argument is managed by Spring {@link TransactionSynchronizationManager}
+     * If it is not, it closes it, otherwise it just updates the reference counter and 
+     * lets Spring call the close callback when the managed transaction ends
+     *
+     * @param session
+     * @param sessionFactory
+     * @param exceptionTranslator
+     */
+    public static void closeSqlSession(SqlSession session, 
+            SqlSessionFactory sessionFactory,
+            PersistenceExceptionTranslator exceptionTranslator) {
+        
         Assert.notNull(session, "No SqlSession specified");
         Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
         
@@ -177,7 +193,17 @@ public final class SqlSessionUtils {
         if ((holder != null) && (holder.getSqlSession() == session)) {
             holder.released();
         } else {
-            session.close();
+            try {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Transaction synchronization committing SqlSession");
+                }
+                session.close();
+            } catch (PersistenceException p) {
+                if (exceptionTranslator != null) {
+                    throw exceptionTranslator.translateExceptionIfPossible(p);
+                }
+                throw p;
+            }
         }
     }
 

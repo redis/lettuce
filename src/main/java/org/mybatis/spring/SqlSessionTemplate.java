@@ -347,7 +347,10 @@ public class SqlSessionTemplate implements SqlSession {
                 } 
                 throw unwrapped;
             } finally {
-                SqlSessionUtils.closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+                SqlSessionUtils.closeSqlSession(
+                        sqlSession, 
+                        SqlSessionTemplate.this.sqlSessionFactory,
+                        SqlSessionTemplate.this.exceptionTranslator);
             }
         }
     }
