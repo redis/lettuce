@@ -121,7 +121,7 @@ public final class SqlSessionUtils {
         }
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Creating SqlSession from SqlSessionFactory");
+            logger.debug("Creating SqlSession with JDBC Connection [" + conn + "]");
         }
 
         // Assume either DataSourceTransactionManager or the underlying
