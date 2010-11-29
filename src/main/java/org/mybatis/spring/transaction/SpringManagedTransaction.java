@@ -85,11 +85,10 @@ public class SpringManagedTransaction implements Transaction {
         boolean manageConnection = true;
 
         for (Object o : TransactionSynchronizationManager.getResourceMap().keySet()) {
-            if (o instanceof DataSource) {
-                if (DataSourceUtils.isConnectionTransactional(nonLoggingConnection, (DataSource) o)) {
-                    manageConnection = false;
-                    break;
-                }
+            if (o instanceof DataSource
+                    && DataSourceUtils.isConnectionTransactional(nonLoggingConnection, (DataSource) o)) {
+                manageConnection = false;
+                break;
             }
         }
 
