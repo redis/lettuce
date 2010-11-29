@@ -70,9 +70,7 @@ public class SpringManagedTransaction implements Transaction {
             nonLoggingConnection = connection;
         }
 
-        // This connection could have been created with any DataSource, not just the one that is
-        // registered in the MyBatis Environment. So, rather than passing a DataSource into this
-        // Transaction, just check the bound resources for a DataSource and use that in the call to
+        // Check the bound resources for a DataSource and use that in the call to
         // isConnectionTransactional. If there is no DataSource bound, there is no Spring
         // transaction; if this Connection does not match the one in the current transaction, this
         // is a different Spring transactional context. In either case, this Transaction should
