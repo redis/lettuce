@@ -110,7 +110,7 @@ public class SpringManagedTransaction implements Transaction {
     public void commit() throws SQLException {
         if (this.shouldManageConnection) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Commiting JDBC connection");
+                logger.debug("Committing JDBC connection");
             }
             this.connection.commit();
         }
