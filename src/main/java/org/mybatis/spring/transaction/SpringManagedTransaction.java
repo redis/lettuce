@@ -93,7 +93,11 @@ public class SpringManagedTransaction implements Transaction {
         this.shouldManageConnection = manageConnection;
 
         if (logger.isDebugEnabled()) {
-            logger.debug("SpringManagedTransaction will manage connection: " + this.shouldManageConnection);
+            if (this.shouldManageConnection) {
+                logger.debug("JDBC Connection [" + this.connection + "] will be managed by SpringManagedTransaction");
+            } else {
+                logger.debug("JDBC Connection [" + this.connection + "] will be managed by Spring");                
+            }
         }   
     }
 
@@ -110,7 +114,7 @@ public class SpringManagedTransaction implements Transaction {
     public void commit() throws SQLException {
         if (this.shouldManageConnection) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Committing JDBC connection");
+                logger.debug("Committing JDBC Connection [" + this.connection + "]");
             }
             this.connection.commit();
         }
@@ -122,7 +126,7 @@ public class SpringManagedTransaction implements Transaction {
     public void rollback() throws SQLException {
         if (this.shouldManageConnection) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Rolling back JDBC connection");
+                logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
             }
             this.connection.rollback();
         }
@@ -134,7 +138,7 @@ public class SpringManagedTransaction implements Transaction {
     public void close() throws SQLException {
         if (this.shouldManageConnection) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Closing JDBC connection");
+                logger.debug("Closing JDBC Connection [" + this.connection + "]");
             }
             this.connection.close();
         }
