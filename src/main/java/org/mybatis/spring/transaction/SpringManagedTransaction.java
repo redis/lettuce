@@ -22,6 +22,8 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.logging.jdbc.ConnectionLogger;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.jdbc.JdbcTransaction;
@@ -41,6 +43,8 @@ import org.springframework.util.Assert;
  * @version $Id$
  */
 public class SpringManagedTransaction implements Transaction {
+
+    private static final Log logger = LogFactory.getLog(SpringManagedTransaction.class);
 
     private final Connection connection;
 
@@ -82,11 +86,18 @@ public class SpringManagedTransaction implements Transaction {
 
         for (Object o : TransactionSynchronizationManager.getResourceMap().keySet()) {
             if (o instanceof DataSource) {
-                manageConnection = !DataSourceUtils.isConnectionTransactional(nonLoggingConnection, (DataSource) o);
+                if (DataSourceUtils.isConnectionTransactional(nonLoggingConnection, (DataSource) o)) {
+                    manageConnection = false;
+                    break;
+                }
             }
         }
 
         this.shouldManageConnection = manageConnection;
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("SpringManagedTransaction will manage connection: " + this.shouldManageConnection);
+        }   
     }
 
     /**
@@ -101,6 +112,9 @@ public class SpringManagedTransaction implements Transaction {
      */
     public void commit() throws SQLException {
         if (this.shouldManageConnection) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Commiting JDBC connection");
+            }
             this.connection.commit();
         }
     }
@@ -110,6 +124,9 @@ public class SpringManagedTransaction implements Transaction {
      */
     public void rollback() throws SQLException {
         if (this.shouldManageConnection) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Rolling back JDBC connection");
+            }
             this.connection.rollback();
         }
     }
@@ -119,6 +136,9 @@ public class SpringManagedTransaction implements Transaction {
      */
     public void close() throws SQLException {
         if (this.shouldManageConnection) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Closing JDBC connection");
+            }
             this.connection.close();
         }
     }
