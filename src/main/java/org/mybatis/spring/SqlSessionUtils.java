@@ -96,16 +96,17 @@ public final class SqlSessionUtils {
         SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
         if (holder != null && holder.isSynchronizedWithTransaction()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching SqlSession from current transaction");
-            }
-
             if (holder.getExecutorType() != executorType) {
                 throw new TransientDataAccessResourceException(
                         "Cannot change the ExecutorType when there is an existing transaction");
             }
 
             holder.requested();
+            
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetched SqlSession [" + holder.getSqlSession() + "] from current transaction");
+            }
+
             return holder.getSqlSession();
         }
 
@@ -148,7 +149,7 @@ public final class SqlSessionUtils {
             }
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Registering transaction synchronization for SqlSession");
+                logger.debug("Registering transaction synchronization for SqlSession [" + session + "]");
             }
             holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
             TransactionSynchronizationManager.bindResource(sessionFactory, holder);
@@ -157,7 +158,7 @@ public final class SqlSessionUtils {
             holder.requested();
         } else {
             if (logger.isDebugEnabled()) {
-                logger.debug("SqlSession was not registered for synchronization because synchronization is not active");
+                logger.debug("SqlSession [" + session + "] was not registered for synchronization because synchronization is not active");
             }            
         }
 
@@ -199,7 +200,7 @@ public final class SqlSessionUtils {
         } else {
             try {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Closing no transactional SqlSession");
+                    logger.debug("Closing no transactional SqlSession [" + session + "]");
                 }
                 session.close();
             } catch (PersistenceException p) {
@@ -285,7 +286,7 @@ public final class SqlSessionUtils {
             if (TransactionSynchronizationManager.isActualTransactionActive()) {
                 try {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Transaction synchronization committing SqlSession");
+                        logger.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
                     }
                     this.holder.getSqlSession().commit(false);
                 } catch (PersistenceException p) {
@@ -310,7 +311,7 @@ public final class SqlSessionUtils {
                 TransactionSynchronizationManager.unbindResource(this.sessionFactory);
                 try {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Transaction synchronization closing SqlSession");
+                        logger.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
                     }
                     this.holder.getSqlSession().close();
                 } finally {
