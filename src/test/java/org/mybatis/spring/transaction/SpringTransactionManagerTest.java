@@ -48,7 +48,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     }
 
     @Test
-    public void shouldNoOpWithOtherDatasource() throws Exception {
+    public void shouldManageWithOtherDatasource() throws Exception {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
         TransactionStatus status = txManager.getTransaction(txDef);
@@ -64,7 +64,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     }
     
     @Test
-    public void shouldCommitWithNoTx() throws Exception {
+    public void shouldManageWithNoTx() throws Exception {
         SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
         SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
         transaction.commit();        
