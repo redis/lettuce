@@ -9,6 +9,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.junit.Test;
+import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
@@ -56,17 +57,18 @@ public final class SqlSessionFactoryBeanTest {
         factoryBean.getObject();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullTransactionFactoryClass() throws Exception {
         setupFactoryBean();
-        factoryBean.setTransactionFactoryClass(null);
-        factoryBean.getObject();
+        factoryBean.setTransactionFactory(null);
+
+        assertConfig(factoryBean.getObject(), SpringManagedTransactionFactory.class);
     }
 
     @Test
     public void testOtherTransactionFactoryClass() throws Exception {
         setupFactoryBean();
-        factoryBean.setTransactionFactoryClass(JdbcTransactionFactory.class);
+        factoryBean.setTransactionFactory(new JdbcTransactionFactory());
 
         assertConfig(factoryBean.getObject(), JdbcTransactionFactory.class);
     }

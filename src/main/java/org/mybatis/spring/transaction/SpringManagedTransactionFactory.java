@@ -18,8 +18,11 @@ package org.mybatis.spring.transaction;
 import java.sql.Connection;
 import java.util.Properties;
 
+import javax.sql.DataSource;
+
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
+import org.springframework.util.Assert;
 
 /**
  * Creates a {@link SpringManagedTransaction}.
@@ -28,11 +31,19 @@ import org.apache.ibatis.transaction.TransactionFactory;
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {
 
+    private final DataSource dataSource;
+    
+    public SpringManagedTransactionFactory(DataSource dataSource) {
+        Assert.notNull("No DataSource specified");
+    
+        this.dataSource = dataSource;
+    }
+    
     /**
      * {@inheritDoc}
      */
     public Transaction newTransaction(Connection conn, boolean autoCommit) {
-        return new SpringManagedTransaction(conn);
+        return new SpringManagedTransaction(conn, this.dataSource);
     }
 
     /**

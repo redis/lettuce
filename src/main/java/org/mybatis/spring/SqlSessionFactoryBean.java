@@ -73,7 +73,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private DataSource dataSource;
 
-    private Class<? extends TransactionFactory> transactionFactoryClass = SpringManagedTransactionFactory.class;
+    private TransactionFactory transactionFactory;
 
     private Properties transactionFactoryProperties;
 
@@ -159,27 +159,23 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * Set the MyBatis TransactionFactory class to use. Default is
-     * <code>SpringManagedTransactionFactory</code>.
+     * Set the MyBatis TransactionFactory to use. Default is {@link SpringManagedTransactionFactory}
      *
-     * The default SpringManagedTransactionFactory should be appropriate for all cases: be it Spring
-     * transaction management, EJB CMT or plain JTA. If there is no active transaction, SqlSession
-     * operations will execute SQL statements non-transactionally.
+     * The default {@link SpringManagedTransactionFactory} should be appropriate for all cases: 
+     * be it Spring transaction management, EJB CMT or plain JTA. If there is no active transaction, 
+     * SqlSession operations will execute SQL statements non-transactionally.
      *
      * <b>It is strongly recommended to use the default TransactionFactory.</b> If not used, any
      * attempt at getting an SqlSession through Spring's MyBatis framework will throw an exception if
      * a transaction is active.
      *
-     * @see #setDataSource
-     * @see #setTransactionFactoryProperties(java.util.Properties)
      * @see org.apache.ibatis.transaction.TransactionFactory
      * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
      * @see org.apache.ibatis.transaction.Transaction
-     * @param <TF> the MyBatis TransactionFactory type
-     * @param transactionFactoryClass the MyBatis TransactionFactory class to use
+     * @param transactionFactory the MyBatis TransactionFactory
      */
-    public <TF extends TransactionFactory> void setTransactionFactoryClass(Class<TF> transactionFactoryClass) {
-        this.transactionFactoryClass = transactionFactoryClass;
+    public void setTransactionFactory(TransactionFactory transactionFactory) {
+        this.transactionFactory = transactionFactory;
     }
 
     /**
@@ -213,7 +209,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(dataSource, "Property 'dataSource' is required");
         Assert.notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
-        Assert.notNull(transactionFactoryClass, "Property 'transactionFactoryClass' is required");
 
         this.sqlSessionFactory = buildSqlSessionFactory();
     }
@@ -271,10 +266,15 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             configuration = new Configuration();
         }
 
-        TransactionFactory transactionFactory = this.transactionFactoryClass.newInstance(); // expose IllegalAccessException, InstantiationException
+        if (this.transactionFactory == null) {
+            this.transactionFactory = new SpringManagedTransactionFactory(this.dataSource);
+        }
 
-        transactionFactory.setProperties(this.transactionFactoryProperties);
-        Environment environment = new Environment(this.environment, transactionFactory, this.dataSource);
+        if (this.transactionFactoryProperties != null) {
+            this.transactionFactory.setProperties(this.transactionFactoryProperties);
+        }
+        
+        Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
 
         configuration.setEnvironment(environment);
 

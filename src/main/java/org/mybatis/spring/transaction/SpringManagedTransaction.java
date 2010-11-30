@@ -29,7 +29,6 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.jdbc.JdbcTransaction;
 import org.apache.ibatis.transaction.managed.ManagedTransaction;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
@@ -50,14 +49,14 @@ public class SpringManagedTransaction implements Transaction {
 
     private final boolean shouldManageConnection;
 
-    public SpringManagedTransaction(Connection connection) {
-        Assert.notNull(connection, "Property 'connection' is required");
-
+    public SpringManagedTransaction(Connection connection, DataSource dataSource) {
+        Assert.notNull(connection, "No Connection specified");
+        Assert.notNull(dataSource, "No DataSource specified");
+        
         this.connection = connection;
 
-        Connection nonLoggingConnection;
-
         // Unwrap the connection if it is a ConnectionLogger for use with Spring.
+        Connection nonLoggingConnection;
         if (Proxy.isProxyClass(connection.getClass())) {
             InvocationHandler handler = Proxy.getInvocationHandler(connection);
 
@@ -70,27 +69,7 @@ public class SpringManagedTransaction implements Transaction {
             nonLoggingConnection = connection;
         }
 
-        // Check the bound resources for a DataSource and use that in the call to
-        // isConnectionTransactional. If there is no DataSource bound, there is no Spring
-        // transaction; if this Connection does not match the one in the current transaction, this
-        // is a different Spring transactional context. In either case, this Transaction should
-        // manage the connection. If there is a Spring transaction in progress, this Transaction
-        // will no-op all methods.
-        //
-        // Note: This also assumes that MyBatis does not allow changing the Transaction or the
-        // Connection once an SqlSession has been created, which is consistent with the default
-        // implementation.
-        boolean manageConnection = true;
-
-        for (Object o : TransactionSynchronizationManager.getResourceMap().keySet()) {
-            if (o instanceof DataSource
-                    && DataSourceUtils.isConnectionTransactional(nonLoggingConnection, (DataSource) o)) {
-                manageConnection = false;
-                break;
-            }
-        }
-
-        this.shouldManageConnection = manageConnection;
+        this.shouldManageConnection = !DataSourceUtils.isConnectionTransactional(nonLoggingConnection, dataSource);
 
         if (logger.isDebugEnabled()) {
             if (this.shouldManageConnection) {
