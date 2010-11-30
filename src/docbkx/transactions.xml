@@ -98,10 +98,12 @@
       configure the <literal>SqlSessionFactoryBean</literal> to use the base MyBatis
       <literal>ManagedTransactionFactory</literal>:
 
-      <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
+      <programlisting language="xml"><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
   <property name="dataSource" ref="dataSource" />
-  <property name="transactionFactoryClass"
-    value="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
+  <property name="transactionFactory">
+    <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
+  </property>  
 </bean>]]></programlisting>
     </para>
   </section>
