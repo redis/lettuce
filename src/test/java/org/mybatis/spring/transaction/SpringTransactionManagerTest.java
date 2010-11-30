@@ -17,12 +17,8 @@ package org.mybatis.spring.transaction;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.transaction.Transaction;
-import org.apache.ibatis.transaction.TransactionFactory;
 import org.junit.Test;
 import org.mybatis.spring.AbstractMyBatisSpringTest;
-import org.mybatis.spring.SqlSessionUtils;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
@@ -38,16 +34,10 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 
         TransactionStatus status = txManager.getTransaction(txDef);
-
-        SqlSession session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        
-        TransactionFactory transactionFactory = sqlSessionFactory.getConfiguration().getEnvironment().getTransactionFactory();
-        Transaction transaction = transactionFactory.newTransaction(session.getConnection(), false);
-        transaction.commit();
-        
+        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
+        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
+        transaction.commit();        
         assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
-        
-        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
         txManager.commit(status);
     }
@@ -55,15 +45,13 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     @Test
     public void testWithNoTx() throws Exception {
 
-        SqlSession session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        
-        TransactionFactory transactionFactory = sqlSessionFactory.getConfiguration().getEnvironment().getTransactionFactory();
-        Transaction transaction = transactionFactory.newTransaction(session.getConnection(), false);
+        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
+        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
         transaction.commit();
         
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
         
-        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+        connection.close();
     }
     
 }
