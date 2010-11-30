@@ -29,7 +29,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
 
 
     @Test
-    public void testWithTx() throws Exception {
+    public void testShouldNoOpWithTx() throws Exception {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 
@@ -43,10 +43,22 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     }
     
     @Test
-    public void testWithNoTx() throws Exception {
+    public void testShouldCommitWithNoTx() throws Exception {
 
         SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
         SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
+        transaction.commit();
+        
+        assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
+        
+        connection.close();
+    }
+
+    @Test
+    public void testShouldIgnoreAutocommit() throws Exception {
+
+        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
+        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, true);
         transaction.commit();
         
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
