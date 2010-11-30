@@ -32,7 +32,7 @@ import com.mockrunner.mock.jdbc.MockDataSource;
 public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
 
     @Test
-    public void testShouldNoOpWithTx() throws Exception {
+    public void shouldNoOpWithTx() throws Exception {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
         TransactionStatus status = txManager.getTransaction(txDef);
@@ -48,7 +48,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     }
 
     @Test
-    public void testShouldNoOpWithOtherDatasource() throws Exception {
+    public void shouldNoOpWithOtherDatasource() throws Exception {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
         TransactionStatus status = txManager.getTransaction(txDef);
@@ -64,7 +64,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     }
     
     @Test
-    public void testShouldCommitWithNoTx() throws Exception {
+    public void shouldCommitWithNoTx() throws Exception {
         SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
         SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
         transaction.commit();        
@@ -74,7 +74,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     }
 
     @Test
-    public void testShouldIgnoreAutocommit() throws Exception {
+    public void shouldIgnoreAutocommit() throws Exception {
         SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(dataSource);
         SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, true);
         transaction.commit();        
