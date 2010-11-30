@@ -35,11 +35,11 @@ import org.springframework.util.Assert;
 /**
  * MyBatis has two TransactionManagers out of the box: The {@link JdbcTransaction} and the
  * {@link ManagedTransaction}. When MyBatis runs under a Spring transaction none of them
- * will work well because {@link JdbcTransaction} would commit/rollback/close and it should not.
- * And {@link ManagedTransaction} would close the connection and it should not.
+ * will work fine because {@link JdbcTransaction} will commit/rollback/close and it should not
+ * and {@link ManagedTransaction} will close the connection and it should not.
  * {@link SpringManagedTransaction} looks if the current connection is being managed by Spring. 
- * In that case it will not commit/rollback/close.
- * Otherwise it will behave almost like {@link JdbcTransaction}.
+ * In that case it will no-op all commit/rollback/close calls assuming that the Spring 
+ * transaction manager will do the job. Otherwise it will behave almost like {@link JdbcTransaction}.
  *
  * @version $Id$
  */
