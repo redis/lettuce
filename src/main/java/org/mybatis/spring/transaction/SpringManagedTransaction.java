@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
  * will work well because {@link JdbcTransaction} would commit/rollback/close and it should not.
  * And {@link ManagedTransaction} would close the connection and it should not.
  * {@link SpringManagedTransaction} looks if the current connection is being managed by Spring. 
- * In that case it will not commit/rollback/close. 
+ * In that case it will not commit/rollback/close.
  * Otherwise it will behave almost like {@link JdbcTransaction}.
  *
  * @version $Id$
@@ -50,31 +50,31 @@ public class SpringManagedTransaction implements Transaction {
     private final Connection connection;
 
     private final boolean shouldManageConnection;
-    
+
     /**
-     * Constructor that discovers if this {@link Transaction} should manage connection or let it to Spring. 
-     * It gets both the {@link Connection} and the {@link DataSource} it was built from and asks Spring if
-     * they are bundled to the current transaction.
+     * Constructor that discovers if this {@link Transaction} should manage connection or let it to Spring. It gets both
+     * the {@link Connection} and the {@link DataSource} it was built from and asks Spring if they are bundled to the
+     * current transaction.
      * 
      * @param connection JDBC connection to manage
      * @param dataSource The {@link DataSource} that was configured in current {@link SqlSessionFactory}
-     * @see DataSourceUtils 
-     * @see DataSourceUtils#isConnectionTransactional(Connection, DataSource) 
+     * @see DataSourceUtils
+     * @see DataSourceUtils#isConnectionTransactional(Connection, DataSource)
      */
     public SpringManagedTransaction(Connection connection, DataSource dataSource) {
         Assert.notNull(connection, "No Connection specified");
         Assert.notNull(dataSource, "No DataSource specified");
-        
+
         this.connection = connection;
         this.shouldManageConnection = !DataSourceUtils.isConnectionTransactional(unwrapConnection(connection), dataSource);
 
-        if (logger.isDebugEnabled()) {
+        if (this.logger.isDebugEnabled()) {
             if (this.shouldManageConnection) {
-                logger.debug("JDBC Connection [" + this.connection + "] will be managed by SpringManagedTransaction");
+                this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by SpringManagedTransaction");
             } else {
-                logger.debug("JDBC Connection [" + this.connection + "] will be managed by Spring");                
+                this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by Spring");
             }
-        }   
+        }
     }
 
     /**
@@ -89,8 +89,8 @@ public class SpringManagedTransaction implements Transaction {
      */
     public void commit() throws SQLException {
         if (this.shouldManageConnection) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Committing JDBC Connection [" + this.connection + "]");
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Committing JDBC Connection [" + this.connection + "]");
             }
             this.connection.commit();
         }
@@ -101,8 +101,8 @@ public class SpringManagedTransaction implements Transaction {
      */
     public void rollback() throws SQLException {
         if (this.shouldManageConnection) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
             }
             this.connection.rollback();
         }
@@ -113,27 +113,26 @@ public class SpringManagedTransaction implements Transaction {
      */
     public void close() throws SQLException {
         if (this.shouldManageConnection) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Closing JDBC Connection [" + this.connection + "]");
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Closing JDBC Connection [" + this.connection + "]");
             }
             this.connection.close();
         }
     }
 
     /**
-     * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the 
-     * original connection so it should be unwrapped before calling 
-     * {@link DataSourceUtils#isConnectionTransactional(Connection, DataSource)} 
+     * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the original connection so it should
+     * be unwrapped before calling {@link DataSourceUtils#isConnectionTransactional(Connection, DataSource)}
      * 
      * @param connection May be a {@link ConnectionLogger} proxy
-     * @return the original JDBC {@link Connection} 
+     * @return the original JDBC {@link Connection}
      */
     private Connection unwrapConnection(Connection connection) {
         if (Proxy.isProxyClass(connection.getClass())) {
             InvocationHandler handler = Proxy.getInvocationHandler(connection);
             if (handler instanceof ConnectionLogger) {
                 return ((ConnectionLogger) handler).getConnection();
-            } 
+            }
         }
         return connection;
     }

@@ -26,19 +26,19 @@ import org.springframework.util.Assert;
 
 /**
  * Creates a {@link SpringManagedTransaction}.
- *
+ * 
  * @version $Id$
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {
 
     private final DataSource dataSource;
-    
+
     public SpringManagedTransactionFactory(DataSource dataSource) {
         Assert.notNull("No DataSource specified");
-    
+
         this.dataSource = dataSource;
     }
-    
+
     /**
      * {@inheritDoc}
      */
