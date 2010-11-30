@@ -52,7 +52,7 @@ public class SpringManagedTransaction implements Transaction {
     private final boolean shouldManageConnection;
     
     /**
-     * Constructor that discovers it this {@link Transaction} should manage connection or let it to Spring. 
+     * Constructor that discovers if this {@link Transaction} should manage connection or let it to Spring. 
      * It gets both the {@link Connection} and the {@link DataSource} it was built from and asks Spring if
      * they are bundled to the current transaction.
      * 
