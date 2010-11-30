@@ -57,7 +57,9 @@ public class SpringManagedTransaction implements Transaction {
      * they are bundled to the current transaction.
      * 
      * @param connection JDBC connection to manage
-     * @param dataSource The {@link DataSource} that was configured in current {@link SqlSessionFactory} 
+     * @param dataSource The {@link DataSource} that was configured in current {@link SqlSessionFactory}
+     * @see DataSourceUtils 
+     * @see DataSourceUtils#isConnectionTransactional(Connection, DataSource) 
      */
     public SpringManagedTransaction(Connection connection, DataSource dataSource) {
         Assert.notNull(connection, "No Connection specified");
