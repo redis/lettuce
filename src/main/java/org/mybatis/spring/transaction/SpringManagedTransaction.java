@@ -43,7 +43,7 @@ import org.springframework.util.Assert;
  */
 public class SpringManagedTransaction implements Transaction {
 
-    private final Log logger = LogFactory.getLog(SpringManagedTransaction.class);
+    private final Log logger = LogFactory.getLog(getClass());
 
     private final Connection connection;
 

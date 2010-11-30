@@ -18,6 +18,7 @@ package org.mybatis.spring;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -33,6 +34,7 @@ import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -40,24 +42,20 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.NestedIOException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * {@link org.springframework.beans.factory.FactoryBean} that creates an MyBatis
- * {@link org.apache.ibatis.session.SqlSessionFactory}. This is the usual way to set up a shared
- * MyBatis SqlSessionFactory in a Spring application context; the SqlSessionFactory can then be
- * passed to MyBatis-based DAOs via dependency injection.
+ * {@link FactoryBean} that creates an MyBatis {@link SqlSessionFactory}. 
+ * This is the usual way to set up a shared MyBatis {@link SqlSessionFactory} in a Spring application context; 
+ * the SqlSessionFactory can then be passed to MyBatis-based DAOs via dependency injection.
  *
- * Either {@link org.springframework.jdbc.datasource.DataSourceTransactionManager} or
- * {@link org.springframework.transaction.jta.JtaTransactionManager} can be used for transaction
- * demarcation in combination with a SqlSessionFactory. JTA should be used for transactions
+ * Either {@link DataSourceTransactionManager} or {@link JtaTransactionManager} can be used for transaction
+ * demarcation in combination with a {@link SqlSessionFactory}. JTA should be used for transactions
  * which span multiple databases or when container managed transactions (CMT) are being used.
- *
- * Allows for specifying a DataSource at the SqlSessionFactory level. This is preferable to per-DAO
- * DataSource references, as it allows for lazy loading and avoids repeated DataSource references in
- * every DAO.
  *
  * @see #setConfigLocation
  * @see #setDataSource
@@ -75,8 +73,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private TransactionFactory transactionFactory;
 
-    private Properties transactionFactoryProperties;
-
     private Properties configurationProperties;
 
     private SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
@@ -86,7 +82,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     private String environment = SqlSessionFactoryBean.class.getSimpleName();
 
     /**
-     * Set the location of the MyBatis SqlSessionFactory config file. A typical value is
+     * Set the location of the MyBatis {@link SqlSessionFactory} config file. A typical value is
      * "WEB-INF/mybatis-configuration.xml".
      */
     public void setConfigLocation(Resource configLocation) {
@@ -94,7 +90,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * Set locations of MyBatis mapper files that are going to be merged into the SqlSessionFactory
+     * Set locations of MyBatis mapper files that are going to be merged into the {@link SqlSessionFactory}
      * configuration at runtime.
      *
      * This is an alternative to specifying "&lt;sqlmapper&gt;" entries in an MyBatis config file.
@@ -117,18 +113,18 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * Set the JDBC DataSource that this instance should manage transactions for. The DataSource
-     * should match the one used by the SqlSessionFactory: for example, you could specify the same
+     * Set the JDBC {@link DataSource} that this instance should manage transactions for. The {@link DataSource}
+     * should match the one used by the {@link SqlSessionFactory}: for example, you could specify the same
      * JNDI DataSource for both.
      *
-     * A transactional JDBC Connection for this DataSource will be provided to application code
-     * accessing this DataSource directly via DataSourceUtils or DataSourceTransactionManager.
+     * A transactional JDBC {@link Connection} for this {@link DataSource} will be provided to application code
+     * accessing this {@link DataSource} directly via {@link DataSourceUtils} or {@link DataSourceTransactionManager}.
      *
-     * The DataSource specified here should be the target DataSource to manage transactions for, not
-     * a TransactionAwareDataSourceProxy. Only data access code may work with
-     * TransactionAwareDataSourceProxy, while the transaction manager needs to work on the
-     * underlying target DataSource. If there's nevertheless a TransactionAwareDataSourceProxy
-     * passed in, it will be unwrapped to extract its target DataSource.
+     * The {@link DataSource} specified here should be the target {@link DataSource} to manage transactions for, not
+     * a {@link TransactionAwareDataSourceProxy}. Only data access code may work with
+     * {@link TransactionAwareDataSourceProxy}, while the transaction manager needs to work on the
+     * underlying target {@link DataSource}. If there's nevertheless a {@link TransactionAwareDataSourceProxy}
+     * passed in, it will be unwrapped to extract its target {@link DataSource}.
      *
      * @see org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy
      * @see org.springframework.jdbc.datasource.DataSourceUtils
@@ -147,10 +143,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * Sets the SqlSessionFactoryBuilder to use when creating the SqlSessionFactory.
+     * Sets the {@link SqlSessionFactoryBuilder} to use when creating the {@link SqlSessionFactory}.
      *
      * This is mainly meant for testing so that mock SqlSessionFactory classes can be injected. By
-     * default, SqlSessionFactoryBuilder creates <code>DefaultSqlSessionFactory<code> instances.
+     * default, {@link SqlSessionFactoryBuilder} creates {@link DefaultSqlSessionFactory} instances.
      *
      * @see org.apache.ibatis.session.SqlSessionFactoryBuilder
      */
@@ -165,7 +161,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * be it Spring transaction management, EJB CMT or plain JTA. If there is no active transaction, 
      * SqlSession operations will execute SQL statements non-transactionally.
      *
-     * <b>It is strongly recommended to use the default TransactionFactory.</b> If not used, any
+     * <b>It is strongly recommended to use the default {@link TransactionFactory}.</b> If not used, any
      * attempt at getting an SqlSession through Spring's MyBatis framework will throw an exception if
      * a transaction is active.
      *
@@ -179,22 +175,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * Set properties to be passed to the TransactionFactory instance used by this
-     * SqlSessionFactory.
-     *
-     * The default SpringManagedTransactionFactory does not have any user configurable properties.
-     *
-     * @see org.apache.ibatis.transaction.TransactionFactory#setProperties(java.util.Properties)
-     * @see org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
-     * @see org.apache.ibatis.transaction.managed.ManagedTransactionFactory
-     */
-    public void setTransactionFactoryProperties(Properties transactionFactoryProperties) {
-        this.transactionFactoryProperties = transactionFactoryProperties;
-    }
-
-    /**
-     * <b>NOTE:</b> This class <em>overrides</em> any Environment you have set in the MyBatis config
-     * file. This is used only as a placeholder name. The default value is
+     * <b>NOTE:</b> This class <em>overrides</em> any {@link Environment} you have set in the MyBatis 
+     * config file. This is used only as a placeholder name. The default value is
      * <code>SqlSessionFactoryBean.class.getSimpleName()</code>.
      *
      * @param environment the environment name
@@ -209,20 +191,20 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(dataSource, "Property 'dataSource' is required");
         Assert.notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
+        Assert.notNull(environment, "Property 'environment' is required");        
 
         this.sqlSessionFactory = buildSqlSessionFactory();
     }
 
     /**
-     * Build a SqlSessionFactory instance.
+     * Build a {@link SqlSessionFactory} instance.
      *
      * The default implementation uses the standard MyBatis {@link XMLConfigBuilder} API to build a
-     * SqlSessionFactory instance based on an Reader.
+     * {@link SqlSessionFactory} instance based on an Reader.
      *
      * @see org.apache.ibatis.builder.xml.XMLConfigBuilder#parse()
      *
      * @return SqlSessionFactory
-     *
      * @throws IOException if loading the config file failed
      * @throws IllegalAccessException
      * @throws InstantiationException
@@ -255,9 +237,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             }
 
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Parsed configuration file: '"
-                        + this.configLocation
-                        + "'");
+                this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
             }
         } else {
             if (this.logger.isDebugEnabled()) {
@@ -268,10 +248,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
         if (this.transactionFactory == null) {
             this.transactionFactory = new SpringManagedTransactionFactory(this.dataSource);
-        }
-
-        if (this.transactionFactoryProperties != null) {
-            this.transactionFactory.setProperties(this.transactionFactoryProperties);
         }
         
         Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
@@ -310,9 +286,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, path, sqlFragments);
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
-                    throw new NestedIOException("Failed to parse mapping resource: '"
-                            + mapperLocation
-                            + "'", e);
+                    throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
                 } finally {
                     if (reader != null) {
                         try {
@@ -323,9 +297,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
 
                 if (this.logger.isDebugEnabled()) {
-                    this.logger.debug("Parsed mapper file: '"
-                            + mapperLocation
-                            + "'");
+                    this.logger.debug("Parsed mapper file: '" + mapperLocation + "'");
                 }
             }
         } else {
