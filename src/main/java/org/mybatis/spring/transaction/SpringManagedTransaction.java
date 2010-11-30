@@ -109,8 +109,9 @@ public class SpringManagedTransaction implements Transaction {
     }
 
     /**
-     * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the original
-     * connectino so we need to unwrap it.
+     * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the 
+     * original connection so it should be unwrapped before calling 
+     * {@link DataSourceUtils#isConnectionTransactional(Connection, DataSource)} 
      * 
      * @param connection May be a {@link ConnectionLogger} proxy
      * @return the original JDBC {@link Connection} 
