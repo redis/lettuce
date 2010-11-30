@@ -94,9 +94,10 @@
 
     <para>
       Note that if you want to use CMT and do <emphasis>not</emphasis> want to
-      use Spring transaction management, you <emphasis>must</emphasis>
-      configure the <literal>SqlSessionFactoryBean</literal> to use the base MyBatis
-      <literal>ManagedTransactionFactory</literal>:
+      use Spring transaction management, you <emphasis>must</emphasis> not 
+      configure any Spring transaction manager and you <emphasis>must</emphasis> 
+      also configure the <literal>SqlSessionFactoryBean</literal> to use the base 
+      MyBatis <literal>ManagedTransactionFactory</literal>:
 
       <programlisting language="xml"><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
