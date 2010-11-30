@@ -16,6 +16,7 @@
 package org.mybatis.spring;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
@@ -28,8 +29,10 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -108,7 +111,16 @@ public final class SqlSessionUtils {
         }
 
         DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
-        Connection conn = DataSourceUtils.getConnection(dataSource);
+        
+        // SqlSessionFactoryBean unwraps TransactionAwareDataSourceProxies but 
+        // we keep this check for the case that SqlSessionUtils is called from custom code
+        boolean transactionAware = (dataSource instanceof TransactionAwareDataSourceProxy);
+        Connection conn;
+        try {
+            conn = transactionAware ? dataSource.getConnection() : DataSourceUtils.getConnection(dataSource);
+        } catch (SQLException e) {
+            throw new CannotGetJdbcConnectionException("Could not get JDBC Connection for SqlSession", e);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Creating SqlSession with JDBC Connection [" + conn + "]");
