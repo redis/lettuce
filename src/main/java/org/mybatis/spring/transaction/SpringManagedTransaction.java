@@ -25,6 +25,7 @@ import javax.sql.DataSource;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.logging.jdbc.ConnectionLogger;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.jdbc.JdbcTransaction;
 import org.apache.ibatis.transaction.managed.ManagedTransaction;
@@ -36,8 +37,9 @@ import org.springframework.util.Assert;
  * {@link ManagedTransaction}. When MyBatis runs under a Spring transaction none of them
  * will work well because {@link JdbcTransaction} would commit/rollback/close and it should not.
  * And {@link ManagedTransaction} would close the connection and it should not.
- * {@link SpringManagedTransaction} looks if the current connection is been managed by Spring. In that case
- * it will not commit/rollback/close. Otherwise it will behave like {@link JdbcTransaction}.
+ * {@link SpringManagedTransaction} looks if the current connection is being managed by Spring. 
+ * In that case it will not commit/rollback/close. 
+ * Otherwise it will behave almost like {@link JdbcTransaction}.
  *
  * @version $Id$
  */
@@ -48,7 +50,15 @@ public class SpringManagedTransaction implements Transaction {
     private final Connection connection;
 
     private final boolean shouldManageConnection;
-
+    
+    /**
+     * Constructor that discovers it this {@link Transaction} should manage connection or let it to Spring. 
+     * It gets both the {@link Connection} and the {@link DataSource} it was built from and asks Spring if
+     * they are bundled to the current transaction.
+     * 
+     * @param connection JDBC connection to manage
+     * @param dataSource The {@link DataSource} that was configured in current {@link SqlSessionFactory} 
+     */
     public SpringManagedTransaction(Connection connection, DataSource dataSource) {
         Assert.notNull(connection, "No Connection specified");
         Assert.notNull(dataSource, "No DataSource specified");
