@@ -43,7 +43,7 @@ import org.springframework.util.Assert;
  */
 public class SpringManagedTransaction implements Transaction {
 
-    private static final Log logger = LogFactory.getLog(SpringManagedTransaction.class);
+    private final Log logger = LogFactory.getLog(SpringManagedTransaction.class);
 
     private final Connection connection;
 
@@ -54,22 +54,7 @@ public class SpringManagedTransaction implements Transaction {
         Assert.notNull(dataSource, "No DataSource specified");
         
         this.connection = connection;
-
-        // Unwrap the connection if it is a ConnectionLogger for use with Spring.
-        Connection nonLoggingConnection;
-        if (Proxy.isProxyClass(connection.getClass())) {
-            InvocationHandler handler = Proxy.getInvocationHandler(connection);
-
-            if (handler instanceof ConnectionLogger) {
-                nonLoggingConnection = ((ConnectionLogger) handler).getConnection();
-            } else {
-                nonLoggingConnection = connection;
-            }
-        } else {
-            nonLoggingConnection = connection;
-        }
-
-        this.shouldManageConnection = !DataSourceUtils.isConnectionTransactional(nonLoggingConnection, dataSource);
+        this.shouldManageConnection = !DataSourceUtils.isConnectionTransactional(unwrapConnection(connection), dataSource);
 
         if (logger.isDebugEnabled()) {
             if (this.shouldManageConnection) {
@@ -121,6 +106,23 @@ public class SpringManagedTransaction implements Transaction {
             }
             this.connection.close();
         }
+    }
+
+    /**
+     * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the original
+     * connectino so we need to unwrap it.
+     * 
+     * @param connection May be a {@link ConnectionLogger} proxy
+     * @return the original JDBC {@link Connection} 
+     */
+    private Connection unwrapConnection(Connection connection) {
+        if (Proxy.isProxyClass(connection.getClass())) {
+            InvocationHandler handler = Proxy.getInvocationHandler(connection);
+            if (handler instanceof ConnectionLogger) {
+                return ((ConnectionLogger) handler).getConnection();
+            } 
+        }
+        return connection;
     }
 
 }
