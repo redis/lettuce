@@ -191,7 +191,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(dataSource, "Property 'dataSource' is required");
         Assert.notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
-        Assert.notNull(environment, "Property 'environment' is required");        
 
         this.sqlSessionFactory = buildSqlSessionFactory();
     }
