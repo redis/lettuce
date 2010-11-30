@@ -23,7 +23,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 /**
- * @version $Id: MapperFactoryBeanTest.java 3294 2010-11-28 04:01:46Z hpresnall $
+ * @version $Id$
  */
 public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
 
