@@ -146,9 +146,7 @@ public abstract class AbstractMyBatisSpringTest {
     @Before
     public void setupConnection() throws SQLException {
         connection = createMockConnection();
-//        connection.setAutoCommit(false);
         connectionTwo = createMockConnection();
-//        connectionTwo.setAutoCommit(false);
         dataSource.addConnection(connectionTwo);
         dataSource.addConnection(connection);
     }
