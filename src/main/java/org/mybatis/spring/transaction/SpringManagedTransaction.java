@@ -48,8 +48,12 @@ public class SpringManagedTransaction implements Transaction {
     private final Log logger = LogFactory.getLog(getClass());
 
     private final Connection connection;
+    
+    private final Connection unwrappedConnection;
+    
+    private final DataSource dataSource;
 
-    private final boolean shouldManageConnection;
+    private final boolean isConnectionTransactional;
 
     /**
      * Constructor that discovers if this {@link Transaction} should manage connection or let it to Spring. It gets both
@@ -66,13 +70,15 @@ public class SpringManagedTransaction implements Transaction {
         Assert.notNull(dataSource, "No DataSource specified");
 
         this.connection = connection;
-        this.shouldManageConnection = !DataSourceUtils.isConnectionTransactional(unwrapConnection(connection), dataSource);
+        this.dataSource = dataSource;
+        this.unwrappedConnection = unwrapConnection(connection);
+        this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.unwrappedConnection, dataSource);
 
         if (this.logger.isDebugEnabled()) {
-            if (this.shouldManageConnection) {
-                this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by SpringManagedTransaction");
-            } else {
+            if (this.isConnectionTransactional) {
                 this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by Spring");
+            } else {
+                this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by SpringManagedTransaction");
             }
         }
     }
@@ -88,7 +94,7 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void commit() throws SQLException {
-        if (this.shouldManageConnection) {
+        if (!this.isConnectionTransactional) {
             if (this.logger.isDebugEnabled()) {
                 this.logger.debug("Committing JDBC Connection [" + this.connection + "]");
             }
@@ -100,7 +106,7 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void rollback() throws SQLException {
-        if (this.shouldManageConnection) {
+        if (!this.isConnectionTransactional) {
             if (this.logger.isDebugEnabled()) {
                 this.logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
             }
@@ -112,12 +118,7 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void close() throws SQLException {
-        if (this.shouldManageConnection) {
-            if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Closing JDBC Connection [" + this.connection + "]");
-            }
-            this.connection.close();
-        }
+        DataSourceUtils.releaseConnection(this.unwrappedConnection, this.dataSource);
     }
 
     /**

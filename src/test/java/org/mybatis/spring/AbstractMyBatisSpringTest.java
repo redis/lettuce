@@ -73,15 +73,31 @@ public abstract class AbstractMyBatisSpringTest {
     }
 
     protected void assertNoCommit() {
+        assertNoCommitJdbc();
+        assertNoCommitSession();
+    }
+
+    protected void assertNoCommitJdbc() {
         assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
         assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
+    }
+
+    protected void assertNoCommitSession() {
         assertEquals("should not call commit on SqlSession", 0, executorInterceptor.getCommitCount());
         assertEquals("should not call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
     }
 
     protected void assertCommit() {
+        assertCommitJdbc();
+        assertCommitSession();
+    }
+
+    protected void assertCommitJdbc() {
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
         assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
+    }
+    
+    protected void assertCommitSession() {
         assertEquals("should call commit on SqlSession", 1, executorInterceptor.getCommitCount());
         assertEquals("should not call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
     }
@@ -130,7 +146,9 @@ public abstract class AbstractMyBatisSpringTest {
     @Before
     public void setupConnection() throws SQLException {
         connection = createMockConnection();
+//        connection.setAutoCommit(false);
         connectionTwo = createMockConnection();
+//        connectionTwo.setAutoCommit(false);
         dataSource.addConnection(connectionTwo);
         dataSource.addConnection(connection);
     }
