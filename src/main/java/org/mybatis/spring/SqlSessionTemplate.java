@@ -339,7 +339,11 @@ public class SqlSessionTemplate implements SqlSession {
                     SqlSessionTemplate.this.executorType,
                     SqlSessionTemplate.this.exceptionTranslator);
             try {
-                return method.invoke(sqlSession, args);
+                Object result = method.invoke(sqlSession, args);
+                if (!SqlSessionUtils.isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
+                    sqlSession.commit();
+                }
+                return result;
             } catch (Throwable t) {
                 Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
                 if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
@@ -349,8 +353,7 @@ public class SqlSessionTemplate implements SqlSession {
             } finally {
                 SqlSessionUtils.closeSqlSession(
                         sqlSession, 
-                        SqlSessionTemplate.this.sqlSessionFactory,
-                        SqlSessionTemplate.this.exceptionTranslator);
+                        SqlSessionTemplate.this.sqlSessionFactory);
             }
         }
     }

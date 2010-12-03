@@ -50,7 +50,8 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     public void testBasicUsage() throws Exception {
         find();
 
-        assertNoCommit();
+        assertNoCommitJdbc();
+        assertCommitSession();
         assertSingleConnection();
         assertExecuteCount(1);
     }
@@ -119,7 +120,8 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         try {
             find(new SqlSessionTemplate(sqlSessionFactory));
 
-            assertNoCommit();
+            assertNoCommitJdbc();
+            assertCommitSession();
             assertSingleConnection();
             assertExecuteCount(1);
         } finally {

@@ -29,12 +29,13 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
 
 // tests basic usage and implementation only
 // MapperFactoryBeanTest handles testing the transactional functions in SqlSessionTemplate
 public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
 
-    private static SqlSessionTemplate sqlSessionTemplate;
+    private static SqlSession sqlSessionTemplate;
 
     @BeforeClass
     public static void setupSqlTemplate() {
@@ -149,4 +150,38 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
         }
     }
 
+    @Test
+    public void testTemplateWithNoTxInsert() {
+
+        sqlSessionTemplate.getMapper(TestMapper.class).insertTest("test1");
+        assertCommitJdbc();
+        assertCommitSession();
+
+    }
+
+    @Test
+    public void testTemplateWithNoTxSelect() {
+
+        sqlSessionTemplate.getMapper(TestMapper.class).findTest();
+        assertNoCommitJdbc();
+        assertCommitSession();
+
+    }
+    
+    @Test
+    public void testWithTxRequired() {
+        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+
+        TransactionStatus status = txManager.getTransaction(txDef);
+
+        sqlSessionTemplate.getMapper(TestMapper.class).findTest();
+
+        txManager.commit(status);
+
+        assertCommit();
+        assertSingleConnection();
+    }
+    
+    
 }
