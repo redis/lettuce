@@ -28,6 +28,9 @@
 
     <body>
         <release version="1.0.0-RC4" date="TBD" description="1.0.0-RC4 release">
+            <action type="fix" issue="196">
+                SqlSession rolls back with no Spring Tx && autocommit=false && dirty=true (an update was executed)
+            </action>
             <action type="update">
                 Improved logging
             </action>
