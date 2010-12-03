@@ -174,7 +174,6 @@ public final class SqlSessionUtils {
      *
      * @param session
      * @param sessionFactory
-     * @param exceptionTranslator
      */
     public static void closeSqlSession(SqlSession session, 
             SqlSessionFactory sessionFactory) {
