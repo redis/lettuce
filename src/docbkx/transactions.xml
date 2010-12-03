@@ -108,4 +108,46 @@
 </bean>]]></programlisting>
     </para>
   </section>
+  
+  <section id="transactions.programmatic">
+    <title>Programmatic transaction management</title>
+    <para>
+      MyBatis <literal>SqlSession</literal> provides you with some methods to handle
+      transactions programmatically. But MyBatis-Spring will inject into your beans
+      a Spring managed <literal>SqlSession</literal> or a Spring managed mapper. That
+      means that Spring will <emphasis>always</emphasis> handle your transactions. 
+    </para>
+    <para>
+      You cannot call <literal>SqlSession.commit()</literal>, <literal>SqlSession.rollback()</literal>  
+      or <literal>SqlSession.close()</literal> over a Spring managed <literal>SqlSession</literal>.
+      If you try to do so, a <literal>UnsupportedOperationException</literal> exception 
+      will be thrown. In case you are using injected mappers you won't even have access 
+      to those methods.
+    </para>
+    <para>
+      Regardless your connection autocommit is set or not, any execution of a 
+      <literal>SqlSession</literal> statement method or any call to a mapper 
+      method outside a Spring transaction will be automatically committed. 
+    </para>
+    <para>
+      If you want to control your transactions programmatically please refer to chapter 10.6 of 
+      the Spring reference manual. This code shows how to handle a transaction manually 
+      using the <literal>PlatformTransactionManager</literal> described in section 10.6.2. 
+      <programlisting language="java"><![CDATA[
+DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+
+TransactionStatus status = txManager.getTransaction(def);
+try {
+  userMapper.insertUser(user);
+}
+catch (MyException ex) {
+  txManager.rollback(status);
+  throw ex;
+}
+txManager.commit(status);
+      ]]></programlisting>
+      Notice that this code shows a mapper but it will also work with a <literal>SqlSession</literal>.
+    </para>
+  </section>
 </chapter>
