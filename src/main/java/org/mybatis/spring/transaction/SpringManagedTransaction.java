@@ -75,11 +75,12 @@ public class SpringManagedTransaction implements Transaction {
         this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.unwrappedConnection, dataSource);
 
         if (this.logger.isDebugEnabled()) {
-            if (this.isConnectionTransactional) {
-                this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by Spring");
-            } else {
-                this.logger.debug("JDBC Connection [" + this.connection + "] will be managed by SpringManagedTransaction");
-            }
+            this.logger.debug(
+                    "JDBC Connection [" 
+                    + this.connection 
+                    + "] will" 
+                    + (this.isConnectionTransactional?" ":" not ") 
+                    + "be managed by Spring");
         }
     }
 
