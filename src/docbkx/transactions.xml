@@ -125,7 +125,7 @@
       to those methods.
     </para>
     <para>
-      Regardless your connection autocommit is set or not, any execution of a 
+      Regardless your connection's autocommit is set or not, any execution of a 
       <literal>SqlSession</literal> data method or any call to a mapper 
       method outside a Spring transaction will be automatically committed. 
     </para>
