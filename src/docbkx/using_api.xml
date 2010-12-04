@@ -26,9 +26,6 @@
     With MyBatis-Spring, you can continue to directly use the MyBatis API.
     Simply create an <literal>SqlSessionFactory</literal> in Spring using
     <literal>SqlSessionFactoryBean</literal> and use the factory in your code.
-    In this case you will not have any MyBatis-Spring dependencies in your
-    code; simply use the injected <literal>SqlSessionFactory</literal> in your
-    DAOs:
 
     <programlisting language="java"><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
   // SqlSessionFactory would normally be set by SqlSessionDaoSupport
@@ -52,12 +49,39 @@
   </para>
 
   <para>
-    Note that this usage will <emphasis>not</emphasis> participate in any
-    Spring transactions. Further, if the <literal>SqlSession</literal> is using a
-    <literal>DataSource</literal> that is also being used by a Spring
-    transaction manager and there is currently a transaction in progress, this
-    code <emphasis>will</emphasis> throw an exception. For this reason, if you
-    must use this style of access, you should not use a Spring transactional
-    database connection.
+    Use this option <emphasis>with care</emphasis> because it may produce runtime errors or,
+	much worse, data integrity problems. This option has several caveats:
+	<itemizedlist>
+		<listitem>
+			<para>
+				It will <emphasis>not</emphasis> participate in any Spring transactions.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				If the <literal>SqlSession</literal> is using a <literal>DataSource</literal>
+				that is also being used by a Spring transaction manager and there is currently 
+				a transaction in progress, this code <emphasis>will</emphasis> throw an exception.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				The default MyBatis default <literal>SqlSession</literal> is not thread safe. If you try to
+				inject it in your beans you <emphasis>will</emphasis> get errors.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				Mappers got from MyBatis default <literal>SqlSession</literal> are not thread safe either. 
+				If you try to inject them it in your beans you <emphasis>will</emphasis> get errors.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				You must make sure that your <literal>SqlSession</literal>s 
+				are <emphasis>always</emphasis> closed.
+			</para>
+		</listitem>
+	</itemizedlist>
   </para>
 </chapter>

@@ -48,7 +48,8 @@
     <para>
       A data mapper is added to Spring like the following:
 
-      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+      <programlisting language="xml"><![CDATA[
+<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
@@ -79,10 +80,7 @@
       respective <literal>sqlSessionFactory</literal> or 
       <literal>sqlSessionTemplate</literal> properties or they can
       be autowired by Spring. If both properties are set, the 
-      <literal>SqlSessionFactory</literal> is ignored. Since the 
-      <literal>SqlSessionTemplate</literal> is required to have a session
-      factory set, that factory will be used by
-      <literal>MapperFactoryBean</literal>.
+      <literal>sqlSessionFactory</literal> is ignored.
     </para>
 
     <para>
@@ -95,15 +93,20 @@
 
        This bean can be used directly in application logic:
 
-      <programlisting language="java"><![CDATA[public class FooService {
+       <programlisting language="java"><![CDATA[
+public class FooServiceImpl implements FooService {
+
   private UserMapper userMapper;
 
-  ...
+  public void setUserMapper(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
 
   public User doSomeBusinessStuff(String userId) {
     return this.userMapper.getUser(userId);
   }
-}]]></programlisting>
+}
+       ]]></programlisting>
 
        Notice that there are no <literal>SqlSession</literal> or MyBatis
        references in this code.  Nor is there any need to create, open or close
@@ -164,7 +167,7 @@
      That is, if no annotation is found, it will use the uncapitalized non-qualified class 
      name of the mapper. But if either a @Component or a JSR-330 @Named annotation is 
      found it will get the name from it.
-     Notice that for example you can configure <literal>annotationClass</literal>
+     Notice that you can set the <literal>annotationClass</literal> property
      to <literal>org.springframework.stereotype.Component</literal>,  
      <literal>javax.inject.Named</literal> (if you have JSE 6) or to your own annotation
      (that must be itself annotated) so the annotation will work both as a marker 

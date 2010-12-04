@@ -62,14 +62,16 @@
     </para> 
       
     <para>
-      <literal>SqlSessionTemplate</literal> implements
-      <literal>SqlSession</literal> and is meant to be a drop-in replacement
-      for MyBatis <literal>SqlSession</literal>.
+      <literal>SqlSessionTemplate</literal> implements <literal>SqlSession</literal> 
+      and is meant to be a drop-in replacement for MyBatis <literal>SqlSession</literal>.
+    </para>
+
+    <para>
       <literal>SqlSessionTemplate</literal> should <emphasis>always</emphasis>
-      be used instead of <literal>SqlSession</literal> because the base MyBatis
-      <literal>SqlSession</literal> cannot participate in Spring transactions
-      and is not thread safe. Switching between the two classes in the same
-      application can cause data integrity issues.
+      be used instead of default MyBatis implementation <literal>DefaultSqlSession</literal> 
+      because it cannot participate in Spring transactions and it cannot be 
+      injected because it is not thread safe. 
+      Switching between the two classes in the same application can cause data integrity issues.
     </para>
 
     <para>
@@ -132,7 +134,11 @@ public class UserDaoImpl implements UserDao {
     <para>
       Note that this configuration style only needs to be used if the desired
       execution method differs from the default set for the
-      <literal>SqlSessionFactory</literal>. The caveat to this form is that
+      <literal>SqlSessionFactory</literal>. 
+    </para>
+
+    <para>
+      The caveat to this form is that
       there <emphasis>cannot</emphasis> be an existing transaction running with
       a different ExecutorType when this method is called. Either ensure that
       calls to <literal>SqlSessionTemplate</literal>s with different executor
@@ -168,7 +174,7 @@ public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
       <literal>SqlSessionDaoSupport</literal> requires either an
       <literal>sqlSessionFactory</literal> or an <literal>sqlSessionTemplate</literal> 
       property to be set. These can be set explicitly or autowired by Spring. 
-      If both properties are set, the SqlSessionFactory is ignored.
+      If both properties are set, the <literal>sqlSessionFactory</literal> is ignored.
     </para>
 
     <para>

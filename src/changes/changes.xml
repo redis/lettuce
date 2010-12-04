@@ -29,22 +29,28 @@
     <body>
         <release version="1.0.0-RC4" date="TBD" description="1.0.0-RC4 release">
             <action type="fix" issue="196">
-                SqlSession rolls back with no Spring Tx && autocommit=false && dirty=true (an update was executed)
+                SqlSession rolls back with no Spring Tx + autocommit=false + dirty=true (an update was executed)
+            </action>
+            <action type="update">
+				setTransactionFactoryProperties property in SqlSessionFactory has been removed
+            </action>
+            <action type="update">
+				setTransactionFactoryClass property in SqlSessionFactory has been replaced by setTransactionFactory
             </action>
             <action type="update">
                 Improved logging
             </action>
             <action type="fix" issue="185">
-                MyBatis-Spring doesn't propagate exceptions up the stack when using batch mode
+                Doesn't propagate exceptions up the stack when using batch mode
             </action>
         </release>
 
         <release version="1.0.0-RC3" date="2010-11-22" description="1.0.0-RC3 release">
             <action type="update">
-                The getSqlSessionTemplate() method in SqlSessionDaoSupport has been replaced by getSqlSession()
+                getSqlSessionTemplate() method in SqlSessionDaoSupport has been replaced by getSqlSession()
             </action>
             <action type="update">
-                MapperFactoryBean has been moved from org.mybatis.spring package to org.mybatis.spring.mapper
+                MapperFactoryBean has been moved to org.mybatis.spring.mapper.MapperFactoryBean
             </action>
             <action type="update">
                 MapperScannerPostProcessor has been moved to org.mybatis.spring.mapper.MapperScannerConfigurer
@@ -83,7 +89,7 @@
                 Setting a specific datasource for one mapper does not work
             </action>
             <action type="fix" issue="160">
-                mybatis-spring should not let changing the executor type during a tx
+                should not let changing the executor type during a tx
             </action>
             <action type="fix" issue="161">
                 mapperLocations does not work for xml files inside JARs
