@@ -15,7 +15,9 @@
  */
 package org.mybatis.spring.mapper;
 
-public class MapperClass {
-    // child class for MapperScannerPostProcessor tests
-    // ensures classes are not loaded as MapperFactoryBeans
-}
+/**
+ * @version $Id$
+ */
+// child class for MapperScannerPostProcessor tests
+// ensures classes are not loaded as MapperFactoryBeans
+public class MapperClass {}

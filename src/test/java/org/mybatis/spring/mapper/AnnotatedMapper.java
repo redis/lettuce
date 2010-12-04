@@ -17,9 +17,12 @@ package org.mybatis.spring.mapper;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * @version $Id$
+ */
+// annotated interface for MapperScannerPostProcessor tests
+// ensures annotated classes are loaded
 @Component
 public interface AnnotatedMapper {
-    // annotated interface for MapperScannerPostProcessor tests
-    // ensures annotated class usage
     public void method();
 }

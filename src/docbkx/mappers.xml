@@ -48,8 +48,7 @@
     <para>
       A data mapper is added to Spring like the following:
 
-      <programlisting language="xml"><![CDATA[
-<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
@@ -80,7 +79,10 @@
       respective <literal>sqlSessionFactory</literal> or 
       <literal>sqlSessionTemplate</literal> properties or they can
       be autowired by Spring. If both properties are set, the 
-      <literal>sqlSessionFactory</literal> is ignored.
+      <literal>SqlSessionFactory</literal> is ignored. Since the 
+      <literal>SqlSessionTemplate</literal> is required to have a session
+      factory set, that factory will be used by
+      <literal>MapperFactoryBean</literal>.
     </para>
 
     <para>
@@ -93,8 +95,7 @@
 
        This bean can be used directly in application logic:
 
-       <programlisting language="java"><![CDATA[
-public class FooServiceImpl implements FooService {
+       <programlisting language="java"><![CDATA[public class FooServiceImpl implements FooService {
 
   private UserMapper userMapper;
 
@@ -105,8 +106,7 @@ public class FooServiceImpl implements FooService {
   public User doSomeBusinessStuff(String userId) {
     return this.userMapper.getUser(userId);
   }
-}
-       ]]></programlisting>
+}]]></programlisting>
 
        Notice that there are no <literal>SqlSession</literal> or MyBatis
        references in this code. Nor is there any need to create, open or close
@@ -143,8 +143,8 @@ public class FooServiceImpl implements FooService {
       <literal>MapperFactoryBeans</literal>. But, if you are using more than
       one <literal>DataSource</literal>, (thus, more than one
       SqlSessionFactory), autowiring will not  work. In this case you can use
-      the <literal>sqlSessionFactoryBean</literal> or 
-      <literal>sqlSessionTemplateBean</literal> properties to set the right
+      the <literal>sqlSessionFactory</literal> or 
+      <literal>sqlSessionTemplate</literal> properties to set the right
       factory / template.
     </para>
 

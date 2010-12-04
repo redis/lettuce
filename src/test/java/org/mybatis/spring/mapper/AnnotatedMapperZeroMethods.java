@@ -17,8 +17,10 @@ package org.mybatis.spring.mapper;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * @version $Id$
+ */
+// annotated interface for MapperScannerPostProcessor tests
+// ensures annotated class with no methods is not loaded
 @Component
-public interface AnnotatedMapperZeroMethods {
-    // annotated interface for MapperScannerPostProcessor tests
-    // ensures annotated class usage with no methods
-}
+public interface AnnotatedMapperZeroMethods {}

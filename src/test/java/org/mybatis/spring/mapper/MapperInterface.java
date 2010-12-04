@@ -15,10 +15,12 @@
  */
 package org.mybatis.spring.mapper;
 
+/**
+ * @version $Id: MapperFactoryBeanTest.java 3294 2010-11-28 04:01:46Z hpresnall $
+ */
+// marker interface for MapperScannerPostProcessor tests
+// when used as a marker interface,
+// this class should be ignored even though it has methods
 public interface MapperInterface {
-    // marker interface for MapperScannerPostProcessor tests
-
-    // when used as a marker interface,
-    // this class should be ignored even though it has methods
     public void method();
 }

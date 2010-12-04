@@ -23,13 +23,14 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
-import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
@@ -41,8 +42,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * BeanFactoryPostProcessor that searches recursively starting from a base package for interfaces
- * and registers them as {@link MapperFactoryBean}. Note that only interfaces with at least one method will
- * be registered; concrete classes will be ignored.
+ * and registers them as {@link MapperFactoryBean}. Note that only interfaces with at least one
+ * method will be registered; concrete classes will be ignored.
  * <p>
  * The <code>basePackage</code> property can contain more than one package name, separated by either
  * commas or semicolons.
@@ -62,7 +63,7 @@ import org.springframework.util.StringUtils;
  * <p>
  * Configuration sample:
  * <p>
- *
+ * 
  * <pre class="code">
  * {@code
  *   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
@@ -72,7 +73,7 @@ import org.springframework.util.StringUtils;
  *   </bean>
  * }
  * </pre>
- *
+ * 
  * @see org.mybatis.spring.mapper.MapperFactoryBean
  * @version $Id$
  */
@@ -138,10 +139,10 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
         }
 
         /**
-         * Configures parent scanner to search for the right interfaces.
-         * It can search for all interfaces or just for those that extends a markerInterface or/and
-         * those annotated with the annotationClass
-         */        
+         * Configures parent scanner to search for the right interfaces. It can search for all
+         * interfaces or just for those that extends a markerInterface or/and those annotated with
+         * the annotationClass
+         */
         @Override
         protected void registerDefaultFilters() {
             boolean acceptAllInterfaces = true;
@@ -196,29 +197,23 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
         }
 
         /**
-         * Calls the parent search that will search and register all the candidates.
-         * Then the registered objects are post processed to set them as MapperFactoryBeans
-         */        
+         * Calls the parent search that will search and register all the candidates. Then the
+         * registered objects are post processed to set them as MapperFactoryBeans
+         */
         @Override
         protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
             Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
             if (beanDefinitions.isEmpty()) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("No MyBatis mapper was found in '"
-                            + MapperScannerConfigurer.this.basePackage
-                            + "' package. Please check your configuration");
-                }
+                logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage
+                        + "' package. Please check your configuration.");
             } else {
                 for (BeanDefinitionHolder holder : beanDefinitions) {
-                    ScannedGenericBeanDefinition definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
+                    GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Creating MapperFactoryBean with '"
-                                + holder.getBeanName()
-                                + "' name and '"
-                                + definition.getBeanClassName()
-                                + "' mapperInterface");
+                        logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName() + "' and '"
+                                + definition.getBeanClassName() + "' mapperInterface");
                     }
 
                     // the mapper interface is the original class of the bean
@@ -246,6 +241,31 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
         @Override
         protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
             return (beanDefinition.getMetadata().isInterface() && beanDefinition.getMetadata().isIndependent());
+        }
+
+        @Override
+        protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
+            if (!super.checkCandidate(beanName, beanDefinition)) {
+                logger.warn("Skipping MapperFactoryBean with name '" + beanName + "' and '"
+                        + beanDefinition.getBeanClassName() + "' mapperInterface"
+                        + ". Bean already defined with the same name!");
+
+                return false;
+            }
+
+            for (String name : getRegistry().getBeanDefinitionNames()) {
+                BeanDefinition toCheck = getRegistry().getBeanDefinition(name);
+
+                if (toCheck.getBeanClassName().equals(beanDefinition.getBeanClassName())) {
+                    logger.warn("Skipping MapperFactoryBean with  name '" + beanName + "'  and '"
+                            + beanDefinition.getBeanClassName() + "' mapperInterface"
+                            + ". Bean already defined with the same type!");
+
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 

@@ -34,6 +34,9 @@ import org.mybatis.spring.mapper.MapperScannerConfigurer;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
+/**
+ * @version $Id$
+ */
 public class MapperScannerConfigurerTest {
     private GenericApplicationContext applicationContext;
 
@@ -159,6 +162,30 @@ public class MapperScannerConfigurerTest {
                 new RuntimeBeanReference("sqlSessionTemplate"));
 
         testInterfaceScan();
+    }
+
+    @Test
+    public void testScanWithNameConflict() {
+        GenericBeanDefinition definition = new GenericBeanDefinition();
+        definition.setBeanClass(Object.class);
+        applicationContext.registerBeanDefinition("mapperInterface", definition);
+
+        startContext();
+
+        assertSame("scanner should not overwite existing bean definition", applicationContext
+                .getBean("mapperInterface").getClass(), Object.class);
+    }
+
+    @Test
+    public void testScanWithTypeConflict() {
+        GenericBeanDefinition definition = new GenericBeanDefinition();
+        definition.setBeanClass(MapperImplementation.class);
+        applicationContext.registerBeanDefinition("fakeMapper", definition);
+
+        startContext();
+
+        assertSame("scanner should not overwite existing bean definition", applicationContext
+                .getBean("fakeMapper").getClass(), MapperImplementation.class);
     }
 
     private void setupSqlSessionFactory(String name) {
