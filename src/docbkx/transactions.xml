@@ -112,10 +112,10 @@
   <section id="transactions.programmatic">
     <title>Programmatic transaction management</title>
     <para>
-      MyBatis <literal>SqlSession</literal> provides you with some methods to handle
-      transactions programmatically. But MyBatis-Spring will inject into your beans
-      a Spring managed <literal>SqlSession</literal> or a Spring managed mapper. That
-      means that Spring will <emphasis>always</emphasis> handle your transactions. 
+      MyBatis <literal>SqlSession</literal> provides you with specific methods to handle
+      transactions programmatically. But when using MyBatis-Spring your beans will be 
+      injected with a Spring managed <literal>SqlSession</literal> or a Spring managed mapper. 
+      That means that Spring will <emphasis>always</emphasis> handle your transactions. 
     </para>
     <para>
       You cannot call <literal>SqlSession.commit()</literal>, <literal>SqlSession.rollback()</literal>  
@@ -126,7 +126,7 @@
     </para>
     <para>
       Regardless your connection autocommit is set or not, any execution of a 
-      <literal>SqlSession</literal> statement method or any call to a mapper 
+      <literal>SqlSession</literal> data method or any call to a mapper 
       method outside a Spring transaction will be automatically committed. 
     </para>
     <para>
