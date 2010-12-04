@@ -15,15 +15,13 @@
  */
 package org.mybatis.spring.sample;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mybatis.spring.SqlSessionTemplate;
-import org.mybatis.spring.sample.dao.UserDaoImpl;
 import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.service.FooService;
-import org.apache.ibatis.session.ExecutorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -39,13 +37,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @DirtiesContext
 public class SampleBatchTest {
 
-    @Autowired
     private FooService fooService;
 
-    // needed only to verify that the ExecutorType is BATCH
     @Autowired
-    private UserDaoImpl userMapperImpl;
-    
     public void setFooService(FooService fooService) {
         this.fooService = fooService;
     }
@@ -55,8 +49,5 @@ public class SampleBatchTest {
         User user = this.fooService.doSomeBusinessStuff("u1");
         assertNotNull(user);
         assertEquals("Pocoyo", user.getName());
-        assertEquals(ExecutorType.BATCH,
-                ((SqlSessionTemplate) userMapperImpl.getSqlSession())
-                .getExecutorType());
     }
 }

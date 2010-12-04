@@ -55,8 +55,9 @@
         <property name="configLocation" value="classpath:org/mybatis/spring/sample/mybatis-config.xml" />
     </bean>
 
-    <!-- extend SqlSessionDaoSupport, but use an SqlSessionTemplate with ExecutorType.BATCH  -->
-    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
+    <!-- directly injecting mappers (recommended), notice there is not UserMapperImpl needed -->
+    <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
         <property name="sqlSessionTemplate">
           <bean class="org.mybatis.spring.SqlSessionTemplate">
             <constructor-arg index="0" ref="sqlSessionFactory" />
@@ -65,7 +66,8 @@
         </property>
     </bean>
 
-    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceDaoImpl">
-        <property name="userDao" ref="userDao" />
+    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceMapperImpl">
+        <property name="userMapper" ref="userMapper" />
     </bean>
+
 </beans>
