@@ -77,7 +77,7 @@
       Assume you have a data mapper class defined like the following:
 
       <programlisting language="java"><![CDATA[public interface UserMapper {
-  @Select("SELECT * FROM user WHERE id = #{userId}")
+  @Select("SELECT * FROM users WHERE id = #{userId}")
   User getUser(@Param("userId") String userId);
 } ]]></programlisting>
 
@@ -107,7 +107,20 @@
 
      <para>
        Calling MyBatis data methods is now only one line of code:
-       <programlisting language="java"><![CDATA[User user = userMapper.getUser(userId);]]></programlisting>
+       <programlisting language="java"><![CDATA[
+public class FooServiceImpl implements FooService {
+
+  private UserMapper userMapper;
+
+  public void setUserMapper(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
+
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
+}
+       ]]></programlisting>
      </para>
 
   </section>
