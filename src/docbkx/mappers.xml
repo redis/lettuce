@@ -109,10 +109,8 @@ public class FooServiceImpl implements FooService {
        ]]></programlisting>
 
        Notice that there are no <literal>SqlSession</literal> or MyBatis
-       references in this code.  Nor is there any need to create, open or close
-       the session. If there is a Spring transaction in progress, the session
-       will also be committed when the transaction completes or or rolled back
-       if there is an error. 
+       references in this code. Nor is there any need to create, open or close
+       the session, MyBatis-Spring will take care of that. 
      </para>
   </section>
 

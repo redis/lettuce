@@ -49,8 +49,8 @@
   </para>
 
   <para>
-    Use this option <emphasis>with care</emphasis> because it may produce runtime errors or,
-	much worse, data integrity problems. This option has several caveats:
+    Use this option <emphasis>with care</emphasis> because wrong usage may produce runtime errors or,
+	much worse, data integrity problems. These are the caveats:
 	<itemizedlist>
 		<listitem>
 			<para>
