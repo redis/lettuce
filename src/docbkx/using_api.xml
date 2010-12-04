@@ -73,7 +73,7 @@
 		<listitem>
 			<para>
 				Mappers got from MyBatis default <literal>SqlSession</literal> are not thread safe either. 
-				If inject them it in your beans you <emphasis>will</emphasis> get errors.
+				If you inject them it in your beans you <emphasis>will</emphasis> get errors.
 			</para>
 		</listitem>
 		<listitem>
