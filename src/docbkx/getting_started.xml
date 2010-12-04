@@ -23,12 +23,8 @@
   <title>Getting Started</title>
 
   <para>
-    MyBatis-Spring helps you integrate your MyBatis code seamlessly with
-    Spring. Using the classes in this library, Spring will load the necessary
-    MyBatis factory and session classes for you. This library also provides
-    an easy way to inject MyBatis data mappers into your service beans.
-    Finally, MyBatis-Spring will handle transactions and translate MyBatis
-    exceptions into Spring DataAccessExceptions.
+    This chapter will show you in a few steps how to install and setup MyBatis-Spring and how to build
+    a simple data access transactional application. 
   </para>
 
   <section id="getting_started.installation">
@@ -41,11 +37,13 @@
     <para>
       If you are using Maven just add the following dependency
       to your pom.xml:
-      <programlisting language="xml"><![CDATA[<dependency>
+      <programlisting language="xml"><![CDATA[
+<dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
   <version>]]><?eval ${project.version}?><![CDATA[</version>
-</dependency>]]></programlisting>
+</dependency>]]>
+      </programlisting>
     </para>
   </section>
 
