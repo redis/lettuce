@@ -176,18 +176,6 @@ public class MapperScannerConfigurerTest {
                 .getBean("mapperInterface").getClass(), Object.class);
     }
 
-    @Test
-    public void testScanWithTypeConflict() {
-        GenericBeanDefinition definition = new GenericBeanDefinition();
-        definition.setBeanClass(MapperImplementation.class);
-        applicationContext.registerBeanDefinition("fakeMapper", definition);
-
-        startContext();
-
-        assertSame("scanner should not overwite existing bean definition", applicationContext
-                .getBean("fakeMapper").getClass(), MapperImplementation.class);
-    }
-
     private void setupSqlSessionFactory(String name) {
         GenericBeanDefinition definition = new GenericBeanDefinition();
         definition.setBeanClass(SqlSessionFactoryBean.class);

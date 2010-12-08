@@ -245,27 +245,14 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
 
         @Override
         protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
-            if (!super.checkCandidate(beanName, beanDefinition)) {
+            if (super.checkCandidate(beanName, beanDefinition)) {
+                return true;
+            } else {
                 logger.warn("Skipping MapperFactoryBean with name '" + beanName + "' and '"
                         + beanDefinition.getBeanClassName() + "' mapperInterface"
                         + ". Bean already defined with the same name!");
-
                 return false;
             }
-
-            for (String name : getRegistry().getBeanDefinitionNames()) {
-                BeanDefinition toCheck = getRegistry().getBeanDefinition(name);
-
-                if (toCheck.getBeanClassName().equals(beanDefinition.getBeanClassName())) {
-                    logger.warn("Skipping MapperFactoryBean with  name '" + beanName + "'  and '"
-                            + beanDefinition.getBeanClassName() + "' mapperInterface"
-                            + ". Bean already defined with the same type!");
-
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 
