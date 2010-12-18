@@ -30,7 +30,7 @@
     <artifactId>mybatis-spring</artifactId>
     <name>mybatis-spring</name>
     <description>An easy-to-use Spring3 bridge for MyBatis sql mapping framework.</description>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <contributors>
