@@ -63,7 +63,6 @@ public class SpringManagedTransaction implements Transaction {
      * @param connection JDBC connection to manage
      * @param dataSource The {@link DataSource} that was configured in current {@link SqlSessionFactory}
      * @see DataSourceUtils
-     * @see DataSourceUtils#isConnectionTransactional(Connection, DataSource)
      */
     public SpringManagedTransaction(Connection connection, DataSource dataSource) {
         Assert.notNull(connection, "No Connection specified");
@@ -124,7 +123,7 @@ public class SpringManagedTransaction implements Transaction {
 
     /**
      * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the original connection so it should
-     * be unwrapped before calling {@link DataSourceUtils#isConnectionTransactional(Connection, DataSource)}
+     * be unwrapped before calling DataSourceUtils isConnectionTransactional(Connection, DataSource)
      * 
      * @param connection May be a {@link ConnectionLogger} proxy
      * @return the original JDBC {@link Connection}

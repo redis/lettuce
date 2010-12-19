@@ -201,8 +201,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * The default implementation uses the standard MyBatis {@link XMLConfigBuilder} API to build a
      * {@link SqlSessionFactory} instance based on an Reader.
      *
-     * @see org.apache.ibatis.builder.xml.XMLConfigBuilder#parse()
-     *
      * @return SqlSessionFactory
      * @throws IOException if loading the config file failed
      * @throws IllegalAccessException
