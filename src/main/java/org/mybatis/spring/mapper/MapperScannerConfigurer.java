@@ -42,24 +42,24 @@ import org.springframework.util.StringUtils;
 
 /**
  * BeanFactoryPostProcessor that searches recursively starting from a base package for interfaces
- * and registers them as {@link MapperFactoryBean}. Note that only interfaces with at least one
+ * and registers them as {@code MapperFactoryBean}. Note that only interfaces with at least one
  * method will be registered; concrete classes will be ignored.
  * <p>
- * The <code>basePackage</code> property can contain more than one package name, separated by either
+ * The {@code basePackage} property can contain more than one package name, separated by either
  * commas or semicolons.
  * <p>
  * This class supports filtering the mappers created by either specifying a marker interface or an
- * annotation. The <code>annotationClass</code> property specifies an annotation to search for. The
- * <code>markerInterface</code> property specifies a parent interface to search for. If both
+ * annotation. The {@code annotationClass} property specifies an annotation to search for. The
+ * {@code markerInterface} property specifies a parent interface to search for. If both
  * properties are specified, mappers are added for interfaces that match <em>either</em> criteria.
  * By default, these two properties are null, so all interfaces in the given
- * <code>basePackage</code> are added as mappers.
+ * {@code basePackage} are added as mappers.
  * <p>
  * This configurer is usually used with autowire enabled so all the beans it creates are
- * automatically autowired with the proper {@link SqlSessionFactory} or {@link SqlSessionTemplate}.
- * If there is more than one {@link SqlSessionFactory} in the application, however, autowiring
- * cannot be used. In this case you must explicitly specify either an {@link SqlSessionFactory} or
- * an {@link SqlSessionTemplate} to use.
+ * automatically autowired with the proper {@code SqlSessionFactory} or {@code SqlSessionTemplate}.
+ * If there is more than one {@code SqlSessionFactory} in the application, however, autowiring
+ * cannot be used. In this case you must explicitly specify either an {@code SqlSessionFactory} or
+ * an {@code SqlSessionTemplate} to use.
  * <p>
  * Configuration sample:
  * <p>
@@ -74,7 +74,7 @@ import org.springframework.util.StringUtils;
  * }
  * </pre>
  * 
- * @see org.mybatis.spring.mapper.MapperFactoryBean
+ * @see MapperFactoryBean
  * @version $Id$
  */
 public class MapperScannerConfigurer implements BeanFactoryPostProcessor, InitializingBean {

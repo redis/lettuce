@@ -25,7 +25,7 @@ import org.apache.ibatis.transaction.TransactionFactory;
 import org.springframework.util.Assert;
 
 /**
- * Creates a {@link SpringManagedTransaction}.
+ * Creates a {@code SpringManagedTransaction}.
  * 
  * @version $Id$
  */

@@ -25,21 +25,18 @@ import javax.sql.DataSource;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.logging.jdbc.ConnectionLogger;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.Transaction;
-import org.apache.ibatis.transaction.jdbc.JdbcTransaction;
-import org.apache.ibatis.transaction.managed.ManagedTransaction;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.util.Assert;
 
 /**
- * MyBatis has two TransactionManagers out of the box: The {@link JdbcTransaction} and the
- * {@link ManagedTransaction}. When MyBatis runs under a Spring transaction none of them
- * will work fine because {@link JdbcTransaction} will commit/rollback/close and it should not
- * and {@link ManagedTransaction} will close the connection and it should not.
- * {@link SpringManagedTransaction} looks if the current connection is being managed by Spring. 
+ * MyBatis has two TransactionManagers out of the box: The {@code JdbcTransaction} and the
+ * {@code ManagedTransaction}. When MyBatis runs under a Spring transaction none of them
+ * will work fine because {@code JdbcTransaction} will commit/rollback/close and it should not
+ * and {@code ManagedTransaction} will close the connection and it should not.
+ * {@code SpringManagedTransaction} looks if the current connection is being managed by Spring. 
  * In that case it will no-op all commit/rollback/close calls assuming that the Spring 
- * transaction manager will do the job. Otherwise it will behave almost like {@link JdbcTransaction}.
+ * transaction manager will do the job. Otherwise it will behave almost like {@code JdbcTransaction}.
  *
  * @version $Id$
  */
@@ -56,13 +53,12 @@ public class SpringManagedTransaction implements Transaction {
     private final boolean isConnectionTransactional;
 
     /**
-     * Constructor that discovers if this {@link Transaction} should manage connection or let it to Spring. It gets both
-     * the {@link Connection} and the {@link DataSource} it was built from and asks Spring if they are bundled to the
+     * Constructor that discovers if this {@code Transaction} should manage connection or let it to Spring. It gets both
+     * the {@code Connection} and the {@code DataSource} it was built from and asks Spring if they are bundled to the
      * current transaction.
      * 
      * @param connection JDBC connection to manage
-     * @param dataSource The {@link DataSource} that was configured in current {@link SqlSessionFactory}
-     * @see DataSourceUtils
+     * @param dataSource The {@code DataSource} that was configured in current {@code SqlSessionFactory}
      */
     public SpringManagedTransaction(Connection connection, DataSource dataSource) {
         Assert.notNull(connection, "No Connection specified");
@@ -123,10 +119,10 @@ public class SpringManagedTransaction implements Transaction {
 
     /**
      * MyBatis wraps the JDBC Connection with a logging proxy but Spring registers the original connection so it should
-     * be unwrapped before calling DataSourceUtils isConnectionTransactional(Connection, DataSource)
+     * be unwrapped before calling {@code DataSourceUtils.isConnectionTransactional(Connection, DataSource)}
      * 
-     * @param connection May be a {@link ConnectionLogger} proxy
-     * @return the original JDBC {@link Connection}
+     * @param connection May be a {@code ConnectionLogger} proxy
+     * @return the original JDBC {@code Connection}
      */
     private Connection unwrapConnection(Connection connection) {
         if (Proxy.isProxyClass(connection.getClass())) {

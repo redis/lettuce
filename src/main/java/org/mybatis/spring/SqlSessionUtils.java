@@ -30,21 +30,17 @@ import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
-import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
  * Handles MyBatis SqlSession life cycle. It can register and get SqlSessions from 
- * Spring {@link TransactionSynchronizationManager}. Also works if no transaction is active.
+ * Spring {@code TransactionSynchronizationManager}. Also works if no transaction is active.
  *
  * @version $Id$
- * @see DataSourceUtils
- * @see TransactionSynchronizationManager
  */
 public final class SqlSessionUtils {
 
@@ -58,13 +54,13 @@ public final class SqlSessionUtils {
     }
 
     /**
-     * Creates a new MyBatis {@link SqlSession} from the {@link SqlSessionFactory}
-     * provided as a parameter and using its {@link DataSource} and {@link ExecutorType}
+     * Creates a new MyBatis {@code SqlSession} from the {@code SqlSessionFactory}
+     * provided as a parameter and using its {@code DataSource} and {@code ExecutorType}
      *
-     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
-     * @return a MyBatis {@literal SqlSession}
+     * @param sessionFactory a MyBatis {@code SqlSessionFactory} to create new sessions
+     * @return a MyBatis {@code SqlSession}
      * @throws TransientDataAccessResourceException if a transaction is active and the
-     *             {@literal SqlSessionFactory} is not using a {@literal SpringManagedTransactionFactory}
+     *             {@code SqlSessionFactory} is not using a {@code SpringManagedTransactionFactory}
      */
     public static SqlSession getSqlSession(SqlSessionFactory sessionFactory) {
         ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
@@ -72,18 +68,18 @@ public final class SqlSessionUtils {
     }
 
     /**
-     * If a Spring transaction is active it uses {@link DataSourceUtils} to get a 
-     * Spring managed {@link Connection}, then creates a new {@link SqlSession}
+     * If a Spring transaction is active it uses {@code DataSourceUtils} to get a 
+     * Spring managed {@code Connection}, then creates a new {@code SqlSession}
      * with this connection and synchronizes it with the transaction.
      * If there is not an active transaction it gets a connection directly from 
-     * the {@link DataSource} and creates a {@link SqlSession} with it. 
+     * the {@code DataSource} and creates a {@code SqlSession} with it. 
      *
-     * @param sessionFactory a MyBatis {@literal SqlSessionFactory} to create new sessions
+     * @param sessionFactory a MyBatis {@code SqlSessionFactory} to create new sessions
      * @param executorType The executor type of the SqlSession to create
      * @param exceptionTranslator Optional. Translates SqlSession.commit() exceptions to Spring exceptions.
      * @throws TransientDataAccessResourceException if a transaction is active and the
-     *             {@link SqlSessionFactory} is not using a {@link SpringManagedTransactionFactory}
-     * @see org.mybatis.spring.transaction.SpringManagedTransactionFactory
+     *             {@code SqlSessionFactory} is not using a {@code SpringManagedTransactionFactory}
+     * @see SpringManagedTransactionFactory
      */
     public static SqlSession getSqlSession(
             SqlSessionFactory sessionFactory, 
@@ -168,7 +164,7 @@ public final class SqlSessionUtils {
     }
 
     /**
-     * Checks if {@link SqlSession} passed as an argument is managed by Spring {@link TransactionSynchronizationManager}
+     * Checks if {@code SqlSession} passed as an argument is managed by Spring {@code TransactionSynchronizationManager}
      * If it is not, it closes it, otherwise it just updates the reference counter and 
      * lets Spring call the close callback when the managed transaction ends
      *
@@ -195,7 +191,7 @@ public final class SqlSessionUtils {
     }
 
     /**
-     * Returns if the {@link SqlSession} passed as an argument is being managed by Spring
+     * Returns if the {@code SqlSession} passed as an argument is being managed by Spring
      *
      * @param session a MyBatis SqlSession to check
      * @param sessionFactory the SqlSessionFactory which the SqlSession was built with
@@ -212,9 +208,9 @@ public final class SqlSessionUtils {
 
     /**
      * Callback for cleaning up resources. It cleans TransactionSynchronizationManager and
-     * also commits and closes the {@link SqlSession}.
-     * It assumes that {@link Connection} life cycle will be managed by 
-     * {@link DataSourceTransactionManager} or {@link JtaTransactionManager} 
+     * also commits and closes the {@code SqlSession}.
+     * It assumes that {@code Connection} life cycle will be managed by 
+     * {@code DataSourceTransactionManager} or {@code JtaTransactionManager} 
      */
     private static final class SqlSessionSynchronization extends TransactionSynchronizationAdapter {
 

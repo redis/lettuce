@@ -17,16 +17,14 @@ package org.mybatis.spring;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.transaction.support.ResourceHolderSupport;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
- * Used to keep current SqlSession in {@link TransactionSynchronizationManager}.
- * The {@link SqlSessionFactory} that created that {@link SqlSession} is used as a key.
- * {@link ExecutorType} is also kept to be able to check if the user is trying to change it
+ * Used to keep current {@code SqlSession} in {@code TransactionSynchronizationManager}.
+ * The {@code SqlSessionFactory} that created that {@code SqlSession} is used as a key.
+ * {@code ExecutorType} is also kept to be able to check if the user is trying to change it
  * during a TX (that is not allowed) and throw a Exception in that case.
  *
  * @version $Id$
@@ -42,8 +40,8 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
     /**
      * Creates a new holder instance.
      *
-     * @param sqlSession the {@literal SqlSession} has to be hold.
-     * @param executorType the {@literal ExecutorType} has to be hold.
+     * @param sqlSession the {@code SqlSession} has to be hold.
+     * @param executorType the {@code ExecutorType} has to be hold.
      */
     public SqlSessionHolder(SqlSession sqlSession, 
             ExecutorType executorType, 

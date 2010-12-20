@@ -29,11 +29,10 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  * Default exception translator.
  *
  * Translates MyBatis SqlSession returned exception into a Spring
- * {@link DataAccessException} using Spring's {@link SQLExceptionTranslator}
- * Can load {@link SQLExceptionTranslator} eagerly of when the
+ * {@code DataAccessException} using Spring's {@code SQLExceptionTranslator}
+ * Can load {@code SQLExceptionTranslator} eagerly of when the
  * first exception is translated.
  *
- * @see DataAccessException
  * @version $Id$
  */
 public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {
@@ -43,7 +42,7 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
     private SQLExceptionTranslator exceptionTranslator;
 
     /**
-     * Creates a new {@literal DataAccessExceptionTranslator} instance.
+     * Creates a new {@code DataAccessExceptionTranslator} instance.
      *
      * @param dataSource DataSource to use to find metadata and establish which error codes are usable.
      * @param exceptionTranslatorLazyInit if true, the translator instantiates internal stuff only the first time will

@@ -31,11 +31,10 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
-import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.util.Assert;
 
 /**
- * Thread safe, Spring managed, {@link SqlSession} that works with Spring
+ * Thread safe, Spring managed, {@code SqlSession} that works with Spring
  * transaction management to ensure that that the actual SqlSession used is the
  * one associated with the current Spring transaction. In addition, it manages
  * the session life-cycle, including closing, committing or rolling back the
@@ -47,7 +46,7 @@ import org.springframework.util.Assert;
  * will be used.
  * <p>
  * This template converts MyBatis PersistenceExceptions into unchecked
- * DataAccessExceptions, using, by default, a {@link MyBatisExceptionTranslator}.
+ * DataAccessExceptions, using, by default, a {@code MyBatisExceptionTranslator}.
  * <p>
  * Because SqlSessionTemplate is thread safe, a single instance can be shared
  * by all DAOs; there should also be a small memory savings by doing this. This
@@ -62,10 +61,7 @@ import org.springframework.util.Assert;
  * </pre>
  * 
  * @see SqlSessionFactory
- * @see SqlSession
- * @see ExecutorType
  * @see MyBatisExceptionTranslator
- * @see PersistenceExceptionTranslator
  * @version $Id$
  */
 public class SqlSessionTemplate implements SqlSession {
@@ -79,7 +75,7 @@ public class SqlSessionTemplate implements SqlSession {
     private final PersistenceExceptionTranslator exceptionTranslator;
 
     /**
-     * Constructs a Spring managed SqlSession with the {@link SqlSessionFactory} 
+     * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory} 
      * provided as an argument.
      *
      * @param sqlSessionFactory
@@ -89,9 +85,9 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     /**
-     * Constructs a Spring managed SqlSession with the {@link SqlSessionFactory} 
-     * provided as an argument and the given {@link ExecutorType}
-     * {@link ExecutorType} cannot be changed once the {@link SqlSessionTemplate}
+     * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory} 
+     * provided as an argument and the given {@code ExecutorType}
+     * {@code ExecutorType} cannot be changed once the {@code SqlSessionTemplate}
      * is constructed.
      *
      * @param sqlSessionFactory
@@ -104,12 +100,12 @@ public class SqlSessionTemplate implements SqlSession {
     }
 
     /**
-     * Constructs a Spring managed {@link SqlSession} with the given
-     * {@link SqlSessionFactory} and {@link ExecutorType}.
-     * A custom {@link SQLExceptionTranslator} can be provided as an 
-     * argument so any {@link PersistenceException} thrown by MyBatis
-     * can be custom translated to a {@link RuntimeException}
-     * The {@link SQLExceptionTranslator} can also be null and thus no
+     * Constructs a Spring managed {@code SqlSession} with the given
+     * {@code SqlSessionFactory} and {@code ExecutorType}.
+     * A custom {@code SQLExceptionTranslator} can be provided as an 
+     * argument so any {@code PersistenceException} thrown by MyBatis
+     * can be custom translated to a {@code RuntimeException}
+     * The {@code SQLExceptionTranslator} can also be null and thus no
      * exception translation will be done and MyBatis exceptions will be 
      * thrown
      *
@@ -329,8 +325,8 @@ public class SqlSessionTemplate implements SqlSession {
     /**
      * Proxy needed to route MyBatis method calls to the proper SqlSession got
      * from String's Transaction Manager
-     * It also unwraps exceptions thrown by {@link Method#invoke(Object, Object...)} to
-     * pass a {@link PersistenceException} to the {@link PersistenceExceptionTranslator}.
+     * It also unwraps exceptions thrown by {@code Method#invoke(Object, Object...)} to
+     * pass a {@code PersistenceException} to the {@code PersistenceExceptionTranslator}.
      */
     private class SqlSessionInterceptor implements InvocationHandler {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
