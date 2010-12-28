@@ -99,7 +99,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     /**
      * Set optional properties to be passed into the SqlSession configuration, as alternative to a
-     * {@code&lt;properties&gt;} tag in the configuration xml file. This will be used to
+     * {@code &lt;properties&gt;} tag in the configuration xml file. This will be used to
      * resolve placeholders in the config file.
      */
     public void setConfigurationProperties(Properties sqlSessionFactoryProperties) {
