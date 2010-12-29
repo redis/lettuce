@@ -24,7 +24,7 @@
 
   <para>
     This chapter will show you in a few steps how to install and setup MyBatis-Spring and how to build
-    a simple data access transactional application. 
+    a simple transactional application. 
   </para>
 
   <section id="getting_started.installation">
@@ -37,13 +37,11 @@
     <para>
       If you are using Maven just add the following dependency
       to your pom.xml:
-      <programlisting language="xml"><![CDATA[
-<dependency>
+      <programlisting language="xml"><![CDATA[<dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
   <version>]]><?eval ${project.version}?><![CDATA[</version>
-</dependency>]]>
-      </programlisting>
+</dependency>]]></programlisting>
     </para>
   </section>
 
@@ -105,8 +103,7 @@
 
      <para>
        Calling MyBatis data methods is now only one line of code:
-       <programlisting language="java"><![CDATA[
-public class FooServiceImpl implements FooService {
+       <programlisting language="java"><![CDATA[public class FooServiceImpl implements FooService {
 
   private UserMapper userMapper;
 
@@ -117,9 +114,7 @@ public class FooServiceImpl implements FooService {
   public User doSomeBusinessStuff(String userId) {
     return this.userMapper.getUser(userId);
   }
-}
-       ]]></programlisting>
+}]]></programlisting>
      </para>
-
   </section>
 </chapter>

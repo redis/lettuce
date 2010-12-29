@@ -34,8 +34,8 @@
   </para>  
 
   <para>
-    Note that is usually not necessary to use a <literal>SqlSession</literal> directly. 
-    In most cases a <literal>MapperFactoryBean</literal>, that will inject mappers
+    Note that it is usually not necessary to use a <literal>SqlSession</literal> directly. 
+    In most cases a <literal>MapperFactoryBean</literal> that will inject mappers
     into your beans, will be all that is needed. The 
     <link linkend="mappers.mapperfactorybean"><literal>MapperFactoryBean</literal></link> 
     will be explained in detail in the next chapter. 
@@ -63,23 +63,19 @@
       
     <para>
       <literal>SqlSessionTemplate</literal> implements <literal>SqlSession</literal> 
-      and is meant to be a drop-in replacement for MyBatis <literal>SqlSession</literal>.
-    </para>
-
-    <para>
-      <literal>SqlSessionTemplate</literal> should <emphasis>always</emphasis>
+      and is meant to be a drop-in replacement for any existing use of <literal>SqlSession</literal>
+      in your code. <literal>SqlSessionTemplate</literal> should <emphasis>always</emphasis>
       be used instead of default MyBatis implementation <literal>DefaultSqlSession</literal> 
-      because it cannot participate in Spring transactions and it cannot be 
-      injected because it is not thread safe. 
-      Switching between the two classes in the same application can cause data integrity issues.
+      because the template can participate in Spring transactions and is thread safe for use by
+      multiple injected mapper classes. Switching between the two classes in the
+      same application can cause data integrity issues.
     </para>
 
     <para>
       A <literal>SqlSessionTemplate</literal> can be constructed 
       using an <literal>SqlSessionFactory</literal> as a constructor argument.
 
-      <programlisting language="xml"><![CDATA[
-<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+      <programlisting language="xml"><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
 </bean>]]></programlisting>	      
     </para>
@@ -88,8 +84,7 @@
       This bean can now be injected directly in your DAO beans. You need a
       <literal>SqlSession</literal> property in your bean like the following
 
-      <programlisting language="java"><![CDATA[      
-public class UserDaoImpl implements UserDao {
+      <programlisting language="java"><![CDATA[public class UserDaoImpl implements UserDao {
     
   private SqlSession sqlSession;
 
@@ -104,8 +99,7 @@ public class UserDaoImpl implements UserDao {
       
       And inject the <literal>SqlSessionTemplate</literal> as follows
       
-      <programlisting language="java"><![CDATA[
-<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
+      <programlisting language="java"><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSession" ref="sqlSession" />
 </bean>]]></programlisting>	      
     </para>
@@ -113,22 +107,20 @@ public class UserDaoImpl implements UserDao {
     <para>
       <literal>SqlSessionTemplate</literal> has also a constructor that takes
       an <literal>ExecutorType</literal> as an argument. This allows you to
-      construct, for example, a batch <literal>SqlSession</literal> but using
+      construct, for example, a batch <literal>SqlSession</literal> by using
 	  the following in Spring's configuration xml:  
-      <programlisting language="xml"><![CDATA[
-<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+      <programlisting language="xml"><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></programlisting>
 	  
       Now all your statements will be batched so the following could be coded
       in a DAO
-      <programlisting language="java"><![CDATA[
- public void insertUsers(User[] users) {
+      <programlisting language="java"><![CDATA[public void insertUsers(User[] users) {
    for (User user : users) {
    	sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
    }
- }]]></programlisting>       
+ }]]></programlisting> 
     </para>
 
     <para>
@@ -142,7 +134,7 @@ public class UserDaoImpl implements UserDao {
       there <emphasis>cannot</emphasis> be an existing transaction running with
       a different ExecutorType when this method is called. Either ensure that
       calls to <literal>SqlSessionTemplate</literal>s with different executor
-      types run in a separate transaction, with PROPAGATION_REQUIRES_NEW or
+      types run in a separate transaction (e.g. with PROPAGATION_REQUIRES_NEW) or
       completely outside of a transaction.
     </para>
   </section>
@@ -156,8 +148,7 @@ public class UserDaoImpl implements UserDao {
       <literal>getSqlSession()</literal> you will get a <literal>SqlSessionTemplate</literal>
       which can then be used to execute SQL methods, like the following:
 
-      <programlisting language="java"><![CDATA[
-public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
+      <programlisting language="java"><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
     return (User) getSqlSession()
         .selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
@@ -182,11 +173,9 @@ public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
       <literal>SqlSessionDaoSupport</literal>, it can be configured in Spring
       like the following:
 
-      <programlisting language="xml"><![CDATA[
-<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+      <programlisting language="xml"><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></programlisting>
     </para>
   </section>
-
 </chapter>

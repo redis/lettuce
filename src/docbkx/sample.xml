@@ -51,7 +51,7 @@
 		The service is composed by an interface <literal>FooService.java</literal>
 		and an implementation <literal>FooServiceImpl.java</literal>. This service is transactional
 		so a transaction is started when any of its methods is called and committed when
-		the method ends without throwing a unchecked exception.
+		the method ends without throwing an unchecked exception.
 		<programlisting language="java"><![CDATA[@Transactional
 public interface FooService {
   User doSomeBusinessStuff(String userId);
@@ -131,7 +131,7 @@ public interface FooService {
 				</tr>
 			</tbody>
 		</table>
-		Please have a look at the different <literal>applicationContext.xml</literal>
+		Please take a look at the different <literal>applicationContext.xml</literal>
 		files to see MyBatis-Spring in action.
 	</para>
 </chapter>

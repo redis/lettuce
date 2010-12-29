@@ -49,8 +49,8 @@
   </para>
 
   <para>
-    Use this option <emphasis>with care</emphasis> because wrong usage may produce runtime errors or,
-	much worse, data integrity problems. These are the caveats:
+    Use this option <emphasis>with care</emphasis> because wrong usage may produce runtime errors or
+	worse, data integrity problems. Be aware of the following caveats with direct API usage:
 	<itemizedlist>
 		<listitem>
 			<para>
@@ -66,20 +66,20 @@
 		</listitem>
 		<listitem>
 			<para>
-				MyBatis default <literal>SqlSession</literal> is not thread safe. If you
+				MyBatis' <literal>DefaultSqlSession</literal> is not thread safe. If you
 				inject it in your beans you <emphasis>will</emphasis> get errors.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-				Mappers got from MyBatis default <literal>SqlSession</literal> are not thread safe either. 
+				Mappers created using <literal>DefaultSqlSession</literal> are not thread safe either. 
 				If you inject them it in your beans you <emphasis>will</emphasis> get errors.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 				You must make sure that your <literal>SqlSession</literal>s 
-				are <emphasis>always</emphasis> closed.
+				are <emphasis>always</emphasis> closed in a finally block.
 			</para>
 		</listitem>
 	</itemizedlist>

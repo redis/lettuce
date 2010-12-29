@@ -30,9 +30,9 @@
       Spring. Using the classes in this library, Spring will load the necessary
       MyBatis factory and session classes for you. This library also provides
       an easy way to inject MyBatis data mappers and <literal>SqlSession</literal>s
-      into your service beans. It will also handle transactions and translate MyBatis 
-      exceptions into Spring <literal>DataAccessException</literal>s. 
-      And Finally, it will let you build your application code free of 
+      into your service beans. It will also handle transactions and translate MyBatis
+      exceptions into Spring <literal>DataAccessException</literal>s.
+      Finally, it will let you build your application code free of 
       dependencies on MyBatis, Spring or MyBatis-Spring.
     </para>
   </section>
@@ -40,8 +40,8 @@
   <section id="introduction.motivation">
     <title>Motivation</title>
     <para>
-      As of version 2, Spring 3.0 only supports iBATIS version 2. An attempt 
-      was made to add MyBatis 3 support into Spring 3.0 (see the Spring Jira 
+      Spring version 2 only supports iBATIS version 2. An attempt was made to
+      add MyBatis 3 support into Spring 3.0 (see the Spring Jira 
       <ulink url="https://jira.springsource.org/browse/SPR-5991">issue</ulink>).
       Unfortunately, Spring 3.0 development ended before MyBatis 3.0 was
       officially released. Because the Spring team did not want to release with
@@ -77,5 +77,4 @@
       this project wouldn't exist.
     </para>
   </section>
-
 </chapter>

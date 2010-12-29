@@ -30,9 +30,9 @@
   </para>
 
   <para>
-    Once a Spring PlatformTransactionManager is configured, you can configure
+    Once a Spring transaction manager is configured, you can configure
     transactions in Spring as you normally would. Both
-    <literal>@Transactional</literal> annotations as well as AOP style
+    <literal>@Transactional</literal> annotations and AOP style
     configurations are supported. A single <literal>SqlSession</literal>
     object will be created and used for the duration of the transaction. This
     session will be committed or rolled back as appropriate when then
@@ -99,8 +99,7 @@
       also configure the <literal>SqlSessionFactoryBean</literal> to use the base 
       MyBatis <literal>ManagedTransactionFactory</literal>:
 
-      <programlisting language="xml"><![CDATA[
-<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
+      <programlisting language="xml"><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
   <property name="dataSource" ref="dataSource" />
   <property name="transactionFactory">
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
@@ -110,7 +109,7 @@
   </section>
   
   <section id="transactions.programmatic">
-    <title>Programmatic transaction management</title>
+    <title>Programmatic Transaction Management</title>
     <para>
       MyBatis <literal>SqlSession</literal> provides you with specific methods to handle
       transactions programmatically. But when using MyBatis-Spring your beans will be 
@@ -121,20 +120,18 @@
       You cannot call <literal>SqlSession.commit()</literal>, <literal>SqlSession.rollback()</literal>  
       or <literal>SqlSession.close()</literal> over a Spring managed <literal>SqlSession</literal>.
       If you try to do so, a <literal>UnsupportedOperationException</literal> exception 
-      will be thrown. In case you are using injected mappers you won't even have access 
-      to those methods.
+      will be thrown. Note these methods are not exposed in injected mapper classes.
     </para>
     <para>
-      Regardless your connection's autocommit is set or not, any execution of a 
+      Regardless of your JDBC connection's autocommit setting, any execution of a 
       <literal>SqlSession</literal> data method or any call to a mapper 
-      method outside a Spring transaction will be automatically committed. 
+      method outside a Spring transaction will be automatically committed.
     </para>
     <para>
       If you want to control your transactions programmatically please refer to chapter 10.6 of 
       the Spring reference manual. This code shows how to handle a transaction manually 
       using the <literal>PlatformTransactionManager</literal> described in section 10.6.2. 
-      <programlisting language="java"><![CDATA[
-DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+      <programlisting language="java"><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 
 TransactionStatus status = txManager.getTransaction(def);
@@ -145,9 +142,9 @@ catch (MyException ex) {
   txManager.rollback(status);
   throw ex;
 }
-txManager.commit(status);
-      ]]></programlisting>
-      Notice that this code shows a mapper but it will also work with a <literal>SqlSession</literal>.
+txManager.commit(status);]]></programlisting>
+
+      Notice that this code uses a mapper, but it will also work with a <literal>SqlSession</literal>.
     </para>
   </section>
 </chapter>

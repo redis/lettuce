@@ -38,7 +38,7 @@
     MyBatis, Spring or MyBatis-Spring. The proxy that
     <literal>MapperFactoryBean</literal> creates handles opening and closing
     the session as well as translating any exceptions into Spring
-    <literal>DataAccessExceptions</literal>. In addition, the proxy will start
+    <literal>DataAccessException</literal>s. In addition, the proxy will start
     a new Spring transaction if required or participate in an existing one if
     it a transaction is active. 
   </para>
@@ -73,11 +73,11 @@
     </para>
 
     <para>
-      Note that while <literal>MapperFactoryBean</literal> requires either an
+      Note that <literal>MapperFactoryBean</literal> requires either an
       <literal>SqlSessionFactory</literal> or an
       <literal>SqlSessionTemplate</literal>. These can be set through the
-      respective <literal>sqlSessionFactory</literal> or 
-      <literal>sqlSessionTemplate</literal> properties or they can
+      respective <literal>sqlSessionFactory</literal> and 
+      <literal>sqlSessionTemplate</literal> properties, or they can
       be autowired by Spring. If both properties are set, the 
       <literal>SqlSessionFactory</literal> is ignored. Since the 
       <literal>SqlSessionTemplate</literal> is required to have a session
@@ -120,7 +120,7 @@
       There is no need to register all your mappers in the Spring XML file.
       Instead, you can use a <literal>MapperScannerConfigurer</literal> that
       will search the classpath for your mappers and set them up
-      automatically as <literal>MapperFactoryBeans</literal>.
+      automatically as <literal>MapperFactoryBean</literal>s.
     </para>
 
     <para>
@@ -141,7 +141,7 @@
       <literal>SqlSessionFactory</literal> or <literal>SqlSessionTemplate</literal>
       because the <literal>MapperScannerConfigurer</literal> will autowire 
       <literal>MapperFactoryBeans</literal>. But, if you are using more than
-      one <literal>DataSource</literal>, (thus, more than one
+      one <literal>DataSource</literal> (thus, more than one
       SqlSessionFactory), autowiring will not  work. In this case you can use
       the <literal>sqlSessionFactory</literal> or 
       <literal>sqlSessionTemplate</literal> properties to set the right
@@ -158,20 +158,18 @@
      By default, these two properties are null, so all interfaces in the given
      base package(s) will be loaded as mappers.
     </para>
-    
+
     <para>
      Discovered mappers will be named using Spring default naming strategy for
-     autodetected components (see Spring manual 3.14.4). 
+     autodetected components (see section 3.14.4 of the Spring manual). 
      That is, if no annotation is found, it will use the uncapitalized non-qualified class 
      name of the mapper. But if either a @Component or a JSR-330 @Named annotation is 
-     found it will get the name from it.
+     found it will get the name from the annotation.
      Notice that you can set the <literal>annotationClass</literal> property
      to <literal>org.springframework.stereotype.Component</literal>,  
      <literal>javax.inject.Named</literal> (if you have JSE 6) or to your own annotation
      (that must be itself annotated) so the annotation will work both as a marker 
      and as a name provider.
     </para>
-    
    </section>
-
 </chapter>
