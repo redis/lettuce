@@ -26,6 +26,7 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
+import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.Environment;
@@ -212,6 +213,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 throw new NestedIOException("Failed to parse config resource: "
                         + this.configLocation, ex);
             } finally {
+                ErrorContext.instance().reset();
                 if (reader != null) {
                     try {
                         reader.close();
@@ -273,6 +275,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
                 } finally {
+                    ErrorContext.instance().reset();
                     if (reader != null) {
                         try {
                             reader.close();
