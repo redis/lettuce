@@ -73,17 +73,6 @@ public final class SqlSessionFactoryBeanTest {
         assertConfig(factoryBean.getObject(), JdbcTransactionFactory.class);
     }
 
-    // the MyBatis API allows null and empty environment names, so we should allow them too
-    @Test
-    public void testNullEnvironment() throws Exception {
-        setupFactoryBean();
-
-        factoryBean.setEnvironment(null);
-
-        assertConfig(factoryBean.getObject(), null,
-                org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
-    }
-
     @Test
     public void testEmptyStringEnvironment() throws Exception {
         setupFactoryBean();
