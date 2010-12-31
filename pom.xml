@@ -30,7 +30,7 @@
     <artifactId>mybatis-spring</artifactId>
     <name>mybatis-spring</name>
     <description>An easy-to-use Spring3 bridge for MyBatis sql mapping framework.</description>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <contributors>
@@ -56,9 +56,9 @@
     </contributors>
 
     <scm>
-        <url>scm:svn:http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</url>
-        <connection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</connection>
-        <developerConnection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</developerConnection>
+        <url>scm:svn:http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/tags/mybatis-spring-1.0.0</url>
+        <connection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/tags/mybatis-spring-1.0.0</connection>
+        <developerConnection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/tags/mybatis-spring-1.0.0</developerConnection>
     </scm>
 
     <build>
