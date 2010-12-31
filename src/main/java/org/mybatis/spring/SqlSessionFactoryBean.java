@@ -16,8 +16,6 @@
 package org.mybatis.spring;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -202,25 +200,14 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         Configuration configuration;
 
         if (this.configLocation != null) {
-            Reader reader = null;
             try {
-                reader = new InputStreamReader(this.configLocation.getInputStream());
-                // Null environment causes the configuration to use the default.
-                // This will be overwritten below regardless.
-                xmlConfigBuilder = new XMLConfigBuilder(reader, null, this.configurationProperties);
+                xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (IOException ex) {
                 throw new NestedIOException("Failed to parse config resource: "
                         + this.configLocation, ex);
             } finally {
                 ErrorContext.instance().reset();
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (IOException ignored) {
-                        // close quietly
-                    }
-                }
             }
 
             if (this.logger.isDebugEnabled()) {
@@ -267,21 +254,13 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     path = mapperLocation.toString();
                 }
 
-                Reader reader = null;
                 try {
-                    reader = new InputStreamReader(mapperLocation.getInputStream());
-                    XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(reader, configuration, path, sqlFragments);
+                    XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(), configuration, path, sqlFragments);
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
                 } finally {
                     ErrorContext.instance().reset();
-                    if (reader != null) {
-                        try {
-                            reader.close();
-                        } catch (IOException ignored) {
-                        }
-                    }
                 }
 
                 if (this.logger.isDebugEnabled()) {
