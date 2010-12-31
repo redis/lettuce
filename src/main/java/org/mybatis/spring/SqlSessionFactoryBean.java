@@ -203,7 +203,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             try {
                 xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
                 configuration = xmlConfigBuilder.parse();
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 throw new NestedIOException("Failed to parse config resource: "
                         + this.configLocation, ex);
             } finally {
