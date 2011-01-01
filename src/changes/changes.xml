@@ -38,10 +38,10 @@
                 SqlSession rolls back with no Spring Tx + autocommit=false + dirty=true (an update was executed)
             </action>
             <action type="update">
-				setTransactionFactoryProperties property in SqlSessionFactory has been removed
+                setTransactionFactoryProperties property in SqlSessionFactory has been removed
             </action>
             <action type="update">
-				setTransactionFactoryClass property in SqlSessionFactory has been replaced by setTransactionFactory
+                setTransactionFactoryClass property in SqlSessionFactory has been replaced by setTransactionFactory
             </action>
             <action type="update">
                 Improved logging
