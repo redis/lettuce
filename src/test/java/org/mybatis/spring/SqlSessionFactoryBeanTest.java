@@ -10,6 +10,8 @@ import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.junit.Test;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
@@ -111,11 +113,24 @@ public final class SqlSessionFactoryBeanTest {
         assertSame(factory.getConfiguration().getDefaultExecutorType(), org.apache.ibatis.session.ExecutorType.REUSE);
 
         // for each statement in the xml file: org.mybatis.spring.TestMapper.xxx & xxx
-        assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 8);
+        assertEquals(9, factory.getConfiguration().getMappedStatementNames().size());
 
-        assertEquals(factory.getConfiguration().getResultMapNames().size(), 4);
-        assertEquals(factory.getConfiguration().getParameterMapNames().size(), 0);
+        assertEquals(4, factory.getConfiguration().getResultMapNames().size());
+        assertEquals(0, factory.getConfiguration().getParameterMapNames().size());
     }
+
+    @Test
+    public void testMapperLocationsWithFragments() throws Exception {
+      setupFactoryBean();
+    
+      factoryBean.setMapperLocations(new Resource[] {
+          new ClassPathResource("org/mybatis/spring/TestMapper.xml"),
+          new ClassPathResource("org/mybatis/spring/TestMapper2.xml"),});
+    
+      SqlSessionFactory factory = factoryBean.getObject();
+    
+      assertEquals(2, factory.getConfiguration().getSqlFragments().size());
+    }  
 
     @Test
     public void testNullMapperLocations() throws Exception {

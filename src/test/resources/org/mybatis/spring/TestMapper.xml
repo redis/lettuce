@@ -24,8 +24,10 @@
 <mapper namespace="org.mybatis.spring.TestMapper">
 
     <select id="findTest" resultType="int">
-        SELECT 1
+        SELECT<include refid="includedSql"/>
     </select>
+
+    <sql id="includedSql">1</sql>
 
     <!-- invalid SQL used to test exception translation -->
     <select id="findFail" resultType="int">

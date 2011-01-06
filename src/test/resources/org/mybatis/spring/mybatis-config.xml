@@ -32,6 +32,7 @@
 
     <mappers>
         <mapper resource="org/mybatis/spring/TestMapper.xml" />
+        <mapper resource="org/mybatis/spring/TestMapper2.xml" />
     </mappers>
 
 </configuration>

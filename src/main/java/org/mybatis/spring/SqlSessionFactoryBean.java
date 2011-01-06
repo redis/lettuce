@@ -16,8 +16,6 @@
 package org.mybatis.spring;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -28,7 +26,6 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -44,8 +41,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}. 
- * This is the usual way to set up a shared MyBatis {@code SqlSessionFactory} in a Spring application context; 
+ * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}.
+ * This is the usual way to set up a shared MyBatis {@code SqlSessionFactory} in a Spring application context;
  * the SqlSessionFactory can then be passed to MyBatis-based DAOs via dependency injection.
  *
  * Either {@code DataSourceTransactionManager} or {@code JtaTransactionManager} can be used for transaction
@@ -146,8 +143,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     /**
      * Set the MyBatis TransactionFactory to use. Default is {@code SpringManagedTransactionFactory}
      *
-     * The default {@code SpringManagedTransactionFactory} should be appropriate for all cases: 
-     * be it Spring transaction management, EJB CMT or plain JTA. If there is no active transaction, 
+     * The default {@code SpringManagedTransactionFactory} should be appropriate for all cases:
+     * be it Spring transaction management, EJB CMT or plain JTA. If there is no active transaction,
      * SqlSession operations will execute SQL statements non-transactionally.
      *
      * <b>It is strongly recommended to use the default {@code TransactionFactory}.</b> If not used, any
@@ -162,7 +159,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     /**
-     * <b>NOTE:</b> This class <em>overrides</em> any {@code Environment} you have set in the MyBatis 
+     * <b>NOTE:</b> This class <em>overrides</em> any {@code Environment} you have set in the MyBatis
      * config file. This is used only as a placeholder name. The default value is
      * {@code SqlSessionFactoryBean.class.getSimpleName()}.
      *
@@ -193,19 +190,16 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    protected SqlSessionFactory buildSqlSessionFactory() throws IOException, IllegalAccessException,
-            InstantiationException {
+    protected SqlSessionFactory buildSqlSessionFactory() throws IOException, IllegalAccessException, InstantiationException {
 
-        XMLConfigBuilder xmlConfigBuilder;
         Configuration configuration;
 
         if (this.configLocation != null) {
             try {
-                xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
+                XMLConfigBuilder xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
                 configuration = xmlConfigBuilder.parse();
             } catch (Exception ex) {
-                throw new NestedIOException("Failed to parse config resource: "
-                        + this.configLocation, ex);
+                throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
             } finally {
                 ErrorContext.instance().reset();
             }
@@ -223,14 +217,12 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         if (this.transactionFactory == null) {
             this.transactionFactory = new SpringManagedTransactionFactory(this.dataSource);
         }
-        
+
         Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
 
         configuration.setEnvironment(environment);
 
         if (!ObjectUtils.isEmpty(this.mapperLocations)) {
-            Map<String, XNode> sqlFragments = new HashMap<String, XNode>();
-
             for (Resource mapperLocation : this.mapperLocations) {
                 if (mapperLocation == null) {
                     continue;
@@ -255,7 +247,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
 
                 try {
-                    XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(), configuration, path, sqlFragments);
+                    XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
+                            configuration, path, configuration.getSqlFragments());
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);

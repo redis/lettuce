@@ -27,7 +27,12 @@
     </properties>
 
     <body>
-        <release version="1.0.0" date="2010-12-31" description="1.0.0 GA release">
+        <release version="1.0.1" date="TBD" description="1.0.1 release">
+            <action type="fix" issue="222">
+                SqlSessionFactoryBean should allow sql fragments to be shared across multiple mapper files  
+            </action>
+        </release>
+        <release version="1.0.0" date="2010-12-31" description="1.0.0 release">
             <action type="fix" issue="14">
                 Support multiple character sets (parse XML from InputStream vs. Reader)
             </action>

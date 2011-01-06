@@ -266,7 +266,7 @@ public final class SqlSessionUtils {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
                     }
-                    this.holder.getSqlSession().commit(false);
+                    this.holder.getSqlSession().commit();
                 } catch (PersistenceException p) {
                     if (this.holder.getPersistenceExceptionTranslator() != null) {
                         throw this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
