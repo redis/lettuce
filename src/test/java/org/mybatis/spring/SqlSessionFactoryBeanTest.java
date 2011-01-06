@@ -113,19 +113,18 @@ public final class SqlSessionFactoryBeanTest {
         assertSame(factory.getConfiguration().getDefaultExecutorType(), org.apache.ibatis.session.ExecutorType.REUSE);
 
         // for each statement in the xml file: org.mybatis.spring.TestMapper.xxx & xxx
-        assertEquals(9, factory.getConfiguration().getMappedStatementNames().size());
+        assertEquals(8, factory.getConfiguration().getMappedStatementNames().size());
 
         assertEquals(4, factory.getConfiguration().getResultMapNames().size());
         assertEquals(0, factory.getConfiguration().getParameterMapNames().size());
     }
 
     @Test
-    public void testMapperLocationsWithFragments() throws Exception {
+    public void testFragmentsAreReadWithMapperLocatios() throws Exception {
       setupFactoryBean();
     
       factoryBean.setMapperLocations(new Resource[] {
-          new ClassPathResource("org/mybatis/spring/TestMapper.xml"),
-          new ClassPathResource("org/mybatis/spring/TestMapper2.xml"),});
+          new ClassPathResource("org/mybatis/spring/TestMapper.xml")});
     
       SqlSessionFactory factory = factoryBean.getObject();
     
