@@ -28,6 +28,9 @@
 
     <body>
         <release version="1.0.1" date="TBD" description="1.0.1 release">
+            <action type="update" issue="179">
+                Added a fail fast checking to ensure that all statements are fully loaded  
+            </action>
             <action type="fix" issue="222">
                 SqlSessionFactoryBean should allow sql fragments to be shared across multiple mapper files  
             </action>

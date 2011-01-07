@@ -33,6 +33,9 @@ import org.apache.ibatis.transaction.TransactionFactory;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.NestedIOException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -53,7 +56,7 @@ import org.springframework.util.ObjectUtils;
  * @see #setDataSource
  * @version $Id$
  */
-public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean {
+public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean, ApplicationListener<ApplicationEvent> {
 
     private final Log logger = LogFactory.getLog(getClass());
 
@@ -72,6 +75,18 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     private SqlSessionFactory sqlSessionFactory;
 
     private String environment = SqlSessionFactoryBean.class.getSimpleName();
+
+    private boolean failFast = true;
+
+    /**
+     * If true, a final check is done on Configuration to assure that all mapped statements
+     * are fully loaded and there is no one still pending to resolve includes
+     * 
+     * @param failFast
+     */
+    public void setFailFast(boolean failFast) {
+      this.failFast = failFast;
+    }
 
     /**
      * Set the location of the MyBatis {@code SqlSessionFactory} config file. A typical value is
@@ -292,6 +307,16 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      */
     public boolean isSingleton() {
         return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (failFast && event instanceof ContextRefreshedEvent) {
+            // fail-fast -> check all statements are completed
+            this.sqlSessionFactory.getConfiguration().buildAllStatements();
+        }
     }
 
 }
