@@ -76,13 +76,16 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private String environment = SqlSessionFactoryBean.class.getSimpleName();
 
-    private boolean failFast = true;
+    private boolean failFast;
 
     /**
      * If true, a final check is done on Configuration to assure that all mapped statements
-     * are fully loaded and there is no one still pending to resolve includes
+     * are fully loaded and there is no one still pending to resolve includes.
+     * Defaults to false.
      * 
-     * @param failFast
+     * @since 1.0.1
+     * 
+     * @param failFast enable failFast
      */
     public void setFailFast(boolean failFast) {
       this.failFast = failFast;
