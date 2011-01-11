@@ -29,6 +29,8 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.type.ClassMetadata;
@@ -77,7 +79,7 @@ import org.springframework.util.StringUtils;
  * @see MapperFactoryBean
  * @version $Id$
  */
-public class MapperScannerConfigurer implements BeanFactoryPostProcessor, InitializingBean {
+public class MapperScannerConfigurer implements BeanFactoryPostProcessor, InitializingBean, ApplicationContextAware {
 
     private String basePackage;
 
@@ -90,6 +92,8 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
     private Class<? extends Annotation> annotationClass;
 
     private Class<?> markerInterface;
+    
+    private ApplicationContext applicationContext;
 
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
@@ -118,6 +122,13 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
     /**
      * {@inheritDoc}
      */
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.basePackage, "Property 'basePackage' is required");
     }
@@ -127,6 +138,7 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
      */
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
         Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
+        scanner.setResourceLoader(this.applicationContext);
 
         scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage,
                 ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
