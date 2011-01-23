@@ -37,7 +37,7 @@ import com.mockrunner.mock.jdbc.MockDataSource;
 /**
  * @version $Id$
  */
-public class MapperScannerConfigurerTest {
+public final class MapperScannerConfigurerTest {
     private GenericApplicationContext applicationContext;
 
     @Before
@@ -58,7 +58,7 @@ public class MapperScannerConfigurerTest {
         // org.springframework.context.annotation.ClassPathBeanDefinitionScanner.includeAnnotationConfig
     }
 
-    public void startContext() {
+    private void startContext() {
         applicationContext.refresh();
         applicationContext.start();
 
