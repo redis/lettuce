@@ -318,7 +318,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     public void onApplicationEvent(ApplicationEvent event) {
         if (failFast && event instanceof ContextRefreshedEvent) {
             // fail-fast -> check all statements are completed
-            this.sqlSessionFactory.getConfiguration().buildAllStatements();
+            this.sqlSessionFactory.getConfiguration().getMappedStatementNames();
         }
     }
 
