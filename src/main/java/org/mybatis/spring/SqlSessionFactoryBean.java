@@ -256,6 +256,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 // Otherwise MyBatis will throw an exception because
                 // it will load both a mapper interface and the mapper xml file,
                 // and throw an exception telling that a mapperStatement cannot be loaded twice.
+                
+                // this is fixed in 3.0.5 but keep this if for backwards compatibility with 3.0.4
                 String path;
                 if (mapperLocation instanceof ClassPathResource) {
                     path = ((ClassPathResource) mapperLocation).getPath();
@@ -265,6 +267,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
 
                 try {
+                    // XMLMapperBuilder with inputs stream is available since MyBatis 3.0.4
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
                             configuration, path, configuration.getSqlFragments());
                     xmlMapperBuilder.parse();
