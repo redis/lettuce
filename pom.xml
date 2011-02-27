@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
-            <version>3.0.4</version>
+            <version>3.0.5-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
@@ -134,6 +134,13 @@
         </dependency>
 
         <!-- Test dependencies -->
+		<dependency>
+			<groupId>ognl</groupId>
+			<artifactId>ognl</artifactId>
+			<version>2.6.9</version>
+			<optional>true</optional>
+		</dependency>
+        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

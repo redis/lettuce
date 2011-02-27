@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring.mapper;
 
+import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
@@ -73,7 +74,11 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
 
         Configuration configuration = getSqlSession().getConfiguration();
         if (this.addToConfig && !configuration.hasMapper(this.mapperInterface)) {
-            configuration.addMapper(this.mapperInterface);
+            try {
+                configuration.addMapper(this.mapperInterface);
+            } finally {
+                ErrorContext.instance().reset();
+            }
         }
     }
 
