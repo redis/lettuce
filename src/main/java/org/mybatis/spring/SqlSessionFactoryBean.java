@@ -37,7 +37,6 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.NestedIOException;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.util.Assert;
@@ -205,10 +204,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      *
      * @return SqlSessionFactory
      * @throws IOException if loading the config file failed
-     * @throws IllegalAccessException
-     * @throws InstantiationException
      */
-    protected SqlSessionFactory buildSqlSessionFactory() throws IOException, IllegalAccessException, InstantiationException {
+    protected SqlSessionFactory buildSqlSessionFactory() throws IOException {
 
         Configuration configuration;
 
@@ -246,30 +243,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     continue;
                 }
 
-                // MyBatis holds a Map using "resource" name as a key.
-                // If a mapper file is loaded, it searches for a mapper interface type.
-                // If the type is found then it tries to load the mapper file again looking for this:
-                //
-                //   String xmlResource = type.getName().replace('.', '/') + ".xml";
-                //
-                // So if a mapper interface exists, resource cannot be an absolute path.
-                // Otherwise MyBatis will throw an exception because
-                // it will load both a mapper interface and the mapper xml file,
-                // and throw an exception telling that a mapperStatement cannot be loaded twice.
-                
-                // this is fixed in 3.0.5 but keep this if for backwards compatibility with 3.0.4
-                String path;
-                if (mapperLocation instanceof ClassPathResource) {
-                    path = ((ClassPathResource) mapperLocation).getPath();
-                } else {
-                    // this won't work if there is also a mapper interface in classpath
-                    path = mapperLocation.toString();
-                }
-
                 try {
-                    // XMLMapperBuilder with inputs stream is available since MyBatis 3.0.4
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
-                            configuration, path, configuration.getSqlFragments());
+                            configuration, mapperLocation.toString(), configuration.getSqlFragments());
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
@@ -283,7 +259,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             }
         } else {
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Property 'mapperLocations' was not specified, only MyBatis mapper files specified in the config xml were loaded");
+                this.logger.debug("Property 'mapperLocations' was not specified or no matching resources found");
             }
         }
 
