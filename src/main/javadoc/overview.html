@@ -1,0 +1,19 @@
+<body>
+  <a href="http://github.com/wg/lettuce">lettuce</a> is a scalable thread-safe Java
+  {@link com.lambdaworks.redis.RedisClient RedisClient}.
+
+  Multiple threads may share one {@link com.lambdaworks.redis.RedisConnection RedisConnection}
+  provided they avoid blocking and transactional operations such as
+  <a href="http://redis.io/commands/blpop">BLPOP</a> and
+  <a href="http://redis.io/commands/multi">MULTI</a>/<a href="http://redis.io/commands/exec">EXEC</a>.
+  Multiple open connections are efficiently managed by the excellent
+  <a href="http://www.jboss.org/netty">netty</a> NIO framework.
+
+  <p>
+    Each redis command is implemented by one or more methods with names identical to the lowercase
+    redis command name. Complex commands with multiple modifiers that change the result type include
+    the CamelCased modifier as part of the command name, e.g.
+    {@link com.lambdaworks.redis.RedisConnection#zrangebyscore zrangebyscore} and
+    {@link com.lambdaworks.redis.RedisConnection#zrangebyscoreWithScores zrangebyscoreWithScores}.
+  </p>
+</body>
