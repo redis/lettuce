@@ -400,6 +400,24 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
+    public String objectEncoding(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(ENCODING).addKey(key);
+        Command<String> cmd = dispatch(OBJECT, new StatusOutput(codec), args);
+        return getOutput(cmd);
+    }
+
+    public Long objectIdletime(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(IDLETIME).addKey(key);
+        Command<Long> cmd = dispatch(OBJECT, new IntegerOutput(codec), args);
+        return getOutput(cmd);
+    }
+
+    public Long objectRefcount(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(REFCOUNT).addKey(key);
+        Command<Long> cmd = dispatch(OBJECT, new IntegerOutput(codec), args);
+        return getOutput(cmd);
+    }
+
     public Boolean persist(K key) {
         Command<Boolean> cmd = dispatch(PERSIST, new BooleanOutput(codec), key);
         return getOutput(cmd);

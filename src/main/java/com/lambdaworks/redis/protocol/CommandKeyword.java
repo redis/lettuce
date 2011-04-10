@@ -8,8 +8,8 @@ package com.lambdaworks.redis.protocol;
  * @author Will Glozer
  */
 public enum CommandKeyword {
-    AFTER, AGGREGATE, ALPHA, ASC, BEFORE, BY, DESC, LIMIT, MAX, MIN,
-    NO, OBJECT, ONE, RESETSTAT, STORE, SUM, WEIGHTS, WITHSCORES;
+    AFTER, AGGREGATE, ALPHA, ASC, BEFORE, BY, DESC, ENCODING, IDLETIME, LIMIT,
+    MAX, MIN, NO, ONE, REFCOUNT, RESETSTAT, STORE, SUM, WEIGHTS, WITHSCORES;
 
     public byte[] bytes;
 

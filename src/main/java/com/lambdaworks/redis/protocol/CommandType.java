@@ -3,7 +3,7 @@
 package com.lambdaworks.redis.protocol;
 
 /**
- * All redis commands as of version 2.2.2.
+ * All redis commands as of version 2.2.4.
  *
  * @author Will Glozer
  */
@@ -19,7 +19,7 @@ public enum CommandType {
 
     // Keys
 
-    DEL, EXISTS, EXPIRE, EXPIREAT, KEYS, MOVE, PERSIST,
+    DEL, EXISTS, EXPIRE, EXPIREAT, KEYS, MOVE, OBJECT, PERSIST,
     RANDOMKEY, RENAME, RENAMENX, TTL, TYPE,
 
     // String

@@ -74,6 +74,26 @@ public class KeyCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void objectEncoding() throws Exception {
+        redis.set(key, value);
+        assertEquals("raw", redis.objectEncoding(key));
+        redis.set(key, String.valueOf(1));
+        assertEquals("int", redis.objectEncoding(key));
+    }
+
+    @Test
+    public void objectIdletime() throws Exception {
+        redis.set(key, value);
+        assertEquals(0, (long) redis.objectIdletime(key));
+    }
+
+    @Test
+    public void objectRefcount() throws Exception {
+        redis.set(key, value);
+        assertEquals(1, (long) redis.objectRefcount(key));
+    }
+
+    @Test
     public void persist() throws Exception {
         assertFalse(redis.persist(key));
         redis.set(key, value);
