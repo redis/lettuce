@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.mybatis.spring;
 
 import java.sql.SQLException;
 
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
 
 import org.springframework.core.io.ClassPathResource;
@@ -63,11 +64,11 @@ public abstract class AbstractMyBatisSpringTest {
         factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
         // note running without SqlSessionFactoryBean.configLocation set => default configuration
         factoryBean.setDataSource(dataSource);
+        factoryBean.setPlugins(new Interceptor[] {executorInterceptor});
         
         exceptionTranslator = new MyBatisExceptionTranslator(dataSource, true);
 
         sqlSessionFactory = factoryBean.getObject();
-        sqlSessionFactory.getConfiguration().addInterceptor(executorInterceptor);
 
         txManager = new DataSourceTransactionManager(dataSource);
     }

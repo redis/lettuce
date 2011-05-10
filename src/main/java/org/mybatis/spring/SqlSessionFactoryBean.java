@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
 	/**
-	 * Set type handlers. They must be annotated with {@code MappedTypes}
+	 * Set type handlers. They must be annotated with {@code MappedTypes} and optionally with {@code MappedJdbcTypes}
 	 * 
 	 * @since 1.0.1
 	 * 
@@ -126,7 +126,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
 	/**
-	 * List of type aliases to register
+	 * List of type aliases to register. They can be annotated with {@code Alias}
 	 * 
 	 * @since 1.0.1
 	 * 
