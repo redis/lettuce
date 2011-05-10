@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.junit.Test;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
-import org.mybatis.spring.type.TestTypeAlias;
-import org.mybatis.spring.type.TestTypeHandler;
+import org.mybatis.spring.type.DummyTypeAlias;
+import org.mybatis.spring.type.DummyTypeHandler;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -182,7 +182,7 @@ public final class SqlSessionFactoryBeanTest {
     @Test
     public void testAddATypeHandler() throws Exception {
         setupFactoryBean();
-        factoryBean.setTypeHandlers(new TypeHandler[] {new TestTypeHandler()});
+        factoryBean.setTypeHandlers(new TypeHandler[] {new DummyTypeHandler()});
         TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
         assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
     }
@@ -190,7 +190,7 @@ public final class SqlSessionFactoryBeanTest {
     @Test
     public void testAddATypeAlias() throws Exception {
         setupFactoryBean();
-        factoryBean.setTypeAliases(new Class[] {TestTypeAlias.class});
+        factoryBean.setTypeAliases(new Class[] {DummyTypeAlias.class});
         TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
         typeAliasRegistry.resolveAlias("testAlias");
     }
