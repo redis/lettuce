@@ -26,15 +26,18 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.transaction.TransactionFactory;
+import org.apache.ibatis.type.TypeHandler;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.NestedIOException;
 import org.springframework.core.io.ClassPathResource;
@@ -42,6 +45,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}.
@@ -78,17 +82,71 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private boolean failFast;
 
+    private Interceptor[] plugins;
+
+    private TypeHandler[] typeHandlers;
+
+    private Class<?>[] typeAliases;
+
+    private String typeAliasesPackage;
+
     /**
-     * If true, a final check is done on Configuration to assure that all mapped statements
-     * are fully loaded and there is no one still pending to resolve includes.
-     * Defaults to false.
+     * Mybatis plugin list.
      * 
      * @since 1.0.1
      * 
-     * @param failFast enable failFast
+     * @param plugins list of plugins
+     * 
      */
+    public void setPlugins(Interceptor[] plugins) {
+      this.plugins = plugins;
+    }
+
+	/**
+	 * Packages to search for type aliases.
+	 * 
+	 * @since 1.0.1
+	 * 
+	 * @param typeAliasesPackage package to scan for domain objects
+	 * 
+	 */
+    public void setTypeAliasesPackage(String typeAliasesPackage) {
+        this.typeAliasesPackage = typeAliasesPackage;
+    }
+
+	/**
+	 * Set type handlers. They must be annotated with {@code MappedTypes}
+	 * 
+	 * @since 1.0.1
+	 * 
+	 * @param typeHandlers Type handler list
+	 */
+    public void setTypeHandlers(TypeHandler[] typeHandlers) {
+        this.typeHandlers = typeHandlers;
+    }
+
+	/**
+	 * List of type aliases to register
+	 * 
+	 * @since 1.0.1
+	 * 
+	 * @param typeAliases Type aliases list
+	 */
+    public void setTypeAliases(Class<?>[] typeAliases) {
+        this.typeAliases = typeAliases;
+    }
+
+	/**
+	 * If true, a final check is done on Configuration to assure that all mapped
+	 * statements are fully loaded and there is no one still pending to resolve
+	 * includes. Defaults to false.
+	 * 
+	 * @since 1.0.1
+	 * 
+	 * @param failFast enable failFast
+	 */
     public void setFailFast(boolean failFast) {
-      this.failFast = failFast;
+        this.failFast = failFast;
     }
 
     /**
@@ -209,25 +267,68 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     protected SqlSessionFactory buildSqlSessionFactory() throws IOException {
 
         Configuration configuration;
-
+        
+        XMLConfigBuilder xmlConfigBuilder = null;
         if (this.configLocation != null) {
-            try {
-                XMLConfigBuilder xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
-                configuration = xmlConfigBuilder.parse();
-            } catch (Exception ex) {
-                throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
-            } finally {
-                ErrorContext.instance().reset();
-            }
-
-            if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
-            }
+            xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
+            configuration = xmlConfigBuilder.getConfiguration();
         } else {
             if (this.logger.isDebugEnabled()) {
                 this.logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
             }
             configuration = new Configuration();
+        }
+                
+        if (StringUtils.hasLength(this.typeAliasesPackage)) {
+            String[] typeAliasPackageArray = StringUtils.tokenizeToStringArray(this.typeAliasesPackage, 
+                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+            for (String packageToScan : typeAliasPackageArray) {
+                configuration.getTypeAliasRegistry().registerAliases(packageToScan);    
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Scanned package: '" + packageToScan + "' for aliases");
+                }
+            }
+        }
+
+        if (!ObjectUtils.isEmpty(this.typeAliases)) {
+            for (Class<?> typeAlias : this.typeAliases) {
+                configuration.getTypeAliasRegistry().registerAlias(typeAlias);
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Registered type alias: '" + typeAlias + "'");
+                }
+            }
+        }
+
+        if (!ObjectUtils.isEmpty(this.plugins)) {
+            for (Interceptor plugin : this.plugins) {
+                configuration.addInterceptor(plugin);
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Registered plugin: '" + plugin + "'");
+                }
+            }
+        }
+
+        if (!ObjectUtils.isEmpty(this.typeHandlers)) {
+            for (TypeHandler typeHandler : this.typeHandlers) {
+                configuration.getTypeHandlerRegistry().register(typeHandler);
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Registered type handler: '" + typeHandler + "'");
+                }
+            }
+        }
+
+        if (xmlConfigBuilder != null) {
+            try {
+                xmlConfigBuilder.parse();
+                
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
+                }
+            } catch (Exception ex) {
+                throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
+            } finally {
+                ErrorContext.instance().reset();
+            }
         }
 
         if (this.transactionFactory == null) {
@@ -235,9 +336,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
 
         Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
-
         configuration.setEnvironment(environment);
-
+        
         if (!ObjectUtils.isEmpty(this.mapperLocations)) {
             for (Resource mapperLocation : this.mapperLocations) {
                 if (mapperLocation == null) {
@@ -245,7 +345,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 }
 
                 // this block is a workaround for issue http://code.google.com/p/mybatis/issues/detail?id=235
-                // when running MyBatis 3.0.4. Not needed in 3.0.5 and above.
+                // when running MyBatis 3.0.4. But not always works. 
+                // Not needed in 3.0.5 and above.
                 String path;
                 if (mapperLocation instanceof ClassPathResource) {
                     path = ((ClassPathResource) mapperLocation).getPath();
