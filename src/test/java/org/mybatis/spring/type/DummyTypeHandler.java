@@ -26,6 +26,9 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedTypes;
 import org.apache.ibatis.type.TypeHandler;
 
+/**
+* @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
+*/
 @MappedTypes(BigInteger.class)
 public class DummyTypeHandler implements TypeHandler {
 

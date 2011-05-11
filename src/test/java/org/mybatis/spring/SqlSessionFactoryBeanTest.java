@@ -143,16 +143,16 @@ public final class SqlSessionFactoryBeanTest {
     }
 
     @Test
-    public void testFragmentsAreReadWithMapperLocatios() throws Exception {
-      setupFactoryBean();
-    
-      factoryBean.setMapperLocations(new Resource[] {
-          new ClassPathResource("org/mybatis/spring/TestMapper.xml")});
-    
-      SqlSessionFactory factory = factoryBean.getObject();
-    
-      assertEquals(2, factory.getConfiguration().getSqlFragments().size());
-    }  
+    public void testFragmentsAreReadWithMapperLocations() throws Exception {
+        setupFactoryBean();
+
+        factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
+
+        SqlSessionFactory factory = factoryBean.getObject();
+
+        // one for 'includedSql' and another for 'org.mybatis.spring.TestMapper.includedSql'
+        assertEquals(2, factory.getConfiguration().getSqlFragments().size());
+    }
 
     @Test
     public void testNullMapperLocations() throws Exception {
@@ -178,11 +178,12 @@ public final class SqlSessionFactoryBeanTest {
 
         assertDefaultConfig(factoryBean.getObject());
     }
-    
+
     @Test
     public void testAddATypeHandler() throws Exception {
         setupFactoryBean();
-        factoryBean.setTypeHandlers(new TypeHandler[] {new DummyTypeHandler()});
+        factoryBean.setTypeHandlers(new TypeHandler[] { new DummyTypeHandler() });
+
         TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
         assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
     }
@@ -190,7 +191,8 @@ public final class SqlSessionFactoryBeanTest {
     @Test
     public void testAddATypeAlias() throws Exception {
         setupFactoryBean();
-        factoryBean.setTypeAliases(new Class[] {DummyTypeAlias.class});
+
+        factoryBean.setTypeAliases(new Class[] { DummyTypeAlias.class });
         TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
         typeAliasRegistry.resolveAlias("testAlias");
     }
@@ -199,8 +201,10 @@ public final class SqlSessionFactoryBeanTest {
     public void testSearchATypeAliasPackage() throws Exception {
         setupFactoryBean();
         factoryBean.setTypeAliasesPackage("org/mybatis/spring/type");
+
         TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
         typeAliasRegistry.resolveAlias("testAlias");
+        typeAliasRegistry.resolveAlias("testAlias2");
     }
 
     private void assertDefaultConfig(SqlSessionFactory factory) {
@@ -219,9 +223,10 @@ public final class SqlSessionFactoryBeanTest {
         assertSame(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass(),
                 transactionFactoryClass);
 
-        // no mappers configured => no mapped statements
+        // no mappers configured => no mapped statements or other parsed elements
         assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 0);
         assertEquals(factory.getConfiguration().getResultMapNames().size(), 0);
         assertEquals(factory.getConfiguration().getParameterMapNames().size(), 0);
+        assertEquals(factory.getConfiguration().getSqlFragments().size(), 0);
     }
 }

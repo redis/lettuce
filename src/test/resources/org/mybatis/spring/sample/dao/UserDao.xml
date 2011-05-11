@@ -3,7 +3,7 @@
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--
-    Copyright 2010 The myBatis Team
+    Copyright 2010-2011 The myBatis Team
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 <!--
     version: $Id: UserMapper.xml 2444 2010-09-15 07:38:37Z simone.tripodi $
 -->
-<mapper namespace="org.mybatis.spring.sample.mapper.UserMapper">
+<mapper namespace="org.mybatis.spring.sample.dao.UserDao">
 
     <select id="getUser" resultType="org.mybatis.spring.sample.domain.User" parameterType="java.lang.String">
         select * from users where id=#{value}

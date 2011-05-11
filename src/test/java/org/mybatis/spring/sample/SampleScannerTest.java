@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -13,28 +13,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.service;
+package org.mybatis.spring.sample;
 
-import org.mybatis.spring.sample.dao.UserDao;
-import org.mybatis.spring.sample.domain.User;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
- * Impl of the FooService.
- *
- * FooService simply receives a userId and uses a mapper/dao to get a record from the database. .
+ * Example of MyBatis-Spring integration with a DAO configured via
+ * MapperScannerConfigurer.
  * 
- * @version $Id$
+ * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
  */
-public class FooServiceDaoImpl implements FooService {
-
-    private UserDao userDao;
-
-    public void setUserDao(UserDao userDao) {
-        this.userDao = userDao;
-    }
-
-    public User doSomeBusinessStuff(String userId) {
-        return this.userDao.getUser(userId);
-    }
-
-}
+@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-scanner.xml" })
+public class SampleScannerTest extends AbstractSampleTest {}

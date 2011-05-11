@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.mapper;
+package org.mybatis.spring.sample;
 
-import org.mybatis.spring.sample.domain.User;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
- * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a
- * proxy implementation at Spring application startup.
+ * Example of MyBatis-Spring integration with a DAO created by
+ * MapperFactoryBean.
  * 
- * @version $Id: UserMapper.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
+ * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
  */
-public interface UserMapper {
-
-    User getUser(String userId);
-
-}
+@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-mapper.xml" })
+public class SampleMapperTest extends AbstractSampleTest {}

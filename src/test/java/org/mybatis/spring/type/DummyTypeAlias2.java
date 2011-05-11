@@ -14,15 +14,14 @@
  *    limitations under the License.
  */
 
+package org.mybatis.spring.type;
+
+import org.apache.ibatis.type.Alias;
+
 /**
- * Sample for four usage scenarios.
- * <ul>
- * <li>Automatic configuration with MapperScannerConfigurer</li>
- * <li>Automatic DAO creation with MapperFactoryBean</li>
- * <li>Extending SqlSessionDaoSupport to code your mapper implementation</li> 
- * <li>Configuring a DAO for batch processing</li> 
- * </ul>
- *
- * @version $Id: package-info.java 2444 2010-09-15 07:38:37Z simone.tripodi $
- */
-package org.mybatis.spring.sample;
+* @version $Id$
+*/
+@Alias("testAlias2")
+public class DummyTypeAlias2 {
+
+}

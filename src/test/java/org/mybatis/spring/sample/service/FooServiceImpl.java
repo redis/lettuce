@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,30 +15,26 @@
  */
 package org.mybatis.spring.sample.service;
 
+import org.mybatis.spring.sample.dao.UserDao;
 import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.sample.mapper.UserMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /**
  * Impl of the FooService.
  *
- * FooService simply receives a userId and uses a mapper/dao to get a record from the database. .
+ * FooService simply receives a userId and uses a mapper/dao to get a record from the database.
  * 
- * @version $Id: FooServiceImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
+ * @version $Id$
  */
-@Service
-public class FooServiceMapperImpl implements FooService {
+public class FooServiceImpl implements FooService {
 
-    private UserMapper userMapper;
+    private UserDao userDao;
 
-    @Autowired
-    public void setUserMapper(UserMapper userMapper) {
-        this.userMapper = userMapper;
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
     }
 
     public User doSomeBusinessStuff(String userId) {
-        return this.userMapper.getUser(userId);
+        return this.userDao.getUser(userId);
     }
 
 }
