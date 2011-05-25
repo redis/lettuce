@@ -85,6 +85,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     private Interceptor[] plugins;
 
     private TypeHandler[] typeHandlers;
+    
+    private String typeHandlersPackage;
 
     private Class<?>[] typeAliases;
 
@@ -114,6 +116,18 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         this.typeAliasesPackage = typeAliasesPackage;
     }
 
+	/**
+	 * Packages to search for type handlers.
+	 * 
+	 * @since 1.0.1
+	 * 
+	 * @param typeHandlersPackage package to scan for type handlers
+	 * 
+	 */
+    public void setTypeHandlersPackage(String typeHandlersPackage) {
+        this.typeHandlersPackage = typeHandlersPackage;
+    }
+    
 	/**
 	 * Set type handlers. They must be annotated with {@code MappedTypes} and optionally with {@code MappedJdbcTypes}
 	 * 
@@ -308,6 +322,17 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             }
         }
 
+        if (StringUtils.hasLength(this.typeHandlersPackage)) {
+            String[] typeHandlersPackageArray = StringUtils.tokenizeToStringArray(this.typeHandlersPackage, 
+                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+            for (String packageToScan : typeHandlersPackageArray ) {
+                configuration.getTypeHandlerRegistry().register(packageToScan);    
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug("Scanned package: '" + packageToScan + "' for type handlers");
+                }
+            }
+        }
+        
         if (!ObjectUtils.isEmpty(this.typeHandlers)) {
             for (TypeHandler typeHandler : this.typeHandlers) {
                 configuration.getTypeHandlerRegistry().register(typeHandler);

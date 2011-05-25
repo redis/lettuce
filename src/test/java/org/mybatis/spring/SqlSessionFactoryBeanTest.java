@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -207,6 +208,16 @@ public final class SqlSessionFactoryBeanTest {
         typeAliasRegistry.resolveAlias("testAlias2");
     }
 
+    @Test
+    public void testSearchATypeHandlerPackage() throws Exception {
+        setupFactoryBean();
+        factoryBean.setTypeHandlersPackage("org/mybatis/spring/type");
+
+        TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
+        assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
+        assertTrue(typeHandlerRegistry.hasTypeHandler(BigDecimal.class));
+    }
+    
     private void assertDefaultConfig(SqlSessionFactory factory) {
         assertConfig(factory, SqlSessionFactoryBean.class.getSimpleName(),
                 org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
