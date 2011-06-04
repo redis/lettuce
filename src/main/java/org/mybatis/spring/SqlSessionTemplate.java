@@ -343,7 +343,10 @@ public class SqlSessionTemplate implements SqlSession {
             } catch (Throwable t) {
                 Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
                 if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
-                    unwrapped = SqlSessionTemplate.this.exceptionTranslator.translateExceptionIfPossible((PersistenceException) unwrapped);
+                    Throwable translated = SqlSessionTemplate.this.exceptionTranslator.translateExceptionIfPossible((PersistenceException) unwrapped);
+                    if (translated != null) {
+                        unwrapped = translated;
+                    }
                 }
                 throw unwrapped;
             } finally {
