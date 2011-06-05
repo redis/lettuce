@@ -60,7 +60,7 @@
     </bean>
     
     <!-- simple transactional service layer bean; the userDao can be implemented in various ways with MyBatis-Spring  -->
-    <bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
+    <bean id="fooService" class="org.mybatis.spring.sample.service.FooService">
         <property name="userDao" ref="userDao" />
     </bean>
 </beans>

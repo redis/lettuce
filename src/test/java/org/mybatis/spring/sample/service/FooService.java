@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,19 +15,27 @@
  */
 package org.mybatis.spring.sample.service;
 
+import org.mybatis.spring.sample.dao.UserDao;
 import org.mybatis.spring.sample.domain.User;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * FooService acts as a business service. 
  * 
- * All calls to any method of FooService are transactional.
- *
- * @version $Id: FooService.java 2654 2010-10-09 17:34:50Z eduardo.macarron $
+ * FooService simply receives a userId and uses a mapper/dao to get a record from the database.
+ * 
+ * @version $Id$
  */
 @Transactional
-public interface FooService {
+public class FooService {
 
-    User doSomeBusinessStuff(String userId);
+    private UserDao userDao;
+
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    public User doSomeBusinessStuff(String userId) {
+        return this.userDao.getUser(userId);
+    }
 
 }
