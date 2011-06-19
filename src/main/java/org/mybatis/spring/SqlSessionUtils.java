@@ -27,6 +27,7 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
@@ -269,7 +270,10 @@ public final class SqlSessionUtils {
                     this.holder.getSqlSession().commit();
                 } catch (PersistenceException p) {
                     if (this.holder.getPersistenceExceptionTranslator() != null) {
-                        throw this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
+                        DataAccessException translated = this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
+                        if (translated != null) {
+                            throw translated;
+                        }                        
                     }
                     throw p;
                 }
