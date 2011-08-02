@@ -5,6 +5,8 @@ package com.lambdaworks.redis;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
@@ -19,6 +21,19 @@ public class ServerCommandTest extends AbstractCommandTest {
     public void bgsave() throws Exception {
         String msg = "Background saving started";
         assertEquals(msg, redis.bgsave());
+    }
+
+    @Test
+    public void clientKill() throws Exception {
+        Pattern p = Pattern.compile("addr=(\\S+)");
+        Matcher m = p.matcher(redis.clientList());
+        assertTrue(m.lookingAt());
+        assertEquals("OK", redis.clientKill(m.group(1)));
+    }
+
+    @Test
+    public void clientList() throws Exception {
+        assertTrue(redis.clientList().contains("addr="));
     }
 
     @Test

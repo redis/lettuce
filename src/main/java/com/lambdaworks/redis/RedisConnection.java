@@ -102,6 +102,18 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
+    public String clientKill(String addr) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL).add(addr);
+        Command<String> cmd = dispatch(CLIENT, new StatusOutput(codec), args);
+        return getOutput(cmd);
+    }
+
+    public String clientList() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LIST);
+        Command<String> cmd = dispatch(CLIENT, new StatusOutput(codec), args);
+        return getOutput(cmd);
+    }
+
     public List<String> configGet(String parameter) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET).add(parameter);
         Command<List<String>> cmd = dispatch(CONFIG, new StringListOutput(codec), args);
