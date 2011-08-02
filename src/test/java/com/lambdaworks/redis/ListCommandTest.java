@@ -13,20 +13,20 @@ import static org.junit.Assert.assertTrue;
 public class ListCommandTest extends AbstractCommandTest {
     @Test
     public void blpop() throws Exception {
-        rpush("two", "2", "3");
+        redis.rpush("two", "2", "3");
         assertEquals(list("two", "2"), redis.blpop(1, "one", "two"));
     }
 
     @Test
     public void brpop() throws Exception {
-        rpush("two", "2", "3");
+        redis.rpush("two", "2", "3");
         assertEquals(list("two", "3"), redis.brpop(1, "one", "two"));
     }
 
     @Test
     public void brpoplpush() throws Exception {
-        rpush("one", "1", "2");
-        rpush("two", "3", "4");
+        redis.rpush("one", "1", "2");
+        redis.rpush("two", "3", "4");
         assertEquals("2", redis.brpoplpush(1, "one", "two"));
         assertEquals(list("1"), redis.lrange("one", 0, -1));
         assertEquals(list("2", "3", "4"), redis.lrange("two", 0, -1));
@@ -58,7 +58,7 @@ public class ListCommandTest extends AbstractCommandTest {
     @Test
     public void lpop() throws Exception {
         assertNull(redis.lpop(key));
-        rpush(key, "one", "two");
+        redis.rpush(key, "one", "two");
         assertEquals("one", redis.lpop(key));
         assertEquals(list("two"), redis.lrange(key, 0, -1));
     }
@@ -68,6 +68,8 @@ public class ListCommandTest extends AbstractCommandTest {
         assertEquals(1, (long) redis.lpush(key, "two"));
         assertEquals(2, (long) redis.lpush(key, "one"));
         assertEquals(list("one", "two"), redis.lrange(key, 0, -1));
+        assertEquals(4, (long) redis.lpush(key, "three", "four"));
+        assertEquals(list("four", "three", "one", "two"), redis.lrange(key, 0, -1));
     }
 
     @Test
@@ -81,7 +83,7 @@ public class ListCommandTest extends AbstractCommandTest {
     @Test
     public void lrange() throws Exception {
         assertTrue(redis.lrange(key, 0, 10).isEmpty());
-        rpush(key, "one", "two", "three");
+        redis.rpush(key, "one", "two", "three");
         List<String> range = redis.lrange(key, 0, 1);
         assertEquals(2, range.size());
         assertEquals("one", range.get(0));
@@ -93,7 +95,7 @@ public class ListCommandTest extends AbstractCommandTest {
     public void lrem() throws Exception {
         assertEquals(0, (long) redis.lrem(key, 0, value));
 
-        rpush(key, "1", "2", "1", "2", "1");
+        redis.rpush(key, "1", "2", "1", "2", "1");
         assertEquals(1, (long) redis.lrem(key, 1, "1"));
         assertEquals(list("2", "1", "2", "1"), redis.lrange(key, 0, -1));
 
@@ -108,14 +110,14 @@ public class ListCommandTest extends AbstractCommandTest {
 
     @Test
     public void lset() throws Exception {
-        rpush(key, "one", "two", "three");
+        redis.rpush(key, "one", "two", "three");
         assertEquals("OK", redis.lset(key, 2, "san"));
         assertEquals(list("one", "two", "san"), redis.lrange(key, 0, -1));
     }
 
     @Test
     public void ltrim() throws Exception {
-        rpush(key, "1", "2", "3", "4", "5", "6");
+        redis.rpush(key, "1", "2", "3", "4", "5", "6");
         assertEquals("OK", redis.ltrim(key, 0, 3));
         assertEquals(list("1", "2", "3", "4"), redis.lrange(key, 0, -1));
         assertEquals("OK", redis.ltrim(key, -2, -1));
@@ -125,7 +127,7 @@ public class ListCommandTest extends AbstractCommandTest {
     @Test
     public void rpop() throws Exception {
         assertNull(redis.rpop(key));
-        rpush(key, "one", "two");
+        redis.rpush(key, "one", "two");
         assertEquals("two", redis.rpop(key));
         assertEquals(list("one"), redis.lrange(key, 0, -1));
     }
@@ -133,8 +135,8 @@ public class ListCommandTest extends AbstractCommandTest {
     @Test
     public void rpoplpush() throws Exception {
         assertNull(redis.rpoplpush("one", "two"));
-        rpush("one", "1", "2");
-        rpush("two", "3", "4");
+        redis.rpush("one", "1", "2");
+        redis.rpush("two", "3", "4");
         assertEquals("2", redis.rpoplpush("one", "two"));
         assertEquals(list("1"), redis.lrange("one", 0, -1));
         assertEquals(list("2", "3", "4"), redis.lrange("two", 0, -1));
@@ -145,6 +147,8 @@ public class ListCommandTest extends AbstractCommandTest {
         assertEquals(1, (long) redis.rpush(key, "one"));
         assertEquals(2, (long) redis.rpush(key, "two"));
         assertEquals(list("one", "two"), redis.lrange(key, 0, -1));
+        assertEquals(4, (long) redis.rpush(key, "three", "four"));
+        assertEquals(list("one", "two", "three", "four"), redis.lrange(key, 0, -1));
     }
 
     @Test

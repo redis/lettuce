@@ -12,9 +12,11 @@ import static org.junit.Assert.*;
 public class SortedSetCommandTest extends AbstractCommandTest {
     @Test
     public void zadd() throws Exception {
-        assertTrue(redis.zadd(key, 1.0, "a"));
-        assertFalse(redis.zadd(key, 1.0, "a"));
+        assertEquals(1, (long) redis.zadd(key, 1.0, "a"));
+        assertEquals(0, (long) redis.zadd(key, 1.0, "a"));
         assertEquals(list("a"), redis.zrange(key, 0, -1));
+        assertEquals(2, (long) redis.zadd(key, 2.0, "b", 3.0, "c"));
+        assertEquals(list("a", "b", "c"), redis.zrange(key, 0, -1));
     }
 
     @Test
@@ -28,7 +30,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     public void zcount() throws Exception {
         assertEquals(0, (long) redis.zcount(key, 0, 0));
 
-        zaddAll(key, 1.0, "a", 2.0, "b", 2.1, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 2.1, "c");
 
         assertEquals(3, (long) redis.zcount(key, 1.0, 3.0));
         assertEquals(2, (long) redis.zcount(key, 1.0, 2.0));
@@ -48,8 +50,8 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
     @Test
     public void zinterstore() throws Exception {
-        zaddAll("zset1", 1.0, "a", 2.0, "b");
-        zaddAll("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
+        redis.zadd("zset1", 1.0, "a", 2.0, "b");
+        redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
         assertEquals(2, redis.zinterstore(key, "zset1", "zset2"), 0.0);
         assertEquals(list("a", "b"), redis.zrange(key, 0, -1));
         assertEquals(svlist(sv(3.0, "a"), sv(5.0, "b")), redis.zrangeWithScores(key, 0, -1));
@@ -57,19 +59,19 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
     @Test
     public void zrange() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(list("a", "b", "c"), redis.zrange(key, 0, -1));
     }
 
     @Test
     public void zrangeWithScores() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")), redis.zrangeWithScores(key, 0, -1));
     }
 
     @Test
     public void zrangebyscore() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(list("b", "c"), redis.zrangebyscore(key, 2.0, 3.0));
         assertEquals(list("b", "c"), redis.zrangebyscore(key, "(1.0", "(4.0"));
         assertEquals(list("a", "b", "c", "d"), redis.zrangebyscore(key, NEGATIVE_INFINITY, POSITIVE_INFINITY));
@@ -80,7 +82,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
     @Test
     public void zrangebyscoreWithScores() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(svlist(sv(2.0, "b"), sv(3.0, "c")), redis.zrangebyscoreWithScores(key, 2.0, 3.0));
         assertEquals(svlist(sv(2.0, "b"), sv(3.0, "c")), redis.zrangebyscoreWithScores(key, "(1.0", "(4.0"));
         assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")), redis.zrangebyscoreWithScores(key, NEGATIVE_INFINITY, POSITIVE_INFINITY));
@@ -92,56 +94,58 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     @Test
     public void zrank() throws Exception {
         assertNull(redis.zrank(key, "a"));
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(0, (long) redis.zrank(key, "a"));
         assertEquals(2, (long) redis.zrank(key, "c"));
     }
 
     @Test
     public void zrem() throws Exception {
-        assertFalse(redis.zrem(key, "a"));
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
-        assertTrue(redis.zrem(key, "b"));
+        assertEquals(0, (long) redis.zrem(key, "a"));
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        assertEquals(1, (long) redis.zrem(key, "b"));
         assertEquals(list("a", "c"), redis.zrange(key, 0, -1));
+        assertEquals(2, (long) redis.zrem(key, "a", "c"));
+        assertEquals(list(), redis.zrange(key, 0, -1));
     }
 
     @Test
     public void zremrangebyscore() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(2, (long) redis.zremrangebyscore(key, 1.0, 2.0));
         assertEquals(list("c"), redis.zrange(key, 0, -1));
 
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(1, (long) redis.zremrangebyscore(key, "(1.0", "(3.0"));
         assertEquals(list("a", "c"), redis.zrange(key, 0, -1));
     }
 
     @Test
     public void zremrangebyrank() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(2, (long) redis.zremrangebyrank(key, 1, 2));
         assertEquals(list("a", "d"), redis.zrange(key, 0, -1));
 
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(4, (long) redis.zremrangebyrank(key, 0, -1));
         assertEquals(0, (long) redis.zcard(key));
     }
 
     @Test
     public void zrevrange() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(list("c", "b", "a"), redis.zrevrange(key, 0, -1));
     }
 
     @Test
     public void zrevrangeWithScores() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangeWithScores(key, 0, -1));
     }
 
     @Test
     public void zrevrangebyscore() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(list("c", "b"), redis.zrevrangebyscore(key, 3.0, 2.0));
         assertEquals(list("c", "b"), redis.zrevrangebyscore(key, "(4.0", "(1.0"));
         assertEquals(list("d", "c", "b", "a"), redis.zrevrangebyscore(key, POSITIVE_INFINITY, NEGATIVE_INFINITY));
@@ -152,7 +156,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
     @Test
     public void zrevrangebyscoreWithScores() throws Exception {
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b")), redis.zrevrangebyscoreWithScores(key, 3.0, 2.0));
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b")), redis.zrevrangebyscoreWithScores(key, "(4.0", "(1.0"));
         assertEquals(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangebyscoreWithScores(key, POSITIVE_INFINITY, NEGATIVE_INFINITY));
@@ -164,7 +168,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     @Test
     public void zrevrank() throws Exception {
         assertNull(redis.zrevrank(key, "a"));
-        zaddAll(key, 1.0, "a", 2.0, "b", 3.0, "c");
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(0, (long) redis.zrevrank(key, "c"));
         assertEquals(2, (long) redis.zrevrank(key, "a"));
     }
@@ -178,8 +182,8 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
     @Test
     public void zunionstore() throws Exception {
-        zaddAll("zset1", 1.0, "a", 2.0, "b");
-        zaddAll("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
+        redis.zadd("zset1", 1.0, "a", 2.0, "b");
+        redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
         assertEquals(3, redis.zunionstore(key, "zset1", "zset2"), 0.0);
         assertEquals(list("a", "c", "b"), redis.zrange(key, 0, -1));
         assertEquals(svlist(sv(3.0, "a"), sv(4.0, "c"), sv(5.0, "b")), redis.zrangeWithScores(key, 0, -1));
@@ -199,8 +203,8 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
     @Test
     public void zStoreArgs() throws Exception {
-        zaddAll("zset1", 1.0, "a", 2.0, "b");
-        zaddAll("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
+        redis.zadd("zset1", 1.0, "a", 2.0, "b");
+        redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertEquals(2, redis.zinterstore(key, sum(), "zset1", "zset2"), 0.0);
         assertEquals(svlist(sv(3.0, "a"), sv(5.0, "b")), redis.zrangeWithScores(key, 0, -1));

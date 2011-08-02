@@ -75,7 +75,7 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void info() throws Exception {
-        assertTrue(redis.info().contains("allocation_stats"));
+        assertTrue(redis.info().contains("redis_version"));
     }
 
     @Test

@@ -216,9 +216,9 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Boolean hdel(K key, K field) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field);
-        Command<Boolean> cmd = dispatch(HDEL, new BooleanOutput(codec), args);
+    public Long hdel(K key, K... fields) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
+        Command<Long> cmd = dispatch(HDEL, new IntegerOutput(codec), args);
         return getOutput(cmd);
     }
 
@@ -333,8 +333,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Long lpush(K key, V value) {
-        Command<Long> cmd = dispatch(LPUSH, new IntegerOutput(codec), key, value);
+    public Long lpush(K key, V... values) {
+        Command<Long> cmd = dispatch(LPUSH, new IntegerOutput(codec), key, values);
         return getOutput(cmd);
     }
 
@@ -467,8 +467,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Long rpush(K key, V value) {
-        Command<Long> cmd = dispatch(RPUSH, new IntegerOutput(codec), key, value);
+    public Long rpush(K key, V... values) {
+        Command<Long> cmd = dispatch(RPUSH, new IntegerOutput(codec), key, values);
         return getOutput(cmd);
     }
 
@@ -477,8 +477,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Boolean sadd(K key, V member) {
-        Command<Boolean> cmd = dispatch(SADD, new BooleanOutput(codec), key, member);
+    public Long sadd(K key, V... members) {
+        Command<Long> cmd = dispatch(SADD, new IntegerOutput(codec), key, members);
         return getOutput(cmd);
     }
 
@@ -612,8 +612,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Boolean srem(K key, V member) {
-        Command<Boolean> cmd = dispatch(SREM, new BooleanOutput(codec), key, member);
+    public Long srem(K key, V... members) {
+        Command<Long> cmd = dispatch(SREM, new IntegerOutput(codec), key, members);
         return getOutput(cmd);
     }
 
@@ -660,9 +660,20 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Boolean zadd(K key, double score, V member) {
+    public Long zadd(K key, double score, V member) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(score).addValue(member);
-        Command<Boolean> cmd = dispatch(ZADD, new BooleanOutput(codec), args);
+        Command<Long> cmd = dispatch(ZADD, new IntegerOutput(codec), args);
+        return getOutput(cmd);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Long zadd(K key, Object... scoresAndValues) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        for (int i = 0; i < scoresAndValues.length; i += 2) {
+            args.add((Double) scoresAndValues[i]);
+            args.addValue((V) scoresAndValues[i + 1]);
+        }
+        Command<Long> cmd = dispatch(ZADD, new IntegerOutput(codec), args);
         return getOutput(cmd);
     }
 
@@ -759,8 +770,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Boolean zrem(K key, V member) {
-        Command<Boolean> cmd = dispatch(ZREM, new BooleanOutput(codec), key, member);
+    public Long zrem(K key, V... members) {
+        Command<Long> cmd = dispatch(ZREM, new IntegerOutput(codec), key, members);
         return getOutput(cmd);
     }
 

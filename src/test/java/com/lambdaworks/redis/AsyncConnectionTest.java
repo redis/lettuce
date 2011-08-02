@@ -36,7 +36,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
     public void doubleCommand() throws Exception {
         assertNull(async.zadd(key, 1.2, value));
         assertNull(async.zscore(key, value));
-        assertEquals(list(true, 1.2), async.flush());
+        assertEquals(list(1L, 1.2), async.flush());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertNull(async.zadd(key, 1.0, "a"));
         assertNull(async.zadd(key, 2.0, "b"));
         assertNull(async.zrangeWithScores(key, 0, -1));
-        assertEquals(list(true, true, svlist(sv(1.0, "a"), sv(2.0, "b"))), async.flush());
+        assertEquals(list(1L, 1L, svlist(sv(1.0, "a"), sv(2.0, "b"))), async.flush());
     }
 
     @Test
@@ -105,7 +105,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertNull(async.sadd(key, "a"));
         assertNull(async.sadd(key, "b"));
         assertNull(async.smembers(key));
-        assertEquals(list(true, true, set("a", "b")), async.flush());
+        assertEquals(list(1L, 1L, set("a", "b")), async.flush());
     }
 
     @Test

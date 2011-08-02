@@ -31,26 +31,6 @@ public abstract class AbstractCommandTest {
         redis.close();
     }
 
-    protected void rpush(String key, String... values) {
-        for (String v : values) {
-            redis.rpush(key, v);
-        }
-    }
-
-    protected void saddAll(String key, String... members) {
-        for (String m : members) {
-            redis.sadd(key, m);
-        }
-    }
-
-    protected void zaddAll(String key, Object... members) {
-        for (int i = 0; i < members.length; i += 2) {
-            Double score = (Double) members[i];
-            String value = (String) members[i + 1];
-            redis.zadd(key, score, value);
-        }
-    }
-
     protected List<String> list(String... args) {
         return Arrays.asList(args);
     }

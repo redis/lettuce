@@ -13,11 +13,13 @@ import static org.junit.Assert.*;
 public class HashCommandTest extends AbstractCommandTest {
     @Test
     public void hdel() throws Exception {
-        assertFalse(redis.hdel(key, "one"));
+        assertEquals(0, (long) redis.hdel(key, "one"));
         redis.hset(key, "two", "2");
-        assertFalse(redis.hdel(key, "one"));
+        assertEquals(0, (long) redis.hdel(key, "one"));
         redis.hset(key, "one", "1");
-        assertTrue(redis.hdel(key, "one"));
+        assertEquals(1, (long) redis.hdel(key, "one"));
+        redis.hset(key, "one", "1");
+        assertEquals(2, (long) redis.hdel(key, "one", "two"));
     }
 
     @Test
