@@ -21,13 +21,14 @@ import java.util.Set;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -43,7 +44,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * BeanFactoryPostProcessor that searches recursively starting from a base package for interfaces
+ * BeanDefinitionRegistryPostProcessor that searches recursively starting from a base package for interfaces
  * and registers them as {@code MapperFactoryBean}. Note that only interfaces with at least one
  * method will be registered; concrete classes will be ignored.
  * <p>
@@ -79,7 +80,7 @@ import org.springframework.util.StringUtils;
  * @see MapperFactoryBean
  * @version $Id$
  */
-public class MapperScannerConfigurer implements BeanFactoryPostProcessor, InitializingBean, ApplicationContextAware {
+public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware {
 
     private String basePackage;
 
@@ -137,7 +138,13 @@ public class MapperScannerConfigurer implements BeanFactoryPostProcessor, Initia
      * {@inheritDoc}
      */
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-        Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
+        Scanner scanner = new Scanner(beanDefinitionRegistry);
         scanner.setResourceLoader(this.applicationContext);
 
         scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage,
