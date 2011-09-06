@@ -27,6 +27,14 @@
     </properties>
 
     <body>
+        <release version="1.0.2" date="2011-09-??" description="1.0.2 release">
+            <action type="fix" issue="339">
+                SqlSessionTemplate throws NullPointerException if ExceptionTranslator cannot translate exception  
+            </action>
+            <action type="fix" issue="387">
+                Replace BeanPostProcessor with BeanDefinitionRegistryPostProcessor  
+            </action>
+        </release>
         <release version="1.0.1" date="2011-06-01" description="1.0.1 release">
             <action type="update" issue="179">
                 Added a fail fast checking to ensure that all statements are fully loaded  
