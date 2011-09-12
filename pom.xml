@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
-            <version>3.0.5</version>
+            <version>3.0.6-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
