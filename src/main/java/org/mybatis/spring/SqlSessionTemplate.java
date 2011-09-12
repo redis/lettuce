@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.exceptions.PersistenceException;
+import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
@@ -310,6 +311,7 @@ public class SqlSessionTemplate implements SqlSession {
 
     /**
      * {@inheritDoc}
+     * 
      */
     public Configuration getConfiguration() {
         return this.sqlSessionFactory.getConfiguration();
@@ -322,6 +324,16 @@ public class SqlSessionTemplate implements SqlSession {
         return this.sqlSessionProxy.getConnection();
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * @since 1.0.2
+     * 
+     */
+    public List<BatchResult> flushStatements() {
+      return this.sqlSessionProxy.flushStatements();
+    }
+    
     /**
      * Proxy needed to route MyBatis method calls to the proper SqlSession got
      * from String's Transaction Manager

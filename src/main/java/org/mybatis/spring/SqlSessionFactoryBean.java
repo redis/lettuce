@@ -84,7 +84,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private Interceptor[] plugins;
 
-    private TypeHandler[] typeHandlers;
+    private TypeHandler<?>[] typeHandlers;
     
     private String typeHandlersPackage;
 
@@ -135,7 +135,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 	 * 
 	 * @param typeHandlers Type handler list
 	 */
-    public void setTypeHandlers(TypeHandler[] typeHandlers) {
+    public void setTypeHandlers(TypeHandler<?>[] typeHandlers) {
         this.typeHandlers = typeHandlers;
     }
 
@@ -334,7 +334,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
         
         if (!ObjectUtils.isEmpty(this.typeHandlers)) {
-            for (TypeHandler typeHandler : this.typeHandlers) {
+            for (TypeHandler<?> typeHandler : this.typeHandlers) {
                 configuration.getTypeHandlerRegistry().register(typeHandler);
                 if (this.logger.isDebugEnabled()) {
                     this.logger.debug("Registered type handler: '" + typeHandler + "'");
