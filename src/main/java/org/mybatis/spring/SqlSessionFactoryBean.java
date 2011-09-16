@@ -291,6 +291,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                 this.logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
             }
             configuration = new Configuration();
+            configuration.setVariables(this.configurationProperties);
         }
                 
         if (StringUtils.hasLength(this.typeAliasesPackage)) {
