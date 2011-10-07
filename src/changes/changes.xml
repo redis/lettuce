@@ -27,7 +27,13 @@
     </properties>
 
     <body>
-        <release version="1.0.2" date="2011-09-??" description="1.0.2 release">
+        <release version="1.0.2" date="2011-10-??" description="1.0.2 release">
+            <action type="update" issue="391">
+                Add SqlSession.flushStatements()
+            </action>
+            <action type="fix" issue="390">
+                configurationProperties not applied in mappings
+            </action>
             <action type="fix" issue="339">
                 SqlSessionTemplate throws NullPointerException if ExceptionTranslator cannot translate exception  
             </action>
