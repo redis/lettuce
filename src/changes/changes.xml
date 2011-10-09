@@ -27,7 +27,7 @@
     </properties>
 
     <body>
-        <release version="1.0.2" date="2011-10-??" description="1.0.2 release">
+        <release version="1.0.2" date="2011-10-09" description="1.0.2 release">
             <action type="update" issue="391">
                 Add SqlSession.flushStatements()
             </action>
