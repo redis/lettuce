@@ -15,6 +15,8 @@
  */
 package org.mybatis.spring.mapper;
 
+import java.util.Properties;
+
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -49,9 +52,16 @@ public final class MapperScannerConfigurerTest {
         // an XML config file
         GenericBeanDefinition definition = new GenericBeanDefinition();
         definition.setBeanClass(MapperScannerConfigurer.class);
-        definition.getPropertyValues().add("basePackage", "org.mybatis.spring.mapper");
+        definition.getPropertyValues().add("basePackage", "${BASE_PACKAGE}");
         applicationContext.registerBeanDefinition("mapperScanner", definition);
 
+        GenericBeanDefinition placeholderDefinition = new GenericBeanDefinition();
+        placeholderDefinition.setBeanClass(PropertyPlaceholderConfigurer.class);
+        Properties properties = new Properties();
+		properties.setProperty("BASE_PACKAGE", "org.mybatis.spring.mapper");
+		placeholderDefinition.getPropertyValues().addPropertyValue("properties", properties);
+        applicationContext.registerBeanDefinition("placeholder", placeholderDefinition);
+        
         setupSqlSessionFactory("sqlSessionFactory");
 
         // assume support for autowiring fields is added by MapperScannerConfigurer via
