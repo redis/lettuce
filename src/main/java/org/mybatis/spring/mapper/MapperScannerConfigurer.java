@@ -22,11 +22,15 @@ import java.util.Set;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyValues;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.PropertyResourceConfigurer;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
@@ -44,19 +48,19 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * BeanDefinitionRegistryPostProcessor that searches recursively starting from a base package for interfaces
- * and registers them as {@code MapperFactoryBean}. Note that only interfaces with at least one
- * method will be registered; concrete classes will be ignored.
+ * BeanDefinitionRegistryPostProcessor that searches recursively starting from a base package for
+ * interfaces and registers them as {@code MapperFactoryBean}. Note that only interfaces with at
+ * least one method will be registered; concrete classes will be ignored.
  * <p>
  * The {@code basePackage} property can contain more than one package name, separated by either
  * commas or semicolons.
  * <p>
  * This class supports filtering the mappers created by either specifying a marker interface or an
  * annotation. The {@code annotationClass} property specifies an annotation to search for. The
- * {@code markerInterface} property specifies a parent interface to search for. If both
- * properties are specified, mappers are added for interfaces that match <em>either</em> criteria.
- * By default, these two properties are null, so all interfaces in the given
- * {@code basePackage} are added as mappers.
+ * {@code markerInterface} property specifies a parent interface to search for. If both properties
+ * are specified, mappers are added for interfaces that match <em>either</em> criteria. By default,
+ * these two properties are null, so all interfaces in the given {@code basePackage} are added as
+ * mappers.
  * <p>
  * This configurer is usually used with autowire enabled so all the beans it creates are
  * automatically autowired with the proper {@code SqlSessionFactory} or {@code SqlSessionTemplate}.
@@ -80,7 +84,8 @@ import org.springframework.util.StringUtils;
  * @see MapperFactoryBean
  * @version $Id$
  */
-public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware {
+public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean,
+        ApplicationContextAware, BeanNameAware {
 
     private String basePackage;
 
@@ -93,8 +98,9 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     private Class<? extends Annotation> annotationClass;
 
     private Class<?> markerInterface;
-    
+
     private ApplicationContext applicationContext;
+    private String beanName;
 
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
@@ -130,6 +136,13 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     /**
      * {@inheritDoc}
      */
+    public void setBeanName(String name) {
+        this.beanName = name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.basePackage, "Property 'basePackage' is required");
     }
@@ -137,13 +150,47 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     /**
      * {@inheritDoc}
      */
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-    }
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {}
 
     /**
      * {@inheritDoc}
      */
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
+        // BeanDefinitionRegistries are called early in application startup, before
+        // BeanFactoryPostProcessors. This means that PropertyResourceConfigurers will not have been
+        // loaded and any property substitution will fail.
+        // To avoid this, pre-load PropertyResourceConfigurers defined in the context.
+        if (applicationContext instanceof org.springframework.context.support.AbstractApplicationContext) {
+            BeanFactory factory = ((org.springframework.context.support.AbstractApplicationContext) applicationContext)
+                    .getBeanFactory();
+
+            if (factory instanceof ConfigurableListableBeanFactory) {
+                java.util.Map<String, PropertyResourceConfigurer> prcs = applicationContext
+                        .getBeansOfType(PropertyResourceConfigurer.class);
+
+                if (!prcs.isEmpty()) {
+                    ConfigurableListableBeanFactory dlbf = (ConfigurableListableBeanFactory) factory;
+
+                    for (PropertyResourceConfigurer prc : prcs.values()) {
+                        prc.postProcessBeanFactory(dlbf);
+                    }
+
+                    // basePackage can also be a property placeholder
+                    // since this class was instantiated before any placeholder resolution,
+                    // update it now
+                    PropertyValues properties = beanDefinitionRegistry.getBeanDefinition(beanName).getPropertyValues();
+                    Object value = properties.getPropertyValue("basePackage").getValue();
+
+                    if (value instanceof String) {
+                        this.basePackage = value.toString();
+                    } else if (value instanceof org.springframework.beans.factory.config.TypedStringValue) {
+                        this.basePackage = ((org.springframework.beans.factory.config.TypedStringValue) value)
+                                .getValue();
+                    }
+                }
+            }
+        }
+
         Scanner scanner = new Scanner(beanDefinitionRegistry);
         scanner.setResourceLoader(this.applicationContext);
 

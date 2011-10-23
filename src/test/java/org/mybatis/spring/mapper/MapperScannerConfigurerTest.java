@@ -17,6 +17,8 @@ package org.mybatis.spring.mapper;
 
 import java.util.Properties;
 
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
@@ -52,16 +54,9 @@ public final class MapperScannerConfigurerTest {
         // an XML config file
         GenericBeanDefinition definition = new GenericBeanDefinition();
         definition.setBeanClass(MapperScannerConfigurer.class);
-        definition.getPropertyValues().add("basePackage", "${BASE_PACKAGE}");
+        definition.getPropertyValues().add("basePackage", "org.mybatis.spring.mapper");
         applicationContext.registerBeanDefinition("mapperScanner", definition);
 
-        GenericBeanDefinition placeholderDefinition = new GenericBeanDefinition();
-        placeholderDefinition.setBeanClass(PropertyPlaceholderConfigurer.class);
-        Properties properties = new Properties();
-		properties.setProperty("BASE_PACKAGE", "org.mybatis.spring.mapper");
-		placeholderDefinition.getPropertyValues().addPropertyValue("properties", properties);
-        applicationContext.registerBeanDefinition("placeholder", placeholderDefinition);
-        
         setupSqlSessionFactory("sqlSessionFactory");
 
         // assume support for autowiring fields is added by MapperScannerConfigurer via
@@ -184,6 +179,40 @@ public final class MapperScannerConfigurerTest {
 
         assertSame("scanner should not overwite existing bean definition", applicationContext
                 .getBean("mapperInterface").getClass(), Object.class);
+    }
+
+    @Test
+    public void testScanWithPropertyPlaceholder() {
+        GenericBeanDefinition definition = (GenericBeanDefinition) applicationContext
+                .getBeanDefinition("mapperScanner");
+
+        // use a property placeholder for basePackage
+        definition.getPropertyValues().removePropertyValue("basePackage");
+        definition.getPropertyValues().add("basePackage", "${basePackageProperty}");
+
+        // also use a property placeholder in sqlSessionFactory to ensure that
+        // MapperScannerConfigurer's early loading the the PropertyPlaceholderConfigurer does not
+        // break later property substitutions
+        definition = (GenericBeanDefinition) applicationContext.getBeanDefinition("sqlSessionFactory");
+        definition.getPropertyValues().removePropertyValue("configLocation");
+        definition.getPropertyValues().add("configLocation", "${configLocationProperty}");
+
+        Properties props = new java.util.Properties();
+        props.put("basePackageProperty", "org.mybatis.spring.mapper");
+        props.put("configLocationProperty", "classpath:org/mybatis/spring/mybatis-config.xml");
+
+        GenericBeanDefinition propertyDefinition = new GenericBeanDefinition();
+        propertyDefinition.setBeanClass(PropertyPlaceholderConfigurer.class);
+        propertyDefinition.getPropertyValues().add("properties", props);
+
+        applicationContext.registerBeanDefinition("propertiesPlaceholder", propertyDefinition);
+
+        testInterfaceScan();
+
+        // also make sure the configLocation was setup correctly
+        // mybatis-config.xml changes the executor from the default SIMPLE type
+        SqlSessionFactory sessionFactory = (SqlSessionFactory) applicationContext.getBean("sqlSessionFactory");
+        assertSame(ExecutorType.REUSE, sessionFactory.getConfiguration().getDefaultExecutorType());
     }
 
     private void setupSqlSessionFactory(String name) {
