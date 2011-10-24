@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
@@ -239,13 +240,15 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
             Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
             if (beanDefinitions.isEmpty()) {
-                logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage + "' package. Please check your configuration.");
+                logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage 
+                        + "' package. Please check your configuration.");
             } else {
                 for (BeanDefinitionHolder holder : beanDefinitions) {
                     GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName() + "' and '" + definition.getBeanClassName() + "' mapperInterface");
+                        logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName() 
+                                + "' and '" + definition.getBeanClassName() + "' mapperInterface");
                     }
 
                     // the mapper interface is the original class of the bean
@@ -269,11 +272,13 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
                     // Bean names instead of bean references are used to delay the creation of sqlSessionFactoryBeans
                     // or sqlSessionTemplate until PropertyResourceConfigurers has been run
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
-                        definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactoryBeanName);
+                        definition.getPropertyValues().add("sqlSessionFactory", 
+                                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
                     }
 
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionTemplateBeanName)) {
-                        definition.getPropertyValues().add("sqlSessionTemplate", MapperScannerConfigurer.this.sqlSessionTemplateBeanName);
+                        definition.getPropertyValues().add("sqlSessionTemplate", 
+                                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
                     }
                 }
             }
@@ -291,7 +296,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
             if (super.checkCandidate(beanName, beanDefinition)) {
                 return true;
             } else {
-                logger.warn("Skipping MapperFactoryBean with name '" + beanName + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
+                logger.warn("Skipping MapperFactoryBean with name '" + beanName 
+                        + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
                         + ". Bean already defined with the same name!");
                 return false;
             }

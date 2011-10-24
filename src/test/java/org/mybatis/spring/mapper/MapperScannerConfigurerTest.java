@@ -185,6 +185,7 @@ public final class MapperScannerConfigurerTest {
     public void testScanWithPropertyPlaceholder() {
         GenericBeanDefinition definition = (GenericBeanDefinition) applicationContext
                 .getBeanDefinition("mapperScanner");
+        definition.getPropertyValues().add("sqlSessionFactoryBeanName", "sqlSessionFactory");
 
         // also use a property placeholder in sqlSessionFactory to ensure that
         // MapperScannerConfigurer's early loading the the PropertyPlaceholderConfigurer does not
