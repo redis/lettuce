@@ -186,10 +186,6 @@ public final class MapperScannerConfigurerTest {
         GenericBeanDefinition definition = (GenericBeanDefinition) applicationContext
                 .getBeanDefinition("mapperScanner");
 
-        // use a property placeholder for basePackage
-        definition.getPropertyValues().removePropertyValue("basePackage");
-        definition.getPropertyValues().add("basePackage", "${basePackageProperty}");
-
         // also use a property placeholder in sqlSessionFactory to ensure that
         // MapperScannerConfigurer's early loading the the PropertyPlaceholderConfigurer does not
         // break later property substitutions
@@ -198,7 +194,6 @@ public final class MapperScannerConfigurerTest {
         definition.getPropertyValues().add("configLocation", "${configLocationProperty}");
 
         Properties props = new java.util.Properties();
-        props.put("basePackageProperty", "org.mybatis.spring.mapper");
         props.put("configLocationProperty", "classpath:org/mybatis/spring/mybatis-config.xml");
 
         GenericBeanDefinition propertyDefinition = new GenericBeanDefinition();
