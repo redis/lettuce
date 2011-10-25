@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ import org.springframework.util.StringUtils;
  *   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
  *       <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
  *       <!-- optional unless there are multiple session factories defined -->
- *       <property name="sqlSessionFactory" value="sqlSessionFactory" />
+ *       <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
  *   </bean>
  * }
  * </pre>
@@ -86,10 +86,6 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     private String basePackage;
 
     private boolean addToConfig = true;
-
-    private SqlSessionFactory sqlSessionFactory;
-
-    private SqlSessionTemplate sqlSessionTemplate;
 
     private String sqlSessionTemplateBeanName;
 
@@ -117,14 +113,6 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
         this.markerInterface = superClass;
     }
 
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
-    }
-
-    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSessionTemplate = sqlSessionTemplate;
-    }
-
     public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
         this.sqlSessionTemplateBeanName = sqlSessionTemplateName;
     }
@@ -145,12 +133,6 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.basePackage, "Property 'basePackage' is required");
-        if (this.sqlSessionFactory != null && StringUtils.hasLength(this.sqlSessionFactoryBeanName)) {
-            throw new IllegalArgumentException("Use either sqlSessionFactory or sqlSessionFactoryBeanName property but not both");
-        }
-        if (this.sqlSessionTemplate != null && StringUtils.hasLength(this.sqlSessionTemplateBeanName)) {
-            throw new IllegalArgumentException("Use either sqlSessionTemplate or sqlSessionTemplateBeanName property but not both");
-        }
     }
 
     /**
@@ -240,14 +222,14 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
             Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
             if (beanDefinitions.isEmpty()) {
-                logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage 
+                logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage
                         + "' package. Please check your configuration.");
             } else {
                 for (BeanDefinitionHolder holder : beanDefinitions) {
                     GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName() 
+                        logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName()
                                 + "' and '" + definition.getBeanClassName() + "' mapperInterface");
                     }
 
@@ -258,26 +240,18 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
                     definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
 
-                    if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
-                        definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactory);
-                    }
-
-                    if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
-                        definition.getPropertyValues().add("sqlSessionTemplate", MapperScannerConfigurer.this.sqlSessionTemplate);
-                    }
-
                     // BeanDefinitionRegistries are called early in application startup, before
                     // BeanFactoryPostProcessors. This means that PropertyResourceConfigurers will not have been
                     // loaded and any property substitution will fail.
                     // Bean names instead of bean references are used to delay the creation of sqlSessionFactoryBeans
                     // or sqlSessionTemplate until PropertyResourceConfigurers has been run
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
-                        definition.getPropertyValues().add("sqlSessionFactory", 
+                        definition.getPropertyValues().add("sqlSessionFactory",
                                 new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
                     }
 
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionTemplateBeanName)) {
-                        definition.getPropertyValues().add("sqlSessionTemplate", 
+                        definition.getPropertyValues().add("sqlSessionTemplate",
                                 new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
                     }
                 }
@@ -296,7 +270,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
             if (super.checkCandidate(beanName, beanDefinition)) {
                 return true;
             } else {
-                logger.warn("Skipping MapperFactoryBean with name '" + beanName 
+                logger.warn("Skipping MapperFactoryBean with name '" + beanName
                         + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
                         + ". Bean already defined with the same name!");
                 return false;

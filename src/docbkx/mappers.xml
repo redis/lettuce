@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <!--
-    Copyright 2010 The myBatis Team
+    Copyright 2010, 2011 The myBatis Team
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -139,8 +139,8 @@
     <para>
       <literal>MapperScannerConfigurer</literal> properties do not support property 
       replacement using the <literal>PropertyPlaceholderConfigurer</literal> because it loads 
-      earlier during Spring startup but you can use a <literal>PropertiesFactoryBean</literal> 
-      and SpEL expressions instead. 
+      earlier during Spring startup. However, you can use a 
+      <literal>PropertiesFactoryBean</literal> and SpEL expressions instead. 
     </para>
     
     <para>
