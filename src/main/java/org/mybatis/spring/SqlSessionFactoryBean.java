@@ -40,7 +40,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.NestedIOException;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.util.Assert;
@@ -370,19 +369,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
                     continue;
                 }
 
-                // this block is a workaround for issue http://code.google.com/p/mybatis/issues/detail?id=235
-                // when running MyBatis 3.0.4. But not always works. 
-                // Not needed in 3.0.5 and above.
-                String path;
-                if (mapperLocation instanceof ClassPathResource) {
-                    path = ((ClassPathResource) mapperLocation).getPath();
-                } else {
-                    path = mapperLocation.toString();
-                }
-
                 try {
                     XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
-                            configuration, path, configuration.getSqlFragments());
+                            configuration, mapperLocation.toString(), configuration.getSqlFragments());
                     xmlMapperBuilder.parse();
                 } catch (Exception e) {
                     throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
