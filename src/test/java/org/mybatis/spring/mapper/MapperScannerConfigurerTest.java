@@ -148,8 +148,8 @@ public final class MapperScannerConfigurerTest {
     public void testScanWithExplicitSqlSessionFactory() throws Exception {
         setupSqlSessionFactory("sqlSessionFactory2");
 
-        applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("sqlSessionFactory",
-                new RuntimeBeanReference("sqlSessionFactory2"));
+        applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("sqlSessionFactoryBeanName",
+                "sqlSessionFactory2");
 
         testInterfaceScan();
     }
@@ -163,8 +163,8 @@ public final class MapperScannerConfigurerTest {
         definition.setConstructorArgumentValues(constructorArgs);
         applicationContext.registerBeanDefinition("sqlSessionTemplate", definition);
 
-        applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("sqlSessionTemplate",
-                new RuntimeBeanReference("sqlSessionTemplate"));
+        applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("sqlSessionTemplateBeanName",
+                "sqlSessionTemplate");
 
         testInterfaceScan();
     }
