@@ -85,7 +85,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     private Interceptor[] plugins;
 
     private TypeHandler<?>[] typeHandlers;
-    
+
     private String typeHandlersPackage;
 
     private Class<?>[] typeAliases;
@@ -101,64 +101,64 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
      * 
      */
     public void setPlugins(Interceptor[] plugins) {
-      this.plugins = plugins;
+        this.plugins = plugins;
     }
 
-	/**
-	 * Packages to search for type aliases.
-	 * 
-	 * @since 1.0.1
-	 * 
-	 * @param typeAliasesPackage package to scan for domain objects
-	 * 
-	 */
+    /**
+     * Packages to search for type aliases.
+     * 
+     * @since 1.0.1
+     * 
+     * @param typeAliasesPackage package to scan for domain objects
+     * 
+     */
     public void setTypeAliasesPackage(String typeAliasesPackage) {
         this.typeAliasesPackage = typeAliasesPackage;
     }
 
-	/**
-	 * Packages to search for type handlers.
-	 * 
-	 * @since 1.0.1
-	 * 
-	 * @param typeHandlersPackage package to scan for type handlers
-	 * 
-	 */
+    /**
+     * Packages to search for type handlers.
+     * 
+     * @since 1.0.1
+     * 
+     * @param typeHandlersPackage package to scan for type handlers
+     * 
+     */
     public void setTypeHandlersPackage(String typeHandlersPackage) {
         this.typeHandlersPackage = typeHandlersPackage;
     }
-    
-	/**
-	 * Set type handlers. They must be annotated with {@code MappedTypes} and optionally with {@code MappedJdbcTypes}
-	 * 
-	 * @since 1.0.1
-	 * 
-	 * @param typeHandlers Type handler list
-	 */
+
+    /**
+     * Set type handlers. They must be annotated with {@code MappedTypes} and optionally with {@code MappedJdbcTypes}
+     * 
+     * @since 1.0.1
+     * 
+     * @param typeHandlers Type handler list
+     */
     public void setTypeHandlers(TypeHandler<?>[] typeHandlers) {
         this.typeHandlers = typeHandlers;
     }
 
-	/**
-	 * List of type aliases to register. They can be annotated with {@code Alias}
-	 * 
-	 * @since 1.0.1
-	 * 
-	 * @param typeAliases Type aliases list
-	 */
+    /**
+     * List of type aliases to register. They can be annotated with {@code Alias}
+     * 
+     * @since 1.0.1
+     * 
+     * @param typeAliases Type aliases list
+     */
     public void setTypeAliases(Class<?>[] typeAliases) {
         this.typeAliases = typeAliases;
     }
 
-	/**
-	 * If true, a final check is done on Configuration to assure that all mapped
-	 * statements are fully loaded and there is no one still pending to resolve
-	 * includes. Defaults to false.
-	 * 
-	 * @since 1.0.1
-	 * 
-	 * @param failFast enable failFast
-	 */
+    /**
+     * If true, a final check is done on Configuration to assure that all mapped
+     * statements are fully loaded and there is no one still pending to resolve
+     * includes. Defaults to false.
+     * 
+     * @since 1.0.1
+     * 
+     * @param failFast enable failFast
+     */
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
     }
@@ -281,7 +281,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     protected SqlSessionFactory buildSqlSessionFactory() throws IOException {
 
         Configuration configuration;
-        
+
         XMLConfigBuilder xmlConfigBuilder = null;
         if (this.configLocation != null) {
             xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
@@ -293,12 +293,12 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             configuration = new Configuration();
             configuration.setVariables(this.configurationProperties);
         }
-                
+
         if (StringUtils.hasLength(this.typeAliasesPackage)) {
-            String[] typeAliasPackageArray = StringUtils.tokenizeToStringArray(this.typeAliasesPackage, 
-                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+            String[] typeAliasPackageArray = StringUtils.tokenizeToStringArray(this.typeAliasesPackage,
+                    ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
             for (String packageToScan : typeAliasPackageArray) {
-                configuration.getTypeAliasRegistry().registerAliases(packageToScan);    
+                configuration.getTypeAliasRegistry().registerAliases(packageToScan);
                 if (this.logger.isDebugEnabled()) {
                     this.logger.debug("Scanned package: '" + packageToScan + "' for aliases");
                 }
@@ -324,16 +324,16 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
 
         if (StringUtils.hasLength(this.typeHandlersPackage)) {
-            String[] typeHandlersPackageArray = StringUtils.tokenizeToStringArray(this.typeHandlersPackage, 
-                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-            for (String packageToScan : typeHandlersPackageArray ) {
-                configuration.getTypeHandlerRegistry().register(packageToScan);    
+            String[] typeHandlersPackageArray = StringUtils.tokenizeToStringArray(this.typeHandlersPackage,
+                    ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+            for (String packageToScan : typeHandlersPackageArray) {
+                configuration.getTypeHandlerRegistry().register(packageToScan);
                 if (this.logger.isDebugEnabled()) {
                     this.logger.debug("Scanned package: '" + packageToScan + "' for type handlers");
                 }
             }
         }
-        
+
         if (!ObjectUtils.isEmpty(this.typeHandlers)) {
             for (TypeHandler<?> typeHandler : this.typeHandlers) {
                 configuration.getTypeHandlerRegistry().register(typeHandler);
@@ -346,7 +346,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         if (xmlConfigBuilder != null) {
             try {
                 xmlConfigBuilder.parse();
-                
+
                 if (this.logger.isDebugEnabled()) {
                     this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
                 }
@@ -363,7 +363,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
         Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
         configuration.setEnvironment(environment);
-        
+
         if (!ObjectUtils.isEmpty(this.mapperLocations)) {
             for (Resource mapperLocation : this.mapperLocations) {
                 if (mapperLocation == null) {

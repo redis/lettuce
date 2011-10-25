@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
         assertCommitSession();
 
     }
-    
+
     @Test
     public void testWithTxRequired() {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
@@ -182,6 +182,5 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
         assertCommit();
         assertSingleConnection();
     }
-    
-    
+
 }

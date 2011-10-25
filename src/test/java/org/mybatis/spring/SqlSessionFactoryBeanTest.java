@@ -217,7 +217,7 @@ public final class SqlSessionFactoryBeanTest {
         assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
         assertTrue(typeHandlerRegistry.hasTypeHandler(BigDecimal.class));
     }
-    
+
     private void assertDefaultConfig(SqlSessionFactory factory) {
         assertConfig(factory, SqlSessionFactoryBean.class.getSimpleName(),
                 org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);

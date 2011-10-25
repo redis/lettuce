@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -45,9 +45,9 @@ public class SpringManagedTransaction implements Transaction {
     private final Log logger = LogFactory.getLog(getClass());
 
     private final Connection connection;
-    
+
     private final Connection unwrappedConnection;
-    
+
     private final DataSource dataSource;
 
     private final boolean isConnectionTransactional;
@@ -71,11 +71,11 @@ public class SpringManagedTransaction implements Transaction {
 
         if (this.logger.isDebugEnabled()) {
             this.logger.debug(
-                    "JDBC Connection [" 
-                    + this.connection 
-                    + "] will" 
-                    + (this.isConnectionTransactional?" ":" not ") 
-                    + "be managed by Spring");
+                    "JDBC Connection ["
+                            + this.connection
+                            + "] will"
+                            + (this.isConnectionTransactional ? " " : " not ")
+                            + "be managed by Spring");
         }
     }
 

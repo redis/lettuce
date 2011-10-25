@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ import org.apache.ibatis.plugin.Signature;
  * @version $Id$
  */
 @Intercepts({
-    @Signature(type = Executor.class, method = "commit", args = { boolean.class }),
-    @Signature(type = Executor.class, method = "rollback", args = { boolean.class }),
-    @Signature(type = Executor.class, method = "close", args = { boolean.class })
+        @Signature(type = Executor.class, method = "commit", args = { boolean.class }),
+        @Signature(type = Executor.class, method = "rollback", args = { boolean.class }),
+        @Signature(type = Executor.class, method = "close", args = { boolean.class })
 })
 final class ExecutorInterceptor implements Interceptor {
 

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
     @Override
     protected void checkDaoConfig() {
         super.checkDaoConfig();
-        
+
         Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
 
         Configuration configuration = getSqlSession().getConfiguration();

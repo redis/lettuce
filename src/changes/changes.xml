@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Copyright 2010 The myBatis Team
+    Copyright 2010-2011 The myBatis Team
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,6 +27,11 @@
     </properties>
 
     <body>
+        <release version="1.0.3" date="TBD" description="1.0.3 release">
+            <action type="update" issue="414">
+                MapperScannerConfigurer does not work with PropertyPlaceholderConfigurer
+            </action>
+        </release>
         <release version="1.0.2" date="2011-10-10" description="1.0.2 release">
             <action type="update" issue="391">
                 Add SqlSession.flushStatements()

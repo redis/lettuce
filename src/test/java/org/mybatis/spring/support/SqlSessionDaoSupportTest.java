@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -184,5 +184,6 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
         applicationContext.registerBeanDefinition(name, definition);
     }
 
-    private static final class MockSqlSessionDao extends SqlSessionDaoSupport {}
+    private static final class MockSqlSessionDao extends SqlSessionDaoSupport {
+    }
 }

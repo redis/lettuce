@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
     private final SqlSession sqlSession;
 
     private final ExecutorType executorType;
-    
+
     private final PersistenceExceptionTranslator exceptionTranslator;
 
     /**
@@ -43,13 +43,13 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
      * @param sqlSession the {@code SqlSession} has to be hold.
      * @param executorType the {@code ExecutorType} has to be hold.
      */
-    public SqlSessionHolder(SqlSession sqlSession, 
-            ExecutorType executorType, 
+    public SqlSessionHolder(SqlSession sqlSession,
+            ExecutorType executorType,
             PersistenceExceptionTranslator exceptionTranslator) {
-        
+
         Assert.notNull(sqlSession, "SqlSession must not be null");
         Assert.notNull(executorType, "ExecutorType must not be null");
-        
+
         this.sqlSession = sqlSession;
         this.executorType = executorType;
         this.exceptionTranslator = exceptionTranslator;

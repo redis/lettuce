@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -76,13 +76,13 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
         }
     }
 
-   /**
-    * Initializes the internal translator reference.
-    */
-   private synchronized void initExceptionTranslator() {
-       if (this.exceptionTranslator == null) {
-           this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
-       }
-   }
+    /**
+     * Initializes the internal translator reference.
+     */
+    private synchronized void initExceptionTranslator() {
+        if (this.exceptionTranslator == null) {
+            this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+        }
+    }
 
 }

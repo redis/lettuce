@@ -24,4 +24,5 @@ import org.springframework.test.context.ContextConfiguration;
  * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
  */
 @ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-mapper.xml" })
-public class SampleMapperTest extends AbstractSampleTest {}
+public class SampleMapperTest extends AbstractSampleTest {
+}

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class SqlSessionTemplate implements SqlSession {
      * @param executorType
      */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
-        this(sqlSessionFactory, executorType, 
+        this(sqlSessionFactory, executorType,
                 new MyBatisExceptionTranslator(
                         sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), true));
     }
@@ -125,7 +125,7 @@ public class SqlSessionTemplate implements SqlSession {
         this.exceptionTranslator = exceptionTranslator;
         this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
                 SqlSessionFactory.class.getClassLoader(),
-                new Class[] { SqlSession.class }, 
+                new Class[] { SqlSession.class },
                 new SqlSessionInterceptor());
     }
 
@@ -331,9 +331,9 @@ public class SqlSessionTemplate implements SqlSession {
      * 
      */
     public List<BatchResult> flushStatements() {
-      return this.sqlSessionProxy.flushStatements();
+        return this.sqlSessionProxy.flushStatements();
     }
-    
+
     /**
      * Proxy needed to route MyBatis method calls to the proper SqlSession got
      * from String's Transaction Manager

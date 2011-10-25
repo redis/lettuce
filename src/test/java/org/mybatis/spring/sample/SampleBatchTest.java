@@ -22,7 +22,7 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
  */
-@ContextConfiguration(locations = {"classpath:org/mybatis/spring/sample/applicationContext-batch.xml"})
+@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-batch.xml" })
 public class SampleBatchTest extends AbstractSampleTest {
     // Note this does not actually test batch functionality since FooService
     // only calls one DAO method. This class and associated Spring context

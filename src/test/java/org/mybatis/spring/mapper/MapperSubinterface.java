@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -21,4 +21,5 @@ package org.mybatis.spring.mapper;
 // interface for MapperScannerPostProcessor tests
 // ensures marker interface usage
 // has no methods except parent methods
-public interface MapperSubinterface extends MapperInterface {}
+public interface MapperSubinterface extends MapperInterface {
+}

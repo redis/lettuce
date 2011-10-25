@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.mybatis.spring.mapper;
 
 /**
- * @version $Id: MapperFactoryBeanTest.java 3294 2010-11-28 04:01:46Z hpresnall $
+ * @version $Id$
  */
 // marker interface for MapperScannerPostProcessor tests
 // when used as a marker interface,

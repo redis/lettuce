@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -83,10 +83,10 @@ public final class SqlSessionUtils {
      * @see SpringManagedTransactionFactory
      */
     public static SqlSession getSqlSession(
-            SqlSessionFactory sessionFactory, 
-            ExecutorType executorType, 
+            SqlSessionFactory sessionFactory,
+            ExecutorType executorType,
             PersistenceExceptionTranslator exceptionTranslator) {
-        
+
         Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
         Assert.notNull(executorType, "No ExecutorType specified");
 
@@ -99,7 +99,7 @@ public final class SqlSessionUtils {
             }
 
             holder.requested();
-            
+
             if (logger.isDebugEnabled()) {
                 logger.debug("Fetched SqlSession [" + holder.getSqlSession() + "] from current transaction");
             }
@@ -108,7 +108,7 @@ public final class SqlSessionUtils {
         }
 
         DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
-        
+
         // SqlSessionFactoryBean unwraps TransactionAwareDataSourceProxies but 
         // we keep this check for the case that SqlSessionUtils is called from custom code
         boolean transactionAware = (dataSource instanceof TransactionAwareDataSourceProxy);
@@ -158,7 +158,7 @@ public final class SqlSessionUtils {
         } else {
             if (logger.isDebugEnabled()) {
                 logger.debug("SqlSession [" + session + "] was not registered for synchronization because synchronization is not active");
-            }            
+            }
         }
 
         return session;
@@ -273,7 +273,7 @@ public final class SqlSessionUtils {
                         DataAccessException translated = this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
                         if (translated != null) {
                             throw translated;
-                        }                        
+                        }
                     }
                     throw p;
                 }

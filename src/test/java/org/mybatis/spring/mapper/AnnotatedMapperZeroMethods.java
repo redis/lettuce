@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010 The myBatis Team
+ *    Copyright 2010-2011 The myBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,4 +23,5 @@ import org.springframework.stereotype.Component;
 // annotated interface for MapperScannerPostProcessor tests
 // ensures annotated class with no methods is not loaded
 @Component
-public interface AnnotatedMapperZeroMethods {}
+public interface AnnotatedMapperZeroMethods {
+}

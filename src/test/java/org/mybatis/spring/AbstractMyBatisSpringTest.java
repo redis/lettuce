@@ -56,7 +56,7 @@ public abstract class AbstractMyBatisSpringTest {
     protected MockConnection connection;
 
     protected MockConnection connectionTwo;
-    
+
     @BeforeClass
     public static void setupBase() throws Exception {
         // create an SqlSessionFactory that will use SpringManagedTransactions
@@ -64,8 +64,8 @@ public abstract class AbstractMyBatisSpringTest {
         factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
         // note running without SqlSessionFactoryBean.configLocation set => default configuration
         factoryBean.setDataSource(dataSource);
-        factoryBean.setPlugins(new Interceptor[] {executorInterceptor});
-        
+        factoryBean.setPlugins(new Interceptor[] { executorInterceptor });
+
         exceptionTranslator = new MyBatisExceptionTranslator(dataSource, true);
 
         sqlSessionFactory = factoryBean.getObject();
@@ -97,7 +97,7 @@ public abstract class AbstractMyBatisSpringTest {
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
         assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
     }
-    
+
     protected void assertCommitSession() {
         assertEquals("should call commit on SqlSession", 1, executorInterceptor.getCommitCount());
         assertEquals("should not call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
