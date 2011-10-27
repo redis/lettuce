@@ -95,26 +95,87 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
     private ApplicationContext applicationContext;
 
+    /**
+     * This property lets you set the base package for your mapper interface files. 
+     * <p>
+     * You can set more than one package by using a semicolon or comma as a separator. 
+     * <p>
+     * Mappers will be searched for recursively starting in the specified package(s).
+     * 
+     * @param basePackage base package name
+     */
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
     }
 
+    /**
+     * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}
+     * 
+     * @param addToConfig
+     * @see MapperFactoryBean#setAddToConfig(boolean)
+     */
     public void setAddToConfig(boolean addToConfig) {
         this.addToConfig = addToConfig;
     }
 
+    /**
+     * This property specifies the annotation that the scanner will search for. 
+     * <p>
+     * The scanner will register all interfaces in the base package that also have the
+     * specified annotation.
+     * <p>
+     * Note this can be combined with markerInterface.
+     * 
+     * @param basePackage annotation class
+     */
     public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
         this.annotationClass = annotationClass;
     }
 
+    /**
+     * This property specifies the parent that the scanner will search for. 
+     * <p>
+     * The scanner will register all interfaces in the base package that also have the
+     * specified interface class as a parent.
+     * <p>
+     * Note this can be combined with annotationClass.
+     * 
+     * @param superClass parent class
+     */
     public void setMarkerInterface(Class<?> superClass) {
         this.markerInterface = superClass;
     }
 
+    /**
+     * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
+     * more than one in the spring context. Usually this is only needed when you 
+     * have more than one datasource.
+     * <p>
+     * Note bean names are used, not bean references. This is because the scanner 
+     * loads early during the start process and it is too early to build mybatis
+     * object instances. 
+     * 
+     * @since 1.0.3
+     * 
+     * @param sqlSessionTemplateName Bean name of the {@code SqlSessionTemplate}
+     */
     public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
         this.sqlSessionTemplateBeanName = sqlSessionTemplateName;
     }
 
+    /**
+     * Specifies which {@code SqlSessionFactory} to use in the case that there is 
+     * more than one in the spring context. Usually this is only needed when you 
+     * have more than one datasource.
+     * <p>
+     * Note bean names are used, not bean references. This is because the scanner 
+     * loads early during the start process and it is too early to build mybatis
+     * object instances. 
+     * 
+     * @since 1.0.3
+     * 
+     * @param sqlSessionFactoryName Bean name of the {@code SqlSessionFactory}
+     */
     public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
         this.sqlSessionFactoryBeanName = sqlSessionFactoryName;
     }

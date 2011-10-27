@@ -55,10 +55,26 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
 
     private boolean addToConfig = true;
 
+    /**
+     * Sets the mapper interface of the MyBatis mapper
+     * 
+     * @param mapperInterface class of the interface
+     */
     public void setMapperInterface(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
     }
 
+    /**
+     * If addToConfig is false the mapper will not be added to MyBatis. This means
+     * it must have been included in mybatis-config.xml.
+     * <p>
+     * If it is true, the mapper will be added to MyBatis in the case it is not already
+     * registered.
+     * <p>
+     * By default addToCofig is true. 
+     * 
+     * @param addToConfig 
+     */
     public void setAddToConfig(boolean addToConfig) {
         this.addToConfig = addToConfig;
     }
