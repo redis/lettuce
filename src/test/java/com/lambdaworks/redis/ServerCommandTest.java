@@ -19,6 +19,9 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void bgsave() throws Exception {
+        while (redis.info().contains("bgrewriteaof_in_progress:1")) {
+            Thread.sleep(100);
+        }
         String msg = "Background saving started";
         assertEquals(msg, redis.bgsave());
     }
