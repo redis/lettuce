@@ -185,7 +185,7 @@ public final class SqlSessionUtils {
             holder.released();
         } else {
             if (logger.isDebugEnabled()) {
-                logger.debug("Closing no transactional SqlSession [" + session + "]");
+                logger.debug("Closing non transactional SqlSession [" + session + "]");
             }
             session.close();
         }

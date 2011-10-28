@@ -30,7 +30,7 @@ import org.apache.ibatis.type.TypeHandler;
 * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
 */
 @MappedTypes(BigDecimal.class)
-public class DummyTypeHandler2 implements TypeHandler {
+public class DummyTypeHandler2 implements TypeHandler<Object> {
 
     public void setParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
     }

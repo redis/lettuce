@@ -17,22 +17,30 @@ package org.mybatis.spring.mapper;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyValue;
+import org.springframework.beans.PropertyValues;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.PropertyResourceConfigurer;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
@@ -61,7 +69,13 @@ import org.springframework.util.StringUtils;
  * automatically autowired with the proper {@code SqlSessionFactory} or {@code SqlSessionTemplate}.
  * If there is more than one {@code SqlSessionFactory} in the application, however, autowiring
  * cannot be used. In this case you must explicitly specify either an {@code SqlSessionFactory} or
- * an {@code SqlSessionTemplate} to use.
+ * an {@code SqlSessionTemplate} to use via the <em>bean name</em> properties. Bean names are used
+ * rather than actual objects because Spring does not initialize property placeholders until after
+ * this class is processed. Passing in an actual object which may require placeholders (i.e. DB user
+ * / password) will fail. Using bean names defers actual object creation until later in the startup
+ * process, after all placeholder substituation is completed. However, note that this configurer
+ * does support property placeholders of its <em>own</em> properties. The <code>basePackage</code>
+ * and bean name properties all support <code>${property}</code> style substitution.
  * <p>
  * Configuration sample:
  * <p>
@@ -79,7 +93,7 @@ import org.springframework.util.StringUtils;
  * @see MapperFactoryBean
  * @version $Id$
  */
-public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware {
+public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
 
     private String basePackage;
 
@@ -94,6 +108,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     private Class<?> markerInterface;
 
     private ApplicationContext applicationContext;
+
+    private String beanName;
 
     /**
      * This property lets you set the base package for your mapper interface files. 
@@ -190,6 +206,13 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     /**
      * {@inheritDoc}
      */
+    public void setBeanName(String name) {
+        this.beanName = name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.basePackage, "Property 'basePackage' is required");
     }
@@ -204,10 +227,69 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      * {@inheritDoc}
      */
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
+        processPropertyPlaceHolders();
+
         Scanner scanner = new Scanner(beanDefinitionRegistry);
         scanner.setResourceLoader(this.applicationContext);
 
         scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
+    }
+
+    /*
+     * BeanDefinitionRegistries are called early in application startup, before
+     * BeanFactoryPostProcessors. This means that PropertyResourceConfigurers will not have been
+     * loaded and any property substitution of this class' properties will fail. To avoid this, find
+     * any PropertyResourceConfigurers defined in the context and run them on this class' bean
+     * definition. Then update the values.
+     */
+    private final void processPropertyPlaceHolders() {
+        Map<String, PropertyResourceConfigurer> prcs = applicationContext
+                .getBeansOfType(PropertyResourceConfigurer.class);
+
+        if (!prcs.isEmpty()) {
+            if (applicationContext instanceof GenericApplicationContext) {
+                BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
+                        .getBeanFactory().getBeanDefinition(beanName);
+
+                // PropertyResourceConfigurer does not expose any methods to explicitly perform
+                // property placeholder substitution. Instead, create a BeanFactory that just
+                // contains this mapper scanner and post process the factory.
+                DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+                factory.registerBeanDefinition(beanName, mapperScannerBean);
+
+                for (PropertyResourceConfigurer prc : prcs.values()) {
+                    prc.postProcessBeanFactory(factory);
+                }
+
+                PropertyValues values = mapperScannerBean.getPropertyValues();
+
+                this.basePackage = updatePropertyValue("basePackage", values);
+                this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName",
+                        values);
+                this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName",
+                        values);
+            }
+        }
+    }
+
+    private String updatePropertyValue(String propertyName, PropertyValues values) {
+        PropertyValue property = values.getPropertyValue(propertyName);
+
+        if (property == null) {
+            return null;
+        }
+
+        Object value = property.getValue();
+
+        if (value == null) {
+            return null;
+        } else if (value instanceof String) {
+            return value.toString();
+        } else if (value instanceof TypedStringValue) {
+            return ((TypedStringValue) value).getValue();
+        } else {
+            return null;
+        }
     }
 
     private final class Scanner extends ClassPathBeanDefinitionScanner {
@@ -299,11 +381,6 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
                     definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
 
-                    // BeanDefinitionRegistries are called early in application startup, before
-                    // BeanFactoryPostProcessors. This means that PropertyResourceConfigurers will not have been
-                    // loaded and any property substitution will fail.
-                    // Bean names instead of bean references are used to delay the creation of sqlSessionFactoryBeans
-                    // or sqlSessionTemplate until PropertyResourceConfigurers has been run
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
                         definition.getPropertyValues().add("sqlSessionFactory",
                                 new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
