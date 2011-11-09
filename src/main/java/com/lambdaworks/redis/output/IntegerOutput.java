@@ -12,10 +12,10 @@ import java.nio.ByteBuffer;
  *
  * @author Will Glozer
  */
-public class IntegerOutput extends CommandOutput<Long> {
+public class IntegerOutput<K, V> extends CommandOutput<K, V, Long> {
     private Long value;
 
-    public IntegerOutput(RedisCodec<?, ?> codec) {
+    public IntegerOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 

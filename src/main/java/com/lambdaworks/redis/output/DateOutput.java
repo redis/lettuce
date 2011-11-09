@@ -12,10 +12,10 @@ import java.util.Date;
  *
  * @author Will Glozer
  */
-public class DateOutput extends CommandOutput<Date> {
+public class DateOutput<K, V> extends CommandOutput<K, V, Date> {
     private Date value;
 
-    public DateOutput(RedisCodec<?, ?> codec) {
+    public DateOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 

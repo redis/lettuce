@@ -49,6 +49,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zinterstore() throws Exception {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
@@ -64,6 +65,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zrangeWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")), redis.zrangeWithScores(key, 0, -1));
@@ -81,6 +83,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zrangebyscoreWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(svlist(sv(2.0, "b"), sv(3.0, "c")), redis.zrangebyscoreWithScores(key, 2.0, 3.0));
@@ -138,6 +141,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zrevrangeWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangeWithScores(key, 0, -1));
@@ -155,6 +159,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zrevrangebyscoreWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b")), redis.zrevrangebyscoreWithScores(key, 3.0, 2.0));
@@ -181,6 +186,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zunionstore() throws Exception {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
@@ -202,6 +208,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void zStoreArgs() throws Exception {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");

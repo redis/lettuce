@@ -14,10 +14,10 @@ import java.nio.ByteBuffer;
  *
  * @author Will Glozer
  */
-public class ValueOutput<V> extends CommandOutput<V> {
+public class ValueOutput<K, V> extends CommandOutput<K, V, V> {
     private V value;
 
-    public ValueOutput(RedisCodec<?, V> codec) {
+    public ValueOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -28,8 +28,7 @@ public class ValueOutput<V> extends CommandOutput<V> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void set(ByteBuffer bytes) {
-        value = (bytes == null) ? null : (V) codec.decodeValue(bytes);
+        value = (bytes == null) ? null : codec.decodeValue(bytes);
     }
 }

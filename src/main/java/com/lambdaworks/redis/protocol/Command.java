@@ -5,9 +5,7 @@ package com.lambdaworks.redis.protocol;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import org.jboss.netty.buffer.ChannelBuffer;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * A redis command and its result. All successfully executed commands will
@@ -17,12 +15,12 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Will Glozer
  */
-public class Command<T> implements Future<T> {
+public class Command<K, V, T> implements Future<T> {
     protected static final byte[] CRLF = "\r\n".getBytes();
 
     protected final CommandType type;
     protected CommandArgs args;
-    protected CommandOutput<T> output;
+    protected CommandOutput<K, V, T> output;
     protected CountDownLatch latch;
 
     /**
@@ -32,7 +30,7 @@ public class Command<T> implements Future<T> {
      * @param output    Command output.
      * @param args      Command args, if any.
      */
-    public Command(CommandType type, CommandOutput<T> output, CommandArgs args) {
+    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs args) {
         this.type   = type;
         this.output = output;
         this.args   = args;
@@ -133,7 +131,7 @@ public class Command<T> implements Future<T> {
      *
      * @return  The command output object.
      */
-    public CommandOutput<T> getOutput() {
+    public CommandOutput<K, V, T> getOutput() {
         return output;
     }
 

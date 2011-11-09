@@ -40,7 +40,7 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
      * @param timeout   Maximum time to wait for a responses.
      * @param unit      Unit of time for the timeout.
      */
-    public RedisPubSubConnection(BlockingQueue<Command<?>> queue, RedisCodec<K, V> codec, int timeout, TimeUnit unit) {
+    public RedisPubSubConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, int timeout, TimeUnit unit) {
         super(queue, codec, timeout, unit);
         listeners = new CopyOnWriteArrayList<RedisPubSubListener<V>>();
         channels  = new HashSet<String>();
@@ -66,19 +66,19 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
     }
 
     public void psubscribe(String... patterns) {
-        dispatch(PSUBSCRIBE, new PubSubOutput<V>(codec), args(patterns));
+        dispatch(PSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
     }
 
     public void punsubscribe(String... patterns) {
-        dispatch(PUNSUBSCRIBE, new PubSubOutput<V>(codec), args(patterns));
+        dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
     }
 
     public void subscribe(String... channels) {
-        dispatch(SUBSCRIBE, new PubSubOutput<V>(codec), args(channels));
+        dispatch(SUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
     }
 
     public void unsubscribe(String... channels) {
-        dispatch(UNSUBSCRIBE, new PubSubOutput<V>(codec), args(channels));
+        dispatch(UNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
     }
 
     @Override
@@ -101,7 +101,7 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
     @Override
     @SuppressWarnings("unchecked")
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        PubSubOutput<V> output = (PubSubOutput<V>) e.getMessage();
+        PubSubOutput<K, V> output = (PubSubOutput<K, V>) e.getMessage();
         for (RedisPubSubListener<V> listener : listeners) {
             switch (output.type()) {
                 case message:

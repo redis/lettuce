@@ -8,6 +8,7 @@ package com.lambdaworks.redis;
  *
  * @author Will Glozer
  */
+@SuppressWarnings("serial")
 public class RedisCommandInterruptedException extends RedisException {
     public RedisCommandInterruptedException(Throwable e) {
         super("Command interrupted", e);

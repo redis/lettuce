@@ -71,6 +71,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "varargs"})
     public void scoredValueListCommand() throws Exception {
         assertNull(async.zadd(key, 1.0, "a"));
         assertNull(async.zadd(key, 2.0, "b"));

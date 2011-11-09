@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
  *
  * @author Will Glozer
  */
-public class PubSubOutput<V> extends CommandOutput<V> {
+public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
     enum Type { message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe }
 
     private Type type;
@@ -24,7 +24,7 @@ public class PubSubOutput<V> extends CommandOutput<V> {
     private long count;
     private V message;
 
-    public PubSubOutput(RedisCodec<?, V> codec) {
+    public PubSubOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -50,7 +50,7 @@ public class PubSubOutput<V> extends CommandOutput<V> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("fallthrough")
     public void set(ByteBuffer bytes) {
         if (type == null) {
             type = Type.valueOf(decodeAscii(bytes));
@@ -68,7 +68,7 @@ public class PubSubOutput<V> extends CommandOutput<V> {
                     channel = decodeAscii(bytes);
                     break;
                 }
-                message = (V) codec.decodeValue(bytes);
+                message = codec.decodeValue(bytes);
                 break;
             case psubscribe:
             case punsubscribe:

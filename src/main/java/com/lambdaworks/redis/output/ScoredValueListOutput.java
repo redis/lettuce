@@ -17,11 +17,11 @@ import java.util.List;
  *
  * @author Will Glozer
  */
-public class ScoredValueListOutput<V> extends CommandOutput<List<ScoredValue<V>>> {
+public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>> {
     private List<ScoredValue<V>> list = new ArrayList<ScoredValue<V>>();
     private V value;
 
-    public ScoredValueListOutput(RedisCodec<?, V> codec) {
+    public ScoredValueListOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -32,10 +32,9 @@ public class ScoredValueListOutput<V> extends CommandOutput<List<ScoredValue<V>>
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void set(ByteBuffer bytes) {
         if (value == null) {
-            value = (V) codec.decodeValue(bytes);
+            value = codec.decodeValue(bytes);
             return;
         }
 

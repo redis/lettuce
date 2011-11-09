@@ -16,10 +16,10 @@ import java.util.List;
  *
  * @author Will Glozer
  */
-public class ValueListOutput<V> extends CommandOutput<List<V>> {
+public class ValueListOutput<K, V> extends CommandOutput<K, V, List<V>> {
     List<V> list = new ArrayList<V>();
 
-    public ValueListOutput(RedisCodec<?, V> codec) {
+    public ValueListOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -30,8 +30,7 @@ public class ValueListOutput<V> extends CommandOutput<List<V>> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void set(ByteBuffer bytes) {
-        list.add(bytes == null ? null : (V) codec.decodeValue(bytes));
+        list.add(bytes == null ? null : codec.decodeValue(bytes));
     }
 }

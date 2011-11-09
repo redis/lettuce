@@ -16,7 +16,7 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
  *
  * @author Will Glozer
  */
-public class RedisStateMachine {
+public class RedisStateMachine<K, V> {
     private static final ByteBuffer QUEUED = ByteBuffer.wrap("QUEUED".getBytes());
 
     static class State {
@@ -43,7 +43,7 @@ public class RedisStateMachine {
      *
      * @return true if a complete response was read.
      */
-    public boolean decode(ChannelBuffer buffer, CommandOutput<?> output) {
+    public boolean decode(ChannelBuffer buffer, CommandOutput<K, V, ?> output) {
         int length, end;
         ByteBuffer bytes;
 

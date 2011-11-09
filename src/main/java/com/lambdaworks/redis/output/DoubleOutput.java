@@ -14,10 +14,10 @@ import static java.lang.Double.parseDouble;
  *
  * @author Will Glozer
  */
-public class DoubleOutput extends CommandOutput<Double> {
+public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
     private Double value;
 
-    public DoubleOutput(RedisCodec<?, ?> codec) {
+    public DoubleOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 

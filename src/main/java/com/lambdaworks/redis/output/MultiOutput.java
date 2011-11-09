@@ -13,17 +13,17 @@ import java.util.*;
  *
  * @author Will Glozer
  */
-public class MultiOutput extends CommandOutput<List<Object>> {
-    private Queue<CommandOutput<?>> queue;
+public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
+    private Queue<CommandOutput<K, V, ?>> queue;
     private List<Object> values;
 
-    public MultiOutput(RedisCodec<?, ?> codec) {
+    public MultiOutput(RedisCodec<K, V> codec) {
         super(codec);
-        this.queue  = new LinkedList<CommandOutput<?>>();
+        this.queue  = new LinkedList<CommandOutput<K, V, ?>>();
         this.values = new ArrayList<Object>();
     }
 
-    public void add(CommandOutput<?> cmd) {
+    public void add(CommandOutput<K, V, ?> cmd) {
         queue.add(cmd);
     }
 
@@ -50,7 +50,7 @@ public class MultiOutput extends CommandOutput<List<Object>> {
     @Override
     public void complete(int depth) {
         if (depth == 1) {
-            CommandOutput<?> output = queue.remove();
+            CommandOutput<K, V, ?> output = queue.remove();
             values.add(output.get());
         }
     }

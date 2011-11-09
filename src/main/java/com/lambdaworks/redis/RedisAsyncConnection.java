@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class RedisAsyncConnection<K, V> extends RedisConnection<K, V> {
     private RedisConnection<K, V> parent;
-    private List<Command<?>> pipeline;
+    private List<Command<K, V, ?>> pipeline;
 
     /**
      * Initialize a new connection.
@@ -32,7 +32,7 @@ public class RedisAsyncConnection<K, V> extends RedisConnection<K, V> {
     public RedisAsyncConnection(RedisCodec<K, V> codec, RedisConnection<K, V> parent) {
         super(null, codec, 0, null);
         this.parent   = parent;
-        this.pipeline = new ArrayList<Command<?>>();
+        this.pipeline = new ArrayList<Command<K, V, ?>>();
     }
 
     /**
@@ -43,7 +43,7 @@ public class RedisAsyncConnection<K, V> extends RedisConnection<K, V> {
      */
     public List<Object> flush() {
         List<Object> list = new ArrayList<Object>(pipeline.size());
-        for (Command<?> cmd : pipeline) {
+        for (Command<K, V, ?> cmd : pipeline) {
             list.add(parent.getOutput(cmd));
         }
         pipeline.clear();
@@ -66,14 +66,14 @@ public class RedisAsyncConnection<K, V> extends RedisConnection<K, V> {
     }
 
     @Override
-    public <T> Command<T> dispatch(CommandType type, CommandOutput<T> output, CommandArgs<K, V> args) {
-        Command<T> cmd = parent.dispatch(type, output, args);
+    public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+        Command<K, V, T> cmd = parent.dispatch(type, output, args);
         pipeline.add(cmd);
         return cmd;
     }
 
     @Override
-    public <T> T getOutput(Command<T> cmd) {
+    public <T> T getOutput(Command<K, V, T> cmd) {
         return null;
     }
 }

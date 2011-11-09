@@ -3,7 +3,7 @@
 package com.lambdaworks.redis.protocol;
 
 /**
- * All redis commands as of version 2.2.4.
+ * Redis commands.
  *
  * @author Will Glozer
  */

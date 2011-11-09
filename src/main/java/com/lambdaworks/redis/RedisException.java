@@ -8,6 +8,7 @@ package com.lambdaworks.redis;
  *
  * @author Will Glozer
  */
+@SuppressWarnings("serial")
 public class RedisException extends RuntimeException {
     public RedisException(String msg) {
         super(msg);

@@ -16,10 +16,10 @@ import java.util.Set;
  *
  * @author Will Glozer
  */
-public class ValueSetOutput<V> extends CommandOutput<Set<V>> {
+public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {
     private Set<V> set = new HashSet<V>();
 
-    public ValueSetOutput(RedisCodec<?, V> codec) {
+    public ValueSetOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -30,8 +30,7 @@ public class ValueSetOutput<V> extends CommandOutput<Set<V>> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void set(ByteBuffer bytes) {
-        set.add(bytes == null ? null : (V) codec.decodeValue(bytes));
+        set.add(bytes == null ? null : codec.decodeValue(bytes));
     }
 }

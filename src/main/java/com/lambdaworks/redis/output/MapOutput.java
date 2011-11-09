@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * @author Will Glozer
  */
-public class MapOutput<K, V> extends CommandOutput<Map<K, V>> {
+public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     private Map<K, V> map = new HashMap<K, V>();
     private K key;
 
@@ -32,14 +32,13 @@ public class MapOutput<K, V> extends CommandOutput<Map<K, V>> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void set(ByteBuffer bytes) {
         if (key == null) {
-            key = (K) codec.decodeKey(bytes);
+            key = codec.decodeKey(bytes);
             return;
         }
 
-        V value = (bytes == null) ? null : (V) codec.decodeValue(bytes);
+        V value = (bytes == null) ? null : codec.decodeValue(bytes);
         map.put(key, value);
         key = null;
     }

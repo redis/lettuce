@@ -12,12 +12,12 @@ import java.nio.ByteBuffer;
  *
  * @author Will Glozer
  */
-public class StatusOutput extends CommandOutput<String> {
+public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
     private static final ByteBuffer OK = ByteBuffer.wrap("OK".getBytes());
 
     private String status;
 
-    public StatusOutput(RedisCodec<?, ?> codec) {
+    public StatusOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 

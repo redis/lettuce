@@ -106,10 +106,10 @@ public class RedisClient {
      */
     public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
         try {
-            BlockingQueue<Command<?>> queue = new LinkedBlockingQueue<Command<?>>();
+            BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
             ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
-            CommandHandler handler = new CommandHandler(queue);
+            CommandHandler handler = new CommandHandler<K, V>(queue);
             RedisConnection<K, V> connection = new RedisConnection<K, V>(queue, codec, timeout, unit);
 
             ChannelPipeline pipeline = Channels.pipeline(watchdog, handler, connection);
@@ -140,7 +140,7 @@ public class RedisClient {
      */
     public <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
         try {
-            BlockingQueue<Command<?>> queue = new LinkedBlockingQueue<Command<?>>();
+            BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
             ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
             PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);

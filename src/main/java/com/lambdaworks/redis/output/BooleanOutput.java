@@ -11,10 +11,10 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  *
  * @author Will Glozer
  */
-public class BooleanOutput extends CommandOutput<Boolean> {
+public class BooleanOutput<K, V> extends CommandOutput<K, V, Boolean> {
     private Boolean value;
 
-    public BooleanOutput(RedisCodec<?, ?> codec) {
+    public BooleanOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 

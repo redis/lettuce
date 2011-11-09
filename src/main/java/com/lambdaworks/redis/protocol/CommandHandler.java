@@ -14,24 +14,24 @@ import java.util.concurrent.BlockingQueue;
  *
  * @author Will Glozer
  */
-public class CommandHandler extends SimpleChannelHandler {
-    protected BlockingQueue<Command<?>> queue;
+public class CommandHandler<K, V> extends SimpleChannelHandler {
+    protected BlockingQueue<Command<K, V, ?>> queue;
     protected ChannelBuffer buffer;
-    protected RedisStateMachine rsm;
+    protected RedisStateMachine<K, V> rsm;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
      * @param queue The command queue.
      */
-    public CommandHandler(BlockingQueue<Command<?>> queue) {
+    public CommandHandler(BlockingQueue<Command<K, V, ?>> queue) {
         this.queue = queue;
     }
 
     @Override
     public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         buffer = ChannelBuffers.dynamicBuffer(ctx.getChannel().getConfig().getBufferFactory());
-        rsm = new RedisStateMachine();
+        rsm = new RedisStateMachine<K, V>();
     }
 
     @Override
@@ -56,7 +56,7 @@ public class CommandHandler extends SimpleChannelHandler {
 
     protected void decode(ChannelHandlerContext ctx, ChannelBuffer buffer) throws InterruptedException {
         while(!queue.isEmpty() && rsm.decode(buffer, queue.peek().getOutput())) {
-            Command<?> cmd = queue.take();
+            Command<K, V, ?> cmd = queue.take();
             cmd.complete();
         }
     }

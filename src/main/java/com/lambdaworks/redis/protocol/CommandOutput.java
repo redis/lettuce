@@ -14,8 +14,8 @@ import java.nio.ByteBuffer;
  *
  * @author Will Glozer
  */
-public abstract class CommandOutput<T> {
-    protected RedisCodec<?, ?> codec;
+public abstract class CommandOutput<K, V, T> {
+    protected RedisCodec<K, V> codec;
     protected String error;
 
     /**
@@ -24,7 +24,7 @@ public abstract class CommandOutput<T> {
      *
      * @param codec Codec used to encode/decode keys and values.
      */
-    public CommandOutput(RedisCodec<?, ?> codec) {
+    public CommandOutput(RedisCodec<K, V> codec) {
         this.codec = codec;
     }
 

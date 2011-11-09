@@ -14,10 +14,10 @@ import java.util.List;
  *
  * @author Will Glozer
  */
-public class StringListOutput extends CommandOutput<List<String>> {
+public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> {
     private List<String> list = new ArrayList<String>();
 
-    public StringListOutput(RedisCodec<?, ?> codec) {
+    public StringListOutput(RedisCodec<K, V> codec) {
         super(codec);
     }
 
