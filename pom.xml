@@ -32,7 +32,7 @@
    <dependency>
      <groupId>org.jboss.netty</groupId>
      <artifactId>netty</artifactId>
-     <version>3.2.4.Final</version>
+     <version>[3.2.4.Final,3.3.0.Final)</version>
    </dependency>
 
    <dependency>
