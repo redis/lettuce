@@ -16,7 +16,7 @@ import java.nio.ByteBuffer;
  */
 public abstract class CommandOutput<K, V, T> {
     protected RedisCodec<K, V> codec;
-    protected String error;
+    protected RedisException error;
 
     /**
      * Initialize a new instance that encodes and decodes keys and
@@ -66,7 +66,7 @@ public abstract class CommandOutput<K, V, T> {
      * @throws RedisException if the server returned an error.
      */
     protected void errorCheck() throws RedisException {
-        if (error != null) throw new RedisException(error);
+        if (error != null) throw error;
     }
 
     /**
@@ -75,7 +75,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param error Error message.
      */
     public void setError(ByteBuffer error) {
-        this.error = decodeAscii(error);
+        this.error = new RedisException(decodeAscii(error));
     }
 
     /**
@@ -84,7 +84,25 @@ public abstract class CommandOutput<K, V, T> {
      * @param error Error message.
      */
     public void setError(String error) {
-        this.error = error;
+        this.error = new RedisException(error);
+    }
+
+    /**
+     * Check if the command resulted in an error.
+     *
+     * @return true if command resulted in an error.
+     */
+    public boolean hasError() {
+        return this.error != null;
+    }
+
+    /**
+     * Get the error that occurred.
+     *
+     * @return The error.
+     */
+    public RedisException getError() {
+        return error;
     }
 
     /**

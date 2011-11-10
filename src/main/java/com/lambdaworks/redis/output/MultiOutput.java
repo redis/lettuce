@@ -51,7 +51,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     public void complete(int depth) {
         if (depth == 1) {
             CommandOutput<K, V, ?> output = queue.remove();
-            values.add(output.get());
+            values.add(!output.hasError() ? output.get() : output.getError());
         }
     }
 }

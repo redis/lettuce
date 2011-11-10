@@ -64,6 +64,18 @@ public class TransactionCommandTest extends AbstractCommandTest {
         assertEquals(list("OK", "OK", list("1", "2"), 0L), redis.exec());
     }
 
+    @Test
+    public void errorInMulti() throws Exception {
+        redis.multi();
+        redis.set(key, value);
+        redis.lpop(key);
+        redis.get(key);
+        List<Object> values = redis.exec();
+        assertEquals("OK", values.get(0));
+        assertTrue(values.get(1) instanceof RedisException);
+        assertEquals(value, values.get(2));
+    }
+
     protected List<Object> list(Object... args) {
         return Arrays.asList(args);
     }
