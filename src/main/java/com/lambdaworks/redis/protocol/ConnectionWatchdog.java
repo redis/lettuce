@@ -44,7 +44,7 @@ public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements 
     }
 
     @Override
-    public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         channel = ctx.getChannel();
         channels.add(channel);
         attempts = 0;
@@ -52,7 +52,7 @@ public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements 
     }
 
     @Override
-    public synchronized void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         if (reconnect) {
             if (attempts < 8) attempts++;
             int timeout = 2 << attempts;

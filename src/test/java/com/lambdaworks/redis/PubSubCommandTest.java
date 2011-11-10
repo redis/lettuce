@@ -5,10 +5,10 @@ package com.lambdaworks.redis;
 import com.lambdaworks.redis.pubsub.*;
 import org.junit.*;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNull;
 
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String> {
     private RedisPubSubConnection<String, String> pubsub;
@@ -103,7 +103,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     }
 
     @Test(timeout = 1000)
-    public void resubscribeOnReconnect() throws Exception {
+    public void resubscribeChannelsOnReconnect() throws Exception {
         pubsub.subscribe(channel);
         assertEquals(channel, channels.take());
         assertEquals(1, (long) counts.take());
@@ -118,18 +118,67 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(message, messages.take());
     }
 
+    @Test(timeout = 1000)
+    public void resubscribePatternsOnReconnect() throws Exception {
+        pubsub.psubscribe(pattern);
+        assertEquals(pattern, patterns.take());
+        assertEquals(1, (long) counts.take());
+
+        pubsub.quit();
+
+        assertEquals(pattern, patterns.take());
+        assertEquals(1, (long) counts.take());
+
+        redis.publish(channel, message);
+        assertEquals(channel, channels.take());
+        assertEquals(message, messages.take());
+    }
+
     @Test(timeout = 100)
     public void adapter() throws Exception {
-        final BlockingQueue<String> localSubscriptions = new LinkedBlockingQueue<String>();
+        final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
+
         RedisPubSubAdapter<String> adapter = new RedisPubSubAdapter<String>() {
             @Override
             public void subscribed(String channel, long count) {
-                localSubscriptions.add(channel);
+                super.subscribed(channel, count);
+                localCounts.add(count);
+            }
+
+            @Override
+            public void unsubscribed(String channel, long count) {
+                super.unsubscribed(channel, count);
+                localCounts.add(count);
             }
         };
+
         pubsub.addListener(adapter);
         pubsub.subscribe(channel);
-        assertEquals(channel, localSubscriptions.take());
+        pubsub.psubscribe(pattern);
+
+        assertEquals(1L, (long) localCounts.take());
+
+        redis.publish(channel, message);
+        pubsub.punsubscribe(pattern);
+        pubsub.unsubscribe(channel);
+
+        assertEquals(0L, (long) localCounts.take());
+    }
+
+    @Test(timeout = 1000)
+    public void removeListener() throws Exception {
+        pubsub.subscribe(channel);
+        assertEquals(channel, channels.take());
+
+        redis.publish(channel, message);
+        assertEquals(channel, channels.take());
+        assertEquals(message, messages.take());
+
+        pubsub.removeListener(this);
+
+        redis.publish(channel, message);
+        assertNull(channels.poll(10, TimeUnit.MILLISECONDS));
+        assertNull(messages.poll(10, TimeUnit.MILLISECONDS));
     }
 
     // RedisPubSubListener implementation

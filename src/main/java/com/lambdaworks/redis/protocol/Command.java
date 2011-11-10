@@ -50,6 +50,7 @@ public class Command<K, V, T> implements Future<T> {
         boolean cancelled = false;
         if (latch.getCount() == 1) {
             latch.countDown();
+            output = null;
             cancelled = true;
         }
         return cancelled;
