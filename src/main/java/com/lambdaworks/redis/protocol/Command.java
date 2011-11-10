@@ -163,20 +163,15 @@ public class Command<K, V, T> implements Future<T> {
     }
 
     /**
-     * Write the textual value of an integer to the supplied buffer.
+     * Write the textual value of a positive integer to the supplied buffer.
      *
      * @param buf   Buffer to write to.
      * @param value Value to write.
      */
     protected static void writeInt(ChannelBuffer buf, int value) {
-        if (value >= 0 && value <= 9) {
+        if (value < 10) {
             buf.writeByte('0' + value);
             return;
-        }
-
-        if (value < 0) {
-            value = -value;
-            buf.writeByte('-');
         }
 
         StringBuilder sb = new StringBuilder(8);

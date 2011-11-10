@@ -144,14 +144,9 @@ public class CommandArgs<K, V> {
     }
 
     private void write(long value) {
-        if (value >= 0 && value <= 9) {
+        if (value < 10) {
             buffer.put((byte) ('0' + value));
             return;
-        }
-
-        if (value < 0) {
-            value = -value;
-            buffer.put((byte) '-');
         }
 
         StringBuilder sb = new StringBuilder(8);
