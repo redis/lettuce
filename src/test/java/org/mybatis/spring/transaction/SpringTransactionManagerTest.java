@@ -46,21 +46,21 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
         txManager.commit(status);
     }
 
-//    @Test
-//    public void shouldManageWithOtherDatasource() throws Exception {
-//        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
-//        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
-//        TransactionStatus status = txManager.getTransaction(txDef);
-//
-//        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(new MockDataSource());
-//        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
-//        transaction.commit();
-//        transaction.close();
-//        assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
-//        assertTrue("should close the Connection", connection.isClosed());
-//
-//        txManager.commit(status);
-//    }
+    //    @Test
+    //    public void shouldManageWithOtherDatasource() throws Exception {
+    //        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+    //        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+    //        TransactionStatus status = txManager.getTransaction(txDef);
+    //
+    //        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(new MockDataSource());
+    //        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
+    //        transaction.commit();
+    //        transaction.close();
+    //        assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
+    //        assertTrue("should close the Connection", connection.isClosed());
+    //
+    //        txManager.commit(status);
+    //    }
 
     @Test
     public void shouldManageWithNoTx() throws Exception {
@@ -70,6 +70,18 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
         transaction.commit();
         transaction.close();
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
+        assertTrue("should close the Connection", connection.isClosed());
+    }
+
+    @Test
+    public void shouldNotCommitWithNoTxAndAutocommitIsOn() throws Exception {
+        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
+        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, false);
+        connection.setAutoCommit(true);
+        transaction.getConnection();
+        transaction.commit();
+        transaction.close();
+        assertEquals("should not call commit on a Connection with autocommit", 0, connection.getNumberCommits());
         assertTrue("should close the Connection", connection.isClosed());
     }
 

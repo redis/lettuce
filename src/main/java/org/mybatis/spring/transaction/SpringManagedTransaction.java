@@ -48,6 +48,8 @@ public class SpringManagedTransaction implements Transaction {
 
     private boolean isConnectionTransactional;
 
+    private boolean autoCommit;
+
     public SpringManagedTransaction(DataSource dataSource) {
         Assert.notNull(dataSource, "No DataSource specified");
         this.dataSource = dataSource;
@@ -64,12 +66,17 @@ public class SpringManagedTransaction implements Transaction {
     }
 
     /**
-     * Gets a connection from Spring transaction manager and discovers if this 
+     * Gets a connection from Spring transaction manager and discovers if this
      * {@code Transaction} should manage connection or let it to Spring. 
+     * <p>
+     * It also reads autocommit setting because when using Spring Transaction MyBatis
+     * thinks that autocommit is always false and will always call commit/rollback 
+     * so we need to no-op that calls.
      */
-    private void openConnection() {
-        this.connection = DataSourceUtils.getConnection(dataSource);
-        this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, dataSource);
+    private void openConnection() throws SQLException {
+        this.connection = DataSourceUtils.getConnection(this.dataSource);
+        this.autoCommit = this.connection.getAutoCommit();
+        this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
 
         if (this.logger.isDebugEnabled()) {
             this.logger.debug(
@@ -85,7 +92,7 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void commit() throws SQLException {
-        if (this.connection != null && !this.isConnectionTransactional) {
+        if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
             if (this.logger.isDebugEnabled()) {
                 this.logger.debug("Committing JDBC Connection [" + this.connection + "]");
             }
@@ -97,7 +104,7 @@ public class SpringManagedTransaction implements Transaction {
      * {@inheritDoc}
      */
     public void rollback() throws SQLException {
-        if (this.connection != null && !this.isConnectionTransactional) {
+        if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
             if (this.logger.isDebugEnabled()) {
                 this.logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
             }
