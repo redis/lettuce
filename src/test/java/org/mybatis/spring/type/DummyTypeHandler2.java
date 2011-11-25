@@ -43,4 +43,8 @@ public class DummyTypeHandler2 implements TypeHandler<Object> {
         return null;
     }
 
+    public Object getResult(ResultSet rs, int columnIndex) throws SQLException {
+        return null;
+    }
+
 }

@@ -90,6 +90,31 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     private Class<?>[] typeAliases;
 
     private String typeAliasesPackage;
+    
+    private String databaseId;
+
+    /**
+     * Sets databaseId.
+     * 
+     * @since 1.1.0
+     * 
+     * @param databaseId
+     * 
+     */
+    public String getDatabaseId() {
+      return databaseId;
+    }
+
+    /**
+     * Gets databaseId.
+     * 
+     * @since 1.1.0
+     * 
+     * @param databaseId
+     */
+    public void setDatabaseId(String databaseId) {
+      this.databaseId = databaseId;
+    }
 
     /**
      * Mybatis plugin list.
@@ -357,10 +382,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
 
         if (this.transactionFactory == null) {
-            this.transactionFactory = new SpringManagedTransactionFactory(this.dataSource);
+            this.transactionFactory = new SpringManagedTransactionFactory();
         }
 
-        Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
+        Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource, this.databaseId);
         configuration.setEnvironment(environment);
 
         if (!ObjectUtils.isEmpty(this.mapperLocations)) {

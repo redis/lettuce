@@ -121,7 +121,7 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     }
 
     @Test
-    public void testExceptionTranslationShouldThrowMyBatisSystemException() {
+    public void testExceptionTranslationShouldThrowMyBatisSystemException() throws SQLException {
         try {
             sqlSessionTemplate.selectOne("undefined");
             fail("exception not thrown when expected");
@@ -129,6 +129,8 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
             // success
         } catch (Throwable t) {
             fail("SqlSessionTemplate should translate MyBatis PersistenceExceptions");
+        } finally {
+            connection.close(); // the template do not open the connection so it do not close it
         }
     }
 
@@ -163,8 +165,7 @@ public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     public void testTemplateWithNoTxSelect() {
 
         sqlSessionTemplate.getMapper(TestMapper.class).findTest();
-        assertNoCommitJdbc();
-        assertCommitSession();
+        assertCommit();
 
     }
 

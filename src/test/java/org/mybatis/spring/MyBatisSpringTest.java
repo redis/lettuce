@@ -25,6 +25,7 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
@@ -139,7 +140,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testWithNonSpringTransactionFactory() {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
-        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource, "databaseId");
         sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
         try {
@@ -178,7 +179,6 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         }
     }
 
-    // TODO should this pass?
     /*
      * this is an edge case - completely separate DataSource, non-Spring TXManager but with an
      * existing Spring TX. Technically, this could be allowed, but the current implementation fails
@@ -186,8 +186,9 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
      * To fix, however, SqlSessionTemplate.execute() would need to run more checks
      * (DataSourceUtils.isConnectionTransactional() and unwrapping TransactionAwareDataSourceProxy)
      * which would increase the code path for all transactions.
+     * (fixed in 1.0.1)
      */
-    @Test(expected = TransientDataAccessResourceException.class)
+    @Test
     public void testNonSpringTxFactoryNonSpringDSWithTx() {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
@@ -204,8 +205,10 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
 
-            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+//            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
         } finally {
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
             // rollback required to close connection
             txManager.rollback(status);
 
@@ -325,10 +328,14 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         assertSingleConnection();
     }
 
+    // is this test right?
+    // it works or fails depending when the getConnection() is done
+    // that is... where is the transaction started?? on openSession() or when the first SQL sentence is run?
     @Test
     public void testWithOtherTx() throws Exception {
 
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getConnection(); // force the connection retrieval
 
         try {
             // this transaction should use another Connection

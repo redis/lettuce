@@ -18,6 +18,7 @@ package org.mybatis.spring.mapper;
 import static org.junit.Assert.fail;
 
 import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.junit.BeforeClass;
@@ -26,6 +27,7 @@ import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.mybatis.spring.MyBatisSystemException;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.SqlSessionUtils;
 import org.mybatis.spring.TestMapper;
 import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.springframework.dao.TransientDataAccessResourceException;
@@ -50,8 +52,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     public void testBasicUsage() throws Exception {
         find();
 
-        assertNoCommitJdbc();
-        assertCommitSession();
+        assertCommit(); // sqlsesssiontemplate autocommits
         assertSingleConnection();
         assertExecuteCount(1);
     }
@@ -63,11 +64,13 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         // mapperLocations properties defaults to null
         factoryBean.setDataSource(dataSource);
+        factoryBean.setDatabaseId("donotintrospectid");
+        factoryBean.setPlugins(new Interceptor[] { executorInterceptor });
 
         SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
 
         find(new SqlSessionTemplate(sqlSessionFactory), true);
-        assertNoCommit();
+        assertCommit(); // sqlsesssiontemplate autocommits
         assertSingleConnection();
         assertExecuteCount(1);
     }
@@ -114,13 +117,13 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     @Test
     public void testWithNonSpringTransactionFactory() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
-        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource, "donotintrospectdatabaseId");
         sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
         try {
             find(new SqlSessionTemplate(sqlSessionFactory));
 
-            assertNoCommitJdbc();
+            assertCommit(); // SqlSessionTemplate autocommits
             assertCommitSession();
             assertSingleConnection();
             assertExecuteCount(1);
@@ -153,9 +156,9 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         }
     }
 
-    // TODO should this pass?
     // similar to testNonSpringTxFactoryNonSpringDSWithTx() in MyBatisSpringTest
-    @Test(expected = TransientDataAccessResourceException.class)
+    // it passes in 1.1.0
+    @Test
     public void testNonSpringWithTx() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
@@ -174,7 +177,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
             find(sqlSessionTemplate);
 
-            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+//            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
         } finally {
             // rollback required to close connection
             txManager.rollback(status);

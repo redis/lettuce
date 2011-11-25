@@ -20,6 +20,7 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.springframework.util.Assert;
@@ -31,19 +32,19 @@ import org.springframework.util.Assert;
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {
 
-    private final DataSource dataSource;
-
-    public SpringManagedTransactionFactory(DataSource dataSource) {
+    /**
+     * {@inheritDoc}
+     */
+    public Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit) {
         Assert.notNull("No DataSource specified");
-
-        this.dataSource = dataSource;
+        return new SpringManagedTransaction(dataSource);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Transaction newTransaction(Connection conn, boolean autoCommit) {
-        return new SpringManagedTransaction(conn, this.dataSource);
+    public Transaction newTransaction(Connection conn) {
+        throw new UnsupportedOperationException("New Spring transactions require a DataSource");
     }
 
     /**

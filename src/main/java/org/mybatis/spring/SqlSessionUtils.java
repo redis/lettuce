@@ -15,14 +15,10 @@
  */
 package org.mybatis.spring;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
+import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -30,9 +26,7 @@ import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
@@ -107,22 +101,6 @@ public final class SqlSessionUtils {
             return holder.getSqlSession();
         }
 
-        DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
-
-        // SqlSessionFactoryBean unwraps TransactionAwareDataSourceProxies but 
-        // we keep this check for the case that SqlSessionUtils is called from custom code
-        boolean transactionAware = (dataSource instanceof TransactionAwareDataSourceProxy);
-        Connection conn;
-        try {
-            conn = transactionAware ? dataSource.getConnection() : DataSourceUtils.getConnection(dataSource);
-        } catch (SQLException e) {
-            throw new CannotGetJdbcConnectionException("Could not get JDBC Connection for SqlSession", e);
-        }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Creating SqlSession with JDBC Connection [" + conn + "]");
-        }
-
         // Assume either DataSourceTransactionManager or the underlying
         // connection pool already dealt with enabling auto commit.
         // This may not be a good assumption, but the overhead of checking
@@ -132,7 +110,10 @@ public final class SqlSessionUtils {
         // of DSTxMgr, but to do that we would need to be able to call
         // ConnectionHolder.isTransactionActive(), which is protected and not
         // visible to this class.
-        SqlSession session = sessionFactory.openSession(executorType, conn);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Creating a new SqlSession");
+        }
+        SqlSession session = sessionFactory.openSession(executorType);
 
         // Register session holder and bind it to enable synchronization.
         //
@@ -141,8 +122,9 @@ public final class SqlSessionUtils {
         // Further assume that if an exception is thrown, whatever started the transaction will
         // handle closing / rolling back the Connection associated with the SqlSession.
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            Environment environment = sessionFactory.getConfiguration().getEnvironment();
             if (!(sessionFactory.getConfiguration().getEnvironment().getTransactionFactory() instanceof SpringManagedTransactionFactory)
-                    && DataSourceUtils.isConnectionTransactional(conn, dataSource)) {
+                && TransactionSynchronizationManager.getResource(environment.getDataSource()) != null) {
                 throw new TransientDataAccessResourceException(
                         "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
             }

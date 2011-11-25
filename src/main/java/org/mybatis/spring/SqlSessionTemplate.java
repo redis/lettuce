@@ -349,7 +349,9 @@ public class SqlSessionTemplate implements SqlSession {
             try {
                 Object result = method.invoke(sqlSession, args);
                 if (!SqlSessionUtils.isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
-                    sqlSession.commit();
+                    // force commit even on non-dirty sessions because some databases require
+                    // a commit/rollback before calling close()
+                    sqlSession.commit(true);
                 }
                 return result;
             } catch (Throwable t) {
