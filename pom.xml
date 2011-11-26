@@ -60,6 +60,13 @@
     <connection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</connection>
     <developerConnection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</developerConnection>
   </scm>
+  <distributionManagement>
+    <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
+    <site>
+      <id>mybatis.site</id>
+      <url>ftp://${mybatis.host}/spring</url>
+    </site>
+  </distributionManagement>
 
   <build>
     <plugins>
