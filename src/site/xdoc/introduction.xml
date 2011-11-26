@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright 2010-2011 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    version: $Id: introduction.xml 3990 2011-10-27 04:24:54Z eduardo.macarron $
+-->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>Introduction</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+ <body>
+  <section name="What is MyBatis-Spring?">
+      <p>
+      MyBatis-Spring helps you integrate your MyBatis code seamlessly with
+      Spring. Using the classes in this library, Spring will load the necessary
+      MyBatis factory and session classes for you. This library also provides
+      an easy way to inject MyBatis data mappers and <code>SqlSession</code>s
+      into your service beans. It will also handle transactions and translate MyBatis
+      exceptions into Spring <code>DataAccessException</code>s.
+      Finally, it will let you build your application code free of 
+      dependencies on MyBatis, Spring or MyBatis-Spring.
+  	  </p>
+  </section>
+
+  <section name="Motivation">
+      <p>
+      Spring version 2 only supports iBATIS version 2. An attempt was made to
+      add MyBatis 3 support into Spring 3.0 (see the Spring Jira 
+      <a href="https://jira.springsource.org/browse/SPR-5991">issue</a>).
+      Unfortunately, Spring 3.0 development ended before MyBatis 3.0 was
+      officially released. Because the Spring team did not want to release with
+      code based on a non-released version of MyBatis, official Spring support
+      would have to wait. Given the interest in Spring support for MyBatis, 
+      the MyBatis community decided it was time to reunite the interested contributors 
+      and add Spring integration as a community sub-project of MyBatis instead.
+  	  </p>
+  </section>
+
+  <section name="Requirements">
+    <p>
+      Before starting with MyBatis-Spring integration, it is very important
+      that you are familiar with both MyBatis and Spring terminology. This
+      document does not attempt to provide background information or basic
+      setup and configuration tutorials for either MyBatis or Spring.
+    </p>
+    <p>
+      Like MyBatis and Spring 3.0, MyBatis-Spring requires Java 5 or higher.
+    </p>
+  </section>
+
+  <section name="Acknowledgements">
+    <p>
+      A special thanks goes to all the special people who made this project
+      a reality (in alphabetical order): Eduardo Macarron, Hunter Presnall 
+      and Putthibong Boonbong for the coding, testing and documentation; 
+      Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan and Tomas Pinos 
+      for their contributions; and Simone Tripodi for finding everyone and
+      bringing them all back to the project under MyBatis ;) Without them,
+      this project wouldn't exist.
+    </p>
+  </section>
+  </body>
+
+</document>

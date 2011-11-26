@@ -24,9 +24,9 @@
 
   <body>
     <menu name="Reference Documentation">
-      <item name="Introduction" href="index.html"/>
+      <item name="Introduction" href="introduction.html"/>
       <item name="Getting Started" href="getting_started.html"/>
-      <item name="Core components" href="core.html"/>
+      <item name="SqlSessionFactoryBean" href="factorybean.html"/>
     </menu>
 
     <menu ref="reports"/>

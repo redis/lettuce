@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2010-2011 The myBatis Team Licensed under the Apache License, 
+	Version 2.0 (the "License"); you may not use this file except in compliance 
+	with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
+	Unless required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. -->
+
+<!-- version: $Id: getting_started.xml 3990 2011-10-27 04:24:54Z eduardo.macarron 
+	$ -->
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+	<properties>
+		<title>Getting Started</title>
+		<author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+	</properties>
+
+	<body>
+		<section name="Getting Started">
+			<p>
+				This chapter will show you in a few steps how to install and setup
+				MyBatis-Spring and how to build
+				a simple transactional application.
+			</p>
+		</section>
+
+		<section name="Installation">
+			<p>
+				To use the MyBatis-Spring module, you just need to include the
+				<code>
+					mybatis-spring-x.x.x.jar
+				</code>
+				file and its dependencies in the classpath.
+			</p>
+			<p>
+				If you are using Maven just add the following dependency
+				to your
+				pom.xml:
+				<source><![CDATA[
+<dependency>
+  <groupId>org.mybatis</groupId>
+  <artifactId>mybatis-spring</artifactId>
+  <version>x.x.x</version>
+</dependency>]]></source>
+			</p>
+		</section>
+
+		<section name="Quick Setup">
+			<p>
+				To use MyBatis with Spring you need at least two things defined in
+				the
+				Spring application context: an
+				<code>SqlSessionFactory</code>
+				and
+				at least one data mapper class.
+			</p>
+
+			<p>
+				In MyBatis-Spring, an
+				<code>SqlSessionFactoryBean</code>
+				is used to
+				create an
+				<code>SqlSessionFactory</code>
+				. To configure the
+				factory bean, put the following in the Spring XML
+				configuration file:
+
+				<source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="datacode" ref="datacode" />
+</bean>]]></source>
+			</p>
+
+			<p>
+				Notice that the
+				<code>SqlSessionFactory</code>
+				requires a
+				<code>Datacode</code>
+				. This can be any
+				<code>Datacode</code>
+				and should be configured just like any other Spring database
+				connection.
+			</p>
+
+			<p>
+				Assume you have a data mapper class defined like the following:
+
+				<source><![CDATA[public interface UserMapper {
+  @Select("SELECT * FROM users WHERE id = #{userId}")
+  User getUser(@Param("userId") String userId);
+} ]]></source>
+
+				This interface is added to Spring using a
+				<code>MapperFactoryBean</code>
+				like the following:
+				<source><![CDATA[
+<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+
+				Note that the mapper class specified
+				<strong>must</strong>
+				be an
+				interface, not an actual implementation class. In this example,
+				annotations are used to specify the SQL, but a MyBatis mapper XML
+				file
+				could also be used.
+			</p>
+
+			<p>
+				Once configured, you can inject mappers directly into your
+				business/service objects in the same way you inject any other Spring
+				bean. The
+				<code>MapperFactoryBean</code>
+				handles creating an
+				<code>SqlSession</code>
+				as well as closing it. If there is a Spring transaction in
+				progress,
+				the session will also be committed or rolled back when the
+				transaction completes. Finally, any exceptions will be translated
+				into
+				Spring
+				<code>DataAccessException</code>
+				s.
+			</p>
+
+			<p>
+				Calling MyBatis data methods is now only one line of code:
+				<source><![CDATA[
+public class FooServiceImpl implements FooService {
+
+private UserMapper userMapper;
+
+public void setUserMapper(UserMapper userMapper) {
+  this.userMapper = userMapper;
+}
+
+public User doSomeBusinessStuff(String userId) {
+  return this.userMapper.getUser(userId);
+}]]></source>
+			</p>
+		</section>
+	</body>
+</document>
