@@ -27,6 +27,7 @@
       <item name="Introduction" href="introduction.html"/>
       <item name="Getting Started" href="getting_started.html"/>
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
+      <item name="Transactions" href="transactions.html"/>
       <item name="Using an SqlSession" href="templates_support.html"/>
       <item name="Injecting Mappers" href="mappers.html"/>
       <item name="Sample Code" href="sample.html"/>

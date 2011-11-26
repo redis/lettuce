@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The myBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--
+  version: $Id$
+-->
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis Spring | Transactions</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+                             
+  <body>
+    <section name="Transactions">
+      <p>
+        One of the primary reasons for using MyBatis-Spring is that it allows
+        MyBatis to participate in Spring transactions. Rather than create a new
+        transaction manager specific to MyBatis, MyBatis-Spring leverages the
+        existing <code>DataSourceTransactionManager</code> in Spring.
+      </p>
+      <p>
+        Once a Spring transaction manager is configured, you can configure
+        transactions in Spring as you normally would. Both
+        <code>@Transactional</code> annotations and AOP style
+        configurations are supported. A single <code>SqlSession</code>
+        object will be created and used for the duration of the transaction. This
+        session will be committed or rolled back as appropriate when then
+        transaction completes.
+      </p>
+      <p>
+        MyBatis-Spring will transparently manage transactions once they are set up.
+        There is no need for additional code in your DAO classes.
+      </p>
+    </section>
+
+    <section name="Standard Configuration">
+      <p>
+        To enable Spring transaction processing, simply create a
+        <code>DataSourceTransactionManager</code> in your Spring XML
+        configuration file:
+
+        <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></source>
+      </p>
+      <p>
+        The <code>DataSource</code> specified can be any JDBC
+        <code>DataSource</code> you would normally
+        use with Spring. This includes connection pools as well as <code>DataSource</code>s
+        obtained through JNDI lookups.
+      </p>
+      <p>
+        Note that the <code>DataSource</code> specified for the transaction
+        manager <strong>must</strong> be the same one that is used to create
+        the <code>SqlSessionFactoryBean</code> or transaction management will
+        not work.
+      </p>
+    </section>
+
+    <section name="Container Managed Transactions">
+      <p>
+        If you are using a JEE container and would like Spring to participate in
+        container managed transactions (CMT), then Spring should be configured
+        with a <code>JtaTransactionManager</code> or one of its container
+        specific subclasses. The easiest way to do this is to use the Spring
+        transaction namespace:
+
+        <source><![CDATA[<tx:jta-transaction-manager />]]></source>
+
+        In this configuration, MyBatis will behave like any other Spring
+        transactional resource configured with CMT. Spring will automatically use
+        any existing container transaction and attach an <code>SqlSession</code> to it. If no
+        transaction is started and one is needed based on the transaction
+        configuration, Spring will start a new container managed transaction.
+      </p>
+      <p>
+        Note that if you want to use CMT and do <strong>not</strong> want to
+        use Spring transaction management, you <strong>must not</strong>
+        configure any Spring transaction manager and you <strong>must</strong>
+        also configure the <code>SqlSessionFactoryBean</code> to use the base
+        MyBatis <code>ManagedTransactionFactory</code>:
+
+        <source><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="transactionFactory">
+    <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
+  </property>  
+</bean>]]></source>
+      </p>
+    </section>
+  
+    <section name="Programmatic Transaction Management">
+      <p>
+        MyBatis <code>SqlSession</code> provides you with specific methods to handle
+        transactions programmatically. But when using MyBatis-Spring your beans will be
+        injected with a Spring managed <code>SqlSession</code> or a Spring managed mapper.
+        That means that Spring will <strong>always</strong> handle your transactions.
+      </p>
+      <p>
+        You cannot call <code>SqlSession.commit()</code>, <code>SqlSession.rollback()</code>
+        or <code>SqlSession.close()</code> over a Spring managed <code>SqlSession</code>.
+        If you try to do so, a <code>UnsupportedOperationException</code> exception
+        will be thrown. Note these methods are not exposed in injected mapper classes.
+      </p>
+      <p>
+        Regardless of your JDBC connection's autocommit setting, any execution of a
+        <code>SqlSession</code> data method or any call to a mapper
+        method outside a Spring transaction will be automatically committed.
+      </p>
+      <p>
+        If you want to control your transactions programmatically please refer to chapter 10.6 of
+        the Spring reference manual. This code shows how to handle a transaction manually
+        using the <code>PlatformTransactionManager</code> described in section 10.6.2.
+        <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+
+TransactionStatus status = txManager.getTransaction(def);
+try {
+  userMapper.insertUser(user);
+}
+catch (MyException ex) {
+  txManager.rollback(status);
+  throw ex;
+}
+txManager.commit(status);]]></source>
+
+        Notice that this code uses a mapper, but it will also work with a <code>SqlSession</code>.
+      </p>
+    </section>
+  </body>
+</document>
