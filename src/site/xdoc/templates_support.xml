@@ -83,7 +83,7 @@
 
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
-</bean>]]></source>	      
+</bean>]]></source>        
       </p>
 
       <p>
@@ -119,12 +119,12 @@
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></source>
-	  
+    
         Now all your statements will be batched so the following could be coded
         in a DAO
         <source><![CDATA[public void insertUsers(User[] users) {
    for (User user : users) {
-   	sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
    }
  }]]></source> 
       </p>

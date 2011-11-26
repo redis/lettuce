@@ -39,7 +39,7 @@
       <p>
         Any of the samples can be run with JUnit 4. The sample code shows a typical design where a transactional service gets
         domain objects from a data access layer. <code>FooService.java</code> acts as the service:
-    		<source><![CDATA[@Transactional
+        <source><![CDATA[@Transactional
 public class FooService {
 
     private UserDao userDao;

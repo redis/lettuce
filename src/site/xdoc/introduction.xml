@@ -38,7 +38,7 @@
       exceptions into Spring <code>DataAccessException</code>s.
       Finally, it will let you build your application code free of 
       dependencies on MyBatis, Spring or MyBatis-Spring.
-  	  </p>
+      </p>
   </section>
 
   <section name="Motivation">
@@ -52,7 +52,7 @@
       would have to wait. Given the interest in Spring support for MyBatis, 
       the MyBatis community decided it was time to reunite the interested contributors 
       and add Spring integration as a community sub-project of MyBatis instead.
-  	  </p>
+      </p>
   </section>
 
   <section name="Requirements">
