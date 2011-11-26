@@ -246,29 +246,27 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
         Map<String, PropertyResourceConfigurer> prcs = applicationContext
                 .getBeansOfType(PropertyResourceConfigurer.class);
 
-        if (!prcs.isEmpty()) {
-            if (applicationContext instanceof GenericApplicationContext) {
-                BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
-                        .getBeanFactory().getBeanDefinition(beanName);
+        if (!prcs.isEmpty() && applicationContext instanceof GenericApplicationContext) {
+            BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
+                    .getBeanFactory().getBeanDefinition(beanName);
 
-                // PropertyResourceConfigurer does not expose any methods to explicitly perform
-                // property placeholder substitution. Instead, create a BeanFactory that just
-                // contains this mapper scanner and post process the factory.
-                DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
-                factory.registerBeanDefinition(beanName, mapperScannerBean);
+            // PropertyResourceConfigurer does not expose any methods to explicitly perform
+            // property placeholder substitution. Instead, create a BeanFactory that just
+            // contains this mapper scanner and post process the factory.
+            DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+            factory.registerBeanDefinition(beanName, mapperScannerBean);
 
-                for (PropertyResourceConfigurer prc : prcs.values()) {
-                    prc.postProcessBeanFactory(factory);
-                }
-
-                PropertyValues values = mapperScannerBean.getPropertyValues();
-
-                this.basePackage = updatePropertyValue("basePackage", values);
-                this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName",
-                        values);
-                this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName",
-                        values);
+            for (PropertyResourceConfigurer prc : prcs.values()) {
+                prc.postProcessBeanFactory(factory);
             }
+
+            PropertyValues values = mapperScannerBean.getPropertyValues();
+
+            this.basePackage = updatePropertyValue("basePackage", values);
+            this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName",
+                    values);
+            this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName",
+                    values);
         }
     }
 
