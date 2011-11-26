@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The myBatis Team
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+      http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 -->
 
 <!--
-    version: $Id$
+  version: $Id$
 -->
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -26,10 +26,9 @@
     <title>MyBatis Spring | Injecting Mappers</title>
     <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
   </properties>
-  
+
   <body>
     <section name="Injecting Mappers">
-
       <p>
         Rather than code data access objects (DAOs) manually using
         <code>SqlSessionDaoSupport</code> or
@@ -40,7 +39,6 @@
         need to code any DAO implementation because MyBatis-Spring will create a
         proxy for you.
       </p>
-
       <p>
         With injected mappers your code will have no direct dependencies on
         MyBatis, Spring or MyBatis-Spring. The proxy that
@@ -50,61 +48,57 @@
         a new Spring transaction if required or participate in an existing one if
         it a transaction is active.
       </p>
+    </section>
 
-    </section>             
+    <section name="MapperFactoryBean">
+      <p>
+        A data mapper is added to Spring like the following:
 
-  <section name="MapperFactoryBean">
-    <p>
-      A data mapper is added to Spring like the following:
-
-      <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
-    </p>
+      </p>
 
-    <p>
-      <code>MapperFactoryBean</code> creates a proxy class that
-      implements <code>UserMapper</code> and injects it into the
-      application. Because a proxy is created at runtime, the specified Mapper
-      <strong>must</strong> be an interface, not an implementation class.
-    </p>
+      <p>
+        <code>MapperFactoryBean</code> creates a proxy class that
+        implements <code>UserMapper</code> and injects it into the
+        application. Because a proxy is created at runtime, the specified Mapper
+        <strong>must</strong> be an interface, not an implementation class.
+      </p>
 
-    <p>
-      If the UserMapper has a corresponding MyBatis XML mapper file, it will be
-      parsed automatically by the <code>MapperFactoryBean</code> if the
-      XML file is in the same classpath location as the Mapper class. There
-      is no need to specify the mapper in a MyBatis configuration file unless
-      the mapper XML files are in a different classpath location. See the
-      <code>SqlSessionFactoryBean's</code>
-      <code><a href="factorybean.html">configLocation</a></code>
-      property for more information.
-    </p>
+      <p>
+        If the UserMapper has a corresponding MyBatis XML mapper file, it will be
+        parsed automatically by the <code>MapperFactoryBean</code> if the
+        XML file is in the same classpath location as the Mapper class. There
+        is no need to specify the mapper in a MyBatis configuration file unless
+        the mapper XML files are in a different classpath location. See the
+        <code>SqlSessionFactoryBean's</code>
+        <code><a href="factorybean.html">configLocation</a></code>
+        property for more information.
+      </p>
 
-    <p>
-      Note that <code>MapperFactoryBean</code> requires either an
-      <code>SqlSessionFactory</code> or an
-      <code>SqlSessionTemplate</code>. These can be set through the
-      respective <code>sqlSessionFactory</code> and
-      <code>sqlSessionTemplate</code> properties, or they can
-      be autowired by Spring. If both properties are set, the
-      <code>SqlSessionFactory</code> is ignored. Since the
-      <code>SqlSessionTemplate</code> is required to have a session
-      factory set, that factory will be used by
-      <code>MapperFactoryBean</code>.
-    </p>
+      <p>
+        Note that <code>MapperFactoryBean</code> requires either an
+        <code>SqlSessionFactory</code> or an <code>SqlSessionTemplate</code>.
+        These can be set through the respective <code>sqlSessionFactory</code> and
+        <code>sqlSessionTemplate</code> properties, or they can be autowired by Spring.
+        If both properties are set, the <code>SqlSessionFactory</code> is ignored.
+        Since the <code>SqlSessionTemplate</code> is required to have a session
+        factory set, that factory will be used by <code>MapperFactoryBean</code>.
+      </p>
 
-    <p>
-       You can inject mappers directly on your business/service objects in the
-       same way you inject any other Spring bean:
+      <p>
+         You can inject mappers directly on your business/service objects in the
+         same way you inject any other Spring bean:
 
-       <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+         <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
 </bean>]]></source>
 
-       This bean can be used directly in application logic:
+         This bean can be used directly in application logic:
 
-       <source><![CDATA[public class FooServiceImpl implements FooService {
+         <source><![CDATA[public class FooServiceImpl implements FooService {
 
   private UserMapper userMapper;
 
@@ -117,71 +111,69 @@
   }
 }]]></source>
 
-       Notice that there are no <code>SqlSession</code> or MyBatis
-       references in this code. Nor is there any need to create, open or close
-       the session, MyBatis-Spring will take care of that.
-     </p>
-  </section>
+         Notice that there are no <code>SqlSession</code> or MyBatis
+         references in this code. Nor is there any need to create, open or close
+         the session, MyBatis-Spring will take care of that.
+       </p>
+    </section>
 
-  <section name="MapperScannerConfigurer">
-    <p>
-      There is no need to register all your mappers in the Spring XML file.
-      Instead, you can use a <code>MapperScannerConfigurer</code> that
-      will search the classpath for your mappers and set them up
-      automatically as <code>MapperFactoryBean</code>s.
-    </p>
+    <section name="MapperScannerConfigurer">
+      <p>
+        There is no need to register all your mappers in the Spring XML file.
+        Instead, you can use a <code>MapperScannerConfigurer</code> that
+        will search the classpath for your mappers and set them up
+        automatically as <code>MapperFactoryBean</code>s.
+      </p>
 
-    <p>
-      To set up a <code>MapperScannerConfigurer</code> add the
-      following to the Spring configuration:
-      <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+      <p>
+        To set up a <code>MapperScannerConfigurer</code> add the
+        following to the Spring configuration:
+        <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
   <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></source>
 
-      The <code>basePackage</code> property lets you set the base package
-      for your mapper interface files. You can set more than one package by
-      using a semicolon or comma as a separator. Mappers will be searched for
-      recursively starting in the specified package(s).
-    </p>
+        The <code>basePackage</code> property lets you set the base package
+        for your mapper interface files. You can set more than one package by
+        using a semicolon or comma as a separator. Mappers will be searched for
+        recursively starting in the specified package(s).
+      </p>
 
-    <p>
-      Notice that there is no need to specify a <code>SqlSessionFactory</code> or
-      <code>SqlSessionTemplate</code> because the <code>MapperScannerConfigurer</code>
-      will create <code>MapperFactoryBean</code>s that can be autowired. But if you are
-      using more than one <code>DataSource</code> autowire may not work for you. In this case
-      you can use the <code>sqlSessionFactoryBeanName</code> or
-      <code>sqlSessionTemplateBeanName</code> properties to set the right bean name to use.
-      Note that <strong>bean names</strong> are required,
-      not bean references, thus the <code>value</code> attribute is used instead of the
-      usual <code>ref</code>:
-<source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
-]]></source>
-    </p>
+      <p>
+        Notice that there is no need to specify a <code>SqlSessionFactory</code> or
+        <code>SqlSessionTemplate</code> because the <code>MapperScannerConfigurer</code>
+        will create <code>MapperFactoryBean</code>s that can be autowired. But if you are
+        using more than one <code>DataSource</code> autowire may not work for you. In this case
+        you can use the <code>sqlSessionFactoryBeanName</code> or
+        <code>sqlSessionTemplateBeanName</code> properties to set the right bean name to use.
+        Note that <strong>bean names</strong> are required,
+        not bean references, thus the <code>value</code> attribute is used instead of the
+        usual <code>ref</code>:
+        <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
+      </p>
 
-    <p>
-     <code>MapperScannerConfigurer</code> supports filtering the mappers
-     created by either specifying a marker interface or an annotation. The
-     <code>annotationClass</code> property specifies an annotation to
-     search for. The <code>markerInterface</code> property specifies a
-     parent interface to search for. If both properties are specified, mappers
-     are added for interfaces that match <strong>either</strong> criteria.
-     By default, these two properties are null, so all interfaces in the given
-     base package(s) will be loaded as mappers.
-    </p>
+      <p>
+        <code>MapperScannerConfigurer</code> supports filtering the mappers
+        created by either specifying a marker interface or an annotation. The
+        <code>annotationClass</code> property specifies an annotation to
+        search for. The <code>markerInterface</code> property specifies a
+        parent interface to search for. If both properties are specified, mappers
+        are added for interfaces that match <strong>either</strong> criteria.
+        By default, these two properties are null, so all interfaces in the given
+        base package(s) will be loaded as mappers.
+      </p>
 
-    <p>
-     Discovered mappers will be named using Spring default naming strategy for
-     autodetected components (see section 3.14.4 of the Spring manual).
-     That is, if no annotation is found, it will use the uncapitalized non-qualified class
-     name of the mapper. But if either a @Component or a JSR-330 @Named annotation is
-     found it will get the name from the annotation.
-     Notice that you can set the <code>annotationClass</code> property
-     to <code>org.springframework.stereotype.Component</code>,
-     <code>javax.inject.Named</code> (if you have JSE 6) or to your own annotation
-     (that must be itself annotated) so the annotation will work both as a marker 
-     and as a name provider.
-    </p>
-   </section>
-  
+      <p>
+        Discovered mappers will be named using Spring default naming strategy for
+        autodetected components (see section 3.14.4 of the Spring manual).
+        That is, if no annotation is found, it will use the uncapitalized non-qualified class
+        name of the mapper. But if either a @Component or a JSR-330 @Named annotation is
+        found it will get the name from the annotation.
+        Notice that you can set the <code>annotationClass</code> property
+        to <code>org.springframework.stereotype.Component</code>,
+        <code>javax.inject.Named</code> (if you have JSE 6) or to your own annotation
+        (that must be itself annotated) so the annotation will work both as a marker
+        and as a name provider.
+      </p>
+    </section>
   </body>
 </document>
