@@ -30,6 +30,7 @@
       <item name="Transactions" href="transactions.html"/>
       <item name="Using an SqlSession" href="templates_support.html"/>
       <item name="Injecting Mappers" href="mappers.html"/>
+      <item name="Using the MyBatis API" href="using_api.html"/>
       <item name="Sample Code" href="sample.html"/>
     </menu>
 
