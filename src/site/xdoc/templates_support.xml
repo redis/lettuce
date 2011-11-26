@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The myBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--
+  version: $Id$
+-->
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis Spring | Using an SqlSession</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="Using an SqlSession">
+      <p>
+        In MyBatis you use the <code>SqlSessionFactory</code> to create an
+        <code>SqlSession</code>. Once you have a session, you use it to
+        execute your mapped statements, commit or rollback connections and
+        finally, when it is no longer needed, you close the session. With
+        MyBatis-Spring you don't need to use <code>SqlSessionFactory</code>
+        directly because your beans can be injected with a thread safe
+        <code>SqlSession</code> that automatically commits, rollbacks and
+        closes the session based on Spring's transaction configuration.
+      </p>  
+    
+      <p>
+        Note that it is usually not necessary to use a <code>SqlSession</code> directly. 
+        In most cases a <code>MapperFactoryBean</code> that will inject mappers
+        into your beans, will be all that is needed. The 
+        <a href="mappers.html#MapperFactoryBean"><code>MapperFactoryBean</code></a>
+        will be explained in detail in the next chapter. 
+      </p>  
+    </section>
+
+    <section name="SqlSessionTemplate">
+      <p>
+        <code>SqlSessionTemplate</code> is the heart of MyBatis-Spring.
+        This class is responsible for managing MyBatis <code>SqlSessions</code>,
+        calling MyBatis SQL methods and translating exceptions.
+        <code>SqlSessionTemplate</code> is thread safe and can be shared
+        by multiple DAOs.
+      </p>
+
+      <p>
+        When calling SQL methods, including any method from Mappers returned by
+        <code>getMapper()</code>, <code>SqlSessionTemplate</code>
+        will ensure that the <code>SqlSession</code> used is the one
+        associated with the current Spring transaction. In addition, it manages
+        the session life-cycle, including closing, committing or rolling back the
+        session as necessary.
+      </p>
+
+      <p>
+        <code>SqlSessionTemplate</code> implements <code>SqlSession</code>
+        and is meant to be a drop-in replacement for any existing use of <code>SqlSession</code>
+        in your code. <code>SqlSessionTemplate</code> should <strong>always</strong>
+        be used instead of default MyBatis implementation <code>DefaultSqlSession</code>
+        because the template can participate in Spring transactions and is thread safe for use by
+        multiple injected mapper classes. Switching between the two classes in the
+        same application can cause data integrity issues.
+      </p>
+
+      <p>
+        A <code>SqlSessionTemplate</code> can be constructed
+        using an <code>SqlSessionFactory</code> as a constructor argument.
+
+        <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+  <constructor-arg index="0" ref="sqlSessionFactory" />
+</bean>]]></source>	      
+      </p>
+
+      <p>
+        This bean can now be injected directly in your DAO beans. You need a
+        <code>SqlSession</code> property in your bean like the following
+
+        <source><![CDATA[public class UserDaoImpl implements UserDao {
+
+  private SqlSession sqlSession;
+
+  public void setSqlSession(SqlSession sqlSession) {
+    this.sqlSession = sqlSession;
+  }
+
+  public User getUser(String userId) {
+    return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+  }
+}]]></source>
+      
+        And inject the <code>SqlSessionTemplate</code> as follows
+      
+        <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
+  <property name="sqlSession" ref="sqlSession" />
+</bean>]]></source>
+      </p>
+
+      <p>
+        <code>SqlSessionTemplate</code> has also a constructor that takes
+        an <code>ExecutorType</code> as an argument. This allows you to
+        construct, for example, a batch <code>SqlSession</code> by using
+        the following in Spring's configuration xml:
+        <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+  <constructor-arg index="0" ref="sqlSessionFactory" />
+  <constructor-arg index="1" value="BATCH" />
+</bean>]]></source>
+	  
+        Now all your statements will be batched so the following could be coded
+        in a DAO
+        <source><![CDATA[public void insertUsers(User[] users) {
+   for (User user : users) {
+   	sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+   }
+ }]]></source> 
+      </p>
+
+      <p>
+        Note that this configuration style only needs to be used if the desired
+        execution method differs from the default set for the
+        <code>SqlSessionFactory</code>.
+      </p>
+
+      <p>
+        The caveat to this form is that
+        there <strong>cannot</strong> be an existing transaction running with
+        a different ExecutorType when this method is called. Either ensure that
+        calls to <code>SqlSessionTemplate</code>s with different executor
+        types run in a separate transaction (e.g. with PROPAGATION_REQUIRES_NEW) or
+        completely outside of a transaction.
+      </p>
+    </section>
+
+    <section name="SqlSessionDaoSupport">
+      <p>
+        <code>SqlSessionDaoSupport</code> is an abstract support class that
+        provides you with a <code>SqlSession</code>. Calling
+        <code>getSqlSession()</code> you will get a <code>SqlSessionTemplate</code>
+        which can then be used to execute SQL methods, like the following:
+
+        <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
+  public User getUser(String userId) {
+    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+  }
+}]]></source>
+
+        Usually <code>MapperFactoryBean</code> is preferred to this class,
+        since it requires no extra code. But, this class is useful if you need
+        to do other non-MyBatis work in your DAO and concrete classes are
+        required.
+      </p>
+
+      <p>
+        <code>SqlSessionDaoSupport</code> requires either an
+        <code>sqlSessionFactory</code> or an <code>sqlSessionTemplate</code>
+        property to be set. These can be set explicitly or autowired by Spring.
+        If both properties are set, the <code>sqlSessionFactory</code> is ignored.
+      </p>
+
+      <p>
+        Assuming a class <code>UserDaoImpl</code> that subclasses
+        <code>SqlSessionDaoSupport</code>, it can be configured in Spring
+        like the following:
+
+        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+      </p>
+    </section>
+  </body>
+</document>
