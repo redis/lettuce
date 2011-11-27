@@ -64,7 +64,7 @@
     <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
     <site>
       <id>mybatis.site</id>
-      <url>ftp://${mybatis.host}/spring</url>
+      <url>ftp://${mybatis.host}/spring/${project.version}</url>
     </site>
   </distributionManagement>
 
