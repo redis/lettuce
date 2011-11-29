@@ -18,9 +18,6 @@ public class CommandInternalsTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
     protected Command<String, String, String> command;
 
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     @Before
     public final void createCommand() throws Exception {
         CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);

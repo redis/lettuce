@@ -11,9 +11,7 @@ public abstract class AbstractCommandTest {
     public static final String host = "localhost";
     public static final int    port = 6379;
 
-    public static final String authHost = host;
-    public static final int    authPort = 6380;
-    public static final String passwd   = "passwd";
+    public static final String passwd = "passwd";
 
     protected RedisClient client = new RedisClient(host, port);
     protected RedisConnection<String, String> redis;
@@ -49,5 +47,25 @@ public abstract class AbstractCommandTest {
 
     protected Set<String> set(String... args) {
         return new HashSet<String>(Arrays.asList(args));
+    }
+
+    public abstract class WithPasswordRequired {
+        protected abstract void run(RedisClient client) throws Exception;
+
+        public WithPasswordRequired() throws Exception {
+            try {
+                redis.configSet("requirepass", passwd);
+                redis.auth(passwd);
+
+                RedisClient client = new RedisClient(host, port);
+                try {
+                    run(client);
+                } finally {
+                    client.shutdown();
+                }
+            } finally {
+                redis.configSet("requirepass", "");
+            }
+        }
     }
 }

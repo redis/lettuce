@@ -39,13 +39,17 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     @Test
     public void auth() throws Exception {
-        RedisClient client = new RedisClient(authHost, authPort);
-        RedisPubSubConnection<String, String> connection = client.connectPubSub();
-        connection.addListener(this);
-        connection.auth(passwd);
-        connection.subscribe(channel);
-        assertEquals(channel, channels.take());
-        connection.close();
+        new WithPasswordRequired() {
+            @Override
+            protected void run(RedisClient client) throws Exception {
+                RedisPubSubConnection<String, String> connection = client.connectPubSub();
+                connection.addListener(PubSubCommandTest.this);
+                connection.auth(passwd);
+
+                connection.subscribe(channel);
+                assertEquals(channel, channels.take());
+            }
+        };
     }
 
     @Test(timeout = 100)

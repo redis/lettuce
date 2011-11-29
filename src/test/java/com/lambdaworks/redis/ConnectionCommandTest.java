@@ -4,26 +4,25 @@ package com.lambdaworks.redis;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class ConnectionCommandTest extends AbstractCommandTest {
     @Test
     public void auth() throws Exception {
-        RedisClient authClient = new RedisClient(authHost, authPort);
-        RedisConnection<String, String> authCon = authClient.connect();
-
-        try {
-            authCon.info();
-            fail("Server doesn't require authentication");
-        } catch (RedisException e) {
-            assertEquals("ERR operation not permitted", e.getMessage());
-            assertEquals("OK", authCon.auth(passwd));
-            assertEquals("OK", redis.set(key, value));
-        } finally {
-            authCon.close();
-        }
+        new WithPasswordRequired() {
+            @Override
+            public void run(RedisClient client) {
+                RedisConnection<String, String> connection = client.connect();
+                try {
+                    connection.ping();
+                    fail("Server doesn't require authentication");
+                } catch (RedisException e) {
+                    assertEquals("ERR operation not permitted", e.getMessage());
+                    assertEquals("OK", connection.auth(passwd));
+                    assertEquals("OK", connection.set(key, value));
+                }
+            }
+        };
     }
 
     @Test
@@ -45,12 +44,16 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
     @Test
     public void authReconnect() throws Exception {
-        RedisClient authClient = new RedisClient(authHost, authPort);
-        RedisConnection<String, String> authCon = authClient.connect();
-        authCon.auth(passwd);
-        assertEquals("OK", authCon.set(key, value));
-        authCon.quit();
-        assertEquals(value, authCon.get(key));
+        new WithPasswordRequired() {
+            @Override
+            public void run(RedisClient client) {
+                RedisConnection<String, String> connection = client.connect();
+                assertEquals("OK", connection.auth(passwd));
+                assertEquals("OK", connection.set(key, value));
+                connection.quit();
+                assertEquals(value, connection.get(key));
+            }
+        };
     }
 
     @Test
