@@ -41,7 +41,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
@@ -243,8 +242,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      * definition. Then update the values.
      */
     private final void processPropertyPlaceHolders() {
-        Map<String, PropertyResourceConfigurer> prcs = applicationContext
-                .getBeansOfType(PropertyResourceConfigurer.class);
+        Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class);
 
         if (!prcs.isEmpty() && applicationContext instanceof GenericApplicationContext) {
             BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
@@ -263,10 +261,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
             PropertyValues values = mapperScannerBean.getPropertyValues();
 
             this.basePackage = updatePropertyValue("basePackage", values);
-            this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName",
-                    values);
-            this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName",
-                    values);
+            this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
+            this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
         }
     }
 
@@ -331,23 +327,11 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
                 });
             }
 
-            // always exclude interfaces with no methods
+            // exclude package-info.java
             addExcludeFilter(new TypeFilter() {
                 public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-                    ClassMetadata classMetadata = metadataReader.getClassMetadata();
-                    Class<?> candidateClass = null;
-
-                    try {
-                        candidateClass = getClass().getClassLoader().loadClass(classMetadata.getClassName());
-                    } catch (ClassNotFoundException ex) {
-                        return false;
-                    }
-
-                    if (candidateClass.getMethods().length == 0) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    String className = metadataReader.getClassMetadata().getClassName();
+                    return className.endsWith("package-info");
                 }
             });
         }
