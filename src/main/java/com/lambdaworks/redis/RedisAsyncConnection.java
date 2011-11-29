@@ -2,11 +2,14 @@
 
 package com.lambdaworks.redis;
 
+import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.*;
 import org.jboss.netty.channel.*;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -153,6 +156,18 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
     public Future<V> echo(V msg) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addValue(msg);
         return dispatch(ECHO, new ValueOutput<K, V>(codec), args);
+    }
+
+    public <T> Future<T> eval(V script, Class<T> type, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addValue(script).add(keys.length).addKeys(keys);
+        return dispatch(EVAL, newOutputForType(type), args);
+    }
+
+    public <T> Future<T> evalsha(String digest, Class<T> type, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(digest).add(keys.length).addKeys(keys);
+        return dispatch(EVALSHA, newOutputForType(type), args);
     }
 
     public Future<Boolean> exists(K key) {
@@ -457,6 +472,22 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
 
     public Future<Long> scard(K key) {
         return dispatch(SCARD, new IntegerOutput<K, V>(codec), key);
+    }
+
+    public Future<List<Boolean>> scriptExists(String... digests) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(EXISTS);
+        for (String sha : digests) args.add(sha);
+        return dispatch(SCRIPT, new BooleanListOutput<K, V>(codec), args);
+    }
+
+    public Future<String> scriptFlush() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FLUSH);
+        return dispatch(SCRIPT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Future<String> scriptLoad(V script) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LOAD).addValue(script);
+        return dispatch(SCRIPT, new StatusOutput<K, V>(codec), args);
     }
 
     public Future<Set<V>> sdiff(K... keys) {
@@ -867,6 +898,16 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         }
     }
 
+    public String digest(V script) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA1");
+            md.update(codec.encodeValue(script));
+            return new String(Base16.encode(md.digest(), false));
+        } catch (NoSuchAlgorithmException e) {
+            throw new RedisException("JVM does not support SHA1");
+        }
+    }
+
     @Override
     public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         channel = ctx.getChannel();
@@ -958,6 +999,18 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         CommandOutput<K, V, T> output = cmd.getOutput();
         if (output.hasError()) throw new RedisException(output.getError());
         return output.get();
+    }
+
+    public <T> CommandOutput<K, V, T> newOutputForType(Class<T> type) {
+        CommandOutput<K, V, T> output;
+        if (type == Long.class) {
+            output = (CommandOutput<K, V, T>) new IntegerOutput<K, V>(codec);
+        } else if (type == List.class) {
+            output = (CommandOutput<K, V, T>) new NestedMultiOutput<K, V>(codec);
+        } else {
+            output = (CommandOutput<K, V, T>) new ValueOutput<K, V>(codec);
+        }
+        return output;
     }
 
     public String string(double n) {

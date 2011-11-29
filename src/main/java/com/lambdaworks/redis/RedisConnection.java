@@ -5,6 +5,8 @@ package com.lambdaworks.redis;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -129,6 +131,42 @@ public class RedisConnection<K, V> {
 
     public V echo(V msg) {
         return await(c.echo(msg));
+    }
+
+    /**
+     * Eval the supplied script. Callers may request a single 64-bit integer result by
+     * passing {@code Long.class}, a (possibly deeply nested) list of {@code Longs, Strings,
+     * Vs} and possibly even {@link RedisException}s by passing {@code List.class},
+     * or a single {@code V} by passing any other class.
+     *
+     * @param script    Lua script to evaluate.
+     * @param type      Class of script return type.
+     * @param keys      Redis keys to pass to script.
+     *
+     * @param <T>       Script return type.
+     *
+     * @return The result of evaluating the script.
+     */
+    public <T> T eval(V script, Class<T> type, K... keys) {
+        return await(c.eval(script, type, keys));
+    }
+
+    /**
+     * Eval a preloaded script identified by a SHA-1 digest. Callers may request a single
+     * 64-bit integer result by passing {@code Long.class}, a (possibly deeply nested)
+     * list of {@code Longs, Strings, Vs} and possibly even {@link RedisException}s by
+     * passing {@code List.class}, or a single {@code V} by passing any other class.
+     *
+     * @param digest    Lowercase hex string of script's SHA-1 digest.
+     * @param type      Class of script return type.
+     * @param keys      Redis keys to pass to script.
+     *
+     * @param <T>       Script return type.
+     *
+     * @return The result of evaluating the script.
+     */
+    public <T> T evalsha(String digest, Class<T> type, K... keys) {
+        return await(c.evalsha(digest, type, keys));
     }
 
     public Boolean exists(K key) {
@@ -394,6 +432,18 @@ public class RedisConnection<K, V> {
 
     public Long scard(K key) {
         return await(c.scard(key));
+    }
+
+    public List<Boolean> scriptExists(String... digests) {
+        return await(c.scriptExists(digests));
+    }
+
+    public String scriptFlush() {
+        return await(c.scriptFlush());
+    }
+
+    public String scriptLoad(V script) {
+        return await(c.scriptLoad(script));
     }
 
     public Set<V> sdiff(K... keys) {
@@ -690,6 +740,17 @@ public class RedisConnection<K, V> {
      */
     public void close() {
         c.close();
+    }
+
+    /**
+     * Generate SHA-1 digest for the supplied script.
+     *
+     * @param script    Lua script.
+     *
+     * @return Script digest as a lowercase hex string.
+     */
+    public String digest(V script) {
+        return c.digest(script);
     }
 
     @SuppressWarnings("unchecked")
