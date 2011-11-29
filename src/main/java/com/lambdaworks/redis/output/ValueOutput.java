@@ -15,20 +15,12 @@ import java.nio.ByteBuffer;
  * @author Will Glozer
  */
 public class ValueOutput<K, V> extends CommandOutput<K, V, V> {
-    private V value;
-
     public ValueOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public V get() {
-        errorCheck();
-        return value;
+        super(codec, null);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        value = (bytes == null) ? null : codec.decodeValue(bytes);
+        output = (bytes == null) ? null : codec.decodeValue(bytes);
     }
 }

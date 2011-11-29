@@ -15,20 +15,12 @@ import java.util.List;
  * @author Will Glozer
  */
 public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> {
-    private List<String> list = new ArrayList<String>();
-
     public StringListOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public List<String> get() {
-        errorCheck();
-        return list;
+        super(codec, new ArrayList<String>());
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        list.add(bytes == null ? null : decodeAscii(bytes));
+        output.add(bytes == null ? null : decodeAscii(bytes));
     }
 }

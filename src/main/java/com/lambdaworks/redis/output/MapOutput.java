@@ -18,17 +18,10 @@ import java.util.Map;
  * @author Will Glozer
  */
 public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
-    private Map<K, V> map = new HashMap<K, V>();
     private K key;
 
     public MapOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public Map<K, V> get() {
-        errorCheck();
-        return map;
+        super(codec, new HashMap<K, V>());
     }
 
     @Override
@@ -39,7 +32,7 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
         }
 
         V value = (bytes == null) ? null : codec.decodeValue(bytes);
-        map.put(key, value);
+        output.put(key, value);
         key = null;
     }
 }

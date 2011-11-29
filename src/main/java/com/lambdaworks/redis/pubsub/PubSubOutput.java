@@ -22,10 +22,9 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
     private String channel;
     private String pattern;
     private long count;
-    private V message;
 
     public PubSubOutput(RedisCodec<K, V> codec) {
-        super(codec);
+        super(codec, null);
     }
 
     public Type type() {
@@ -42,11 +41,6 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
 
     public long count() {
         return count;
-    }
-
-    @Override
-    public V get() {
-        return message;
     }
 
     @Override
@@ -68,7 +62,7 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
                     channel = decodeAscii(bytes);
                     break;
                 }
-                message = codec.decodeValue(bytes);
+                output = codec.decodeValue(bytes);
                 break;
             case psubscribe:
             case punsubscribe:

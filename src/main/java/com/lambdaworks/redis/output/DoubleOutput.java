@@ -15,20 +15,12 @@ import static java.lang.Double.parseDouble;
  * @author Will Glozer
  */
 public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
-    private Double value;
-
     public DoubleOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public Double get() {
-        errorCheck();
-        return value;
+        super(codec, null);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        value = (bytes == null) ? null : parseDouble(decodeAscii(bytes));
+        output = (bytes == null) ? null : parseDouble(decodeAscii(bytes));
     }
 }

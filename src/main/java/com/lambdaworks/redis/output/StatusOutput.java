@@ -15,20 +15,12 @@ import java.nio.ByteBuffer;
 public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
     private static final ByteBuffer OK = ByteBuffer.wrap("OK".getBytes());
 
-    private String status;
-
     public StatusOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public String get() {
-        errorCheck();
-        return status;
+        super(codec, null);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        status = OK.equals(bytes) ? "OK" : decodeAscii(bytes);
+        output = OK.equals(bytes) ? "OK" : decodeAscii(bytes);
     }
 }

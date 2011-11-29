@@ -18,17 +18,10 @@ import java.util.List;
  * @author Will Glozer
  */
 public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>> {
-    private List<ScoredValue<V>> list = new ArrayList<ScoredValue<V>>();
     private V value;
 
     public ScoredValueListOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public List<ScoredValue<V>> get() {
-        errorCheck();
-        return list;
+        super(codec, new ArrayList<ScoredValue<V>>());
     }
 
     @Override
@@ -39,7 +32,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        list.add(new ScoredValue<V>(score, value));
+        output.add(new ScoredValue<V>(score, value));
         value = null;
     }
 }

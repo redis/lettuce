@@ -79,7 +79,7 @@ public class CommandInternalsTest {
 
     @Test(expected = IllegalStateException.class)
     public void outputSubclassOverride1() {
-        CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(codec) {
+        CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(codec, null) {
             @Override
             public String get() throws RedisException {
                 return null;
@@ -90,7 +90,7 @@ public class CommandInternalsTest {
 
     @Test(expected = IllegalStateException.class)
     public void outputSubclassOverride2() {
-        CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(codec) {
+        CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(codec, null) {
             @Override
             public String get() throws RedisException {
                 return null;

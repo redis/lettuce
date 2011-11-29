@@ -2,7 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 import java.nio.ByteBuffer;
@@ -16,26 +15,29 @@ import java.nio.ByteBuffer;
  */
 public abstract class CommandOutput<K, V, T> {
     protected RedisCodec<K, V> codec;
-    protected RedisException error;
+    protected T output;
+    protected String error;
 
     /**
      * Initialize a new instance that encodes and decodes keys and
      * values using the supplied codec.
      *
-     * @param codec Codec used to encode/decode keys and values.
+     * @param codec     Codec used to encode/decode keys and values.
+     * @param output    Initial value of output.
      */
-    public CommandOutput(RedisCodec<K, V> codec) {
-        this.codec = codec;
+    public CommandOutput(RedisCodec<K, V> codec, T output) {
+        this.codec  = codec;
+        this.output = output;
     }
 
     /**
      * Get the command output.
      *
      * @return The command output.
-     *
-     * @throws RedisException if the command failed.
      */
-    public abstract T get() throws RedisException;
+    public T get() {
+        return output;
+    }
 
     /**
      * Set the command output to a sequence of bytes, or null. Concrete
@@ -60,22 +62,12 @@ public abstract class CommandOutput<K, V, T> {
     }
 
     /**
-     * Check if the redis server returned an error and if so throw a
-     * {@link RedisException} containing the error message.
-     *
-     * @throws RedisException if the server returned an error.
-     */
-    protected void errorCheck() throws RedisException {
-        if (error != null) throw error;
-    }
-
-    /**
      * Set command output to an error message from the server.
      *
      * @param error Error message.
      */
     public void setError(ByteBuffer error) {
-        this.error = new RedisException(decodeAscii(error));
+        this.error = decodeAscii(error);
     }
 
     /**
@@ -84,7 +76,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param error Error message.
      */
     public void setError(String error) {
-        this.error = new RedisException(error);
+        this.error = error;
     }
 
     /**
@@ -101,7 +93,7 @@ public abstract class CommandOutput<K, V, T> {
      *
      * @return The error.
      */
-    public RedisException getError() {
+    public String getError() {
         return error;
     }
 

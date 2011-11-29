@@ -17,20 +17,12 @@ import java.util.List;
  * @author Will Glozer
  */
 public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> {
-    private List<K> keys = new ArrayList<K>();
-
     public KeyListOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public List<K> get() {
-        errorCheck();
-        return keys;
+        super(codec, new ArrayList<K>());
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        keys.add(codec.decodeKey(bytes));
+        output.add(codec.decodeKey(bytes));
     }
 }

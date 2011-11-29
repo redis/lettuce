@@ -13,25 +13,17 @@ import java.nio.ByteBuffer;
  * @author Will Glozer
  */
 public class IntegerOutput<K, V> extends CommandOutput<K, V, Long> {
-    private Long value;
-
     public IntegerOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public Long get() {
-        errorCheck();
-        return value;
+        super(codec, null);
     }
 
     @Override
     public void set(long integer) {
-        value = integer;
+        output = integer;
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        value = null;
+        output = null;
     }
 }

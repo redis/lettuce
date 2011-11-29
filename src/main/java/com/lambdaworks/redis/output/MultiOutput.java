@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis.output;
 
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
@@ -15,21 +16,14 @@ import java.util.*;
  */
 public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     private Queue<CommandOutput<K, V, ?>> queue;
-    private List<Object> values;
 
     public MultiOutput(RedisCodec<K, V> codec) {
-        super(codec);
-        this.queue  = new LinkedList<CommandOutput<K, V, ?>>();
-        this.values = new ArrayList<Object>();
+        super(codec, new ArrayList<Object>());
+        queue = new LinkedList<CommandOutput<K, V, ?>>();
     }
 
     public void add(CommandOutput<K, V, ?> cmd) {
         queue.add(cmd);
-    }
-
-    @Override
-    public List<Object> get() {
-        return values;
     }
 
     @Override
@@ -50,8 +44,8 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     @Override
     public void complete(int depth) {
         if (depth == 1) {
-            CommandOutput<K, V, ?> output = queue.remove();
-            values.add(!output.hasError() ? output.get() : output.getError());
+            CommandOutput<K, V, ?> o = queue.remove();
+            output.add(!o.hasError() ? o.get() : new RedisException(o.getError()));
         }
     }
 }

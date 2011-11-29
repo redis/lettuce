@@ -990,7 +990,9 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         if (!cmd.await(timeout, unit)) {
             throw new RedisException("Command timed out");
         }
-        return cmd.get();
+        CommandOutput<K, V, T> output = cmd.getOutput();
+        if (output.hasError()) throw new RedisException(output.getError());
+        return output.get();
     }
 
     public String string(double n) {

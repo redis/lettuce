@@ -17,20 +17,12 @@ import java.util.List;
  * @author Will Glozer
  */
 public class ValueListOutput<K, V> extends CommandOutput<K, V, List<V>> {
-    List<V> list = new ArrayList<V>();
-
     public ValueListOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public List<V> get() {
-        errorCheck();
-        return list;
+        super(codec, new ArrayList<V>());
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        list.add(bytes == null ? null : codec.decodeValue(bytes));
+        output.add(bytes == null ? null : codec.decodeValue(bytes));
     }
 }

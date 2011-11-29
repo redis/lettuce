@@ -12,20 +12,12 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @author Will Glozer
  */
 public class BooleanOutput<K, V> extends CommandOutput<K, V, Boolean> {
-    private Boolean value;
-
     public BooleanOutput(RedisCodec<K, V> codec) {
-        super(codec);
-    }
-
-    @Override
-    public Boolean get() {
-        errorCheck();
-        return value;
+        super(codec, null);
     }
 
     @Override
     public void set(long integer) {
-        value = (integer == 1) ? Boolean.TRUE : Boolean.FALSE;
+        output = (integer == 1) ? Boolean.TRUE : Boolean.FALSE;
     }
 }
