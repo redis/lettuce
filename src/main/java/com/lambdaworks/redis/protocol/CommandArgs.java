@@ -8,6 +8,8 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import static java.lang.Math.max;
+
 /**
  * Redis command argument encoder.
  *
@@ -93,7 +95,8 @@ public class CommandArgs<K, V> {
         buffer.mark();
 
         if (buffer.remaining() < arg.length) {
-            realloc(buffer.capacity() * 2);
+            int estimate = buffer.remaining() + arg.length + 10;
+            realloc(max(buffer.capacity() * 2, estimate));
         }
 
         while (true) {
@@ -106,7 +109,7 @@ public class CommandArgs<K, V> {
                 break;
             } catch (BufferOverflowException e) {
                 buffer.reset();
-                realloc();
+                realloc(buffer.capacity() * 2);
             }
         }
 
@@ -120,7 +123,8 @@ public class CommandArgs<K, V> {
         buffer.mark();
 
         if (buffer.remaining() < length) {
-            realloc(buffer.capacity() * 2);
+            int estimate = buffer.remaining() + length + 10;
+            realloc(max(buffer.capacity() * 2, estimate));
         }
 
         while (true) {
@@ -135,7 +139,7 @@ public class CommandArgs<K, V> {
                 break;
             } catch (BufferOverflowException e) {
                 buffer.reset();
-                realloc();
+                realloc(buffer.capacity() * 2);
             }
         }
 
@@ -159,10 +163,6 @@ public class CommandArgs<K, V> {
         for (int i = sb.length() - 1; i >= 0; i--) {
             buffer.put((byte) sb.charAt(i));
         }
-    }
-
-    private void realloc() {
-        realloc(buffer.capacity() * 2);
     }
 
     private void realloc(int size) {
