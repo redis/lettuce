@@ -16,7 +16,7 @@ import java.util.concurrent.*;
  * @author Will Glozer
  */
 public class Command<K, V, T> implements Future<T> {
-    protected static final byte[] CRLF = "\r\n".getBytes();
+    private static final byte[] CRLF = "\r\n".getBytes();
 
     protected final CommandType type;
     protected CommandArgs args;

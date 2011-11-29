@@ -14,7 +14,7 @@ import java.util.Map;
  * @author Will Glozer
  */
 public class CommandArgs<K, V> {
-    protected static final byte[] CRLF = "\r\n".getBytes();
+    private static final byte[] CRLF = "\r\n".getBytes();
 
     private RedisCodec<K, V> codec;
     private ByteBuffer buffer;
