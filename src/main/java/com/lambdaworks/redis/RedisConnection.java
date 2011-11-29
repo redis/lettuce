@@ -67,10 +67,11 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     }
 
     public String auth(String password) {
-        this.password = password;
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
         Command<K, V, String> cmd = dispatch(AUTH, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        String status = getOutput(cmd);
+        if ("OK".equals(status)) this.password = password;
+        return status;
     }
 
     public String bgrewriteaof() {
@@ -517,10 +518,11 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     }
 
     public String select(int db) {
-        this.db = db;
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(db);
         Command<K, V, String> cmd = dispatch(SELECT, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        String status = getOutput(cmd);
+        if ("OK".equals(status)) this.db = db;
+        return status;
     }
 
     public String set(K key, V value) {

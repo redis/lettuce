@@ -4,6 +4,8 @@ package com.lambdaworks.redis;
 
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+
 import static org.junit.Assert.*;
 
 public class ConnectionCommandTest extends AbstractCommandTest {
@@ -64,8 +66,29 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         assertEquals(value, redis.get(key));
     }
 
-    @Test(expected = RedisException.class)
+    @Test
+    public void authInvalidPassword() throws Exception {
+        try {
+            redis.auth("invalid");
+            fail("Authenticated with invalid password");
+        } catch (RedisException e) {
+            assertEquals("ERR Client sent AUTH, but no password is set", e.getMessage());
+            Field f = redis.getClass().getDeclaredField("password");
+            f.setAccessible(true);
+            assertNull(f.get(redis));
+        }
+    }
+
+    @Test
     public void selectInvalid() throws Exception {
-        redis.select(1024);
+        try {
+            redis.select(1024);
+            fail("Selected invalid db index");
+        } catch (RedisException e) {
+            assertEquals("ERR invalid DB index", e.getMessage());
+            Field f = redis.getClass().getDeclaredField("db");
+            f.setAccessible(true);
+            assertEquals(0, f.get(redis));
+        }
     }
 }
