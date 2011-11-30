@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring.mapper;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.apache.ibatis.mapping.Environment;
@@ -27,12 +28,13 @@ import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.mybatis.spring.MyBatisSystemException;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.mybatis.spring.SqlSessionUtils;
 import org.mybatis.spring.TestMapper;
 import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockDataSource;
 
 /**
@@ -52,7 +54,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     public void testBasicUsage() throws Exception {
         find();
 
-        assertCommit(); // sqlsesssiontemplate autocommits
+        assertCommit(); // SqlSesssionTemplate autocommits
         assertSingleConnection();
         assertExecuteCount(1);
     }
@@ -70,7 +72,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
 
         find(new SqlSessionTemplate(sqlSessionFactory), true);
-        assertCommit(); // sqlsesssiontemplate autocommits
+        assertCommit(); // SqlSesssionTemplate autocommits
         assertSingleConnection();
         assertExecuteCount(1);
     }
@@ -157,7 +159,6 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     }
 
     // similar to testNonSpringTxFactoryNonSpringDSWithTx() in MyBatisSpringTest
-    // it passes in 1.1.0
     @Test
     public void testNonSpringWithTx() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
@@ -177,10 +178,18 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
             find(sqlSessionTemplate);
 
-//            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+            txManager.commit(status);
+
+            // txManager still uses original connection
+            assertCommit();
+            assertSingleConnection();
+
+            // SqlSessionTemplate uses its own connection
+            MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
+            assertEquals("should call commit on Connection", 1, mockConnection.getNumberCommits());
+            assertEquals("should not call rollback on Connection", 0, mockConnection.getNumberRollbacks());
+            assertCommitSession();
         } finally {
-            // rollback required to close connection
-            txManager.rollback(status);
 
             sqlSessionFactory.getConfiguration().setEnvironment(original);
         }

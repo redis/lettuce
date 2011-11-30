@@ -117,16 +117,22 @@ public final class SqlSessionUtils {
 
         // Register session holder and bind it to enable synchronization.
         //
-        // Note: The DataSource should be synchronized with the transaction
-        // either through DataSourceTxMgr or another tx synchronization.
+        // Note: The DataSource used by the Environment should be synchronized with the
+        // transaction either through DataSourceTxMgr or another tx synchronization.
         // Further assume that if an exception is thrown, whatever started the transaction will
         // handle closing / rolling back the Connection associated with the SqlSession.
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             Environment environment = sessionFactory.getConfiguration().getEnvironment();
-            if (!(sessionFactory.getConfiguration().getEnvironment().getTransactionFactory() instanceof SpringManagedTransactionFactory)
-                && TransactionSynchronizationManager.getResource(environment.getDataSource()) != null) {
-                throw new TransientDataAccessResourceException(
-                        "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
+
+            if (!(environment.getTransactionFactory() instanceof SpringManagedTransactionFactory)) {
+                if (TransactionSynchronizationManager.getResource(environment.getDataSource()) == null) {
+                    logger.debug("Not registering transaction for SqlSession [" + session + "]");
+                    return session;
+                }
+                else {
+                    throw new TransientDataAccessResourceException(
+                    "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
+                }
             }
 
             if (logger.isDebugEnabled()) {

@@ -25,7 +25,6 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
@@ -33,6 +32,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
+import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockPreparedStatement;
 
 /**
@@ -180,16 +180,11 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     }
 
     /*
-     * this is an edge case - completely separate DataSource, non-Spring TXManager but with an
-     * existing Spring TX. Technically, this could be allowed, but the current implementation fails
-     * because DataSourceUtils.getConnection(DataSource) pulls _any_ Connection into the current tx.
-     * To fix, however, SqlSessionTemplate.execute() would need to run more checks
-     * (DataSourceUtils.isConnectionTransactional() and unwrapping TransactionAwareDataSourceProxy)
-     * which would increase the code path for all transactions.
-     * (fixed in 1.0.1)
+     * Separate DataSource, non-Spring TXManager but with an existing Spring TX.
+     * The Spring TX should not interfere with the SqlSession.
      */
     @Test
-    public void testNonSpringTxFactoryNonSpringDSWithTx() {
+    public void testNonSpringTxFactoryNonSpringDSWithTx() throws java.sql.SQLException {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
         MockDataSource mockDataSource = new MockDataSource();
@@ -204,13 +199,23 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             status = txManager.getTransaction(new DefaultTransactionDefinition());
 
             session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+            session.commit();
+            session.close();
 
-//            fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+            txManager.commit(status);
+
+            // txManager still uses original connection
+            assertCommit();
+            assertSingleConnection();
+
+            // SqlSession uses its own connection
+            // that connection will not have commited since no SQL was executed by the session 
+            MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
+            assertEquals("should call commit on Connection", 0, mockConnection.getNumberCommits());
+            assertEquals("should not call rollback on Connection", 0, mockConnection.getNumberRollbacks());
+            assertCommitSession();
         } finally {
             SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
-
-            // rollback required to close connection
-            txManager.rollback(status);
 
             sqlSessionFactory.getConfiguration().setEnvironment(original);
         }
@@ -354,7 +359,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             // two transactions should have completed, each using their own Connection
             assertEquals("should call DataSource.getConnection() twice", 2, dataSource.getConnectionCount());
 
-            // both connections and should be committed
+            // both connections should be committed
             assertEquals("should call commit on Connection 1", 1, connection.getNumberCommits());
             assertEquals("should not call rollback on Connection 1", 0, connection.getNumberRollbacks());
 
@@ -362,8 +367,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             assertEquals("should not call rollback on Connection 2", 0, connectionTwo.getNumberRollbacks());
 
             // the SqlSession should have also committed
-            assertEquals("should call commit on SqlSession", 1, executorInterceptor.getCommitCount());
-            assertEquals("should call rollback on SqlSession", 0, executorInterceptor.getRollbackCount());
+            assertCommitSession();
 
             assertConnectionClosed(connection);
             assertConnectionClosed(connectionTwo);
