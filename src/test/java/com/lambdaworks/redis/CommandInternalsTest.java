@@ -6,8 +6,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +37,16 @@ public class CommandInternalsTest {
         assertFalse(command.isDone());
         command.complete();
         assertTrue(command.isDone());
+    }
+
+    @Test
+    public void get() throws Exception {
+        ByteBuffer buffer = ByteBuffer.allocate(3);
+        buffer.put("one".getBytes("ASCII"));
+        buffer.flip();
+        command.getOutput().set(buffer);
+        command.complete();
+        assertEquals("one", command.get());
     }
 
     @Test

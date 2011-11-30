@@ -21,4 +21,11 @@ public class ScoredValueTest {
         ScoredValue<String> sv1 = new ScoredValue<String>(1.0, "a");
         assertEquals(String.format("(%f, %s)", sv1.score, sv1.value), sv1.toString());
     }
+
+    @Test
+    public void testHashCode() throws Exception {
+        assertTrue(new ScoredValue<String>(1.0, "a").hashCode() != 0);
+        assertTrue(new ScoredValue<String>(0.0, "a").hashCode() != 0);
+        assertTrue(new ScoredValue<String>(0.0, null).hashCode() == 0);
+    }
 }
