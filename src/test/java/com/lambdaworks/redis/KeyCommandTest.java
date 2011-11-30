@@ -90,7 +90,7 @@ public class KeyCommandTest extends AbstractCommandTest {
     @Test
     public void objectRefcount() throws Exception {
         redis.set(key, value);
-        assertEquals(1, (long) redis.objectRefcount(key));
+        assertTrue(redis.objectRefcount(key) > 0);
     }
 
     @Test

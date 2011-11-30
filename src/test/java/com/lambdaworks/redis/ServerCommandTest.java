@@ -5,6 +5,7 @@ package com.lambdaworks.redis;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -116,6 +117,38 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void slaveofNoOne() throws Exception {
         assertEquals("OK", redis.slaveofNoOne());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void slowlog() throws Exception {
+        long start = System.currentTimeMillis() / 1000;
+
+        assertEquals("OK", redis.configSet("slowlog-log-slower-than", "1"));
+        assertEquals("OK", redis.slowlogReset());
+        redis.set(key, value);
+
+        List<Object> log = redis.slowlogGet();
+        assertEquals(2, log.size());
+
+        List<Object> entry = (List<Object>) log.get(0);
+        assertEquals(4, entry.size());
+        assertTrue(entry.get(0) instanceof Long);
+        assertTrue((Long) entry.get(1) >= start);
+        assertTrue(entry.get(2) instanceof Long);
+        assertEquals(list("SET", key, value), entry.get(3));
+
+        entry = (List<Object>) log.get(1);
+        assertEquals(4, entry.size());
+        assertTrue(entry.get(0) instanceof Long);
+        assertTrue((Long) entry.get(1) >= start);
+        assertTrue(entry.get(2) instanceof Long);
+        assertEquals(list("SLOWLOG", "RESET"), entry.get(3));
+
+        assertEquals(1, redis.slowlogGet(1).size());
+        assertEquals(4, (long) redis.slowlogLen());
+
+        redis.configSet("slowlog-log-slower-than", "0");
     }
 
     @Test

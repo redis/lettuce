@@ -5,7 +5,7 @@ lettuce - A scalable Java Redis client
   as BLPOP, and MULTI/EXEC. Multiple connections are efficiently managed by the
   excellent netty NIO framework.
 
-  This version of lettuce has been tested against redis 2.4.2
+  This version of lettuce has been tested against redis 2.4.4
 
 Basic Usage
 
@@ -56,5 +56,5 @@ Maven Artifacts
   <dependency>
     <groupId>com.lambdaworks</groupId>
     <artifactId>lettuce</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
   </dependency>

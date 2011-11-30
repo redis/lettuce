@@ -592,6 +592,30 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
+    public List<Object> slowlogGet() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET);
+        Command<K, V, List<Object>> cmd = dispatch(SLOWLOG, new NestedMultiOutput<K, V>(codec), args);
+        return getOutput(cmd);
+    }
+
+    public List<Object> slowlogGet(int count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET).add(count);
+        Command<K, V, List<Object>> cmd = dispatch(SLOWLOG, new NestedMultiOutput<K, V>(codec), args);
+        return getOutput(cmd);
+    }
+
+    public Long slowlogLen() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LEN);
+        Command<K, V, Long> cmd = dispatch(SLOWLOG, new IntegerOutput<K, V>(codec), args);
+        return getOutput(cmd);
+    }
+
+    public String slowlogReset() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESET);
+        Command<K, V, String> cmd = dispatch(SLOWLOG, new StatusOutput<K, V>(codec), args);
+        return getOutput(cmd);
+    }
+
     public Set<V> smembers(K key) {
         Command<K, V, Set<V>> cmd = dispatch(SMEMBERS, new ValueSetOutput<K, V>(codec), key);
         return getOutput(cmd);
