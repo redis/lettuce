@@ -142,7 +142,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     @Test
     public void testWithNonSpringTransactionFactory() {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
-        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource, "databaseId");
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
         sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
         try {

@@ -25,6 +25,8 @@ import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
+import org.apache.ibatis.mapping.DatabaseIdProvider;
+import org.apache.ibatis.mapping.DefaultDatabaseIdProvider;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.Configuration;
@@ -91,29 +93,26 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     private String typeAliasesPackage;
     
-    private String databaseId;
+    private DatabaseIdProvider databaseIdProvider = new DefaultDatabaseIdProvider();
 
     /**
-     * Sets databaseId.
+     * Sets the DatabaseIdProvider.
      * 
      * @since 1.1.0
-     * 
-     * @param databaseId
-     * 
+     * @return
      */
-    public String getDatabaseId() {
-      return databaseId;
+    public DatabaseIdProvider getDatabaseIdProvider() {
+        return databaseIdProvider;
     }
 
     /**
-     * Gets databaseId.
+     * Gets the DatabaseIdProvider
      * 
      * @since 1.1.0
-     * 
-     * @param databaseId
+     * @param databaseIdProvider
      */
-    public void setDatabaseId(String databaseId) {
-      this.databaseId = databaseId;
+    public void setDatabaseIdProvider(DatabaseIdProvider databaseIdProvider) {
+        this.databaseIdProvider = databaseIdProvider;
     }
 
     /**
@@ -317,7 +316,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             configuration = new Configuration();
             configuration.setVariables(this.configurationProperties);
         }
-
+        
         if (StringUtils.hasLength(this.typeAliasesPackage)) {
             String[] typeAliasPackageArray = StringUtils.tokenizeToStringArray(this.typeAliasesPackage,
                     ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
@@ -385,8 +384,12 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             this.transactionFactory = new SpringManagedTransactionFactory();
         }
 
-        Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource, this.databaseId);
+        Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
         configuration.setEnvironment(environment);
+
+        if (this.databaseIdProvider != null) {
+            configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
+        }
 
         if (!ObjectUtils.isEmpty(this.mapperLocations)) {
             for (Resource mapperLocation : this.mapperLocations) {

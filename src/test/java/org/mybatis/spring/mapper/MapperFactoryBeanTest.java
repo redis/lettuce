@@ -64,9 +64,9 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
         // the default SqlSessionFactory in AbstractMyBatisSpringTest is created with an explicitly set
         // MapperLocations list, so create a new factory here that tests auto-loading the config
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+        factoryBean.setDatabaseIdProvider(null);
         // mapperLocations properties defaults to null
         factoryBean.setDataSource(dataSource);
-        factoryBean.setDatabaseId("donotintrospectid");
         factoryBean.setPlugins(new Interceptor[] { executorInterceptor });
 
         SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
@@ -119,7 +119,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     @Test
     public void testWithNonSpringTransactionFactory() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
-        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource, "donotintrospectdatabaseId");
+        Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
         sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
         try {
