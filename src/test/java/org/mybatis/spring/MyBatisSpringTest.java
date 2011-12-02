@@ -24,16 +24,19 @@ import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockPreparedStatement;
+import com.mockrunner.mock.ejb.MockUserTransaction;
 
 /**
  * @version $Id$
@@ -135,8 +138,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         assertSingleConnection();
     }
 
-    // Spring API should work with a MyBatis TransactionFactories, as long as there is not a Spring
-    // TX is progress
+    // Spring API should work with a MyBatis TransactionFactories
     @Test
     public void testWithNonSpringTransactionFactory() {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
@@ -157,6 +159,8 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         }
     }
 
+    // Spring TX, non-Spring TransactionFactory, Spring managed DataSource
+    // this should not work since the DS will be out of sync with MyBatis
     @Test(expected = TransientDataAccessResourceException.class)
     public void testNonSpringTxFactoryWithTx() throws Exception {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
@@ -179,10 +183,8 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         }
     }
 
-    /*
-     * Separate DataSource, non-Spring TXManager but with an existing Spring TX.
-     * The Spring TX should not interfere with the SqlSession.
-     */
+    // Spring TX, non-Spring TransactionFactory, MyBatis managed DataSource
+    // this should work since the DS is managed MyBatis
     @Test
     public void testNonSpringTxFactoryNonSpringDSWithTx() throws java.sql.SQLException {
         Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
@@ -209,7 +211,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
             assertSingleConnection();
 
             // SqlSession uses its own connection
-            // that connection will not have commited since no SQL was executed by the session 
+            // that connection will not have commited since no SQL was executed by the session
             MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
             assertEquals("should call commit on Connection", 0, mockConnection.getNumberCommits());
             assertEquals("should not call rollback on Connection", 0, mockConnection.getNumberRollbacks());
@@ -274,6 +276,74 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     }
 
     @Test
+    public void testWithJtaTxManager() {
+        JtaTransactionManager jtaManager = new JtaTransactionManager(new MockUserTransaction());
+
+        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+
+        TransactionStatus status = jtaManager.getTransaction(txDef);
+
+        session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+        session.getMapper(TestMapper.class).findTest();
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+        jtaManager.commit(status);
+
+        // assume a real JTA tx would enlist and commit the JDBC connection
+        assertNoCommitJdbc();
+        assertCommitSession();
+        assertSingleConnection();
+    }
+
+    @Test
+    public void testWithJtaTxManagerAndNonSpringTxManager() throws java.sql.SQLException {
+        Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
+
+        MockDataSource mockDataSource = new MockDataSource();
+        mockDataSource.setupConnection(createMockConnection());
+
+        Environment nonSpring = new Environment("non-spring", new ManagedTransactionFactory(), mockDataSource);
+        sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
+
+        JtaTransactionManager jtaManager = new JtaTransactionManager(new MockUserTransaction());
+
+        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+
+        TransactionStatus status = jtaManager.getTransaction(txDef);
+
+        try {
+            session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+            session.getMapper(TestMapper.class).findTest();
+            // Spring is not managing SqlSession, so commit is needed
+            session.commit(true);
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+            jtaManager.commit(status);
+
+            // assume a real JTA tx would enlist and commit the JDBC connection
+            assertNoCommitJdbc();
+            assertCommitSession();
+
+            MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
+            assertEquals("should call commit on Connection", 0, mockConnection.getNumberCommits());
+            assertEquals("should not call rollback on Connection", 0, mockConnection.getNumberRollbacks());
+
+            assertEquals("should not call DataSource.getConnection()", 0, dataSource.getConnectionCount());
+
+        } finally {
+            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+            sqlSessionFactory.getConfiguration().setEnvironment(original);
+
+            // null the connection since it was not used
+            // this avoids failing in validateConnectionClosed()
+            connection = null;
+        }
+    }
+
+    @Test
     public void testWithTxSupports() {
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         txDef.setPropagationBehaviorName("PROPAGATION_SUPPORTS");
@@ -305,6 +375,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         txManager.commit(status);
 
         assertCommit();
+        assertCommitSession();
         assertSingleConnection();
     }
 
@@ -323,8 +394,8 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
         txManager.commit(status);
 
-        // Connection should be committed once, but we explicitly called commit on the SqlSession, so
-        // it should be committed twice
+        // Connection should be committed once, but we explicitly called commit on the SqlSession,
+        // so it should be committed twice
         assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
         assertEquals("should not call rollback on Connection", 0, connection.getNumberRollbacks());
         assertEquals("should call commit on SqlSession", 2, executorInterceptor.getCommitCount());
@@ -333,52 +404,40 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
         assertSingleConnection();
     }
 
-    // is this test right?
-    // it works or fails depending when the getConnection() is done
-    // that is... where is the transaction started?? on openSession() or when the first SQL sentence is run?
     @Test
-    public void testWithOtherTx() throws Exception {
-
+    public void testWithInterleavedTx() throws Exception {
+        // this session will use one Connection
         session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
-        session.getConnection(); // force the connection retrieval
+        session.getMapper(TestMapper.class).findTest();
 
-        try {
-            // this transaction should use another Connection
-            txManager.setDataSource(dataSource);
-            TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
+        // this transaction should use another Connection
+        TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
 
-            // all MyBatis work happens during the tx, but should not be participating
-            session.getMapper(TestMapper.class).findTest();
-            session.commit(true);
-            SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+        // session continues using original connection
+        session.getMapper(TestMapper.class).insertTest("test2");
+        session.commit(true);
+        SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-            // this should succeed
-            // SpringManagedTransaction (from SqlSession.commit()) should not interfere with tx
-            txManager.commit(status);
+        // this should succeed
+        // SpringManagedTransaction (from SqlSession.commit()) should not interfere with tx
+        txManager.commit(status);
 
-            // two transactions should have completed, each using their own Connection
-            assertEquals("should call DataSource.getConnection() twice", 2, dataSource.getConnectionCount());
+        // two DB connections should have completed, each using their own Connection
+        assertEquals("should call DataSource.getConnection() twice", 2, dataSource.getConnectionCount());
 
-            // both connections should be committed
-            assertEquals("should call commit on Connection 1", 1, connection.getNumberCommits());
-            assertEquals("should not call rollback on Connection 1", 0, connection.getNumberRollbacks());
+        // both connections should be committed
+        assertEquals("should call commit on Connection 1", 1, connection.getNumberCommits());
+        assertEquals("should not call rollback on Connection 1", 0, connection.getNumberRollbacks());
 
-            assertEquals("should call commit on Connection 2", 1, connectionTwo.getNumberCommits());
-            assertEquals("should not call rollback on Connection 2", 0, connectionTwo.getNumberRollbacks());
+        assertEquals("should call commit on Connection 2", 1, connectionTwo.getNumberCommits());
+        assertEquals("should not call rollback on Connection 2", 0, connectionTwo.getNumberRollbacks());
+        
+        // the SqlSession should have also committed and executed twice
+        assertCommitSession();
+        assertExecuteCount(2);
 
-            // the SqlSession should have also committed
-            assertCommitSession();
-
-            assertConnectionClosed(connection);
-            assertConnectionClosed(connectionTwo);
-        } finally {
-            // reset the txManager; keep other tests from potentially failing
-            txManager.setDataSource(dataSource);
-
-            // null the connection since it was not used
-            // this avoids failing in validateConnectionClosed()
-            connection = null;
-        }
+        assertConnectionClosed(connection);
+        assertConnectionClosed(connectionTwo);
     }
 
     @Test

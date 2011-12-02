@@ -101,21 +101,13 @@ public final class SqlSessionUtils {
             return holder.getSqlSession();
         }
 
-        // Assume either DataSourceTransactionManager or the underlying
-        // connection pool already dealt with enabling auto commit.
-        // This may not be a good assumption, but the overhead of checking
-        // connection.getAutoCommit() again may be expensive (?) in some drivers
-        // (see DataSourceTransactionManager.doBegin()). One option would be to
-        // only check for auto commit if this function is being called outside
-        // of DSTxMgr, but to do that we would need to be able to call
-        // ConnectionHolder.isTransactionActive(), which is protected and not
-        // visible to this class.
         if (logger.isDebugEnabled()) {
           logger.debug("Creating a new SqlSession");
         }
+
         SqlSession session = sessionFactory.openSession(executorType);
 
-        // Register session holder and bind it to enable synchronization.
+        // Register session holder if synchronization is active (i.e. a Spring TX is active)
         //
         // Note: The DataSource used by the Environment should be synchronized with the
         // transaction either through DataSourceTxMgr or another tx synchronization.
@@ -124,26 +116,30 @@ public final class SqlSessionUtils {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             Environment environment = sessionFactory.getConfiguration().getEnvironment();
 
-            if (!(environment.getTransactionFactory() instanceof SpringManagedTransactionFactory)) {
+            if (environment.getTransactionFactory() instanceof SpringManagedTransactionFactory) {
+               if (logger.isDebugEnabled()) {
+                   logger.debug("Registering transaction synchronization for SqlSession [" + session + "]");
+               }
+
+               holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
+               TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+               TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
+               holder.setSynchronizedWithTransaction(true);
+               holder.requested();
+            }
+            else {
                 if (TransactionSynchronizationManager.getResource(environment.getDataSource()) == null) {
-                    logger.debug("Not registering transaction for SqlSession [" + session + "]");
-                    return session;
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Not registering transaction for SqlSession [" + session + "]");
+                    }
                 }
                 else {
                     throw new TransientDataAccessResourceException(
                     "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
                 }
             }
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("Registering transaction synchronization for SqlSession [" + session + "]");
-            }
-            holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
-            TransactionSynchronizationManager.bindResource(sessionFactory, holder);
-            TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
-            holder.setSynchronizedWithTransaction(true);
-            holder.requested();
-        } else {
+        }
+        else {
             if (logger.isDebugEnabled()) {
                 logger.debug("SqlSession [" + session + "] was not registered for synchronization because synchronization is not active");
             }
