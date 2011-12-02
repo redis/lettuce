@@ -63,11 +63,10 @@ public final class SqlSessionUtils {
     }
 
     /**
-     * If a Spring transaction is active it uses {@code DataSourceUtils} to get a 
-     * Spring managed {@code Connection}, then creates a new {@code SqlSession}
-     * with this connection and synchronizes it with the transaction.
-     * If there is not an active transaction it gets a connection directly from 
-     * the {@code DataSource} and creates a {@code SqlSession} with it. 
+     * Gets an SqlSession from Spring Transaction Manager or creates a new one if needed.
+     * Tries to get a SqlSession out of current transaction. If there is not any, it creates a new one.
+     * Then, it synchronizes the SqlSession with the transaction if Spring TX is active and 
+     * <code>SpringManagedTransactionFactory</code> is configured as a transaction manager.
      *
      * @param sessionFactory a MyBatis {@code SqlSessionFactory} to create new sessions
      * @param executorType The executor type of the SqlSession to create
@@ -76,10 +75,7 @@ public final class SqlSessionUtils {
      *             {@code SqlSessionFactory} is not using a {@code SpringManagedTransactionFactory}
      * @see SpringManagedTransactionFactory
      */
-    public static SqlSession getSqlSession(
-            SqlSessionFactory sessionFactory,
-            ExecutorType executorType,
-            PersistenceExceptionTranslator exceptionTranslator) {
+    public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType, PersistenceExceptionTranslator exceptionTranslator) {
 
         Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
         Assert.notNull(executorType, "No ExecutorType specified");
@@ -88,8 +84,7 @@ public final class SqlSessionUtils {
 
         if (holder != null && holder.isSynchronizedWithTransaction()) {
             if (holder.getExecutorType() != executorType) {
-                throw new TransientDataAccessResourceException(
-                        "Cannot change the ExecutorType when there is an existing transaction");
+                throw new TransientDataAccessResourceException("Cannot change the ExecutorType when there is an existing transaction");
             }
 
             holder.requested();
@@ -102,7 +97,7 @@ public final class SqlSessionUtils {
         }
 
         if (logger.isDebugEnabled()) {
-          logger.debug("Creating a new SqlSession");
+            logger.debug("Creating a new SqlSession");
         }
 
         SqlSession session = sessionFactory.openSession(executorType);
@@ -117,29 +112,26 @@ public final class SqlSessionUtils {
             Environment environment = sessionFactory.getConfiguration().getEnvironment();
 
             if (environment.getTransactionFactory() instanceof SpringManagedTransactionFactory) {
-               if (logger.isDebugEnabled()) {
-                   logger.debug("Registering transaction synchronization for SqlSession [" + session + "]");
-               }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Registering transaction synchronization for SqlSession [" + session + "]");
+                }
 
-               holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
-               TransactionSynchronizationManager.bindResource(sessionFactory, holder);
-               TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
-               holder.setSynchronizedWithTransaction(true);
-               holder.requested();
-            }
-            else {
+                holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
+                TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+                TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
+                holder.setSynchronizedWithTransaction(true);
+                holder.requested();
+            } else {
                 if (TransactionSynchronizationManager.getResource(environment.getDataSource()) == null) {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Not registering transaction for SqlSession [" + session + "]");
+                        logger.debug("SqlSession [" + session + "] was not registered for synchronization because DataSource is not transactional");
                     }
-                }
-                else {
+                } else {
                     throw new TransientDataAccessResourceException(
-                    "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
+                            "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
                 }
             }
-        }
-        else {
+        } else {
             if (logger.isDebugEnabled()) {
                 logger.debug("SqlSession [" + session + "] was not registered for synchronization because synchronization is not active");
             }
