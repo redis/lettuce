@@ -144,56 +144,56 @@ public class SqlSessionTemplate implements SqlSession {
     /**
      * {@inheritDoc}
      */
-    public Object selectOne(String statement) {
+    public <T> T selectOne(String statement) {
         return this.sqlSessionProxy.selectOne(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Object selectOne(String statement, Object parameter) {
+    public <T> T selectOne(String statement, Object parameter) {
         return this.sqlSessionProxy.selectOne(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Map<?, ?> selectMap(String statement, String mapKey) {
+    public <K, V> Map<K, V> selectMap(String statement, String mapKey) {
         return this.sqlSessionProxy.selectMap(statement, mapKey);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Map<?, ?> selectMap(String statement, Object parameter, String mapKey) {
+    public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey) {
         return this.sqlSessionProxy.selectMap(statement, parameter, mapKey);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Map<?, ?> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+    public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
         return this.sqlSessionProxy.selectMap(statement, parameter, mapKey, rowBounds);
     }
 
     /**
      * {@inheritDoc}
      */
-    public List<?> selectList(String statement) {
+    public <E> List<E> selectList(String statement) {
         return this.sqlSessionProxy.selectList(statement);
     }
 
     /**
      * {@inheritDoc}
      */
-    public List<?> selectList(String statement, Object parameter) {
+    public <E> List<E> selectList(String statement, Object parameter) {
         return this.sqlSessionProxy.selectList(statement, parameter);
     }
 
     /**
      * {@inheritDoc}
      */
-    public List<?> selectList(String statement, Object parameter, RowBounds rowBounds) {
+    public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
         return this.sqlSessionProxy.selectList(statement, parameter, rowBounds);
     }
 
