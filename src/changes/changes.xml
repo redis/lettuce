@@ -1,148 +1,149 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Copyright 2010-2011 The myBatis Team
+<!-- Copyright 2010-2011 The myBatis Team Licensed under the Apache License, 
+	Version 2.0 (the "License"); you may not use this file except in compliance 
+	with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
+	Unless required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. -->
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
--->
-
-<!--
-    version: $Id$
--->
+<!-- version: $Id: changes.xml 3985 2011-10-25 05:08:54Z eduardo.macarron 
+	$ -->
 <document xmlns="http://maven.apache.org/changes/1.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/plugins/maven-changes-plugin/xsd/changes-1.0.0.xsd">
-    <properties>
-        <author>The myBatis Team</author>
-        <title>Changes</title>
-    </properties>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/plugins/maven-changes-plugin/xsd/changes-1.0.0.xsd">
+	<properties>
+		<author>The myBatis Team</author>
+		<title>Changes</title>
+	</properties>
 
-    <body>
-        <release version="1.0.3" date="TBD" description="1.0.3 release">
-            <action type="update" issue="414">
-                MapperScannerConfigurer does not work with PropertyPlaceholderConfigurer
-            </action>
-        </release>
-        <release version="1.0.2" date="2011-10-10" description="1.0.2 release">
-            <action type="update" issue="391">
-                Add SqlSession.flushStatements()
-            </action>
-            <action type="fix" issue="390">
-                configurationProperties not applied in mappings
-            </action>
-            <action type="fix" issue="339">
-                SqlSessionTemplate throws NullPointerException if ExceptionTranslator cannot translate exception  
-            </action>
-            <action type="fix" issue="387">
-                Replace BeanPostProcessor with BeanDefinitionRegistryPostProcessor  
-            </action>
-        </release>
-        <release version="1.0.1" date="2011-06-01" description="1.0.1 release">
-            <action type="update" issue="179">
-                Added a fail fast checking to ensure that all statements are fully loaded  
-            </action>
-            <action type="fix" issue="222">
-                SqlSessionFactoryBean should allow sql fragments to be shared across multiple mapper files  
-            </action>
-            <action type="fix" issue="227">
-                Spring MapperScannerConfigurer does not work properly in OSGi  
-            </action>
-            <action type="update" issue="314">
-                Enable typehandler and alias registration in mybatis-spring
-            </action>
-        </release>
-        <release version="1.0.0" date="2010-12-31" description="1.0.0 release">
-            <action type="fix" issue="14">
-                Support multiple character sets (parse XML from InputStream vs. Reader)
-            </action>
-            <action type="fix" issue="104">
-                Reset error context after calling XMLConfigBuilder or XMLMapperBuilder
-            </action>
-            <action type="fix" issue="196">
-                SqlSession rolls back with no Spring Tx + autocommit=false + dirty=true (an update was executed)
-            </action>
-            <action type="update">
-                setTransactionFactoryProperties property in SqlSessionFactory has been removed
-            </action>
-            <action type="update">
-                setTransactionFactoryClass property in SqlSessionFactory has been replaced by setTransactionFactory
-            </action>
-            <action type="update">
-                Improved logging
-            </action>
-            <action type="fix" issue="185">
-                Doesn't propagate exceptions up the stack when using batch mode
-            </action>
-        </release>
+	<body>
+		<release version="1.1.0" date="TBD" description="1.1.0 release">
+			<action type="fix" issue="449">
+				Prevent class loading / add zero-method mappers while scanning for mappers
+			</action>
+			<action type="update" issue="279">
+				Lazy loads do not execute within Spring-managed transactions
+			</action>
+			<action type="fix" issue="414">
+				MapperScannerConfigurer does not work with PropertyPlaceholderConfigurer
+			</action>
+		</release>
+		<release version="1.0.2" date="2011-10-10" description="1.0.2 release">
+			<action type="update" issue="391">
+				Add SqlSession.flushStatements()
+			</action>
+			<action type="fix" issue="390">
+				configurationProperties not applied in mappings
+			</action>
+			<action type="fix" issue="339">
+				SqlSessionTemplate throws NullPointerException if ExceptionTranslator cannot translate
+				exception
+			</action>
+			<action type="fix" issue="387">
+				Replace BeanPostProcessor with BeanDefinitionRegistryPostProcessor
+			</action>
+		</release>
+		<release version="1.0.1" date="2011-06-01" description="1.0.1 release">
+			<action type="update" issue="179">
+				Added a fail fast checking to ensure that all statements are fully loaded
+			</action>
+			<action type="fix" issue="222">
+				SqlSessionFactoryBean should allow sql fragments to be shared across multiple mapper
+				files
+			</action>
+			<action type="fix" issue="227">
+				Spring MapperScannerConfigurer does not work properly in OSGi
+			</action>
+			<action type="update" issue="314">
+				Enable typehandler and alias registration in mybatis-spring
+			</action>
+		</release>
+		<release version="1.0.0" date="2010-12-31" description="1.0.0 release">
+			<action type="fix" issue="14">
+				Support multiple character sets (parse XML from InputStream vs. Reader)
+			</action>
+			<action type="fix" issue="104">
+				Reset error context after calling XMLConfigBuilder or XMLMapperBuilder
+			</action>
+			<action type="fix" issue="196">
+				SqlSession rolls back with no Spring Tx + autocommit=false + dirty=true (an
+				update was executed)
+			</action>
+			<action type="update">
+				setTransactionFactoryProperties property in SqlSessionFactory has been removed
+			</action>
+			<action type="update">
+				setTransactionFactoryClass property in SqlSessionFactory has been replaced by
+				setTransactionFactory
+			</action>
+			<action type="update">
+				Improved logging
+			</action>
+			<action type="fix" issue="185">
+				Doesn't propagate exceptions up the stack when using batch mode
+			</action>
+		</release>
 
-        <release version="1.0.0-RC3" date="2010-11-22" description="1.0.0-RC3 release">
-            <action type="update">
-                getSqlSessionTemplate() method in SqlSessionDaoSupport has been replaced by getSqlSession()
-            </action>
-            <action type="update">
-                MapperFactoryBean has been moved to org.mybatis.spring.mapper.MapperFactoryBean
-            </action>
-            <action type="update">
-                MapperScannerPostProcessor has been moved to org.mybatis.spring.mapper.MapperScannerConfigurer
-            </action>
-            <action type="update">
-                Removed @Mapper annotation
-            </action>
-            <action type="update" issue="176">
-                Mapper scanning should not rely on proprietary @Mapper annotation
-            </action>
-            <action type="fix" issue="166">
-                Avoid one Proxy creation when using injected mappers
-            </action>
-            <action type="update" issue="163">
-                Add new selectMap methods to SqlSessionTemplate
-            </action>
-        </release>
+		<release version="1.0.0-RC3" date="2010-11-22" description="1.0.0-RC3 release">
+			<action type="update">
+				getSqlSessionTemplate() method in SqlSessionDaoSupport has been replaced by getSqlSession()
+			</action>
+			<action type="update">
+				MapperFactoryBean has been moved to org.mybatis.spring.mapper.MapperFactoryBean
+			</action>
+			<action type="update">
+				MapperScannerPostProcessor has been moved to org.mybatis.spring.mapper.MapperScannerConfigurer
+			</action>
+			<action type="update">
+				Removed @Mapper annotation
+			</action>
+			<action type="update" issue="176">
+				Mapper scanning should not rely on proprietary @Mapper annotation
+			</action>
+			<action type="fix" issue="166">
+				Avoid one Proxy creation when using injected mappers
+			</action>
+			<action type="update" issue="163">
+				Add new selectMap methods to SqlSessionTemplate
+			</action>
+		</release>
 
-        <release version="1.0.0-RC2" date="2010-10-31" description="1.0.0-RC2 release">
-            <action type="update">
-                Improved documentation manual.
-            </action>
-            <action type="update" issue="116">
-                Add operation select(String, ResultHandler)
-            </action>
-            <action type="update" issue="130">
-                Component Scan for Mappers
-            </action>
-            <action type="fix" issue="154">
-                SqlSessionCallback.doInSqlSession should not throw SqlException
-            </action>
-            <action type="fix" issue="156">
-                getExceptionTranslator() may not be called in mybatis-spring
-            </action>
-            <action type="fix" issue="157">
-                Setting a specific datasource for one mapper does not work
-            </action>
-            <action type="fix" issue="160">
-                should not let changing the executor type during a tx
-            </action>
-            <action type="fix" issue="161">
-                mapperLocations does not work for xml files inside JARs
-            </action>
-            <action type="fix" issue="162">
-                Use a reference to SqlSessionFactory in MapperScanner
-            </action>
-        </release>
+		<release version="1.0.0-RC2" date="2010-10-31" description="1.0.0-RC2 release">
+			<action type="update">
+				Improved documentation manual.
+			</action>
+			<action type="update" issue="116">
+				Add operation select(String, ResultHandler)
+			</action>
+			<action type="update" issue="130">
+				Component Scan for Mappers
+			</action>
+			<action type="fix" issue="154">
+				SqlSessionCallback.doInSqlSession should not throw SqlException
+			</action>
+			<action type="fix" issue="156">
+				getExceptionTranslator() may not be called in mybatis-spring
+			</action>
+			<action type="fix" issue="157">
+				Setting a specific datasource for one mapper does not work
+			</action>
+			<action type="fix" issue="160">
+				should not let changing the executor type during a tx
+			</action>
+			<action type="fix" issue="161">
+				mapperLocations does not work for xml files inside JARs
+			</action>
+			<action type="fix" issue="162">
+				Use a reference to SqlSessionFactory in MapperScanner
+			</action>
+		</release>
 
-        <release version="1.0.0-RC1" date="2010-09-22" description="1.0.0-RC1 release">
-            <action dev="simone.tripodi" type="update">
-                First RC release.
-            </action>
-        </release>
-    </body>
+		<release version="1.0.0-RC1" date="2010-09-22" description="1.0.0-RC1 release">
+			<action dev="simone.tripodi" type="update">
+				First RC release.
+			</action>
+		</release>
+	</body>
 
 </document>
