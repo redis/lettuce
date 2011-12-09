@@ -43,7 +43,7 @@
       	skills. You just need to know plain Java and SQL.
       	</p>
       	<p>
-      	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping good design and program structure. 
+      	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping a good design and program structure. 
       	As we will see a bit later, you will not find jdbc code, object creation, binding code or transaction handling code. What is more 
       	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will se that the 
       	combination of MyBatis mappers and dependency injection lets you build applications with no dependency on MyBatis.     
