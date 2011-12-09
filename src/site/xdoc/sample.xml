@@ -326,7 +326,7 @@ public class OrderService {
       fully supported by MyBatis-Spring. 
       The Spring's <code>@Transactional</code> annotation indicates that this method is transactional, 
       that means that all <code>updateInventoryQuantity</code>, <code>insertOrder</code> and 
-      <code>insertLineItem</code> mapper calls must succeed or none one.</p>
+      <code>insertLineItem</code> mapper calls must succeed or none.</p>
       
       <h4>Persistence</h4>
       <p>The persistence layer is composed of MyBatis mappers. Mappers are just plain Java
