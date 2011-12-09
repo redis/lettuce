@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
   limitations under the License.
 -->
 
-<!--
-  version: $Id$
--->
+<!--  version: $Id:$ -->
+
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
@@ -33,7 +32,7 @@
       	JPetStore 6 is a full web application built on top of MyBatis 3, 
       	<a href="http://www.springsource.org">Spring 3</a> and <a href="http://www.stripesframework.org/">Stripes</a>.
         If is available for download in the 
-        <a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/test/java/org/mybatis/spring/sample/">downloads</a>
+        <a href="http://code.google.com/p/mybatis/downloads/list?q=Product=Sample">downloads</a>
         section of MyBatis project site.
         In this section we will walk through this sample to understand how is it built and learn how to run it. 
       </p>

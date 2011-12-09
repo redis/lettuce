@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
   limitations under the License.
 -->
 
-<!--
-  version: $Id$
--->
+<!--  version: $Id$ -->
+
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
@@ -47,9 +46,8 @@
         <a href="mappers.html#MapperFactoryBean"><code>MapperFactoryBean</code></a>
         will be explained in detail in the next chapter. 
       </p>  
-    </section>
 
-    <section name="SqlSessionTemplate">
+    <subsection name="SqlSessionTemplate">
       <p>
         <code>SqlSessionTemplate</code> is the heart of MyBatis-Spring.
         This class is responsible for managing MyBatis <code>SqlSessions</code>,
@@ -143,9 +141,9 @@
         types run in a separate transaction (e.g. with PROPAGATION_REQUIRES_NEW) or
         completely outside of a transaction.
       </p>
-    </section>
+    </subsection>
 
-    <section name="SqlSessionDaoSupport">
+    <subsection name="SqlSessionDaoSupport">
       <p>
         <code>SqlSessionDaoSupport</code> is an abstract support class that
         provides you with a <code>SqlSession</code>. Calling
@@ -180,6 +178,7 @@
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
       </p>
+      </subsection>
     </section>
   </body>
 </document>

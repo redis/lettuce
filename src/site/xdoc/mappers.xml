@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
   limitations under the License.
 -->
 
-<!--
-  version: $Id$
--->
+<!--  version: $Id$ -->
+
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
@@ -48,9 +47,8 @@
         a new Spring transaction if required or participate in an existing one if
         it a transaction is active.
       </p>
-    </section>
 
-    <section name="MapperFactoryBean">
+    <subsection name="MapperFactoryBean">
       <p>
         A data mapper is added to Spring like the following:
 
@@ -115,9 +113,9 @@
          references in this code. Nor is there any need to create, open or close
          the session, MyBatis-Spring will take care of that.
        </p>
-    </section>
+    </subsection>
 
-    <section name="MapperScannerConfigurer">
+    <subsection name="MapperScannerConfigurer">
       <p>
         There is no need to register all your mappers in the Spring XML file.
         Instead, you can use a <code>MapperScannerConfigurer</code> that
@@ -174,6 +172,7 @@
         (that must be itself annotated) so the annotation will work both as a marker
         and as a name provider.
       </p>
+      </subsection>
     </section>
   </body>
 </document>

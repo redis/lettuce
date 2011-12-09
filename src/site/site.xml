@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@
   <body>
     <menu name="Reference Documentation">
       <item name="Introduction" href="index.html"/>
-      <item name="Getting Started" href="getting_started.html"/>
+      <item name="Getting Started" href="getting-started.html"/>
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
       <item name="Transactions" href="transactions.html"/>
-      <item name="Using an SqlSession" href="templates_support.html"/>
+      <item name="Using an SqlSession" href="sqlsession.html"/>
       <item name="Injecting Mappers" href="mappers.html"/>
-      <item name="Using the MyBatis API" href="using_api.html"/>
+      <item name="Using the MyBatis API" href="using-api.html"/>
       <item name="Sample Code" href="sample.html"/>
     </menu>
 

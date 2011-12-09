@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
   limitations under the License.
 -->
 
-<!--
-  version: $Id$
--->
+<!--  version: $Id$ -->
+
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
@@ -48,9 +47,8 @@
         MyBatis-Spring will transparently manage transactions once they are set up.
         There is no need for additional code in your DAO classes.
       </p>
-    </section>
-
-    <section name="Standard Configuration">
+  
+    <subsection name="Standard Configuration">
       <p>
         To enable Spring transaction processing, simply create a
         <code>DataSourceTransactionManager</code> in your Spring XML
@@ -72,9 +70,9 @@
         the <code>SqlSessionFactoryBean</code> or transaction management will
         not work.
       </p>
-    </section>
+    </subsection>
 
-    <section name="Container Managed Transactions">
+    <subsection name="Container Managed Transactions">
       <p>
         If you are using a JEE container and would like Spring to participate in
         container managed transactions (CMT), then Spring should be configured
@@ -104,9 +102,9 @@
   </property>  
 </bean>]]></source>
       </p>
-    </section>
+    </subsection>
   
-    <section name="Programmatic Transaction Management">
+    <subsection name="Programmatic Transaction Management">
       <p>
         MyBatis <code>SqlSession</code> provides you with specific methods to handle
         transactions programmatically. But when using MyBatis-Spring your beans will be
@@ -143,6 +141,7 @@ txManager.commit(status);]]></source>
 
         Notice that this code uses a mapper, but it will also work with a <code>SqlSession</code>.
       </p>
+      </subsection>
     </section>
   </body>
 </document>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2011 The myBatis Team
+  Copyright 2010-2011 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
   limitations under the License.
 -->
 
-<!--
-  version: $Id: site.xml 4037 2011-11-23 21:49:57Z simone.tripodi $
--->
+<!--  version: $Id:$ -->
+
 <document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
@@ -33,9 +32,8 @@
         MyBatis-Spring and how to build
         a simple transactional application.
       </p>
-    </section>
 
-    <section name="Installation">
+    <subsection name="Installation">
       <p>
         To use the MyBatis-Spring module, you just need to include the
         <code>
@@ -54,9 +52,9 @@
   <version>x.x.x</version>
 </dependency>]]></source>
       </p>
-    </section>
+    </subsection>
 
-    <section name="Quick Setup">
+    <subsection name="Quick Setup">
       <p>
         To use MyBatis with Spring you need at least two things defined in
         the
@@ -151,6 +149,7 @@ public User doSomeBusinessStuff(String userId) {
   return this.userMapper.getUser(userId);
 }]]></source>
       </p>
+      </subsection>
     </section>
   </body>
 </document>
