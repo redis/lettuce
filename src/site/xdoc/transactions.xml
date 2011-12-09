@@ -53,11 +53,10 @@
         To enable Spring transaction processing, simply create a
         <code>DataSourceTransactionManager</code> in your Spring XML
         configuration file:
-
+      </p>
         <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
-      </p>
       <p>
         The <code>DataSource</code> specified can be any JDBC
         <code>DataSource</code> you would normally
@@ -79,9 +78,9 @@
         with a <code>JtaTransactionManager</code> or one of its container
         specific subclasses. The easiest way to do this is to use the Spring
         transaction namespace:
-
-        <source><![CDATA[<tx:jta-transaction-manager />]]></source>
-
+      </p>
+      <source><![CDATA[<tx:jta-transaction-manager />]]></source>
+      <p>
         In this configuration, MyBatis will behave like any other Spring
         transactional resource configured with CMT. Spring will automatically use
         any existing container transaction and attach an <code>SqlSession</code> to it. If no
@@ -94,14 +93,13 @@
         configure any Spring transaction manager and you <strong>must</strong>
         also configure the <code>SqlSessionFactoryBean</code> to use the base
         MyBatis <code>ManagedTransactionFactory</code>:
-
-        <source><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+      </p>
+      <source><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
   <property name="transactionFactory">
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
   </property>  
 </bean>]]></source>
-      </p>
     </subsection>
   
     <subsection name="Programmatic Transaction Management">
@@ -126,6 +124,7 @@
         If you want to control your transactions programmatically please refer to chapter 10.6 of
         the Spring reference manual. This code shows how to handle a transaction manually
         using the <code>PlatformTransactionManager</code> described in section 10.6.2.
+      </p>
         <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 
@@ -138,7 +137,7 @@ catch (MyException ex) {
   throw ex;
 }
 txManager.commit(status);]]></source>
-
+      <p>
         Notice that this code uses a mapper, but it will also work with a <code>SqlSession</code>.
       </p>
       </subsection>

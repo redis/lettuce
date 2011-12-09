@@ -78,16 +78,15 @@
       <p>
         A <code>SqlSessionTemplate</code> can be constructed
         using an <code>SqlSessionFactory</code> as a constructor argument.
-
+      </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
 </bean>]]></source>        
-      </p>
-
+     
       <p>
         This bean can now be injected directly in your DAO beans. You need a
         <code>SqlSession</code> property in your bean like the following
-
+      </p>
         <source><![CDATA[public class UserDaoImpl implements UserDao {
 
   private SqlSession sqlSession;
@@ -100,7 +99,7 @@
     return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
-      
+      <p>
         And inject the <code>SqlSessionTemplate</code> as follows
       
         <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
@@ -113,20 +112,21 @@
         an <code>ExecutorType</code> as an argument. This allows you to
         construct, for example, a batch <code>SqlSession</code> by using
         the following in Spring's configuration xml:
+      </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></source>
-    
+      <p>
         Now all your statements will be batched so the following could be coded
         in a DAO
+      </p>
         <source><![CDATA[public void insertUsers(User[] users) {
    for (User user : users) {
      sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
    }
  }]]></source> 
-      </p>
-
+  
       <p>
         Note that this configuration style only needs to be used if the desired
         execution method differs from the default set for the
@@ -149,13 +149,13 @@
         provides you with a <code>SqlSession</code>. Calling
         <code>getSqlSession()</code> you will get a <code>SqlSessionTemplate</code>
         which can then be used to execute SQL methods, like the following:
-
+      </p>
         <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
     return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
-
+      <p>
         Usually <code>MapperFactoryBean</code> is preferred to this class,
         since it requires no extra code. But, this class is useful if you need
         to do other non-MyBatis work in your DAO and concrete classes are
@@ -173,11 +173,10 @@
         Assuming a class <code>UserDaoImpl</code> that subclasses
         <code>SqlSessionDaoSupport</code>, it can be configured in Spring
         like the following:
-
+      </p>
         <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
-      </p>
       </subsection>
     </section>
   </body>

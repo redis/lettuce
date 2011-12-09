@@ -51,13 +51,12 @@
     <subsection name="MapperFactoryBean">
       <p>
         A data mapper is added to Spring like the following:
-
+      </p>
         <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
-      </p>
-
+   
       <p>
         <code>MapperFactoryBean</code> creates a proxy class that
         implements <code>UserMapper</code> and injects it into the
@@ -89,13 +88,14 @@
       <p>
          You can inject mappers directly on your business/service objects in the
          same way you inject any other Spring bean:
-
+      </p>
          <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
 </bean>]]></source>
-
+ 
+      <p>
          This bean can be used directly in application logic:
-
+      </p>
          <source><![CDATA[public class FooServiceImpl implements FooService {
 
   private UserMapper userMapper;
@@ -108,7 +108,7 @@
     return this.userMapper.getUser(userId);
   }
 }]]></source>
-
+       <p>
          Notice that there are no <code>SqlSession</code> or MyBatis
          references in this code. Nor is there any need to create, open or close
          the session, MyBatis-Spring will take care of that.
@@ -126,10 +126,11 @@
       <p>
         To set up a <code>MapperScannerConfigurer</code> add the
         following to the Spring configuration:
+      </p>
         <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
   <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></source>
-
+      <p>
         The <code>basePackage</code> property lets you set the base package
         for your mapper interface files. You can set more than one package by
         using a semicolon or comma as a separator. Mappers will be searched for
@@ -146,9 +147,9 @@
         Note that <strong>bean names</strong> are required,
         not bean references, thus the <code>value</code> attribute is used instead of the
         usual <code>ref</code>:
-        <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
       </p>
-
+      <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
+    
       <p>
         <code>MapperScannerConfigurer</code> supports filtering the mappers
         created by either specifying a marker interface or an annotation. The

@@ -32,14 +32,17 @@
         <code>SqlSessionFactoryBuilder</code>. In MyBatis-Spring,
         <code>SqlSessionFactoryBean</code> is used instead.
       </p>
+      
     <subsection name="Setup">
       <p>
         To create the factory bean, put the following in the Spring XML
         configuration file:
+      </p>
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
+	  <p>
         Note that
         <code>SqlSessionFactoryBean</code>
         implements Spring's
@@ -61,11 +64,11 @@
         <code>sqlSessionFactory</code>
         . In Java, the
         equivalent code would be:
+      </p>
 
-        <source><![CDATA[
+      <source><![CDATA[
 SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
 SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
-      </p>
 
       <p>
         In normal MyBatis-Spring usage, you will not need to use
@@ -151,13 +154,15 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
         files in a directory or to
         recursively search all paths from a base
         location. For example:
-
+      </p>
+      
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
   <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
 </bean>]]></source>
 
+      <p>
         This will load all the MyBatis mapper XML files in the
         sample.config.mappers package and its sub-packages from the
         classpath.

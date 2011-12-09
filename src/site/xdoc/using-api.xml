@@ -32,7 +32,7 @@
         With MyBatis-Spring, you can continue to directly use the MyBatis API.
         Simply create an <code>SqlSessionFactory</code> in Spring using
         <code>SqlSessionFactoryBean</code> and use the factory in your code.
-
+      </p>
         <source><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
   // SqlSessionFactory would normally be set by SqlSessionDaoSupport
   private SqlSessionFactory sqlSessionFactory;
@@ -52,7 +52,6 @@
     }
   }
 }]]></source>
-      </p>
 
       <p>
         Use this option <strong>with care</strong> because wrong usage may produce runtime errors or

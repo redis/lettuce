@@ -45,13 +45,13 @@
         If you are using Maven just add the following dependency
         to your
         pom.xml:
+      </p>
         <source><![CDATA[
 <dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
   <version>x.x.x</version>
 </dependency>]]></source>
-      </p>
     </subsection>
 
     <subsection name="Quick Setup">
@@ -73,12 +73,12 @@
         . To configure the
         factory bean, put the following in the Spring XML
         configuration file:
+      </p>
 
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="datacode" ref="datacode" />
 </bean>]]></source>
-      </p>
 
       <p>
         Notice that the
@@ -93,21 +93,24 @@
 
       <p>
         Assume you have a data mapper class defined like the following:
-
+      </p>
         <source><![CDATA[public interface UserMapper {
   @Select("SELECT * FROM users WHERE id = #{userId}")
   User getUser(@Param("userId") String userId);
 } ]]></source>
 
+      <p>
         This interface is added to Spring using a
         <code>MapperFactoryBean</code>
         like the following:
+      </p>
         <source><![CDATA[
 <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
 
+      <p>
         Note that the mapper class specified
         <strong>must</strong>
         be an
@@ -136,6 +139,7 @@
 
       <p>
         Calling MyBatis data methods is now only one line of code:
+      </p>
         <source><![CDATA[
 public class FooServiceImpl implements FooService {
 
@@ -148,7 +152,6 @@ public void setUserMapper(UserMapper userMapper) {
 public User doSomeBusinessStuff(String userId) {
   return this.userMapper.getUser(userId);
 }]]></source>
-      </p>
       </subsection>
     </section>
   </body>
