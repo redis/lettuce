@@ -77,6 +77,42 @@
       this project wouldn't exist.
     </p>
   </section>
+  
+	<section name="Help make this documentation better…">
+		<p>
+			If you find this documentation lacking in any way, or missing
+			documentation for a feature, then the best thing to do is learn
+			about it and then write the documentation yourself!
+		</p>
+		<p>
+			Sources of this manual are available in xdoc format at 
+			<a href="http://mybati	<section name="Help make this documentation better…">
+		<p>
+			If you find this documentation lacking in any way, or missing
+			documentation for a feature, then the best thing to do is learn
+			about it and then write the documentation yourself!
+		</p>
+		<p>
+			Sources of this manual are available in xdoc format at 
+			<a href="http://mybatis.googlecode.com/svn/trunk/src/site/">project's SVN </a>.
+			Check them out, update them and send your patch to the
+			<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>.
+		</p>
+		<p>
+			You’re the best author of this documentation, people like you have
+			to read it!
+		</p>
+	</section>
+			s.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">project's SVN </a>.
+			Check them out, update them and send your patch to the
+			<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>.
+		</p>
+		<p>
+			You’re the best author of this documentation, people like you have
+			to read it!
+		</p>
+	</section>
+  
   </body>
 
 </document>
