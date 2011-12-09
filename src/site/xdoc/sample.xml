@@ -39,7 +39,7 @@
       </p>
       <subsection name="Purpose">
       	<p>
-      	This new JPetStore comes with the same idea in mind than for its predecessors: <strong>keep it simple</strong>. The main idea behind JPetStore 6 
+      	This new JPetStore comes with the same idea in mind than for its predecessors: <strong>keep it simple</strong>. The main purpose behind JPetStore 6 
       	is to demonstrate that a full web application can be built with just a few classes, and what is more important, with no advanced coding 
       	skills. You just need to know plain Java and SQL.
       	</p>
@@ -123,8 +123,8 @@
 	</filter>
 ]]></source>      
 
-	<p>We are done with Stripes. Lets move on the Spring side. According to Spring's reference manual 
-	we should add a Context listener to start up Spring. So lets add it</p>
+	<p>We are done with Stripes. Let's move on to the Spring side. According to Spring's reference manual 
+	we should add a Context listener to start up Spring. So let's add it</p>
 
 <source><![CDATA[
 	<listener>
@@ -133,12 +133,12 @@
 ]]></source>      
 
 	<p>By default Spring will use <code>/WEB-INF/applicationContext.xml</code> if we don't specify 
-	a different file. The default is fine, so lets go on.
+	a different file. The default is fine for us.
 	</p>
 
 	<p>Now we have to let Stripes know that it will be running with Spring. This way we will be able
 	to inject Spring beans directly into Stripes ActionBeans. For that purpose, following once 
-	again the Stripes manual, we set up a interceptor as follows below:
+	again the Stripes manual, we set up an interceptor as follows below:
 	</p>
 
 <source><![CDATA[
@@ -161,8 +161,8 @@
       
       <h4>applicationContext.xml</h4>
       <p>As you already know applicationContext.xml is the Spring's configuration file. Spring is a dependency 
-      injection framework and it has to know which beans it must create and bind and it knows it reading the 
-      applicationContext.xml file. Lets have a deeper look into it.
+      injection framework and it has to know which beans it must create and how to bind them together and that is
+      what applicationContext.xml file is for. Let's have a deeper look into it.
       </p>
       <p>
       The first and easiest thing we have to do is let Spring know where are our service beans. We will let Spring
@@ -197,7 +197,7 @@
 ]]></source>
 	  	  
 	  <p>So far, all we have done is standard Stripes and Spring configuration and now it is time to 
-	  move on the MyBatis part. As you have learned in this manual to set up MyBatis with Spring you need
+	  move on to the MyBatis part. As you have learned in this manual to set up MyBatis with Spring you need
 	  at least two things: an <code>SqlSessionFactoryBean</code> and a mapper class. So let's go hands on. 
 	  First define a <code>SqlSessionFactoryBean</code>:
 	  </p>     
@@ -222,7 +222,7 @@
       
       <p>To save some writing when building our mapper xml files we would want to be able to use short 
       aliases for beans. The <code>SqlSessionFactoryBean</code> has the capability to search for beans and 
-      register their short names as alias if we setup the <code>typeAliasPackage</code> property like
+      register their short names as aliases if we setup the <code>typeAliasPackage</code> property like
       the following
       </p>
 
@@ -233,21 +233,21 @@
     </bean>
 ]]></source>
 
-		<p>Our application is fully configured and ready to run. But before running it lets have a tour 
+		<p>Our application is now fully configured and ready to run. But before running it lets have a tour 
 		through the code to see how it looks like.
 		</p>      
       
       </subsection>
       
       <subsection name="Code tour">
-      <p>JPetStore is a typical MVC application with three layers: persentation, logic and data access.
+      <p>JPetStore is a typical MVC application with three layers: presentation, logic and data access.
       </p>
       <h4>Presentation</h4>
       <p>The presentation layer is composed by JSP files and Stripes ActionBeans. JSPs just use plain HTML, 
       JSTL tags and Stripes tags so there is nothing especial about them for the sake of this sample. Stripes
       ActionBeans are like Struts actions or Spring MVC controllers so there is nothing especial with them either.  
       </p>
-      <p>Given that we integrated Stripes with Spring, we can inject our services into our BeanActions so
+      <p>Given that we have integrated Stripes with Spring, we can inject our services into our BeanActions so
       you can just use them without caring about its creation or lookup. 
       Have a look at <code>CatalogActionBean</code>:</p>
 
@@ -268,7 +268,7 @@ public class CatalogActionBean extends AbstractActionBean {
   ...  
 ]]></source>
 
-	  <p>Note the <code>@SpringBean</code> annotation. This is a Stripes annotation that tells Stripes to
+	  <p>Note the <code>@SpringBean</code> annotation, that is an Stripes annotation that tells Stripes to
 	  look for that bean in Spring and inject it into this ActionBean.</p>
 
       <h4>Logic</h4>
@@ -314,20 +314,26 @@ public class OrderService {
   }
 ]]></source>
       
-      <p>The first thing you will notice is that there is no JDBC code in your service, nor it is any 
-      transaction handling code, <strong>and there is not even MyBatis code in it</strong>. 
-      </p>
-      <p>This code uses the declarative transaction demarcation feature of Spring. The Spring's 
-      <code>@Transactional</code> annotation, indicates that this method is transactional, that
-      means that all <code>updateInventoryQuantity</code>, <code>insertOrder</code> and 
-      <code>insertLineItem</code> statements should work or none of them.</p>
-      <p>It uses MyBatis mappers, that are plain java interfaces, and that is why you do not see 
-      any call to MyBatis API in the code. It is just not needed.</p>
+      <p>The first thing you will notice is that there is no JDBC code in your service, 
+      nor it is any MyBatis code in it. You may think that we used the 
+      DAO pattern and database access code is in the database layer, but I you will see later,   
+      the database layer is built with MyBatis mappers, that are plain java
+      interfaces, and that is why <strong>you will not find any call to MyBatis API</strong> 
+      in the application. It is just not needed.</p>
+      
+      <p>The second think you may have noticed is that there are no commits or rollbacks.
+      That is because it uses the declarative transaction demarcation feature of Spring that is 
+      fully supported by MyBatis-Spring. 
+      The Spring's <code>@Transactional</code> annotation indicates that this method is transactional, 
+      that means that all <code>updateInventoryQuantity</code>, <code>insertOrder</code> and 
+      <code>insertLineItem</code> calls succeed or none of them.</p>
       
       <h4>Persistence</h4>
-      <p>The persistence layer is composed of MyBatis mappers. Mappers are just plain java
-      interfaces and mapper xml files. When the <code>getOrder</code> method is called on a 
-      <code>OrderMapper</code> interface, MyBatis will execute the getOrder statement in OrderMapper.xml file and
+      <p>The persistence layer is composed of MyBatis mappers. Mappers are just plain Java
+      interfaces and mapper xml files containing the SQL statements. 
+      There is no custom Java code in this layer. When the 
+      <code>getOrder</code> method is called on the <code>OrderMapper</code> interface, 
+      MyBatis will execute the getOrder SQL statement in OrderMapper.xml file and
       will populate the <code>Order</code> domain bean with retrieved data.
       </p> 
 
@@ -388,7 +394,7 @@ public interface OrderMapper {
       <p>
       <span class="label important">NOTE</span> 
       You can easily add caching to your queries by adding a &lt;cache /&gt; element to your 
-      mapper xml file. When using Spring you can also add cache at the Spring level, caching the 
+      mapper xml file. Or, if you prefer, Spring lets you cache at a higher level, caching the 
       whole call to a mapper or service method.
       </p>
       
