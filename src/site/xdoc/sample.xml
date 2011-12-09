@@ -316,17 +316,17 @@ public class OrderService {
       
       <p>The first thing you will notice is that there is no JDBC code in your service, 
       nor it is any MyBatis code in it. You may think that we used the 
-      DAO pattern and database access code is in the database layer, but I you will see later,   
+      DAO pattern and database access code is in the database layer, but as we will see later,   
       the database layer is built with MyBatis mappers, that are plain java
       interfaces, and that is why <strong>you will not find any call to MyBatis API</strong> 
-      in the application. It is just not needed.</p>
+      in the whole application. It is just not needed.</p>
       
-      <p>The second think you may have noticed is that there are no commits or rollbacks.
+      <p>The second thing you may have noticed is that there are no commits or rollbacks.
       That is because it uses the declarative transaction demarcation feature of Spring that is 
       fully supported by MyBatis-Spring. 
       The Spring's <code>@Transactional</code> annotation indicates that this method is transactional, 
       that means that all <code>updateInventoryQuantity</code>, <code>insertOrder</code> and 
-      <code>insertLineItem</code> calls succeed or none of them.</p>
+      <code>insertLineItem</code> mapper calls must succeed or none one.</p>
       
       <h4>Persistence</h4>
       <p>The persistence layer is composed of MyBatis mappers. Mappers are just plain Java
