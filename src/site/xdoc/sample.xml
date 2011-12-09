@@ -51,7 +51,7 @@
       </subsection>
       <subsection name="Program Structure">
       	<p> JpetStore 6 follows the typical maven project structure </p>
-<pre>/jpetstore
+<pre>/jpetstore               <tt>&lt;-- Maven pom.xml goes here.</tt>
   /src
     /main/
       /java                   <tt>&lt;-- Java code goes here.</tt>
