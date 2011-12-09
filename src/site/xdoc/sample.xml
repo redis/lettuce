@@ -314,7 +314,7 @@ public class OrderService {
   }
 ]]></source>
       
-      <p>The first thing you will notice is that there is no JDBC code in your service, 
+      <p>The first thing you will notice is that there is no JDBC code in the service, 
       nor it is any MyBatis code in it. You may think that we used the 
       DAO pattern and database access code is in the database layer, but as we will see later,   
       the database layer is built with MyBatis mappers, that are plain java
