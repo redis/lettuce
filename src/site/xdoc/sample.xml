@@ -412,7 +412,7 @@ public interface OrderMapper {
 		<li>In eclipse, go to Help/Eclipse Marketplace</li>
 		<li>Install m2e plugin (maven)</li>
 		<li>Install m2e-wtp plugin (maven for wtp)</li>
-		<li>Dowload and unzip mybatis-jpetstore-6.0.1-bundle.zip</li>
+		<li>Dowload and unzip mybatis-jpetstore-6.0.x-bundle.zip</li>
 		<li>Unzip mybatis-jpetstore-6.0.x-sources.zip</li>
 		<li>In eclipse, select File/Import/Maven/Existing Maven Projects</li>
 		<li>Select the folder where you unzipped mybatis-jpetstore-6.0.x-sources.zip</li>
