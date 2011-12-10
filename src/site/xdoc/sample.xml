@@ -31,7 +31,7 @@
       <p>
       	JPetStore 6 is a full web application built on top of MyBatis 3, 
       	<a href="http://www.springsource.org">Spring 3</a> and <a href="http://www.stripesframework.org/">Stripes</a>.
-        If is available for download in the 
+        It is available for downloading in the 
         <a href="http://code.google.com/p/mybatis/downloads/list?q=Product=Sample">downloads</a>
         section of MyBatis project site.
         In this section we will walk through this sample to understand how is it built and learn how to run it. 

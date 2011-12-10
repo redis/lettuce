@@ -27,7 +27,8 @@
   </properties>
 
  <body>
-  <section name="What is MyBatis-Spring?">
+ <section name="Introduction">
+  <subsection name="What is MyBatis-Spring?">
       <p>
       MyBatis-Spring helps you integrate your MyBatis code seamlessly with
       Spring. Using the classes in this library, Spring will load the necessary
@@ -38,23 +39,23 @@
       Finally, it will let you build your application code free of 
       dependencies on MyBatis, Spring or MyBatis-Spring.
       </p>
-  </section>
+  </subsection>
 
-  <section name="Motivation">
+  <subsection name="Motivation">
       <p>
       Spring version 2 only supports iBATIS version 2. An attempt was made to
-      add MyBatis 3 support into Spring 3.0 (see the Spring Jira 
+      add MyBatis 3 support into Spring 3 (see the Spring Jira 
       <a href="https://jira.springsource.org/browse/SPR-5991">issue</a>).
-      Unfortunately, Spring 3.0 development ended before MyBatis 3.0 was
+      Unfortunately, Spring 3 development ended before MyBatis 3 was
       officially released. Because the Spring team did not want to release with
       code based on a non-released version of MyBatis, official Spring support
       would have to wait. Given the interest in Spring support for MyBatis, 
       the MyBatis community decided it was time to reunite the interested contributors 
       and add Spring integration as a community sub-project of MyBatis instead.
       </p>
-  </section>
+  </subsection>
 
-  <section name="Requirements">
+  <subsection name="Requirements">
     <p>
       Before starting with MyBatis-Spring integration, it is very important
       that you are familiar with both MyBatis and Spring terminology. This
@@ -62,11 +63,11 @@
       setup and configuration tutorials for either MyBatis or Spring.
     </p>
     <p>
-      Like MyBatis and Spring 3.0, MyBatis-Spring requires Java 5 or higher.
+      Like MyBatis 3 and Spring 3, MyBatis-Spring requires Java 5 or higher.
     </p>
-  </section>
+  </subsection>
 
-  <section name="Acknowledgements">
+  <subsection name="Acknowledgements">
     <p>
       A special thanks goes to all the special people who made this project
       a reality (in alphabetical order): Eduardo Macarron, Hunter Presnall 
@@ -76,9 +77,9 @@
       bringing them all back to the project under MyBatis ;) Without them,
       this project wouldn't exist.
     </p>
-  </section>
+  </subsection>
   
-	<section name="Help make this documentation better…">
+	<subsection name="Help make this documentation better…">
 		<p>
 			If you find this documentation lacking in any way, or missing
 			documentation for a feature, then the best thing to do is learn
@@ -94,8 +95,8 @@
 			You’re the best author of this documentation, people like you have
 			to read it!
 		</p>
-	</section>
-  
+	</subsection>
+</section>  
   </body>
 
 </document>
