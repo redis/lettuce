@@ -45,7 +45,7 @@
       	<p>
       	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping a good design and program structure. 
       	As we will see a bit later, you will not find jdbc code, object creation, binding code or transaction handling code. What is more 
-      	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will se that the 
+      	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will see that the 
       	combination of MyBatis mappers and dependency injection lets you build applications with no dependency on MyBatis.     
       	</p> 
       </subsection>
@@ -208,7 +208,7 @@
 ]]></source>
 
       <p>And now we need to setup our mappers. For that purpose we will use the <code>MapperScannerConfigurer</code>
-      that works similar to Spring standard component scan. It will search our classpath for mapper clases
+      that works similar to Spring standard component scan. It will search our classpath for mapper classes
       and register them to MyBatis. Similar to Spring's component scan we must configure the base
       package to search in. 
       </p>
