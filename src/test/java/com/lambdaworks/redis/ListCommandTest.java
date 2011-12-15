@@ -5,6 +5,7 @@ package com.lambdaworks.redis;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -17,9 +18,9 @@ public class ListCommandTest extends AbstractCommandTest {
 
     @Test
     public void blpopTimeout() throws Exception {
+        redis.setTimeout(10, TimeUnit.SECONDS);
         assertNull(redis.blpop(1, key));
     }
-
 
     @Test
     public void brpop() throws Exception {

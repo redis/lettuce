@@ -30,8 +30,8 @@ public class ClientTest extends AbstractCommandTest {
 
     @Test(expected = RedisException.class, timeout = 100)
     public void timeout() throws Exception {
-        redis.setTimeout(20, TimeUnit.MILLISECONDS);
-        redis.blpop(0, key);
+        redis.setTimeout(0, TimeUnit.MICROSECONDS);
+        redis.get(key);
     }
 
     @Test

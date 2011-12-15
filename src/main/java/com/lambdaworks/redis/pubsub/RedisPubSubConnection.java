@@ -40,7 +40,7 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
      * @param timeout   Maximum time to wait for a responses.
      * @param unit      Unit of time for the timeout.
      */
-    public RedisPubSubConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, int timeout, TimeUnit unit) {
+    public RedisPubSubConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(queue, codec, timeout, unit);
         listeners = new CopyOnWriteArrayList<RedisPubSubListener<V>>();
         channels  = new HashSet<String>();

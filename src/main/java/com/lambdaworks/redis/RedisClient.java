@@ -30,7 +30,7 @@ public class RedisClient {
     private ClientBootstrap bootstrap;
     private Timer timer;
     private ChannelGroup channels;
-    private int timeout;
+    private long timeout;
     private TimeUnit unit;
 
     /**
@@ -70,7 +70,7 @@ public class RedisClient {
      * @param timeout   Default connection timeout.
      * @param unit      Unit of time for the timeout.
      */
-    public void setDefaultTimeout(int timeout, TimeUnit unit) {
+    public void setDefaultTimeout(long timeout, TimeUnit unit) {
         this.timeout = timeout;
         this.unit    = unit;
         bootstrap.setOption("connectTimeoutMillis", unit.toMillis(timeout));

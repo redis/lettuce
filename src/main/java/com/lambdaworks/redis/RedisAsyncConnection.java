@@ -7,6 +7,7 @@ import com.lambdaworks.redis.protocol.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An asynchronous {@link RedisConnection} wrapper. All redis command methods
@@ -73,7 +74,7 @@ public class RedisAsyncConnection<K, V> extends RedisConnection<K, V> {
     }
 
     @Override
-    public <T> T getOutput(Command<K, V, T> cmd) {
+    public <T> T getOutput(Command<K, V, T> cmd, long timeout, TimeUnit unit) {
         return null;
     }
 }

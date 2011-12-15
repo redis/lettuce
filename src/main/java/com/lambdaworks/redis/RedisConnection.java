@@ -12,6 +12,7 @@ import java.util.concurrent.*;
 
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
+import static java.lang.Math.max;
 
 /**
  * A synchronous thread-safe connection to a redis server. Multiple threads may
@@ -28,7 +29,7 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     protected BlockingQueue<Command<K, V, ?>> queue;
     protected RedisCodec<K, V> codec;
     protected Channel channel;
-    private int timeout;
+    private long timeout;
     private TimeUnit unit;
     private String password;
     private int db;
@@ -43,7 +44,7 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
      * @param timeout Maximum time to wait for a responses.
      * @param unit    Unit of time for the timeout.
      */
-    public RedisConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, int timeout, TimeUnit unit) {
+    public RedisConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         this.queue = queue;
         this.codec = codec;
         this.timeout = timeout;
@@ -56,7 +57,7 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
      * @param timeout Command timeout.
      * @param unit    Unit of time for the timeout.
      */
-    public void setTimeout(int timeout, TimeUnit unit) {
+    public void setTimeout(long timeout, TimeUnit unit) {
         this.timeout = timeout;
         this.unit = unit;
     }
@@ -87,20 +88,23 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     public KeyValue<K, V> blpop(long timeout, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
         Command<K, V, KeyValue<K, V>> cmd = dispatch(BLPOP, new KeyValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        timeout = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
+        return getOutput(cmd, timeout, TimeUnit.SECONDS);
     }
 
     public KeyValue<K, V> brpop(long timeout, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
         Command<K, V, KeyValue<K, V>> cmd = dispatch(BRPOP, new KeyValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        timeout = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
+        return getOutput(cmd, timeout, TimeUnit.SECONDS);
     }
 
     public V brpoplpush(long timeout, K source, K destination) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.addKey(source).addKey(destination).add(timeout);
         Command<K, V, V> cmd = dispatch(BRPOPLPUSH, new ValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        timeout = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
+        return getOutput(cmd, timeout, TimeUnit.SECONDS);
     }
 
     public String clientKill(String addr) {
@@ -1010,13 +1014,17 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return cmd;
     }
 
-    public <T> T getOutput(Command<K, V, T> cmd) {
+    public <T> T getOutput(Command<K, V, T> cmd, long timeout, TimeUnit unit) {
         if (!cmd.await(timeout, unit)) {
             throw new RedisException("Command timed out");
         }
         CommandOutput<K, V, T> output = cmd.getOutput();
         if (output.hasError()) throw new RedisException(output.getError());
         return output.get();
+    }
+
+    protected final <T> T getOutput(Command<K, V, T> cmd) {
+        return getOutput(cmd, timeout, unit);
     }
 
     public String string(double n) {
