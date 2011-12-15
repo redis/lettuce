@@ -7,6 +7,11 @@ lettuce - A scalable Java Redis client
 
   This version of lettuce has been tested against redis 2.4.4
 
+  Join the lambdaWorks-OSS Google Group to discuss this project:
+
+    http://groups.google.com/group/lambdaworks-oss
+    lambdaworks-oss@googlegroups.com
+
 Basic Usage
 
   RedisClient client = new RedisClient("localhost")

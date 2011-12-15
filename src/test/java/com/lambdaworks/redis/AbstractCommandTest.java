@@ -41,6 +41,10 @@ public abstract class AbstractCommandTest {
         return Arrays.asList(args);
     }
 
+    protected KeyValue<String, String> kv(String key, String value) {
+        return new KeyValue<String, String>(key, value);
+    }
+
     protected ScoredValue<String> sv(double score, String value) {
         return new ScoredValue<String>(score, value);
     }

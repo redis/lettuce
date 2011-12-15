@@ -84,15 +84,15 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public List<V> blpop(long timeout, K... keys) {
+    public KeyValue<K, V> blpop(long timeout, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
-        Command<K, V, List<V>> cmd = dispatch(BLPOP, new ValueListOutput<K, V>(codec), args);
+        Command<K, V, KeyValue<K, V>> cmd = dispatch(BLPOP, new KeyValueOutput<K, V>(codec), args);
         return getOutput(cmd);
     }
 
-    public List<V> brpop(long timeout, K... keys) {
+    public KeyValue<K, V> brpop(long timeout, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
-        Command<K, V, List<V>> cmd = dispatch(BRPOP, new ValueListOutput<K, V>(codec), args);
+        Command<K, V, KeyValue<K, V>> cmd = dispatch(BRPOP, new KeyValueOutput<K, V>(codec), args);
         return getOutput(cmd);
     }
 

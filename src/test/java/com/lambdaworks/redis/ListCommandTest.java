@@ -6,21 +6,25 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ListCommandTest extends AbstractCommandTest {
     @Test
     public void blpop() throws Exception {
         redis.rpush("two", "2", "3");
-        assertEquals(list("two", "2"), redis.blpop(1, "one", "two"));
+        assertEquals(kv("two", "2"), redis.blpop(1, "one", "two"));
     }
+
+    @Test
+    public void blpopTimeout() throws Exception {
+        assertNull(redis.blpop(1, key));
+    }
+
 
     @Test
     public void brpop() throws Exception {
         redis.rpush("two", "2", "3");
-        assertEquals(list("two", "3"), redis.brpop(1, "one", "two"));
+        assertEquals(kv("two", "3"), redis.brpop(1, "one", "two"));
     }
 
     @Test
@@ -30,6 +34,11 @@ public class ListCommandTest extends AbstractCommandTest {
         assertEquals("2", redis.brpoplpush(1, "one", "two"));
         assertEquals(list("1"), redis.lrange("one", 0, -1));
         assertEquals(list("2", "3", "4"), redis.lrange("two", 0, -1));
+    }
+
+    @Test
+    public void brpoplpushTimeout() throws Exception {
+        assertNull(redis.brpoplpush(1, "one", "two"));
     }
 
     @Test
