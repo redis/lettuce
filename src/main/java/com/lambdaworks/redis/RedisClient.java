@@ -109,29 +109,12 @@ public class RedisClient {
      * @return A new connection.
      */
     public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
-        try {
-            BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
-            ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
-            CommandHandler handler = new CommandHandler<K, V>(queue);
-            RedisConnection<K, V> connection = new RedisConnection<K, V>(queue, codec, timeout, unit);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
+        RedisConnection<K, V> connection = new RedisConnection<K, V>(queue, codec, timeout, unit);
 
-            ChannelPipeline pipeline = Channels.pipeline(watchdog, handler, connection);
-            Channel channel = bootstrap.getFactory().newChannel(pipeline);
-
-            ChannelFuture future = channel.connect((SocketAddress) bootstrap.getOption("remoteAddress"));
-            future.await();
-
-            if (!future.isSuccess()) {
-                throw future.getCause();
-            }
-
-            watchdog.setReconnect(true);
-
-            return connection;
-        } catch (Throwable e) {
-            throw new RedisException("Unable to connect", e);
-        }
+        return connect(handler, connection);
     }
 
     /**
@@ -143,13 +126,17 @@ public class RedisClient {
      * @return A new pub/sub connection.
      */
     public <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
+        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
+        RedisPubSubConnection<K, V> connection = new RedisPubSubConnection<K, V>(queue, codec, timeout, unit);
+
+        return connect(handler, connection);
+    }
+
+    private <K, V, T extends RedisConnection<K, V>> T connect(CommandHandler<K, V> handler, T connection) {
         try {
-            BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
-
             ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
-            PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
-            RedisPubSubConnection<K, V> connection = new RedisPubSubConnection<K, V>(queue, codec, timeout, unit);
-
             ChannelPipeline pipeline = Channels.pipeline(watchdog, handler, connection);
             Channel channel = bootstrap.getFactory().newChannel(pipeline);
 
