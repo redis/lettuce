@@ -2,16 +2,21 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.ExpectedException;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class AsyncConnectionTest extends AbstractCommandTest {
     private RedisAsyncConnection<String,String> async;
+
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
 
     @Before
     public void openAsyncConnection() throws Exception {
@@ -113,5 +118,22 @@ public class AsyncConnectionTest extends AbstractCommandTest {
     public void discard() throws Exception {
         assertEquals("OK", async.multi());
         assertEquals("OK", async.discard());
+    }
+
+    @Test
+    public void clear() throws Exception {
+        async.set(key, value);
+        async.get(key);
+        async.clear();
+        assertTrue(async.flush().isEmpty());
+    }
+
+    @Test
+    public void flushTimeout() throws Exception {
+        exception.expect(RedisException.class);
+        exception.expectMessage("Command timed out");
+        async.set(key, value);
+        async.blpop(1, key);
+        async.flush(1, TimeUnit.MICROSECONDS);
     }
 }

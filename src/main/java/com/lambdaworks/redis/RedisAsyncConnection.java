@@ -31,22 +31,53 @@ public class RedisAsyncConnection<K, V> extends RedisConnection<K, V> {
      * @param parent    Parent connection.
      */
     public RedisAsyncConnection(RedisCodec<K, V> codec, RedisConnection<K, V> parent) {
-        super(null, codec, 0, null);
+        super(null, codec, parent.timeout, parent.unit);
         this.parent   = parent;
         this.pipeline = new ArrayList<Command<K, V, ?>>();
     }
 
     /**
-     * Wait for completion of all commands executed since the last flush
-     * and return their outputs.
+     * Discard output of all commands executed since the last clear
+     * or {@link #flush}.
+     */
+    public void clear() {
+        pipeline.clear();
+    }
+
+    /**
+     * Wait for completion of all commands executed since the last {@link #clear}
+     * or flush and return their outputs, or until the connection's configured
+     * {@link #setTimeout timeout} expires.
      *
      * @return The command outputs.
      */
     public List<Object> flush() {
+        return flush(timeout, unit);
+    }
+
+    /**
+     * Wait for completion of all commands executed since the last {@link #clear}
+     * or flush and return their outputs.
+     *
+     * @param timeout Maximum time to wait for all commands to complete.
+     * @param unit    Unit of time for the timeout.
+     *
+     * @return The command outputs.
+     */
+    public List<Object> flush(long timeout, TimeUnit unit) {
         List<Object> list = new ArrayList<Object>(pipeline.size());
+
+        long nanos = unit.toNanos(timeout);
+        long time  = System.nanoTime();
+
         for (Command<K, V, ?> cmd : pipeline) {
-            list.add(parent.getOutput(cmd));
+            list.add(parent.getOutput(cmd, nanos, TimeUnit.NANOSECONDS));
+            long now = System.nanoTime();
+            nanos -= now - time;
+            time   = now;
+            if (nanos <= 0) throw new RedisException("Command timed out");
         }
+
         pipeline.clear();
         return list;
     }
