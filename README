@@ -23,6 +23,15 @@ Basic Usage
   that change the result type include the CamelCased modifier as part of the
   command name, e.g. zrangebyscore and zrangebyscoreWithScores.
 
+  RedisConnections are designed to be long-lived, and if the connection is lost
+  will reconnect until close() is called. Pending commands that have not timed
+  out will be (re)sent after successful reconnection.
+
+  All RedisConnections inherit a default timeout from their RedisClient and
+  and will throw a RedisException when non-blocking commands fail to return a
+  result before the timeout expires. The timeout defaults to 60 seconds and
+  may be changed in the RedisClient or for each individual RedisConnection.
+
 Pub/Sub
 
   RedisPubSubConnection<String, String> connection = client.connectPubSub()

@@ -43,7 +43,9 @@ public class RedisClient {
     }
 
     /**
-     * Create a new client that connects to the supplied host and port.
+     * Create a new client that connects to the supplied host and port. Connection
+     * attempts and non-blocking commands will {@link #setDefaultTimeout timeout}
+     * after 60 seconds.
      *
      * @param host    Server hostname.
      * @param port    Server port.
@@ -65,7 +67,9 @@ public class RedisClient {
     }
 
     /**
-     * Set the default timeout for connections created by this client.
+     * Set the default timeout for {@link RedisConnection connections} created by
+     * this client. The timeout applies to connection attempts and non-blocking
+     * commands.
      *
      * @param timeout   Default connection timeout.
      * @param unit      Unit of time for the timeout.

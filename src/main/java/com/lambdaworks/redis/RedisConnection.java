@@ -29,8 +29,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     protected BlockingQueue<Command<K, V, ?>> queue;
     protected RedisCodec<K, V> codec;
     protected Channel channel;
-    private long timeout;
-    private TimeUnit unit;
+    protected long timeout;
+    protected TimeUnit unit;
     private String password;
     private int db;
     private MultiOutput<K, V> multi;
