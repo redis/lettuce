@@ -938,26 +938,29 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         channel = ctx.getChannel();
 
-        BlockingQueue<Command<K, V, ?>> tmp = new LinkedBlockingQueue<Command<K, V, ?>>();
+        List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
 
         if (password != null) {
             CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
-            tmp.put(new Command<K, V, String>(AUTH, new StatusOutput<K, V>(codec), args));
+            tmp.add(new Command<K, V, String>(AUTH, new StatusOutput<K, V>(codec), args));
         }
 
         if (db != 0) {
             CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(db);
-            tmp.put(new Command<K, V, String>(SELECT, new StatusOutput<K, V>(codec), args));
+            tmp.add(new Command<K, V, String>(SELECT, new StatusOutput<K, V>(codec), args));
         }
 
         tmp.addAll(queue);
-
         queue.clear();
-        queue.addAll(tmp);
 
-        for (Command cmd : queue) {
-            channel.write(cmd);
+        for (Command<K, V, ?> cmd : tmp) {
+            if (!cmd.isCancelled()) {
+                queue.add(cmd);
+                channel.write(cmd);
+            }
         }
+
+        tmp.clear();
     }
 
     @Override
@@ -1016,6 +1019,7 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
 
     public <T> T getOutput(Command<K, V, T> cmd, long timeout, TimeUnit unit) {
         if (!cmd.await(timeout, unit)) {
+            cmd.cancel(true);
             throw new RedisException("Command timed out");
         }
         CommandOutput<K, V, T> output = cmd.getOutput();
