@@ -16,6 +16,7 @@
 package org.mybatis.spring;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -388,7 +389,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         configuration.setEnvironment(environment);
 
         if (this.databaseIdProvider != null) {
-            configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
+            try {
+                configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
+            } catch (SQLException e) {
+              throw new NestedIOException("Failed getting a databaseId", e);
+            }
         }
 
         if (!ObjectUtils.isEmpty(this.mapperLocations)) {
