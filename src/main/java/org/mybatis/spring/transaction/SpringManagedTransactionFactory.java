@@ -23,7 +23,6 @@ import javax.sql.DataSource;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
-import org.springframework.util.Assert;
 
 /**
  * Creates a {@code SpringManagedTransaction}.
@@ -36,7 +35,6 @@ public class SpringManagedTransactionFactory implements TransactionFactory {
      * {@inheritDoc}
      */
     public Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit) {
-        Assert.notNull("No DataSource specified");
         return new SpringManagedTransaction(dataSource);
     }
 
