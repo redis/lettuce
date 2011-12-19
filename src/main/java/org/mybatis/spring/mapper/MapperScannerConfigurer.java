@@ -141,7 +141,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      * <p>
      * Note this can be combined with markerInterface.
      * 
-     * @param basePackage annotation class
+     * @param annotationClass annotation class
      */
     public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
         this.annotationClass = annotationClass;
