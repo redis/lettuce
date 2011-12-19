@@ -241,7 +241,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      * any PropertyResourceConfigurers defined in the context and run them on this class' bean
      * definition. Then update the values.
      */
-    private final void processPropertyPlaceHolders() {
+    private void processPropertyPlaceHolders() {
         Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class);
 
         if (!prcs.isEmpty() && applicationContext instanceof GenericApplicationContext) {
