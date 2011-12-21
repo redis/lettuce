@@ -292,4 +292,26 @@
     </dependency>
   </dependencies>
 
+  <!--
+   | this is just a turnaround to Mac compilers
+  -->
+  <profiles>
+    <profile>
+      <id>mac-jvm-classloader-issue</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>oro</groupId>
+          <artifactId>oro</artifactId>
+          <version>2.0.8</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
 </project>
