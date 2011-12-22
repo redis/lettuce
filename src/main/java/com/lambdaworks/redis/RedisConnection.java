@@ -5,15 +5,13 @@ package com.lambdaworks.redis;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static com.lambdaworks.redis.protocol.CommandType.MULTI;
 import static java.lang.Math.max;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static com.lambdaworks.redis.protocol.CommandType.MULTI;
 
 /**
  * A synchronous thread-safe connection to a redis server. Multiple threads may
@@ -134,39 +132,47 @@ public class RedisConnection<K, V> {
     }
 
     /**
-     * Eval the supplied script. Callers may request a single 64-bit integer result by
-     * passing {@code Long.class}, a (possibly deeply nested) list of {@code Longs, Strings,
-     * Vs} and possibly even {@link RedisException}s by passing {@code List.class},
-     * or a single {@code V} by passing any other class.
+     * Eval the supplied script, which must result in the requested
+     * {@link ScriptOutputType type}.
      *
      * @param script    Lua script to evaluate.
-     * @param type      Class of script return type.
+     * @param type      Script output type.
      * @param keys      Redis keys to pass to script.
      *
-     * @param <T>       Script return type.
+     * @param <T>       Expected return type.
      *
      * @return The result of evaluating the script.
      */
-    public <T> T eval(V script, Class<T> type, K... keys) {
-        return await(c.eval(script, type, keys));
+    @SuppressWarnings("unchecked")
+    public <T> T eval(V script, ScriptOutputType type, K... keys) {
+        return (T) await(c.eval(script, type, keys, (V[]) new Object[0]));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T eval(V script, ScriptOutputType type, K[] keys, V... values) {
+        return (T) await(c.eval(script, type, keys, values));
     }
 
     /**
-     * Eval a preloaded script identified by a SHA-1 digest. Callers may request a single
-     * 64-bit integer result by passing {@code Long.class}, a (possibly deeply nested)
-     * list of {@code Longs, Strings, Vs} and possibly even {@link RedisException}s by
-     * passing {@code List.class}, or a single {@code V} by passing any other class.
+     * Eval a pre-loaded script identified by its SHA-1 digest, which must result
+     * in the requested {@link ScriptOutputType type}.
      *
      * @param digest    Lowercase hex string of script's SHA-1 digest.
-     * @param type      Class of script return type.
+     * @param type      Script output type.
      * @param keys      Redis keys to pass to script.
      *
-     * @param <T>       Script return type.
+     * @param <T>       Expected return type.
      *
      * @return The result of evaluating the script.
      */
-    public <T> T evalsha(String digest, Class<T> type, K... keys) {
-        return await(c.evalsha(digest, type, keys));
+    @SuppressWarnings("unchecked")
+    public <T> T evalsha(String digest, ScriptOutputType type, K... keys) {
+        return (T) await(c.evalsha(digest, type, keys, (V[]) new Object[0]));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
+        return (T) await(c.evalsha(digest, type, keys, values));
     }
 
     public Boolean exists(K key) {

@@ -158,16 +158,18 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(ECHO, new ValueOutput<K, V>(codec), args);
     }
 
-    public <T> Future<T> eval(V script, Class<T> type, K... keys) {
+    public <T> Future<T> eval(V script, ScriptOutputType type, K[] keys, V... values) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addValue(script).add(keys.length).addKeys(keys);
-        return dispatch(EVAL, newOutputForType(type), args);
+        args.addValue(script).add(keys.length).addKeys(keys).addValues(values);
+        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+        return dispatch(EVAL, output, args);
     }
 
-    public <T> Future<T> evalsha(String digest, Class<T> type, K... keys) {
+    public <T> Future<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.add(digest).add(keys.length).addKeys(keys);
-        return dispatch(EVALSHA, newOutputForType(type), args);
+        args.add(digest).add(keys.length).addKeys(keys).addValues(values);
+        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+        return dispatch(EVALSHA, output, args);
     }
 
     public Future<Boolean> exists(K key) {
@@ -1001,16 +1003,16 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return output.get();
     }
 
-    public <T> CommandOutput<K, V, T> newOutputForType(Class<T> type) {
-        CommandOutput<K, V, T> output;
-        if (type == Long.class) {
-            output = (CommandOutput<K, V, T>) new IntegerOutput<K, V>(codec);
-        } else if (type == List.class) {
-            output = (CommandOutput<K, V, T>) new NestedMultiOutput<K, V>(codec);
-        } else {
-            output = (CommandOutput<K, V, T>) new ValueOutput<K, V>(codec);
+    @SuppressWarnings("unchecked")
+    protected <K, V, T> CommandOutput<K, V, T> newScriptOutput(RedisCodec<K, V> codec, ScriptOutputType type) {
+        switch (type) {
+            case BOOLEAN: return (CommandOutput<K, V, T>) new BooleanOutput<K, V>(codec);
+            case INTEGER: return (CommandOutput<K, V, T>) new IntegerOutput<K, V>(codec);
+            case STATUS:  return (CommandOutput<K, V, T>) new StatusOutput<K, V>(codec);
+            case MULTI:   return (CommandOutput<K, V, T>) new NestedMultiOutput<K, V>(codec);
+            case VALUE:   return (CommandOutput<K, V, T>) new ValueOutput<K, V>(codec);
+            default:      throw new RedisException("Unsupported script output type");
         }
-        return output;
     }
 
     public String string(double n) {
