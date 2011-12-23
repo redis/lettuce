@@ -44,7 +44,7 @@
       	</p>
       	<p>
       	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping a good design and program structure. 
-      	As we will see a bit later, you will not find jdbc code, object creation, binding code or transaction handling code. What is more 
+      	As we will see a bit later, you will not find JDBC code, object creation, binding code or transaction handling code. What is more 
       	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will see that the 
       	combination of MyBatis mappers and dependency injection lets you build applications with no dependency on MyBatis.     
       	</p> 
@@ -85,7 +85,7 @@
       </p>
       <h4>web.xml</h4>
       <p>
-      First af all we need to start Stripes, so we follow the Stripes manual to do so. The manual says that
+      First of all we need to start Stripes, so we follow the Stripes manual to do so. The manual says that
       we should set up a dispatcher servlet and a filter. So let's go. 
       </p>
 <source><![CDATA[
@@ -328,7 +328,7 @@ public class OrderService {
       
       <h4>Persistence</h4>
       <p>The persistence layer is composed of MyBatis mappers. Mappers are just plain Java
-      interfaces and mapper xml files containing the SQL statements. 
+      interfaces and mapper XML files containing the SQL statements. 
       There is no custom Java code in this layer. When the 
       <code>getOrder</code> method is called on the <code>OrderMapper</code> interface, 
       MyBatis will execute the getOrder SQL statement in OrderMapper.xml file and
