@@ -448,8 +448,8 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
         return getOutput(cmd);
     }
 
-    public Long publish(String channel, V message) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(channel).addValue(message);
+    public Long publish(K channel, V message) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(channel).addValue(message);
         Command<K, V, Long> cmd = dispatch(PUBLISH, new IntegerOutput<K, V>(codec), args);
         return getOutput(cmd);
     }

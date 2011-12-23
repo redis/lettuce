@@ -10,28 +10,28 @@ package com.lambdaworks.redis.pubsub;
  *
  * @author Will Glozer
  */
-public class RedisPubSubAdapter<V> implements RedisPubSubListener<V> {
+public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
     @Override
-    public void message(String channel, V message) {
+    public void message(K channel, V message) {
     }
 
     @Override
-    public void message(String pattern, String channel, V message) {
+    public void message(K pattern, K channel, V message) {
     }
 
     @Override
-    public void subscribed(String channel, long count) {
+    public void subscribed(K channel, long count) {
     }
 
     @Override
-    public void psubscribed(String pattern, long count) {
+    public void psubscribed(K pattern, long count) {
     }
 
     @Override
-    public void unsubscribed(String channel, long count) {
+    public void unsubscribed(K channel, long count) {
     }
 
     @Override
-    public void punsubscribed(String pattern, long count) {
+    public void punsubscribed(K pattern, long count) {
     }
 }

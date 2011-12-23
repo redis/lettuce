@@ -8,6 +8,7 @@ import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import org.jboss.netty.channel.*;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -28,9 +29,9 @@ import static com.lambdaworks.redis.protocol.CommandType.*;
  * @author Will Glozer
  */
 public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
-    private List<RedisPubSubListener<V>> listeners;
-    private Set<String> channels;
-    private Set<String> patterns;
+    private List<RedisPubSubListener<K, V>> listeners;
+    private Set<K> channels;
+    private Set<K> patterns;
 
     /**
      * Initialize a new connection.
@@ -42,9 +43,9 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
      */
     public RedisPubSubConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(queue, codec, timeout, unit);
-        listeners = new CopyOnWriteArrayList<RedisPubSubListener<V>>();
-        channels  = new HashSet<String>();
-        patterns  = new HashSet<String>();
+        listeners = new CopyOnWriteArrayList<RedisPubSubListener<K, V>>();
+        channels  = new HashSet<K>();
+        patterns  = new HashSet<K>();
     }
 
     /**
@@ -52,7 +53,7 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
      *
      * @param listener Listener.
      */
-    public void addListener(RedisPubSubListener<V> listener) {
+    public void addListener(RedisPubSubListener<K, V> listener) {
         listeners.add(listener);
     }
 
@@ -61,23 +62,23 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
      *
      * @param listener Listener.
      */
-    public void removeListener(RedisPubSubListener<V> listener) {
+    public void removeListener(RedisPubSubListener<K, V> listener) {
         listeners.remove(listener);
     }
 
-    public void psubscribe(String... patterns) {
+    public void psubscribe(K... patterns) {
         dispatch(PSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
     }
 
-    public void punsubscribe(String... patterns) {
+    public void punsubscribe(K... patterns) {
         dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
     }
 
-    public void subscribe(String... channels) {
+    public void subscribe(K... channels) {
         dispatch(SUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
     }
 
-    public void unsubscribe(String... channels) {
+    public void unsubscribe(K... channels) {
         dispatch(UNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
     }
 
@@ -86,14 +87,12 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
         super.channelConnected(ctx, e);
 
         if (channels.size() > 0) {
-            String[] channelArray = new String[channels.size()];
-            subscribe(channels.toArray(channelArray));
+            subscribe(toArray(channels));
             channels.clear();
         }
 
         if (patterns.size() > 0) {
-            String[] patternArray = new String[patterns.size()];
-            psubscribe(patterns.toArray(patternArray));
+            psubscribe(toArray(patterns));
             patterns.clear();
         }
     }
@@ -102,7 +101,7 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
     @SuppressWarnings("unchecked")
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         PubSubOutput<K, V> output = (PubSubOutput<K, V>) e.getMessage();
-        for (RedisPubSubListener<V> listener : listeners) {
+        for (RedisPubSubListener<K, V> listener : listeners) {
             switch (output.type()) {
                 case message:
                     listener.message(output.channel(), output.get());
@@ -130,11 +129,16 @@ public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
         }
     }
 
-    private CommandArgs<K, V> args(String... strings) {
+    private CommandArgs<K, V> args(K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        for (String c : strings) {
-            args.add(c);
-        }
+        args.addKeys(keys);
         return args;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T[] toArray(Collection<T> c) {
+        Class<T> cls = (Class<T>) c.iterator().next().getClass();
+        T[] array = (T[]) Array.newInstance(cls, c.size());
+        return c.toArray(array);
     }
 }

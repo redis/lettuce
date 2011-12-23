@@ -10,7 +10,7 @@ import java.util.concurrent.*;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 
-public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String> {
+public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
     private RedisPubSubConnection<String, String> pubsub;
 
     private BlockingQueue<String> channels;
@@ -106,6 +106,19 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(0, (long) counts.take());
     }
 
+    @Test(timeout = 100)
+    public void utf8Channel() throws Exception {
+        String channel = "channelλ";
+        String message = "αβγ";
+
+        pubsub.subscribe(channel);
+        assertEquals(channel, channels.take());
+
+        redis.publish(channel, message);
+        assertEquals(channel, channels.take());
+        assertEquals(message, messages.take());
+    }
+
     @Test(timeout = 1000)
     public void resubscribeChannelsOnReconnect() throws Exception {
         pubsub.subscribe(channel);
@@ -142,7 +155,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     public void adapter() throws Exception {
         final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
 
-        RedisPubSubAdapter<String> adapter = new RedisPubSubAdapter<String>() {
+        RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
             @Override
             public void subscribed(String channel, long count) {
                 super.subscribed(channel, count);

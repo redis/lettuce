@@ -9,14 +9,14 @@ package com.lambdaworks.redis.pubsub;
  *
  * @author Will Glozer
  */
-public interface RedisPubSubListener<V> {
+public interface RedisPubSubListener<K, V> {
     /**
      * Message received from a channel subscription.
      *
      * @param channel   Channel.
      * @param message   Message.
      */
-    void message(String channel, V message);
+    void message(K channel, V message);
 
     /**
      * Message received from a pattern subscription.
@@ -25,7 +25,7 @@ public interface RedisPubSubListener<V> {
      * @param channel   Channel.
      * @param message   Message.
      */
-    void message(String pattern, String channel, V message);
+    void message(K pattern, K channel, V message);
 
     /**
      * Subscribed to a channel.
@@ -33,7 +33,7 @@ public interface RedisPubSubListener<V> {
      * @param channel   Channel
      * @param count     Subscription count.
      */
-    void subscribed(String channel, long count);
+    void subscribed(K channel, long count);
 
     /**
      * Subscribed to a pattern.
@@ -41,7 +41,7 @@ public interface RedisPubSubListener<V> {
      * @param pattern   Pattern.
      * @param count     Subscription count.
      */
-    void psubscribed(String pattern, long count);
+    void psubscribed(K pattern, long count);
 
     /**
      * Unsubscribed from a channel.
@@ -49,7 +49,7 @@ public interface RedisPubSubListener<V> {
      * @param channel   Channel
      * @param count     Subscription count.
      */
-    void unsubscribed(String channel, long count);
+    void unsubscribed(K channel, long count);
 
     /**
      * Unsubscribed from a pattern.
@@ -57,5 +57,5 @@ public interface RedisPubSubListener<V> {
      * @param pattern   Channel
      * @param count     Subscription count.
      */
-    void punsubscribed(String pattern, long count);
+    void punsubscribed(K pattern, long count);
 }

@@ -35,7 +35,7 @@ Basic Usage
 Pub/Sub
 
   RedisPubSubConnection<String, String> connection = client.connectPubSub()
-  connection.addListener(new RedisPubSubListener<String>() { ... })
+  connection.addListener(new RedisPubSubListener<String, String>() { ... })
   connection.subscribe("channel")
 
 Async
