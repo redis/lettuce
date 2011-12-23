@@ -50,7 +50,7 @@
       	</p> 
       </subsection>
       <subsection name="Program Structure">
-      	<p> JpetStore 6 follows the typical maven project structure </p>
+      	<p> JPetStore 6 follows the typical maven project structure </p>
 <pre>/jpetstore                    <tt>&lt;-- Maven pom.xml goes here.</tt>
   /src
     /main/
@@ -86,7 +86,7 @@
       <h4>web.xml</h4>
       <p>
       First af all we need to start Stripes, so we follow the Stripes manual to do so. The manual says that
-      we should set up a Dispatcher servlet and a filter. So let's go. 
+      we should set up a dispatcher servlet and a filter. So let's go. 
       </p>
 <source><![CDATA[
 <filter>
@@ -141,16 +141,15 @@
 	</p>
 
 <source><![CDATA[
-	<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
-		...
-		<init-param>
-			<param-name>Interceptor.Classes</param-name>
-			<param-value>
-		        net.sourceforge.stripes.integration.spring.SpringInterceptor
-		    </param-value>
-		</init-param>
-	</filter>
-    ...
+   <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+      ...
+      <init-param>
+         <param-name>Interceptor.Classes</param-name>
+         <param-value>
+            net.sourceforge.stripes.integration.spring.SpringInterceptor
+         </param-value>
+      </init-param>
+   </filter>
 ]]></source>      
       
       <p>We are done with web.xml. As you may have notice, we have not set up any MyBatis 3 configuration yet.
@@ -180,7 +179,7 @@
 	  
 	  <p>We will also need a <code>DataSource</code> and a <code>TransactionManager</code>. Given that this is a demo application
 	  we will use a test Spring <code>DataSource</code> that will create an HSQL in-memory database and load
-	  our database scripts into it. We will also use the standard Spring's <code>DataSourceTransactionManager</code>
+	  our database scripts into it and the standard Spring's <code>DataSourceTransactionManager</code>
 	  to handle transactions. 
 	  </p>
 
@@ -239,7 +238,7 @@
       </subsection>
       
       <subsection name="Code tour">
-      <p>JPetStore is a typical MVC application with three layers: presentation, logic and data access.
+      <p>JPetStore 6 is a typical MVC application with three layers: presentation, logic and data access.
       </p>
       <h4>Presentation</h4>
       <p>The presentation layer is composed by JSP files and Stripes ActionBeans. JSPs just use plain HTML, 
@@ -400,7 +399,7 @@ public interface OrderMapper {
       </subsection>
       
       <subsection name="Running JPetStore">
-      <p>You may ask. Does all this work? Yes it does!. Let's run it.</p>
+      <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
       <p>Let's assume you have a clean computer. These are the steps you should follow to 
       have the sample running on Tomcat 7</p>
       <ul>
