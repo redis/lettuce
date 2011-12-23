@@ -189,8 +189,11 @@ public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
     }
 
     public Boolean expireat(K key, Date timestamp) {
-        long seconds = timestamp.getTime() / 1000;
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(seconds);
+        return expireat(key, timestamp.getTime() / 1000);
+    }
+
+    public Boolean expireat(K key, long timestamp) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(timestamp);
         Command<K, V, Boolean> cmd = dispatch(EXPIREAT, new BooleanOutput<K, V>(codec), args);
         return getOutput(cmd);
     }
