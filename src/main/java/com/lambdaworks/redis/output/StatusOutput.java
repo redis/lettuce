@@ -7,13 +7,15 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 
 import java.nio.ByteBuffer;
 
+import static com.lambdaworks.redis.protocol.Charsets.buffer;
+
 /**
  * Status message output.
  *
  * @author Will Glozer
  */
 public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
-    private static final ByteBuffer OK = ByteBuffer.wrap("OK".getBytes());
+    private static final ByteBuffer OK = buffer("OK");
 
     public StatusOutput(RedisCodec<K, V> codec) {
         super(codec, null);

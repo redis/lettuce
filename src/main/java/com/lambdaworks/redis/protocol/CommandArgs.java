@@ -16,7 +16,7 @@ import static java.lang.Math.max;
  * @author Will Glozer
  */
 public class CommandArgs<K, V> {
-    private static final byte[] CRLF = "\r\n".getBytes();
+    private static final byte[] CRLF = "\r\n".getBytes(Charsets.ASCII);
 
     private RedisCodec<K, V> codec;
     private ByteBuffer buffer;

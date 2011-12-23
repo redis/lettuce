@@ -8,6 +8,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
+import static com.lambdaworks.redis.protocol.Charsets.buffer;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 /**
@@ -17,7 +18,7 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
  * @author Will Glozer
  */
 public class RedisStateMachine<K, V> {
-    private static final ByteBuffer QUEUED = ByteBuffer.wrap("QUEUED".getBytes());
+    private static final ByteBuffer QUEUED = buffer("QUEUED");
 
     static class State {
         enum Type { SINGLE, ERROR, INTEGER, BULK, MULTI, BYTES }

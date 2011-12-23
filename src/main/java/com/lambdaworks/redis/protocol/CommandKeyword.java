@@ -15,6 +15,6 @@ public enum CommandKeyword {
     public byte[] bytes;
 
     private CommandKeyword() {
-        bytes = name().getBytes();
+        bytes = name().getBytes(Charsets.ASCII);
     }
 }

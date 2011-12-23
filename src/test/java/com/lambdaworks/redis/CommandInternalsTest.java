@@ -4,14 +4,15 @@ package com.lambdaworks.redis;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
+import static com.lambdaworks.redis.protocol.Charsets.buffer;
 import static junit.framework.Assert.*;
 
 public class CommandInternalsTest {
@@ -41,20 +42,14 @@ public class CommandInternalsTest {
 
     @Test
     public void get() throws Exception {
-        ByteBuffer buffer = ByteBuffer.allocate(3);
-        buffer.put("one".getBytes("ASCII"));
-        buffer.flip();
-        command.getOutput().set(buffer);
+        command.getOutput().set(buffer("one"));
         command.complete();
         assertEquals("one", command.get());
     }
 
     @Test
     public void getWithTimeout() throws Exception {
-        ByteBuffer buffer = ByteBuffer.allocate(3);
-        buffer.put("one".getBytes("ASCII"));
-        buffer.flip();
-        command.getOutput().set(buffer);
+        command.getOutput().set(buffer("one"));
         command.complete();
         assertEquals("one", command.get(0, TimeUnit.MILLISECONDS));
     }
@@ -110,10 +105,18 @@ public class CommandInternalsTest {
     }
 
     @Test
+    public void nestedMultiError() throws Exception {
+        NestedMultiOutput<String, String> output = new NestedMultiOutput<String, String>(codec);
+        output.setError(buffer("Oops!"));
+        assertTrue(output.get().get(0) instanceof RedisException);
+    }
+
+    @Test
     public void sillyTestsForEmmaCoverage() throws Exception {
         assertEquals(CommandType.APPEND, CommandType.valueOf("APPEND"));
         assertEquals(CommandKeyword.AFTER, CommandKeyword.valueOf("AFTER"));
         assertNotNull(new ZStoreArgs.Builder());
         assertNotNull(new SortArgs.Builder());
+        assertNotNull(new Charsets());
     }
 }
