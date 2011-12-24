@@ -22,16 +22,15 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | Using the MyBatis API</title>
+    <title>MyBatis-Spring | 第七章 使用 MyBatis API</title>
     <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
   </properties>
      
   <body>
-    <section name="Using the MyBatis API">
+    <section name="第七章 使用 MyBatis API">
       <p>
-        With MyBatis-Spring, you can continue to directly use the MyBatis API.
-        Simply create an <code>SqlSessionFactory</code> in Spring using
-        <code>SqlSessionFactoryBean</code> and use the factory in your code.
+使用 MyBatis-Spring,你可以继续直接使用 MyBatis 的 API。仅仅在代码中使用 Spring 中
+的 SqlSessionFactoryBean 来创建一个 SqlSessionFactory。
       </p>
         <source><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
   // SqlSessionFactory would normally be set by SqlSessionDaoSupport
@@ -54,38 +53,38 @@
 }]]></source>
 
       <p>
-        Use this option <strong>with care</strong> because wrong usage may produce runtime errors or
-      worse, data integrity problems. Be aware of the following caveats with direct API usage:
+小心使用此选项,
+因为错误的使用会产生运行时错误,
+或者更糟糕的数据一致性的问题。
+这些是告诫:
       </p>
       <ul>
         <li>
           <p>
-            It will <strong>not</strong> participate in any Spring transactions.
+它不会参与到 Spring 的事务之中。
           </p>
         </li>
         <li>
           <p>
-            If the <code>SqlSession</code> is using a <code>DataSource</code>
-            that is also being used by a Spring transaction manager and there is currently
-            a transaction in progress, this code <strong>will</strong> throw an exception.
+如果 SqlSession 使用 DataSource,它也会被 Spring 事务管理器使用,而且当前
+有事务在进行时,这段代码会抛出异常。
           </p>
         </li>
         <li>
           <p>
-            MyBatis' <code>DefaultSqlSession</code> is not thread safe. If you
-            inject it in your beans you <strong>will</strong> get errors.
+MyBatis 的 DefaultSqlSession 是线程不安全的。如果在 bean 中注入了它,就会
+发生错误。
           </p>
         </li>
         <li>
           <p>
-            Mappers created using <code>DefaultSqlSession</code> are not thread safe either.
-            If you inject them it in your beans you <strong>will</strong> get errors.
+使用 DefaultSqlSession 创建的映射器也不是线程安全的。如果你将它们注入到
+bean 中,是会发生错误的。
           </p>
         </li>
         <li>
           <p>
-            You must make sure that your <code>SqlSession</code>s
-            are <strong>always</strong> closed in a finally block.
+你必须保证在 finally 块中来关闭 SqlSession。
           </p>
         </li>
       </ul>

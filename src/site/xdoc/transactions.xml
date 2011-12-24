@@ -22,77 +22,63 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | Transactions</title>
+    <title>MyBatis-Spring | 第四章 事务</title>
     <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
   </properties>
                              
   <body>
-    <section name="Transactions">
+    <section name="第四章 事务">
       <p>
-        One of the primary reasons for using MyBatis-Spring is that it allows
-        MyBatis to participate in Spring transactions. Rather than create a new
-        transaction manager specific to MyBatis, MyBatis-Spring leverages the
-        existing <code>DataSourceTransactionManager</code> in Spring.
+一个使用 MyBatis-Spring 的主要原因是它允许 MyBatis 参与到 Spring 的事务管理中。而
+不是给 MyBatis 创建一个新的特定的事务管理器,MyBatis-Spring 利用了存在于 Spring 中的
+DataSourceTransactionManager。
       </p>
       <p>
-        Once a Spring transaction manager is configured, you can configure
-        transactions in Spring as you normally would. Both
-        <code>@Transactional</code> annotations and AOP style
-        configurations are supported. A single <code>SqlSession</code>
-        object will be created and used for the duration of the transaction. This
-        session will be committed or rolled back as appropriate when then
-        transaction completes.
+一旦 Spring 的 PlatformTransactionManager 配置好了,你可以在 Spring 中以你通常的做
+法来配置事务。@Transactional 注解和 AOP(Aspect-Oriented Program,面向切面编程,译
+者注)样式的配置都是支持的。在事务处理期间,一个单独的 SqlSession 对象将会被创建
+和使用。当事务完成时,这个 session 会以合适的方式提交或回滚。
       </p>
       <p>
-        MyBatis-Spring will transparently manage transactions once they are set up.
-        There is no need for additional code in your DAO classes.
+一旦事务创建之后,MyBatis-Spring 将会透明的管理事务。在你的 DAO 类中就不需要额
+外的代码了。
       </p>
   
-    <subsection name="Standard Configuration">
+    <subsection name="标准配置">
       <p>
-        To enable Spring transaction processing, simply create a
-        <code>DataSourceTransactionManager</code> in your Spring XML
-        configuration file:
+要 开 启 Spring 的 事 务 处 理 , 在 Spring 的 XML 配 置 文 件 中 简 单 创 建 一 个
+DataSourceTransactionManager 对象:
       </p>
         <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
       <p>
-        The <code>DataSource</code> specified can be any JDBC
-        <code>DataSource</code> you would normally
-        use with Spring. This includes connection pools as well as <code>DataSource</code>s
-        obtained through JNDI lookups.
+指定的 DataSource 一般可以是你使用 Spring 的任意 JDBC DataSource。这包含了连接
+池和通过 JNDI 查找获得的 DataSource。
       </p>
       <p>
-        Note that the <code>DataSource</code> specified for the transaction
-        manager <strong>must</strong> be the same one that is used to create
-        the <code>SqlSessionFactoryBean</code> or transaction management will
-        not work.
+要注意,
+为事务管理器指定的 DataSource 必须和用来创建 SqlSessionFactoryBean 的
+是同一个数据源,否则事务管理器就无法工作了。
       </p>
     </subsection>
 
-    <subsection name="Container Managed Transactions">
+    <subsection name="容器管理事务">
       <p>
-        If you are using a JEE container and would like Spring to participate in
-        container managed transactions (CMT), then Spring should be configured
-        with a <code>JtaTransactionManager</code> or one of its container
-        specific subclasses. The easiest way to do this is to use the Spring
-        transaction namespace:
+如果你正使用一个 JEE 容器而且想让 Spring 参与到容器管理事务(Container managed
+transactions,CMT,译者注)中,那么 Spring 应该使用 JtaTransactionManager 或它的容
+器指定的子类来配置。做这件事情的最方便的方式是用 Spring 的事务命名空间:
       </p>
       <source><![CDATA[<tx:jta-transaction-manager />]]></source>
       <p>
-        In this configuration, MyBatis will behave like any other Spring
-        transactional resource configured with CMT. Spring will automatically use
-        any existing container transaction and attach an <code>SqlSession</code> to it. If no
-        transaction is started and one is needed based on the transaction
-        configuration, Spring will start a new container managed transaction.
+在这种配置中,MyBatis 将会和其它由 CMT 配置的 Spring 事务资源一样。Spring 会自动
+使用任意存在的容器事务,在上面附加一个 SqlSession。如果没有开始事务,或者需要基
+于事务配置,Spring 会开启一个新的容器管理事务。
       </p>
       <p>
-        Note that if you want to use CMT and do <strong>not</strong> want to
-        use Spring transaction management, you <strong>must not</strong>
-        configure any Spring transaction manager and you <strong>must</strong>
-        also configure the <code>SqlSessionFactoryBean</code> to use the base
-        MyBatis <code>ManagedTransactionFactory</code>:
+注 意 , 如 果 你 想 使 用 CMT , 而 不 想 使 用 Spring 的 事 务 管 理 , 你 就 必 须 配 置
+SqlSessionFactoryBean 来使用基本的 MyBatis 的 ManagedTransactionFactory 而不是其
+它任意的 Spring 事务管理器:
       </p>
       <source><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
@@ -102,28 +88,28 @@
 </bean>]]></source>
     </subsection>
   
-    <subsection name="Programmatic Transaction Management">
+    <subsection name="编程式事务管理">
       <p>
-        MyBatis <code>SqlSession</code> provides you with specific methods to handle
-        transactions programmatically. But when using MyBatis-Spring your beans will be
-        injected with a Spring managed <code>SqlSession</code> or a Spring managed mapper.
-        That means that Spring will <strong>always</strong> handle your transactions.
+MyBatis 的 SqlSession 提供指定的方法来处理编程式的事务。
+但是当使用 MyBatis-Spring
+时,
+bean 将会使用 Spring 管理的 SqlSession 或映射器来注入。
+那就是说 Spring 通常是处理
+事务的。
       </p>
       <p>
-        You cannot call <code>SqlSession.commit()</code>, <code>SqlSession.rollback()</code>
-        or <code>SqlSession.close()</code> over a Spring managed <code>SqlSession</code>.
-        If you try to do so, a <code>UnsupportedOperationException</code> exception
-        will be thrown. Note these methods are not exposed in injected mapper classes.
+你 不 能 在 Spring 管 理 的 SqlSession 上 调 用 SqlSession.commit() ,
+SqlSession.rollback() 或 SqlSession.close() 方 法 。 如 果 这 样 做 了 , 就 会 抛 出
+UnsupportedOperationException 异常。注意在使用注入的映射器时不能访问那些方法。
       </p>
       <p>
-        Regardless of your JDBC connection's autocommit setting, any execution of a
-        <code>SqlSession</code> data method or any call to a mapper
-        method outside a Spring transaction will be automatically committed.
+无论 JDBC 连接是否设置为自动提交,
+SqlSession 数据方法的执行或在 Spring 事务之外
+任意调用映射器方法都将会自动被提交。
       </p>
       <p>
-        If you want to control your transactions programmatically please refer to chapter 10.6 of
-        the Spring reference manual. This code shows how to handle a transaction manually
-        using the <code>PlatformTransactionManager</code> described in section 10.6.2.
+如果你想编程式地控制事务,请参考 Spring 手册的 10.6 节。这段代码展示了如何手动
+使用在 10.6.2 章节描述的 PlatformTransactionManager 来处理事务。
       </p>
         <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
@@ -138,7 +124,7 @@ catch (MyException ex) {
 }
 txManager.commit(status);]]></source>
       <p>
-        Notice that this code uses a mapper, but it will also work with a <code>SqlSession</code>.
+注意这段代码展示了一个映射器,但它也能和 SqlSession 一起使用。
       </p>
       </subsection>
     </section>
