@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id:$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+  
+  <properties>
+    <title>MyBatis-Spring | Sample Code</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="Sample Code">
+      <p>
+      	JPetStore 6 is a full web application built on top of MyBatis 3, 
+      	<a href="http://www.springsource.org">Spring 3</a> and <a href="http://www.stripesframework.org/">Stripes</a>.
+        It is available for downloading in the 
+        <a href="http://code.google.com/p/mybatis/downloads/list?q=Product=Sample">downloads</a>
+        section of MyBatis project site.
+        In this section we will walk through this sample to understand how is it built and learn how to run it. 
+      </p>
+      <subsection name="Purpose">
+      	<p>
+      	This new JPetStore comes with the same idea in mind than for its predecessors: <strong>keep it simple</strong>. The main purpose behind JPetStore 6 
+      	is to demonstrate that a full web application can be built with just a few classes, and what is more important, with no advanced coding 
+      	skills. You just need to know plain Java and SQL.
+      	</p>
+      	<p>
+      	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping a good design and program structure. 
+      	As we will see a bit later, you will not find JDBC code, object creation, binding code or transaction handling code. What is more 
+      	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will see that the 
+      	combination of MyBatis mappers and dependency injection lets you build applications with no dependency on MyBatis.     
+      	</p> 
+      </subsection>
+      <subsection name="Program Structure">
+      	<p> JPetStore 6 follows the typical maven project structure </p>
+<pre>/jpetstore                    <tt>&lt;-- Maven pom.xml goes here.</tt>
+  /src
+    /main/
+      /java                   <tt>&lt;-- Java code goes here.</tt>
+        /org/
+          /mybatis
+            /jpetstore
+              /domain         <tt>&lt;-- Business domain objects go here.</tt>
+              /persistence    <tt>&lt;-- Mapper interfaces go here.</tt>
+              /service        <tt>&lt;-- Application logic goes here.</tt>
+              /web
+                /actions      <tt>&lt;-- Presentation logic (actions) goes here.</tt>
+      /resources              <tt>&lt;-- Non java files go here.</tt>
+        /org
+          /mybatis
+            /jpetstore
+              /persistence    <tt>&lt;-- Mapper XML files go here.</tt>
+        /database
+      /webapp                 
+        /css
+        /images
+        /WEB-INF              <tt>&lt;-- web.xml and applicationContext.xml go here.</tt>
+          /jsp                <tt>&lt;-- JSP files go here.</tt>
+      </pre>
+      </subsection>
+      
+      <subsection name="Configuration files">
+      <p>
+      Configuration files are read during application startup. Their purpose is to configure the three
+      frameworks composing the application: Stripes, Spring and MyBatis. We will just need to configure
+      two files: web.xml and applicationContext.xml.
+      </p>
+      <h4>web.xml</h4>
+      <p>
+      First of all we need to start Stripes, so we follow the Stripes manual to do so. The manual says that
+      we should set up a dispatcher servlet and a filter. So let's go. 
+      </p>
+<source><![CDATA[
+<filter>
+	<display-name>Stripes Filter</display-name>
+	<filter-name>StripesFilter</filter-name>
+	<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+</filter>
+<filter-mapping>
+	<filter-name>StripesFilter</filter-name>
+	<servlet-name>StripesDispatcher</servlet-name>
+	<dispatcher>REQUEST</dispatcher>
+</filter-mapping>
+<servlet>
+	<servlet-name>StripesDispatcher</servlet-name>
+	<servlet-class>net.sourceforge.stripes.controller.DispatcherServlet</servlet-class>
+	<load-on-startup>1</load-on-startup>
+</servlet>
+<servlet-mapping>
+	<servlet-name>StripesDispatcher</servlet-name>
+	<url-pattern>*.action</url-pattern>
+</servlet-mapping>
+]]></source>      
+
+	<p>Stripes is able to search for ActionBean classes, for that purpose we must set up the
+	base package it should search in.</p>
+
+<source><![CDATA[
+	<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+	<init-param>
+		<param-name>ActionResolver.Packages</param-name>
+		<param-value>org.mybatis.jpetstore.web</param-value>
+	</init-param>
+	</filter>
+]]></source>      
+
+	<p>We are done with Stripes. Let's move on to the Spring side. According to Spring's reference manual 
+	we should add a Context listener to start up Spring. So let's add it</p>
+
+<source><![CDATA[
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+]]></source>      
+
+	<p>By default Spring will use <code>/WEB-INF/applicationContext.xml</code> if we don't specify 
+	a different file. The default is fine for us.
+	</p>
+
+	<p>Now we have to let Stripes know that it will be running with Spring. This way we will be able
+	to inject Spring beans directly into Stripes ActionBeans. For that purpose, following once 
+	again the Stripes manual, we set up an interceptor as follows below:
+	</p>
+
+<source><![CDATA[
+   <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+      ...
+      <init-param>
+         <param-name>Interceptor.Classes</param-name>
+         <param-value>
+            net.sourceforge.stripes.integration.spring.SpringInterceptor
+         </param-value>
+      </init-param>
+   </filter>
+]]></source>      
+      
+      <p>We are done with web.xml. As you may have notice, we have not set up any MyBatis 3 configuration yet.
+      That configuration goes into the Spring's applicationContext.xml that we will see in the following
+      section.
+      </p>
+      
+      <h4>applicationContext.xml</h4>
+      <p>As you already know applicationContext.xml is the Spring's configuration file. Spring is a dependency 
+      injection framework and it has to know which beans it must create and how to bind them together and that is
+      what applicationContext.xml file is for. Let's have a deeper look into it.
+      </p>
+      <p>
+      The first and easiest thing we have to do is let Spring know where are our service beans. We will let Spring
+      search them in our classpath so we just need to provide it the base package to search in:
+      </p>
+      
+<source><![CDATA[
+    <context:component-scan base-package="org.mybatis.jpetstore.service" />
+]]></source>
+
+	  <p>
+	  <span class="label important">NOTE</span> Spring's component scan feature is not able to find MyBatis mappers.
+	  A mapper is not a plain bean and Spring would not know how to instantiate it. We will need a 
+	  <code>MapperScannerConfigurer</code> for that, as we will see soon.
+	  </p> 
+	  
+	  <p>We will also need a <code>DataSource</code> and a <code>TransactionManager</code>. Given that this is a demo application
+	  we will use a test Spring <code>DataSource</code> that will create an HSQL in-memory database and load
+	  our database scripts into it and the standard Spring's <code>DataSourceTransactionManager</code>
+	  to handle transactions. 
+	  </p>
+
+<source><![CDATA[
+   <jdbc:embedded-database id="dataSource">
+       <jdbc:script location="classpath:database/jpetstore-hsqldb-schema.sql"/>
+       <jdbc:script location="classpath:database/jpetstore-hsqldb-dataload.sql"/>
+   </jdbc:embedded-database>
+
+   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+       <property name="dataSource" ref="dataSource" />
+   </bean>
+]]></source>
+	  	  
+	  <p>So far, all we have done is standard Stripes and Spring configuration and now it is time to 
+	  move on to the MyBatis part. As you have learned in this manual to set up MyBatis with Spring you need
+	  at least two things: an <code>SqlSessionFactoryBean</code> and a mapper class. So let's go hands on. 
+	  First define a <code>SqlSessionFactoryBean</code>:
+	  </p>     
+
+<source><![CDATA[
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+]]></source>
+
+      <p>And now we need to setup our mappers. For that purpose we will use the <code>MapperScannerConfigurer</code>
+      that works similar to Spring standard component scan. It will search our classpath for mapper classes
+      and register them to MyBatis. Similar to Spring's component scan we must configure the base
+      package to search in. 
+      </p>
+
+<source><![CDATA[
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
+    </bean>
+]]></source>
+      
+      <p>To save some writing when building our mapper xml files we would want to be able to use short 
+      aliases for beans. The <code>SqlSessionFactoryBean</code> has the capability to search for beans and 
+      register their short names as aliases if we setup the <code>typeAliasPackage</code> property like
+      the following
+      </p>
+
+<source><![CDATA[
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="typeAliasesPackage" value="org.mybatis.jpetstore.domain" />
+    </bean>
+]]></source>
+
+		<p>Our application is now fully configured and ready to run. But before running it lets have a tour 
+		through the code to see how it looks like.
+		</p>      
+      
+      </subsection>
+      
+      <subsection name="Code tour">
+      <p>JPetStore 6 is a typical MVC application with three layers: presentation, logic and data access.
+      </p>
+      <h4>Presentation</h4>
+      <p>The presentation layer is composed by JSP files and Stripes ActionBeans. JSPs just use plain HTML, 
+      JSTL tags and Stripes tags so there is nothing especial about them for the sake of this sample. Stripes
+      ActionBeans are like Struts actions or Spring MVC controllers so there is nothing especial with them either.  
+      </p>
+      <p>Given that we have integrated Stripes with Spring, we can inject our services into our BeanActions so
+      you can just use them without caring about its creation or lookup. 
+      Have a look at <code>CatalogActionBean</code>:</p>
+
+<source><![CDATA[
+@SessionScope
+public class CatalogActionBean extends AbstractActionBean {
+  ...
+  @SpringBean
+  private transient CatalogService catalogService;
+  ...
+  public ForwardResolution viewCategory() {
+    if (categoryId != null) {
+      productList = catalogService.getProductListByCategory(categoryId);
+      category = catalogService.getCategory(categoryId);
+    }
+    return new ForwardResolution(VIEW_CATEGORY);
+  }
+  ...  
+]]></source>
+
+	  <p>Note the <code>@SpringBean</code> annotation, that is an Stripes annotation that tells Stripes to
+	  look for that bean in Spring and inject it into this ActionBean.</p>
+
+      <h4>Logic</h4>
+      <p>Application logic is composed by plain Java beans that act as services and plain Java beans that
+      act as domain objects. This layer is in charge of filling domain objects with database data and 
+      updating database data with the content of the domain objects. For this purpose this layer must be
+      transactional, that is, it must be able to perform atomic database updates. 
+      </p>
+      <p>Let's have a look at <code>OrderService</code> code to see how all this is achieved:
+      </p>
+
+<source><![CDATA[
+@Service
+public class OrderService {
+
+  @Autowired
+  private ItemMapper itemMapper;
+  @Autowired
+  private OrderMapper orderMapper;
+  @Autowired
+  private LineItemMapper lineItemMapper;
+
+  @Transactional
+  public void insertOrder(Order order) {
+    order.setOrderId(getNextId("ordernum"));
+    for (int i = 0; i < order.getLineItems().size(); i++) {
+      LineItem lineItem = (LineItem) order.getLineItems().get(i);
+      String itemId = lineItem.getItemId();
+      Integer increment = new Integer(lineItem.getQuantity());
+      Map<String, Object> param = new HashMap<String, Object>(2);
+      param.put("itemId", itemId);
+      param.put("increment", increment);
+      itemMapper.updateInventoryQuantity(param);
+    }
+
+    orderMapper.insertOrder(order);
+    orderMapper.insertOrderStatus(order);
+    for (int i = 0; i < order.getLineItems().size(); i++) {
+      LineItem lineItem = (LineItem) order.getLineItems().get(i);
+      lineItem.setOrderId(order.getOrderId());
+      lineItemMapper.insertLineItem(lineItem);
+    }
+  }
+]]></source>
+      
+      <p>The first thing you will notice is that there is no JDBC code in the service, 
+      nor it is any MyBatis code in it. You may think that we used the 
+      DAO pattern and database access code is in the database layer, but as we will see later,   
+      the database layer is built with MyBatis mappers, that are plain java
+      interfaces, and that is why <strong>you will not find any call to MyBatis API</strong> 
+      in the whole application. It is just not needed.</p>
+      
+      <p>The second thing you may have noticed is that there are no commits or rollbacks.
+      That is because it uses the declarative transaction demarcation feature of Spring that is 
+      fully supported by MyBatis-Spring. 
+      The Spring's <code>@Transactional</code> annotation indicates that this method is transactional, 
+      that means that all <code>updateInventoryQuantity</code>, <code>insertOrder</code> and 
+      <code>insertLineItem</code> mapper calls must succeed or none.</p>
+      
+      <h4>Persistence</h4>
+      <p>The persistence layer is composed of MyBatis mappers. Mappers are just plain Java
+      interfaces and mapper XML files containing the SQL statements. 
+      There is no custom Java code in this layer. When the 
+      <code>getOrder</code> method is called on the <code>OrderMapper</code> interface, 
+      MyBatis will execute the getOrder SQL statement in OrderMapper.xml file and
+      will populate the <code>Order</code> domain bean with retrieved data.
+      </p> 
+
+<source><![CDATA[
+public interface OrderMapper {
+
+  List<Order> getOrdersByUsername(String username);
+
+  Order getOrder(int orderId);
+  
+  void insertOrder(Order order);
+  
+  void insertOrderStatus(Order order);
+
+}]]></source>      
+
+<source><![CDATA[
+<mapper namespace="org.mybatis.jpetstore.persistence.OrderMapper">
+
+  <cache />
+
+  <select id="getOrder" resultType="Order" parameterType="int">
+    select
+      BILLADDR1 AS billAddress1,
+      BILLADDR2 AS billAddress2,
+      BILLCITY,
+      BILLCOUNTRY,
+      BILLSTATE,
+      BILLTOFIRSTNAME,
+      BILLTOLASTNAME,
+      BILLZIP,
+      SHIPADDR1 AS shipAddress1,
+      SHIPADDR2 AS shipAddress2,
+      SHIPCITY,
+      SHIPCOUNTRY,
+      SHIPSTATE,
+      SHIPTOFIRSTNAME,
+      SHIPTOLASTNAME,
+      SHIPZIP,
+      CARDTYPE,
+      COURIER,
+      CREDITCARD,
+      EXPRDATE AS expiryDate,
+      LOCALE,
+      ORDERDATE,
+      ORDERS.ORDERID,
+      TOTALPRICE,
+      USERID AS username,
+      STATUS
+    FROM ORDERS, ORDERSTATUS
+    WHERE ORDERS.ORDERID = #{value}
+      AND ORDERS.ORDERID = ORDERSTATUS.ORDERID
+  </select>
+  ...
+</mapper>
+]]></source>      
+
+      <p>
+      <span class="label important">NOTE</span> 
+      You can easily add caching to your queries by adding a &lt;cache /&gt; element to your 
+      mapper xml file. Or, if you prefer, Spring lets you cache at a higher level, caching the 
+      whole call to a mapper or service method.
+      </p>
+      
+      </subsection>
+      
+      <subsection name="Running JPetStore">
+      <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
+      <p>Let's assume you have a clean computer. These are the steps you should follow to 
+      have the sample running on Tomcat 7</p>
+      <ul>
+		<li>Download and install a JDK 6 or later</li> 
+		<li>Download and upzip Eclipse</li>
+		<li>Download and unzip Tomcat 7</li>
+		<li>Run Eclipse</li>
+		<li>In eclipse, go to Help/Eclipse Marketplace</li>
+		<li>Install m2e plugin (maven)</li>
+		<li>Install m2e-wtp plugin (maven for wtp)</li>
+		<li>Dowload and unzip mybatis-jpetstore-6.0.x-bundle.zip</li>
+		<li>Unzip mybatis-jpetstore-6.0.x-sources.zip</li>
+		<li>In eclipse, select File/Import/Maven/Existing Maven Projects</li>
+		<li>Select the folder where you unzipped mybatis-jpetstore-6.0.x-sources.zip</li>
+		<li>A new project named "jpetstore" will be shown</li>
+		<li>Right click on jpetstore project and select "run on server"</li>
+		<li>Select Tomcat 7 Server and set your installation directory</li>
+		<li>JPetStore home page should be shown!!</li>
+      </ul>
+
+		<p>
+		<span class="label important">NOTE</span>
+		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Eclipse is not needed
+		either, you can run the sample from your favorite IDE or the command line. 
+		</p>
+      </subsection>
+    </section>
+  </body>
+</document>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id:$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | 简介</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+ <body>
+ <section name="简介">
+  <subsection name="What is MyBatis-Spring?">
+      <p>
+ MyBatis-Spring 会帮助你将 MyBatis 代码无缝地整合到 Spring 中。
+使用这个类库中的类,
+Spring 将会加载必要的 MyBatis 工厂类和 session 类。
+这个类库也提供一个简单的方式来注入
+MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
+而且它也会处理事务,
+翻译 MyBatis
+的异常到 Spring 的 DataAccessException 异常(数据访问异常,译者注)中。最终,它并
+不会依赖于 MyBatis,Spring 或 MyBatis-Spring 来构建应用程序代码。
+      </p>
+  </subsection>
+
+  <subsection name="Motivation">
+      <p>
+ 正如第二版那样,Spring 3.0 也仅支持 iBatis2。那么,我们就想将 MyBatis3 的支持添加
+到 Spring3.0(参考 Spring Jira 中的问题)中。而不幸的是,Spring 3.0 的开发在 MyBatis 3.0
+官方发布前就结束了。
+因为 Spring 开发团队不想发布一个基于非发布版的 MyBatis 的整合支
+持,那么 Spring 官方的支持就不得不继续等待了。要在 Spring 中支持 MyBatis,MyBatis 社
+区认为现在应该是自己团结贡献者和有兴趣的人一起来开始将 Spring 的整合作为 MyBatis 社
+区的子项目的时候了。
+     </p>
+  </subsection>
+
+  <subsection name="Requirements">
+    <p>
+在开始使用 MyBatis-Spring 的整合之前,很重要的一点是,你要熟悉 Spring 和 MyBatis
+这两个框架还有和它们有关的术语,本手册中不会提供二者的基本内容,安装和配置教程。
+    </p>
+    <p>
+同 MyBatis 和 Spring 3.0 一样,MyBatis-Spring 也需要 Java 5 或更高版本来支持。
+    </p>
+  </subsection>
+
+  <subsection name="Acknowledgements">
+    <p>
+特别感谢那些使得本项目成为现实的人们(按字母顺序排序)。 
+Eduardo Macarron, Hunter Presnall和Putthibong Boonbong的编码,
+测试和文档修改工作;
+Andrius Juozapaitis,
+Giovanni Cuccu,Raj Nagappan和Tomas Pinos的贡献;而Simone Tripodi发现了这些人并
+把他们带入项目之中。没有他们的努力,这个项目是不可能存在的。
+    </p>
+  </subsection>
+  
+	<subsection name="Help make this documentation better…">
+		<p>
+			If you find this documentation lacking in any way, or missing
+			documentation for a feature, then the best thing to do is learn
+			about it and then write the documentation yourself!
+		</p>
+		<p>
+			Sources of this manual are available in xdoc format at 
+			<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">project's SVN </a>.
+			Check them out, update them and send your patch to the
+			<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>.
+		</p>
+		<p>
+			You’re the best author of this documentation, people like you have
+			to read it!
+		</p>
+	</subsection>
+</section>  
+  </body>
+
+</document>
