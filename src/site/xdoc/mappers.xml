@@ -22,29 +22,35 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | 第六章 注入映射器</title>
+    <title>MyBatis-Spring | Injecting Mappers</title>
     <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
   </properties>
 
   <body>
-    <section name="第六章 注入映射器">
+    <section name="Injecting Mappers">
       <p>
-为了代替手工使用 SqlSessionDaoSupport 或 SqlSessionTemplate 编写数据访问对象
-(DAO)的代码,MyBatis-Spring 提供了一个动态代理的实现:MapperFactoryBean。这个类
-可以让你直接注入数据映射器接口到你的 service 层 bean 中。当使用映射器时,你仅仅如调
-用你的 DAO 一样调用它们就可以了,但是你不需要编写任何 DAO 实现的代码,因为
-MyBatis-Spring 将会为你创建代理。
+        Rather than code data access objects (DAOs) manually using
+        <code>SqlSessionDaoSupport</code> or
+        <code>SqlSessionTemplate</code>, Mybatis-Spring provides a proxy
+        factory: <code>MapperFactoryBean</code>. This class lets you inject
+        data mapper interfaces directly into your service beans. When using mappers
+        you simply call them as you have always called your DAOs, but you won't
+        need to code any DAO implementation because MyBatis-Spring will create a
+        proxy for you.
       </p>
       <p>
-使用注入的映射器代码,在 MyBatis,Spring 或 MyBatis-Spring 上面不会有直接的依赖。
-MapperFactoryBean 创建的代理控制开放和关闭 session,翻译任意的异常到 Spring 的
-DataAccessException 异常中。此外,如果需要或参与到一个已经存在活动事务中,代理将
-会开启一个新的 Spring 事务。
+        With injected mappers your code will have no direct dependencies on
+        MyBatis, Spring or MyBatis-Spring. The proxy that
+        <code>MapperFactoryBean</code> creates handles opening and closing
+        the session as well as translating any exceptions into Spring
+        <code>DataAccessException</code>s. In addition, the proxy will start
+        a new Spring transaction if required or participate in an existing one if
+        it a transaction is active.
       </p>
 
     <subsection name="MapperFactoryBean">
       <p>
-数据映射器接口可以按照如下做法加入到 Spring 中:
+        A data mapper is added to Spring like the following:
       </p>
         <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
@@ -52,42 +58,43 @@ DataAccessException 异常中。此外,如果需要或参与到一个已经存�
 </bean>]]></source>
    
       <p>
-MapperFactoryBean 创建的代理类实现了 UserMapper 接口,并且注入到应用程序中。
-因为代理创建在运行时环境中(Runtime,译者注)
-,那么指定的映射器必须是一个接口,而
-不是一个具体的实现类。
+        <code>MapperFactoryBean</code> creates a proxy class that
+        implements <code>UserMapper</code> and injects it into the
+        application. Because a proxy is created at runtime, the specified Mapper
+        <strong>must</strong> be an interface, not an implementation class.
       </p>
 
       <p>
-如果 UserMapper 有一个对应的 MyBatis 的 XML 映射器文件,
-如果 XML 文件在类路径的
-位置和映射器类相同时,
-它会被 MapperFactoryBean 自动解析。
-没有必要在 MyBatis 配置文
-件 中 去 指 定 映 射 器 , 除 非 映 射 器 的 XML 文 件 在 不 同 的 类 路 径 下 。 可 以 参 考
-SqlSessionFactoryBean 的 configLocation 属性(第三章)来获取更多信息。
+        If the UserMapper has a corresponding MyBatis XML mapper file, it will be
+        parsed automatically by the <code>MapperFactoryBean</code> if the
+        XML file is in the same classpath location as the Mapper class. There
+        is no need to specify the mapper in a MyBatis configuration file unless
+        the mapper XML files are in a different classpath location. See the
+        <code>SqlSessionFactoryBean's</code>
+        <code><a href="factorybean.html">configLocation</a></code>
+        property for more information.
       </p>
 
       <p>
-注意,当 MapperFactoryBean 需要 SqlSessionFactory 或 SqlSessionTemplate 时。
-这些可以通过各自的 SqlSessionFactory 或 SqlSessionTemplate 属性来设置,
-或者可以由
-Spring 来自动装配。如果两个属性都设置了,那么 SqlSessionFactory 就会被忽略,因为
-SqlSessionTemplate 是需要有一个 session 工厂的设置;
-那个工厂会由 MapperFactoryBean.
-来使用。
+        Note that <code>MapperFactoryBean</code> requires either an
+        <code>SqlSessionFactory</code> or an <code>SqlSessionTemplate</code>.
+        These can be set through the respective <code>sqlSessionFactory</code> and
+        <code>sqlSessionTemplate</code> properties, or they can be autowired by Spring.
+        If both properties are set, the <code>SqlSessionFactory</code> is ignored.
+        Since the <code>SqlSessionTemplate</code> is required to have a session
+        factory set, that factory will be used by <code>MapperFactoryBean</code>.
       </p>
 
       <p>
-你可以直接在 business/service 对象中以和注入任意 Spring bean 的相同方式直接注入映
-射器:
+         You can inject mappers directly on your business/service objects in the
+         same way you inject any other Spring bean:
       </p>
          <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
 </bean>]]></source>
  
       <p>
-这个 bean 可以直接在应用程序逻辑中使用:
+         This bean can be used directly in application logic:
       </p>
          <source><![CDATA[public class FooServiceImpl implements FooService {
 
@@ -102,65 +109,69 @@ SqlSessionTemplate 是需要有一个 session 工厂的设置;
   }
 }]]></source>
        <p>
-注意在这段代码中没有 SqlSession 或 MyBatis 的引用。也没有任何需要创建,打开或
-关闭 session 的代码,MyBatis-Spring 会来关心它的。
+         Notice that there are no <code>SqlSession</code> or MyBatis
+         references in this code. Nor is there any need to create, open or close
+         the session, MyBatis-Spring will take care of that.
        </p>
     </subsection>
 
     <subsection name="MapperScannerConfigurer">
       <p>
-没有必要在 Spring 的 XML 配置文件中注册所有的映射器。相反,你可以使用一个
-MapperScannerConfigurer , 它 将 会 查 找 类 路 径 下 的 映 射 器 并 自 动 将 它 们 创 建 成
-MapperFactoryBean。
+        There is no need to register all your mappers in the Spring XML file.
+        Instead, you can use a <code>MapperScannerConfigurer</code> that
+        will search the classpath for your mappers and set them up
+        automatically as <code>MapperFactoryBean</code>s.
       </p>
 
       <p>
-要创建 MapperScannerConfigurer,可以在 Spring 的配置中添加如下代码:
+        To set up a <code>MapperScannerConfigurer</code> add the
+        following to the Spring configuration:
       </p>
         <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
   <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></source>
       <p>
-basePackage 属性是让你为映射器接口文件设置基本的包路径。
-你可以使用分号或逗号
-作为分隔符设置多于一个的包路径。每个映射器将会在指定的包路径中递归地被搜索到。
+        The <code>basePackage</code> property lets you set the base package
+        for your mapper interface files. You can set more than one package by
+        using a semicolon or comma as a separator. Mappers will be searched for
+        recursively starting in the specified package(s).
       </p>
 
       <p>
-MapperScannerConfigurer 属性不支持使用了 PropertyPlaceholderConfigurer 的属
-性替换,因为会在 Spring 其中之前来它加载。但是,你可以使用 PropertiesFactoryBean
-和 SpEL 表达式来作为替代。
+        Notice that there is no need to specify a <code>SqlSessionFactory</code> or
+        <code>SqlSessionTemplate</code> because the <code>MapperScannerConfigurer</code>
+        will create <code>MapperFactoryBean</code>s that can be autowired. But if you are
+        using more than one <code>DataSource</code> autowire may not work for you. In this case
+        you can use the <code>sqlSessionFactoryBeanName</code> or
+        <code>sqlSessionTemplateBeanName</code> properties to set the right bean name to use.
+        Note that <strong>bean names</strong> are required,
+        not bean references, thus the <code>value</code> attribute is used instead of the
+        usual <code>ref</code>:
       </p>
-
-      <p>
-注 意 , 没 有 必 要 去 指 定 SqlSessionFactory 或 SqlSessionTemplate , 因 为
-MapperScannerConfigurer 将会创建 MapperFactoryBean,之后自动装配。但是,如果你使
-用了一个 以上的 DataSource ,那 么自动 装配可 能会失效 。这种 情况下 ,你可 以使用
-sqlSessionFactoryBeanName 或 sqlSessionTemplateBeanName 属性来设置正确的 bean 名
-称来使用。这就是它如何来配置的,注意 bean 的名称是必须的,而不是 bean 的引用,因
-此,value 属性在这里替代通常的 ref:
-      </p>
-
       <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
-      
-      <p>
-MapperScannerConfigurer 支 持 过 滤 由 指 定 的 创 建 接 口 或 注 解 创 建 映 射 器 。
-annotationClass 属性指定了要寻找的注解名称。
-markerInterface 属性指定了要寻找的父
-接口。如果两者都被指定了,加入到接口中的映射器会匹配两种标准。默认情况下,这两个
-属性都是 null,所以在基包中给定的所有接口可以作为映射器加载。
-      </p>
     
       <p>
-被发现的映射器将会使用 Spring 对自动侦测组件(参考 Spring 手册的 3.14.4)默认的命
-名策略来命名。也就是说,如果没有发现注解,它就会使用映射器的非大写的非完全限定类
-名。但是如果发现了@Component 或 JSR-330 的@Named 注解,它会获取名称。注意你可以
-配
-置
-到
-org.springframework.stereotype.Component ,
-javax.inject.Named(如果你使用 JSE 6 的话)或你自己的注解(肯定是自我注解)中,这
-样注解将会用作生成器和名称提供器。
+        <code>MapperScannerConfigurer</code> supports filtering the mappers
+        created by either specifying a marker interface or an annotation. The
+        <code>annotationClass</code> property specifies an annotation to
+        search for. The <code>markerInterface</code> property specifies a
+        parent interface to search for. If both properties are specified, mappers
+        are added for interfaces that match <strong>either</strong> criteria.
+        By default, these two properties are null, so all interfaces in the given
+        base package(s) will be loaded as mappers.
+      </p>
+
+      <p>
+        Discovered mappers will be named using Spring default naming strategy for
+        autodetected components (see section 3.14.4 of the Spring manual).
+        That is, if no annotation is found, it will use the uncapitalized non-qualified class
+        name of the mapper. But if either a @Component or a JSR-330 @Named annotation is
+        found it will get the name from the annotation.
+        Notice that you can set the <code>annotationClass</code> property
+        to <code>org.springframework.stereotype.Component</code>,
+        <code>javax.inject.Named</code> (if you have JSE 6) or to your own annotation
+        (that must be itself annotated) so the annotation will work both as a marker
+        and as a name provider.
       </p>
       </subsection>
     </section>

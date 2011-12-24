@@ -28,25 +28,42 @@
   <body>
     <section name="SqlSessionFactoryBean">
       <p>
-在基本的 MyBatis 中,session 工厂可以使用 SqlSessionFactoryBuilder 来创建。而在
-MyBatis-Spring 中,则使用 SqlSessionFactoryBean 来替代。
+        In base MyBatis, the session factory can be built using
+        <code>SqlSessionFactoryBuilder</code>. In MyBatis-Spring,
+        <code>SqlSessionFactoryBean</code> is used instead.
       </p>
       
     <subsection name="Setup">
       <p>
-要创建工厂 bean,放置下面的代码在 Spring 的 XML 配置文件中:
+        To create the factory bean, put the following in the Spring XML
+        configuration file:
       </p>
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
 	  <p>
-要注意 SqlSessionFactoryBean 实现了 Spring 的 FactoryBean 接口(请参考 Spring 文
-档的 3.8 章节)这就说明了由 Spring 最终创建的 bean 不是 SqlSessionFactoryBean 本身,
-。
-而是工厂类的 getObject()返回的方法的结果。这种情况下,Spring 将会在应用启动时为你
-创建 SqlSessionFactory 对象,然后将它以 SqlSessionFactory 为名来存储。在 Java 中,
-相同的代码是:
+        Note that
+        <code>SqlSessionFactoryBean</code>
+        implements Spring's
+        <code>FactoryBean</code>
+        interface (see section 3.8 of the Spring
+        documentation). This means
+        that the bean Spring ultimately creates is
+        <b>not</b>
+        the
+        <code>SqlSessionFactoryBean</code>
+        itself, but what the
+        factory returns as a result of the
+        <code>getObject()</code>
+        call on
+        the factory. In this case, Spring will build an
+        <code>SqlSessionFactory</code>
+        for you at application startup and
+        store it with the name
+        <code>sqlSessionFactory</code>
+        . In Java, the
+        equivalent code would be:
       </p>
 
       <source><![CDATA[
@@ -54,48 +71,89 @@ SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
 SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
 
       <p>
-在一般的 MyBatis-Spring 用法中,
-你不需要直接使用 SqlSessionFactoryBean 或和其对
-应的 SqlSessionFactory。相反,session 工厂将会被注入到 MapperFactoryBean 或其它扩
-展了 SqlSessionDaoSupport 的 DAO(Data Access Object,数据访问对象,译者注)中。
+        In normal MyBatis-Spring usage, you will not need to use
+        <code>SqlSessionFactoryBean</code>
+        or the corresponding
+        <code>SqlSessionFactory</code>
+        directly. Instead, the session
+        factory will be injected into
+        <code>MapperFactoryBean</code>
+        s or
+        other DAOs that extend
+        <code>SqlSessionDaoSupport</code>
+        .
       </p>
     </subsection>
 
-    <subsection name="属性">
+    <subsection name="Properties">
 
       <p>
-SqlSessionFactory 有一个单独的必须属性,就是 JDBC 的 DataSource。这可以是任意
-的 DataSource,其配置应该和其它 Spring 数据库连接是一样的。
+        <code>SqlSessionFactory</code>
+        has a single required property, the
+        JDBC
+        <code>DataSource</code>
+        . This can be any
+        <code>DataSource</code>
+        and should be configured just
+        like any other Spring database
+        connection.
       </p>
 
       <p>
-一个通用的属性是 configLocation,它是用来指定 MyBatis 的 XML 配置文件路径的。
-如果基本的 MyBatis 配置需要改变,
-那么这就是一个需要它的地方。
-通常这会是<code>&lt;settings&gt;</code>
-或<code>&lt;typeAliases&gt;</code>的部分。
+        One common property is
+        <code>configLocation</code>
+        which is used to
+        specify the location of the MyBatis XML
+        configuration file. One case
+        where this is needed is if the base
+        MyBatis configuration needs to be
+        changed. Usually this will be
+        <code>&lt;settings&gt;</code>
+        or
+        <code>&lt;typeAliases&gt;</code>
+        sections.
       </p>
 
       <p>
-要注意这个配置文件不需要是一个完整的 MyBatis 配置。确切地说,任意环境,数据源
-和 MyBatis 的事务管理器都会被忽略。SqlSessionFactoryBean 会创建它自己的,使用这些
-值定制 MyBatis 的 Environment 时是需要的。
+        Note that this config file does
+        <b>not</b>
+        need to be a
+        complete MyBatis config. Specifically, any environments,
+        data sources
+        and MyBatis transaction managers will be
+        <b>ignored</b>
+        .
+        <code>SqlSessionFactoryBean</code>
+        creates its own, custom MyBatis
+        <code>Environment</code>
+        with these values set as required.
       </p>
 
       <p>
-如果 MyBatis 映射器 XML 文件在和映射器类相同的路径下不存在,那么另外一个需要
-配置文件的原因就是它了。使用这个配置,有两种选择。第一是手动在 MyBatis 的 XML 配
-置文件中使用&lt;mappers&gt;部分来指定类路径。第二是使用工厂 bean 的 mapperLocations 属
-性。
+        Another reason to require a config file is if the MyBatis mapper XML
+        files are not in the same classpath location as the mapper classes.
+        With
+        this configuration, there are two options. This first is to
+        manually
+        specify the classpath of the XML files using a
+        <code>&lt;mappers&gt;</code>
+        section in the MyBatis config
+        file. A second option is to use the
+        <code>mapperLocations</code>
+        property of the factory bean.
       </p>
 
       <p>
-mapperLocations 属性使用一个资源位置的 list。
-这个属性可以用来指定 MyBatis 的 XML
-映射器文件的位置。
-它的值可以包含 Ant 样式来加载一个目录中所有文件,
-或者从基路径下
-递归搜索所有路径。比如:
+        The
+        <code>mapperLocations</code>
+        property takes a list of resource
+        locations. This property can be
+        used to specify the location of MyBatis
+        XML mapper files. The value
+        can contain Ant-style patterns to load all
+        files in a directory or to
+        recursively search all paths from a base
+        location. For example:
       </p>
       
         <source><![CDATA[
@@ -105,13 +163,18 @@ mapperLocations 属性使用一个资源位置的 list。
 </bean>]]></source>
 
       <p>
-这会从类路径下加载在 sample.config.mappers 包和它的子包中所有的 MyBatis 映射器
-XML 文件。
+        This will load all the MyBatis mapper XML files in the
+        sample.config.mappers package and its sub-packages from the
+        classpath.
       </p>
 
       <p>
-在容器环境管理事务中,一个可能需要的属性是 transactionFactoryClass。请参考
-第四章(4.2 节)中来查看有关部分。
+        One property that may be required in an environment with container
+        managed transactions is
+        <code>transactionFactoryClass</code>
+        .
+        Please see the relevant section in the
+        Transactions chapter.
       </p>
       </subsection>
     </section>

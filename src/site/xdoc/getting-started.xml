@@ -21,27 +21,30 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | 第二章 入门</title>
+    <title>MyBatis-Spring | Getting Started</title>
     <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
   </properties>
 
   <body>
-    <section name="第二章 入门">
+    <section name="Getting Started">
       <p>
-本章将会以简略的步骤告诉你如何安装和创建 MyBatis-Spring,并构建一个简单的数据
-访问事务性的应用程序。
+        This chapter will show you in a few steps how to install and setup
+        MyBatis-Spring and how to build
+        a simple transactional application.
       </p>
 
     <subsection name="Installation">
       <p>
-要使用 MyBatis-Spring 模块,你只需要包含
+        To use the MyBatis-Spring module, you just need to include the
         <code>
           mybatis-spring-x.x.x.jar
         </code>
-文 件就可以了,并在类路径中加入相关的依赖。
+        file and its dependencies in the classpath.
       </p>
       <p>
-如果你使用 Maven,那么在 pom.xml 中加入下面的代码即可:
+        If you are using Maven just add the following dependency
+        to your
+        pom.xml:
       </p>
         <source><![CDATA[
 <dependency>
@@ -53,13 +56,23 @@
 
     <subsection name="Quick Setup">
       <p>
-要和 Spring 一起使用 MyBatis,你需要在 Spring 应用上下文中定义至少两样东西:一个
-SqlSessionFactory 和至少一个数据映射器类。
+        To use MyBatis with Spring you need at least two things defined in
+        the
+        Spring application context: an
+        <code>SqlSessionFactory</code>
+        and
+        at least one data mapper class.
       </p>
 
       <p>
-在 MyBatis-Spring 中,SqlSessionFactoryBean 是用于创建 SqlSessionFactory 的。要
-配置这个工厂 bean,放置下面的代码在 Spring 的 XML 配置文件中:
+        In MyBatis-Spring, an
+        <code>SqlSessionFactoryBean</code>
+        is used to
+        create an
+        <code>SqlSessionFactory</code>
+        . To configure the
+        factory bean, put the following in the Spring XML
+        configuration file:
       </p>
 
         <source><![CDATA[
@@ -68,9 +81,14 @@ SqlSessionFactory 和至少一个数据映射器类。
 </bean>]]></source>
 
       <p>
-要注意 SqlSessionFactory 需要一个 DataSource(数据源,译者注)
-。这可以是任意
-的 DataSource,配置它就和配置其它 Spring 数据库连接一样。
+        Notice that the
+        <code>SqlSessionFactory</code>
+        requires a
+        <code>Datacode</code>
+        . This can be any
+        <code>Datacode</code>
+        and should be configured just like any other Spring database
+        connection.
       </p>
 
       <p>
@@ -82,9 +100,10 @@ SqlSessionFactory 和至少一个数据映射器类。
 } ]]></source>
 
       <p>
-那么可以使用 MapperFactoryBean,像下面这样来把接口加入到 Spring 中:
+        This interface is added to Spring using a
+        <code>MapperFactoryBean</code>
+        like the following:
       </p>
-
         <source><![CDATA[
 <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
@@ -92,19 +111,34 @@ SqlSessionFactory 和至少一个数据映射器类。
 </bean>]]></source>
 
       <p>
-要注意,所指定的映射器类必须是一个接口,而不是具体的实现类。在这个示例中,注
-解被用来指定 SQL 语句,但是 MyBatis 的映射器 XML 文件也可以用。
+        Note that the mapper class specified
+        <strong>must</strong>
+        be an
+        interface, not an actual implementation class. In this example,
+        annotations are used to specify the SQL, but a MyBatis mapper XML
+        file
+        could also be used.
       </p>
 
       <p>
-一旦配置好,你可以用注入其它任意 Spring 的 bean 相同的方式直接注入映射器到你的
-business/service 对象中。MapperFactoryBean 处理 SqlSession 的创建和关闭它。如果使用
-了 Spring 的事务,那么当事务完成时,session 将会提交或回滚。最终,任何异常都会被翻
-译成 Spring 的 DataAccessException 异常。
+        Once configured, you can inject mappers directly into your
+        business/service objects in the same way you inject any other Spring
+        bean. The
+        <code>MapperFactoryBean</code>
+        handles creating an
+        <code>SqlSession</code>
+        as well as closing it. If there is a Spring transaction in
+        progress,
+        the session will also be committed or rolled back when the
+        transaction completes. Finally, any exceptions will be translated
+        into
+        Spring
+        <code>DataAccessException</code>
+        s.
       </p>
 
       <p>
-调用 MyBatis 数据方法现在只需一行代码:
+        Calling MyBatis data methods is now only one line of code:
       </p>
         <source><![CDATA[
 public class FooServiceImpl implements FooService {
