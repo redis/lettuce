@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id: using-api.xml 4466 2011-12-24 15:05:20Z eduardo.macarron $ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | 第七章 使用 MyBatis API</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+     
+  <body>
+    <section name="第七章 使用 MyBatis API">
+      <p>
+使用 MyBatis-Spring,你可以继续直接使用 MyBatis 的 API。仅仅在代码中使用 Spring 中
+的 SqlSessionFactoryBean 来创建一个 SqlSessionFactory。
+      </p>
+        <source><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+  // SqlSessionFactory would normally be set by SqlSessionDaoSupport
+  private SqlSessionFactory sqlSessionFactory;
+
+  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+    this.sqlSessionFactory = sqlSessionFactory;
+  }
+
+  public User getUser(String userId) {
+    // note standard MyBatis API usage - opening and closing the session manually
+    SqlSession session = sqlSessionFactory.openSession();
+
+    try {
+      return (User) session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    } finally {
+      session.close();
+    }
+  }
+}]]></source>
+
+      <p>
+小心使用此选项,
+因为错误的使用会产生运行时错误,
+或者更糟糕的数据一致性的问题。
+这些是告诫:
+      </p>
+      <ul>
+        <li>
+          <p>
+它不会参与到 Spring 的事务之中。
+          </p>
+        </li>
+        <li>
+          <p>
+如果 SqlSession 使用 DataSource,它也会被 Spring 事务管理器使用,而且当前
+有事务在进行时,这段代码会抛出异常。
+          </p>
+        </li>
+        <li>
+          <p>
+MyBatis 的 DefaultSqlSession 是线程不安全的。如果在 bean 中注入了它,就会
+发生错误。
+          </p>
+        </li>
+        <li>
+          <p>
+使用 DefaultSqlSession 创建的映射器也不是线程安全的。如果你将它们注入到
+bean 中,是会发生错误的。
+          </p>
+        </li>
+        <li>
+          <p>
+你必须保证在 finally 块中来关闭 SqlSession。
+          </p>
+        </li>
+      </ul>
+    </section>
+  </body>
+</document>
