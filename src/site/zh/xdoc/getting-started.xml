@@ -64,7 +64,7 @@ SqlSessionFactory 和至少一个数据映射器类。
 
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-  <property name="datacode" ref="datacode" />
+  <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
 
       <p>

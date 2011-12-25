@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id: using-api.xml 4468 2011-12-24 15:15:01Z eduardo.macarron $ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | Using the MyBatis API</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+     
+  <body>
+    <section name="Using the MyBatis API">
+      <p>
+        With MyBatis-Spring, you can continue to directly use the MyBatis API.
+        Simply create an <code>SqlSessionFactory</code> in Spring using
+        <code>SqlSessionFactoryBean</code> and use the factory in your code.
+      </p>
+        <source><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+  // SqlSessionFactory would normally be set by SqlSessionDaoSupport
+  private SqlSessionFactory sqlSessionFactory;
+
+  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+    this.sqlSessionFactory = sqlSessionFactory;
+  }
+
+  public User getUser(String userId) {
+    // note standard MyBatis API usage - opening and closing the session manually
+    SqlSession session = sqlSessionFactory.openSession();
+
+    try {
+      return (User) session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    } finally {
+      session.close();
+    }
+  }
+}]]></source>
+
+      <p>
+        Use this option <strong>with care</strong> because wrong usage may produce runtime errors or
+      worse, data integrity problems. Be aware of the following caveats with direct API usage:
+      </p>
+      <ul>
+        <li>
+          <p>
+            It will <strong>not</strong> participate in any Spring transactions.
+          </p>
+        </li>
+        <li>
+          <p>
+            If the <code>SqlSession</code> is using a <code>DataSource</code>
+            that is also being used by a Spring transaction manager and there is currently
+            a transaction in progress, this code <strong>will</strong> throw an exception.
+          </p>
+        </li>
+        <li>
+          <p>
+            MyBatis' <code>DefaultSqlSession</code> is not thread safe. If you
+            inject it in your beans you <strong>will</strong> get errors.
+          </p>
+        </li>
+        <li>
+          <p>
+            Mappers created using <code>DefaultSqlSession</code> are not thread safe either.
+            If you inject them it in your beans you <strong>will</strong> get errors.
+          </p>
+        </li>
+        <li>
+          <p>
+            You must make sure that your <code>SqlSession</code>s
+            are <strong>always</strong> closed in a finally block.
+          </p>
+        </li>
+      </ul>
+    </section>
+  </body>
+</document>

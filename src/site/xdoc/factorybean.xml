@@ -28,7 +28,7 @@
   <body>
     <section name="SqlSessionFactoryBean">
       <p>
-        In base MyBatis, the session factory can be built using
+        In base MyBatis, the <code>SqlSessionFactory</code> is built using
         <code>SqlSessionFactoryBuilder</code>. In MyBatis-Spring,
         <code>SqlSessionFactoryBean</code> is used instead.
       </p>
@@ -77,8 +77,7 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
         <code>SqlSessionFactory</code>
         directly. Instead, the session
         factory will be injected into
-        <code>MapperFactoryBean</code>
-        s or
+        <code>MapperFactoryBean</code>s or
         other DAOs that extend
         <code>SqlSessionDaoSupport</code>
         .
@@ -131,7 +130,7 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
 
       <p>
         Another reason to require a config file is if the MyBatis mapper XML
-        files are not in the same classpath location as the mapper classes.
+        files are not in the same classpath location as the mapper interfaces.
         With
         this configuration, there are two options. This first is to
         manually

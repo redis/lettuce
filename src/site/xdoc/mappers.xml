@@ -33,7 +33,7 @@
         <code>SqlSessionDaoSupport</code> or
         <code>SqlSessionTemplate</code>, Mybatis-Spring provides a proxy
         factory: <code>MapperFactoryBean</code>. This class lets you inject
-        data mapper interfaces directly into your service beans. When using mappers
+        data mapper interfaces directly into other beans. When using mappers
         you simply call them as you have always called your DAOs, but you won't
         need to code any DAO implementation because MyBatis-Spring will create a
         proxy for you.
@@ -67,7 +67,7 @@
       <p>
         If the UserMapper has a corresponding MyBatis XML mapper file, it will be
         parsed automatically by the <code>MapperFactoryBean</code> if the
-        XML file is in the same classpath location as the Mapper class. There
+        XML file is in the same classpath location as the mapper interface. There
         is no need to specify the mapper in a MyBatis configuration file unless
         the mapper XML files are in a different classpath location. See the
         <code>SqlSessionFactoryBean's</code>

@@ -30,13 +30,11 @@
  <section name="Introduction">
   <subsection name="What is MyBatis-Spring?">
       <p>
-      MyBatis-Spring helps you integrate your MyBatis code seamlessly with
-      Spring. Using the classes in this library, Spring will load the necessary
-      MyBatis factory and session classes for you. This library also provides
-      an easy way to inject MyBatis data mappers and <code>SqlSession</code>s
-      into your service beans. It will also handle transactions and translate MyBatis
-      exceptions into Spring <code>DataAccessException</code>s.
-      Finally, it will let you build your application code free of 
+      MyBatis-Spring integrates MyBatis seamlessly with Spring.
+      This library allows MyBatis to participate in Spring transactions, takes care of
+      building MyBatis mappers and <code>SqlSession</code>s and inject them into other beans, 
+      translates MyBatis exceptions into Spring <code>DataAccessException</code>s, 
+      and finally, it lets you build your application code free of 
       dependencies on MyBatis, Spring or MyBatis-Spring.
       </p>
   </subsection>

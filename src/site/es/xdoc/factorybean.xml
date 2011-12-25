@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id:$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | SqlSessionFactoryBean</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="SqlSessionFactoryBean">
+      <p>
+        En MyBatis una <code>SqlSessionFactory</code> se crea mediante la clase 
+        <code>SqlSessionFactoryBuilder</code>. En MyBatis-Spring se usa la clase
+        <code>SqlSessionFactoryBean</code> en su lugar.
+      </p>
+      
+    <subsection name="Configuración">
+      <p>
+        Para crear un factory bean, pon lo siguiente en el fichero XML de configuración de Spring:
+      </p>
+        <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></source>
+	  <p>
+	    La clase <code>SqlSessionFactoryBean</code> implementa el interfaz <code>FactoryBean</code>
+        (see section 3.8 of the Spring documentation). Lo cual significa que el bean que crea Spring
+        en última instancia <b>no</b> es un <code>SqlSessionFactoryBean</code> en si mismo, sino el 
+        objeto que la factoria devuelve como resultado de la llamada al método
+        <code>getObject()</code>. En este caso, Spring creará un bean
+        <code>SqlSessionFactory</code> durante el arranque de la aplicación y lo guardará bajo el nombre
+        <code>sqlSessionFactory</code>. En Java, el código equivalente sería:
+      </p>
+
+      <source><![CDATA[
+SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
+
+      <p>
+        Normalmente no necesitarás utilizar directamente un <code>SqlSessionFactoryBean</code>
+        o su correspondiente <code>SqlSessionFactory</code> directly.
+        En su lugar, la factoría se utilizará para ser inyectada en <code>MapperFactoryBean</code>s o
+        DAOs que extiendan de <code>SqlSessionDaoSupport</code>.
+      </p>
+    </subsection>
+
+    <subsection name="Properties">
+
+      <p>
+        La clase <code>SqlSessionFactory</code> solo tiene una propiedad obligatoria, un <code>DataSource</code>.
+        Puede ser cualquier <code>DataSource</code> y se puede configurar como cualquier otra conexión a base de daots de Spring.
+      </p>
+
+      <p>
+        Una propiedad muy común es la <code>configLocation</code> que se utiliza para indicar la localización del fichero de configuración
+        XML de MyBatis. Normalmente solo es necesario dicho fichero si se requiere cambiar los valores por defecto de las secciones 
+        <code>&lt;settings&gt;</code> o <code>&lt;typeAliases&gt;</code>.
+      </p>
+
+      <p>
+        Es importante saber que este fichero de configuración <b>no</b> tiene por qué ser un fichero de configuración de MyBatis completo.
+        Concretamente, los environments, dataSources y transactionManagers serán <b>ignorados</b>.
+        <code>SqlSessionFactoryBean</code> crea su propio <code>Environment</code> de MyBatis con los valores configurados tal y como se requieren.
+      </p>
+
+      <p>
+        Otro motivo para necesitar un fichero de configuración es que los ficheros de mapeo XML no estén en el mismo lugar del classpath 
+        que los mapper interfaces. En este caso hay dos opciones. La primera es especificar manualmente el classpath de los ficheros XML
+        usando la sección <code>&lt;mappers&gt;</code> del fichero de configuración de MyBatis. La segunda opción es usar la propiedad
+        <code>mapperLocations</code> del factory bean.
+      </p>
+
+      <p>
+        La propiedad <code>mapperLocations</code> recibe una lista de localizaciones de recursos. Se utiliza para indicar la ubicación de los
+        ficheros de mapeo XML de MyBatis. El valor puede contener un patron tipo Ant para cargar todos los ficheros de un directorio o 
+        buscar de forma recursiva en todos los paths desde una localización base. Por ejemplo:
+      </p>
+      
+        <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
+</bean>]]></source>
+
+      <p>
+        Esto cargaría todos los ficheros de mapeo XML en el paquete sample.config.mappers y sus subpaquetes.
+      </p>
+
+      <p>
+        Otra propiedad que puede ser necesaria en un entorno con transacciones gestionadas por contenedor es la 
+        <code>transactionFactoryClass</code>. Lee la sección de transacciones para obtener más detalles.
+      </p>
+      </subsection>
+    </section>
+  </body>
+</document>

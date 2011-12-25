@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id:$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | Introducción</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+ <body>
+ <section name="Introduction">
+  <subsection name="¿Qué es MyBatis-Spring?">
+      <p>
+      MyBatis-Spring permite integrar MyBatis con Spring.
+      Esta librería permite que MyBatis participe en trasacciones Spring, se encarga de constuir
+      mappers y <code>SqlSession</code>s e inyectarlos en otros beans, traduce excepciones
+      de MyBatis en excepcines <code>DataAccessException</code>s de Spring y finalmente,
+      permite construir aplicaciones libres de dependencias de MyBatis, Spring y MyBatis-Spring.
+      </p>
+  </subsection>
+
+  <subsection name="Motivación">
+      <p>
+      Spring version 2 sólo soporta iBATIS version 2. See hizo un intento de incluir el soporte
+      de MyBatis 3 en Spring 3 (ver el <a href="https://jira.springsource.org/browse/SPR-5991">issue Jira</a>).
+      Pero desafortunadamente, el desarrollo de Spring 3 finalizó antes de que MyBatis 3 fuera liberado oficialmente.
+      Dado que el equipo de Spring no quería liberar una versión basada en un producto no terminado el soporte de 
+      oficial tenía que esperar. Dado el interés de la comunidad en el soporte de MyBatis, 
+      la comunidad de MyBatis decidió que era el momento de unificar a los colaboradores interesados 
+      y proporcionar la integración con Spring como un sub-projecto de MyBatis en su lugar.
+      </p>
+  </subsection>
+
+  <subsection name="Requisitos">
+    <p>
+      Antes de comenzar con MyBatis-Spring, es muy importante que estés familiarizado con la terminología tanto de 
+      MyBatis como de Spring. Este documento no pretende proporcionar información de configuración básica de 
+      MyBatis o Spring. 
+    </p>
+    <p>
+      MyBatis-Spring requiere Spring 3.0 o superior, MyBatis 3.1 o superior y Java 5 o superior.
+    </p>
+  </subsection>
+
+  <subsection name="Agradecimientos">
+    <p>
+      Queremos agradecer a la todos los que han hecho de este proyecto una realidad (en orden alfabético): 
+      Eduardo Macarron, Hunter Presnall y Putthibong Boonbong por la codificación, pruebas y documentación; 
+      a Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan y Tomas Pinos 
+      por sus contribuciones; y a Simone Tripodi por encontrarlos a todos y traerlos al proyecto MyBatis ;)
+      Sin ellos este proyecto no existiría.
+    </p>
+  </subsection>
+  
+  <subsection name="Colabora en mejorar esta documentación...">
+	<p>
+		Si ves que hay alguna carencia en esta documentación, o que falta
+		alguna característica
+		por documentar, te animamos a que lo
+		investigues y la documentes tu
+		mismo!
+	</p>
+	<p>
+		Las fuentes de este manual están disponibles en formato xdoc en el
+		<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">SVN del proyecto</a>
+		.
+		Extraelas, actualizalas y envía tu parche al
+		<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>
+		.
+	</p>
+	<p>
+		Eres el mejor candidato para documentar porque los lectores de
+		esta
+		documentación son gente como
+		tú!
+	</p>
+  </subsection>
+</section>  
+  </body>
+
+</document>

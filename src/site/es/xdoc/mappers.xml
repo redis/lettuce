@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2011 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id: mappers.xml 4468 2011-12-24 15:15:01Z eduardo.macarron $ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | Inyectar mappers</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="Inyectar mappers">
+      <p>
+        En lugar de codificar DAOs (data access objects) manualmente usando la clase
+        <code>SqlSessionDaoSupport</code> o <code>SqlSessionTemplate</code>, Mybatis-Spring proporciona una 
+        factoría de proxies: <code>MapperFactoryBean</code>. Esta clase te permite inyectar mappers
+        directamente en otros beans.
+        Los mappers se invocan de la misma forma que siempbre has invocado a tus DAOs, pero 
+        no necesitarás crear implementaciones de DAO porque MyBatis-Spring creará un proxy por ti.
+      </p>
+      <p>
+        Al usar mappers inyectados tu código no tendrá dependencias directas de MyBatis, Spring o MyBatis-Spring.
+        El proxy creado por la clase <code>MapperFactoryBean</code> se encarga de crear y cerrar sesiones y 
+        también de traducir excepciones a la jerarquía de <code>DataAccessException</code>s de Spring. 
+        Adicionalmente el proxy arrancará una nueva transacción Spring si se requiere o participará 
+        de una existente en caso de que haya una previamente activa.
+      </p>
+
+    <subsection name="MapperFactoryBean">
+      <p>
+        Un mapper se añade de la siguiente forma:
+      </p>
+        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+   
+      <p>
+        La clase <code>MapperFactoryBean</code> crea un proxy que 
+        implementa <code>UserMapper</code> y lo inyecta en la aplicación. 
+        Dado que el proxy se crea en ejecución el mapper especificado 
+        <strong>debe</strong> ser un interface y no una implementación.
+      </p>
+
+      <p>
+        Si el mapper UserMapper tiene un fichero XML de mapeo asociado el <code>MapperFactoryBean</code> 
+        lo cargará automáticamente. Por lo tanto no es necesario especificar dicho mapper en el fichero 
+        de configuración de MyBatis a no ser que los ficheros XML estén en una lugar distinto del classpath.
+        Ver la sección de <code>SqlSessionFactoryBean</code> y la propiedad
+        <code><a href="factorybean.html">configLocation</a></code>
+        para más información.
+      </p>
+
+      <p>
+        El <code>MapperFactoryBean</code> requiere o un 
+        <code>SqlSessionFactory</code> o un <code>SqlSessionTemplate</code>.
+        Ambos se pueden informar usando sendas propiedades <code>sqlSessionFactory</code> y
+        <code>sqlSessionTemplate</code>, or pueden ser autowired por Spring.
+        Si ambas propiedades han sdo informadas la <code>SqlSessionFactory</code> se ignora.
+        Dado que un <code>SqlSessionTemplate</code> debe tener un session factory
+        dicho factory se usará por el <code>MapperFactoryBean</code>.
+      </p>
+
+      <p>
+         Puedes inyectar mappers directamente en tus beans de la misma forma que inyectarías cualqueir otro bean de Spring:
+      </p>
+         <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+  <property name="userMapper" ref="userMapper" />
+</bean>]]></source>
+ 
+      <p>
+         Este bean se puede usar directamente en la lógica de aplicación:
+      </p>
+         <source><![CDATA[public class FooServiceImpl implements FooService {
+
+  private UserMapper userMapper;
+
+  public void setUserMapper(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
+
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
+}]]></source>
+       <p>
+         Observa que no se usa la <code>SqlSession</code> ni ninguna otra referencia a MyBatis en este código. 
+         No es necesario ni siquiera crear o cerrar la sesión, MyBatis-Spring se encarga de ello.
+       </p>
+    </subsection>
+
+    <subsection name="MapperScannerConfigurer">
+      <p>
+        No es necesario registrar todos los mappers en el fichero XML de Spring. 
+        En su lugar es posible utilizar un <code>MapperScannerConfigurer</code> que se encargará de buscar mappers en el classpath
+        y configurarlos automáticamente como <code>MapperFactoryBean</code>s.
+      </p>
+
+      <p>
+        Para configurar un <code>MapperScannerConfigurer</code> añade lo siguiente a la configuración de Spring:
+      </p>
+        <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+  <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
+</bean>]]></source>
+      <p>
+        La propiedad <code>basePackage</code> te permite indicar el paquete base donde residen tus mappers.
+        Puedes indicar más de un paquete usando un punto y coma o una coma como separador. Los mappers serán buscados
+        de forma recursiva comenzando en el/los paquetes especificados.
+      </p>
+
+      <p>
+        Fíjate que no es necesario indicar una <code>SqlSessionFactory</code> o
+        <code>SqlSessionTemplate</code> porque el <code>MapperScannerConfigurer</code>
+        creará <code>MapperFactoryBean</code>s que pueden ser autowired. Pero si usas más de un <code>DataSource</code> 
+        el autowire puede que no te funcione. En este caso puedes usar las propiedades<code>sqlSessionFactoryBeanName</code> or
+        <code>sqlSessionTemplateBeanName</code> para indicar los beans correctos a utilizar.
+        Observa que se requeiren <strong>los nombres de los beans</strong> y no sus referencias
+        por ello se usa el atributo <code>value</code> en lugar del habitual <code>ref</code>:
+      </p>
+      <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
+    
+      <p>
+        <code>MapperScannerConfigurer</code> soporta el filtrado de mappers mediante una interfaz marcador o una anotación.
+        La propiedad <code>annotationClass</code> especifica la anotación que se debe buscar.
+        La propiedad <code>markerInterface</code> especifica la interfaz a buscar. 
+        Si se indican ambas se añadirán todos los mappers que cumplan <strong>cualquier</strong> criterio.
+        Por defecto ambas propiedades son null asi que todos los interfaces de los paquetes base serán cargados como mappers.
+      </p>
+
+      <p>
+        Los mappers descubiertos serán nombrados usando la estratégia de nombres por defecto de Spring para los componentes
+        autodetectados (ver la sección 3.14.4 del manual de Spring).
+        Es decir, si no se encuentra ninguna anotación, se usará el nombre no cualificado sin capitalizar del mapper.
+        Pero si se encuentra una anotación @Component o JSR-330 @Named se obtendrá el nombre de dicha anotación.
+        Fíjate que puedes usar como valor de la <code>annotationClass</code> el valor <code>org.springframework.stereotype.Component</code>,
+        <code>javax.inject.Named</code> (if you have JSE 6) o una anotación propia
+        (que debe ser a su vez anotada) de forma que la anotación hará las veces de localizador y de proveedor de nombre.
+      </p>
+      </subsection>
+    </section>
+  </body>
+</document>
