@@ -123,7 +123,7 @@
 ]]></source>      
 
 	<p>We are done with Stripes. Let's move on to the Spring side. According to Spring's reference manual 
-	we should add a Context listener to start up Spring. So let's add it</p>
+	we should add a Context listener to start up Spring. So let's add it:</p>
 
 <source><![CDATA[
 	<listener>
@@ -245,7 +245,7 @@
       JSTL tags and Stripes tags so there is nothing especial about them for the sake of this sample. Stripes
       ActionBeans are like Struts actions or Spring MVC controllers so there is nothing especial with them either.  
       </p>
-      <p>Given that we have integrated Stripes with Spring, we can inject our services into our BeanActions so
+      <p>Given that we have integrated Stripes with Spring, we can inject our services into our ActionsBeans so
       you can just use them without caring about its creation or lookup. 
       Have a look at <code>CatalogActionBean</code>:</p>
 
