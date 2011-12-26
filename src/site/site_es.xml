@@ -23,15 +23,15 @@
   name="MyBatis">
 
   <body>
-    <menu name="Reference Documentation">
-      <item name="Introduction" href="index.html"/>
-      <item name="Getting Started" href="getting-started.html"/>
+    <menu name="Manual de Referencia">
+      <item name="Introducción" href="index.html"/>
+      <item name="Primeros pasos" href="getting-started.html"/>
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
-      <item name="Transactions" href="transactions.html"/>
-      <item name="Using an SqlSession" href="sqlsession.html"/>
-      <item name="Injecting Mappers" href="mappers.html"/>
-      <item name="Using the MyBatis API" href="using-api.html"/>
-      <item name="Sample Code" href="sample.html"/>
+      <item name="Transacciones" href="transactions.html"/>
+      <item name="Uso de SqlSession" href="sqlsession.html"/>
+      <item name="Inyección de Mappers" href="mappers.html"/>
+      <item name="Uso del API de MyBatis" href="using-api.html"/>
+      <item name="Código de ejemplo" href="sample.html"/>
     </menu>
 
     <menu ref="reports"/>
