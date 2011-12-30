@@ -34,9 +34,19 @@
       <item name="Introduction" href="index.html"/>
       <item name="Getting Started" href="getting-started.html"/>
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
-      <item name="Transactions" href="transactions.html"/>
-      <item name="Using an SqlSession" href="sqlsession.html"/>
-      <item name="Injecting Mappers" href="mappers.html"/>
+      <item name="Transactions" href="transactions.html" collapse="true">
+        <item href="transactions.html#configuration" name="Standard Configuration" />
+        <item href="transactions.html#container" name="Container Managed Transactions" />
+        <item href="transactions.html#programmatic" name="Programmatic Transaction Management" />
+      </item>
+      <item name="Using an SqlSession" href="sqlsession.html" collapse="true">
+        <item href="sqlsession.html#SqlSessionTemplate" name="SqlSessionTemplate" />
+        <item href="sqlsession.html#SqlSessionDaoSupport" name="SqlSessionDaoSupport" />
+      </item>
+      <item name="Injecting Mappers" href="mappers.html" collapse="true">
+        <item href="mappers.html#MapperFactoryBean" name="MapperFactoryBean" />
+        <item href="mappers.html#MapperScannerConfigurer" name="MapperScannerConfigurer" />
+      </item>
       <item name="Using the MyBatis API" href="using-api.html"/>
       <item name="Sample Code" href="sample.html"/>
     </menu>

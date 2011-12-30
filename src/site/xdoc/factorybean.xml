@@ -130,7 +130,7 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
 
       <p>
         Another reason to require a config file is if the MyBatis mapper XML
-        files are not in the same classpath location as the mapper interfaces.
+        files are not in the same classpath location as the mapper classes.
         With
         this configuration, there are two options. This first is to
         manually

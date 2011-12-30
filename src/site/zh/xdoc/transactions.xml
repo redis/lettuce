@@ -44,7 +44,7 @@ DataSourceTransactionManager。
 外的代码了。
       </p>
   
-    <subsection name="标准配置">
+    <subsection name="标准配置" id="configuration">
       <p>
 要 开 启 Spring 的 事 务 处 理 , 在 Spring 的 XML 配 置 文 件 中 简 单 创 建 一 个
 DataSourceTransactionManager 对象:
@@ -63,7 +63,7 @@ DataSourceTransactionManager 对象:
       </p>
     </subsection>
 
-    <subsection name="容器管理事务">
+    <subsection name="容器管理事务" id="container">
       <p>
 如果你正使用一个 JEE 容器而且想让 Spring 参与到容器管理事务(Container managed
 transactions,CMT,译者注)中,那么 Spring 应该使用 JtaTransactionManager 或它的容
@@ -88,7 +88,7 @@ SqlSessionFactoryBean 来使用基本的 MyBatis 的 ManagedTransactionFactory �
 </bean>]]></source>
     </subsection>
   
-    <subsection name="编程式事务管理">
+    <subsection name="编程式事务管理" id="programmatic">
       <p>
 MyBatis 的 SqlSession 提供指定的方法来处理编程式的事务。
 但是当使用 MyBatis-Spring

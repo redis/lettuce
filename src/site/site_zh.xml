@@ -34,9 +34,19 @@
       <item name="简介" href="index.html"/>
       <item name="第二章 入门" href="getting-started.html"/>
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
-      <item name="第四章 事务" href="transactions.html"/>
-      <item name="第五章 使用 SqlSession" href="sqlsession.html"/>
-      <item name="第六章 注入映射器" href="mappers.html"/>
+      <item name="第四章 事务" href="transactions.html" collapse="true">
+        <item href="transactions.html#configuration" name="标准配置" />
+        <item href="transactions.html#container" name="容器管理事务" />
+        <item href="transactions.html#programmatic" name="编程式事务管理" />
+      </item>
+      <item name="第五章 使用 SqlSession" href="sqlsession.html" collapse="true">
+        <item href="sqlsession.html#SqlSessionTemplate" name="SqlSessionTemplate" />
+        <item href="sqlsession.html#SqlSessionDaoSupport" name="SqlSessionDaoSupport" />
+      </item>
+      <item name="第六章 注入映射器" href="mappers.html" collapse="true">
+        <item href="mappers.html#MapperFactoryBean" name="MapperFactoryBean" />
+        <item href="mappers.html#MapperScannerConfigurer" name="MapperScannerConfigurer" />
+      </item>
       <item name="第七章 使用 MyBatis API" href="using-api.html"/>
       <item name="第八章 示例代码" href="sample.html"/>
     </menu>

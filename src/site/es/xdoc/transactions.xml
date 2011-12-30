@@ -44,7 +44,7 @@
         incluir código adicional en tus clases.
       </p>
   
-    <subsection name="Standard Configuration">
+    <subsection name="Configuration Estándar" id="configuration">
       <p>
         Para habilitar las transacciones Spring, simplemente crea un <code>DataSourceTransactionManager</code> en tu fichero de configuración XML:
       </p>
@@ -61,7 +61,7 @@
       </p>
     </subsection>
 
-    <subsection name="Container Managed Transactions">
+    <subsection name="Container Managed Transactions" id="container">
       <p>
         Si estás usando un contenedor JEE y quiere que spring participe en las transacciones gestionadas por contenedor (CMT), entonces debes 
         configurar un <code>JtaTransactionManager</code> en Spring o alguna de sus clases específicas de cada contenedor.
@@ -87,7 +87,7 @@
 </bean>]]></source>
     </subsection>
   
-    <subsection name="Programmatic Transaction Management">
+    <subsection name="Ǵestión programática de transacción" id="programmatic">
       <p>
         La interfaz <code>SqlSession</code> proporciona métodos especificos para gestionar la transacción.
         Pero al usar MyBatis-Spring en tus beans se inyectará una <code>SqlSession</code> o un mapper gestionados por Spring.
