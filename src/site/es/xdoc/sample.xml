@@ -456,14 +456,12 @@ public interface OrderMapper {
           <a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>. Gracias de antemano!
         </p>
         <p>
-
-          <p>
-            <span class="label important">NOTE</span>
+          <span class="label important">NOTE</span>
 		JPetStore y debe ejecutarse en cualquier servidor compatible Servlet 2.5 y JSP 2.1. Tampoco es necesario NetBeans o Eclipse, puedes ejecutarlo desde
 		tu IDE favorito o desde la línea de comando.
-          </p>
+        </p>
 
-        </subsection>
+      </subsection>
     </section>
   </body>
 </document>

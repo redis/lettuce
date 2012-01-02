@@ -440,7 +440,7 @@ public interface OrderMapper {
           Now you are ready to play with it, experiment with your own changes or whatever you want.
         </p>
         <p>
-          And remember that if you find a bug or something that is missing or improvable (for example the missing tests!),
+          And remember that if you find a bug or something that is missing or can be improved (for example the missing tests!),
           change it, create a diff patch file and fill an issue with it in the
            <a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>. Thanks in advance!!!
         </p>
