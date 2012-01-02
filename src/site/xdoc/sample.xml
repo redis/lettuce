@@ -433,7 +433,7 @@ public interface OrderMapper {
       </ul>
 		<p>
 		<span class="label important">NOTE</span>
-		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Eclipse is not needed
+		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Netbeans or Eclipse are not needed
 		either, you can run the sample from your favorite IDE or the command line. 
 		</p>
       </subsection>
