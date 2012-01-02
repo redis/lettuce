@@ -401,7 +401,19 @@ public interface OrderMapper {
       <subsection name="Running JPetStore">
       <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
       <p>Let's assume you have a clean computer. These are the steps you should follow to 
-      have the sample running on Tomcat 7</p>
+      have the sample running on Tomcat 7 with NetBeans 7</p>
+      <ul>
+		<li>Download and install NetBeans 7.x JEE version with Tomcat 7</li> 
+		<li>Dowload and unzip mybatis-jpetstore-6.0.x-bundle.zip</li>
+		<li>Unzip mybatis-jpetstore-6.0.x-sources.zip</li>
+		<li>In NetBeans select File/Open Project</li>
+		<li>Select the folder where you unzipped mybatis-jpetstore-6.0.x-sources.zip</li>
+		<li>A new project named "JPetStore Demo 6" will be shown</li>
+		<li>Right click on jpetstore project and select "Run"</li>
+		<li>Select Tomcat 7 Server</li>
+		<li>JPetStore home page should be shown!!</li>
+      </ul>
+      <p>And these to run it with Eclipse</p>
       <ul>
 		<li>Download and install a JDK 6 or later</li> 
 		<li>Download and upzip Eclipse</li>
@@ -419,7 +431,6 @@ public interface OrderMapper {
 		<li>Select Tomcat 7 Server and set your installation directory</li>
 		<li>JPetStore home page should be shown!!</li>
       </ul>
-
 		<p>
 		<span class="label important">NOTE</span>
 		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Eclipse is not needed
