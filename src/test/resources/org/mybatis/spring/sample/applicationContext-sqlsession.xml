@@ -19,7 +19,7 @@
     A sample context that shows how to integrate MyBatis with Spring using
     a hand-coded DAO implementation.
 
-    version: $Id: context.xml 2717 2010-10-15 15:37:00Z eduardo.macarron $
+    version: $Id$
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

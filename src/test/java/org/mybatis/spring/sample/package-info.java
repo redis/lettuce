@@ -23,7 +23,7 @@
  * <li>Configuring a DAO for batch processing</li> 
  * </ul>
  *
- * @version $Id: package-info.java 2444 2010-09-15 07:38:37Z simone.tripodi $
+ * @version $Id$
  */
 package org.mybatis.spring.sample;
 

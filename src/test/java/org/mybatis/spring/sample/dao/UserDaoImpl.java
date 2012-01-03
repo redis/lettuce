@@ -24,7 +24,7 @@ import org.mybatis.spring.support.SqlSessionDaoSupport;
  * need to open/close/commit/rollback.
  * MyBatis exceptions are translated to Spring Data Exceptions.
  *
- * @version $Id: UserMapperTemplateImpl.java 2444 2010-09-15 07:38:37Z simone.tripodi $
+ * @version $Id$
  */
 public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
 

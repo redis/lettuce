@@ -19,7 +19,7 @@ package org.mybatis.spring.type;
 import org.apache.ibatis.type.Alias;
 
 /**
-* @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
+* @version $Id$
 */
 @Alias("testAlias")
 public class DummyTypeAlias {

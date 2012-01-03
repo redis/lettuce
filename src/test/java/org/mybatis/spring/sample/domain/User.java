@@ -18,7 +18,7 @@ package org.mybatis.spring.sample.domain;
 /**
  * A simple bean that holds User info.
  *
- * @version $Id: User.java 2444 2010-09-15 07:38:37Z simone.tripodi $
+ * @version $Id$
  */
 public class User {
 

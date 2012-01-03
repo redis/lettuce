@@ -21,7 +21,7 @@ import org.springframework.test.context.ContextConfiguration;
  * Example of MyBatis-Spring integration with a DAO configured via
  * MapperScannerConfigurer.
  * 
- * @version $Id: MyBatisSampleTest.java 2697 2010-10-14 13:04:41Z eduardo.macarron $
+ * @version $Id$
  */
 @ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-scanner.xml" })
 public class SampleScannerTest extends AbstractSampleTest {
