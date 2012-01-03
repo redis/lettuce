@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 
-<!--  version: $Id: mappers.xml 4466 2011-12-24 15:05:20Z eduardo.macarron $ -->
+<!--  version: $Id$ -->
 
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

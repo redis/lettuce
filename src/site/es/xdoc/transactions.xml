@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 
-<!--  version: $Id: transactions.xml 4468 2011-12-24 15:15:01Z eduardo.macarron $ -->
+<!--  version: $Id$ -->
 
 <document xmlns="http://maven.apache.org/XDOC/2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
