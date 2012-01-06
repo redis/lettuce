@@ -151,6 +151,15 @@
       <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
     
       <p>
+        <span class="label important">NOTE</span> <code>sqlSessionFactoryBeanName</code> and 
+        <code>sqlSessionTemplateBeanName</code> properties were available up to MyBatis-Spring 1.0.2 
+        but given that the <code>MapperScannerConfigurer</code> runs earlier in the startup 
+        process that <code>PropertyPlaceholderConfigurer</code> there were frequent errors. 
+        For that purpose that properties were replaced by the <code>sqlSessionFactoryBeanName</code> 
+        and <code>sqlSessionTemplateBeanName</code> properties as of MyBatis-Spring 1.1.0.
+      </p>
+    
+      <p>
         <code>MapperScannerConfigurer</code> supports filtering the mappers
         created by either specifying a marker interface or an annotation. The
         <code>annotationClass</code> property specifies an annotation to
