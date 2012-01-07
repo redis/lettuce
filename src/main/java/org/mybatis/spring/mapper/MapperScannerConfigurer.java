@@ -20,6 +20,8 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
@@ -97,7 +99,11 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     private String basePackage;
 
     private boolean addToConfig = true;
+    
+    private SqlSessionFactory sqlSessionFactory;
 
+    private SqlSessionTemplate sqlSessionTemplate;
+    
     private String sqlSessionTemplateBeanName;
 
     private String sqlSessionFactoryBeanName;
@@ -166,11 +172,25 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      * more than one in the spring context. Usually this is only needed when you 
      * have more than one datasource.
      * <p>
+     * Use {@link #setSqlSessionTemplateBeanName(String)} instead
+     * 
+     * @param sqlSessionTemplate
+     */
+    @Deprecated
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSessionTemplate = sqlSessionTemplate;
+    }
+
+    /**
+     * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
+     * more than one in the spring context. Usually this is only needed when you 
+     * have more than one datasource.
+     * <p>
      * Note bean names are used, not bean references. This is because the scanner 
      * loads early during the start process and it is too early to build mybatis
      * object instances. 
      * 
-     * @since 1.0.3
+     * @since 1.1.0
      * 
      * @param sqlSessionTemplateName Bean name of the {@code SqlSessionTemplate}
      */
@@ -183,11 +203,25 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
      * more than one in the spring context. Usually this is only needed when you 
      * have more than one datasource.
      * <p>
+     * Use {@link #setSqlSessionFactoryBeanName(String)} instead.
+     * 
+     * @param sqlSessionFactory
+     */
+    @Deprecated
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+    }
+
+    /**
+     * Specifies which {@code SqlSessionFactory} to use in the case that there is 
+     * more than one in the spring context. Usually this is only needed when you 
+     * have more than one datasource.
+     * <p>
      * Note bean names are used, not bean references. This is because the scanner 
      * loads early during the start process and it is too early to build mybatis
      * object instances. 
      * 
-     * @since 1.0.3
+     * @since 1.1.0
      * 
      * @param sqlSessionFactoryName Bean name of the {@code SqlSessionFactory}
      */
@@ -362,15 +396,19 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
                     definition.setBeanClass(MapperFactoryBean.class);
 
                     definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
-
+                   
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
                         definition.getPropertyValues().add("sqlSessionFactory",
                                 new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
+                    } else if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
+                        definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactory);
                     }
 
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionTemplateBeanName)) {
                         definition.getPropertyValues().add("sqlSessionTemplate",
                                 new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
+                    } else if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
+                        definition.getPropertyValues().add("sqlSessionTemplate", MapperScannerConfigurer.this.sqlSessionTemplate);
                     }
                 }
             }
