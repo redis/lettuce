@@ -336,7 +336,7 @@ public class SqlSessionTemplate implements SqlSession {
 
     /**
      * Proxy needed to route MyBatis method calls to the proper SqlSession got
-     * from String's Transaction Manager
+     * from Spring's Transaction Manager
      * It also unwraps exceptions thrown by {@code Method#invoke(Object, Object...)} to
      * pass a {@code PersistenceException} to the {@code PersistenceExceptionTranslator}.
      */
