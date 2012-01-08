@@ -93,7 +93,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     private Class<?>[] typeAliases;
 
     private String typeAliasesPackage;
-    
+
     private DatabaseIdProvider databaseIdProvider = new DefaultDatabaseIdProvider();
 
     /**
@@ -317,7 +317,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             configuration = new Configuration();
             configuration.setVariables(this.configurationProperties);
         }
-        
+
         if (StringUtils.hasLength(this.typeAliasesPackage)) {
             String[] typeAliasPackageArray = StringUtils.tokenizeToStringArray(this.typeAliasesPackage,
                     ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
@@ -392,7 +392,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
             try {
                 configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
             } catch (SQLException e) {
-              throw new NestedIOException("Failed getting a databaseId", e);
+                throw new NestedIOException("Failed getting a databaseId", e);
             }
         }
 

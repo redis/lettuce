@@ -99,11 +99,11 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     private String basePackage;
 
     private boolean addToConfig = true;
-    
+
     private SqlSessionFactory sqlSessionFactory;
 
     private SqlSessionTemplate sqlSessionTemplate;
-    
+
     private String sqlSessionTemplateBeanName;
 
     private String sqlSessionFactoryBeanName;
@@ -396,7 +396,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
                     definition.setBeanClass(MapperFactoryBean.class);
 
                     definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
-                   
+
                     if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
                         definition.getPropertyValues().add("sqlSessionFactory",
                                 new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
