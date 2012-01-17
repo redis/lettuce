@@ -22,7 +22,7 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | Códig de ejemplo</title>
+    <title>MyBatis-Spring | Código de ejemplo</title>
     <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
   </properties>
 
@@ -86,7 +86,7 @@
       </p>
       <h4>web.xml</h4>
       <p>
-      Primeramente debemos arrancar Stripts, asi que, para ello, seguimos el manual de Stripes. El manual indica
+      Primeramente debemos arrancar Stripes, asi que, para ello, seguimos el manual de Stripes. El manual indica
       que debe configurarse un dispatcher servlet y un filtro filter. Vamos allá.
       </p>
 <source><![CDATA[
