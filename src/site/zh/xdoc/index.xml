@@ -60,8 +60,58 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
 这两个框架还有和它们有关的术语,本手册中不会提供二者的基本内容,安装和配置教程。
     </p>
     <p>
-同 MyBatis 和 Spring 3.0 一样,MyBatis-Spring 也需要 Java 5 或更高版本来支持。
+      MyBatis-Spring requires Java 5 or higher and the following MyBatis and Spring versions:
     </p>
+	<table>
+		<thead>
+			<tr>
+				<th>
+					MyBatis-Spring
+				</th>
+				<th>
+					MyBatis
+				</th>
+				<th>
+					Spring
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					1.0.0 and 1.0.1
+				</td>
+				<td>
+					3.0.1 to 3.0.5
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+			<tr>
+				<td>
+					1.0.2
+				</td>
+				<td>
+					3.0.6
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+			<tr>
+				<td>
+					1.1.0
+				</td>
+				<td>
+					3.1.0 or higher
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+		</tbody>
+	</table>
   </subsection>
 
   <subsection name="Acknowledgements">
