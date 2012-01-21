@@ -61,9 +61,58 @@
       setup and configuration tutorials for either MyBatis or Spring.
     </p>
     <p>
-      MyBatis-Spring requires Spring 3.0 or higher, MyBatis 3.1 or higher and
-      Java 5 or higher.
+      MyBatis-Spring requires Java 5 or higher and the following MyBatis and Spring versions:
     </p>
+	<table>
+		<thead>
+			<tr>
+				<th>
+					MyBatis-Spring
+				</th>
+				<th>
+					MyBatis
+				</th>
+				<th>
+					Spring
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					1.0.0 and 1.0.1
+				</td>
+				<td>
+					3.0.1 to 3.0.5
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+			<tr>
+				<td>
+					1.0.2
+				</td>
+				<td>
+					3.0.6
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+			<tr>
+				<td>
+					1.1.0
+				</td>
+				<td>
+					3.1.0 or higher
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+		</tbody>
+	</table>
   </subsection>
 
   <subsection name="Acknowledgements">
