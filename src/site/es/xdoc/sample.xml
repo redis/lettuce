@@ -27,7 +27,7 @@
   </properties>
 
   <body>
-    <section name="Cógido de ejemplo">
+    <section name="Código de ejemplo">
       <p>
         JPetStore 6 es una aplicación web completa construida sobre MyBatis 3,
       	<a href="http://www.springsource.org">Spring 3</a> y <a href="http://www.stripesframework.org/">Stripes</a>.
