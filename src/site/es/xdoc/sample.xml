@@ -78,7 +78,7 @@
       </pre>
       </subsection>
 
-      <subsection name="Configuration files">
+      <subsection name="Ficheros de configuración">
       <p>
       Los ficheros de configuración se leen durante el arranque de la aplicación. Su propósito es configurar los tres
       frameworks que componen la aplicación: Stripes, Spring y MyBatis. Solo tendremos que configurar
