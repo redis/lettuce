@@ -5,12 +5,11 @@ package com.lambdaworks.redis;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
-import java.util.*;
+import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class AsyncConnectionTest extends AbstractCommandTest {
     private RedisAsyncConnection<String,String> async;
@@ -20,120 +19,59 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
     @Before
     public void openAsyncConnection() throws Exception {
-        async = redis.getAsyncConnection();
+        async = client.connectAsync();
+    }
+
+    @After
+    public void closeAsyncConnection() throws Exception {
+        async.close();
     }
 
     @Test
-    public void booleanCommand() throws Exception {
-        assertNull(async.set(key, value));
-        assertNull(async.exists(key));
-        assertEquals(list("OK", true), async.flush());
+    public void multi() throws Exception {
+        assertEquals("OK", async.multi().get());
+        Future<String> set = async.set(key, value);
+        Future<Long> rpush = async.rpush("list", "1", "2");
+        Future<List<String>> lrange = async.lrange("list", 0, -1);
+
+        assertTrue(!set.isDone() && !rpush.isDone() && !rpush.isDone());
+        assertEquals(list("OK", 2L, list("1", "2")), async.exec().get());
+
+        assertEquals("OK", set.get());
+        assertEquals(2L, (long) rpush.get());
+        assertEquals(list("1", "2"), lrange.get());
     }
 
     @Test
-    public void dateCommand() throws Exception {
-        Date date = redis.lastsave();
-        assertNull(async.lastsave());
-        assertEquals(list(date), async.flush());
+    public void watch() throws Exception {
+        assertEquals("OK", async.watch(key).get());
+
+        redis.set(key, value + "X");
+
+        async.multi();
+        Future<Long> append = async.append(key, "foo");
+        assertEquals(list(), async.exec().get());
+        assertNull(append.get());
     }
 
     @Test
-    public void doubleCommand() throws Exception {
-        assertNull(async.zadd(key, 1.2, value));
-        assertNull(async.zscore(key, value));
-        assertEquals(list(1L, 1.2), async.flush());
+    public void awaitAll() throws Exception {
+        Future<String> get1 = async.get(key);
+        Future<String> set = async.set(key, value);
+        Future<String> get2 = async.get(key);
+        Future<Long> append = async.append(key, value);
+
+        assertTrue(async.awaitAll(get1, set, get2, append));
+
+        assertNull(get1.get());
+        assertEquals("OK", set.get());
+        assertEquals(value, get2.get());
+        assertEquals(value.length() * 2, (long) append.get());
     }
 
-    @Test
-    public void integerCommand() throws Exception {
-        assertNull(async.incrby(key, 3));
-        assertEquals(list(3L), async.flush());
-    }
-
-    @Test
-    public void keyListCommand() throws Exception {
-        assertNull(async.hset(key, "one", "1"));
-        assertNull(async.hkeys(key));
-        assertEquals(list(true, list("one")), async.flush());
-    }
-
-    @Test
-    public void mapCommand() throws Exception {
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("one", "1");
-        assertNull(async.hmset(key, map));
-        assertNull(async.hgetall(key));
-        assertEquals(list("OK", map), async.flush());
-    }
-
-    @Test
-    public void multiCommand() throws Exception {
-        assertEquals("OK", async.multi());
-        assertNull(async.set(key, value));
-        assertNull(async.get(key));
-        assertEquals(list("OK", value), async.exec());
-        assertEquals(list("OK", value), async.flush());
-    }
-
-    @Test
-    @SuppressWarnings({"unchecked", "varargs"})
-    public void scoredValueListCommand() throws Exception {
-        assertNull(async.zadd(key, 1.0, "a"));
-        assertNull(async.zadd(key, 2.0, "b"));
-        assertNull(async.zrangeWithScores(key, 0, -1));
-        assertEquals(list(1L, 1L, svlist(sv(1.0, "a"), sv(2.0, "b"))), async.flush());
-    }
-
-    @Test
-    public void stringCommand() throws Exception {
-        assertNull(async.set(key, value));
-        assertNull(async.get(key));
-        assertEquals(list("OK", value), async.flush());
-    }
-
-    @Test
-    public void valueCommand() throws Exception {
-        assertNull(async.set(key, value));
-        assertNull(async.get(key));
-        assertEquals(list("OK", value), async.flush());
-    }
-
-    @Test
-    public void valueListCommand() throws Exception {
-        assertNull(async.rpush(key, "a"));
-        assertNull(async.rpush(key, "b"));
-        assertNull(async.lrange(key, 0, -1));
-        assertEquals(list(1L, 2L, list("a", "b")), async.flush());
-    }
-
-    @Test
-    public void valueSetOutput() throws Exception {
-        assertNull(async.sadd(key, "a"));
-        assertNull(async.sadd(key, "b"));
-        assertNull(async.smembers(key));
-        assertEquals(list(1L, 1L, set("a", "b")), async.flush());
-    }
-
-    @Test
-    public void discard() throws Exception {
-        assertEquals("OK", async.multi());
-        assertEquals("OK", async.discard());
-    }
-
-    @Test
-    public void clear() throws Exception {
-        async.set(key, value);
-        async.get(key);
-        async.clear();
-        assertTrue(async.flush().isEmpty());
-    }
-
-    @Test
-    public void flushTimeout() throws Exception {
-        exception.expect(RedisException.class);
-        exception.expectMessage("Command timed out");
-        async.set(key, value);
-        async.blpop(1, key);
-        async.flush(1, TimeUnit.MICROSECONDS);
+    @Test(timeout = 100)
+    public void awaitAllTimeout() throws Exception {
+        Future<KeyValue<String, String>> blpop = async.blpop(1, key);
+        assertFalse(async.awaitAll(1, TimeUnit.NANOSECONDS, blpop));
     }
 }

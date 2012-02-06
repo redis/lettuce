@@ -2,17 +2,16 @@
 
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
-import org.jboss.netty.channel.*;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
-import static com.lambdaworks.redis.protocol.CommandType.*;
 import static java.lang.Math.max;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static com.lambdaworks.redis.protocol.CommandType.MULTI;
 
 /**
  * A synchronous thread-safe connection to a redis server. Multiple threads may
@@ -25,1019 +24,654 @@ import static java.lang.Math.max;
  *
  * @author Will Glozer
  */
-public class RedisConnection<K, V> extends SimpleChannelUpstreamHandler {
-    protected BlockingQueue<Command<K, V, ?>> queue;
-    protected RedisCodec<K, V> codec;
-    protected Channel channel;
+public class RedisConnection<K, V> {
+    protected RedisAsyncConnection<K, V> c;
     protected long timeout;
     protected TimeUnit unit;
-    private String password;
-    private int db;
-    private MultiOutput<K, V> multi;
-    private boolean closed;
 
     /**
      * Initialize a new connection.
      *
-     * @param queue   Command queue.
-     * @param codec   Codec used to encode/decode keys and values.
-     * @param timeout Maximum time to wait for a responses.
-     * @param unit    Unit of time for the timeout.
+     * @param c  Underlying async connection.
      */
-    public RedisConnection(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        this.queue = queue;
-        this.codec = codec;
-        this.timeout = timeout;
-        this.unit = unit;
+    public RedisConnection(RedisAsyncConnection<K, V> c) {
+        this.c       = c;
+        this.timeout = c.timeout;
+        this.unit    = c.unit;
     }
 
     /**
      * Set the command timeout for this connection.
      *
-     * @param timeout Command timeout.
-     * @param unit    Unit of time for the timeout.
+     * @param timeout   Command timeout.
+     * @param unit      Unit of time for the timeout.
      */
     public void setTimeout(long timeout, TimeUnit unit) {
         this.timeout = timeout;
-        this.unit = unit;
+        this.unit    = unit;
+        c.setTimeout(timeout, unit);
     }
 
     public Long append(K key, V value) {
-        Command<K, V, Long> cmd = dispatch(APPEND, new IntegerOutput<K, V>(codec), key, value);
-        return getOutput(cmd);
+        return await(c.append(key, value));
     }
 
     public String auth(String password) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
-        Command<K, V, String> cmd = dispatch(AUTH, new StatusOutput<K, V>(codec), args);
-        String status = getOutput(cmd);
-        if ("OK".equals(status)) this.password = password;
-        return status;
+        return c.auth(password);
     }
 
     public String bgrewriteaof() {
-        Command<K, V, String> cmd = dispatch(BGREWRITEAOF, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.bgrewriteaof());
     }
 
     public String bgsave() {
-        Command<K, V, String> cmd = dispatch(BGSAVE, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.bgsave());
     }
 
     public KeyValue<K, V> blpop(long timeout, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
-        Command<K, V, KeyValue<K, V>> cmd = dispatch(BLPOP, new KeyValueOutput<K, V>(codec), args);
-        timeout = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
-        return getOutput(cmd, timeout, TimeUnit.SECONDS);
+        long timeout2 = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
+        return await(c.blpop(timeout, keys), timeout2, SECONDS);
     }
 
     public KeyValue<K, V> brpop(long timeout, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
-        Command<K, V, KeyValue<K, V>> cmd = dispatch(BRPOP, new KeyValueOutput<K, V>(codec), args);
-        timeout = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
-        return getOutput(cmd, timeout, TimeUnit.SECONDS);
+        long timeout2 = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
+        return await(c.brpop(timeout, keys), timeout2, SECONDS);
     }
 
     public V brpoplpush(long timeout, K source, K destination) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(source).addKey(destination).add(timeout);
-        Command<K, V, V> cmd = dispatch(BRPOPLPUSH, new ValueOutput<K, V>(codec), args);
-        timeout = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
-        return getOutput(cmd, timeout, TimeUnit.SECONDS);
+        long timeout2 = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
+        return await(c.brpoplpush(timeout, source, destination), timeout2, SECONDS);
     }
 
     public String clientKill(String addr) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL).add(addr);
-        Command<K, V, String> cmd = dispatch(CLIENT, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.clientKill(addr));
     }
 
     public String clientList() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LIST);
-        Command<K, V, String> cmd = dispatch(CLIENT, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.clientList());
     }
 
     public List<String> configGet(String parameter) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET).add(parameter);
-        Command<K, V, List<String>> cmd = dispatch(CONFIG, new StringListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.configGet(parameter));
     }
 
     public String configResetstat() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESETSTAT);
-        Command<K, V, String> cmd = dispatch(CONFIG, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.configResetstat());
     }
 
     public String configSet(String parameter, String value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SET).add(parameter).add(value);
-        Command<K, V, String> cmd = dispatch(CONFIG, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.configSet(parameter, value));
     }
 
     public Long dbsize() {
-        Command<K, V, Long> cmd = dispatch(DBSIZE, new IntegerOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.dbsize());
     }
 
     public String debugObject(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(OBJECT).addKey(key);
-        Command<K, V, String> cmd = dispatch(DEBUG, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.debugObject(key));
     }
 
     public Long decr(K key) {
-        Command<K, V, Long> cmd = dispatch(DECR, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.decr(key));
     }
 
     public Long decrby(K key, long amount) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(amount);
-        Command<K, V, Long> cmd = dispatch(DECRBY, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.decrby(key, amount));
     }
 
     public Long del(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
-        Command<K, V, Long> cmd = dispatch(DEL, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.del(keys));
     }
 
     public String discard() {
-        Command<K, V, String> cmd = dispatch(DISCARD, new StatusOutput<K, V>(codec));
-        multi = null;
-        return getOutput(cmd);
+        return await(c.discard());
     }
 
     public V echo(V msg) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addValue(msg);
-        Command<K, V, V> cmd = dispatch(ECHO, new ValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.echo(msg));
     }
 
     public Boolean exists(K key) {
-        Command<K, V, Boolean> cmd = dispatch(EXISTS, new BooleanOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.exists(key));
     }
 
     public Boolean expire(K key, long seconds) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(seconds);
-        Command<K, V, Boolean> cmd = dispatch(EXPIRE, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.expire(key, seconds));
     }
 
     public Boolean expireat(K key, Date timestamp) {
-        return expireat(key, timestamp.getTime() / 1000);
+        return await(c.expireat(key, timestamp));
     }
 
     public Boolean expireat(K key, long timestamp) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(timestamp);
-        Command<K, V, Boolean> cmd = dispatch(EXPIREAT, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.expireat(key, timestamp));
     }
 
     public List<Object> exec() {
-        Command<K, V, List<Object>> cmd = dispatch(EXEC, multi);
-        multi = null;
-        return getOutput(cmd);
+        return await(c.exec());
     }
 
     public String flushall() throws Exception {
-        Command<K, V, String> cmd = dispatch(FLUSHALL, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.flushall());
     }
 
     public String flushdb() throws Exception {
-        Command<K, V, String> cmd = dispatch(FLUSHDB, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.flushdb());
     }
 
     public V get(K key) {
-        Command<K, V, V> cmd = dispatch(GET, new ValueOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.get(key));
     }
 
     public Long getbit(K key, long offset) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(offset);
-        Command<K, V, Long> cmd = dispatch(GETBIT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.getbit(key, offset));
     }
 
     public V getrange(K key, long start, long end) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(end);
-        Command<K, V, V> cmd = dispatch(GETRANGE, new ValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.getrange(key, start, end));
     }
 
     public V getset(K key, V value) {
-        Command<K, V, V> cmd = dispatch(GETSET, new ValueOutput<K, V>(codec), key, value);
-        return getOutput(cmd);
+        return await(c.getset(key, value));
     }
 
     public Long hdel(K key, K... fields) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
-        Command<K, V, Long> cmd = dispatch(HDEL, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hdel(key, fields));
     }
 
     public Boolean hexists(K key, K field) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field);
-        Command<K, V, Boolean> cmd = dispatch(HEXISTS, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hexists(key, field));
     }
 
     public V hget(K key, K field) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field);
-        Command<K, V, V> cmd = dispatch(HGET, new ValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hget(key, field));
     }
 
     public Long hincrby(K key, K field, long amount) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field).add(amount);
-        Command<K, V, Long> cmd = dispatch(HINCRBY, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hincrby(key, field, amount));
     }
 
     public Map<K, V> hgetall(K key) {
-        Command<K, V, Map<K, V>> cmd = dispatch(HGETALL, new MapOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.hgetall(key));
     }
 
     public List<K> hkeys(K key) {
-        Command<K, V, List<K>> cmd = dispatch(HKEYS, new KeyListOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.hkeys(key));
     }
 
     public Long hlen(K key) {
-        Command<K, V, Long> cmd = dispatch(HLEN, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.hlen(key));
     }
 
     public List<V> hmget(K key, K... fields) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
-        Command<K, V, List<V>> cmd = dispatch(HMGET, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hmget(key, fields));
     }
 
     public String hmset(K key, Map<K, V> map) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(map);
-        Command<K, V, String> cmd = dispatch(HMSET, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hmset(key, map));
     }
 
     public Boolean hset(K key, K field, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field).addValue(value);
-        Command<K, V, Boolean> cmd = dispatch(HSET, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hset(key, field, value));
     }
 
     public Boolean hsetnx(K key, K field, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field).addValue(value);
-        Command<K, V, Boolean> cmd = dispatch(HSETNX, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.hsetnx(key, field, value));
     }
 
     public List<V> hvals(K key) {
-        Command<K, V, List<V>> cmd = dispatch(HVALS, new ValueListOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.hvals(key));
     }
 
     public Long incr(K key) {
-        Command<K, V, Long> cmd = dispatch(INCR, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.incr(key));
     }
 
     public Long incrby(K key, long amount) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(amount);
-        Command<K, V, Long> cmd = dispatch(INCRBY, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.incrby(key, amount));
     }
 
     public String info() {
-        Command<K, V, String> cmd = dispatch(INFO, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.info());
     }
 
     public List<K> keys(K pattern) {
-        Command<K, V, List<K>> cmd = dispatch(KEYS, new KeyListOutput<K, V>(codec), pattern);
-        return getOutput(cmd);
+        return await(c.keys(pattern));
     }
 
     public Date lastsave() {
-        Command<K, V, Date> cmd = dispatch(LASTSAVE, new DateOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.lastsave());
     }
 
     public V lindex(K key, long index) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(index);
-        Command<K, V, V> cmd = dispatch(LINDEX, new ValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.lindex(key, index));
     }
 
     public Long linsert(K key, boolean before, V pivot, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(before ? BEFORE : AFTER).addValue(pivot).addValue(value);
-        Command<K, V, Long> cmd = dispatch(LINSERT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.linsert(key, before, pivot, value));
     }
 
     public Long llen(K key) {
-        Command<K, V, Long> cmd = dispatch(LLEN, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.llen(key));
     }
 
     public V lpop(K key) {
-        Command<K, V, V> cmd = dispatch(LPOP, new ValueOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.lpop(key));
     }
 
     public Long lpush(K key, V... values) {
-        Command<K, V, Long> cmd = dispatch(LPUSH, new IntegerOutput<K, V>(codec), key, values);
-        return getOutput(cmd);
+        return await(c.lpush(key, values));
     }
 
     public Long lpushx(K key, V value) {
-        Command<K, V, Long> cmd = dispatch(LPUSHX, new IntegerOutput<K, V>(codec), key, value);
-        return getOutput(cmd);
+        return await(c.lpushx(key, value));
     }
 
     public List<V> lrange(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
-        Command<K, V, List<V>> cmd = dispatch(LRANGE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.lrange(key, start, stop));
     }
 
     public Long lrem(K key, long count, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(count).addValue(value);
-        Command<K, V, Long> cmd = dispatch(LREM, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.lrem(key, count, value));
     }
 
     public String lset(K key, long index, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(index).addValue(value);
-        Command<K, V, String> cmd = dispatch(LSET, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.lset(key, index, value));
     }
 
     public String ltrim(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
-        Command<K, V, String> cmd = dispatch(LTRIM, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.ltrim(key, start, stop));
     }
 
     public List<V> mget(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
-        Command<K, V, List<V>> cmd = dispatch(MGET, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.mget(keys));
     }
 
     public Boolean move(K key, int db) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(db);
-        Command<K, V, Boolean> cmd = dispatch(MOVE, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.move(key, db));
     }
 
     public String multi() {
-        Command<K, V, String> cmd = dispatch(MULTI, new StatusOutput<K, V>(codec));
-        String status = getOutput(cmd);
-        if ("OK".equals(status)) {
-            multi = new MultiOutput<K, V>(codec);
-        }
-        return status;
+        return await(c.multi());
     }
 
     public String mset(Map<K, V> map) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(map);
-        Command<K, V, String> cmd = dispatch(MSET, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.mset(map));
     }
 
     public Boolean msetnx(Map<K, V> map) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(map);
-        Command<K, V, Boolean> cmd = dispatch(MSETNX, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.msetnx(map));
     }
 
     public String objectEncoding(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(ENCODING).addKey(key);
-        Command<K, V, String> cmd = dispatch(OBJECT, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.objectEncoding(key));
     }
 
     public Long objectIdletime(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(IDLETIME).addKey(key);
-        Command<K, V, Long> cmd = dispatch(OBJECT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.objectIdletime(key));
     }
 
     public Long objectRefcount(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(REFCOUNT).addKey(key);
-        Command<K, V, Long> cmd = dispatch(OBJECT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.objectRefcount(key));
     }
 
     public Boolean persist(K key) {
-        Command<K, V, Boolean> cmd = dispatch(PERSIST, new BooleanOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.persist(key));
     }
 
     public String ping() {
-        Command<K, V, String> cmd = dispatch(PING, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.ping());
     }
 
     public Long publish(K channel, V message) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(channel).addValue(message);
-        Command<K, V, Long> cmd = dispatch(PUBLISH, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.publish(channel, message));
     }
 
     public String quit() {
-        Command<K, V, String> cmd = dispatch(QUIT, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.quit());
     }
 
     public V randomkey() {
-        Command<K, V, V> cmd = dispatch(RANDOMKEY, new ValueOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.randomkey());
     }
 
     public String rename(K key, K newKey) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(newKey);
-        Command<K, V, String> cmd = dispatch(RENAME, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.rename(key, newKey));
     }
 
     public Boolean renamenx(K key, K newKey) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(newKey);
-        Command<K, V, Boolean> cmd = dispatch(RENAMENX, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.renamenx(key, newKey));
     }
 
     public V rpop(K key) {
-        Command<K, V, V> cmd = dispatch(RPOP, new ValueOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.rpop(key));
     }
 
     public V rpoplpush(K source, K destination) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(source).addKey(destination);
-        Command<K, V, V> cmd = dispatch(RPOPLPUSH, new ValueOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.rpoplpush(source, destination));
     }
 
     public Long rpush(K key, V... values) {
-        Command<K, V, Long> cmd = dispatch(RPUSH, new IntegerOutput<K, V>(codec), key, values);
-        return getOutput(cmd);
+        return await(c.rpush(key, values));
     }
 
     public Long rpushx(K key, V value) {
-        Command<K, V, Long> cmd = dispatch(RPUSHX, new IntegerOutput<K, V>(codec), key, value);
-        return getOutput(cmd);
+        return await(c.rpushx(key, value));
     }
 
     public Long sadd(K key, V... members) {
-        Command<K, V, Long> cmd = dispatch(SADD, new IntegerOutput<K, V>(codec), key, members);
-        return getOutput(cmd);
+        return await(c.sadd(key, members));
     }
 
     public String save() {
-        Command<K, V, String> cmd = dispatch(SAVE, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.save());
     }
 
     public Long scard(K key) {
-        Command<K, V, Long> cmd = dispatch(SCARD, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.scard(key));
     }
 
     public Set<V> sdiff(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
-        Command<K, V, Set<V>> cmd = dispatch(SDIFF, new ValueSetOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sdiff(keys));
     }
 
     public Long sdiffstore(K destination, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(destination).addKeys(keys);
-        Command<K, V, Long> cmd = dispatch(SDIFFSTORE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sdiffstore(destination, keys));
     }
 
     public String select(int db) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(db);
-        Command<K, V, String> cmd = dispatch(SELECT, new StatusOutput<K, V>(codec), args);
-        String status = getOutput(cmd);
-        if ("OK".equals(status)) this.db = db;
-        return status;
+        return c.select(db);
     }
 
     public String set(K key, V value) {
-        Command<K, V, String> cmd = dispatch(SET, new StatusOutput<K, V>(codec), key, value);
-        return getOutput(cmd);
+        return await(c.set(key, value));
     }
 
     public Long setbit(K key, long offset, int value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(offset).add(value);
-        Command<K, V, Long> cmd = dispatch(SETBIT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.setbit(key, offset, value));
     }
 
     public String setex(K key, long seconds, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(seconds).addValue(value);
-        Command<K, V, String> cmd = dispatch(SETEX, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.setex(key, seconds, value));
     }
 
     public Boolean setnx(K key, V value) {
-        Command<K, V, Boolean> cmd = dispatch(SETNX, new BooleanOutput<K, V>(codec), key, value);
-        return getOutput(cmd);
+        return await(c.setnx(key, value));
     }
 
     public Long setrange(K key, long offset, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(offset).addValue(value);
-        Command<K, V, Long> cmd = dispatch(SETRANGE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.setrange(key, offset, value));
     }
 
     public void shutdown() {
-        dispatch(SHUTDOWN, new StatusOutput<K, V>(codec));
+        c.shutdown();
     }
 
     public Set<V> sinter(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
-        Command<K, V, Set<V>> cmd = dispatch(SINTER, new ValueSetOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sinter(keys));
     }
 
     public Long sinterstore(K destination, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(destination).addKeys(keys);
-        Command<K, V, Long> cmd = dispatch(SINTERSTORE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sinterstore(destination, keys));
     }
 
     public Boolean sismember(K key, V member) {
-        Command<K, V, Boolean> cmd = dispatch(SISMEMBER, new BooleanOutput<K, V>(codec), key, member);
-        return getOutput(cmd);
+        return await(c.sismember(key, member));
     }
 
     public Boolean smove(K source, K destination, V member) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(source).addKey(destination).addValue(member);
-        Command<K, V, Boolean> cmd = dispatch(SMOVE, new BooleanOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.smove(source, destination, member));
     }
 
     public String slaveof(String host, int port) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(host).add(port);
-        Command<K, V, String> cmd = dispatch(SLAVEOF, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.slaveof(host, port));
     }
 
     public String slaveofNoOne() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NO).add(ONE);
-        Command<K, V, String> cmd = dispatch(SLAVEOF, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.slaveofNoOne());
     }
 
     public List<Object> slowlogGet() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET);
-        Command<K, V, List<Object>> cmd = dispatch(SLOWLOG, new NestedMultiOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.slowlogGet());
     }
 
     public List<Object> slowlogGet(int count) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET).add(count);
-        Command<K, V, List<Object>> cmd = dispatch(SLOWLOG, new NestedMultiOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.slowlogGet(count));
     }
 
     public Long slowlogLen() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LEN);
-        Command<K, V, Long> cmd = dispatch(SLOWLOG, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.slowlogLen());
     }
 
     public String slowlogReset() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESET);
-        Command<K, V, String> cmd = dispatch(SLOWLOG, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.slowlogReset());
     }
 
     public Set<V> smembers(K key) {
-        Command<K, V, Set<V>> cmd = dispatch(SMEMBERS, new ValueSetOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.smembers(key));
     }
 
     public List<V> sort(K key) {
-        Command<K, V, List<V>> cmd = dispatch(SORT, new ValueListOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.sort(key));
     }
 
     public List<V> sort(K key, SortArgs sortArgs) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
-        sortArgs.build(args, null);
-        Command<K, V, List<V>> cmd = dispatch(SORT, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sort(key, sortArgs));
     }
 
     public Long sortStore(K key, SortArgs sortArgs, K destination) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
-        sortArgs.build(args, destination);
-        Command<K, V, Long> cmd = dispatch(SORT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sortStore(key, sortArgs, destination));
     }
 
     public V spop(K key) {
-        Command<K, V, V> cmd = dispatch(SPOP, new ValueOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.spop(key));
     }
 
     public V srandmember(K key) {
-        Command<K, V, V> cmd = dispatch(SRANDMEMBER, new ValueOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.srandmember(key));
     }
 
     public Long srem(K key, V... members) {
-        Command<K, V, Long> cmd = dispatch(SREM, new IntegerOutput<K, V>(codec), key, members);
-        return getOutput(cmd);
+        return await(c.srem(key, members));
     }
 
     public Set<V> sunion(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
-        Command<K, V, Set<V>> cmd = dispatch(SUNION, new ValueSetOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sunion(keys));
     }
 
     public Long sunionstore(K destination, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(destination).addKeys(keys);
-        Command<K, V, Long> cmd = dispatch(SUNIONSTORE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.sunionstore(destination, keys));
     }
 
     public String sync() {
-        Command<K, V, String> cmd = dispatch(SYNC, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.sync());
     }
 
     public Long strlen(K key) {
-        Command<K, V, Long> cmd = dispatch(STRLEN, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.strlen(key));
     }
 
     public Long ttl(K key) {
-        Command<K, V, Long> cmd = dispatch(TTL, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.ttl(key));
     }
 
     public String type(K key) {
-        Command<K, V, String> cmd = dispatch(TYPE, new StatusOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.type(key));
     }
 
     public String watch(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
-        Command<K, V, String> cmd = dispatch(WATCH, new StatusOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.watch(keys));
     }
 
     public String unwatch() {
-        Command<K, V, String> cmd = dispatch(UNWATCH, new StatusOutput<K, V>(codec));
-        return getOutput(cmd);
+        return await(c.unwatch());
     }
 
     public Long zadd(K key, double score, V member) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(score).addValue(member);
-        Command<K, V, Long> cmd = dispatch(ZADD, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zadd(key, score, member));
     }
 
-    @SuppressWarnings("unchecked")
     public Long zadd(K key, Object... scoresAndValues) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
-        for (int i = 0; i < scoresAndValues.length; i += 2) {
-            args.add((Double) scoresAndValues[i]);
-            args.addValue((V) scoresAndValues[i + 1]);
-        }
-        Command<K, V, Long> cmd = dispatch(ZADD, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zadd(key, scoresAndValues));
     }
 
     public Long zcard(K key) {
-        Command<K, V, Long> cmd = dispatch(ZCARD, new IntegerOutput<K, V>(codec), key);
-        return getOutput(cmd);
+        return await(c.zcard(key));
     }
 
     public Long zcount(K key, double min, double max) {
-        return zcount(key, string(min), string(max));
+        return await(c.zcount(key, min, max));
     }
 
     public Long zcount(K key, String min, String max) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min).add(max);
-        Command<K, V, Long> cmd = dispatch(ZCOUNT, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zcount(key, min, max));
     }
 
     public Double zincrby(K key, double amount, K member) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(amount).addKey(member);
-        Command<K, V, Double> cmd = dispatch(ZINCRBY, new DoubleOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zincrby(key, amount, member));
     }
 
     public Long zinterstore(K destination, K... keys) {
-        return zinterstore(destination, new ZStoreArgs(), keys);
+        return await(c.zinterstore(destination, keys));
     }
 
     public Long zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(destination).add(keys.length).addKeys(keys);
-        storeArgs.build(args);
-        Command<K, V, Long> cmd = dispatch(ZINTERSTORE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zinterstore(destination, storeArgs, keys));
     }
 
     public List<V> zrange(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
-        Command<K, V, List<V>> cmd = dispatch(ZRANGE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrange(key, start, stop));
     }
 
     public List<ScoredValue<V>> zrangeWithScores(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(start).add(stop).add(WITHSCORES);
-        Command<K, V, List<ScoredValue<V>>> cmd = dispatch(ZRANGE, new ScoredValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrangeWithScores(key, start, stop));
     }
 
     public List<V> zrangebyscore(K key, double min, double max) {
-        return zrangebyscore(key, string(min), string(max));
+        return await(c.zrangebyscore(key, min, max));
     }
 
     public List<V> zrangebyscore(K key, String min, String max) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min).add(max);
-        Command<K, V, List<V>> cmd = dispatch(ZRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrangebyscore(key, min, max));
     }
 
     public List<V> zrangebyscore(K key, double min, double max, long offset, long count) {
-        return zrangebyscore(key, string(min), string(max), offset, count);
+        return await(c.zrangebyscore(key, min, max, offset, count));
     }
 
     public List<V> zrangebyscore(K key, String min, String max, long offset, long count) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(LIMIT).add(offset).add(count);
-        Command<K, V, List<V>> cmd = dispatch(ZRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrangebyscore(key, min, max, offset, count));
     }
 
     public List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max) {
-        return zrangebyscoreWithScores(key, string(min), string(max));
+        return await(c.zrangebyscoreWithScores(key, min, max));
     }
 
     public List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(WITHSCORES);
-        Command<K, V, List<ScoredValue<V>>> cmd = dispatch(ZRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrangebyscoreWithScores(key, min, max));
     }
 
     public List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
-        return zrangebyscoreWithScores(key, string(min), string(max), offset, count);
+        return await(c.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
     public List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(WITHSCORES).add(LIMIT).add(offset).add(count);
-        Command<K, V, List<ScoredValue<V>>> cmd = dispatch(ZRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
     public Long zrank(K key, V member) {
-        Command<K, V, Long> cmd = dispatch(ZRANK, new IntegerOutput<K, V>(codec), key, member);
-        return getOutput(cmd);
+        return await(c.zrank(key, member));
     }
 
     public Long zrem(K key, V... members) {
-        Command<K, V, Long> cmd = dispatch(ZREM, new IntegerOutput<K, V>(codec), key, members);
-        return getOutput(cmd);
+        return await(c.zrem(key, members));
     }
 
     public Long zremrangebyrank(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
-        Command<K, V, Long> cmd = dispatch(ZREMRANGEBYRANK, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zremrangebyrank(key, start, stop));
     }
 
     public Long zremrangebyscore(K key, double min, double max) {
-        return zremrangebyscore(key, string(min), string(max));
+        return await(c.zremrangebyscore(key, min, max));
     }
 
     public Long zremrangebyscore(K key, String min, String max) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min).add(max);
-        Command<K, V, Long> cmd = dispatch(ZREMRANGEBYSCORE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zremrangebyscore(key, min, max));
     }
 
     public List<V> zrevrange(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
-        Command<K, V, List<V>> cmd = dispatch(ZREVRANGE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrevrange(key, start, stop));
     }
 
     public List<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(start).add(stop).add(WITHSCORES);
-        Command<K, V, List<ScoredValue<V>>> cmd = dispatch(ZREVRANGE, new ScoredValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrevrangeWithScores(key, start, stop));
     }
 
     public List<V> zrevrangebyscore(K key, double max, double min) {
-        return zrevrangebyscore(key, string(max), string(min));
+        return await(c.zrevrangebyscore(key, max, min));
     }
 
     public List<V> zrevrangebyscore(K key, String max, String min) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(max).add(min);
-        Command<K, V, List<V>> cmd = dispatch(ZREVRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrevrangebyscore(key, max, min));
     }
 
     public List<V> zrevrangebyscore(K key, double max, double min, long offset, long count) {
-        return zrevrangebyscore(key, string(max), string(min), offset, count);
+        return await(c.zrevrangebyscore(key, max, min, offset, count));
     }
 
     public List<V> zrevrangebyscore(K key, String max, String min, long offset, long count) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(LIMIT).add(offset).add(count);
-        Command<K, V, List<V>> cmd = dispatch(ZREVRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrevrangebyscore(key, max, min, offset, count));
     }
 
     public List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min) {
-        return zrevrangebyscoreWithScores(key, string(max), string(min));
+        return await(c.zrevrangebyscoreWithScores(key, max, min));
     }
 
     public List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(WITHSCORES);
-        Command<K, V, List<ScoredValue<V>>> cmd = dispatch(ZREVRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrevrangebyscoreWithScores(key, max, min));
     }
 
     public List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
-        return zrevrangebyscoreWithScores(key, string(max), string(min), offset, count);
+        return await(c.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     public List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(WITHSCORES).add(LIMIT).add(offset).add(count);
-        Command<K, V, List<ScoredValue<V>>> cmd = dispatch(ZREVRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
-        return getOutput(cmd);
+        return await(c.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     public Long zrevrank(K key, V member) {
-        Command<K, V, Long> cmd = dispatch(ZREVRANK, new IntegerOutput<K, V>(codec), key, member);
-        return getOutput(cmd);
+        return await(c.zrevrank(key, member));
     }
 
     public Double zscore(K key, V member) {
-        Command<K, V, Double> cmd = dispatch(ZSCORE, new DoubleOutput<K, V>(codec), key, member);
-        return getOutput(cmd);
+        return await(c.zscore(key, member));
     }
 
     public Long zunionstore(K destination, K... keys) {
-        return zunionstore(destination, new ZStoreArgs(), keys);
+        return await(c.zunionstore(destination, keys));
     }
 
     public Long zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(destination).add(keys.length).addKeys(keys);
-        storeArgs.build(args);
-        Command<K, V, Long> cmd = dispatch(ZUNIONSTORE, new IntegerOutput<K, V>(codec), args);
-        return getOutput(cmd);
-    }
-
-    /**
-     * Get a new asynchronous wrapper for this connection. The wrapper delegates
-     * all commands to this connection but returns null instead of waiting for
-     * a response from the server.
-     *
-     * @return A new asynchronous connection wrapper.
-     */
-    public RedisAsyncConnection<K, V> getAsyncConnection() {
-        return new RedisAsyncConnection<K, V>(codec, this);
+        return await(c.zunionstore(destination, storeArgs, keys));
     }
 
     /**
      * Close the connection.
      */
-    public synchronized void close() {
-        if (!closed && channel != null) {
-            ConnectionWatchdog watchdog = channel.getPipeline().get(ConnectionWatchdog.class);
-            watchdog.setReconnect(false);
-            closed = true;
-            channel.close();
-        }
+    public void close() {
+        c.close();
     }
 
-    @Override
-    public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        channel = ctx.getChannel();
-
-        List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
-
-        if (password != null) {
-            CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
-            tmp.add(new Command<K, V, String>(AUTH, new StatusOutput<K, V>(codec), args));
-        }
-
-        if (db != 0) {
-            CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(db);
-            tmp.add(new Command<K, V, String>(SELECT, new StatusOutput<K, V>(codec), args));
-        }
-
-        tmp.addAll(queue);
-        queue.clear();
-
-        for (Command<K, V, ?> cmd : tmp) {
-            if (!cmd.isCancelled()) {
-                queue.add(cmd);
-                channel.write(cmd);
-            }
-        }
-
-        tmp.clear();
+    @SuppressWarnings("unchecked")
+    private <T> T await(Future<T> future, long timeout, TimeUnit unit) {
+        Command<K, V, T> cmd = (Command<K, V, T>) future;
+        return c.await(cmd, timeout, unit);
     }
 
-    @Override
-    public synchronized void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        if (closed) {
-            for (Command<K, V, ?> cmd : queue) {
-                cmd.getOutput().setError("Connection closed");
-                cmd.complete();
-            }
-            queue.clear();
-            queue = null;
-            channel = null;
-        }
-    }
-
-    public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
-        return dispatch(type, output, (CommandArgs<K, V>) null);
-    }
-
-    public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
-        return dispatch(type, output, args);
-    }
-
-    public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, K key, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(value);
-        return dispatch(type, output, args);
-    }
-
-    public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, K key, V[] values) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
-        return dispatch(type, output, args);
-    }
-
-    public synchronized <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        Command<K, V, T> cmd = new Command<K, V, T>(type, output, args);
-
-        try {
-            if (multi != null && type != EXEC) {
-                multi.add(cmd.getOutput());
-            }
-
-            queue.put(cmd);
-
-            if (channel != null) {
-                channel.write(cmd);
-            }
-        } catch (NullPointerException e) {
-            throw new RedisException("Connection is closed");
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
-        }
-
-        return cmd;
-    }
-
-    public <T> T getOutput(Command<K, V, T> cmd, long timeout, TimeUnit unit) {
-        if (!cmd.await(timeout, unit)) {
-            cmd.cancel(true);
-            throw new RedisException("Command timed out");
-        }
-        CommandOutput<K, V, T> output = cmd.getOutput();
-        if (output.hasError()) throw new RedisException(output.getError());
-        return output.get();
-    }
-
-    protected final <T> T getOutput(Command<K, V, T> cmd) {
-        return getOutput(cmd, timeout, unit);
-    }
-
-    public String string(double n) {
-        if (Double.isInfinite(n)) {
-            return (n > 0) ? "+inf" : "-inf";
-        }
-        return Double.toString(n);
+    @SuppressWarnings("unchecked")
+    private <T> T await(Future<T> future) {
+        Command<K, V, T> cmd = (Command<K, V, T>) future;
+        if (c.multi != null && cmd.type != MULTI) return null;
+        return c.await(cmd, timeout, unit);
     }
 }

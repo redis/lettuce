@@ -5,7 +5,7 @@ lettuce - A scalable Java Redis client
   as BLPOP, and MULTI/EXEC. Multiple connections are efficiently managed by the
   excellent netty NIO framework.
 
-  This version of lettuce has been tested against redis 2.4.4
+  This version of lettuce has been tested against redis 2.4.7
 
   Join the lambdaWorks-OSS Google Group to discuss this project:
 
@@ -23,14 +23,25 @@ Basic Usage
   that change the result type include the CamelCased modifier as part of the
   command name, e.g. zrangebyscore and zrangebyscoreWithScores.
 
-  RedisConnections are designed to be long-lived, and if the connection is lost
+  Redis connections are designed to be long-lived, and if the connection is lost
   will reconnect until close() is called. Pending commands that have not timed
   out will be (re)sent after successful reconnection.
 
-  All RedisConnections inherit a default timeout from their RedisClient and
+  All connections inherit a default timeout from their RedisClient and
   and will throw a RedisException when non-blocking commands fail to return a
   result before the timeout expires. The timeout defaults to 60 seconds and
-  may be changed in the RedisClient or for each individual RedisConnection.
+  may be changed in the RedisClient or for each individual connection.
+
+Asynchronous Connections
+
+  RedisAsyncConnection<String, String> async = client.connectAsync()
+  Future<String> set = async.set("key", "value")
+  Future<String> get = async.get("key")
+
+  async.awaitAll(set, get) == true
+
+  set.get() == "OK"
+  get.get() == "value"
 
 Pub/Sub
 
@@ -38,30 +49,20 @@ Pub/Sub
   connection.addListener(new RedisPubSubListener<String, String>() { ... })
   connection.subscribe("channel")
 
-Async
-
-  RedisAsyncConnection<String, String> async = connection.getAsyncConnection()
-  async.set("key", "value")
-  async.get("key")
-  List<Object> results = async.flush()
-
-  When using an async connection all redis commands except for multi, exec,
-  and discard will immediately return null. Calling flush() will wait for all
-  commands to complete and then return their outputs.
-
-  Async connections are just a lightweight wrapper around a regular connection
-  and the same restrictions on blocking and transactional operations apply.
-  The wrapper is not thread-safe and should only be used by a single thread.
-
 Codecs
 
   Lettuce supports pluggable codecs responsible for encoding and decoding keys
   and values. The default codec supports UTF-8 encoded String keys and values.
 
   Each connection may have its own codec passed to the extended
-  RedisClient.connect method:
+  RedisClient.connect methods:
 
   RedisConnection<K, V> connect(RedisCodec<K, V> codec)
+  RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec)
+  RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec)
+
+  For pub/sub connections channel names and patterns are treated as keys,
+  messages are treated as values.
 
 Maven Artifacts
 
@@ -70,5 +71,5 @@ Maven Artifacts
   <dependency>
     <groupId>com.lambdaworks</groupId>
     <artifactId>lettuce</artifactId>
-    <version>1.3.0</version>
+    <version>2.0.0</version>
   </dependency>

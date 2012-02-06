@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisAsyncConnection;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -79,7 +79,7 @@ public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements 
     public void run(Timeout timeout) throws Exception {
         ChannelPipeline old = channel.getPipeline();
         CommandHandler handler = old.get(CommandHandler.class);
-        RedisConnection connection = old.get(RedisConnection.class);
+        RedisAsyncConnection connection = old.get(RedisAsyncConnection.class);
         ChannelPipeline pipeline = Channels.pipeline(this, handler, connection);
 
         Channel c = bootstrap.getFactory().newChannel(pipeline);

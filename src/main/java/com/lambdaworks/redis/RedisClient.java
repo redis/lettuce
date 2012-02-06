@@ -21,7 +21,7 @@ import java.util.concurrent.*;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads
- * may share one {@link RedisConnection} provided they avoid blocking and transactional
+ * may share one {@link RedisAsyncConnection} provided they avoid blocking and transactional
  * operations such as BLPOP and MULTI/EXEC.
  *
  * @author Will Glozer
@@ -81,8 +81,8 @@ public class RedisClient {
     }
 
     /**
-     * Open a new connection to the redis server that treats all keys and
-     * values as UTF-8 strings.
+     * Open a new synchronous connection to the redis server that treats
+     * keys and values as UTF-8 strings.
      *
      * @return A new connection.
      */
@@ -91,7 +91,17 @@ public class RedisClient {
     }
 
     /**
-     * Open a new pub/sub connection to the redis server that treats all
+     * Open a new asynchronous connection to the redis server that treats
+     * keys and values as UTF-8 strings.
+     *
+     * @return A new connection.
+     */
+    public RedisAsyncConnection<String, String> connectAsync() {
+        return connectAsync(new Utf8StringCodec());
+    }
+
+    /**
+     * Open a new pub/sub connection to the redis server that treats
      * keys and values as UTF-8 strings.
      *
      * @return A new connection.
@@ -101,7 +111,7 @@ public class RedisClient {
     }
 
     /**
-     * Open a new connection to the redis server. Use the supplied
+     * Open a new synchronous connection to the redis server. Use the supplied
      * {@link RedisCodec codec} to encode/decode keys and values.
      *
      * @param codec Use this codec to encode/decode keys and values.
@@ -109,10 +119,22 @@ public class RedisClient {
      * @return A new connection.
      */
     public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
+        return new RedisConnection<K, V>(connectAsync(codec));
+    }
+
+    /**
+     * Open a new asynchronous connection to the redis server. Use the supplied
+     * {@link RedisCodec codec} to encode/decode keys and values.
+     *
+     * @param codec Use this codec to encode/decode keys and values.
+     *
+     * @return A new connection.
+     */
+    public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
-        RedisConnection<K, V> connection = new RedisConnection<K, V>(queue, codec, timeout, unit);
+        RedisAsyncConnection<K, V> connection = new RedisAsyncConnection<K, V>(queue, codec, timeout, unit);
 
         return connect(handler, connection);
     }
@@ -134,7 +156,7 @@ public class RedisClient {
         return connect(handler, connection);
     }
 
-    private <K, V, T extends RedisConnection<K, V>> T connect(CommandHandler<K, V> handler, T connection) {
+    private <K, V, T extends RedisAsyncConnection<K, V>> T connect(CommandHandler<K, V> handler, T connection) {
         try {
             ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
             ChannelPipeline pipeline = Channels.pipeline(watchdog, handler, connection);
@@ -162,7 +184,7 @@ public class RedisClient {
     public void shutdown() {
         for (Channel c : channels) {
             ChannelPipeline pipeline = c.getPipeline();
-            RedisConnection connection = pipeline.get(RedisConnection.class);
+            RedisAsyncConnection connection = pipeline.get(RedisAsyncConnection.class);
             connection.close();
         }
         ChannelGroupFuture future = channels.close();

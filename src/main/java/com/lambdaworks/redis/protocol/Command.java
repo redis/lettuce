@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 public class Command<K, V, T> implements Future<T> {
     private static final byte[] CRLF = "\r\n".getBytes(Charsets.ASCII);
 
-    protected final CommandType type;
+    public final CommandType type;
     protected CommandArgs args;
     protected CommandOutput<K, V, T> output;
     protected CountDownLatch latch;
@@ -29,12 +29,13 @@ public class Command<K, V, T> implements Future<T> {
      * @param type      Command type.
      * @param output    Command output.
      * @param args      Command args, if any.
+     * @param multi     Flag indicating if MULTI active.
      */
-    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs args) {
+    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs args, boolean multi) {
         this.type   = type;
         this.output = output;
         this.args   = args;
-        this.latch  = new CountDownLatch(1);
+        this.latch  = new CountDownLatch(multi ? 2 : 1);
     }
 
     /**
@@ -99,15 +100,20 @@ public class Command<K, V, T> implements Future<T> {
      * @param timeout   Maximum time to wait for a result.
      * @param unit      Unit of time for the timeout.
      *
-     * @return The command output, or null if the timeout expires.
+     * @return The command output.
+     *
+     * @throws TimeoutException if the wait timed out.
      */
     @Override
-    public T get(long timeout, TimeUnit unit) {
+    public T get(long timeout, TimeUnit unit) throws TimeoutException {
         try {
-            return latch.await(timeout, unit) ? output.get() : null;
+            if (!latch.await(timeout, unit)) {
+                throw new TimeoutException("Command timed out");
+            }
         } catch (InterruptedException e) {
             throw new RedisCommandInterruptedException(e);
         }
+        return output.get();
     }
 
     /**

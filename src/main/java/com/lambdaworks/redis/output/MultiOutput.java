@@ -4,6 +4,7 @@ package com.lambdaworks.redis.output;
 
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
 import java.nio.ByteBuffer;
@@ -15,37 +16,43 @@ import java.util.*;
  * @author Will Glozer
  */
 public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private Queue<CommandOutput<K, V, ?>> queue;
+    private Queue<Command<K, V, ?>> queue;
 
     public MultiOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<Object>());
-        queue = new LinkedList<CommandOutput<K, V, ?>>();
+        queue = new LinkedList<Command<K, V, ?>>();
     }
 
-    public void add(CommandOutput<K, V, ?> cmd) {
+    public void add(Command<K, V, ?> cmd) {
         queue.add(cmd);
     }
 
     @Override
     public void set(long integer) {
-        queue.peek().set(integer);
+        queue.peek().getOutput().set(integer);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        queue.peek().set(bytes);
+        queue.peek().getOutput().set(bytes);
     }
 
     @Override
     public void setError(ByteBuffer error) {
-        queue.peek().setError(error);
+        queue.peek().getOutput().setError(error);
     }
 
     @Override
     public void complete(int depth) {
         if (depth == 1) {
-            CommandOutput<K, V, ?> o = queue.remove();
+            Command<K, V, ?> cmd = queue.remove();
+            CommandOutput<K, V, ?> o = cmd.getOutput();
             output.add(!o.hasError() ? o.get() : new RedisException(o.getError()));
+            cmd.complete();
+        } else if (depth == 0 && !queue.isEmpty()) {
+            for (Command<K, V, ?> cmd : queue) {
+                cmd.complete();
+            }
         }
     }
 }

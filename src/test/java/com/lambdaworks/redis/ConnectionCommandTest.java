@@ -68,27 +68,33 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
     @Test
     public void authInvalidPassword() throws Exception {
+        RedisAsyncConnection async = client.connectAsync();
         try {
-            redis.auth("invalid");
+            async.auth("invalid");
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
             assertEquals("ERR Client sent AUTH, but no password is set", e.getMessage());
-            Field f = redis.getClass().getDeclaredField("password");
+            Field f = async.getClass().getDeclaredField("password");
             f.setAccessible(true);
-            assertNull(f.get(redis));
+            assertNull(f.get(async));
+        } finally {
+            async.close();
         }
     }
 
     @Test
     public void selectInvalid() throws Exception {
+        RedisAsyncConnection async = client.connectAsync();
         try {
-            redis.select(1024);
+            async.select(1024);
             fail("Selected invalid db index");
         } catch (RedisException e) {
             assertEquals("ERR invalid DB index", e.getMessage());
-            Field f = redis.getClass().getDeclaredField("db");
+            Field f = async.getClass().getDeclaredField("db");
             f.setAccessible(true);
-            assertEquals(0, f.get(redis));
+            assertEquals(0, f.get(async));
+        } finally {
+            async.close();
         }
     }
 }

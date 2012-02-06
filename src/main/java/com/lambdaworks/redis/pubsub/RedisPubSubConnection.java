@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -28,7 +28,7 @@ import static com.lambdaworks.redis.protocol.CommandType.*;
  *
  * @author Will Glozer
  */
-public class RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
+public class RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> {
     private List<RedisPubSubListener<K, V>> listeners;
     private Set<K> channels;
     private Set<K> patterns;

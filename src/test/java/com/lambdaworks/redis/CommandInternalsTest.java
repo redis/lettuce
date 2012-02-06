@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.lambdaworks.redis.protocol.Charsets.buffer;
 import static junit.framework.Assert.*;
@@ -22,7 +23,7 @@ public class CommandInternalsTest {
     @Before
     public final void createCommand() throws Exception {
         CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);
-        command = new Command<String, String, String>(CommandType.INFO, output, null);
+        command = new Command<String, String, String>(CommandType.INFO, output, null, false);
     }
 
     @Test
@@ -54,14 +55,14 @@ public class CommandInternalsTest {
         assertEquals("one", command.get(0, TimeUnit.MILLISECONDS));
     }
 
-    @Test(timeout = 10)
+    @Test(expected = TimeoutException.class, timeout = 10)
     public void getTimeout() throws Exception {
-        assertNull(command.get(2, TimeUnit.MILLISECONDS));
+        assertNull(command.get(2, TimeUnit.MICROSECONDS));
     }
 
     @Test(timeout = 10)
     public void awaitTimeout() throws Exception {
-        assertFalse(command.await(2, TimeUnit.MILLISECONDS));
+        assertFalse(command.await(2, TimeUnit.MICROSECONDS));
     }
 
     @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
