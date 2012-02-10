@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class IntegerCommandTest extends AbstractCommandTest {
+public class NumericCommandTest extends AbstractCommandTest {
     @Test
     public void decr() throws Exception {
         assertEquals(-1, (long) redis.decr(key));
@@ -29,5 +29,11 @@ public class IntegerCommandTest extends AbstractCommandTest {
     public void incrby() throws Exception {
         assertEquals(3, (long) redis.incrby(key, 3));
         assertEquals(6, (long) redis.incrby(key, 3));
+    }
+
+    @Test
+    public void incrbyfloat() throws Exception {
+        assertEquals(3.0, redis.incrbyfloat(key, 3.0), 0.1);
+        assertEquals(3.2, redis.incrbyfloat(key, 0.2), 0.1);
     }
 }

@@ -103,6 +103,32 @@ public class KeyCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void pexpire() throws Exception {
+        assertFalse(redis.pexpire(key, 10));
+        redis.set(key, value);
+        assertTrue(redis.pexpire(key, 10));
+        assertTrue(redis.pttl(key) <= 10 && redis.pttl(key) > 0);
+    }
+
+    @Test
+    public void pexpireat() throws Exception {
+        Date expiration = new Date(System.currentTimeMillis() + 100);
+        assertFalse(redis.pexpireat(key, expiration));
+        redis.set(key, value);
+        assertTrue(redis.pexpireat(key, expiration));
+        assertTrue(redis.pttl(key) <= 100 && redis.pttl(key) > 0);
+    }
+
+    @Test
+    public void pttl() throws Exception {
+        assertEquals(-1, (long) redis.pttl(key));
+        redis.set(key, value);
+        assertEquals(-1, (long) redis.pttl(key));
+        redis.pexpire(key, 10);
+        assertTrue(redis.pttl(key) <= 10 && redis.pttl(key) > 0);
+    }
+
+    @Test
     public void randomkey() throws Exception {
         assertNull(redis.randomkey());
         redis.set(key, value);

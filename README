@@ -1,9 +1,10 @@
 lettuce - A scalable Java Redis client
 
-  Lettuce is a scalable thread-safe Redis client. Multiple threads may share one
-  RedisConnection provided they avoid blocking and transactional operations such
-  as BLPOP, and MULTI/EXEC. Multiple connections are efficiently managed by the
-  excellent netty NIO framework.
+  Lettuce is a scalable thread-safe Redis client providing both synchronous and
+  asyncronous connections. Multiple threads may share one connection provided
+  they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
+  Multiple connections are efficiently managed by the excellent netty NIO
+  framework.
 
   This version of lettuce has been tested against redis 2.4.7
 

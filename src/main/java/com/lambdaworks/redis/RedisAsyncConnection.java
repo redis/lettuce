@@ -225,6 +225,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(HINCRBY, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Future<Double> hincrbyfloat(K key, K field, double amount) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field).add(amount);
+        return dispatch(HINCRBYFLOAT, new DoubleOutput<K, V>(codec), args);
+    }
+
     public Future<Map<K, V>> hgetall(K key) {
         return dispatch(HGETALL, new MapOutput<K, V>(codec), key);
     }
@@ -268,6 +273,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
     public Future<Long> incrby(K key, long amount) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(amount);
         return dispatch(INCRBY, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Future<Double> incrbyfloat(K key, double amount) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(amount);
+        return dispatch(INCRBYFLOAT, new DoubleOutput<K, V>(codec), args);
     }
 
     public Future<String> info() {
@@ -374,8 +384,27 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(PERSIST, new BooleanOutput<K, V>(codec), key);
     }
 
+    public Future<Boolean> pexpire(K key, long milliseconds) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(milliseconds);
+        return dispatch(PEXPIRE, new BooleanOutput<K, V>(codec), args);
+    }
+
+    public Future<Boolean> pexpireat(K key, Date timestamp) {
+        return pexpireat(key, timestamp.getTime());
+    }
+
+    public Future<Boolean> pexpireat(K key, long timestamp) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(timestamp);
+        return dispatch(PEXPIREAT, new BooleanOutput<K, V>(codec), args);
+    }
+
     public Future<String> ping() {
         return dispatch(PING, new StatusOutput<K, V>(codec));
+    }
+
+    public Future<Long> pttl(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        return dispatch(PTTL, new IntegerOutput<K, V>(codec), args);
     }
 
     public Future<Long> publish(K channel, V message) {
@@ -471,8 +500,14 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(SETRANGE, new IntegerOutput<K, V>(codec), args);
     }
 
+    @Deprecated
     public void shutdown() {
         dispatch(SHUTDOWN, new StatusOutput<K, V>(codec));
+    }
+
+    public void shutdown(boolean save) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        dispatch(SHUTDOWN, new StatusOutput<K, V>(codec), save ? args.add(SAVE) : args.add(NOSAVE));
     }
 
     public Future<Set<V>> sinter(K... keys) {

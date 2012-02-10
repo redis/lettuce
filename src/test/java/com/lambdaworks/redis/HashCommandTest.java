@@ -56,6 +56,12 @@ public class HashCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void hincrbyfloat() throws Exception {
+        assertEquals(1.0, redis.hincrbyfloat(key, "one", 1.0), 0.1);
+        assertEquals(-1.0, redis.hincrbyfloat(key, "one", -2.0), 0.1);
+    }
+
+    @Test
     public void hkeys() throws Exception {
         assertEquals(list(), redis.hkeys(key));
         redis.hset(key, "one", "1");

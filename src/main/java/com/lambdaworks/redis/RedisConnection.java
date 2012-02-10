@@ -191,6 +191,10 @@ public class RedisConnection<K, V> {
         return await(c.hincrby(key, field, amount));
     }
 
+    public Double hincrbyfloat(K key, K field, double amount) {
+        return await(c.hincrbyfloat(key, field, amount));
+    }
+
     public Map<K, V> hgetall(K key) {
         return await(c.hgetall(key));
     }
@@ -229,6 +233,10 @@ public class RedisConnection<K, V> {
 
     public Long incrby(K key, long amount) {
         return await(c.incrby(key, amount));
+    }
+
+    public Double incrbyfloat(K key, double amount) {
+        return await(c.incrbyfloat(key, amount));
     }
 
     public String info() {
@@ -319,8 +327,25 @@ public class RedisConnection<K, V> {
         return await(c.persist(key));
     }
 
+    public Boolean pexpire(K key, long milliseconds) {
+        return await(c.pexpire(key, milliseconds));
+    }
+
+    public Boolean pexpireat(K key, Date timestamp) {
+        return await(c.pexpireat(key, timestamp));
+    }
+
+    public Boolean pexpireat(K key, long timestamp) {
+        return await(c.pexpireat(key, timestamp));
+    }
+
+
     public String ping() {
         return await(c.ping());
+    }
+
+    public Long pttl(K key) {
+        return await(c.pttl(key));
     }
 
     public Long publish(K channel, V message) {
@@ -403,8 +428,13 @@ public class RedisConnection<K, V> {
         return await(c.setrange(key, offset, value));
     }
 
+    @Deprecated
     public void shutdown() {
         c.shutdown();
+    }
+
+    public void shutdown(boolean save) {
+        c.shutdown(save);
     }
 
     public Set<V> sinter(K... keys) {

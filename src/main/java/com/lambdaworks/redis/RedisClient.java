@@ -21,8 +21,8 @@ import java.util.concurrent.*;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads
- * may share one {@link RedisAsyncConnection} provided they avoid blocking and transactional
- * operations such as BLPOP and MULTI/EXEC.
+ * may share one connection provided they avoid blocking and transactional operations
+ * such as BLPOP and MULTI/EXEC.
  *
  * @author Will Glozer
  */

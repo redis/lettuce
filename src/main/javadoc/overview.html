@@ -1,10 +1,11 @@
 <body>
   <a href="http://github.com/wg/lettuce">lettuce</a> is a scalable thread-safe Java
-  {@link com.lambdaworks.redis.RedisClient RedisClient}.
+  {@link com.lambdaworks.redis.RedisClient RedisClient} providing both
+  {@link com.lambdaworks.redis.RedisConnection synchronous} and
+  {@link com.lambdaworks.redis.RedisAsyncConnection asynchronous} connections.
 
-  Multiple threads may share one {@link com.lambdaworks.redis.RedisConnection RedisConnection}
-  provided they avoid blocking and transactional operations such as
-  <a href="http://redis.io/commands/blpop">BLPOP</a> and
+  Multiple threads may share one connection provided they avoid blocking and transactional
+  operations such as <a href="http://redis.io/commands/blpop">BLPOP</a> and
   <a href="http://redis.io/commands/multi">MULTI</a>/<a href="http://redis.io/commands/exec">EXEC</a>.
   Multiple open connections are efficiently managed by the excellent
   <a href="http://www.jboss.org/netty">netty</a> NIO framework.
@@ -18,18 +19,16 @@
   </p>
 
   <p>
-    {@link com.lambdaworks.redis.RedisConnection RedisConnections} are designed to be long-lived,
-    and if the connection is lost will reconnect until
-    {@link com.lambdaworks.redis.RedisConnection#close close} is called. Pending commands that have
-    not timed out will be (re)sent after successful reconnection.
+    Redis connections are designed to be long-lived, and if the connection is lost will reconnect
+    until {@code close()} is called. Pending commands that have not timed out will be (re)sent after
+    successful reconnection.
   </p>
 
   <p>
-    All {@link com.lambdaworks.redis.RedisConnection RedisConnections} inherit a default
-    timeout from their {@link com.lambdaworks.redis.RedisClient} and will throw a
-    {@link com.lambdaworks.redis.RedisException} when non-blocking commands fail to return
-    a result before the timeout expires. The timeout defaults to 60 seconds and
+    All connections inherit a default timeout from their {@link com.lambdaworks.redis.RedisClient}
+    and will throw a {@link com.lambdaworks.redis.RedisException} when non-blocking commands fail
+    to return a result before the timeout expires. The timeout defaults to 60 seconds and
     may be changed via {@link com.lambdaworks.redis.RedisClient#setDefaultTimeout} or for
-    individual connections with {@link com.lambdaworks.redis.RedisConnection#setTimeout}.
+    each individual connection.
   </p>
 </body>
