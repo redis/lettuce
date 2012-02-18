@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright 2010-2011 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    The base sample context containing commnon beans shared by all the
+    MyBatis-Spring sample contexts.
+
+    version: $Id: applicationContext-infrastructure.xml 4527 2012-01-03 13:58:41Z eduardo.macarron $
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:tx="http://www.springframework.org/schema/tx"
+     xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+     xsi:schemaLocation="
+     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+     http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+     http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd">
+
+    <!-- in-memory database and a datasource -->
+    <jdbc:embedded-database id="dataSource">
+        <jdbc:script location="classpath:org/mybatis/spring/batch/db/database-schema.sql"/>
+        <jdbc:script location="classpath:org/mybatis/spring/batch/db/database-test-data.sql"/>
+    </jdbc:embedded-database>
+
+    <!-- transaction manager, use JtaTransactionManager for global tx -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    
+    <!-- enable transaction demarcation with annotations -->
+    <tx:annotation-driven />
+    
+    <!-- simplest possible SqlSessionFactory configuration -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <!-- Directly specify the location of the MyBatis mapper xml file. This
+             is NOT required when using MapperScannerConfigurer or
+             MapperFactoryBean; they will load the xml automatically if it is
+             in the same classpath location as the DAO interface. Rather than
+             directly referencing the xml files, the 'configLocation' property
+             could also be used to specify the location of a MyBatis config
+             file. This config file could, in turn, contain &ltmapper&gt
+             elements that point to the correct mapper xml files.
+         -->
+        <property name="mapperLocations" value="classpath:/org/mybatis/spring/batch/dao/*.xml" />
+    </bean>
+    
+    <!-- item reader  -->
+    <bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <property name="queryId" value="getEmployee" />
+    </bean>
+
+    <bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <property name="statementId" value="updateEmployee" />
+    </bean>
+
+</beans>
