@@ -18,6 +18,8 @@ package org.mybatis.spring.batch;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.ibatis.session.SqlSession;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mybatis.spring.batch.domain.Employee;
@@ -34,9 +36,12 @@ public class SpringBatchTest {
 
     @Autowired
     private MyBatisPagingItemReader<Employee> reader;
-    
+
     @Autowired
     private MyBatisBatchItemWriter<Employee> writer;
+
+    @Autowired
+    private SqlSession session;
     
     @Test
     @Transactional
@@ -49,5 +54,7 @@ public class SpringBatchTest {
             employee = reader.read();
         }
         writer.write(employees);
+        
+        Assert.assertEquals(20000, session.selectOne("check"));
     }
 }

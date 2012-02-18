@@ -31,4 +31,9 @@
         update employees set salary=#{salary} where id=#{id}
     </update>
 
+    <select id="check" resultType="int">
+        select sum(salary) from employees
+    </select>
+
+
 </mapper>
