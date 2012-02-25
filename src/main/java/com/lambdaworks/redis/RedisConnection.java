@@ -448,6 +448,10 @@ public class RedisConnection<K, V> {
         return await(c.scriptFlush());
     }
 
+    public String scriptKill() {
+        return await(c.scriptKill());
+    }
+
     public String scriptLoad(V script) {
         return await(c.scriptLoad(script));
     }

@@ -80,5 +80,14 @@ public class ScriptingCommandTest extends AbstractCommandTest {
 
         assertEquals("OK", redis.scriptFlush());
         assertEquals(list(false, false), redis.scriptExists(digest1, digest2));
+
+        redis.configSet("lua-time-limit", "10");
+        RedisAsyncConnection<String, String> async = client.connectAsync();
+        try {
+            async.eval("while true do end", STATUS, new String[0]);
+            assertEquals("OK", redis.scriptKill());
+        } finally {
+            async.close();
+        }
     }
 }

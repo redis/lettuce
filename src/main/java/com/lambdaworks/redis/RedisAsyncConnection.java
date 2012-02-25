@@ -487,6 +487,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(SCRIPT, new StatusOutput<K, V>(codec), args);
     }
 
+    public Future<String> scriptKill() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL);
+        return dispatch(SCRIPT, new StatusOutput<K, V>(codec), args);
+    }
+
     public Future<String> scriptLoad(V script) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LOAD).addValue(script);
         return dispatch(SCRIPT, new StatusOutput<K, V>(codec), args);
