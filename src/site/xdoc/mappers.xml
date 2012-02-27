@@ -152,11 +152,12 @@
     
       <p>
         <span class="label important">NOTE</span> <code>sqlSessionFactoryBean</code> and 
-        <code>sqlSessionTemplateBean</code> properties were available up to MyBatis-Spring 1.0.2 
+        <code>sqlSessionTemplateBean</code> properties were the only option available up to MyBatis-Spring 1.0.2 
         but given that the <code>MapperScannerConfigurer</code> runs earlier in the startup 
         process that <code>PropertyPlaceholderConfigurer</code> there were frequent errors. 
-        For that purpose that properties were replaced by the <code>sqlSessionFactoryBeanName</code> 
-        and <code>sqlSessionTemplateBeanName</code> properties as of MyBatis-Spring 1.1.0.
+        For that purpose that properties have been deprecated and the new properties 
+        <code>sqlSessionFactoryBeanName</code> and <code>sqlSessionTemplateBeanName</code> 
+        are recommended.
       </p>
     
       <p>
