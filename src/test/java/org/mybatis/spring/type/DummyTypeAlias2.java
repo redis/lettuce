@@ -13,14 +13,13 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring.type;
 
 import org.apache.ibatis.type.Alias;
 
 /**
-* @version $Id$
-*/
+ * @version $Id$
+ */
 @Alias("testAlias2")
 public class DummyTypeAlias2 {
 

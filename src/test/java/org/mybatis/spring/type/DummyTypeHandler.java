@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring.type;
 
 import java.math.BigInteger;
@@ -27,8 +26,8 @@ import org.apache.ibatis.type.MappedTypes;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
-* @version $Id$
-*/
+ * @version $Id$
+ */
 @MappedTypes(BigInteger.class)
 public class DummyTypeHandler implements TypeHandler<Object> {
 

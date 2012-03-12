@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring.type;
 
 import java.math.BigDecimal;
@@ -27,8 +26,8 @@ import org.apache.ibatis.type.MappedTypes;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
-* @version $Id$
-*/
+ * @version $Id$
+ */
 @MappedTypes(BigDecimal.class)
 public class DummyTypeHandler2 implements TypeHandler<Object> {
 
