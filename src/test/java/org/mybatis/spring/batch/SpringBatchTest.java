@@ -15,11 +15,12 @@
  */
 package org.mybatis.spring.batch;
 
+import static org.junit.Assert.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mybatis.spring.batch.domain.Employee;
@@ -55,6 +56,6 @@ public class SpringBatchTest {
     }
     writer.write(employees);
 
-    Assert.assertEquals(20000, session.selectOne("check"));
+    assertEquals(20000, session.selectOne("check"));
   }
 }
