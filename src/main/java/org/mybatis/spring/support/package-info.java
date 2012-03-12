@@ -20,4 +20,3 @@
  * @version $Id$
  */
 package org.mybatis.spring.support;
-
