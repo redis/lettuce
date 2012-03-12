@@ -1,5 +1,3 @@
-package org.mybatis.spring.batch.domain;
-
 /*
  * Copyright 2010-2012 The MyBatis Team.
  *
@@ -15,6 +13,8 @@ package org.mybatis.spring.batch.domain;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.mybatis.spring.batch.domain;
+
 public class Employee {
 
   private int id;
