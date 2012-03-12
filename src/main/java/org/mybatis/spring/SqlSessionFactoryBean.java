@@ -98,7 +98,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Sets the DatabaseIdProvider.
-   * 
+   *
    * @since 1.1.0
    * @return
    */
@@ -108,7 +108,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Gets the DatabaseIdProvider
-   * 
+   *
    * @since 1.1.0
    * @param databaseIdProvider
    */
@@ -118,11 +118,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Mybatis plugin list.
-   * 
+   *
    * @since 1.0.1
-   * 
+   *
    * @param plugins list of plugins
-   * 
+   *
    */
   public void setPlugins(Interceptor[] plugins) {
     this.plugins = plugins;
@@ -130,11 +130,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Packages to search for type aliases.
-   * 
+   *
    * @since 1.0.1
-   * 
+   *
    * @param typeAliasesPackage package to scan for domain objects
-   * 
+   *
    */
   public void setTypeAliasesPackage(String typeAliasesPackage) {
     this.typeAliasesPackage = typeAliasesPackage;
@@ -142,11 +142,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Packages to search for type handlers.
-   * 
+   *
    * @since 1.0.1
-   * 
+   *
    * @param typeHandlersPackage package to scan for type handlers
-   * 
+   *
    */
   public void setTypeHandlersPackage(String typeHandlersPackage) {
     this.typeHandlersPackage = typeHandlersPackage;
@@ -154,9 +154,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Set type handlers. They must be annotated with {@code MappedTypes} and optionally with {@code MappedJdbcTypes}
-   * 
+   *
    * @since 1.0.1
-   * 
+   *
    * @param typeHandlers Type handler list
    */
   public void setTypeHandlers(TypeHandler<?>[] typeHandlers) {
@@ -165,9 +165,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * List of type aliases to register. They can be annotated with {@code Alias}
-   * 
+   *
    * @since 1.0.1
-   * 
+   *
    * @param typeAliases Type aliases list
    */
   public void setTypeAliases(Class<?>[] typeAliases) {
@@ -178,9 +178,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * If true, a final check is done on Configuration to assure that all mapped
    * statements are fully loaded and there is no one still pending to resolve
    * includes. Defaults to false.
-   * 
+   *
    * @since 1.0.1
-   * 
+   *
    * @param failFast enable failFast
    */
   public void setFailFast(boolean failFast) {
