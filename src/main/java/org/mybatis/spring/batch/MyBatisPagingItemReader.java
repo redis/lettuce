@@ -15,6 +15,9 @@
  */
 package org.mybatis.spring.batch;
 
+import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.ClassUtils.getShortName;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,16 +26,14 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 /**
- * 
+ *
  * {@code org.springframework.batch.item.ItemReader} for reading database
  * records using MyBatis in a paging fashion.
  *
  * Provided to facilitate the migration from Spring-Batch iBATIS 2 page item readers to MyBatis 3.
- * 
+ *
  * @since 1.1.0
  */
 public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
@@ -46,12 +47,12 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   private Map<String, Object> parameterValues;
 
   public MyBatisPagingItemReader() {
-    setName(ClassUtils.getShortName(MyBatisPagingItemReader.class));
+    setName(getShortName(MyBatisPagingItemReader.class));
   }
 
   /**
    * Public setter for {@link SqlSessionFactory} for injection purposes.
-   * 
+   *
    * @param SqlSessionFactory sqlSessionFactory
    */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -59,9 +60,9 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   }
 
   /**
-   * Public setter for the statement id identifying the statement in the SqlMap 
+   * Public setter for the statement id identifying the statement in the SqlMap
    * configuration file.
-   * 
+   *
    * @param queryId the id for the statement
    */
   public void setQueryId(String queryId) {
@@ -70,7 +71,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   /**
    * The parameter values to be used for the query execution.
-   * 
+   *
    * @param parameterValues the values keyed by the parameter named used in
    * the query string.
    */
@@ -84,9 +85,9 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
    */
   public void afterPropertiesSet() throws Exception {
     super.afterPropertiesSet();
-    Assert.notNull(sqlSessionFactory);
+    notNull(sqlSessionFactory);
     sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
-    Assert.notNull(queryId);
+    notNull(queryId);
   }
 
   @Override
