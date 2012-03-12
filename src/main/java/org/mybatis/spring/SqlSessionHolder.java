@@ -15,11 +15,12 @@
  */
 package org.mybatis.spring;
 
+import static org.springframework.util.Assert.notNull;
+
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.transaction.support.ResourceHolderSupport;
-import org.springframework.util.Assert;
 
 /**
  * Used to keep current {@code SqlSession} in {@code TransactionSynchronizationManager}.
@@ -47,8 +48,8 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
       ExecutorType executorType,
       PersistenceExceptionTranslator exceptionTranslator) {
 
-    Assert.notNull(sqlSession, "SqlSession must not be null");
-    Assert.notNull(executorType, "ExecutorType must not be null");
+    notNull(sqlSession, "SqlSession must not be null");
+    notNull(executorType, "ExecutorType must not be null");
 
     this.sqlSession = sqlSession;
     this.executorType = executorType;
