@@ -15,12 +15,13 @@
  */
 package org.mybatis.spring.mapper;
 
+import static org.springframework.util.Assert.notNull;
+
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.util.Assert;
 
 /**
  * BeanFactory that enables injection of MyBatis mapper interfaces. It can be set up with a
@@ -37,7 +38,7 @@ import org.springframework.util.Assert;
  *   <bean id="oneMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyMapperInterface" />
  *   </bean>
- * 
+ *
  *   <bean id="anotherMapper" parent="baseMapper">
  *     <property name="mapperInterface" value="my.package.MyAnotherMapperInterface" />
  *   </bean>
@@ -57,7 +58,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
 
   /**
    * Sets the mapper interface of the MyBatis mapper
-   * 
+   *
    * @param mapperInterface class of the interface
    */
   public void setMapperInterface(Class<T> mapperInterface) {
@@ -71,9 +72,9 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
    * If it is true, the mapper will be added to MyBatis in the case it is not already
    * registered.
    * <p>
-   * By default addToCofig is true. 
-   * 
-   * @param addToConfig 
+   * By default addToCofig is true.
+   *
+   * @param addToConfig
    */
   public void setAddToConfig(boolean addToConfig) {
     this.addToConfig = addToConfig;
@@ -86,7 +87,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
   protected void checkDaoConfig() {
     super.checkDaoConfig();
 
-    Assert.notNull(this.mapperInterface, "Property 'mapperInterface' is required");
+    notNull(this.mapperInterface, "Property 'mapperInterface' is required");
 
     Configuration configuration = getSqlSession().getConfiguration();
     if (this.addToConfig && !configuration.hasMapper(this.mapperInterface)) {
