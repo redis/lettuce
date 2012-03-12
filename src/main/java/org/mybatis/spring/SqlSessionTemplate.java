@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring;
 
+import static org.apache.ibatis.reflection.ExceptionUtil.unwrapThrowable;
 import static org.mybatis.spring.SqlSessionUtils.closeSqlSession;
 import static org.mybatis.spring.SqlSessionUtils.getSqlSession;
 import static org.mybatis.spring.SqlSessionUtils.isSqlSessionTransactional;
@@ -29,7 +30,6 @@ import java.util.Map;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.executor.BatchResult;
-import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.ResultHandler;
@@ -360,7 +360,7 @@ public class SqlSessionTemplate implements SqlSession {
         }
         return result;
       } catch (Throwable t) {
-        Throwable unwrapped = ExceptionUtil.unwrapThrowable(t);
+        Throwable unwrapped = unwrapThrowable(t);
         if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
           Throwable translated = SqlSessionTemplate.this.exceptionTranslator.translateExceptionIfPossible((PersistenceException) unwrapped);
           if (translated != null) {
