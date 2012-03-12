@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>MyBatis-Spring</name>
@@ -58,9 +58,9 @@
   </contributors>
 
   <scm>
-    <url>scm:svn:http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/tags/mybatis-spring-1.1.0</url>
-    <connection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/tags/mybatis-spring-1.1.0</connection>
-    <developerConnection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/tags/mybatis-spring-1.1.0</developerConnection>
+    <url>scm:svn:http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</url>
+    <connection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</connection>
+    <developerConnection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</developerConnection>
   </scm>
   <distributionManagement>
     <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
