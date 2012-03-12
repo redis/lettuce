@@ -15,6 +15,10 @@
  */
 package org.mybatis.spring.transaction;
 
+import static org.springframework.jdbc.datasource.DataSourceUtils.isConnectionTransactional;
+import static org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection;
+import static org.springframework.util.Assert.notNull;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -24,16 +28,15 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.transaction.Transaction;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.util.Assert;
 
 /**
  * {@code SpringManagedTransaction} handles the lifecycle of a JDBC connection.
  * It retrieves a connection from Spring's transaction manager and returns it back to it
  * when it is no longer needed.
- * <p> 
- * If Spring's transaction handling is active it will no-op all commit/rollback/close calls 
+ * <p>
+ * If Spring's transaction handling is active it will no-op all commit/rollback/close calls
  * assuming that the Spring transaction manager will do the job.
- * <p> 
+ * <p>
  * If it is not it will behave like {@code JdbcTransaction}.
  *
  * @version $Id$
@@ -51,7 +54,7 @@ public class SpringManagedTransaction implements Transaction {
   private boolean autoCommit;
 
   public SpringManagedTransaction(DataSource dataSource) {
-    Assert.notNull(dataSource, "No DataSource specified");
+    notNull(dataSource, "No DataSource specified");
     this.dataSource = dataSource;
   }
 
@@ -67,16 +70,16 @@ public class SpringManagedTransaction implements Transaction {
 
   /**
    * Gets a connection from Spring transaction manager and discovers if this
-   * {@code Transaction} should manage connection or let it to Spring. 
+   * {@code Transaction} should manage connection or let it to Spring.
    * <p>
    * It also reads autocommit setting because when using Spring Transaction MyBatis
-   * thinks that autocommit is always false and will always call commit/rollback 
+   * thinks that autocommit is always false and will always call commit/rollback
    * so we need to no-op that calls.
    */
   private void openConnection() throws SQLException {
     this.connection = DataSourceUtils.getConnection(this.dataSource);
     this.autoCommit = this.connection.getAutoCommit();
-    this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
+    this.isConnectionTransactional = isConnectionTransactional(this.connection, this.dataSource);
 
     if (this.logger.isDebugEnabled()) {
       this.logger.debug(
@@ -116,7 +119,7 @@ public class SpringManagedTransaction implements Transaction {
    * {@inheritDoc}
    */
   public void close() throws SQLException {
-    DataSourceUtils.releaseConnection(this.connection, this.dataSource);
+    releaseConnection(this.connection, this.dataSource);
   }
 
 }
