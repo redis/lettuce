@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring;
 
+import static java.lang.reflect.Proxy.newProxyInstance;
 import static org.apache.ibatis.reflection.ExceptionUtil.unwrapThrowable;
 import static org.mybatis.spring.SqlSessionUtils.closeSqlSession;
 import static org.mybatis.spring.SqlSessionUtils.getSqlSession;
@@ -23,7 +24,6 @@ import static org.springframework.util.Assert.notNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +128,7 @@ public class SqlSessionTemplate implements SqlSession {
     this.sqlSessionFactory = sqlSessionFactory;
     this.executorType = executorType;
     this.exceptionTranslator = exceptionTranslator;
-    this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
+    this.sqlSessionProxy = (SqlSession) newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[] { SqlSession.class },
         new SqlSessionInterceptor());
