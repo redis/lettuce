@@ -15,6 +15,8 @@
  */
 package org.mybatis.spring;
 
+import static org.springframework.util.Assert.notNull;
+
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
@@ -29,10 +31,9 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.Assert;
 
 /**
- * Handles MyBatis SqlSession life cycle. It can register and get SqlSessions from 
+ * Handles MyBatis SqlSession life cycle. It can register and get SqlSessions from
  * Spring {@code TransactionSynchronizationManager}. Also works if no transaction is active.
  *
  * @version $Id$
@@ -65,7 +66,7 @@ public final class SqlSessionUtils {
   /**
    * Gets an SqlSession from Spring Transaction Manager or creates a new one if needed.
    * Tries to get a SqlSession out of current transaction. If there is not any, it creates a new one.
-   * Then, it synchronizes the SqlSession with the transaction if Spring TX is active and 
+   * Then, it synchronizes the SqlSession with the transaction if Spring TX is active and
    * <code>SpringManagedTransactionFactory</code> is configured as a transaction manager.
    *
    * @param sessionFactory a MyBatis {@code SqlSessionFactory} to create new sessions
@@ -77,8 +78,8 @@ public final class SqlSessionUtils {
    */
   public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType, PersistenceExceptionTranslator exceptionTranslator) {
 
-    Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
-    Assert.notNull(executorType, "No ExecutorType specified");
+    notNull(sessionFactory, "No SqlSessionFactory specified");
+    notNull(executorType, "No ExecutorType specified");
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
@@ -142,7 +143,7 @@ public final class SqlSessionUtils {
 
   /**
    * Checks if {@code SqlSession} passed as an argument is managed by Spring {@code TransactionSynchronizationManager}
-   * If it is not, it closes it, otherwise it just updates the reference counter and 
+   * If it is not, it closes it, otherwise it just updates the reference counter and
    * lets Spring call the close callback when the managed transaction ends
    *
    * @param session
@@ -150,8 +151,8 @@ public final class SqlSessionUtils {
    */
   public static void closeSqlSession(SqlSession session, SqlSessionFactory sessionFactory) {
 
-    Assert.notNull(session, "No SqlSession specified");
-    Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
+    notNull(session, "No SqlSession specified");
+    notNull(sessionFactory, "No SqlSessionFactory specified");
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
     if ((holder != null) && (holder.getSqlSession() == session)) {
@@ -175,8 +176,8 @@ public final class SqlSessionUtils {
    * @return true if session is transactional, otherwise false
    */
   public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
-    Assert.notNull(session, "No SqlSession specified");
-    Assert.notNull(sessionFactory, "No SqlSessionFactory specified");
+    notNull(session, "No SqlSession specified");
+    notNull(sessionFactory, "No SqlSessionFactory specified");
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
@@ -186,8 +187,8 @@ public final class SqlSessionUtils {
   /**
    * Callback for cleaning up resources. It cleans TransactionSynchronizationManager and
    * also commits and closes the {@code SqlSession}.
-   * It assumes that {@code Connection} life cycle will be managed by 
-   * {@code DataSourceTransactionManager} or {@code JtaTransactionManager} 
+   * It assumes that {@code Connection} life cycle will be managed by
+   * {@code DataSourceTransactionManager} or {@code JtaTransactionManager}
    */
   private static final class SqlSessionSynchronization extends TransactionSynchronizationAdapter {
 
@@ -196,8 +197,8 @@ public final class SqlSessionUtils {
     private final SqlSessionFactory sessionFactory;
 
     public SqlSessionSynchronization(SqlSessionHolder holder, SqlSessionFactory sessionFactory) {
-      Assert.notNull(holder, "Parameter 'holder' must be not null");
-      Assert.notNull(sessionFactory, "Parameter 'sessionFactory' must be not null");
+      notNull(holder, "Parameter 'holder' must be not null");
+      notNull(sessionFactory, "Parameter 'sessionFactory' must be not null");
 
       this.holder = holder;
       this.sessionFactory = sessionFactory;
