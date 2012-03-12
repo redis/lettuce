@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -28,35 +28,35 @@ import com.mockrunner.mock.jdbc.MockDataSource;
  */
 final class PooledMockDataSource extends MockDataSource {
 
-    private int connectionCount = 0;
+  private int connectionCount = 0;
 
-    private LinkedList<Connection> connections = new LinkedList<Connection>();
+  private LinkedList<Connection> connections = new LinkedList<Connection>();
 
-    @Override
-    public Connection getConnection() throws SQLException {
-        if (connections.isEmpty()) {
-            throw new SQLException("Sorry, I ran out of connections");
-        }
-        ++this.connectionCount;
-        return this.connections.removeLast();
+  @Override
+  public Connection getConnection() throws SQLException {
+    if (connections.isEmpty()) {
+      throw new SQLException("Sorry, I ran out of connections");
     }
+    ++this.connectionCount;
+    return this.connections.removeLast();
+  }
 
-    int getConnectionCount() {
-        return this.connectionCount;
-    }
+  int getConnectionCount() {
+    return this.connectionCount;
+  }
 
-    void reset() {
-        this.connectionCount = 0;
-        this.connections.clear();
-    }
+  void reset() {
+    this.connectionCount = 0;
+    this.connections.clear();
+  }
 
-    @Override
-    public void setupConnection(Connection connection) {
-        throw new UnsupportedOperationException("used addConnection() instead");
-    }
+  @Override
+  public void setupConnection(Connection connection) {
+    throw new UnsupportedOperationException("used addConnection() instead");
+  }
 
-    public void addConnection(Connection c) {
-        this.connections.add(c);
-    }
+  public void addConnection(Connection c) {
+    this.connections.add(c);
+  }
 
 }

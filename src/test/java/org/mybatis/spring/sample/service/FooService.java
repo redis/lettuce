@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -28,14 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class FooService {
 
-    private UserDao userDao;
+  private UserDao userDao;
 
-    public void setUserDao(UserDao userDao) {
-        this.userDao = userDao;
-    }
+  public void setUserDao(UserDao userDao) {
+    this.userDao = userDao;
+  }
 
-    public User doSomeBusinessStuff(String userId) {
-        return this.userDao.getUser(userId);
-    }
+  public User doSomeBusinessStuff(String userId) {
+    return this.userDao.getUser(userId);
+  }
 
 }

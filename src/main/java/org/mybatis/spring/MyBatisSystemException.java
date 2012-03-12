@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ import org.springframework.dao.UncategorizedDataAccessException;
  */
 public class MyBatisSystemException extends UncategorizedDataAccessException {
 
-    private static final long serialVersionUID = -5284728621670758939L;
+  private static final long serialVersionUID = -5284728621670758939L;
 
-    public MyBatisSystemException(Throwable cause) {
-        super(null, cause);
-    }
+  public MyBatisSystemException(Throwable cause) {
+    super(null, cause);
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -34,54 +34,54 @@ import org.apache.ibatis.plugin.Signature;
  * @version $Id$
  */
 @Intercepts({
-        @Signature(type = Executor.class, method = "commit", args = { boolean.class }),
-        @Signature(type = Executor.class, method = "rollback", args = { boolean.class }),
-        @Signature(type = Executor.class, method = "close", args = { boolean.class })
+    @Signature(type = Executor.class, method = "commit", args = { boolean.class }),
+    @Signature(type = Executor.class, method = "rollback", args = { boolean.class }),
+    @Signature(type = Executor.class, method = "close", args = { boolean.class })
 })
 final class ExecutorInterceptor implements Interceptor {
 
-    private int commitCount;
+  private int commitCount;
 
-    private int rollbackCount;
+  private int rollbackCount;
 
-    private boolean closed;
+  private boolean closed;
 
-    public Object intercept(Invocation invocation) throws Throwable {
-        if ("commit".equals(invocation.getMethod().getName())) {
-            ++this.commitCount;
-        } else if ("rollback".equals(invocation.getMethod().getName())) {
-            ++this.rollbackCount;
-        } else if ("close".equals(invocation.getMethod().getName())) {
-            this.closed = true;
-        }
-
-        return invocation.proceed();
+  public Object intercept(Invocation invocation) throws Throwable {
+    if ("commit".equals(invocation.getMethod().getName())) {
+      ++this.commitCount;
+    } else if ("rollback".equals(invocation.getMethod().getName())) {
+      ++this.rollbackCount;
+    } else if ("close".equals(invocation.getMethod().getName())) {
+      this.closed = true;
     }
 
-    public Object plugin(Object target) {
-        return Plugin.wrap(target, this);
-    }
+    return invocation.proceed();
+  }
 
-    public void setProperties(Properties properties) {
-        // do nothing
-    }
+  public Object plugin(Object target) {
+    return Plugin.wrap(target, this);
+  }
 
-    void reset() {
-        this.commitCount = 0;
-        this.rollbackCount = 0;
-        this.closed = false;
-    }
+  public void setProperties(Properties properties) {
+    // do nothing
+  }
 
-    int getCommitCount() {
-        return this.commitCount;
-    }
+  void reset() {
+    this.commitCount = 0;
+    this.rollbackCount = 0;
+    this.closed = false;
+  }
 
-    int getRollbackCount() {
-        return this.rollbackCount;
-    }
+  int getCommitCount() {
+    return this.commitCount;
+  }
 
-    boolean isExecutorClosed() {
-        return this.closed;
-    }
+  int getRollbackCount() {
+    return this.rollbackCount;
+  }
+
+  boolean isExecutorClosed() {
+    return this.closed;
+  }
 
 }

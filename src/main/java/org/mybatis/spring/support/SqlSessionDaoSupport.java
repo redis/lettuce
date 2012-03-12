@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -36,39 +36,39 @@ import org.springframework.util.Assert;
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
-    private SqlSession sqlSession;
+  private SqlSession sqlSession;
 
-    private boolean externalSqlSession;
+  private boolean externalSqlSession;
 
-    @Autowired(required = false)
-    public final void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        if (!this.externalSqlSession) {
-            this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
-        }
+  @Autowired(required = false)
+  public final void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+    if (!this.externalSqlSession) {
+      this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
     }
+  }
 
-    @Autowired(required = false)
-    public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSession = sqlSessionTemplate;
-        this.externalSqlSession = true;
-    }
+  @Autowired(required = false)
+  public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+    this.sqlSession = sqlSessionTemplate;
+    this.externalSqlSession = true;
+  }
 
-    /**
-     * Users should use this method to get a SqlSession to call its statement methods
-     * This is SqlSession is managed by spring. Users should not commit/rollback/close it
-     * because it will be automatically done.
-     * 
-     * @return Spring managed thread safe SqlSession 
-     */
-    public final SqlSession getSqlSession() {
-        return this.sqlSession;
-    }
+  /**
+   * Users should use this method to get a SqlSession to call its statement methods
+   * This is SqlSession is managed by spring. Users should not commit/rollback/close it
+   * because it will be automatically done.
+   * 
+   * @return Spring managed thread safe SqlSession 
+   */
+  public final SqlSession getSqlSession() {
+    return this.sqlSession;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void checkDaoConfig() {
-        Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");
-    }
+  /**
+   * {@inheritDoc}
+   */
+  protected void checkDaoConfig() {
+    Assert.notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");
+  }
 
 }

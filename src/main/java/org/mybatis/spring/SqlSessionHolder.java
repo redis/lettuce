@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -31,40 +31,40 @@ import org.springframework.util.Assert;
  */
 public final class SqlSessionHolder extends ResourceHolderSupport {
 
-    private final SqlSession sqlSession;
+  private final SqlSession sqlSession;
 
-    private final ExecutorType executorType;
+  private final ExecutorType executorType;
 
-    private final PersistenceExceptionTranslator exceptionTranslator;
+  private final PersistenceExceptionTranslator exceptionTranslator;
 
-    /**
-     * Creates a new holder instance.
-     *
-     * @param sqlSession the {@code SqlSession} has to be hold.
-     * @param executorType the {@code ExecutorType} has to be hold.
-     */
-    public SqlSessionHolder(SqlSession sqlSession,
-            ExecutorType executorType,
-            PersistenceExceptionTranslator exceptionTranslator) {
+  /**
+   * Creates a new holder instance.
+   *
+   * @param sqlSession the {@code SqlSession} has to be hold.
+   * @param executorType the {@code ExecutorType} has to be hold.
+   */
+  public SqlSessionHolder(SqlSession sqlSession,
+      ExecutorType executorType,
+      PersistenceExceptionTranslator exceptionTranslator) {
 
-        Assert.notNull(sqlSession, "SqlSession must not be null");
-        Assert.notNull(executorType, "ExecutorType must not be null");
+    Assert.notNull(sqlSession, "SqlSession must not be null");
+    Assert.notNull(executorType, "ExecutorType must not be null");
 
-        this.sqlSession = sqlSession;
-        this.executorType = executorType;
-        this.exceptionTranslator = exceptionTranslator;
-    }
+    this.sqlSession = sqlSession;
+    this.executorType = executorType;
+    this.exceptionTranslator = exceptionTranslator;
+  }
 
-    public SqlSession getSqlSession() {
-        return sqlSession;
-    }
+  public SqlSession getSqlSession() {
+    return sqlSession;
+  }
 
-    public ExecutorType getExecutorType() {
-        return executorType;
-    }
+  public ExecutorType getExecutorType() {
+    return executorType;
+  }
 
-    public PersistenceExceptionTranslator getPersistenceExceptionTranslator() {
-        return exceptionTranslator;
-    }
+  public PersistenceExceptionTranslator getPersistenceExceptionTranslator() {
+    return exceptionTranslator;
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ import org.apache.ibatis.type.TypeHandler;
 @MappedTypes(BigDecimal.class)
 public class DummyTypeHandler2 implements TypeHandler<Object> {
 
-    public void setParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
-    }
+  public void setParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
+  }
 
-    public Object getResult(ResultSet rs, String columnName) throws SQLException {
-        return null;
-    }
+  public Object getResult(ResultSet rs, String columnName) throws SQLException {
+    return null;
+  }
 
-    public Object getResult(CallableStatement cs, int columnIndex) throws SQLException {
-        return null;
-    }
+  public Object getResult(CallableStatement cs, int columnIndex) throws SQLException {
+    return null;
+  }
 
-    public Object getResult(ResultSet rs, int columnIndex) throws SQLException {
-        return null;
-    }
+  public Object getResult(ResultSet rs, int columnIndex) throws SQLException {
+    return null;
+  }
 
 }

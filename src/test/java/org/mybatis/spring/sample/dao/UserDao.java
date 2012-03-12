@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -25,6 +25,6 @@ import org.mybatis.spring.sample.domain.User;
  */
 public interface UserDao {
 
-    User getUser(String userId);
+  User getUser(String userId);
 
 }

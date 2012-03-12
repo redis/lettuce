@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 the MyBatis Team.
+ * Copyright 2010-2012 The MyBatis Team.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,27 +34,27 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration(locations = { "classpath:org/mybatis/spring/batch/applicationContext.xml" })
 public class SpringBatchTest {
 
-    @Autowired
-    private MyBatisPagingItemReader<Employee> reader;
+  @Autowired
+  private MyBatisPagingItemReader<Employee> reader;
 
-    @Autowired
-    private MyBatisBatchItemWriter<Employee> writer;
+  @Autowired
+  private MyBatisBatchItemWriter<Employee> writer;
 
-    @Autowired
-    private SqlSession session;
-    
-    @Test
-    @Transactional
-    public void shouldDuplicateSalaryOfAllEmployees() throws UnexpectedInputException, ParseException, Exception {
-        List<Employee> employees = new ArrayList<Employee>();
-        Employee employee = reader.read();
-        while (employee != null) {
-            employee.setSalary(employee.getSalary() * 2);
-            employees.add(employee);
-            employee = reader.read();
-        }
-        writer.write(employees);
-        
-        Assert.assertEquals(20000, session.selectOne("check"));
+  @Autowired
+  private SqlSession session;
+
+  @Test
+  @Transactional
+  public void shouldDuplicateSalaryOfAllEmployees() throws UnexpectedInputException, ParseException, Exception {
+    List<Employee> employees = new ArrayList<Employee>();
+    Employee employee = reader.read();
+    while (employee != null) {
+      employee.setSalary(employee.getSalary() * 2);
+      employees.add(employee);
+      employee = reader.read();
     }
+    writer.write(employees);
+
+    Assert.assertEquals(20000, session.selectOne("check"));
+  }
 }

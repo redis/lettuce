@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import org.mybatis.spring.support.SqlSessionDaoSupport;
  */
 public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
 
-    public User getUser(String userId) {
-        return (User) getSqlSession().selectOne("org.mybatis.spring.sample.dao.UserDao.getUser", userId);
-    }
+  public User getUser(String userId) {
+    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.dao.UserDao.getUser", userId);
+  }
 
 }

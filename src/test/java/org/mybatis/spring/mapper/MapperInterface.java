@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -22,5 +22,5 @@ package org.mybatis.spring.mapper;
 // when used as a marker interface,
 // this class should be ignored even though it has methods
 public interface MapperInterface {
-    public void method();
+  public void method();
 }

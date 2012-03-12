@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -24,12 +24,9 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.service.FooService;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -40,18 +37,18 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @DirtiesContext
 public abstract class AbstractSampleTest {
 
-    @Autowired
-    protected FooService fooService;
+  @Autowired
+  protected FooService fooService;
 
-    public final void setFooService(FooService fooService) {
-        this.fooService = fooService;
-    }
+  public final void setFooService(FooService fooService) {
+    this.fooService = fooService;
+  }
 
-    @Test
-    public final void testFooService() {
-        User user = this.fooService.doSomeBusinessStuff("u1");
-        assertNotNull(user);
-        assertEquals("Pocoyo", user.getName());
-    }
+  @Test
+  public final void testFooService() {
+    User user = this.fooService.doSomeBusinessStuff("u1");
+    assertNotNull(user);
+    assertEquals("Pocoyo", user.getName());
+  }
 
 }

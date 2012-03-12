@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import org.springframework.test.context.ContextConfiguration;
  */
 @ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-batch.xml" })
 public class SampleBatchTest extends AbstractSampleTest {
-    // Note this does not actually test batch functionality since FooService
-    // only calls one DAO method. This class and associated Spring context
-    // simply show that no implementation changes are needed to enable
-    // different MyBatis configurations.
+  // Note this does not actually test batch functionality since FooService
+  // only calls one DAO method. This class and associated Spring context
+  // simply show that no implementation changes are needed to enable
+  // different MyBatis configurations.
 }

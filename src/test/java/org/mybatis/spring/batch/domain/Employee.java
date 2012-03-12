@@ -1,6 +1,7 @@
 package org.mybatis.spring.batch.domain;
+
 /*
- * Copyright 2010-2012 the MyBatis Team.
+ * Copyright 2010-2012 The MyBatis Team.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +17,32 @@ package org.mybatis.spring.batch.domain;
  */
 public class Employee {
 
-    private int id;
-    private String name;
-    private int salary;
+  private int id;
+  private String name;
+  private int salary;
 
-    public int getId() {
-        return id;
-    }
+  public int getId() {
+    return id;
+  }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public int getSalary() {
-        return salary;
-    }
+  public int getSalary() {
+    return salary;
+  }
 
-    public void setSalary(int salary) {
-        this.salary = salary;
-    }
+  public void setSalary(int salary) {
+    this.salary = salary;
+  }
 
 }

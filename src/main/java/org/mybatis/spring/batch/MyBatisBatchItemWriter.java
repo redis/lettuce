@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 the MyBatis Team.
+ * Copyright 2010-2012 The MyBatis Team.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,97 +50,97 @@ import org.springframework.util.Assert;
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
 
-    protected static final Log logger = LogFactory.getLog(MyBatisBatchItemWriter.class);
+  protected static final Log logger = LogFactory.getLog(MyBatisBatchItemWriter.class);
 
-    private SqlSessionTemplate sqlSessionTemplate;
+  private SqlSessionTemplate sqlSessionTemplate;
 
-    private String statementId;
+  private String statementId;
 
-    private boolean assertUpdates = true;
+  private boolean assertUpdates = true;
 
-    /**
-     * Public setter for the flag that determines whether an assertion is made
-     * that all items cause at least one row to be updated.
-     * 
-     * @param assertUpdates the flag to set. Defaults to true;
-     */
-    public void setAssertUpdates(boolean assertUpdates) {
-        this.assertUpdates = assertUpdates;
+  /**
+   * Public setter for the flag that determines whether an assertion is made
+   * that all items cause at least one row to be updated.
+   * 
+   * @param assertUpdates the flag to set. Defaults to true;
+   */
+  public void setAssertUpdates(boolean assertUpdates) {
+    this.assertUpdates = assertUpdates;
+  }
+
+  /**
+   * Public setter for {@link SqlSessionFactory} for injection purposes.
+   * 
+   * @param SqlSessionFactory sqlSessionFactory
+   */
+  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+    if (sqlSessionTemplate == null) {
+      this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     }
+  }
 
-    /**
-     * Public setter for {@link SqlSessionFactory} for injection purposes.
-     * 
-     * @param SqlSessionFactory sqlSessionFactory
-     */
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        if (sqlSessionTemplate == null) {
-            this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
+  /**
+   * Public setter for the {@link SqlSessionTemplate}.
+   * 
+   * @param SqlSessionTemplate the SqlSessionTemplate
+   */
+  public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+    this.sqlSessionTemplate = sqlSessionTemplate;
+  }
+
+  /**
+   * Public setter for the statement id identifying the statement in the SqlMap 
+   * configuration file.
+   * 
+   * @param statementId the id for the statement
+   */
+  public void setStatementId(String statementId) {
+    this.statementId = statementId;
+  }
+
+  /**
+   * Check mandatory properties - there must be an SqlSession and a statementId.
+   */
+  public void afterPropertiesSet() {
+    Assert.notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
+    Assert.isTrue(sqlSessionTemplate.getExecutorType() == ExecutorType.BATCH, "SqlSessionTemplate's executor type must be BATCH");
+    Assert.notNull(statementId, "A statementId is required.");
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void write(final List<? extends T> items) {
+
+    if (!items.isEmpty()) {
+
+      if (logger.isDebugEnabled()) {
+        logger.debug("Executing batch with " + items.size() + " items.");
+      }
+
+      for (T item : items) {
+        sqlSessionTemplate.update(statementId, item);
+      }
+
+      List<BatchResult> results = sqlSessionTemplate.flushStatements();
+
+      if (assertUpdates) {
+        if (results.size() != 1) {
+          throw new InvalidDataAccessResourceUsageException("Batch execution returned invalid results. " +
+              "Expected 1 but number of BatchResult objects returned was " + results.size());
         }
-    }
 
-    /**
-     * Public setter for the {@link SqlSessionTemplate}.
-     * 
-     * @param SqlSessionTemplate the SqlSessionTemplate
-     */
-    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSessionTemplate = sqlSessionTemplate;
-    }
+        int[] updateCounts = results.get(0).getUpdateCounts();
 
-    /**
-     * Public setter for the statement id identifying the statement in the SqlMap 
-     * configuration file.
-     * 
-     * @param statementId the id for the statement
-     */
-    public void setStatementId(String statementId) {
-        this.statementId = statementId;
-    }
-
-    /**
-     * Check mandatory properties - there must be an SqlSession and a statementId.
-     */
-    public void afterPropertiesSet() {
-        Assert.notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
-        Assert.isTrue(sqlSessionTemplate.getExecutorType() == ExecutorType.BATCH, "SqlSessionTemplate's executor type must be BATCH");
-        Assert.notNull(statementId, "A statementId is required.");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void write(final List<? extends T> items) {
-
-        if (!items.isEmpty()) {
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("Executing batch with " + items.size() + " items.");
-            }
-
-            for (T item : items) {
-                sqlSessionTemplate.update(statementId, item);
-            }
-
-            List<BatchResult> results = sqlSessionTemplate.flushStatements();
-
-            if (assertUpdates) {
-                if (results.size() != 1) {
-                    throw new InvalidDataAccessResourceUsageException("Batch execution returned invalid results. " +
-                            "Expected 1 but number of BatchResult objects returned was " + results.size());
-                }
-
-                int[] updateCounts = results.get(0).getUpdateCounts();
-
-                for (int i = 0; i < updateCounts.length; i++) {
-                    int value = updateCounts[i];
-                    if (value == 0) {
-                        throw new EmptyResultDataAccessException("Item " + i + " of " + updateCounts.length
-                                + " did not update any rows: [" + items.get(i) + "]", 1);
-                    }
-                }
-            }
+        for (int i = 0; i < updateCounts.length; i++) {
+          int value = updateCounts[i];
+          if (value == 0) {
+            throw new EmptyResultDataAccessException("Item " + i + " of " + updateCounts.length
+                + " did not update any rows: [" + items.get(i) + "]", 1);
+          }
         }
+      }
     }
+  }
 
 }

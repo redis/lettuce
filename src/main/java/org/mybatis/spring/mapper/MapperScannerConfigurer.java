@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -96,342 +96,342 @@ import org.springframework.util.StringUtils;
  */
 public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
 
-    private String basePackage;
+  private String basePackage;
 
-    private boolean addToConfig = true;
+  private boolean addToConfig = true;
 
-    private SqlSessionFactory sqlSessionFactory;
+  private SqlSessionFactory sqlSessionFactory;
 
-    private SqlSessionTemplate sqlSessionTemplate;
+  private SqlSessionTemplate sqlSessionTemplate;
 
-    private String sqlSessionTemplateBeanName;
+  private String sqlSessionTemplateBeanName;
 
-    private String sqlSessionFactoryBeanName;
+  private String sqlSessionFactoryBeanName;
 
-    private Class<? extends Annotation> annotationClass;
+  private Class<? extends Annotation> annotationClass;
 
-    private Class<?> markerInterface;
+  private Class<?> markerInterface;
 
-    private ApplicationContext applicationContext;
+  private ApplicationContext applicationContext;
 
-    private String beanName;
+  private String beanName;
 
-    /**
-     * This property lets you set the base package for your mapper interface files. 
-     * <p>
-     * You can set more than one package by using a semicolon or comma as a separator. 
-     * <p>
-     * Mappers will be searched for recursively starting in the specified package(s).
-     * 
-     * @param basePackage base package name
-     */
-    public void setBasePackage(String basePackage) {
-        this.basePackage = basePackage;
+  /**
+   * This property lets you set the base package for your mapper interface files. 
+   * <p>
+   * You can set more than one package by using a semicolon or comma as a separator. 
+   * <p>
+   * Mappers will be searched for recursively starting in the specified package(s).
+   * 
+   * @param basePackage base package name
+   */
+  public void setBasePackage(String basePackage) {
+    this.basePackage = basePackage;
+  }
+
+  /**
+   * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}
+   * 
+   * @param addToConfig
+   * @see MapperFactoryBean#setAddToConfig(boolean)
+   */
+  public void setAddToConfig(boolean addToConfig) {
+    this.addToConfig = addToConfig;
+  }
+
+  /**
+   * This property specifies the annotation that the scanner will search for. 
+   * <p>
+   * The scanner will register all interfaces in the base package that also have the
+   * specified annotation.
+   * <p>
+   * Note this can be combined with markerInterface.
+   * 
+   * @param annotationClass annotation class
+   */
+  public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
+    this.annotationClass = annotationClass;
+  }
+
+  /**
+   * This property specifies the parent that the scanner will search for. 
+   * <p>
+   * The scanner will register all interfaces in the base package that also have the
+   * specified interface class as a parent.
+   * <p>
+   * Note this can be combined with annotationClass.
+   * 
+   * @param superClass parent class
+   */
+  public void setMarkerInterface(Class<?> superClass) {
+    this.markerInterface = superClass;
+  }
+
+  /**
+   * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
+   * more than one in the spring context. Usually this is only needed when you 
+   * have more than one datasource.
+   * <p>
+   * Use {@link #setSqlSessionTemplateBeanName(String)} instead
+   * 
+   * @param sqlSessionTemplate
+   */
+  @Deprecated
+  public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+    this.sqlSessionTemplate = sqlSessionTemplate;
+  }
+
+  /**
+   * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
+   * more than one in the spring context. Usually this is only needed when you 
+   * have more than one datasource.
+   * <p>
+   * Note bean names are used, not bean references. This is because the scanner 
+   * loads early during the start process and it is too early to build mybatis
+   * object instances. 
+   * 
+   * @since 1.1.0
+   * 
+   * @param sqlSessionTemplateName Bean name of the {@code SqlSessionTemplate}
+   */
+  public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
+    this.sqlSessionTemplateBeanName = sqlSessionTemplateName;
+  }
+
+  /**
+   * Specifies which {@code SqlSessionFactory} to use in the case that there is 
+   * more than one in the spring context. Usually this is only needed when you 
+   * have more than one datasource.
+   * <p>
+   * Use {@link #setSqlSessionFactoryBeanName(String)} instead.
+   * 
+   * @param sqlSessionFactory
+   */
+  @Deprecated
+  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+    this.sqlSessionFactory = sqlSessionFactory;
+  }
+
+  /**
+   * Specifies which {@code SqlSessionFactory} to use in the case that there is 
+   * more than one in the spring context. Usually this is only needed when you 
+   * have more than one datasource.
+   * <p>
+   * Note bean names are used, not bean references. This is because the scanner 
+   * loads early during the start process and it is too early to build mybatis
+   * object instances. 
+   * 
+   * @since 1.1.0
+   * 
+   * @param sqlSessionFactoryName Bean name of the {@code SqlSessionFactory}
+   */
+  public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
+    this.sqlSessionFactoryBeanName = sqlSessionFactoryName;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void setApplicationContext(ApplicationContext applicationContext) {
+    this.applicationContext = applicationContext;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void setBeanName(String name) {
+    this.beanName = name;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void afterPropertiesSet() throws Exception {
+    Assert.notNull(this.basePackage, "Property 'basePackage' is required");
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
+    processPropertyPlaceHolders();
+
+    Scanner scanner = new Scanner(beanDefinitionRegistry);
+    scanner.setResourceLoader(this.applicationContext);
+
+    scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
+  }
+
+  /*
+   * BeanDefinitionRegistries are called early in application startup, before
+   * BeanFactoryPostProcessors. This means that PropertyResourceConfigurers will not have been
+   * loaded and any property substitution of this class' properties will fail. To avoid this, find
+   * any PropertyResourceConfigurers defined in the context and run them on this class' bean
+   * definition. Then update the values.
+   */
+  private void processPropertyPlaceHolders() {
+    Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class);
+
+    if (!prcs.isEmpty() && applicationContext instanceof GenericApplicationContext) {
+      BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
+          .getBeanFactory().getBeanDefinition(beanName);
+
+      // PropertyResourceConfigurer does not expose any methods to explicitly perform
+      // property placeholder substitution. Instead, create a BeanFactory that just
+      // contains this mapper scanner and post process the factory.
+      DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+      factory.registerBeanDefinition(beanName, mapperScannerBean);
+
+      for (PropertyResourceConfigurer prc : prcs.values()) {
+        prc.postProcessBeanFactory(factory);
+      }
+
+      PropertyValues values = mapperScannerBean.getPropertyValues();
+
+      this.basePackage = updatePropertyValue("basePackage", values);
+      this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
+      this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
+    }
+  }
+
+  private String updatePropertyValue(String propertyName, PropertyValues values) {
+    PropertyValue property = values.getPropertyValue(propertyName);
+
+    if (property == null) {
+      return null;
+    }
+
+    Object value = property.getValue();
+
+    if (value == null) {
+      return null;
+    } else if (value instanceof String) {
+      return value.toString();
+    } else if (value instanceof TypedStringValue) {
+      return ((TypedStringValue) value).getValue();
+    } else {
+      return null;
+    }
+  }
+
+  private final class Scanner extends ClassPathBeanDefinitionScanner {
+
+    public Scanner(BeanDefinitionRegistry registry) {
+      super(registry);
     }
 
     /**
-     * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}
-     * 
-     * @param addToConfig
-     * @see MapperFactoryBean#setAddToConfig(boolean)
+     * Configures parent scanner to search for the right interfaces. It can search for all
+     * interfaces or just for those that extends a markerInterface or/and those annotated with
+     * the annotationClass
      */
-    public void setAddToConfig(boolean addToConfig) {
-        this.addToConfig = addToConfig;
-    }
+    @Override
+    protected void registerDefaultFilters() {
+      boolean acceptAllInterfaces = true;
 
-    /**
-     * This property specifies the annotation that the scanner will search for. 
-     * <p>
-     * The scanner will register all interfaces in the base package that also have the
-     * specified annotation.
-     * <p>
-     * Note this can be combined with markerInterface.
-     * 
-     * @param annotationClass annotation class
-     */
-    public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
-        this.annotationClass = annotationClass;
-    }
+      // if specified, use the given annotation and / or marker interface
+      if (MapperScannerConfigurer.this.annotationClass != null) {
+        addIncludeFilter(new AnnotationTypeFilter(MapperScannerConfigurer.this.annotationClass));
+        acceptAllInterfaces = false;
+      }
 
-    /**
-     * This property specifies the parent that the scanner will search for. 
-     * <p>
-     * The scanner will register all interfaces in the base package that also have the
-     * specified interface class as a parent.
-     * <p>
-     * Note this can be combined with annotationClass.
-     * 
-     * @param superClass parent class
-     */
-    public void setMarkerInterface(Class<?> superClass) {
-        this.markerInterface = superClass;
-    }
+      // override AssignableTypeFilter to ignore matches on the actual marker interface
+      if (MapperScannerConfigurer.this.markerInterface != null) {
+        addIncludeFilter(new AssignableTypeFilter(MapperScannerConfigurer.this.markerInterface) {
+          @Override
+          protected boolean matchClassName(String className) {
+            return false;
+          }
+        });
+        acceptAllInterfaces = false;
+      }
 
-    /**
-     * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
-     * more than one in the spring context. Usually this is only needed when you 
-     * have more than one datasource.
-     * <p>
-     * Use {@link #setSqlSessionTemplateBeanName(String)} instead
-     * 
-     * @param sqlSessionTemplate
-     */
-    @Deprecated
-    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-        this.sqlSessionTemplate = sqlSessionTemplate;
-    }
+      if (acceptAllInterfaces) {
+        // default include filter that accepts all classes
+        addIncludeFilter(new TypeFilter() {
+          public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
+            return true;
+          }
+        });
+      }
 
-    /**
-     * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
-     * more than one in the spring context. Usually this is only needed when you 
-     * have more than one datasource.
-     * <p>
-     * Note bean names are used, not bean references. This is because the scanner 
-     * loads early during the start process and it is too early to build mybatis
-     * object instances. 
-     * 
-     * @since 1.1.0
-     * 
-     * @param sqlSessionTemplateName Bean name of the {@code SqlSessionTemplate}
-     */
-    public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
-        this.sqlSessionTemplateBeanName = sqlSessionTemplateName;
-    }
-
-    /**
-     * Specifies which {@code SqlSessionFactory} to use in the case that there is 
-     * more than one in the spring context. Usually this is only needed when you 
-     * have more than one datasource.
-     * <p>
-     * Use {@link #setSqlSessionFactoryBeanName(String)} instead.
-     * 
-     * @param sqlSessionFactory
-     */
-    @Deprecated
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
-    }
-
-    /**
-     * Specifies which {@code SqlSessionFactory} to use in the case that there is 
-     * more than one in the spring context. Usually this is only needed when you 
-     * have more than one datasource.
-     * <p>
-     * Note bean names are used, not bean references. This is because the scanner 
-     * loads early during the start process and it is too early to build mybatis
-     * object instances. 
-     * 
-     * @since 1.1.0
-     * 
-     * @param sqlSessionFactoryName Bean name of the {@code SqlSessionFactory}
-     */
-    public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
-        this.sqlSessionFactoryBeanName = sqlSessionFactoryName;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setBeanName(String name) {
-        this.beanName = name;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void afterPropertiesSet() throws Exception {
-        Assert.notNull(this.basePackage, "Property 'basePackage' is required");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
-        processPropertyPlaceHolders();
-
-        Scanner scanner = new Scanner(beanDefinitionRegistry);
-        scanner.setResourceLoader(this.applicationContext);
-
-        scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
-    }
-
-    /*
-     * BeanDefinitionRegistries are called early in application startup, before
-     * BeanFactoryPostProcessors. This means that PropertyResourceConfigurers will not have been
-     * loaded and any property substitution of this class' properties will fail. To avoid this, find
-     * any PropertyResourceConfigurers defined in the context and run them on this class' bean
-     * definition. Then update the values.
-     */
-    private void processPropertyPlaceHolders() {
-        Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class);
-
-        if (!prcs.isEmpty() && applicationContext instanceof GenericApplicationContext) {
-            BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
-                    .getBeanFactory().getBeanDefinition(beanName);
-
-            // PropertyResourceConfigurer does not expose any methods to explicitly perform
-            // property placeholder substitution. Instead, create a BeanFactory that just
-            // contains this mapper scanner and post process the factory.
-            DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
-            factory.registerBeanDefinition(beanName, mapperScannerBean);
-
-            for (PropertyResourceConfigurer prc : prcs.values()) {
-                prc.postProcessBeanFactory(factory);
-            }
-
-            PropertyValues values = mapperScannerBean.getPropertyValues();
-
-            this.basePackage = updatePropertyValue("basePackage", values);
-            this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
-            this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
+      // exclude package-info.java
+      addExcludeFilter(new TypeFilter() {
+        public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
+          String className = metadataReader.getClassMetadata().getClassName();
+          return className.endsWith("package-info");
         }
+      });
     }
 
-    private String updatePropertyValue(String propertyName, PropertyValues values) {
-        PropertyValue property = values.getPropertyValue(propertyName);
+    /**
+     * Calls the parent search that will search and register all the candidates. Then the
+     * registered objects are post processed to set them as MapperFactoryBeans
+     */
+    @Override
+    protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
+      Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
-        if (property == null) {
-            return null;
+      if (beanDefinitions.isEmpty()) {
+        logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage
+            + "' package. Please check your configuration.");
+      } else {
+        for (BeanDefinitionHolder holder : beanDefinitions) {
+          GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
+
+          if (logger.isDebugEnabled()) {
+            logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName()
+                + "' and '" + definition.getBeanClassName() + "' mapperInterface");
+          }
+
+          // the mapper interface is the original class of the bean
+          // but, the actual class of the bean is MapperFactoryBean
+          definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
+          definition.setBeanClass(MapperFactoryBean.class);
+
+          definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
+
+          if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
+            definition.getPropertyValues().add("sqlSessionFactory",
+                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
+          } else if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
+            definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactory);
+          }
+
+          if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionTemplateBeanName)) {
+            definition.getPropertyValues().add("sqlSessionTemplate",
+                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
+          } else if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
+            definition.getPropertyValues().add("sqlSessionTemplate", MapperScannerConfigurer.this.sqlSessionTemplate);
+          }
         }
+      }
 
-        Object value = property.getValue();
-
-        if (value == null) {
-            return null;
-        } else if (value instanceof String) {
-            return value.toString();
-        } else if (value instanceof TypedStringValue) {
-            return ((TypedStringValue) value).getValue();
-        } else {
-            return null;
-        }
+      return beanDefinitions;
     }
 
-    private final class Scanner extends ClassPathBeanDefinitionScanner {
-
-        public Scanner(BeanDefinitionRegistry registry) {
-            super(registry);
-        }
-
-        /**
-         * Configures parent scanner to search for the right interfaces. It can search for all
-         * interfaces or just for those that extends a markerInterface or/and those annotated with
-         * the annotationClass
-         */
-        @Override
-        protected void registerDefaultFilters() {
-            boolean acceptAllInterfaces = true;
-
-            // if specified, use the given annotation and / or marker interface
-            if (MapperScannerConfigurer.this.annotationClass != null) {
-                addIncludeFilter(new AnnotationTypeFilter(MapperScannerConfigurer.this.annotationClass));
-                acceptAllInterfaces = false;
-            }
-
-            // override AssignableTypeFilter to ignore matches on the actual marker interface
-            if (MapperScannerConfigurer.this.markerInterface != null) {
-                addIncludeFilter(new AssignableTypeFilter(MapperScannerConfigurer.this.markerInterface) {
-                    @Override
-                    protected boolean matchClassName(String className) {
-                        return false;
-                    }
-                });
-                acceptAllInterfaces = false;
-            }
-
-            if (acceptAllInterfaces) {
-                // default include filter that accepts all classes
-                addIncludeFilter(new TypeFilter() {
-                    public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-                        return true;
-                    }
-                });
-            }
-
-            // exclude package-info.java
-            addExcludeFilter(new TypeFilter() {
-                public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-                    String className = metadataReader.getClassMetadata().getClassName();
-                    return className.endsWith("package-info");
-                }
-            });
-        }
-
-        /**
-         * Calls the parent search that will search and register all the candidates. Then the
-         * registered objects are post processed to set them as MapperFactoryBeans
-         */
-        @Override
-        protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
-            Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
-
-            if (beanDefinitions.isEmpty()) {
-                logger.warn("No MyBatis mapper was found in '" + MapperScannerConfigurer.this.basePackage
-                        + "' package. Please check your configuration.");
-            } else {
-                for (BeanDefinitionHolder holder : beanDefinitions) {
-                    GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName()
-                                + "' and '" + definition.getBeanClassName() + "' mapperInterface");
-                    }
-
-                    // the mapper interface is the original class of the bean
-                    // but, the actual class of the bean is MapperFactoryBean
-                    definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
-                    definition.setBeanClass(MapperFactoryBean.class);
-
-                    definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
-
-                    if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
-                        definition.getPropertyValues().add("sqlSessionFactory",
-                                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
-                    } else if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
-                        definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactory);
-                    }
-
-                    if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionTemplateBeanName)) {
-                        definition.getPropertyValues().add("sqlSessionTemplate",
-                                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
-                    } else if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
-                        definition.getPropertyValues().add("sqlSessionTemplate", MapperScannerConfigurer.this.sqlSessionTemplate);
-                    }
-                }
-            }
-
-            return beanDefinitions;
-        }
-
-        @Override
-        protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
-            return (beanDefinition.getMetadata().isInterface() && beanDefinition.getMetadata().isIndependent());
-        }
-
-        @Override
-        protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
-            if (super.checkCandidate(beanName, beanDefinition)) {
-                return true;
-            } else {
-                logger.warn("Skipping MapperFactoryBean with name '" + beanName
-                        + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
-                        + ". Bean already defined with the same name!");
-                return false;
-            }
-        }
+    @Override
+    protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
+      return (beanDefinition.getMetadata().isInterface() && beanDefinition.getMetadata().isIndependent());
     }
+
+    @Override
+    protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
+      if (super.checkCandidate(beanName, beanDefinition)) {
+        return true;
+      } else {
+        logger.warn("Skipping MapperFactoryBean with name '" + beanName
+            + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
+            + ". Bean already defined with the same name!");
+        return false;
+      }
+    }
+  }
 
 }

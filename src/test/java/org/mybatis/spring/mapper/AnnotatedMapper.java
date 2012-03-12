@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -24,5 +24,5 @@ import org.springframework.stereotype.Component;
 // ensures annotated classes are loaded
 @Component
 public interface AnnotatedMapper {
-    public void method();
+  public void method();
 }

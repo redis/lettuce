@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -31,25 +31,25 @@ import org.apache.ibatis.transaction.TransactionFactory;
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {
 
-    /**
-     * {@inheritDoc}
-     */
-    public Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit) {
-        return new SpringManagedTransaction(dataSource);
-    }
+  /**
+   * {@inheritDoc}
+   */
+  public Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit) {
+    return new SpringManagedTransaction(dataSource);
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Transaction newTransaction(Connection conn) {
-        throw new UnsupportedOperationException("New Spring transactions require a DataSource");
-    }
+  /**
+   * {@inheritDoc}
+   */
+  public Transaction newTransaction(Connection conn) {
+    throw new UnsupportedOperationException("New Spring transactions require a DataSource");
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void setProperties(Properties props) {
-        // not needed in this version
-    }
+  /**
+   * {@inheritDoc}
+   */
+  public void setProperties(Properties props) {
+    // not needed in this version
+  }
 
 }

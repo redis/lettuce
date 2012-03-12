@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The myBatis Team
+ *    Copyright 2010-2012 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import static org.junit.Assert.assertEquals;
 import java.sql.SQLException;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -37,153 +37,153 @@ import org.springframework.context.support.GenericApplicationContext;
  * @version $Id$
  */
 public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
-    private SqlSessionDaoSupport sqlSessionDaoSupport;
+  private SqlSessionDaoSupport sqlSessionDaoSupport;
 
-    private GenericApplicationContext applicationContext;
+  private GenericApplicationContext applicationContext;
 
-    @Before
-    public void setup() {
-        sqlSessionDaoSupport = new MockSqlSessionDao();
-    }
+  @Before
+  public void setup() {
+    sqlSessionDaoSupport = new MockSqlSessionDao();
+  }
 
-    @After
-    public void closeConnection() throws SQLException {
-        connection.close();
-    }
+  @After
+  public void closeConnection() throws SQLException {
+    connection.close();
+  }
 
-    @Test
-    public void testWithSqlSessionTemplate() {
-        SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-        sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
-        sqlSessionDaoSupport.afterPropertiesSet();
+  @Test
+  public void testWithSqlSessionTemplate() {
+    SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+    sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
+    sqlSessionDaoSupport.afterPropertiesSet();
 
-        assertEquals("should store the Template", sessionTemplate, sqlSessionDaoSupport.getSqlSession());
-    }
+    assertEquals("should store the Template", sessionTemplate, sqlSessionDaoSupport.getSqlSession());
+  }
 
-    @Test
-    public void testWithSqlSessionFactory() {
-        sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
-        sqlSessionDaoSupport.afterPropertiesSet();
+  @Test
+  public void testWithSqlSessionFactory() {
+    sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
+    sqlSessionDaoSupport.afterPropertiesSet();
 
-        assertEquals("should store the Factory", sqlSessionFactory, ((SqlSessionTemplate) sqlSessionDaoSupport
-                .getSqlSession()).getSqlSessionFactory());
-    }
+    assertEquals("should store the Factory", sqlSessionFactory, ((SqlSessionTemplate) sqlSessionDaoSupport
+        .getSqlSession()).getSqlSessionFactory());
+  }
 
-    @Test
-    public void testWithBothFactoryAndTemplate() {
-        SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
-        sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
-        sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
-        sqlSessionDaoSupport.afterPropertiesSet();
+  @Test
+  public void testWithBothFactoryAndTemplate() {
+    SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+    sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
+    sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
+    sqlSessionDaoSupport.afterPropertiesSet();
 
-        assertEquals("should ignore the Factory", sessionTemplate, sqlSessionDaoSupport.getSqlSession());
-    }
+    assertEquals("should ignore the Factory", sessionTemplate, sqlSessionDaoSupport.getSqlSession());
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testWithNoFactoryOrSession() {
-        sqlSessionDaoSupport.afterPropertiesSet();
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testWithNoFactoryOrSession() {
+    sqlSessionDaoSupport.afterPropertiesSet();
+  }
 
-    @Test
-    public void testAutowireSqlSessionTemplate() {
-        setupContext();
+  @Test
+  public void testAutowireSqlSessionTemplate() {
+    setupContext();
 
-        setupSqlSessionTemplate("template");
+    setupSqlSessionTemplate("template");
 
-        startContext();
+    startContext();
 
-        assertEquals("should store the Template", applicationContext.getBean(SqlSessionTemplate.class),
-                sqlSessionDaoSupport.getSqlSession());
-    }
+    assertEquals("should store the Template", applicationContext.getBean(SqlSessionTemplate.class),
+        sqlSessionDaoSupport.getSqlSession());
+  }
 
-    @Test
-    public void testAutowireSqlSessionFactory() {
-        setupContext();
-        setupSqlSessionFactory("factory1");
+  @Test
+  public void testAutowireSqlSessionFactory() {
+    setupContext();
+    setupSqlSessionFactory("factory1");
 
-        startContext();
+    startContext();
 
-        assertEquals("should store the Factory", applicationContext.getBean(SqlSessionFactory.class),
-                ((SqlSessionTemplate) sqlSessionDaoSupport.getSqlSession()).getSqlSessionFactory());
+    assertEquals("should store the Factory", applicationContext.getBean(SqlSessionFactory.class),
+        ((SqlSessionTemplate) sqlSessionDaoSupport.getSqlSession()).getSqlSessionFactory());
 
-    }
+  }
 
-    @Test(expected = org.springframework.beans.factory.BeanCreationException.class)
-    public void testAutowireWithNoFactoryOrSession() {
-        setupContext();
-        startContext();
-    }
+  @Test(expected = org.springframework.beans.factory.BeanCreationException.class)
+  public void testAutowireWithNoFactoryOrSession() {
+    setupContext();
+    startContext();
+  }
 
-    @Test
-    public void testAutowireWithBothFactoryAndTemplate() {
-        setupContext();
+  @Test
+  public void testAutowireWithBothFactoryAndTemplate() {
+    setupContext();
 
-        setupSqlSessionFactory("factory");
-        setupSqlSessionTemplate("template");
+    setupSqlSessionFactory("factory");
+    setupSqlSessionTemplate("template");
 
-        startContext();
+    startContext();
 
-        assertEquals("should ignore the Factory", applicationContext.getBean(SqlSessionTemplate.class),
-                sqlSessionDaoSupport.getSqlSession());
-    }
+    assertEquals("should ignore the Factory", applicationContext.getBean(SqlSessionTemplate.class),
+        sqlSessionDaoSupport.getSqlSession());
+  }
 
-    @Test(expected = BeanCreationException.class)
-    public void testAutowireWithTwoFactories() {
-        setupContext();
+  @Test(expected = BeanCreationException.class)
+  public void testAutowireWithTwoFactories() {
+    setupContext();
 
-        setupSqlSessionFactory("factory1");
-        setupSqlSessionFactory("factory2");
+    setupSqlSessionFactory("factory1");
+    setupSqlSessionFactory("factory2");
 
-        startContext();
-    }
+    startContext();
+  }
 
-    @Test(expected = BeanCreationException.class)
-    public void testAutowireWithTwoTemplates() {
-        setupContext();
+  @Test(expected = BeanCreationException.class)
+  public void testAutowireWithTwoTemplates() {
+    setupContext();
 
-        setupSqlSessionTemplate("template1");
-        setupSqlSessionTemplate("template2");
+    setupSqlSessionTemplate("template1");
+    setupSqlSessionTemplate("template2");
 
-        startContext();
-    }
+    startContext();
+  }
 
-    private void setupContext() {
-        applicationContext = new GenericApplicationContext();
+  private void setupContext() {
+    applicationContext = new GenericApplicationContext();
 
-        GenericBeanDefinition definition = new GenericBeanDefinition();
-        definition.setBeanClass(MockSqlSessionDao.class);
-        applicationContext.registerBeanDefinition("dao", definition);
+    GenericBeanDefinition definition = new GenericBeanDefinition();
+    definition.setBeanClass(MockSqlSessionDao.class);
+    applicationContext.registerBeanDefinition("dao", definition);
 
-        // add support for autowiring fields
-        AnnotationConfigUtils.registerAnnotationConfigProcessors(applicationContext);
-    }
+    // add support for autowiring fields
+    AnnotationConfigUtils.registerAnnotationConfigProcessors(applicationContext);
+  }
 
-    private void startContext() {
-        applicationContext.refresh();
-        applicationContext.start();
+  private void startContext() {
+    applicationContext.refresh();
+    applicationContext.start();
 
-        sqlSessionDaoSupport = applicationContext.getBean(MockSqlSessionDao.class);
-    }
+    sqlSessionDaoSupport = applicationContext.getBean(MockSqlSessionDao.class);
+  }
 
-    private void setupSqlSessionFactory(String name) {
-        GenericBeanDefinition definition = new GenericBeanDefinition();
-        definition.setBeanClass(SqlSessionFactoryBean.class);
-        definition.getPropertyValues().add("dataSource", dataSource);
+  private void setupSqlSessionFactory(String name) {
+    GenericBeanDefinition definition = new GenericBeanDefinition();
+    definition.setBeanClass(SqlSessionFactoryBean.class);
+    definition.getPropertyValues().add("dataSource", dataSource);
 
-        applicationContext.registerBeanDefinition(name, definition);
-    }
+    applicationContext.registerBeanDefinition(name, definition);
+  }
 
-    private void setupSqlSessionTemplate(String name) {
-        setupSqlSessionFactory("sqlSessionFactory");
+  private void setupSqlSessionTemplate(String name) {
+    setupSqlSessionFactory("sqlSessionFactory");
 
-        GenericBeanDefinition definition = new GenericBeanDefinition();
-        definition.setBeanClass(SqlSessionTemplate.class);
-        ConstructorArgumentValues constructorArgs = new ConstructorArgumentValues();
-        constructorArgs.addGenericArgumentValue(new RuntimeBeanReference("sqlSessionFactory"));
-        definition.setConstructorArgumentValues(constructorArgs);
-        applicationContext.registerBeanDefinition(name, definition);
-    }
+    GenericBeanDefinition definition = new GenericBeanDefinition();
+    definition.setBeanClass(SqlSessionTemplate.class);
+    ConstructorArgumentValues constructorArgs = new ConstructorArgumentValues();
+    constructorArgs.addGenericArgumentValue(new RuntimeBeanReference("sqlSessionFactory"));
+    definition.setConstructorArgumentValues(constructorArgs);
+    applicationContext.registerBeanDefinition(name, definition);
+  }
 
-    private static final class MockSqlSessionDao extends SqlSessionDaoSupport {
-    }
+  private static final class MockSqlSessionDao extends SqlSessionDaoSupport {
+  }
 }
