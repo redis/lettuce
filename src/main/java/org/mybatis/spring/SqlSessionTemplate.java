@@ -15,6 +15,9 @@
  */
 package org.mybatis.spring;
 
+import static org.mybatis.spring.SqlSessionUtils.closeSqlSession;
+import static org.mybatis.spring.SqlSessionUtils.getSqlSession;
+import static org.mybatis.spring.SqlSessionUtils.isSqlSessionTransactional;
 import static org.springframework.util.Assert.notNull;
 
 import java.lang.reflect.InvocationHandler;
@@ -34,6 +37,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
+
 
 /**
  * Thread safe, Spring managed, {@code SqlSession} that works with Spring
@@ -343,13 +347,13 @@ public class SqlSessionTemplate implements SqlSession {
    */
   private class SqlSessionInterceptor implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      final SqlSession sqlSession = SqlSessionUtils.getSqlSession(
+      final SqlSession sqlSession = getSqlSession(
           SqlSessionTemplate.this.sqlSessionFactory,
           SqlSessionTemplate.this.executorType,
           SqlSessionTemplate.this.exceptionTranslator);
       try {
         Object result = method.invoke(sqlSession, args);
-        if (!SqlSessionUtils.isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
+        if (!isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
           // force commit even on non-dirty sessions because some databases require
           // a commit/rollback before calling close()
           sqlSession.commit(true);
@@ -365,7 +369,7 @@ public class SqlSessionTemplate implements SqlSession {
         }
         throw unwrapped;
       } finally {
-        SqlSessionUtils.closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+        closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
       }
     }
   }
