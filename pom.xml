@@ -66,7 +66,15 @@
     <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
     <site>
       <id>mybatis.site</id>
-      <url>ftp://${mybatis.host}/spring/</url>
+      <!--
+       | make it overridible, FTP is terribly slow when launched from Maven Wagon
+       | an alternative strategy could be deploying the site locally
+       |
+       |    -Dsite.deploymentUrl=file://...
+       |
+       | then async redeploying it via Filezilla/whatelese
+      -->
+      <url>${site.deploymentUrl}</url>
     </site>
   </distributionManagement>
 
@@ -75,6 +83,10 @@
     <spring.version>3.1.1.RELEASE</spring.version>
     <clirr.comparisonVersion>1.0.2</clirr.comparisonVersion>
     <gcu.product>Spring</gcu.product>
+    <!--
+     | see distributionManagement.site.url
+    -->
+    <site.deploymentUrl>ftp://${mybatis.host}/spring/</site.deploymentUrl>
   </properties>
 
   <dependencies>
