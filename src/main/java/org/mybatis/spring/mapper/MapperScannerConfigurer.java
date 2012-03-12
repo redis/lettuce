@@ -15,6 +15,8 @@
  */
 package org.mybatis.spring.mapper;
 
+import static org.springframework.util.Assert.notNull;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Map;
@@ -48,7 +50,6 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.core.type.filter.TypeFilter;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -80,7 +81,7 @@ import org.springframework.util.StringUtils;
  * <p>
  * Configuration sample:
  * <p>
- * 
+ *
  * <pre class="code">
  * {@code
  *   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
@@ -90,7 +91,7 @@ import org.springframework.util.StringUtils;
  *   </bean>
  * }
  * </pre>
- * 
+ *
  * @see MapperFactoryBean
  * @version $Id$
  */
@@ -117,12 +118,12 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   private String beanName;
 
   /**
-   * This property lets you set the base package for your mapper interface files. 
+   * This property lets you set the base package for your mapper interface files.
    * <p>
-   * You can set more than one package by using a semicolon or comma as a separator. 
+   * You can set more than one package by using a semicolon or comma as a separator.
    * <p>
    * Mappers will be searched for recursively starting in the specified package(s).
-   * 
+   *
    * @param basePackage base package name
    */
   public void setBasePackage(String basePackage) {
@@ -131,7 +132,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
   /**
    * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}
-   * 
+   *
    * @param addToConfig
    * @see MapperFactoryBean#setAddToConfig(boolean)
    */
@@ -140,13 +141,13 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * This property specifies the annotation that the scanner will search for. 
+   * This property specifies the annotation that the scanner will search for.
    * <p>
    * The scanner will register all interfaces in the base package that also have the
    * specified annotation.
    * <p>
    * Note this can be combined with markerInterface.
-   * 
+   *
    * @param annotationClass annotation class
    */
   public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
@@ -154,13 +155,13 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * This property specifies the parent that the scanner will search for. 
+   * This property specifies the parent that the scanner will search for.
    * <p>
    * The scanner will register all interfaces in the base package that also have the
    * specified interface class as a parent.
    * <p>
    * Note this can be combined with annotationClass.
-   * 
+   *
    * @param superClass parent class
    */
   public void setMarkerInterface(Class<?> superClass) {
@@ -168,12 +169,12 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
-   * more than one in the spring context. Usually this is only needed when you 
+   * Specifies which {@code SqlSessionTemplate} to use in the case that there is
+   * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
    * Use {@link #setSqlSessionTemplateBeanName(String)} instead
-   * 
+   *
    * @param sqlSessionTemplate
    */
   @Deprecated
@@ -182,16 +183,16 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Specifies which {@code SqlSessionTemplate} to use in the case that there is 
-   * more than one in the spring context. Usually this is only needed when you 
+   * Specifies which {@code SqlSessionTemplate} to use in the case that there is
+   * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
-   * Note bean names are used, not bean references. This is because the scanner 
+   * Note bean names are used, not bean references. This is because the scanner
    * loads early during the start process and it is too early to build mybatis
-   * object instances. 
-   * 
+   * object instances.
+   *
    * @since 1.1.0
-   * 
+   *
    * @param sqlSessionTemplateName Bean name of the {@code SqlSessionTemplate}
    */
   public void setSqlSessionTemplateBeanName(String sqlSessionTemplateName) {
@@ -199,12 +200,12 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Specifies which {@code SqlSessionFactory} to use in the case that there is 
-   * more than one in the spring context. Usually this is only needed when you 
+   * Specifies which {@code SqlSessionFactory} to use in the case that there is
+   * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
    * Use {@link #setSqlSessionFactoryBeanName(String)} instead.
-   * 
+   *
    * @param sqlSessionFactory
    */
   @Deprecated
@@ -213,16 +214,16 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Specifies which {@code SqlSessionFactory} to use in the case that there is 
-   * more than one in the spring context. Usually this is only needed when you 
+   * Specifies which {@code SqlSessionFactory} to use in the case that there is
+   * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
-   * Note bean names are used, not bean references. This is because the scanner 
+   * Note bean names are used, not bean references. This is because the scanner
    * loads early during the start process and it is too early to build mybatis
-   * object instances. 
-   * 
+   * object instances.
+   *
    * @since 1.1.0
-   * 
+   *
    * @param sqlSessionFactoryName Bean name of the {@code SqlSessionFactory}
    */
   public void setSqlSessionFactoryBeanName(String sqlSessionFactoryName) {
@@ -247,7 +248,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * {@inheritDoc}
    */
   public void afterPropertiesSet() throws Exception {
-    Assert.notNull(this.basePackage, "Property 'basePackage' is required");
+    notNull(this.basePackage, "Property 'basePackage' is required");
   }
 
   /**
