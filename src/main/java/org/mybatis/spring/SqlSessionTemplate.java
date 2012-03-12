@@ -15,6 +15,8 @@
  */
 package org.mybatis.spring;
 
+import static org.springframework.util.Assert.*;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -32,7 +34,6 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
-import org.springframework.util.Assert;
 
 /**
  * Thread safe, Spring managed, {@code SqlSession} that works with Spring
@@ -52,15 +53,15 @@ import org.springframework.util.Assert;
  * Because SqlSessionTemplate is thread safe, a single instance can be shared
  * by all DAOs; there should also be a small memory savings by doing this. This
  * pattern can be used in Spring configuration files as follows:
- * 
+ *
  * <pre class="code">
- * {@code 
- * <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate"> 
- *   <constructor-arg ref="sqlSessionFactory" /> 
+ * {@code
+ * <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+ *   <constructor-arg ref="sqlSessionFactory" />
  * </bean>
  * }
  * </pre>
- * 
+ *
  * @see SqlSessionFactory
  * @see MyBatisExceptionTranslator
  * @version $Id$
@@ -76,7 +77,7 @@ public class SqlSessionTemplate implements SqlSession {
   private final PersistenceExceptionTranslator exceptionTranslator;
 
   /**
-   * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory} 
+   * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory}
    * provided as an argument.
    *
    * @param sqlSessionFactory
@@ -86,7 +87,7 @@ public class SqlSessionTemplate implements SqlSession {
   }
 
   /**
-   * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory} 
+   * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory}
    * provided as an argument and the given {@code ExecutorType}
    * {@code ExecutorType} cannot be changed once the {@code SqlSessionTemplate}
    * is constructed.
@@ -103,11 +104,11 @@ public class SqlSessionTemplate implements SqlSession {
   /**
    * Constructs a Spring managed {@code SqlSession} with the given
    * {@code SqlSessionFactory} and {@code ExecutorType}.
-   * A custom {@code SQLExceptionTranslator} can be provided as an 
+   * A custom {@code SQLExceptionTranslator} can be provided as an
    * argument so any {@code PersistenceException} thrown by MyBatis
    * can be custom translated to a {@code RuntimeException}
    * The {@code SQLExceptionTranslator} can also be null and thus no
-   * exception translation will be done and MyBatis exceptions will be 
+   * exception translation will be done and MyBatis exceptions will be
    * thrown
    *
    * @param sqlSessionFactory
@@ -117,8 +118,8 @@ public class SqlSessionTemplate implements SqlSession {
   public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
       PersistenceExceptionTranslator exceptionTranslator) {
 
-    Assert.notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
-    Assert.notNull(executorType, "Property 'executorType' is required");
+    notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
+    notNull(executorType, "Property 'executorType' is required");
 
     this.sqlSessionFactory = sqlSessionFactory;
     this.executorType = executorType;
@@ -311,7 +312,7 @@ public class SqlSessionTemplate implements SqlSession {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    */
   public Configuration getConfiguration() {
     return this.sqlSessionFactory.getConfiguration();
@@ -326,9 +327,9 @@ public class SqlSessionTemplate implements SqlSession {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @since 1.0.2
-   * 
+   *
    */
   public List<BatchResult> flushStatements() {
     return this.sqlSessionProxy.flushStatements();
