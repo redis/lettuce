@@ -15,6 +15,11 @@
  */
 package org.mybatis.spring;
 
+import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.ObjectUtils.isEmpty;
+import static org.springframework.util.StringUtils.hasLength;
+import static org.springframework.util.StringUtils.tokenizeToStringArray;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -45,9 +50,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.NestedIOException;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}.
@@ -287,8 +289,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * {@inheritDoc}
    */
   public void afterPropertiesSet() throws Exception {
-    Assert.notNull(dataSource, "Property 'dataSource' is required");
-    Assert.notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
+    notNull(dataSource, "Property 'dataSource' is required");
+    notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
 
     this.sqlSessionFactory = buildSqlSessionFactory();
   }
@@ -318,8 +320,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       configuration.setVariables(this.configurationProperties);
     }
 
-    if (StringUtils.hasLength(this.typeAliasesPackage)) {
-      String[] typeAliasPackageArray = StringUtils.tokenizeToStringArray(this.typeAliasesPackage,
+    if (hasLength(this.typeAliasesPackage)) {
+      String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeAliasPackageArray) {
         configuration.getTypeAliasRegistry().registerAliases(packageToScan);
@@ -329,7 +331,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!ObjectUtils.isEmpty(this.typeAliases)) {
+    if (!isEmpty(this.typeAliases)) {
       for (Class<?> typeAlias : this.typeAliases) {
         configuration.getTypeAliasRegistry().registerAlias(typeAlias);
         if (this.logger.isDebugEnabled()) {
@@ -338,7 +340,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!ObjectUtils.isEmpty(this.plugins)) {
+    if (!isEmpty(this.plugins)) {
       for (Interceptor plugin : this.plugins) {
         configuration.addInterceptor(plugin);
         if (this.logger.isDebugEnabled()) {
@@ -347,8 +349,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (StringUtils.hasLength(this.typeHandlersPackage)) {
-      String[] typeHandlersPackageArray = StringUtils.tokenizeToStringArray(this.typeHandlersPackage,
+    if (hasLength(this.typeHandlersPackage)) {
+      String[] typeHandlersPackageArray = tokenizeToStringArray(this.typeHandlersPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeHandlersPackageArray) {
         configuration.getTypeHandlerRegistry().register(packageToScan);
@@ -358,7 +360,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!ObjectUtils.isEmpty(this.typeHandlers)) {
+    if (!isEmpty(this.typeHandlers)) {
       for (TypeHandler<?> typeHandler : this.typeHandlers) {
         configuration.getTypeHandlerRegistry().register(typeHandler);
         if (this.logger.isDebugEnabled()) {
@@ -396,7 +398,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!ObjectUtils.isEmpty(this.mapperLocations)) {
+    if (!isEmpty(this.mapperLocations)) {
       for (Resource mapperLocation : this.mapperLocations) {
         if (mapperLocation == null) {
           continue;
