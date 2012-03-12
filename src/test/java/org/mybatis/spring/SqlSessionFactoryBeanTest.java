@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package org.mybatis.spring;
 
 import static org.junit.Assert.assertEquals;
@@ -40,7 +39,7 @@ import org.springframework.core.io.Resource;
 import com.mockrunner.mock.jdbc.MockDataSource;
 
 /**
- * 
+ *
  * @version $Id$
  */
 public final class SqlSessionFactoryBeanTest {
