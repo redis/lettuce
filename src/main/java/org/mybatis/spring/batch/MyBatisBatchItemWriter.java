@@ -105,7 +105,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
    */
   public void afterPropertiesSet() {
     notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
-    isTrue(sqlSessionTemplate.getExecutorType() == ExecutorType.BATCH, "SqlSessionTemplate's executor type must be BATCH");
+    isTrue(ExecutorType.BATCH == sqlSessionTemplate.getExecutorType(), "SqlSessionTemplate's executor type must be BATCH");
     notNull(statementId, "A statementId is required.");
   }
 
