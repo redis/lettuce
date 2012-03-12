@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring;
 
-import static org.springframework.util.Assert.*;
+import static org.springframework.util.Assert.notNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
