@@ -16,6 +16,9 @@
 
 package org.mybatis.spring.batch;
 
+import static org.springframework.util.Assert.isTrue;
+import static org.springframework.util.Assert.notNull;
+
 import java.util.List;
 
 import org.apache.ibatis.executor.BatchResult;
@@ -28,24 +31,23 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
-import org.springframework.util.Assert;
 
 /**
- * {@code ItemWriter} that uses the batching features from 
- * {@code SqlSessionTemplate} to execute a batch of statements for all items 
+ * {@code ItemWriter} that uses the batching features from
+ * {@code SqlSessionTemplate} to execute a batch of statements for all items
  * provided.<br/>
- * 
+ *
  * Provided to facilitate the migration from Spring-Batch iBATIS 2 writers to MyBatis 3<br/>
- * 
+ *
  * The user must provide a MyBatis statement id that points to the SQL statement defined
  * in the MyBatis.<br/>
- * 
- * It is expected that {@link #write(List)} is called inside a transaction. If it is not 
+ *
+ * It is expected that {@link #write(List)} is called inside a transaction. If it is not
  * each statement call will be autocommitted and flushStatements will return no results.<br/>
- * 
+ *
  * The writer is thread safe after its properties are set (normal singleton
  * behavior), so it can be used to write in multiple concurrent transactions.
- * 
+ *
  * @since 1.1.0
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
@@ -61,7 +63,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   /**
    * Public setter for the flag that determines whether an assertion is made
    * that all items cause at least one row to be updated.
-   * 
+   *
    * @param assertUpdates the flag to set. Defaults to true;
    */
   public void setAssertUpdates(boolean assertUpdates) {
@@ -70,7 +72,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
 
   /**
    * Public setter for {@link SqlSessionFactory} for injection purposes.
-   * 
+   *
    * @param SqlSessionFactory sqlSessionFactory
    */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -81,7 +83,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
 
   /**
    * Public setter for the {@link SqlSessionTemplate}.
-   * 
+   *
    * @param SqlSessionTemplate the SqlSessionTemplate
    */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -89,9 +91,9 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   }
 
   /**
-   * Public setter for the statement id identifying the statement in the SqlMap 
+   * Public setter for the statement id identifying the statement in the SqlMap
    * configuration file.
-   * 
+   *
    * @param statementId the id for the statement
    */
   public void setStatementId(String statementId) {
@@ -102,9 +104,9 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
    * Check mandatory properties - there must be an SqlSession and a statementId.
    */
   public void afterPropertiesSet() {
-    Assert.notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
-    Assert.isTrue(sqlSessionTemplate.getExecutorType() == ExecutorType.BATCH, "SqlSessionTemplate's executor type must be BATCH");
-    Assert.notNull(statementId, "A statementId is required.");
+    notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
+    isTrue(sqlSessionTemplate.getExecutorType() == ExecutorType.BATCH, "SqlSessionTemplate's executor type must be BATCH");
+    notNull(statementId, "A statementId is required.");
   }
 
   /**
