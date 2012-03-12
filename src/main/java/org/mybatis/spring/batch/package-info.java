@@ -20,4 +20,3 @@
  * @version $Id: package-info.java 4527 2012-01-03 13:58:41Z eduardo.macarron $
  */
 package org.mybatis.spring.batch;
-
