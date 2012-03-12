@@ -56,7 +56,7 @@
              file. This config file could, in turn, contain &ltmapper&gt
              elements that point to the correct mapper xml files.
          -->
-        <property name="mapperLocations" value="classpath:/org/mybatis/spring/sample/dao/*.xml" />
+        <property name="mapperLocations" value="classpath:org/mybatis/spring/sample/dao/*.xml" />
     </bean>
     
     <!-- simple transactional service layer bean; the userDao can be implemented in various ways with MyBatis-Spring  -->
