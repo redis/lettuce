@@ -18,7 +18,9 @@
 	</properties>
 
 	<body>
-		<release version="1.1.0" date="TBD" description="1.1.0 release">
+		<release version="1.1.1" date="TBD" description="1.1.1 release">
+		</release>
+		<release version="1.1.0" date="2012-03-12" description="1.1.0 release">
 			<action type="fix" issue="449">
 				Prevent class loading / add zero-method mappers while scanning for mappers
 			</action>
