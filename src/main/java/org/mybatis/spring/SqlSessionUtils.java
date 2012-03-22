@@ -239,17 +239,14 @@ public final class SqlSessionUtils {
      */
     @Override
     public void beforeCommit(boolean readOnly) {
-      // Connection commit or rollback will be handled by ConnectionSynchronization or
-      // DataSourceTransactionManager.
-      // But, do cleanup the SqlSession / Executor, including flushing BATCH statements so
-      // they are actually executed.
-      // SpringManagedTransaction will no-op the commit over the jdbc connection
-      if (isActualTransactionActive()) {
+      // Flush BATCH statements so they are actually executed before the connection is committed.
+      // If there is no tx active data will be rolled back so there is no need to flush batches
+      if (this.holder.getExecutorType() == ExecutorType.BATCH && isActualTransactionActive()) {
         try {
           if (logger.isDebugEnabled()) {
-            logger.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
+            logger.debug("Transaction synchronization flushing SqlSession [" + this.holder.getSqlSession() + "]");
           }
-          this.holder.getSqlSession().commit();
+          this.holder.getSqlSession().flushStatements();
         } catch (PersistenceException p) {
           if (this.holder.getPersistenceExceptionTranslator() != null) {
             DataAccessException translated = this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
@@ -267,19 +264,43 @@ public final class SqlSessionUtils {
      */
     @Override
     public void afterCompletion(int status) {
-      // unbind the SqlSession from tx synchronization
-      // Note, assuming DefaultSqlSession, rollback is not needed because rollback on
-      // SpringManagedTransaction will no-op anyway. In addition, closing the session cleans
-      // up the same internal resources as rollback.
-      if (!this.holder.isOpen()) {
-        unbindResource(this.sessionFactory);
-        try {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
+      // Unbind the SqlSession from tx synchronization
+      // Note, commit/rollback is needed to ensure 2nd level cache is properly updated
+      // SpringTransaction will no-op the connection commit/rollback
+      try {
+        // Do not call commit unless there is really a transaction; 
+        // no need to commit if just tx synchronization is active but no transaction was started
+        if (isActualTransactionActive()) {
+          switch (status) {
+          case STATUS_COMMITTED:
+            if (logger.isDebugEnabled()) {
+              logger.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
+            }
+            holder.getSqlSession().commit();
+            break;
+          case STATUS_ROLLED_BACK:
+            if (logger.isDebugEnabled()) {
+              logger.debug("Transaction synchronization rolling back SqlSession [" + this.holder.getSqlSession() + "]");
+            }
+            holder.getSqlSession().rollback();
+            break;
+          default:
+            if (logger.isDebugEnabled()) {
+              logger.debug("Transaction synchronization ended with unknown status for SqlSession [" + this.holder.getSqlSession() + "]");
+            }
           }
-          this.holder.getSqlSession().close();
-        } finally {
-          this.holder.reset();
+        }
+      } finally {
+        if (!holder.isOpen()) {
+          unbindResource(sessionFactory);
+          try {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
+            }
+            this.holder.getSqlSession().close();
+          } finally {
+            this.holder.reset();
+          }
         }
       }
     }

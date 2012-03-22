@@ -361,6 +361,25 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     assertSingleConnection();
   }
 
+
+  @Test
+  public void testRollbackWithTxSupports() {
+    DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+    txDef.setPropagationBehaviorName("PROPAGATION_SUPPORTS");
+
+    TransactionStatus status = txManager.getTransaction(txDef);
+
+    session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
+    session.getMapper(TestMapper.class).findTest();
+    SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
+
+    txManager.rollback(status);
+
+    // SUPPORTS should just activate tx synchronization but not commits
+    assertNoCommit();
+    assertSingleConnection();
+  }
+
   @Test
   public void testWithTxRequired() {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
