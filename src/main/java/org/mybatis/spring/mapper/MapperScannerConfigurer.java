@@ -401,11 +401,9 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
           boolean explicitFactoryUsed = false;
           if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
             definition.getPropertyValues().add("sqlSessionFactory", new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
-            definition.getPropertyValues().add("sqlSessionTemplate", null);
             explicitFactoryUsed = true;
           } else if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
             definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactory);
-            definition.getPropertyValues().add("sqlSessionTemplate", null);
             explicitFactoryUsed = true;
           }
 
