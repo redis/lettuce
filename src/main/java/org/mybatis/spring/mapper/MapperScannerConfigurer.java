@@ -398,18 +398,29 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
           definition.getPropertyValues().add("addToConfig", MapperScannerConfigurer.this.addToConfig);
 
+          boolean explicitFactoryUsed = false;
           if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionFactoryBeanName)) {
-            definition.getPropertyValues().add("sqlSessionFactory",
-                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
+            definition.getPropertyValues().add("sqlSessionFactory", new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionFactoryBeanName));
+            definition.getPropertyValues().add("sqlSessionTemplate", null);
+            explicitFactoryUsed = true;
           } else if (MapperScannerConfigurer.this.sqlSessionFactory != null) {
             definition.getPropertyValues().add("sqlSessionFactory", MapperScannerConfigurer.this.sqlSessionFactory);
+            definition.getPropertyValues().add("sqlSessionTemplate", null);
+            explicitFactoryUsed = true;
           }
 
           if (StringUtils.hasLength(MapperScannerConfigurer.this.sqlSessionTemplateBeanName)) {
-            definition.getPropertyValues().add("sqlSessionTemplate",
-                new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
+            if (explicitFactoryUsed) {
+              logger.warn("Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
+            }
+            definition.getPropertyValues().add("sqlSessionTemplate", new RuntimeBeanReference(MapperScannerConfigurer.this.sqlSessionTemplateBeanName));
+            definition.getPropertyValues().add("sqlSessionFactory", null);
           } else if (MapperScannerConfigurer.this.sqlSessionTemplate != null) {
+            if (explicitFactoryUsed) {
+              logger.warn("Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
+            }
             definition.getPropertyValues().add("sqlSessionTemplate", MapperScannerConfigurer.this.sqlSessionTemplate);
+            definition.getPropertyValues().add("sqlSessionFactory", null);
           }
         }
       }
