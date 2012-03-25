@@ -17,25 +17,23 @@
 
 <!--
     A sample context that shows how to integrate MyBatis with Spring using
-    a DAO setup for BATCH transactions.
+    MapperScannerConfigurer. With this configuration, DAOs are created
+    automatically by the scanner and do not have to be explicitly defined.
 
-    version: $Id$
+    version: $Id: applicationContext-scanner.xml 4869 2012-03-12 07:00:51Z simone.tripodi $
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="
      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-	<import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
+    <!-- import datasource and transaction manager  -->
+    <import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
 
-    <!-- To change the default ExecutorType, a custom SqlSessionTemplate is all that is needed. -->
-    <bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
-        <property name="mapperInterface" value="org.mybatis.spring.sample.dao.UserDao" />
-        <property name="sqlSessionTemplate">
-          <bean class="org.mybatis.spring.SqlSessionTemplate">
-            <constructor-arg index="0" ref="sqlSessionFactory" />
-            <constructor-arg index="1" value="BATCH" />
-          </bean>
-        </property>
+    <!-- Scan for mappers and let them be autowired; notice there is no
+         UserDaoImplementation needed. The required SqlSessionFactory will be
+         autowired. -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="org.mybatis.spring.sample.dao" />
     </bean>
 </beans>

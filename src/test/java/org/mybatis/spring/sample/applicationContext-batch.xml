@@ -17,19 +17,25 @@
 
 <!--
     A sample context that shows how to integrate MyBatis with Spring using
-    a hand-coded DAO implementation.
+    a DAO setup for BATCH transactions.
 
-    version: $Id$
+    version: $Id: applicationContext-batch.xml 4869 2012-03-12 07:00:51Z simone.tripodi $
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="
      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-    <!-- import common beans  -->
-    <import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
+	<import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
 
-    <!-- UserDaoImple extends SqlSessionDaoSupport.
-         The required SqlSessionFactory will be autowired. -->
-    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl" />
+    <!-- To change the default ExecutorType, a custom SqlSessionTemplate is all that is needed. -->
+    <bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="org.mybatis.spring.sample.dao.UserDao" />
+        <property name="sqlSessionTemplate">
+          <bean class="org.mybatis.spring.SqlSessionTemplate">
+            <constructor-arg index="0" ref="sqlSessionFactory" />
+            <constructor-arg index="1" value="BATCH" />
+          </bean>
+        </property>
+    </bean>
 </beans>
