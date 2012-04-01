@@ -117,6 +117,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
   private String beanName;
 
+  private boolean processPropertyHolders;
+  
   /**
    * This property lets you set the base package for your mapper interface files.
    * <p>
@@ -231,6 +233,16 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
+   * 
+   * @since 1.1.0
+   * 
+   * @param processPropertyHolders
+   */
+  public void setProcessPropertyHolders(boolean processPropertyHolders) {
+    this.processPropertyHolders = processPropertyHolders;
+  }
+
+  /**
    * {@inheritDoc}
    */
   public void setApplicationContext(ApplicationContext applicationContext) {
@@ -261,7 +273,9 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * {@inheritDoc}
    */
   public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
-    processPropertyPlaceHolders();
+    if (this.processPropertyHolders) {
+      processPropertyPlaceHolders();
+    }
 
     Scanner scanner = new Scanner(beanDefinitionRegistry);
     scanner.setResourceLoader(this.applicationContext);

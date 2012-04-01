@@ -207,6 +207,7 @@ public final class MapperScannerConfigurerTest {
     // use a property placeholder for basePackage
     definition.getPropertyValues().removePropertyValue("basePackage");
     definition.getPropertyValues().add("basePackage", "${basePackageProperty}");
+    definition.getPropertyValues().add("processPropertyHolders", true);
 
     // also use a property placeholder for an SqlSessionFactory property
     // to make sure the configLocation was setup correctly and MapperScanner did not change
