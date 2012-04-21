@@ -86,7 +86,7 @@
   <properties>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
     <spring.version>3.1.1.RELEASE</spring.version>
-    <clirr.comparisonVersion>1.0.2</clirr.comparisonVersion>
+    <clirr.comparisonVersion>1.1.0</clirr.comparisonVersion>
     <gcu.product>Spring</gcu.product>
     <!--
      | see distributionManagement.site.url
