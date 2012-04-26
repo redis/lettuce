@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2012 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | スタートガイド</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="スタートガイド">
+      <p>
+        この章では、MyBatis-Spring のインストール・設定手順と、トランザクション処理を含むシンプルなアプリケーションの構築する方法について説明します。
+      </p>
+
+    <subsection name="インストール">
+      <p>
+        MyBatis-Spring を使うためには、
+        <code>
+          mybatis-spring-x.x.x.jar
+        </code> と依存するライブラリをクラスパスに追加するだけで OK です。
+      </p>
+      <p>
+        Maven をお使いの場合は、
+        pom.xml に次の dependency を追加してください。
+      </p>
+        <source><![CDATA[
+<dependency>
+  <groupId>org.mybatis</groupId>
+  <artifactId>mybatis-spring</artifactId>
+  <version>x.x.x</version>
+</dependency>]]></source>
+    </subsection>
+
+    <subsection name="クイックセットアップ">
+      <p>
+        MyBatis と Spring を組み合わせて使う場合、Spring の Application Context 内に少なくとも
+        <code>SqlSessionFactory</code> と一つ以上の Mapper インターフェイスを定義する必要があります。
+      </p>
+
+      <p>
+        MyBatis-Spring では
+        <code>SqlSessionFactory</code> の生成に <code>SqlSessionFactoryBean</code> を使います。この Factory Bean を設定するため、Spring の XML 設定ファイルに次の Bean を追加してください。
+      </p>
+
+        <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></source>
+
+      <p>
+        <code>SqlSessionFactory</code> が <code>DataSource</code> を必要としている点に注意してください。
+        どのような <code>DataSource</code> でも構いません。通常の手順で設定してください。
+      </p>
+
+      <p>
+        Mapper インターフェイスが次のように定義されている場合...
+      </p>
+        <source><![CDATA[public interface UserMapper {
+  @Select("SELECT * FROM users WHERE id = #{userId}")
+  User getUser(@Param("userId") String userId);
+} ]]></source>
+
+      <p>
+        <code>MapperFactoryBean</code> を使ってこのインターフェイスを Spring に登録する場合、以下のように設定します。
+      </p>
+        <source><![CDATA[
+<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+
+      <p>
+        ここで指定した Mapper は、実装クラスではなく <strong>インターフェイス</strong> である必要がありますので注意してください。<br />
+        この例では、アノテーションを使って SQL を指定していますが、Mapper XML ファイルを使うこともできます。
+      </p>
+
+      <p>
+        上記のように設定しておけば、あとは他の Spring Bean と同様にビジネス／サービス層のオブジェクトにインジェクト（注入）することができます。
+        <code>MapperFactoryBean</code> は <code>SqlSession</code> の生成とクローズを行います。<br />
+        もし Spring のトランザクション内で実行された場合は、トランザクション終了時にセッションがコミットあるいはロールバックされます。
+        最後にもう一点、全ての例外は Spring の <code>DataAccessException</code> に変換されます。
+      </p>
+
+      <p>
+        MyBatis のデータメソッドは、一行だけで実行可能となります。
+      </p>
+        <source><![CDATA[
+public class FooServiceImpl implements FooService {
+
+private UserMapper userMapper;
+
+public void setUserMapper(UserMapper userMapper) {
+  this.userMapper = userMapper;
+}
+
+public User doSomeBusinessStuff(String userId) {
+  return this.userMapper.getUser(userId);
+}]]></source>
+      </subsection>
+    </section>
+  </body>
+</document>

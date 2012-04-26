@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2012 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | イントロダクション</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+ <body>
+ <section name="イントロダクション">
+  <subsection name="MyBatis-Spring とは？">
+      <p>
+      MyBatis-Spring によって MyBatis と Spring をシームレスに連携させることができます。このライブラリを使えば、MyBatis のステートメントを Spring のトランザクション内で実行することもできますし、Mapper や <code>SqlSession</code> の生成、他の Bean への注入、MyBatis の例外から Spring の <code>DataAccessException</code> への変換、さらには MyBatis や Spring, MyBatis-Spring に依存しないコードでアプリケーションを構築することも可能になります。
+      </p>
+  </subsection>
+
+  <subsection name="動機">
+      <p>
+      Spring バージョン 2 は iBATIS バージョン 2 しかサポートしていません。Spring 3 の開発時に MyBatis 3 への対応が検討されました（こちらの <a href="https://jira.springsource.org/browse/SPR-5991">チケット</a> 参照）が、Spring 3 が MyBatis 3 よりも前に正式リリースを迎えたため、残念ながら実装は見送られました。Spring 開発陣としては、未リリースの MyBatis 3 に合わせたコードをリリースしたくなかったという事情があり、Spring 側での正式対応は保留となっていました。MyBatis コミュニティの中で Spring 対応への要望が強かったため、有志によって Spring との連携を行う MyBatis のサブプロジェクトが立ち上げられました。
+      </p>
+  </subsection>
+
+  <subsection name="動作条件">
+    <p>
+      MyBatis-Spring を利用するためには、MyBatis と Spring の用語について理解しておくことが重要です。
+      このドキュメントには MyBatis や Spring についての説明や基本設定といった情報は含まれていません。
+    </p>
+    <p>
+      MyBatis-Spring の動作には Java 5 以降が必要です。<br />
+      また、各ライブラリの適切なバージョンを使用する必要があります。
+    </p>
+	<table>
+		<thead>
+			<tr>
+				<th>
+					MyBatis-Spring
+				</th>
+				<th>
+					MyBatis
+				</th>
+				<th>
+					Spring
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					1.0.0 and 1.0.1
+				</td>
+				<td>
+					3.0.1 to 3.0.5
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+			<tr>
+				<td>
+					1.0.2
+				</td>
+				<td>
+					3.0.6
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+			<tr>
+				<td>
+					1.1.0
+				</td>
+				<td>
+					3.1.0 or higher
+				</td>
+				<td>
+					3.0.0 or higher
+				</td>
+			</tr>
+		</tbody>
+	</table>
+  </subsection>
+
+  <subsection name="謝辞">
+    <p>
+      このプロジェクトの実現にご協力頂いた次の方々に感謝します（アルファベット順）: 
+      Eduardo Macarron, Hunter Presnall, Putthibong Boonbong（コーディング、テスト、ドキュメント作成）;
+      Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan, Tomas Pinos（コントリビューション）;
+      Simone Tripodi（メンバーを集め、MyBatis のサブプロジェクトとしてまとめてくれました）<br />
+      このプロジェクトは彼らの協力なしには実現できなかったでしょう。
+    </p>
+  </subsection>
+
+  <subsection name="このドキュメントの改善にご協力ください...">
+    <p>
+      このドキュメントの中で誤りや特定の機能に関する記述が抜けていることに気づいたら、詳しく調べてドキュメントを更新して頂けると助かります。
+    </p>
+    <p>
+      このマニュアルのソースは xdoc 形式で、<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">プロジェクトの SVN リポジトリ</a>で配布されています。<br />
+      SVN からチェックアウトしたファイルを修正したら、<a href="http://code.google.com/p/mybatis/issues/entry">トラッカー</a>で新しいチケットを作成して変更箇所のパッチを添付してください。
+    </p>
+    <p>
+      このドキュメントを必要としている人、つまりあなたこそが最高の著者なのです！
+    </p>
+  </subsection>
+
+</section>
+</body>
+
+</document>

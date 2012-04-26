@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2012 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | SqlSessionFactoryBean</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="SqlSessionFactoryBean">
+      <p>
+        基となる MyBatis では、<code>SqlSessionFactory</code> をビルドする際 <code>SqlSessionFactoryBuilder</code> を使いましたが、MyBatis-Spring では、<code>SqlSessionFactoryBean</code> を使います。
+      </p>
+      
+    <subsection name="設定">
+      <p>
+        Spring の XML 設定ファイルに次の Bean を定義することで Factory Bean を生成することができます。
+      </p>
+        <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></source>
+      <p>
+        <code>SqlSessionFactoryBean</code> は Spring の <code>FactoryBean</code> インターフェイス（Spring ドキュメントの 3.8 章を参照してください）を実装しています。
+        これはつまり、最終的に Spring が生成するのは <code>SqlSessionFactoryBean</code> ではなく、Factory の <code>getObject()</code> メソッドによって返されるオブジェクトであるということです。<br />
+        上記の設定では、Spring は <code>SqlSessionFactory</code> を生成し、<code>sqlSessionFactory</code> という名前の Bean として登録します。
+        これに相当する Java のコードは下記のようになるでしょう。
+      </p>
+
+      <source><![CDATA[
+SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
+
+      <p>
+        通常 MyBatis-Spring を使う場合、<code>SqlSessionFactoryBean</code> や対応する <code>SqlSessionFactory</code> を直接利用する必要はありません。
+        sqlSessionFactory は <code>MapperFactoryBean</code> や <code>SqlSessionDaoSupport</code> を継承した他の DAO にインジェクト（注入）されます。
+      </p>
+    </subsection>
+
+    <subsection name="プロパティ">
+
+      <p>
+        <code>SqlSessionFactory</code> で必須のプロパティは JDBC の <code>DataSource</code> のみです。
+        どのような <code>DataSource</code> でも構いません。Spring でデータベース接続を定義する通常の手順で定義してください。
+      </p>
+
+      <p>
+        <code>configLocation</code> は、MyBatis の XML 設定ファイルの場所を指定する際に使用します。<br />
+        これは、例えば基になる MyBatis の設定の一部を変更したい場合などに必要となります。
+        よくあるのは <code>&lt;settings&gt;</code> や <code>&lt;typeAliases&gt;</code> などの設定です。
+      </p>
+
+      <p>
+        ここで指定する設定ファイルは、完全な MyBatis 設定ファイルである必要はありません。
+        環境、データソース、MyBatis のトランザクションマネージャーに関する設定は<b>無視されます</b>。
+        <code>SqlSessionFactoryBean</code> は、独自にカスタマイズした MyBatis <code>Environment</code> を生成し、必要に応じてこれらの値を設定するようになっています。
+      </p>
+
+      <p>
+        設定ファイルの指定が必要とされるもう一つの例は、MyBatis の Mapper XML ファイルが Mapper クラスとは別のクラスパスに存在する場合です。
+        このような構成にする場合、次のどちらかの方法で設定することができます。
+        最初の方法は、MyBatis の設定ファイルの <code>&lt;mappers&gt;</code> で各 XML ファイルのクラスパスを指定する方法です。
+        そしてもう一つは、Factory Bean の <code>mapperLocations</code> を使った方法です。
+      </p>
+
+      <p>
+        <code>mapperLocations</code> プロパティは Resource Location のリストを取り、ここで MyBatis の XML Mapper ファイルの場所を指定することができます。
+        Ant スタイルのパターン文字列を使って特定のディレクトリ内の全ファイルを指定したり、内包するディレクトリを再帰的に検索対象にすることもできます。次の例を見てください。
+      </p>
+      
+        <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
+</bean>]]></source>
+
+      <p>
+        このように指定すると、クラスパス内の sample.config.mappers パッケージと、そのサブパッケージに含まれる全ての MyBatis Mapper XML ファイルがロードされます。
+      </p>
+
+      <p>
+        Container-Managed トランザクションを利用する環境では、<code>transactionFactoryClass</code> プロパティが必須となります。
+        「トランザクション」章の該当する節を参照してください。
+      </p>
+      </subsection>
+    </section>
+  </body>
+</document>

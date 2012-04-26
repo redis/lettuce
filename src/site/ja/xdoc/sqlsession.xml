@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2012 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | Using an SqlSession</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="SqlSession の利用">
+      <p>
+        MyBatis では <code>SqlSessionFactory</code> を使って <code>SqlSession</code> を生成しました。
+        そして取得したセッションを使って Mapped Statement を実行し、接続をコミットあるいはロールバックした後、最終的に不要となったセッションをクローズする、というのが一連の流れでした。
+        MyBatis-Spring では、SPring のトランザクション設定に基づいて自動的にコミット、ロールバック、クローズされるスレッドセーフな <code>SqlSession</code> が注入されるので、直接 <code>SqlSessionFactory</code> を使う必要はありません。
+      </p>  
+    
+      <p>
+        また通常は、<code>SqlSession</code> を直接使用する必要もありません。
+        ほとんどの場合、<code>MapperFactoryBean</code> がインジェクト（注入）する Mapper があれば十分なはずです。
+        <a href="mappers.html#MapperFactoryBean"><code>MapperFactoryBean</code></a> については、次の章で説明します。
+      </p>  
+
+    <subsection name="SqlSessionTemplate">
+      <p>
+        <code>SqlSessionTemplate</code> は MyBatis-Spring で最も重要なクラスです。
+        このクラスが MyBatis の <code>SqlSession</code> を管理して、SQL メソッドの実行や例外の変換を行なっています。
+        <code>SqlSessionTemplate</code> はスレッドセーフで、複数の DAO 間で共有することができます。
+      </p>
+
+      <p>
+        <code>getMapper()</code> から返された Mapper のメソッドも含めて、SQL メソッドを呼び出す場合、確実に現在の Spring トランザクションに付加された <code>SqlSession</code> が使われるようにするのも <code>SqlSessionTemplate</code> の仕事です。
+        またセッションのクローズや、状況に応じたコミットあるいはロールバックといったセッションのライフサイクルの管理も <code>SqlSessionTemplate</code> が行なっています。
+      </p>
+
+      <p>
+        <code>SqlSessionTemplate</code> は <code>SqlSession</code> を実装しており、既存のコードで <code>SqlSession</code> が使われている箇所にそのまま代入できるよう設計されています。
+        <code>SqlSessionTemplate</code> は Spring が管理するトランザクション内で実行され、また Spring によってインジェクトされる複数の Mapper から呼び出すことができるようにスレッドセーフとなっているので、常にこのクラスを MyBatis のデフォルト実装である <code>DefaultSqlSession</code> の代わりに使用するべきです。
+        同一アプリケーション内でこれら２つのクラスを混在させて使用するとデータの不整合などの問題が発生する可能性があります。
+      </p>
+
+      <p>
+        <code>SqlSessionTemplate</code> を生成する際は、<code>SqlSessionFactory</code> をコンストラクタ引数として渡します。
+      </p>
+        <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+  <constructor-arg index="0" ref="sqlSessionFactory" />
+</bean>]]></source>
+     
+      <p>
+        この Bean は、直接あなたの DAO Bean にインジェクト（注入）することができます。
+        注入対象の Bean には <code>SqlSession</code> プロパティを定義しておく必要があります。
+      </p>
+        <source><![CDATA[public class UserDaoImpl implements UserDao {
+
+  private SqlSession sqlSession;
+
+  public void setSqlSession(SqlSession sqlSession) {
+    this.sqlSession = sqlSession;
+  }
+
+  public User getUser(String userId) {
+    return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+  }
+}]]></source>
+      <p>
+        そして、以下のようにして <code>SqlSessionTemplate</code> を注入します。
+      </p>      
+      <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
+  <property name="sqlSession" ref="sqlSession" />
+</bean>]]></source>
+      
+      <p>
+        <code>SqlSessionTemplate</code> には、<code>ExecutorType</code> を引数に取るコンストラクタも定義されています。
+        このコンストラクタを使うと、例えばバッチ処理を行う <code>SqlSession</code> を取得することができます。
+      </p>
+        <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+  <constructor-arg index="0" ref="sqlSessionFactory" />
+  <constructor-arg index="1" value="BATCH" />
+</bean>]]></source>
+      <p>
+        これで実行されるステートメントは全てバッチ処理の対象となります。
+        DAO クラス中では、例えば次のように書くことができます。
+      </p>
+        <source><![CDATA[public void insertUsers(User[] users) {
+   for (User user : users) {
+     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+   }
+ }]]></source> 
+  
+      <p>
+        デフォルト以外の <code>ExecutorType</code> を使用する場合にのみ <code>SqlSessionFactory</code> の Bean を定義する際に２つの引数を指定する必要があります。
+      </p>
+
+      <p>
+        この初期化方式を使用する場合の注意点として、このメソッドが呼び出される時点で異なる ExecutorType で実行されているトランザクションが存在していてはならない、という制限があります。
+        そのためには、異なる ExecutorType が指定された <code>SqlSessionTemplate</code> への呼び出しを、それぞれが独立したトランザクション内で実行する（例えば PROPAGATION_REQUIRES_NEW を指定しておく）か、あるいは完全にトランザクションの外で実行するようにしてください。
+      </p>
+    </subsection>
+
+    <subsection name="SqlSessionDaoSupport">
+      <p>
+        <code>SqlSessionDaoSupport</code> は <code>SqlSession</code> を提供する抽象クラスです。
+        <code>getSqlSession()</code> を呼び出すことで、SQL メソッドを実行するための <code>SqlSessionTemplate</code> を取得することができます。
+      </p>
+        <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
+  public User getUser(String userId) {
+    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+  }
+}]]></source>
+      <p>
+        普通は <code>MapperFactoryBean</code> を使った方がコード量が少なくて済みますが、DAO の中で MyBatis 以外の処理を行うため実装クラスが必要となる場合には便利なクラスです。
+      </p>
+
+      <p>
+        <code>SqlSessionDaoSupport</code> を使用する際は、<code>sqlSessionFactory</code> または <code>sqlSessionTemplate</code> をセットする必要があります。
+        これらのプロパティは明示的にセットすることもできますし、Spring の Autowired を使ってセットすることもできます。
+        もし両方のプロパティがセットされた場合、<code>sqlSessionFactory</code> は無視されます。
+      </p>
+
+      <p>
+        <code>SqlSessionDaoSupport</code> のサブクラスである <code>UserDaoImpl</code> を Spring Bean として定義する例を挙げておきます。
+      </p>
+        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+      </subsection>
+    </section>
+  </body>
+</document>

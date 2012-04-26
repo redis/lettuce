@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2012 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | トランザクション</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="トランザクション">
+      <p>
+        これは MyBatis-Spring を使う主な理由の一つでもありますが、MyBatis-Spring を使うと MyBatis の処理を Spring が管理するトランザクションの一部として実行できるようになります。
+        MyBatis-Spring は、MyBatis のために新しいトランザクションマネージャーを生成するのではなく、Spring が生成した <code>DataSourceTransactionManager</code> を利用します。
+      </p>
+      <p>
+        Spring のトランザクションマネージャーが定義されていれば、通常の手順で Spring のトランザクションを利用することができます。
+        <code>@Transactional</code> アノテーションと AOP 形式での指定、どちらも利用可能です。
+        トランザクション内では <code>SqlSession</code> が一つ生成され、トランザクションの生存期間中はこの <code>SqlSession</code> が使用されます。
+        このセッションは、トランザクション完了時にコミットあるいはロールバックされます。
+      </p>
+      <p>
+        MyBatis-Spring ではトランザクションは透過的に管理されるので、あなたの DAO クラスにコードを追加する必要はありません。
+      </p>
+  
+    <subsection name="標準的な設定" id="configuration">
+      <p>
+        Spring の XML 設定ファイルで <code>DataSourceTransactionManager</code> を生成するだけで、Spring のトランザクション処理が有効となります。
+      </p>
+        <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>]]></source>
+      <p>
+        ここで指定する <code>DataSource</code> は、通常 Spring で利用される JDBC <code>DataSource</code> であればどのようなデータソースでも構いません。
+        例えば、コネクションプールや JNDI 経由で取得した <code>DataSource</code> などです。
+      </p>
+      <p>
+        ただし、トランザクションマネージャーに対して指定する <code>DataSource</code> は、<code>SqlSessionFactoryBean</code> に対して指定したものと同じでなくてはなりません。もし別のデータソースを指定した場合、トランザクション機能は正しく動作しません。
+      </p>
+    </subsection>
+
+    <subsection name="Container Managed Transactions" id="container">
+      <p>
+        JEEコンテナを利用していて、Spring の処理を CMT (Container Managed Transaction) の一部として利用したい場合、<code>JtaTransactionManager</code> あるいはそのコンテナ固有のサブクラスを使って Spring を設定する必要があります。
+        最も簡単なのは、Spring のトランザクション名前空間を使う方法です。
+      </p>
+      <source><![CDATA[<tx:jta-transaction-manager />]]></source>
+      <p>
+        このように設定しておくと MyBatis は、CMT を使うように設定された他の Spring リソースと同じように動作します。
+        Spring は、既存のコンテナ管理されたトランザクションがあれば、そのトランザクションに <code>SqlSession</code> を付加して利用します。
+        もしトランザクションを要求する処理が呼び出された時点で開始されたトランザクションがなければ、Spring が新しいコンテナ管理されたトランザクションを開始します。
+      </p>
+      <p>
+        CMT は使いたいが、Spring のトランザクション管理は利用したくないという場合、Spring のトランザクションマネージャーを定義してはいけません。
+        またこの場合、MyBatis 側で生成された <code>ManagedTransactionFactory</code> を使うように <code>SqlSessionFactoryBean</code> を設定する必要があります。
+      </p>
+      <source><![CDATA[<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="transactionFactory">
+    <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
+  </property>  
+</bean>]]></source>
+    </subsection>
+  
+    <subsection name="トランザクションをプログラム的に制御する" id="programmatic">
+      <p>
+        MyBatis の <code>SqlSession</code> では、トランザクションをプログラム的に制御するためのメソッドが用意されています。
+        しかし、MyBatis-Spring では、あなたの Bean にインジェクト（注入）されるのは Spring が管理する <code>SqlSession</code> あるいは Mapper です。
+        つまり、トランザクションを制御するのは常に Spring でなくてはなりません。
+      </p>
+      <p>
+        Spring が管理している <code>SqlSession</code> に対して <code>SqlSession.commit()</code>, <code>SqlSession.rollback()</code>, <code>SqlSession.close()</code> を呼び出すことはできません。
+        もしこれらのメソッドを呼び出した場合、<code>UnsupportedOperationException</code> がスローされます。
+        あなたの Bean に注入される Mapper クラスでは、これらのメソッドは隠蔽されています。
+      </p>
+      <p>
+        Spring が管理するトランザクションの外側で <code>SqlSession</code> のデータメソッドあるいは Mapper メソッドを呼び出した場合、JDBC 接続に対する auto-commit の設定に関わらず、変更は直ちにコミットされます。
+      </p>
+      <p>
+        もしあなたがトランザクションをプログラム的に制御したいのであれば、Spring リファレンスの 10.6 章を参照してください。
+        以下のコードは、10.6.2 節で解説されている <code>PlatformTransactionManager</code> を使ってトランザクションを手動で制御する例です。
+      </p>
+        <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+
+TransactionStatus status = txManager.getTransaction(def);
+try {
+  userMapper.insertUser(user);
+}
+catch (MyException ex) {
+  txManager.rollback(status);
+  throw ex;
+}
+txManager.commit(status);]]></source>
+      <p>
+        ここでは Mapper を使っていますが、<code>SqlSession</code> を使うこともできます。
+      </p>
+      </subsection>
+    </section>
+  </body>
+</document>
