@@ -127,6 +127,10 @@ public class RedisConnection<K, V> {
         return await(c.discard());
     }
 
+    public byte[] dump(K key) {
+        return await(c.dump(key));
+    }
+
     public V echo(V msg) {
         return await(c.echo(msg));
     }
@@ -335,6 +339,10 @@ public class RedisConnection<K, V> {
         return await(c.ltrim(key, start, stop));
     }
 
+    public String migrate(String host, int port, K key, int db, long timeout) {
+        return await(c.migrate(host, port, key, db, timeout));
+    }
+
     public List<V> mget(K... keys) {
         return await(c.mget(keys));
     }
@@ -410,6 +418,10 @@ public class RedisConnection<K, V> {
 
     public Boolean renamenx(K key, K newKey) {
         return await(c.renamenx(key, newKey));
+    }
+
+    public String restore(K key, long ttl, byte[] value) {
+        return await(c.restore(key,  ttl, value));
     }
 
     public V rpop(K key) {

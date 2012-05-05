@@ -27,6 +27,13 @@ public class KeyCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void dump() throws Exception {
+        assertNull(redis.dump("invalid"));
+        redis.set(key, value);
+        assertTrue(redis.dump(key).length > 0);
+    }
+
+    @Test
     public void exists() throws Exception {
         assertFalse(redis.exists(key));
         redis.set(key, value);
@@ -175,6 +182,23 @@ public class KeyCommandTest extends AbstractCommandTest {
     public void renamenxIdenticalKeys() throws Exception {
         redis.set(key, value);
         redis.renamenx(key, key);
+    }
+
+    @Test
+    public void restore() throws Exception {
+        redis.set(key, value);
+        byte[] bytes = redis.dump(key);
+        redis.del(key);
+
+        assertEquals("OK", redis.restore(key, 0, bytes));
+        assertEquals(value, redis.get(key));
+        assertEquals(-1, redis.pttl(key).longValue());
+
+        redis.del(key);
+        assertEquals("OK", redis.restore(key, 1000, bytes));
+        assertEquals(value, redis.get(key));
+        long ttl = redis.pttl(key);
+        assertTrue(ttl <= 1000 && ttl >= 0);
     }
 
     @Test

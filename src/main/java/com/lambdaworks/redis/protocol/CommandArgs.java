@@ -83,6 +83,10 @@ public class CommandArgs<K, V> {
         return write(Double.toString(n));
     }
 
+    public CommandArgs<K, V> add(byte[] value) {
+        return write(value);
+    }
+
     public CommandArgs<K, V> add(CommandKeyword keyword) {
         return write(keyword.bytes);
     }

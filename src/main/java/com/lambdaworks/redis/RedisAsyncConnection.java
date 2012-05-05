@@ -153,6 +153,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(DISCARD, new StatusOutput<K, V>(codec));
     }
 
+    public Future<byte[]> dump(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        return dispatch(DUMP, new ByteArrayOutput<K, V>(codec), args);
+    }
+
     public Future<V> echo(V msg) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addValue(msg);
         return dispatch(ECHO, new ValueOutput<K, V>(codec), args);
@@ -356,6 +361,12 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(LTRIM, new StatusOutput<K, V>(codec), args);
     }
 
+    public Future<String> migrate(String host, int port, K key, int db, long timeout) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(host).add(port).addKey(key).add(db).add(timeout);
+        return dispatch(MIGRATE, new StatusOutput<K, V>(codec), args);
+    }
+
     public Future<List<V>> mget(K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return dispatch(MGET, new ValueListOutput<K, V>(codec), args);
@@ -445,6 +456,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
     public Future<Boolean> renamenx(K key, K newKey) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(newKey);
         return dispatch(RENAMENX, new BooleanOutput<K, V>(codec), args);
+    }
+
+    public Future<String> restore(K key, long ttl, byte[] value) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(ttl).add(value);
+        return dispatch(RESTORE, new StatusOutput<K, V>(codec), args);
     }
 
     public Future<V> rpop(K key) {
