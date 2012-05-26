@@ -39,13 +39,13 @@
       <subsection name="Propósito">
       	<p>
       	Esta nueva versión de JPetStore viene con la misma idea en mente que sus precedesores: <strong>hazlo fácil</strong>. El propósito principal
-      	tras JPetStore 6 es demostrar que una aplicación web completa puede construirse con solo unas pocas clases, y lo que es más importante,
+      	tras JPetStore 6 es demostrar que una aplicación web completa puede construirse con sólo unas pocas clases, y lo que es más importante,
       	sin necesidad de tener grandes conocimientos de programación. Sólo necesitas saber java básico y SQL.
       	</p>
       	<p>
       	La sexta versión de JPetStore es la más pequeña de la familia. Sólo usa 24 clases y conserva un buen diseño y estructura de programa.
       	Como veremos un poco después, no encontrarás código JDBC, de creación de objetos, de enlace de objetos o de gestión de transacciones.
-      	Y lo que es más sorprendente es que <strong>no encontrarás ninguna llamada al API de MyBatis ¡</strong>. A pesar de que esto suena a mágia,
+      	Y lo que es más sorprendente es que <strong>¡no encontrarás ninguna llamada al API de MyBatis!</strong>. A pesar de que esto suena a mágia,
       	verás que la combinación de los mappers de MyBatis con la inyección de dependencias te permite realizar aplicaciones libres de dependencia
       	de MyBatis.
       	</p>
@@ -81,7 +81,7 @@
       <subsection name="Ficheros de configuración">
       <p>
       Los ficheros de configuración se leen durante el arranque de la aplicación. Su propósito es configurar los tres
-      frameworks que componen la aplicación: Stripes, Spring y MyBatis. Solo tendremos que configurar
+      frameworks que componen la aplicación: Stripes, Spring y MyBatis. Sólo tendremos que configurar
       dos ficheros: web.xml y applicationContext.xml.
       </p>
       <h4>web.xml</h4>
@@ -139,8 +139,8 @@
 	</p>
 
 	<p>
-	Ahora tenemos que decirle a Stripes que va a ejecutarse juto con Spring. De esta forma seremos capaces de
-	injectar beans de Spring en ActionBeans de Stripes. Para ello, siguiendo una vez más el manual de Stripes, configuramos un interceptor
+	Ahora tenemos que decirle a Stripes que va a ejecutarse junto con Spring. De esta forma seremos capaces de
+	inyectar beans de Spring en ActionBeans de Stripes. Para ello, siguiendo una vez más el manual de Stripes, configuramos un interceptor
 	como sigue:
 	</p>
 
@@ -166,12 +166,12 @@
       <p>
       Como ya sabes el fichero applicationContext.xml es el fichero de configuración de Spring. Spring es un framework
       de inyección de dependencias y debe conocer qué beans debe crear y como enlazarlos y esto es precisamente para lo que
-      sirve el applicationContext.xml. Echemosle un vistazo.
+      sirve el applicationContext.xml. Echémosle un vistazo.
       </p>
 
       <p>
       La primera tarea y la más sencilla que debemos hacer es indicarle a Spring donde buscar nuestros beans de servicio.
-      Dejaremos que Spring los busque en nuestro classpath y para ello tenemos que indicar a spring el paquete base donde comenzar la búsqueda:
+      Dejaremos que Spring los busque en nuestro classpath y para ello tenemos que indicar a Spring el paquete base donde comenzar la búsqueda:
       </p>
 
 <source><![CDATA[
@@ -179,14 +179,14 @@
 ]]></source>
 
 	  <p>
-	  <span class="label important">NOTA</span> Sprign no es capaz de localizar de forma automática los mappers de MyBatis.
+	  <span class="label important">NOTA</span> Spring no es capaz de localizar de forma automática los mappers de MyBatis.
 	  Un mapper no es un bean normal y Spring no conocería cómo instanciarlos. Necesitaremos un
 	  <code>MapperScannerConfigurer</code> para esta tarea, como veremos pronto.
 	  </p>
 
 	  <p>
 	  Necesitaremos también un <code>DataSource</code> y un <code>TransactionManager</code>. Como esto es una aplicación de demo usaremos
-	  un <code>DataSource</code> de test de Spring que crea una base de datos HSQL en memoria y en ella los scripts de datos,
+	  un <code>DataSource</code> de test de Spring que crea una base de datos HSQL en memoria y carga en ella los scripts de datos,
 	  y el <code>DataSourceTransactionManager</code> estándar de Spring para gestionar transacciones.
 	  </p>
 
@@ -405,13 +405,13 @@ public interface OrderMapper {
       <p>
       <span class="label important">NOTE</span>
       Puedes añadir caché a tus queries fácilmente añadiendo un elemento &lt;cache /&gt; a tu fichero de mapeo XML
-      O, si lo prefieres Spring puede cachear a más alto nivel, cacheando completamente la llamada al mapper o a todo el servicio.
+      O, si lo prefieres, Spring puede cachear a más alto nivel, cacheando completamente la llamada al mapper o a todo el servicio.
       </p>
 
       </subsection>
 
       <subsection name="Running JPetStore">
-        <p>Te prenguntarás. ¿Esto funciona? Sí! Ejecutémoslo.</p>
+        <p>Te prenguntarás. ¿Esto funciona? ¡Sí! Ejecutémoslo.</p>
         <p>Asumiendo que tienes un PC limpio estos son los pasos que debes seguir para ejecutar el ejemplo en Tomcat 7 y NetBeans 7.</p>
         <ul>
           <li>Descarga e instala NetBeans 7.x version JEE con Tomcat 7</li>
@@ -423,7 +423,7 @@ public interface OrderMapper {
           <li>Aparecerá un nuevo proyecto llamado "JPetStore Demo 6" en la pestaña de projectos de NetBeans</li>
           <li>Botón derecho en el proyecto y pulsa "Run"</li>
           <li>Selecciona el servidor Tomcat 7</li>
-          <li>La home de JPetStore debería mostrarse!!</li>
+          <li>¡¡La home de JPetStore debería mostrarse!!</li>
         </ul>
         <p>Y estos son los pasos para ejecutarlo en Eclipse. El proceso es un poco más largo porque Eclipse no trae
         soporte de SVN ni Maven de serie y no dispone de una opción para instalar Tomcat.
@@ -444,7 +444,7 @@ public interface OrderMapper {
           <li>Aparecerá un nuevo proyecto llamado"jpetstore"</li>
           <li>Botón derecho en el proyecto jpetstore y selecciona "run on server"</li>
           <li>Selecciona Tomcat 7 Server y configura el directorio donde lo descomprimiste</li>
-          <li>La home de JPetStore debería mostrarse!!</li>
+          <li>¡¡La home de JPetStore debería mostrarse!!</li>
         </ul>
 
         <p>
@@ -457,10 +457,9 @@ public interface OrderMapper {
         </p>
         <p>
           <span class="label important">NOTE</span>
-		JPetStore y debe ejecutarse en cualquier servidor compatible Servlet 2.5 y JSP 2.1. Tampoco es necesario NetBeans o Eclipse, puedes ejecutarlo desde
-		tu IDE favorito o desde la línea de comando.
+		  JPetStore y debe ejecutarse en cualquier servidor compatible Servlet 2.5 y JSP 2.1. Tampoco es necesario NetBeans o Eclipse, 
+		  puedes ejecutarlo desde tu IDE favorito o desde la línea de comando.
         </p>
-
       </subsection>
     </section>
   </body>

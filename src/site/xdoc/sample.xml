@@ -221,7 +221,7 @@
       <p>To save some writing when building our mapper xml files we would want to be able to use short
       aliases for beans. The <code>SqlSessionFactoryBean</code> has the capability to search for beans and
       register their short names as aliases if we setup the <code>typeAliasPackage</code> property like
-      the following
+      the following:
       </p>
 
 <source><![CDATA[
@@ -247,7 +247,8 @@
       </p>
       <p>Given that we have integrated Stripes with Spring, we can inject our services into our ActionsBeans so
       you can just use them without caring about its creation or lookup.
-      Have a look at <code>CatalogActionBean</code>:</p>
+      Have a look at <code>CatalogActionBean</code>:
+      </p>
 
 <source><![CDATA[
 @SessionScope
