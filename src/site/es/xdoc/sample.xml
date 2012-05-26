@@ -365,7 +365,7 @@ public interface OrderMapper {
   <cache />
 
   <select id="getOrder" resultType="Order" parameterType="int">
-    select
+    SELECT
       BILLADDR1 AS billAddress1,
       BILLADDR2 AS billAddress2,
       BILLCITY,

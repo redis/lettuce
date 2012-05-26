@@ -90,23 +90,23 @@
       </p>
 <source><![CDATA[
 <filter>
-	<display-name>Stripes Filter</display-name>
-	<filter-name>StripesFilter</filter-name>
-	<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  <display-name>Stripes Filter</display-name>
+  <filter-name>StripesFilter</filter-name>
+  <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
 </filter>
 <filter-mapping>
-	<filter-name>StripesFilter</filter-name>
-	<servlet-name>StripesDispatcher</servlet-name>
-	<dispatcher>REQUEST</dispatcher>
+  <filter-name>StripesFilter</filter-name>
+  <servlet-name>StripesDispatcher</servlet-name>
+  <dispatcher>REQUEST</dispatcher>
 </filter-mapping>
 <servlet>
-	<servlet-name>StripesDispatcher</servlet-name>
-	<servlet-class>net.sourceforge.stripes.controller.DispatcherServlet</servlet-class>
-	<load-on-startup>1</load-on-startup>
+  <servlet-name>StripesDispatcher</servlet-name>
+  <servlet-class>net.sourceforge.stripes.controller.DispatcherServlet</servlet-class>
+  <load-on-startup>1</load-on-startup>
 </servlet>
 <servlet-mapping>
-	<servlet-name>StripesDispatcher</servlet-name>
-	<url-pattern>*.action</url-pattern>
+  <servlet-name>StripesDispatcher</servlet-name>
+  <url-pattern>*.action</url-pattern>
 </servlet-mapping>
 ]]></source>
 
@@ -114,21 +114,21 @@
 	base package it should search in.</p>
 
 <source><![CDATA[
-	<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
-	<init-param>
-		<param-name>ActionResolver.Packages</param-name>
-		<param-value>org.mybatis.jpetstore.web</param-value>
-	</init-param>
-	</filter>
+<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  <init-param>
+    <param-name>ActionResolver.Packages</param-name>
+    <param-value>org.mybatis.jpetstore.web</param-value>
+  </init-param>
+</filter>
 ]]></source>
 
 	<p>We are done with Stripes. Let's move on to the Spring side. According to Spring's reference manual
-	we should add a Context listener to start up Spring. So let's add it</p>
+	we should add a Context listener to start up Spring. So let's add it:</p>
 
 <source><![CDATA[
-	<listener>
-		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-	</listener>
+<listener>
+  <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+</listener>
 ]]></source>
 
 	<p>By default Spring will use <code>/WEB-INF/applicationContext.xml</code> if we don't specify
@@ -141,15 +141,13 @@
 	</p>
 
 <source><![CDATA[
-   <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
-      ...
-      <init-param>
-         <param-name>Interceptor.Classes</param-name>
-         <param-value>
-            net.sourceforge.stripes.integration.spring.SpringInterceptor
-         </param-value>
-      </init-param>
-   </filter>
+<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  ...
+  <init-param>
+    <param-name>Interceptor.Classes</param-name>
+    <param-value>net.sourceforge.stripes.integration.spring.SpringInterceptor</param-value>
+  </init-param>
+</filter>
 ]]></source>
 
       <p>We are done with web.xml. As you may have notice, we have not set up any MyBatis 3 configuration yet.
@@ -168,7 +166,7 @@
       </p>
 
 <source><![CDATA[
-    <context:component-scan base-package="org.mybatis.jpetstore.service" />
+<context:component-scan base-package="org.mybatis.jpetstore.service" />
 ]]></source>
 
 	  <p>
@@ -184,14 +182,14 @@
 	  </p>
 
 <source><![CDATA[
-   <jdbc:embedded-database id="dataSource">
-       <jdbc:script location="classpath:database/jpetstore-hsqldb-schema.sql"/>
-       <jdbc:script location="classpath:database/jpetstore-hsqldb-dataload.sql"/>
-   </jdbc:embedded-database>
+<jdbc:embedded-database id="dataSource">
+  <jdbc:script location="classpath:database/jpetstore-hsqldb-schema.sql"/>
+  <jdbc:script location="classpath:database/jpetstore-hsqldb-dataload.sql"/>
+</jdbc:embedded-database>
 
-   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-       <property name="dataSource" ref="dataSource" />
-   </bean>
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>
 ]]></source>
 
 	  <p>So far, all we have done is standard Stripes and Spring configuration and now it is time to
@@ -201,9 +199,9 @@
 	  </p>
 
 <source><![CDATA[
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource" />
-    </bean>
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>
 ]]></source>
 
       <p>And now we need to setup our mappers. For that purpose we will use the <code>MapperScannerConfigurer</code>
@@ -213,22 +211,22 @@
       </p>
 
 <source><![CDATA[
-    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-        <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
-    </bean>
+<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+  <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
+</bean>
 ]]></source>
 
       <p>To save some writing when building our mapper xml files we would want to be able to use short
       aliases for beans. The <code>SqlSessionFactoryBean</code> has the capability to search for beans and
       register their short names as aliases if we setup the <code>typeAliasPackage</code> property like
-      the following
+      the following:
       </p>
 
 <source><![CDATA[
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource" />
-        <property name="typeAliasesPackage" value="org.mybatis.jpetstore.domain" />
-    </bean>
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="typeAliasesPackage" value="org.mybatis.jpetstore.domain" />
+</bean>
 ]]></source>
 
 		<p>Our application is now fully configured and ready to run. But before running it lets have a tour
@@ -245,9 +243,10 @@
       JSTL tags and Stripes tags so there is nothing especial about them for the sake of this sample. Stripes
       ActionBeans are like Struts actions or Spring MVC controllers so there is nothing especial with them either.
       </p>
-      <p>Given that we have integrated Stripes with Spring, we can inject our services into our BeanActions so
+      <p>Given that we have integrated Stripes with Spring, we can inject our services into our ActionsBeans so
       you can just use them without caring about its creation or lookup.
-      Have a look at <code>CatalogActionBean</code>:</p>
+      Have a look at <code>CatalogActionBean</code>:
+      </p>
 
 <source><![CDATA[
 @SessionScope
@@ -354,7 +353,7 @@ public interface OrderMapper {
   <cache />
 
   <select id="getOrder" resultType="Order" parameterType="int">
-    select
+    SELECT
       BILLADDR1 AS billAddress1,
       BILLADDR2 AS billAddress2,
       BILLCITY,
@@ -398,7 +397,6 @@ public interface OrderMapper {
 
       </subsection>
 
-
       <subsection name="Running JPetStore">
         <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
         <p>Let's assume you have a clean computer. These are the steps you should follow to
@@ -441,7 +439,7 @@ public interface OrderMapper {
           Now you are ready to play with it, experiment with your own changes or whatever you want.
         </p>
         <p>
-          And remember that if you find a bug or something that is missing or improvable (for example the missing tests!),
+          And remember that if you find a bug or something that is missing or can be improved (for example the missing tests!),
           change it, create a diff patch file and fill an issue with it in the
            <a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>. Thanks in advance!!!
         </p>
