@@ -115,12 +115,12 @@
 	Stripes es capaz de buscar los ActionBeans, para ello debemos configurar el paquete base desde el que debe comenzar la búsqueda.</p>
 
 <source><![CDATA[
-	<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
-	<init-param>
-		<param-name>ActionResolver.Packages</param-name>
-		<param-value>org.mybatis.jpetstore.web</param-value>
-	</init-param>
-	</filter>
+<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  <init-param>
+    <param-name>ActionResolver.Packages</param-name>
+    <param-value>org.mybatis.jpetstore.web</param-value>
+  </init-param>
+</filter>
 ]]></source>
 
 	<p>
@@ -128,9 +128,9 @@
 	para arrancar Spring asi que añadámoslo:</p>
 
 <source><![CDATA[
-	<listener>
-		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-	</listener>
+<listener>
+  <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+</listener>
 ]]></source>
 
 	<p>
@@ -145,15 +145,13 @@
 	</p>
 
 <source><![CDATA[
-   <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
-      ...
-      <init-param>
-         <param-name>Interceptor.Classes</param-name>
-         <param-value>
-            net.sourceforge.stripes.integration.spring.SpringInterceptor
-         </param-value>
-      </init-param>
-   </filter>
+<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  ...
+  <init-param>
+    <param-name>Interceptor.Classes</param-name>
+    <param-value>net.sourceforge.stripes.integration.spring.SpringInterceptor</param-value>
+  </init-param>
+</filter>
 ]]></source>
 
       <p>
@@ -175,7 +173,7 @@
       </p>
 
 <source><![CDATA[
-    <context:component-scan base-package="org.mybatis.jpetstore.service" />
+<context:component-scan base-package="org.mybatis.jpetstore.service" />
 ]]></source>
 
 	  <p>
@@ -191,14 +189,14 @@
 	  </p>
 
 <source><![CDATA[
-   <jdbc:embedded-database id="dataSource">
-       <jdbc:script location="classpath:database/jpetstore-hsqldb-schema.sql"/>
-       <jdbc:script location="classpath:database/jpetstore-hsqldb-dataload.sql"/>
-   </jdbc:embedded-database>
+<jdbc:embedded-database id="dataSource">
+  <jdbc:script location="classpath:database/jpetstore-hsqldb-schema.sql"/>
+  <jdbc:script location="classpath:database/jpetstore-hsqldb-dataload.sql"/>
+</jdbc:embedded-database>
 
-   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-       <property name="dataSource" ref="dataSource" />
-   </bean>
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>
 ]]></source>
 
 	  <p>
@@ -209,9 +207,9 @@
 	  </p>
 
 <source><![CDATA[
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource" />
-    </bean>
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>
 ]]></source>
 
       <p>
@@ -221,9 +219,9 @@
       </p>
 
 <source><![CDATA[
-    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-        <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
-    </bean>
+<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+  <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
+</bean>
 ]]></source>
 
       <p>
@@ -233,10 +231,10 @@
       </p>
 
 <source><![CDATA[
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource" />
-        <property name="typeAliasesPackage" value="org.mybatis.jpetstore.domain" />
-    </bean>
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="typeAliasesPackage" value="org.mybatis.jpetstore.domain" />
+</bean>
 ]]></source>
 
 		<p>
