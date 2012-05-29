@@ -20,6 +20,7 @@ import java.util.concurrent.BlockingQueue;
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
     private RedisCodec<K, V> codec;
+    private PubSubOutput<K, V> output;
 
     /**
      * Initialize a new instance.
@@ -29,7 +30,8 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
      */
     public PubSubCommandHandler(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec) {
         super(queue);
-        this.codec = codec;
+        this.codec  = codec;
+        this.output = new PubSubOutput<K, V>(codec);
     }
 
     @Override
@@ -41,7 +43,6 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
             if (output instanceof PubSubOutput) Channels.fireMessageReceived(ctx, output);
         }
 
-        PubSubOutput<K, V> output = new PubSubOutput<K, V>(codec);
         while (rsm.decode(buffer, output)) {
             Channels.fireMessageReceived(ctx, output);
             output = new PubSubOutput<K, V>(codec);
