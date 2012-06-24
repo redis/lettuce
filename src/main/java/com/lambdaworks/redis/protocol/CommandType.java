@@ -25,8 +25,8 @@ public enum CommandType {
 
     // String
 
-    APPEND, GET, GETBIT, GETRANGE, GETSET, MGET, MSET, MSETNX,
-    SET, SETEX, SETNX, SETBIT, SETRANGE, STRLEN,
+    APPEND, GET, GETRANGE, GETSET, MGET, MSET, MSETNX, SET, SETEX, SETNX,
+    SETRANGE, STRLEN,
 
     // Numeric
 
@@ -64,7 +64,11 @@ public enum CommandType {
 
     // Scripting
 
-    EVAL, EVALSHA, SCRIPT;
+    EVAL, EVALSHA, SCRIPT,
+
+    // Bits
+
+    BITCOUNT, BITOP, GETBIT, SETBIT;
 
     public byte[] bytes;
 

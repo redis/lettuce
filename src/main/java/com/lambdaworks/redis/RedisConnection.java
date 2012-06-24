@@ -68,6 +68,29 @@ public class RedisConnection<K, V> {
         return await(c.bgsave());
     }
 
+    public Long bitcount(K key) {
+        return await(c.bitcount(key));
+    }
+
+    public Long bitcount(K key, long start, long end) {
+        return await(c.bitcount(key, start, end));
+    }
+
+    public Long bitopAnd(K destination, K... keys) {
+        return await(c.bitopAnd(destination, keys));
+    }
+
+    public Long bitopNot(K destination, K source) {
+        return await(c.bitopNot(destination, source));
+    }
+
+    public Long bitopOr(K destination, K... keys) {
+        return await(c.bitopOr(destination, keys));
+    }
+    public Long bitopXor(K destination, K... keys) {
+        return await(c.bitopXor(destination, keys));
+    }
+
     public KeyValue<K, V> blpop(long timeout, K... keys) {
         long timeout2 = (timeout == 0 ? Long.MAX_VALUE : max(timeout, unit.toSeconds(this.timeout)));
         return await(c.blpop(timeout, keys), timeout2, SECONDS);

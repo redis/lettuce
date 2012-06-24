@@ -84,6 +84,41 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(BGSAVE, new StatusOutput<K, V>(codec));
     }
 
+    public Future<Long> bitcount(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        return dispatch(BITCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Future<Long> bitcount(K key, long start, long end) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(start).add(end);
+        return dispatch(BITCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Future<Long> bitopAnd(K destination, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(AND).addKey(destination).addKeys(keys);
+        return dispatch(BITOP, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Future<Long> bitopNot(K destination, K source) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(NOT).addKey(destination).addKey(source);
+        return dispatch(BITOP, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Future<Long> bitopOr(K destination, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(OR).addKey(destination).addKeys(keys);
+        return dispatch(BITOP, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Future<Long> bitopXor(K destination, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(XOR).addKey(destination).addKeys(keys);
+        return dispatch(BITOP, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Future<KeyValue<K, V>> blpop(long timeout, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
         return dispatch(BLPOP, new KeyValueOutput<K, V>(codec), args);
