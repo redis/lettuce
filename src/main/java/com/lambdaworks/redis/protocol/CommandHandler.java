@@ -36,7 +36,7 @@ public class CommandHandler<K, V> extends SimpleChannelHandler {
 
     @Override
     public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        Command cmd = (Command) e.getMessage();
+        Command<?, ?, ?> cmd = (Command<?, ?, ?>) e.getMessage();
         Channel channel = ctx.getChannel();
         ChannelBuffer buf = ChannelBuffers.dynamicBuffer(channel.getConfig().getBufferFactory());
         cmd.encode(buf);

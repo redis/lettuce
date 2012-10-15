@@ -19,7 +19,7 @@ public class ScoredValue<V> {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        ScoredValue that = (ScoredValue) o;
+        ScoredValue<?> that = (ScoredValue<?>) o;
         return Double.compare(that.score, score) == 0 && value.equals(that.value);
     }
 

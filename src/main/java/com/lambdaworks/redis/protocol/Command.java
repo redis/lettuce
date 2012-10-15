@@ -19,7 +19,7 @@ public class Command<K, V, T> implements Future<T> {
     private static final byte[] CRLF = "\r\n".getBytes(Charsets.ASCII);
 
     public final CommandType type;
-    protected CommandArgs args;
+    protected CommandArgs<K, V> args;
     protected CommandOutput<K, V, T> output;
     protected CountDownLatch latch;
 
@@ -31,7 +31,7 @@ public class Command<K, V, T> implements Future<T> {
      * @param args      Command args, if any.
      * @param multi     Flag indicating if MULTI active.
      */
-    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs args, boolean multi) {
+    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
         this.type   = type;
         this.output = output;
         this.args   = args;

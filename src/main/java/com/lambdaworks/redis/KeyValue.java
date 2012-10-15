@@ -19,7 +19,7 @@ public class KeyValue<K, V> {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        KeyValue that = (KeyValue) o;
+        KeyValue<?, ?> that = (KeyValue<?, ?>) o;
         return key.equals(that.key) && value.equals(that.value);
     }
 

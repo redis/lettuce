@@ -2,8 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.*;
 
 import java.util.*;
 
@@ -13,10 +12,20 @@ public abstract class AbstractCommandTest {
 
     public static final String passwd = "passwd";
 
-    protected RedisClient client = new RedisClient(host, port);
+    protected static RedisClient client;
     protected RedisConnection<String, String> redis;
     protected String key   = "key";
     protected String value = "value";
+
+    @BeforeClass
+    public static void setupClient() {
+        client = new RedisClient(host, port);
+    }
+
+    @AfterClass
+    public static void shutdownClient() {
+        client.shutdown();
+    }
 
     @Before
     public final void openConnection() throws Exception {

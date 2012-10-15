@@ -78,8 +78,8 @@ public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements 
     @Override
     public void run(Timeout timeout) throws Exception {
         ChannelPipeline old = channel.getPipeline();
-        CommandHandler handler = old.get(CommandHandler.class);
-        RedisAsyncConnection connection = old.get(RedisAsyncConnection.class);
+        CommandHandler<?, ?> handler = old.get(CommandHandler.class);
+        RedisAsyncConnection<?, ?> connection = old.get(RedisAsyncConnection.class);
         ChannelPipeline pipeline = Channels.pipeline(this, handler, connection);
 
         Channel c = bootstrap.getFactory().newChannel(pipeline);

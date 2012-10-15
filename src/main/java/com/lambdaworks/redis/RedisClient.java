@@ -184,7 +184,7 @@ public class RedisClient {
     public void shutdown() {
         for (Channel c : channels) {
             ChannelPipeline pipeline = c.getPipeline();
-            RedisAsyncConnection connection = pipeline.get(RedisAsyncConnection.class);
+            RedisAsyncConnection<?, ?> connection = pipeline.get(RedisAsyncConnection.class);
             connection.close();
         }
         ChannelGroupFuture future = channels.close();

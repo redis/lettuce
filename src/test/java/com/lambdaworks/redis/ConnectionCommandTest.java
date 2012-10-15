@@ -84,7 +84,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
     @Test
     public void selectInvalid() throws Exception {
-        RedisAsyncConnection async = client.connectAsync();
+        RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
             async.select(1024);
             fail("Selected invalid db index");
