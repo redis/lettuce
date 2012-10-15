@@ -676,6 +676,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(SRANDMEMBER, new ValueOutput<K, V>(codec), key);
     }
 
+    public Future<Set<V>> srandmember(K key, long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(count);
+        return dispatch(SRANDMEMBER, new ValueSetOutput<K, V>(codec), args);
+    }
+
     public Future<Long> srem(K key, V... members) {
         return dispatch(SREM, new IntegerOutput<K, V>(codec), key, members);
     }

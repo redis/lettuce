@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis;
 
+import java.util.Set;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -92,9 +93,12 @@ public class SetCommandTest extends AbstractCommandTest {
     @Test
     public void srandmember() throws Exception {
         assertNull(redis.spop(key));
-        redis.sadd(key, "a", "b", "c");
-        assertTrue(set("a", "b", "c").contains(redis.srandmember(key)));
-        assertEquals(set("a", "b", "c"), redis.smembers(key));
+        redis.sadd(key, "a", "b", "c", "d");
+        assertTrue(set("a", "b", "c", "d").contains(redis.srandmember(key)));
+        assertEquals(set("a", "b", "c", "d"), redis.smembers(key));
+        Set<String> rand = redis.srandmember(key, 3);
+        assertEquals(3, rand.size());
+        assertTrue(set("a", "b", "c", "d").containsAll(rand));
     }
 
     @Test

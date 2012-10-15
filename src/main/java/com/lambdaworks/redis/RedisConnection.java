@@ -596,6 +596,10 @@ public class RedisConnection<K, V> {
         return await(c.srandmember(key));
     }
 
+    public Set<V> srandmember(K key, long count) {
+        return await(c.srandmember(key, count));
+    }
+
     public Long srem(K key, V... members) {
         return await(c.srem(key, members));
     }
