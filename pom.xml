@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>15</version>
+    <version>16</version>
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
@@ -88,6 +88,8 @@
     <spring.version>3.1.1.RELEASE</spring.version>
     <clirr.comparisonVersion>1.1.0</clirr.comparisonVersion>
     <gcu.product>Spring</gcu.product>
+    <osgi.import>org.springframework.batch;resolution:=optional,*</osgi.import>
+    <osgi.dynamicImport>*</osgi.dynamicImport>
     <!--
      | see distributionManagement.site.url
     -->
