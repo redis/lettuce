@@ -15,10 +15,7 @@
  */
 package org.mybatis.spring;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,12 +24,14 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.type.TypeAliasRegistry;
+import org.apache.ibatis.type.TypeException;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.junit.Test;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.mybatis.spring.type.DummyTypeAlias;
 import org.mybatis.spring.type.DummyTypeHandler;
+import org.mybatis.spring.type.SuperType;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -205,6 +204,33 @@ public final class SqlSessionFactoryBeanTest {
     TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
     typeAliasRegistry.resolveAlias("testAlias");
     typeAliasRegistry.resolveAlias("testAlias2");
+    typeAliasRegistry.resolveAlias("dummyTypeHandler");
+    typeAliasRegistry.resolveAlias("superType");
+  }
+
+  @Test
+  public void testSearchATypeAliasPackageWithSuperType() throws Exception {
+    setupFactoryBean();
+    factoryBean.setTypeAliasesSuperType(SuperType.class);
+    factoryBean.setTypeAliasesPackage("org/mybatis/spring/type");
+
+    TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
+    typeAliasRegistry.resolveAlias("testAlias2");
+    typeAliasRegistry.resolveAlias("superType");
+
+    try {
+        typeAliasRegistry.resolveAlias("testAlias");
+        fail();
+    } catch (TypeException e) {
+        // expected
+    }
+
+    try {
+        typeAliasRegistry.resolveAlias("dummyTypeHandler");
+        fail();
+    } catch (TypeException e) {
+        // expected
+    }
   }
 
   @Test

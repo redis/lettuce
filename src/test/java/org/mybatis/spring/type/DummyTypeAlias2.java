@@ -21,6 +21,6 @@ import org.apache.ibatis.type.Alias;
  * @version $Id$
  */
 @Alias("testAlias2")
-public class DummyTypeAlias2 {
+public class DummyTypeAlias2 extends SuperType {
 
 }

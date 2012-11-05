@@ -96,6 +96,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private String typeAliasesPackage;
 
+  private Class<?> typeAliasesSuperType;
+
   private DatabaseIdProvider databaseIdProvider = new DefaultDatabaseIdProvider();
 
   /**
@@ -140,6 +142,19 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    */
   public void setTypeAliasesPackage(String typeAliasesPackage) {
     this.typeAliasesPackage = typeAliasesPackage;
+  }
+
+  /**
+   * Super class which domain objects have to extend to have a type alias created.
+   * No effect if there is no package to scan configured.
+   *
+   * @since 1.1.2
+   *
+   * @param typeAliasesSuperType super class for domain objects
+   *
+   */
+  public void setTypeAliasesSuperType(Class<?> typeAliasesSuperType) {
+    this.typeAliasesSuperType = typeAliasesSuperType;
   }
 
   /**
@@ -324,7 +339,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeAliasPackageArray) {
-        configuration.getTypeAliasRegistry().registerAliases(packageToScan);
+        configuration.getTypeAliasRegistry().registerAliases(packageToScan,
+                typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
         if (this.logger.isDebugEnabled()) {
           this.logger.debug("Scanned package: '" + packageToScan + "' for aliases");
         }
