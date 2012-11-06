@@ -42,14 +42,14 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   private boolean externalSqlSession;
 
   @Autowired(required = false)
-  public final void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     if (!this.externalSqlSession) {
       this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
     }
   }
 
   @Autowired(required = false)
-  public final void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+  public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
     this.sqlSession = sqlSessionTemplate;
     this.externalSqlSession = true;
   }
@@ -61,7 +61,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    *
    * @return Spring managed thread safe SqlSession
    */
-  public final SqlSession getSqlSession() {
+  public SqlSession getSqlSession() {
     return this.sqlSession;
   }
 
