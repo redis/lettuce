@@ -35,6 +35,8 @@ import org.apache.ibatis.mapping.DatabaseIdProvider;
 import org.apache.ibatis.mapping.DefaultDatabaseIdProvider;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.reflection.factory.ObjectFactory;
+import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -100,7 +102,31 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private DatabaseIdProvider databaseIdProvider = new DefaultDatabaseIdProvider();
 
+  private ObjectFactory objectFactory;
+
+  private ObjectWrapperFactory objectWrapperFactory;
+
   /**
+   * Sets the ObjectFactory.
+   * 
+   * @since 1.1.2
+   * @param objectFactory
+   */
+  public void setObjectFactory(ObjectFactory objectFactory) {
+    this.objectFactory = objectFactory;
+  }
+
+  /**
+   * Sets the ObjectWrapperFactory.
+   * 
+   * @since 1.1.2
+   * @param objectWrapperFactory
+   */
+  public void setObjectWrapperFactory(ObjectWrapperFactory objectWrapperFactory) {
+    this.objectWrapperFactory = objectWrapperFactory;
+  }
+
+    /**
    * Sets the DatabaseIdProvider.
    *
    * @since 1.1.0
@@ -333,6 +359,14 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
       configuration = new Configuration();
       configuration.setVariables(this.configurationProperties);
+    }
+
+    if (this.objectFactory != null) {
+      configuration.setObjectFactory(this.objectFactory);
+    }
+
+    if (this.objectWrapperFactory != null) {
+      configuration.setObjectWrapperFactory(this.objectWrapperFactory);
     }
 
     if (hasLength(this.typeAliasesPackage)) {

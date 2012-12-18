@@ -20,6 +20,10 @@ import static org.junit.Assert.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
+import org.apache.ibatis.reflection.factory.ObjectFactory;
+import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
+import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
@@ -42,6 +46,9 @@ import com.mockrunner.mock.jdbc.MockDataSource;
  * @version $Id$
  */
 public final class SqlSessionFactoryBeanTest {
+
+  private static final class TestObjectFactory extends DefaultObjectFactory {}
+  private static final class TestObjectWrapperFactory extends DefaultObjectWrapperFactory {}
 
   private static MockDataSource dataSource = new MockDataSource();
 
@@ -241,6 +248,24 @@ public final class SqlSessionFactoryBeanTest {
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
     assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
     assertTrue(typeHandlerRegistry.hasTypeHandler(BigDecimal.class));
+  }
+
+  @Test
+  public void testSetObjectFactory() throws Exception {
+    setupFactoryBean();
+    factoryBean.setObjectFactory(new TestObjectFactory());
+
+    ObjectFactory objectFactory = factoryBean.getObject().getConfiguration().getObjectFactory();
+    assertTrue(objectFactory instanceof TestObjectFactory);
+  }
+
+  @Test
+  public void testSetObjectWrapperFactory() throws Exception {
+    setupFactoryBean();
+    factoryBean.setObjectWrapperFactory(new TestObjectWrapperFactory());
+
+    ObjectWrapperFactory objectWrapperFactory = factoryBean.getObject().getConfiguration().getObjectWrapperFactory();
+    assertTrue(objectWrapperFactory instanceof TestObjectWrapperFactory);
   }
 
   private void assertDefaultConfig(SqlSessionFactory factory) {
