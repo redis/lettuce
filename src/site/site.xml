@@ -48,6 +48,9 @@
         <item href="mappers.html#MapperScannerConfigurer" name="MapperScannerConfigurer" />
       </item>
       <item name="Using the MyBatis API" href="using-api.html"/>
+      <item name="Spring Batch" href="batch.html"/>
+        <item href="batch.html#MyBatisPagingItemReader" name="MyBatisPagingItemReader" />
+        <item href="batch.html#MyBatisBatchItemWriter" name="MyBatisBatchItemWriter" />
       <item name="Sample Code" href="sample.html"/>
     </menu>
 
