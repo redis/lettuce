@@ -260,24 +260,26 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-  * Gets beanNameGenerator to be used while running the scanner
-  * @return the beanNameGenerator BeanNameGenerator that has been configured
-  * @since 1.1.2
-  */
+   * Gets beanNameGenerator to be used while running the scanner
+   * 
+   * @return the beanNameGenerator BeanNameGenerator that has been configured
+   * @since 1.1.2
+   */
   public BeanNameGenerator getBeanNameGenerator() {
-	 return beanNameGenerator;
+    return beanNameGenerator;
   }
-	
+
   /**
    * Sets beanNameGenerator to be used while running the scanner
+   * 
    * @param beanNameGenerator the beanNameGenerator to set
    * @since 1.1.2
    */
-   public void setBeanNameGenerator(BeanNameGenerator beanNameGenerator) {
-	  this.beanNameGenerator = beanNameGenerator;
-   }
+  public void setBeanNameGenerator(BeanNameGenerator beanNameGenerator) {
+    this.beanNameGenerator = beanNameGenerator;
+  }
 
-/**
+  /**
    * {@inheritDoc}
    */
   public void afterPropertiesSet() throws Exception {
@@ -301,10 +303,10 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     Scanner scanner = new Scanner(beanDefinitionRegistry);
     scanner.setResourceLoader(this.applicationContext);
 
-    if(this.beanNameGenerator != null) {
-    	scanner.setBeanNameGenerator(this.beanNameGenerator);
+    if (this.beanNameGenerator != null) {
+      scanner.setBeanNameGenerator(this.beanNameGenerator);
     }
-    
+
     scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
   }
 
