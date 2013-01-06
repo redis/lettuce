@@ -96,6 +96,24 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
+  public void testNameGenerator() {
+    GenericBeanDefinition definition = new GenericBeanDefinition();
+    definition.setBeanClass(BeanNameGenerator.class);
+    applicationContext.registerBeanDefinition("beanNameGenerator", definition);
+
+    applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
+        "beanNameGenerator", new RuntimeBeanReference("beanNameGenerator"));
+
+    startContext();
+
+    // only child inferfaces should be loaded
+    applicationContext.getBean("org.mybatis.spring.mapper.MapperInterface");
+    applicationContext.getBean("org.mybatis.spring.mapper.MapperSubinterface");
+    applicationContext.getBean("org.mybatis.spring.mapper.child.MapperChildInterface");
+    applicationContext.getBean("org.mybatis.spring.mapper.AnnotatedMapper");
+  }
+
+  @Test
   public void testMarkerInterfaceScan() {
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
         "markerInterface", MapperInterface.class);
