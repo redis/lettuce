@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.mapper.child.MapperChildInterface;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
@@ -106,11 +107,11 @@ public final class MapperScannerConfigurerTest {
 
     startContext();
 
-    // only child inferfaces should be loaded
-    applicationContext.getBean("org.mybatis.spring.mapper.MapperInterface");
-    applicationContext.getBean("org.mybatis.spring.mapper.MapperSubinterface");
-    applicationContext.getBean("org.mybatis.spring.mapper.child.MapperChildInterface");
-    applicationContext.getBean("org.mybatis.spring.mapper.AnnotatedMapper");
+    // only child inferfaces should be loaded and named with its class name
+    applicationContext.getBean(MapperInterface.class.getName());
+    applicationContext.getBean(MapperSubinterface.class.getName());
+    applicationContext.getBean(MapperChildInterface.class.getName());
+    applicationContext.getBean(AnnotatedMapper.class.getName());
   }
 
   @Test
