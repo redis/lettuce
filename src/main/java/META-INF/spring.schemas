@@ -1,0 +1,3 @@
+http\://www.mybatis.org/schema/mybatis/mybatis-spring-1.2.xsd=org/mybatis/spring/config/mybatis-spring-1.2.xsd
+http\://www.mybatis.org/schema/mybatis/mybatis-spring.xsd=org/mybatis/spring/config/mybatis-spring-1.2.xsd
+ 
