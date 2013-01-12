@@ -24,17 +24,17 @@
     version: $Id: applicationContext-mapper.xml 4869 2012-03-12 07:00:51Z simone.tripodi $
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-    <!-- import datasource and transaction manager  -->
-    <import resource="classpath:org/mybatis/spring/sample/applicationContext-infrastructure.xml"/>
+	<!-- import datasource and transaction manager -->
+	<import	resource="classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml" />
 
-    <!-- Directly injecting mappers; notice there is no UserDaoImplementation
-         needed, but the DAO interface is required. The required
-         SqlSessionFactory will be autowired. -->
-    <bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
-        <property name="mapperInterface" value="org.mybatis.spring.sample.dao.UserDao" />
-    </bean>
+	<!-- Directly injecting mappers; notice there is no UserDaoImplementation 
+		needed, but the DAO interface is required. The required SqlSessionFactory 
+		will be autowired. -->
+	<bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.mybatis.spring.sample.dao.UserDao" />
+	</bean>
 </beans>

@@ -23,6 +23,6 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @version $Id$
  */
-@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-sqlsession.xml" })
+@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-sqlsession.xml" })
 public class SampleSqlSessionTest extends AbstractSampleTest {
 }

@@ -23,6 +23,6 @@ import org.springframework.test.context.ContextConfiguration;
  * 
  * @version $Id$
  */
-@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/applicationContext-scanner.xml" })
+@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-scanner.xml" })
 public class SampleScannerTest extends AbstractSampleTest {
 }
