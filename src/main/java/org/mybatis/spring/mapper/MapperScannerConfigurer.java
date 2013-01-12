@@ -120,7 +120,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
   private boolean processPropertyPlaceHolders;
   
-  private BeanNameGenerator beanNameGenerator;
+  private BeanNameGenerator nameGenerator;
   
   /**
    * This property lets you set the base package for your mapper interface files.
@@ -263,20 +263,20 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * Gets beanNameGenerator to be used while running the scanner
    * 
    * @return the beanNameGenerator BeanNameGenerator that has been configured
-   * @since 1.1.2
+   * @since 1.2.0
    */
-  public BeanNameGenerator getBeanNameGenerator() {
-    return beanNameGenerator;
+  public BeanNameGenerator getNameGenerator() {
+    return nameGenerator;
   }
 
   /**
    * Sets beanNameGenerator to be used while running the scanner
    * 
-   * @param beanNameGenerator the beanNameGenerator to set
-   * @since 1.1.2
+   * @param nameGenerator the beanNameGenerator to set
+   * @since 1.2.0
    */
-  public void setBeanNameGenerator(BeanNameGenerator beanNameGenerator) {
-    this.beanNameGenerator = beanNameGenerator;
+  public void setNameGenerator(BeanNameGenerator nameGenerator) {
+    this.nameGenerator = nameGenerator;
   }
 
   /**
@@ -303,8 +303,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     Scanner scanner = new Scanner(beanDefinitionRegistry);
     scanner.setResourceLoader(this.applicationContext);
 
-    if (this.beanNameGenerator != null) {
-      scanner.setBeanNameGenerator(this.beanNameGenerator);
+    if (this.nameGenerator != null) {
+      scanner.setBeanNameGenerator(this.nameGenerator);
     }
 
     scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));

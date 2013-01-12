@@ -29,9 +29,11 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Component;
@@ -39,7 +41,7 @@ import org.springframework.stereotype.Component;
 import com.mockrunner.mock.jdbc.MockDataSource;
 
 /**
- * @version $Id$
+ * @version $Id: MapperScannerConfigurerTest.java 5575 2013-01-06 19:55:31Z eduardo.macarron $
  */
 public final class MapperScannerConfigurerTest {
   private GenericApplicationContext applicationContext;
@@ -103,7 +105,7 @@ public final class MapperScannerConfigurerTest {
     applicationContext.registerBeanDefinition("beanNameGenerator", definition);
 
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
-        "beanNameGenerator", new RuntimeBeanReference("beanNameGenerator"));
+        "nameGenerator", new RuntimeBeanReference("beanNameGenerator"));
 
     startContext();
 
@@ -270,4 +272,13 @@ public final class MapperScannerConfigurerTest {
       // success
     }
   }
+  
+  public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {
+
+    public String generateBeanName(BeanDefinition beanDefinition, BeanDefinitionRegistry definitionRegistry) {
+      return beanDefinition.getBeanClassName();
+    }
+
+  }
+
 }
