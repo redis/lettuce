@@ -144,7 +144,7 @@ public final class SqlSessionFactoryBeanTest {
     // for each statement in the xml file: org.mybatis.spring.TestMapper.xxx & xxx
     assertEquals(8, factory.getConfiguration().getMappedStatementNames().size());
 
-    assertEquals(4, factory.getConfiguration().getResultMapNames().size());
+    assertEquals(0, factory.getConfiguration().getResultMapNames().size());
     assertEquals(0, factory.getConfiguration().getParameterMapNames().size());
   }
 
