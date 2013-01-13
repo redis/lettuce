@@ -165,6 +165,19 @@ public final class EnableMapperScanningTest {
   }
 
   @Test
+  public void testScanWithExplicitSqlSessionFactory() {
+    applicationContext.register(AppConfigWithSqlSessionFactory.class);
+
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+  }
+
+  @Test
   public void testScanWithExplicitSqlSessionTemplate() throws Exception {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(SqlSessionTemplate.class);
@@ -206,8 +219,13 @@ public final class EnableMapperScanningTest {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionTemplateBeanName = "sqlSessionTemplate")
+  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionTemplate = "sqlSessionTemplate")
   public static class AppConfigWithSqlSessionTemplate {
+  }
+
+  @Configuration
+  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionFactory = "sqlSessionFactory")
+  public static class AppConfigWithSqlSessionFactory {
   }
 
 }

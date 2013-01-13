@@ -66,9 +66,9 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     }
     BeanNameGenerator nameGenerator = BeanUtils.instantiateClass((Class<?>) annoAttrs.getClass("nameGenerator"), BeanNameGenerator.class);
     scanner.setBeanNameGenerator(nameGenerator);
-    final String sqlSessionTemplateBeanName = annoAttrs.getString("sqlSessionTemplateBeanName");
+    final String sqlSessionTemplateBeanName = annoAttrs.getString("sqlSessionTemplate");
     scanner.setSqlSessionTemplateBeanName(sqlSessionTemplateBeanName);
-    final String sqlSessionFactoryBeanName = annoAttrs.getString("sqlSessionFactoryBeanName");
+    final String sqlSessionFactoryBeanName = annoAttrs.getString("sqlSessionFactory");
     scanner.setSqlSessionFactoryBeanName(sqlSessionFactoryBeanName);
     List<String> basePackages = new ArrayList<String>();
     for (String pkg : annoAttrs.getStringArray("value")) {

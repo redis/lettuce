@@ -115,7 +115,7 @@ public @interface EnableMapperScanning {
    * loads early during the start process and it is too early to build mybatis
    * object instances.
    */
-  String sqlSessionTemplateBeanName() default "";
+  String sqlSessionTemplate() default "";
 
   /**
    * Specifies which {@code SqlSessionFactory} to use in the case that there is
@@ -126,7 +126,7 @@ public @interface EnableMapperScanning {
    * loads early during the start process and it is too early to build mybatis
    * object instances.
    */
-  String sqlSessionFactoryBeanName() default "";
+  String sqlSessionFactory() default "";
 
   /**
    * The {@link BeanNameGenerator} class to be used for naming detected components

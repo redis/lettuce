@@ -115,23 +115,47 @@
        </p>
     </subsection>
 
-    <subsection name="MapperScannerConfigurer">
+    <subsection name="Scanning for mappers" id="scan">
       <p>
         There is no need to register all your mappers in the Spring XML file.
-        Instead, you can use a <code>MapperScannerConfigurer</code> that
-        will search the classpath for your mappers and set them up
-        automatically as <code>MapperFactoryBean</code>s.
+        Instead, you can let MyBatis-Spring scan your classpath for them.
       </p>
+      
+      <p>
+        You can scan for mappers in three different ways:
+      </p>
+      <ul>
+        <li>Using the <code>mybatis</code> namespace and the <code>scan</code> element.</li>
+        <li>Using the annotation <code>@EnableMapperScanning</code></li>
+        <li>Using a classic Spring xml file and registering the <code>MapperScannerConfigurer</code></li>
+      </ul> 
+
+      <h4>&lt;mybatis:scan&gt;</h4>
+      
+      <p>
+        MyBatis-Spring provides a <code>mybatis</code> namespace with a XML element named <code>scan</code>. This
+        element will sarch your classpath for Mappers and will register them to Spring as <code>MapperFactoryBeans</code>. 
+      </p>
+      
+      <p>Follows below a sample XML configuration</p>
+
+        <source><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:mybatis="http://www.mybatis.org/schema/mybatis"
+     xsi:schemaLocation="
+     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+     http://www.mybatis.org/schema/mybatis http://www.mybatis.org/schema/mybatis/mybatis-spring.xsd">
+
+    ...
+
+    <!-- Scan for mappers and let them be autowired. -->
+    <mybatis:scan base-package="org.mybatis.spring.sample.dao" />
+    
+    ...
+</beans>]]></source>
 
       <p>
-        To set up a <code>MapperScannerConfigurer</code> add the
-        following to the Spring configuration:
-      </p>
-        <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-  <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
-</bean>]]></source>
-      <p>
-        The <code>basePackage</code> property lets you set the base package
+        The <code>base-package</code> attribute lets you set the base package
         for your mapper interface files. You can set more than one package by
         using a semicolon or comma as a separator. Mappers will be searched for
         recursively starting in the specified package(s).
@@ -139,12 +163,74 @@
 
       <p>
         Notice that there is no need to specify a <code>SqlSessionFactory</code> or
-        <code>SqlSessionTemplate</code> because the <code>MapperScannerConfigurer</code>
+        <code>SqlSessionTemplate</code> because the <code>&lt;mybatis:scan&gt;</code>
         will create <code>MapperFactoryBean</code>s that can be autowired. But if you are
         using more than one <code>DataSource</code> autowire may not work for you. In this case
-        you can use the <code>sqlSessionFactoryBeanName</code> or
-        <code>sqlSessionTemplateBeanName</code> properties to set the right bean name to use.
-        Note that <strong>bean names</strong> are required,
+        you can use the <code>factory-ref</code> or
+        <code>template-ref</code> attributes to set the right bean name to use.
+      </p>
+
+      <p>
+        <code>&lt;mybatis:scan&gt;</code> supports filtering the mappers
+        created by either specifying a marker interface or an annotation. The
+        <code>annotation</code> property specifies an annotation to
+        search for. The <code>marker-interface</code> attribute specifies a
+        parent interface to search for. If both properties are specified, mappers
+        are added for interfaces that match <strong>either</strong> criteria.
+        By default, these two properties are null, so all interfaces in the given
+        base package(s) will be loaded as mappers.
+      </p>
+
+      <p>
+        Discovered mappers will be named using Spring default naming strategy for
+        autodetected components (see section 3.14.4 of the Spring manual).
+        That is, if no annotation is found, it will use the uncapitalized non-qualified class
+        name of the mapper. But if either a @Component or a JSR-330 @Named annotation is
+        found it will get the name from the annotation.
+        Notice that you can set the <code>annotation</code> attribute
+        to <code>org.springframework.stereotype.Component</code>,
+        <code>javax.inject.Named</code> (if you have JSE 6) or to your own annotation
+        (that must be itself annotated) so the annotation will work both as a marker
+        and as a name provider.
+      </p>
+
+      <h4>@EnableMapperScanning</h4>
+      
+      <p>
+        If you are using the Spring Java Configuration (a.k.a @Configuration) you would 
+        prefer to use the <code>@EnableMapperScanning</code> rather than the 
+        <code>&lt;mybatis:scan&gt;</code>.  
+      </p>
+      
+      <p>The <code>@EnableMapperScanning</code> annotation is used as follows:</p>
+   
+   <source><![CDATA[@Configuration
+@EnableMapperScanning("org.mybatis.spring.sample.dao")
+public class AppConfig {
+   ...
+}]]></source>
+	
+	  <p>The annotation works in the same exact way than <code>&lt;mybatis:scan&gt;</code> we
+	  saw in the previous section. It also lets you specify a marker interface or an annotation class
+	  through its properties <code>markerInterface</code> and <code>annotationClass</code>. 
+	  It also lets you specify an specific <code>SqlSessionFactory</code> or <code>SqlSessionTemplate</code>
+	  by using its properties <code>sqlSessionFactory</code> and <code>sqlSessionTemplate</code>.
+	  </p>
+     
+      <h4>MapperScannerConfigurer</h4>
+        
+      <p>
+        The <code>MapperScannerConfigurer</code> is a <code>BeanDefinitionRegistryPostProcessor</code> that
+        can be included in a classic xml application context as a normal bean.
+        To set up a <code>MapperScannerConfigurer</code> add the following to the Spring configuration:
+      </p>
+        <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+  <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
+</bean>]]></source>
+
+      <p>
+        If you need to specify an specific <code>sqlSessionFactory</code> or <code>sqlSessionTemplate</code>
+        note that <strong>bean names</strong> are required,
         not bean references, thus the <code>value</code> attribute is used instead of the
         usual <code>ref</code>:
       </p>
@@ -158,30 +244,6 @@
         For that purpose that properties have been deprecated and the new properties 
         <code>sqlSessionFactoryBeanName</code> and <code>sqlSessionTemplateBeanName</code> 
         are recommended.
-      </p>
-    
-      <p>
-        <code>MapperScannerConfigurer</code> supports filtering the mappers
-        created by either specifying a marker interface or an annotation. The
-        <code>annotationClass</code> property specifies an annotation to
-        search for. The <code>markerInterface</code> property specifies a
-        parent interface to search for. If both properties are specified, mappers
-        are added for interfaces that match <strong>either</strong> criteria.
-        By default, these two properties are null, so all interfaces in the given
-        base package(s) will be loaded as mappers.
-      </p>
-
-      <p>
-        Discovered mappers will be named using Spring default naming strategy for
-        autodetected components (see section 3.14.4 of the Spring manual).
-        That is, if no annotation is found, it will use the uncapitalized non-qualified class
-        name of the mapper. But if either a @Component or a JSR-330 @Named annotation is
-        found it will get the name from the annotation.
-        Notice that you can set the <code>annotationClass</code> property
-        to <code>org.springframework.stereotype.Component</code>,
-        <code>javax.inject.Named</code> (if you have JSE 6) or to your own annotation
-        (that must be itself annotated) so the annotation will work both as a marker
-        and as a name provider.
       </p>
       </subsection>
     </section>

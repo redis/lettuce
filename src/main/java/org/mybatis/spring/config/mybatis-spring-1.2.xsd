@@ -48,18 +48,18 @@
 					</xsd:appinfo>
 				</xsd:annotation>
 			</xsd:attribute>
-			<xsd:attribute name="template" type="xsd:string">
-				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	Specifies which {@code SqlSessionTemplate} to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
-					]]></xsd:documentation>
-				</xsd:annotation>
-			</xsd:attribute>
-			<xsd:attribute name="factory" type="xsd:string">
+			<xsd:attribute name="factory-ref" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
 	Specifies which {@code SqlSessionFactory} to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
 	                ]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="template-ref" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+	Specifies which {@code SqlSessionTemplate} to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
+					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
 			<xsd:attribute name="name-generator" type="xsd:string">
