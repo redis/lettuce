@@ -80,10 +80,7 @@ public final class MapperScannerConfigurerTest {
     // no method interfaces should be ignored too
     assertBeanNotLoaded("package-info");
     //        assertBeanNotLoaded("annotatedMapperZeroMethods"); // as of 1.1.0 mappers with no methods are loaded
-  }
-
-  @After
-  public void destroyContext() {
+    
     applicationContext.destroy();
   }
 
