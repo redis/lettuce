@@ -143,6 +143,7 @@ public abstract class AbstractMyBatisSpringTest {
    */
   @Before
   public void setupConnection() throws SQLException {
+    dataSource.reset();
     connection = createMockConnection();
     connectionTwo = createMockConnection();
     dataSource.addConnection(connectionTwo);
@@ -152,11 +153,6 @@ public abstract class AbstractMyBatisSpringTest {
   @Before
   public void resetExecutorInterceptor() {
     executorInterceptor.reset();
-  }
-
-  @Before
-  public void resetDataSource() {
-    dataSource.reset();
   }
 
   @After
