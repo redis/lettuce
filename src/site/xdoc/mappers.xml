@@ -146,7 +146,7 @@
   http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
   http://www.mybatis.org/schema/mybatis http://www.mybatis.org/schema/mybatis/mybatis-spring.xsd">
  
-  <mybatis:scan base-package="org.mybatis.spring.sample.dao" />
+  <mybatis:scan base-package="org.mybatis.spring.sample.mapper" />
 
 </beans>]]></source>
 
@@ -201,10 +201,24 @@
       <p>The <code>@EnableMapperScanning</code> annotation is used as follows:</p>
    
    <source><![CDATA[@Configuration
-@EnableMapperScanning("org.mybatis.spring.sample.dao")
+@EnableMapperScanning("org.mybatis.spring.sample.mapper")
 public class AppConfig {
-   ...
-}]]></source>
+
+  @Bean
+  public DataSource dataSource() {
+      return new EmbeddedDatabaseBuilder()
+               .setType(EmbeddedDatabaseType.H2)
+               .build();
+  }
+
+  @Bean
+  public SqlSessionFactory sqlSessionFactory() throws Exception {
+      SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+      sessionFactory.setDataSource(dataSource());
+      return sessionFactory.getObject();
+  }
+}
+]]></source>
 	
 	  <p>The annotation works in the same exact way than <code>&lt;mybatis:scan&gt;</code> we
 	  saw in the previous section. It also lets you specify a marker interface or an annotation class
