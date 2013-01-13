@@ -23,11 +23,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.mybatis.spring.annotation.EnableMapperScanning;
+import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.MapperInterface;
+import org.mybatis.spring.mapper.MapperSubinterface;
+import org.mybatis.spring.mapper.child.MapperChildInterface;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -88,6 +92,19 @@ public final class EnableMapperScanningTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
+  }
+
+  @Test
+  public void testNameGenerator() {
+    applicationContext.register(AppConfigWithNameGenerator.class);
+
+    startContext();
+
+    // only child inferfaces should be loaded and named with its class name
+    applicationContext.getBean(MapperInterface.class.getName());
+    applicationContext.getBean(MapperSubinterface.class.getName());
+    applicationContext.getBean(MapperChildInterface.class.getName());
+    applicationContext.getBean(AnnotatedMapper.class.getName());
   }
 
   @Test
@@ -223,6 +240,19 @@ public final class EnableMapperScanningTest {
   @Configuration
   @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionFactory = "sqlSessionFactory")
   public static class AppConfigWithSqlSessionFactory {
+  }
+
+  @Configuration
+  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", nameGenerator = EnableMapperScanningTest.BeanNameGenerator.class)
+  public static class AppConfigWithNameGenerator {
+  }
+
+  public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {
+
+    public String generateBeanName(BeanDefinition beanDefinition, BeanDefinitionRegistry definitionRegistry) {
+      return beanDefinition.getBeanClassName();
+    }
+
   }
 
 }

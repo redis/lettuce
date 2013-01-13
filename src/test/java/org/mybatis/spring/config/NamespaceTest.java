@@ -21,9 +21,15 @@ import org.junit.After;
 import org.junit.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.mapper.AnnotatedMapper;
+import org.mybatis.spring.mapper.MapperInterface;
+import org.mybatis.spring.mapper.MapperSubinterface;
+import org.mybatis.spring.mapper.child.MapperChildInterface;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -75,6 +81,20 @@ public final class NamespaceTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
+  }
+
+  @Test
+  public void testNameGenerator() {
+
+    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/name-generator.xml" }, setupSqlSessionFactory());
+
+    startContext();
+
+    // only child inferfaces should be loaded and named with its class name
+    applicationContext.getBean(MapperInterface.class.getName());
+    applicationContext.getBean(MapperSubinterface.class.getName());
+    applicationContext.getBean(MapperChildInterface.class.getName());
+    applicationContext.getBean(AnnotatedMapper.class.getName());
   }
 
   @Test
@@ -187,6 +207,14 @@ public final class NamespaceTest {
     } catch (NoSuchBeanDefinitionException nsbde) {
       // success
     }
+  }
+
+  public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {
+
+    public String generateBeanName(BeanDefinition beanDefinition, BeanDefinitionRegistry definitionRegistry) {
+      return beanDefinition.getBeanClassName();
+    }
+
   }
 
 }
