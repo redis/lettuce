@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2012 The MyBatis Team
+  Copyright 2010-2013 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@
   <body>
     <section name="Spring Batch">
       <p>
-        As of version 1.1.0 MyBatis-Spring provides a to beans for building Spring Batch applications: the <code>MyBatisPagingItemReader</code> 
-        and the <code>MyBatisBatchItemWriter</code>. Both beans and this documentation are ports of their corresponding iBATIS versions 
+        As of version 1.1.0 MyBatis-Spring provides two beans for building Spring Batch applications: the <code>MyBatisPagingItemReader</code> 
+        and the <code>MyBatisBatchItemWriter</code>. Both beans and this documentation are ports of their corresponding iBATIS 2.x versions 
         that are provided by default by in the Spring Batch bundle.
       </p>
       
@@ -72,7 +72,7 @@
       
       <p>
         It is an <code>ItemWriter</code> that uses the batching features from <code>SqlSessionTemplate</code>
-        to execute a batch of statements for all items* provided.
+        to execute a batch of statements for all items provided.
       </p>
  
       <p>
