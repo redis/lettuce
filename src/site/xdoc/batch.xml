@@ -28,24 +28,65 @@
   <body>
     <section name="Spring Batch">
       <p>
-        Note this is not batch but spring batch and blah, blah...
+        As of version 1.1.0 MyBatis-Spring provides a to beans for building Spring Batch applications: the <code>MyBatisPagingItemReader</code> 
+        and the <code>MyBatisBatchItemWriter</code>. Both beans and this documentation are ports of their corresponding iBATIS versions 
+        that are provided by default by in the Spring Batch bundle.
       </p>
       
-      <subsection name="Setup a Reader">
+      <p>
+        <span class="label important">NOTE</span>This about <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> and not
+        about MyBatis batch SqlSessions. For information about batch sessions go to section: Using an SqlSession.
+      </p>
+      
+      <subsection name="MyBatisPagingItemReader">
         <p>
-          To setup a reader....
+          This bean is an <code>IteamReader</code> that reads records from a database using MyBatis in a paging fashion.
         </p>
-        <source><![CDATA[
-<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-  <property name="dataSource" ref="dataSource" />
+        
+		<p>
+		  It executes the query specified as the setQueryId property to retrieve requested data. 
+		  The query is executed using paged requests of a size specified in setPageSize property. 
+		  Additional pages are requested when needed as <code>read()</code> method is called, returning an object corresponding
+          to current position. 
+          
+          Some standard query parameters are provided by the reader and the SQL in the named query must use some or all of these parameters
+          (depending on the SQL variant) to construct a result set of the required size. The parameters are:
+        </p>
+
+		 <ul>
+		 <li><code>_page</code>: the page number to be read (starting at 0)</li>
+		 <li><code>_pagesize</code>: the size of the pages, i.e. the number of rows to return</li>
+		 <li><code>_skiprows</code>: the product of <code>_page</code> and
+		 <code>_pagesize</code></li>
+		 </ul>
+ 
+        <p>Follows below a sample configuration snippet:</p>
+        
+        <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="queryId" value="getEmployee" />
 </bean>]]></source>
-	    <p>
-	    More intesting info...
-        </p>
       </subsection>
 
-      <subsection name="???">
-
+      <subsection name="MyBatisBatchItemWriter">
+      
+      <p>
+        It is an <code>ItemWriter</code> that uses the batching features from <code>SqlSessionTemplate</code>
+        to execute a batch of statements for all items* provided.
+      </p>
+ 
+      <p>
+        The user must provide an mapped statement id that will be executed when <code>write()</code> is called.
+        It is expected that <code>write()</code> is called inside a transaction.<br/>
+      </p>
+ 
+        <p>Follows below a sample configuration snippet:</p>
+        
+        <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="statementId" value="updateEmployee" />
+</bean>]]></source>
+ 
       </subsection>
     </section>
   </body>

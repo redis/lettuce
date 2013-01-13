@@ -140,18 +140,14 @@
       <p>Follows below a sample XML configuration</p>
 
         <source><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xmlns:mybatis="http://www.mybatis.org/schema/mybatis"
-     xsi:schemaLocation="
-     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-     http://www.mybatis.org/schema/mybatis http://www.mybatis.org/schema/mybatis/mybatis-spring.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:mybatis="http://www.mybatis.org/schema/mybatis"
+  xsi:schemaLocation="
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  http://www.mybatis.org/schema/mybatis http://www.mybatis.org/schema/mybatis/mybatis-spring.xsd">
+ 
+  <mybatis:scan base-package="org.mybatis.spring.sample.dao" />
 
-    ...
-
-    <!-- Scan for mappers and let them be autowired. -->
-    <mybatis:scan base-package="org.mybatis.spring.sample.dao" />
-    
-    ...
 </beans>]]></source>
 
       <p>
