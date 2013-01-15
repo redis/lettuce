@@ -125,19 +125,23 @@
         You can scan for mappers in three different ways:
       </p>
       <ul>
-        <li>Using the <code>mybatis</code> namespace and the <code>scan</code> element.</li>
+        <li>Using the <code>&lt;mybatis:scan/&gt;</code> element.</li>
         <li>Using the annotation <code>@EnableMapperScanning</code></li>
         <li>Using a classic Spring xml file and registering the <code>MapperScannerConfigurer</code></li>
-      </ul> 
+      </ul>
+      
+      <p>Both <code>&lt;mybatis:scan/&gt;</code> and <code>@EnableMapperScanning</code> are features introduced in MyBatis-Spring 1.2.0.
+      <code>@EnableMapperScanning</code> requires Spring 3.1+.</p> 
 
-      <h4>&lt;mybatis:scan&gt;</h4>
+      <h4>&lt;mybatis:scan/&gt;</h4>
       
       <p>
-        MyBatis-Spring provides a <code>mybatis</code> namespace with a XML element named <code>scan</code>. This
-        element will sarch your classpath for Mappers and will register them to Spring as <code>MapperFactoryBeans</code>. 
+        The <code>&lt;mybatis:scan/&gt;</code> XML element will search for mappers 
+        in a very similar way than the built-in element <code>&lt;context:component-scan&gt;</code>
+        searches for beans. 
       </p>
       
-      <p>Follows below a sample XML configuration</p>
+      <p>Follows below a sample XML configuration:</p>
 
         <source><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -159,7 +163,7 @@
 
       <p>
         Notice that there is no need to specify a <code>SqlSessionFactory</code> or
-        <code>SqlSessionTemplate</code> because the <code>&lt;mybatis:scan&gt;</code>
+        <code>SqlSessionTemplate</code> because the <code>&lt;mybatis:scan/&gt;</code>
         will create <code>MapperFactoryBean</code>s that can be autowired. But if you are
         using more than one <code>DataSource</code> autowire may not work for you. In this case
         you can use the <code>factory-ref</code> or
@@ -167,7 +171,7 @@
       </p>
 
       <p>
-        <code>&lt;mybatis:scan&gt;</code> supports filtering the mappers
+        <code>&lt;mybatis:scan/&gt;</code> supports filtering the mappers
         created by either specifying a marker interface or an annotation. The
         <code>annotation</code> property specifies an annotation to
         search for. The <code>marker-interface</code> attribute specifies a
@@ -190,12 +194,19 @@
         and as a name provider.
       </p>
 
+      <p>
+        <span class="label important">NOTE</span> <code>&lt;context:component-scan&gt;</code> 
+        won't be able to scan and register mappers. Mappers are interfaces and, in order to register them to 
+        Spring, the scanner must know how to create a <code>MapperFactoryBean</code> for each interface
+        it finds. 
+      </p>
+
       <h4>@EnableMapperScanning</h4>
       
       <p>
         If you are using the Spring Java Configuration (a.k.a @Configuration) you would 
         prefer to use the <code>@EnableMapperScanning</code> rather than the 
-        <code>&lt;mybatis:scan&gt;</code>.  
+        <code>&lt;mybatis:scan/&gt;</code>.  
       </p>
       
       <p>The <code>@EnableMapperScanning</code> annotation is used as follows:</p>
@@ -218,10 +229,10 @@ public class AppConfig {
 }
 ]]></source>
 	
-	  <p>The annotation works in the same exact way than <code>&lt;mybatis:scan&gt;</code> we
+	  <p>The annotation works in the same exact way than <code>&lt;mybatis:scan/&gt;</code> we
 	  saw in the previous section. It also lets you specify a marker interface or an annotation class
 	  through its properties <code>markerInterface</code> and <code>annotationClass</code>. 
-	  It also lets you specify an specific <code>SqlSessionFactory</code> or <code>SqlSessionTemplate</code>
+	  You can also provide an specific <code>SqlSessionFactory</code> or <code>SqlSessionTemplate</code>
 	  by using its properties <code>sqlSessionFactory</code> and <code>sqlSessionTemplate</code>.
 	  </p>
      
