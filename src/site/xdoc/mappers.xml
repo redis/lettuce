@@ -137,7 +137,7 @@
       
       <p>
         The <code>&lt;mybatis:scan/&gt;</code> XML element will search for mappers 
-        in a very similar way than the built-in element <code>&lt;context:component-scan&gt;</code>
+        in a very similar way than the built-in element <code>&lt;context:component-scan/&gt;</code>
         searches for beans. 
       </p>
       
@@ -195,7 +195,7 @@
       </p>
 
       <p>
-        <span class="label important">NOTE</span> <code>&lt;context:component-scan&gt;</code> 
+        <span class="label important">NOTE</span> <code>&lt;context:component-scan/&gt;</code> 
         won't be able to scan and register mappers. Mappers are interfaces and, in order to register them to 
         Spring, the scanner must know how to create a <code>MapperFactoryBean</code> for each interface
         it finds. 
