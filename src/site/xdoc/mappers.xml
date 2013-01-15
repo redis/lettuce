@@ -122,7 +122,7 @@
       </p>
       
       <p>
-        You can scan for mappers in three different ways:
+        There are three different ways:
       </p>
       <ul>
         <li>Using the <code>&lt;mybatis:scan/&gt;</code> element.</li>
