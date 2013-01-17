@@ -35,13 +35,13 @@ import org.springframework.context.annotation.Import;
  * <p>Configuration example:</p>
  * <pre class="code">
  * &#064;Configuration
- * &#064;EnableMyBatisMapperScanner("org.my.pkg.persistence")
+ * &#064;EnableMapperScanning("org.mybatis.spring.sample.mapper")
  * public class AppConfig {
  * 
  *   &#064;Bean
  *   public DataSource dataSource() {
  *     return new EmbeddedDatabaseBuilder()
- *              .setType(EmbeddedDatabaseType.H2)
+ *              .addScript("schema.sql")
  *              .build();
  *   }
  * 
@@ -123,10 +123,6 @@ public @interface EnableMapperScanning {
    * Specifies which {@code SqlSessionTemplate} to use in the case that there is
    * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
-   * <p>
-   * Note bean names are used, not bean references. This is because the scanner
-   * loads early during the start process and it is too early to build mybatis
-   * object instances.
    */
   String sqlSessionTemplateRef() default "";
 
@@ -134,12 +130,7 @@ public @interface EnableMapperScanning {
    * Specifies which {@code SqlSessionFactory} to use in the case that there is
    * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
-   * <p>
-   * Note bean names are used, not bean references. This is because the scanner
-   * loads early during the start process and it is too early to build mybatis
-   * object instances.
    */
   String sqlSessionFactoryRef() default "";
-
 
 }
