@@ -95,6 +95,19 @@ public final class EnableMapperScanningTest {
   }
 
   @Test
+  public void testInterfaceScanWithPackageClasses() {
+    applicationContext.register(AppConfigWithPackageClasses.class);
+
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+  }
+
+  @Test
   public void testNameGenerator() {
     applicationContext.register(AppConfigWithNameGenerator.class);
 
@@ -215,6 +228,11 @@ public final class EnableMapperScanningTest {
   @Configuration
   @EnableMapperScanning("org.mybatis.spring.mapper")
   public static class AppConfigWithPackageScan {
+  }
+
+  @Configuration
+  @EnableMapperScanning(basePackageClasses = MapperInterface.class)
+  public static class AppConfigWithPackageClasses {
   }
 
   @Configuration
