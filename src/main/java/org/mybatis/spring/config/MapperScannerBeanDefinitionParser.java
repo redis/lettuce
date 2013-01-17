@@ -3,7 +3,7 @@ package org.mybatis.spring.config;
 import java.lang.annotation.Annotation;
 
 import org.mybatis.spring.mapper.MapperFactoryBean;
-import org.mybatis.spring.mapper.MapperScanner;
+import org.mybatis.spring.mapper.ClassPathMapperScanner;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanNameGenerator;
@@ -20,7 +20,7 @@ import org.w3c.dom.Element;
  * 
  * @since 1.2.0
  * @see MapperFactoryBean
- * @see MapperScanner
+ * @see ClassPathMapperScanner
  */
 
 public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
@@ -36,7 +36,7 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
    * {@inheritDoc}
    */
   public synchronized BeanDefinition parse(Element element, ParserContext parserContext) {
-    MapperScanner scanner = new MapperScanner(parserContext.getRegistry(), false);
+    ClassPathMapperScanner scanner = new ClassPathMapperScanner(parserContext.getRegistry(), false);
     ClassLoader classLoader = scanner.getResourceLoader().getClassLoader();
     XmlReaderContext readerContext = parserContext.getReaderContext();
     scanner.setResourceLoader(readerContext.getResourceLoader());

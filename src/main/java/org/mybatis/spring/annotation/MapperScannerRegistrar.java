@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mybatis.spring.mapper.MapperFactoryBean;
-import org.mybatis.spring.mapper.MapperScanner;
+import org.mybatis.spring.mapper.ClassPathMapperScanner;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
@@ -39,7 +39,7 @@ import org.springframework.util.StringUtils;
  * {@code BeanDefinitionRegistryPostProcessor} will work for XML configuration.
  * 
  * @see MapperFactoryBean
- * @see MapperScanner
+ * @see ClassPathMapperScanner
  * @since 1.2.0
  * @version $Id$
  */
@@ -53,7 +53,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
     AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(EnableMapperScanning.class.getName()));
-    MapperScanner scanner = new MapperScanner(registry, false);
+    ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry, false);
 
     if (resourceLoader != null) { // this check is needed in Spring 3.1
       scanner.setResourceLoader(resourceLoader);

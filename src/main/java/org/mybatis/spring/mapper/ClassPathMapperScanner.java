@@ -52,7 +52,7 @@ import org.springframework.util.StringUtils;
  * @since 1.2.0
  * @version $Id$
  */
-public class MapperScanner extends ClassPathBeanDefinitionScanner {
+public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private boolean addToConfig = true;
   private Class<? extends Annotation> annotationClass;
@@ -62,11 +62,11 @@ public class MapperScanner extends ClassPathBeanDefinitionScanner {
   private String sqlSessionTemplateBeanName;
   private String sqlSessionFactoryBeanName;
 
-  public MapperScanner(BeanDefinitionRegistry registry) {
+  public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     this(registry, true);
   }
 
-  public MapperScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters) {
+  public ClassPathMapperScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters) {
     super(registry, useDefaultFilters);
   }
 

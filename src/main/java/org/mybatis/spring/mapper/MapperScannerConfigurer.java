@@ -82,7 +82,7 @@ import org.springframework.util.StringUtils;
  * </pre>
  *
  * @see MapperFactoryBean
- * @see MapperScanner
+ * @see ClassPathMapperScanner
  * @version $Id$
  */
 public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
@@ -290,7 +290,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
       processPropertyPlaceHolders();
     }
 
-    MapperScanner scanner = new MapperScanner(registry, false);
+    ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry, false);
     scanner.setAddToConfig(this.addToConfig);
     scanner.setAnnotationClass(this.annotationClass);
     scanner.setMarkerInterface(this.markerInterface);
