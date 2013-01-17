@@ -233,12 +233,12 @@ public final class EnableMapperScanningTest {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionTemplate = "sqlSessionTemplate")
+  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionTemplateRef = "sqlSessionTemplate")
   public static class AppConfigWithSqlSessionTemplate {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionFactory = "sqlSessionFactory")
+  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionFactoryRef = "sqlSessionFactory")
   public static class AppConfigWithSqlSessionFactory {
   }
 

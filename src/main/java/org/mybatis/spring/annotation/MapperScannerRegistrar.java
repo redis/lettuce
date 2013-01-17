@@ -29,6 +29,7 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -45,7 +46,7 @@ import org.springframework.util.StringUtils;
 public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
   private ResourceLoader resourceLoader;
-  
+
   /**
    * {@inheritDoc}
    */
@@ -53,23 +54,29 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
     AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(EnableMapperScanning.class.getName()));
     MapperScanner scanner = new MapperScanner(registry, false);
+
     if (resourceLoader != null) { // this check is needed in Spring 3.1
       scanner.setResourceLoader(resourceLoader);
     }
+
     Class<? extends Annotation> annotationClass = annoAttrs.getClass("annotationClass");
     if (!Annotation.class.equals(annotationClass)) {
       scanner.setAnnotationClass(annotationClass);
     }
+
     Class<?> markerInterface = annoAttrs.getClass("markerInterface");
     if (!Class.class.equals(markerInterface)) {
       scanner.setMarkerInterface(markerInterface);
     }
-    BeanNameGenerator nameGenerator = BeanUtils.instantiateClass((Class<?>) annoAttrs.getClass("nameGenerator"), BeanNameGenerator.class);
-    scanner.setBeanNameGenerator(nameGenerator);
-    final String sqlSessionTemplateBeanName = annoAttrs.getString("sqlSessionTemplate");
-    scanner.setSqlSessionTemplateBeanName(sqlSessionTemplateBeanName);
-    final String sqlSessionFactoryBeanName = annoAttrs.getString("sqlSessionFactory");
-    scanner.setSqlSessionFactoryBeanName(sqlSessionFactoryBeanName);
+
+    Class<? extends BeanNameGenerator> generatorClass = annoAttrs.getClass("nameGenerator");
+    if (!BeanNameGenerator.class.equals(generatorClass)) {
+      scanner.setBeanNameGenerator(BeanUtils.instantiateClass(generatorClass));
+    }
+
+    scanner.setSqlSessionTemplateBeanName(annoAttrs.getString("sqlSessionTemplateRef"));
+    scanner.setSqlSessionFactoryBeanName(annoAttrs.getString("sqlSessionFactoryRef"));
+
     List<String> basePackages = new ArrayList<String>();
     for (String pkg : annoAttrs.getStringArray("value")) {
       if (StringUtils.hasText(pkg)) {
@@ -80,6 +87,9 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
       if (StringUtils.hasText(pkg)) {
         basePackages.add(pkg);
       }
+    }
+    for (Class<?> clazz : annoAttrs.getClassArray("basePackageClasses")) {
+      basePackages.add(ClassUtils.getPackageName(clazz));
     }
     scanner.registerFilters();
     scanner.doScan(StringUtils.toStringArray(basePackages));
