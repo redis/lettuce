@@ -31,63 +31,13 @@
       <p>
         Rather than code data access objects (DAOs) manually using
         <code>SqlSessionDaoSupport</code> or
-        <code>SqlSessionTemplate</code>, Mybatis-Spring provides a proxy
-        factory: <code>MapperFactoryBean</code>. This class lets you inject
-        data mapper interfaces directly into other beans. When using mappers
-        you simply call them as you have always called your DAOs, but you won't
-        need to code any DAO implementation because MyBatis-Spring will create a
-        proxy for you.
-      </p>
-      <p>
-        With injected mappers your code will have no direct dependencies on
-        MyBatis, Spring or MyBatis-Spring. The proxy that
-        <code>MapperFactoryBean</code> creates handles opening and closing
-        the session as well as translating any exceptions into Spring
-        <code>DataAccessException</code>s. In addition, the proxy will start
-        a new Spring transaction if required or participate in an existing one if
-        it a transaction is active.
-      </p>
-
-    <subsection name="MapperFactoryBean">
-      <p>
-        A data mapper is added to Spring like the following:
-      </p>
-        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
-  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
-  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-</bean>]]></source>
-   
-      <p>
-        <code>MapperFactoryBean</code> creates a proxy class that
-        implements <code>UserMapper</code> and injects it into the
-        application. Because a proxy is created at runtime, the specified Mapper
-        <strong>must</strong> be an interface, not an implementation class.
+        <code>SqlSessionTemplate</code>, Mybatis-Spring can create thread 
+        safe mappers so that you inject them directly into other beans. 
       </p>
 
       <p>
-        If the UserMapper has a corresponding MyBatis XML mapper file, it will be
-        parsed automatically by the <code>MapperFactoryBean</code> if the
-        XML file is in the same classpath location as the mapper interface. There
-        is no need to specify the mapper in a MyBatis configuration file unless
-        the mapper XML files are in a different classpath location. See the
-        <code>SqlSessionFactoryBean's</code>
-        <code><a href="factorybean.html">configLocation</a></code>
-        property for more information.
-      </p>
-
-      <p>
-        Note that <code>MapperFactoryBean</code> requires either an
-        <code>SqlSessionFactory</code> or an <code>SqlSessionTemplate</code>.
-        These can be set through the respective <code>sqlSessionFactory</code> and
-        <code>sqlSessionTemplate</code> properties, or they can be autowired by Spring.
-        If both properties are set, the <code>SqlSessionFactory</code> is ignored.
-        Since the <code>SqlSessionTemplate</code> is required to have a session
-        factory set, that factory will be used by <code>MapperFactoryBean</code>.
-      </p>
-
-      <p>
-         You can inject mappers directly on your business/service objects in the
-         same way you inject any other Spring bean:
+        Once you have registered your mappers to Spring you can inject them
+        directly on your business/service objects in the same way you inject any other Spring bean:
       </p>
          <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
@@ -113,16 +63,81 @@
          references in this code. Nor is there any need to create, open or close
          the session, MyBatis-Spring will take care of that.
        </p>
+
+	<subsection name="Registering a mapper" id="register">
+	  <p>
+	    The way you register a mapper depends on whether you are using a classic XML configuration
+	    or the new 3.0+ Java Config (a.k.a. @Configuration).</p>
+	
+      <h4>With XML Config</h4>
+      
+      <p>
+        A mapper is registered to Spring by including a <code>MapperFactoryBean</code> in your XML
+        config file like follows: 
+      </p>
+        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+
+      <p>
+        If the UserMapper has a corresponding MyBatis XML mapper file 
+        in the same classpath location as the mapper interface, it will be
+        parsed automatically by the <code>MapperFactoryBean</code>. There
+        is no need to specify the mapper in a MyBatis configuration file unless
+        the mapper XML files are in a different classpath location. See the
+        <code>SqlSessionFactoryBean's</code>
+        <code><a href="factorybean.html">configLocation</a></code>
+        property for more information.
+      </p>
+
+      <p>
+        Note that <code>MapperFactoryBean</code> requires either an
+        <code>SqlSessionFactory</code> or an <code>SqlSessionTemplate</code>.
+        These can be set through the respective <code>sqlSessionFactory</code> and
+        <code>sqlSessionTemplate</code> properties, or they can be autowired by Spring.
+        If both properties are set, the <code>SqlSessionFactory</code> is ignored.
+        Since the <code>SqlSessionTemplate</code> is required to have a session
+        factory set, that factory will be used by <code>MapperFactoryBean</code>.
+      </p>
+      
+       <h4>With Java Config</h4>
+       
+       <p>
+         When using Spring Java Config you can get a mapper directly out 
+         of an <code>SqlSessionTemplate</code> like follows: 
+       </p>
+        
+<source><![CDATA[    @Bean
+    public SqlSessionFactory sqlSessionFactory() throws Exception {
+      SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
+      ss.setDataSource(dataSource());
+      return (SqlSessionFactory) ss.getObject();
+    }
+
+    @Bean
+    public UserMapper userMapper() throws Exception {
+      SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+      return sessionTemplate.getMapper(UserMapper.class);
+    }
+]]></source>
+
+       <p>
+         Note that you can not return a mapper got from the MyBatis default <code>SqlSession</code> because
+         it would not be thread safe and will only live until the <code>SqlSession</code>
+         it was created from is closed. You must use an <code>SqlSessionTemplate</code> instead, 
+         as shown in the sample.
+       </p>
     </subsection>
 
     <subsection name="Scanning for mappers" id="scan">
       <p>
-        There is no need to register all your mappers in the Spring XML file.
+        There is no need to register all your mappers one by one.
         Instead, you can let MyBatis-Spring scan your classpath for them.
       </p>
       
       <p>
-        There are three different ways:
+        There are three different ways to do it:
       </p>
       <ul>
         <li>Using the <code>&lt;mybatis:scan/&gt;</code> element.</li>
@@ -137,7 +152,7 @@
       
       <p>
         The <code>&lt;mybatis:scan/&gt;</code> XML element will search for mappers 
-        in a very similar way than the built-in element <code>&lt;context:component-scan/&gt;</code>
+        in a very similar way than the Spring built-in element <code>&lt;context:component-scan/&gt;</code>
         searches for beans. 
       </p>
       
