@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The MyBatis Team
+ *    Copyright 2010-2013 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,20 +15,21 @@
  */
 
 /**
+ * MyBatis @Configuration style sample 
+ * 
  * @version $Id: AbstractSampleTest.java 4871 2012-03-12 07:50:06Z eduardo.macarron@gmail.com $
  */
 package org.mybatis.spring.sample;
 
 import javax.sql.DataSource;
 
-import junit.framework.Assert;
-
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.mybatis.spring.sample.dao.UserDao;
-import org.mybatis.spring.sample.dao.UserDaoImpl;
 import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.service.FooService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,17 +53,10 @@ public class ConfigurationSampleTest {
   static class ContextConfiguration {
 
     @Bean
-    public FooService fooService() {
+    public FooService fooService() throws Exception {
       FooService fooService = new FooService();
       fooService.setUserDao(userDao());
       return fooService;
-    }
-
-    @Bean
-    public UserDao userDao() {
-      UserDaoImpl userDao = new UserDaoImpl();
-      userDao.setSqlSessionFactory(sqlSessionFactory());
-      return userDao;
     }
 
     @Bean
@@ -72,23 +66,28 @@ public class ConfigurationSampleTest {
 
     @Bean
     public DataSource dataSource() {
-      return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.HSQL)
+      return new EmbeddedDatabaseBuilder()
+          .setType(EmbeddedDatabaseType.HSQL)
           .addScript("org/mybatis/spring/sample/db/database-schema.sql")
           .addScript("org/mybatis/spring/sample/db/database-test-data.sql")
           .build();
     }
 
     @Bean
-    public SqlSessionFactory sqlSessionFactory() {
+    public SqlSessionFactory sqlSessionFactory() throws Exception {
       SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
       ss.setDataSource(dataSource());
-      ss.setMapperLocations(new Resource[] { new ClassPathResource(
-          "org/mybatis/spring/sample/dao/UserDao.xml") });
-      try {
-        return (SqlSessionFactory) ss.getObject();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      ss.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/sample/dao/UserDao.xml") });
+      return (SqlSessionFactory) ss.getObject();
+    }
+
+    @Bean
+    public UserDao userDao() throws Exception {
+      MapperFactoryBean<UserDao> mapperFactoryBean = new MapperFactoryBean<UserDao>();
+      mapperFactoryBean.setMapperInterface(UserDao.class);
+      mapperFactoryBean.setSqlSessionFactory(sqlSessionFactory());
+      mapperFactoryBean.afterPropertiesSet();
+      return mapperFactoryBean.getObject();
     }
   }
 
