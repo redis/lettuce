@@ -44,8 +44,8 @@
         <item href="sqlsession.html#SqlSessionDaoSupport" name="SqlSessionDaoSupport" />
       </item>
       <item name="Injecting Mappers" href="mappers.html" collapse="true">
-        <item href="mappers.html#MapperFactoryBean" name="MapperFactoryBean" />
-        <item href="mappers.html#scan" name="Scanning for mappers" />
+        <item href="mappers.html#register" name="Registering" />
+        <item href="mappers.html#scan" name="Scanning" />
       </item>
       <item name="Using the MyBatis API" href="using-api.html"/>
       <item name="Spring Batch" href="batch.html"/>
