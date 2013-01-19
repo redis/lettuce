@@ -110,9 +110,9 @@
         
 <source><![CDATA[    @Bean
     public SqlSessionFactory sqlSessionFactory() throws Exception {
-      SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
-      ss.setDataSource(dataSource());
-      return (SqlSessionFactory) ss.getObject();
+      SqlSessionFactoryBean sqlSessionFactory = new SqlSessionFactoryBean();
+      sqlSessionFactory.setDataSource(dataSource());
+      return (SqlSessionFactory) sqlSessionFactory.getObject();
     }
 
     @Bean
