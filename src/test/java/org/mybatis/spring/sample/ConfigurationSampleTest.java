@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.mybatis.spring.sample.dao.UserDao;
 import org.mybatis.spring.sample.domain.User;
@@ -53,24 +54,17 @@ public class ConfigurationSampleTest {
   static class ContextConfiguration {
 
     @Bean
-    public FooService fooService() throws Exception {
-      FooService fooService = new FooService();
-      fooService.setUserDao(userDao());
-      return fooService;
-    }
-
-    @Bean
-    public PlatformTransactionManager transactionalManagerOne() {
-      return new DataSourceTransactionManager(dataSource());
-    }
-
-    @Bean
     public DataSource dataSource() {
       return new EmbeddedDatabaseBuilder()
           .setType(EmbeddedDatabaseType.HSQL)
           .addScript("org/mybatis/spring/sample/db/database-schema.sql")
           .addScript("org/mybatis/spring/sample/db/database-test-data.sql")
           .build();
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionalManagerOne() {
+      return new DataSourceTransactionManager(dataSource());
     }
 
     @Bean
@@ -83,11 +77,25 @@ public class ConfigurationSampleTest {
 
     @Bean
     public UserDao userDao() throws Exception {
+      // when using javaconfig a template requires less lines than a MapperFactoryBean
+      SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+      return sessionTemplate.getMapper(UserDao.class);
+    }
+
+    @Bean
+    public UserDao userDaoWithFactory() throws Exception {
       MapperFactoryBean<UserDao> mapperFactoryBean = new MapperFactoryBean<UserDao>();
       mapperFactoryBean.setMapperInterface(UserDao.class);
       mapperFactoryBean.setSqlSessionFactory(sqlSessionFactory());
       mapperFactoryBean.afterPropertiesSet();
       return mapperFactoryBean.getObject();
+    }
+    
+    @Bean
+    public FooService fooService() throws Exception {
+      FooService fooService = new FooService();
+      fooService.setUserDao(userDao());
+      return fooService;
     }
   }
 
