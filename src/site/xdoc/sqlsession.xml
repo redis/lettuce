@@ -39,21 +39,13 @@
         closes the session based on Spring's transaction configuration.
       </p>  
     
-      <p>
-        Note that it is usually not necessary to use a <code>SqlSession</code> directly. 
-        In most cases a <code>MapperFactoryBean</code> that will inject mappers
-        into your beans, will be all that is needed. The 
-        <a href="mappers.html#MapperFactoryBean"><code>MapperFactoryBean</code></a>
-        will be explained in detail in the next chapter. 
-      </p>  
-
     <subsection name="SqlSessionTemplate">
       <p>
         <code>SqlSessionTemplate</code> is the heart of MyBatis-Spring.
-        This class is responsible for managing MyBatis <code>SqlSessions</code>,
-        calling MyBatis SQL methods and translating exceptions.
+        It implements <code>SqlSession</code> and is meant to be a drop-in replacement
+        for any existing use of <code>SqlSession</code> in your code.
         <code>SqlSessionTemplate</code> is thread safe and can be shared
-        by multiple DAOs.
+        by multiple DAOs or mappers.
       </p>
 
       <p>
@@ -62,13 +54,12 @@
         will ensure that the <code>SqlSession</code> used is the one
         associated with the current Spring transaction. In addition, it manages
         the session life-cycle, including closing, committing or rolling back the
-        session as necessary.
+        session as necessary. It will also translate MyBatis exceptions
+        into Spring <code>DataAccessException</code>s.
       </p>
 
       <p>
-        <code>SqlSessionTemplate</code> implements <code>SqlSession</code>
-        and is meant to be a drop-in replacement for any existing use of <code>SqlSession</code>
-        in your code. <code>SqlSessionTemplate</code> should <strong>always</strong>
+        <code>SqlSessionTemplate</code> should <strong>always</strong>
         be used instead of default MyBatis implementation <code>DefaultSqlSession</code>
         because the template can participate in Spring transactions and is thread safe for use by
         multiple injected mapper classes. Switching between the two classes in the

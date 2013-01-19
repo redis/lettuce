@@ -32,19 +32,15 @@
         Rather than code data access objects (DAOs) manually using
         <code>SqlSessionDaoSupport</code> or
         <code>SqlSessionTemplate</code>, Mybatis-Spring can create thread 
-        safe mappers so that you inject them directly into other beans. 
+        that you can inject directly into other beans:
       </p>
 
-      <p>
-        Once you have registered your mappers to Spring you can inject them
-        directly on your business/service objects in the same way you inject any other Spring bean:
-      </p>
-         <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
 </bean>]]></source>
  
       <p>
-         This bean can be used directly in application logic:
+         Now the mapper is ready to be used in application logic:
       </p>
          <source><![CDATA[public class FooServiceImpl implements FooService {
 
