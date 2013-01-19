@@ -35,8 +35,8 @@
       <item name="Getting Started" href="getting-started.html"/>
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
       <item name="Transactions" href="transactions.html" collapse="true">
-        <item href="transactions.html#configuration" name="Configuration" />
-        <item href="transactions.html#container" name="CMT" />
+        <item href="transactions.html#configuration" name="Standard Configuration" />
+        <item href="transactions.html#container" name="Container Managed Transactions" />
         <item href="transactions.html#programmatic" name="Programmatic" />
       </item>
       <item name="Using an SqlSession" href="sqlsession.html" collapse="true">
@@ -44,8 +44,8 @@
         <item href="sqlsession.html#SqlSessionDaoSupport" name="SqlSessionDaoSupport" />
       </item>
       <item name="Injecting Mappers" href="mappers.html" collapse="true">
-        <item href="mappers.html#register" name="Registering" />
-        <item href="mappers.html#scan" name="Scanning" />
+        <item href="mappers.html#register" name="Registering a mapper" />
+        <item href="mappers.html#scan" name="Scanning for mappers" />
       </item>
       <item name="Using the MyBatis API" href="using-api.html"/>
       <item name="Spring Batch" href="batch.html"/>
