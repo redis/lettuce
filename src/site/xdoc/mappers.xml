@@ -31,8 +31,8 @@
       <p>
         Rather than code data access objects (DAOs) manually using
         <code>SqlSessionDaoSupport</code> or
-        <code>SqlSessionTemplate</code>, Mybatis-Spring can create thread 
-        that you can inject directly into other beans:
+        <code>SqlSessionTemplate</code>, Mybatis-Spring can create a 
+        thread safe mapper that you can inject directly into other beans:
       </p>
 
       <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
@@ -40,7 +40,7 @@
 </bean>]]></source>
  
       <p>
-         Now the mapper is ready to be used in application logic:
+         Once injected, the mapper is ready to be used in application logic:
       </p>
          <source><![CDATA[public class FooServiceImpl implements FooService {
 
@@ -121,7 +121,8 @@
        <p>
          Note that you can not return a mapper got from the MyBatis default <code>SqlSession</code> because
          it would not be thread safe and will only live until the <code>SqlSession</code>
-         it was created from is closed. You must use an <code>SqlSessionTemplate</code> instead, 
+         it was created from is closed. You must use an 
+         <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> instead, 
          as shown in the sample.
        </p>
     </subsection>
