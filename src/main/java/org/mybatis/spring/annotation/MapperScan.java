@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Import;
  * <p>Configuration example:</p>
  * <pre class="code">
  * &#064;Configuration
- * &#064;EnableMapperScanning("org.mybatis.spring.sample.mapper")
+ * &#064;MapperScan("org.mybatis.spring.sample.mapper")
  * public class AppConfig {
  * 
  *   &#064;Bean
@@ -68,7 +68,7 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Documented
 @Import(MapperScannerRegistrar.class)
-public @interface EnableMapperScanning {
+public @interface MapperScan {
 
   /**
    * Alias for the {@link #basePackages()} attribute. Allows for more concise

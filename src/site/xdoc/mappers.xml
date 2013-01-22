@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2012 The MyBatis Team
+  Copyright 2010-2013 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -138,12 +138,12 @@
       </p>
       <ul>
         <li>Using the <code>&lt;mybatis:scan/&gt;</code> element.</li>
-        <li>Using the annotation <code>@EnableMapperScanning</code></li>
+        <li>Using the annotation <code>@MapperScan</code></li>
         <li>Using a classic Spring xml file and registering the <code>MapperScannerConfigurer</code></li>
       </ul>
       
-      <p>Both <code>&lt;mybatis:scan/&gt;</code> and <code>@EnableMapperScanning</code> are features introduced in MyBatis-Spring 1.2.0.
-      <code>@EnableMapperScanning</code> requires Spring 3.1+.</p> 
+      <p>Both <code>&lt;mybatis:scan/&gt;</code> and <code>@MapperScan</code> are features introduced in MyBatis-Spring 1.2.0.
+      <code>@MapperScan</code> requires Spring 3.1+.</p> 
 
       <h4>&lt;mybatis:scan/&gt;</h4>
       
@@ -213,18 +213,18 @@
         it finds. 
       </p>
 
-      <h4>@EnableMapperScanning</h4>
+      <h4>@MapperScan</h4>
       
       <p>
         If you are using the Spring Java Configuration (a.k.a @Configuration) you would 
-        prefer to use the <code>@EnableMapperScanning</code> rather than the 
+        prefer to use the <code>@MapperScan</code> rather than the 
         <code>&lt;mybatis:scan/&gt;</code>.  
       </p>
       
-      <p>The <code>@EnableMapperScanning</code> annotation is used as follows:</p>
+      <p>The <code>@MapperScan</code> annotation is used as follows:</p>
    
    <source><![CDATA[@Configuration
-@EnableMapperScanning("org.mybatis.spring.sample.mapper")
+@MapperScan("org.mybatis.spring.sample.mapper")
 public class AppConfig {
 
   @Bean

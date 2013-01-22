@@ -46,7 +46,7 @@ import com.mockrunner.mock.jdbc.MockDataSource;
  * 
  * @version $Id$
  */
-public final class EnableMapperScanningTest {
+public final class MapperScanTest {
   private AnnotationConfigApplicationContext applicationContext;
 
   @Before
@@ -226,42 +226,42 @@ public final class EnableMapperScanningTest {
   }
 
   @Configuration
-  @EnableMapperScanning("org.mybatis.spring.mapper")
+  @MapperScan("org.mybatis.spring.mapper")
   public static class AppConfigWithPackageScan {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackageClasses = MapperInterface.class)
+  @MapperScan(basePackageClasses = MapperInterface.class)
   public static class AppConfigWithPackageClasses {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", markerInterface = MapperInterface.class)
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", markerInterface = MapperInterface.class)
   public static class AppConfigWithMarkerInterface {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", annotationClass = Component.class)
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", annotationClass = Component.class)
   public static class AppConfigWithAnnotation {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", annotationClass = Component.class, markerInterface = MapperInterface.class)
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", annotationClass = Component.class, markerInterface = MapperInterface.class)
   public static class AppConfigWithMarkerInterfaceAndAnnotation {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionTemplateRef = "sqlSessionTemplate")
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", sqlSessionTemplateRef = "sqlSessionTemplate")
   public static class AppConfigWithSqlSessionTemplate {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", sqlSessionFactoryRef = "sqlSessionFactory")
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", sqlSessionFactoryRef = "sqlSessionFactory")
   public static class AppConfigWithSqlSessionFactory {
   }
 
   @Configuration
-  @EnableMapperScanning(basePackages = "org.mybatis.spring.mapper", nameGenerator = EnableMapperScanningTest.BeanNameGenerator.class)
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", nameGenerator = MapperScanTest.BeanNameGenerator.class)
   public static class AppConfigWithNameGenerator {
   }
 

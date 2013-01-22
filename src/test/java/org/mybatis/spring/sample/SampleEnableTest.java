@@ -15,13 +15,13 @@
  */
 package org.mybatis.spring.sample;
 
-import org.mybatis.spring.annotation.EnableMapperScanning;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
- * Test to ensure that the {@code EnableMapperScanning}
+ * Test to ensure that the {@link MapperScan}
  * annotation works as expected.
  *
  * @since 1.2.0
@@ -32,7 +32,7 @@ public class SampleEnableTest extends AbstractSampleTest {
 
 	@Configuration
 	@ImportResource("classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml")
-	@EnableMapperScanning("org.mybatis.spring.sample.dao")
+	@MapperScan("org.mybatis.spring.sample.dao")
 	static class AppConfig {
 	}
 }
