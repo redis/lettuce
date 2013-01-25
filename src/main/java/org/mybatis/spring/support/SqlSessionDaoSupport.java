@@ -50,8 +50,10 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
 
   @Autowired(required = false)
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-    this.sqlSession = sqlSessionTemplate;
-    this.externalSqlSession = true;
+    if (sqlSessionTemplate != null) {  // fix for issue #762
+      this.sqlSession = sqlSessionTemplate;
+      this.externalSqlSession = true;
+    }
   }
 
   /**

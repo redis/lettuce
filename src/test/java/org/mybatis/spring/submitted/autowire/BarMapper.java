@@ -15,6 +15,6 @@
  */
 package org.mybatis.spring.submitted.autowire;
 
-public interface FooMapper extends IFoo {
-  public String executeFoo();
+public interface BarMapper extends IBar {
+  public String executeBar();
 }

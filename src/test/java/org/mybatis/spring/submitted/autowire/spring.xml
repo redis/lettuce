@@ -2,32 +2,51 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
 						http://www.springframework.org/schema/beans/spring-beans.xsd
     					http://www.springframework.org/schema/context
-       					http://www.springframework.org/schema/context/spring-context.xsd"
+       					http://www.springframework.org/schema/context/spring-context.xsd
+       					http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd"
 	default-lazy-init="false">
 	
-	<bean id="dataSource" class="org.hsqldb.jdbc.JDBCDataSource">
-		<property name="url" value="jdbc:hsqldb:mem:autowire"/>
+<!-- 	<bean id="dataSource" class="org.hsqldb.jdbc.JDBCDataSource"> -->
+<!-- 		<property name="url" value="jdbc:hsqldb:mem:autowire"/> -->
+<!-- 	</bean> -->
+	
+	 <jdbc:embedded-database id="dataSourceFoo">
+        <jdbc:script location="classpath:org/mybatis/spring/submitted/autowire/database-schema-foo.sql"/>
+    </jdbc:embedded-database>
+
+	 <jdbc:embedded-database id="dataSourceBar">
+        <jdbc:script location="classpath:org/mybatis/spring/submitted/autowire/database-schema-bar.sql"/>
+    </jdbc:embedded-database>
+	
+	
+	<bean id="sqlSessionFactoryFoo" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceFoo" />
 	</bean>
 	
-	<bean id="sqlSessionFactoryA" class="org.mybatis.spring.SqlSessionFactoryBean">
-		<property name="dataSource" ref="dataSource" />
+	<bean id="sqlSessionFactoryBar" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceBar" />
 	</bean>
 	
-	<bean id="sqlSessionFactoryB" class="org.mybatis.spring.SqlSessionFactoryBean">
-		<property name="dataSource" ref="dataSource" />
-	</bean>
-	
-	<bean id="sqlSessionTemplateA" class="org.mybatis.spring.SqlSessionTemplate">
-		<constructor-arg index="0" ref="sqlSessionFactoryA"/>
+	<!-- If we simply comment out this bean, then the test runs -->
+	<bean id="sqlSessionTemplateFoo" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactoryFoo"/>
 		<constructor-arg index="1" value="SIMPLE"/>
 		<constructor-arg index="2"><null/></constructor-arg>
 	</bean>
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage" value="org.mybatis.spring.submitted.autowire" />
-		<property name="sqlSessionTemplate" ref="sqlSessionTemplateA" />
+		<property name="markerInterface" value="org.mybatis.spring.submitted.autowire.IFoo" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryFoo" />
+	</bean>
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="org.mybatis.spring.submitted.autowire" />
+		<property name="markerInterface" value="org.mybatis.spring.submitted.autowire.IBar" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBar" />
 	</bean>
 </beans>
