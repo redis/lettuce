@@ -17,7 +17,7 @@
 /**
  * MyBatis @Configuration style sample 
  * 
- * @version $Id: AbstractSampleTest.java 4871 2012-03-12 07:50:06Z eduardo.macarron@gmail.com $
+ * @version $Id$
  */
 package org.mybatis.spring.sample;
 

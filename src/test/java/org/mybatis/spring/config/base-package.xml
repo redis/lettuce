@@ -20,7 +20,7 @@
     MapperScannerConfigurer. With this configuration, DAOs are created
     automatically by the scanner and do not have to be explicitly defined.
 
-    version: $Id: applicationContext-scanner.xml 4869 2012-03-12 07:00:51Z simone.tripodi $
+    version: $Id$
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

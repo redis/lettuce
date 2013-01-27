@@ -19,7 +19,7 @@
 -->
 
 <!--
-    version: $Id: UserDao.xml 4527 2012-01-03 13:58:41Z eduardo.macarron $
+    version: $Id$
 -->
 <mapper namespace="org.mybatis.spring.batch.dao.UserDao">
 

@@ -17,6 +17,6 @@
 /**
  * Contains classes to facilitate the migration in Spring-Batch applications.
  *
- * @version $Id: package-info.java 4527 2012-01-03 13:58:41Z eduardo.macarron $
+ * @version $Id$
  */
 package org.mybatis.spring.batch;

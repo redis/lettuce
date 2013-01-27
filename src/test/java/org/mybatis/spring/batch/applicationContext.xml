@@ -19,7 +19,7 @@
     The base sample context containing commnon beans shared by all the
     MyBatis-Spring sample contexts.
 
-    version: $Id: applicationContext-infrastructure.xml 4527 2012-01-03 13:58:41Z eduardo.macarron $
+    version: $Id$
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

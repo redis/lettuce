@@ -19,7 +19,7 @@
     A sample context that shows how to integrate MyBatis with Spring using
     a DAO setup for BATCH transactions.
 
-    version: $Id: applicationContext-batch.xml 4869 2012-03-12 07:00:51Z simone.tripodi $
+    version: $Id$
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

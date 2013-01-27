@@ -16,7 +16,7 @@
 -->
 
 <!--
-    version: $Id: TestMapper.xml 4869 2012-03-12 07:00:51Z simone.tripodi $
+    version: $Id$
 -->
 <!DOCTYPE mapper
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
