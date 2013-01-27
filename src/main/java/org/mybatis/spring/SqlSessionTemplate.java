@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The MyBatis Team
+ *    Copyright 2010-2013 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 
 
@@ -70,7 +71,7 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
  * @see MyBatisExceptionTranslator
  * @version $Id$
  */
-public class SqlSessionTemplate implements SqlSession {
+public class SqlSessionTemplate implements SqlSession, DisposableBean {
 
   private final SqlSessionFactory sqlSessionFactory;
 
@@ -372,6 +373,17 @@ public class SqlSessionTemplate implements SqlSession {
         closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
       }
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @since 1.2.0
+   *
+   */
+  @Override
+  public void destroy() throws Exception {
+    // fix to avoid Spring 3.2 complaining that calling close() fails
   }
 
 }
