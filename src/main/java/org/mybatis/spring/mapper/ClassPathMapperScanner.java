@@ -175,10 +175,6 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
           definition.getPropertyValues().add("sqlSessionFactory", this.sqlSessionFactory);
           explicitFactoryUsed = true;
         }
-        
-        if (explicitFactoryUsed) { // fix for issue #762 
-          definition.getPropertyValues().add("sqlSessionTemplate", null);
-        }
 
         if (StringUtils.hasText(this.sqlSessionTemplateBeanName)) {
           if (explicitFactoryUsed) {

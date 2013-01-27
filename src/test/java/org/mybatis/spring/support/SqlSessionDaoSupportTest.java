@@ -27,8 +27,6 @@ import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.config.ConstructorArgumentValues;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.GenericApplicationContext;
@@ -85,18 +83,6 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testAutowireSqlSessionTemplate() {
-    setupContext();
-
-    setupSqlSessionTemplate("template");
-
-    startContext();
-
-    assertEquals("should store the Template", applicationContext.getBean(SqlSessionTemplate.class),
-        sqlSessionDaoSupport.getSqlSession());
-  }
-
-  @Test
   public void testAutowireSqlSessionFactory() {
     setupContext();
     setupSqlSessionFactory("factory1");
@@ -114,35 +100,12 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     startContext();
   }
 
-  @Test
-  public void testAutowireWithBothFactoryAndTemplate() {
-    setupContext();
-
-    setupSqlSessionFactory("factory");
-    setupSqlSessionTemplate("template");
-
-    startContext();
-
-    assertEquals("should ignore the Factory", applicationContext.getBean(SqlSessionTemplate.class),
-        sqlSessionDaoSupport.getSqlSession());
-  }
-
   @Test(expected = BeanCreationException.class)
   public void testAutowireWithTwoFactories() {
     setupContext();
 
     setupSqlSessionFactory("factory1");
     setupSqlSessionFactory("factory2");
-
-    startContext();
-  }
-
-  @Test(expected = BeanCreationException.class)
-  public void testAutowireWithTwoTemplates() {
-    setupContext();
-
-    setupSqlSessionTemplate("template1");
-    setupSqlSessionTemplate("template2");
 
     startContext();
   }
@@ -170,17 +133,6 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     definition.setBeanClass(SqlSessionFactoryBean.class);
     definition.getPropertyValues().add("dataSource", dataSource);
 
-    applicationContext.registerBeanDefinition(name, definition);
-  }
-
-  private void setupSqlSessionTemplate(String name) {
-    setupSqlSessionFactory("sqlSessionFactory");
-
-    GenericBeanDefinition definition = new GenericBeanDefinition();
-    definition.setBeanClass(SqlSessionTemplate.class);
-    ConstructorArgumentValues constructorArgs = new ConstructorArgumentValues();
-    constructorArgs.addGenericArgumentValue(new RuntimeBeanReference("sqlSessionFactory"));
-    definition.setConstructorArgumentValues(constructorArgs);
     applicationContext.registerBeanDefinition(name, definition);
   }
 
