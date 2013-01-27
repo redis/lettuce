@@ -24,10 +24,10 @@
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xmlns:mybatis="http://www.mybatis.org/schema/mybatis"
+     xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
      xsi:schemaLocation="
      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-     http://www.mybatis.org/schema/mybatis http://www.mybatis.org/schema/mybatis/mybatis-spring.xsd">
+     http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
 
     <!-- Scan for mappers and let them be autowired; notice there is no
          UserDaoImplementation needed. The required SqlSessionFactory will be
