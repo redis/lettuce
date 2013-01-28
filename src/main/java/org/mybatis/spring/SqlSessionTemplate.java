@@ -36,9 +36,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
-
 
 /**
  * Thread safe, Spring managed, {@code SqlSession} that works with Spring
@@ -71,7 +69,7 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
  * @see MyBatisExceptionTranslator
  * @version $Id$
  */
-public class SqlSessionTemplate implements SqlSession, DisposableBean {
+public class SqlSessionTemplate implements SqlSession {
 
   private final SqlSessionFactory sqlSessionFactory;
 
@@ -373,17 +371,6 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
         closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
       }
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @since 1.2.0
-   *
-   */
-  @Override
-  public void destroy() throws Exception {
-    // fix to avoid Spring 3.2 complaining that calling close() fails
   }
 
 }
