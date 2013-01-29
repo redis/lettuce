@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
@@ -42,12 +43,10 @@ import org.springframework.util.StringUtils;
  * an {@code annotationClass} and/or {@code markerInterface} is specified, only
  * the specified types will be searched (searching for all interfaces will be
  * disabled).
- * 
  * <p>
  * This functionality was previously a private class of
  * {@link MapperScannerConfigurer}, but was broken out in version 1.2.0.
- * </p>
- * 
+ *
  * @see MapperFactoryBean
  * @since 1.2.0
  * @version $Id$
@@ -55,19 +54,21 @@ import org.springframework.util.StringUtils;
 public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private boolean addToConfig = true;
-  private Class<? extends Annotation> annotationClass;
-  private Class<?> markerInterface;
+
   private SqlSessionFactory sqlSessionFactory;
+
   private SqlSessionTemplate sqlSessionTemplate;
+
   private String sqlSessionTemplateBeanName;
+
   private String sqlSessionFactoryBeanName;
 
-  public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
-    this(registry, true);
-  }
+  private Class<? extends Annotation> annotationClass;
 
-  public ClassPathMapperScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters) {
-    super(registry, useDefaultFilters);
+  private Class<?> markerInterface;
+
+  public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
+    super(registry, false);
   }
 
   public void setAddToConfig(boolean addToConfig) {
@@ -112,8 +113,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       acceptAllInterfaces = false;
     }
 
-    // override AssignableTypeFilter to ignore matches on the actual marker
-    // interface
+    // override AssignableTypeFilter to ignore matches on the actual marker interface
     if (this.markerInterface != null) {
       addIncludeFilter(new AssignableTypeFilter(this.markerInterface) {
         @Override
@@ -123,6 +123,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       });
       acceptAllInterfaces = false;
     }
+
     if (acceptAllInterfaces) {
       // default include filter that accepts all classes
       addIncludeFilter(new TypeFilter() {
@@ -157,7 +158,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
         GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
 
         if (logger.isDebugEnabled()) {
-          logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName() + "' and '" + definition.getBeanClassName() + "' mapperInterface");
+          logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName() 
+              + "' and '" + definition.getBeanClassName() + "' mapperInterface");
         }
 
         // the mapper interface is the original class of the bean
@@ -181,13 +183,20 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
             logger.warn("Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
           }
           definition.getPropertyValues().add("sqlSessionTemplate", new RuntimeBeanReference(this.sqlSessionTemplateBeanName));
-          definition.getPropertyValues().add("sqlSessionFactory", null);
+          explicitFactoryUsed = true;
         } else if (this.sqlSessionTemplate != null) {
           if (explicitFactoryUsed) {
             logger.warn("Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
           }
           definition.getPropertyValues().add("sqlSessionTemplate", this.sqlSessionTemplate);
-          definition.getPropertyValues().add("sqlSessionFactory", null);
+          explicitFactoryUsed = true;
+        }
+
+        if (!explicitFactoryUsed) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Enabling autowire by type for MapperFactoryBean with name '" + holder.getBeanName() + "'.");
+          }
+          definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         }
       }
     }
@@ -211,4 +220,5 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       return false;
     }
   }
+
 }

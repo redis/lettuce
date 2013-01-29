@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.sql.SQLException;
 
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,18 +79,6 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   @Test(expected = IllegalArgumentException.class)
   public void testWithNoFactoryOrSession() {
     sqlSessionDaoSupport.afterPropertiesSet();
-  }
-
-  @Test
-  public void testAutowireSqlSessionFactory() {
-    setupContext();
-    setupSqlSessionFactory("factory1");
-
-    startContext();
-
-    assertEquals("should store the Factory", applicationContext.getBean(SqlSessionFactory.class),
-        ((SqlSessionTemplate) sqlSessionDaoSupport.getSqlSession()).getSqlSessionFactory());
-
   }
 
   @Test(expected = org.springframework.beans.factory.BeanCreationException.class)

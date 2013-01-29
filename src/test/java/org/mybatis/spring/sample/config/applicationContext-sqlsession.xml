@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Copyright 2010-2012 The myBatis Team
+    Copyright 2010-2012 The MyBatis Team
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,5 +31,5 @@
 
     <!-- UserDaoImple extends SqlSessionDaoSupport.
          The required SqlSessionFactory will be autowired. -->
-    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl" />
+    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl" autowire="byType" />
 </beans>

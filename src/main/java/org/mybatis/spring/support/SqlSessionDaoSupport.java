@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The MyBatis Team
+ *    Copyright 2010-2013 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import static org.springframework.util.Assert.notNull;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.support.DaoSupport;
 
 /**
@@ -30,7 +29,7 @@ import org.springframework.dao.support.DaoSupport;
  * This class needs a SqlSessionTemplate or a SqlSessionFactory.
  * If both are set the SqlSessionFactory will be ignored.
  * <p>
- * {code Autowired} was removed from setSqlSessionTemplate
+ * {code Autowired} was removed from setSqlSessionTemplate and setSqlSessionFactory
  * in version 1.2.0.
  *
  * @see #setSqlSessionFactory
@@ -44,7 +43,6 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
 
   private boolean externalSqlSession;
 
-  @Autowired(required = false)
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     if (!this.externalSqlSession) {
       this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
