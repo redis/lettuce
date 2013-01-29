@@ -155,7 +155,7 @@
       <p>
         <code>SqlSessionDaoSupport</code> requires either an
         <code>sqlSessionFactory</code> or an <code>sqlSessionTemplate</code>
-        property to be set. These can be set explicitly or autowired by Spring.
+        property to be set.
         If both properties are set, the <code>sqlSessionFactory</code> is ignored.
       </p>
 

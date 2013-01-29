@@ -91,7 +91,7 @@
         Note that <code>MapperFactoryBean</code> requires either an
         <code>SqlSessionFactory</code> or an <code>SqlSessionTemplate</code>.
         These can be set through the respective <code>sqlSessionFactory</code> and
-        <code>sqlSessionTemplate</code> properties, or they can be autowired by Spring.
+        <code>sqlSessionTemplate</code> properties.
         If both properties are set, the <code>SqlSessionFactory</code> is ignored.
         Since the <code>SqlSessionTemplate</code> is required to have a session
         factory set, that factory will be used by <code>MapperFactoryBean</code>.
@@ -177,8 +177,8 @@
         Notice that there is no need to specify a <code>SqlSessionFactory</code> or
         <code>SqlSessionTemplate</code> because the <code>&lt;mybatis:scan/&gt;</code>
         will create <code>MapperFactoryBean</code>s that can be autowired. But if you are
-        using more than one <code>DataSource</code> autowire may not work for you. In this case
-        you can use the <code>factory-ref</code> or
+        using more than one <code>DataSource</code> autowire may not work for you. 
+        In this case you can use the <code>factory-ref</code> or
         <code>template-ref</code> attributes to set the right bean name to use.
       </p>
 

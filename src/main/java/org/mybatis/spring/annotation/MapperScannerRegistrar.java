@@ -19,8 +19,8 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.mybatis.spring.mapper.ClassPathMapperScanner;
+import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
@@ -37,7 +37,7 @@ import org.springframework.util.StringUtils;
  * MyBatis mapper scanning. Using an @Enable annotation allows beans to be
  * registered via @Component configuration, whereas implementing
  * {@code BeanDefinitionRegistryPostProcessor} will work for XML configuration.
- * 
+ *
  * @see MapperFactoryBean
  * @see ClassPathMapperScanner
  * @since 1.2.0
@@ -53,7 +53,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
     AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
-    ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry, false);
+    ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
 
     if (resourceLoader != null) { // this check is needed in Spring 3.1
       scanner.setResourceLoader(resourceLoader);

@@ -95,9 +95,9 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
 
   private SqlSessionTemplate sqlSessionTemplate;
 
-  private String sqlSessionTemplateBeanName;
-
   private String sqlSessionFactoryBeanName;
+
+  private String sqlSessionTemplateBeanName;
 
   private Class<? extends Annotation> annotationClass;
 
@@ -108,10 +108,9 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   private String beanName;
 
   private boolean processPropertyPlaceHolders;
-  
+
   private BeanNameGenerator nameGenerator;
 
-  
   /**
    * This property lets you set the base package for your mapper interface files.
    * <p>
@@ -126,7 +125,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}
+   * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}.
    *
    * @param addToConfig
    * @see MapperFactoryBean#setAddToConfig(boolean)
@@ -226,9 +225,9 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * 
+   *
    * @since 1.1.1
-   * 
+   *
    * @param processPropertyPlaceHolders
    */
   public void setProcessPropertyPlaceHolders(boolean processPropertyPlaceHolders) {
@@ -250,8 +249,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Gets beanNameGenerator to be used while running the scanner
-   * 
+   * Gets beanNameGenerator to be used while running the scanner.
+   *
    * @return the beanNameGenerator BeanNameGenerator that has been configured
    * @since 1.2.0
    */
@@ -260,8 +259,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   * Sets beanNameGenerator to be used while running the scanner
-   * 
+   * Sets beanNameGenerator to be used while running the scanner.
+   *
    * @param nameGenerator the beanNameGenerator to set
    * @since 1.2.0
    */
@@ -290,7 +289,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
       processPropertyPlaceHolders();
     }
 
-    ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry, false);
+    ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
     scanner.setAddToConfig(this.addToConfig);
     scanner.setAnnotationClass(this.annotationClass);
     scanner.setMarkerInterface(this.markerInterface);

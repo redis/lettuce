@@ -26,7 +26,7 @@ import org.apache.ibatis.transaction.TransactionFactory;
 
 /**
  * Creates a {@code SpringManagedTransaction}.
- * 
+ *
  * @version $Id$
  */
 public class SpringManagedTransactionFactory implements TransactionFactory {

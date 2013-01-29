@@ -18,7 +18,8 @@ package org.mybatis.spring.config;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 /**
- * 
+ * Namespace handler for the MyBatis namespace.
+ *
  * @since 1.2.0
  *
  */

@@ -31,25 +31,25 @@ import org.springframework.context.annotation.Import;
  * Use this annotation to register MyBatis mapper interfaces when using Java
  * Config. It performs when same work as {@link MapperScannerConfigurer} via
  * {@link MapperScannerRegistrar}.
- * 
+ *
  * <p>Configuration example:</p>
  * <pre class="code">
  * &#064;Configuration
  * &#064;MapperScan("org.mybatis.spring.sample.mapper")
  * public class AppConfig {
- * 
+ *
  *   &#064;Bean
  *   public DataSource dataSource() {
  *     return new EmbeddedDatabaseBuilder()
  *              .addScript("schema.sql")
  *              .build();
  *   }
- * 
+ *
  *   &#064;Bean
  *   public DataSourceTransactionManager transactionManager() {
  *     return new DataSourceTransactionManager(dataSource());
  *   }
- * 
+ *
  *   &#064;Bean
  *   public SqlSessionFactory sqlSessionFactory() throws Exception {
  *     SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
@@ -59,7 +59,7 @@ import org.springframework.context.annotation.Import;
  *   }
  * }
  * </pre>
- * 
+ *
  * @since 1.2.0
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
