@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright 2010-2013 The myBatis Team
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
 
 <xsd:schema xmlns="http://mybatis.org/schema/mybatis-spring"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -9,26 +24,31 @@
 
 	<xsd:element name="scan">
 		<xsd:annotation>
-			<xsd:documentation><![CDATA[
-   Searches recursively starting from a base package for
-   interfaces and registers them as {@code MapperFactoryBean}. Note that only interfaces with at
-   least one method will be registered; concrete classes will be ignored.
-			]]></xsd:documentation>
+			<xsd:documentation>
+				<![CDATA[
+					Searches recursively starting from a base package for interfaces and registers them as MapperFactoryBeans.
+					Note that only interfaces with at least one method will be registered; concrete classes will be ignored.
+				]]>
+			</xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
 			<xsd:attribute name="base-package" type="xsd:string"
 				use="required">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	The comma-separated list of packages to scan for annotated components.
-					]]></xsd:documentation>
+					<xsd:documentation>
+						<![CDATA[
+							The comma-separated list of packages to scan for annotated components.
+						]]>
+					</xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
 			<xsd:attribute name="marker-interface" type="xsd:string">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	The scanner will register all interfaces in the base package that also have the specified annotation.
-					]]></xsd:documentation>
+					<xsd:documentation>
+						<![CDATA[
+							The scanner will register all interfaces in the base package that also have the specified annotation.
+						]]>
+					</xsd:documentation>
 					<xsd:appinfo>
 						<tool:annotation>
 							<tool:expected-type type="java.lang.Class" />
@@ -38,9 +58,11 @@
 			</xsd:attribute>
 			<xsd:attribute name="annotation" type="xsd:string">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	The scanner will register all interfaces in the base package that also have the specified interface class as a parent.
-					]]></xsd:documentation>
+					<xsd:documentation>
+						<![CDATA[
+							The scanner will register all interfaces in the base package that also have the specified interface class as a parent.
+						]]>
+					</xsd:documentation>
 					<xsd:appinfo>
 						<tool:annotation>
 							<tool:expected-type type="java.lang.Class" />
@@ -51,28 +73,33 @@
 			</xsd:attribute>
 			<xsd:attribute name="factory-ref" type="xsd:string">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	Specifies which {@code SqlSessionFactory} to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
-	                ]]></xsd:documentation>
+					<xsd:documentation>
+						<![CDATA[
+							Specifies which SqlSessionFactory to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
+	                	]]>
+	                </xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
 			<xsd:attribute name="template-ref" type="xsd:string">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	Specifies which {@code SqlSessionTemplate} to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
-					]]></xsd:documentation>
+					<xsd:documentation>
+						<![CDATA[
+							Specifies which SqlSessionTemplate to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
+						]]>
+					</xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
 			<xsd:attribute name="name-generator" type="xsd:string">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	The fully-qualified class name of the BeanNameGenerator to be used for naming detected components.
-					]]></xsd:documentation>
+					<xsd:documentation>
+						<![CDATA[
+							The fully-qualified class name of the BeanNameGenerator to be used for naming detected components.
+						]]>
+					</xsd:documentation>
 					<xsd:appinfo>
 						<tool:annotation>
 							<tool:expected-type type="java.lang.Class" />
-							<tool:assignable-to
-								type="org.springframework.beans.factory.support.BeanNameGenerator" />
+							<tool:assignable-to type="org.springframework.beans.factory.support.BeanNameGenerator" />
 						</tool:annotation>
 					</xsd:appinfo>
 				</xsd:annotation>
