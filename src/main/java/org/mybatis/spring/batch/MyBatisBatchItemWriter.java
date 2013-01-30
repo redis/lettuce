@@ -48,6 +48,7 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  * behavior), so it can be used to write in multiple concurrent transactions.
  *
  * @since 1.1.0
+ * @version $Id$
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
 

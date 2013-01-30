@@ -34,6 +34,7 @@ import org.springframework.batch.item.database.AbstractPagingItemReader;
  * Provided to facilitate the migration from Spring-Batch iBATIS 2 page item readers to MyBatis 3.
  *
  * @since 1.1.0
+ * @version $Id$
  */
 public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 

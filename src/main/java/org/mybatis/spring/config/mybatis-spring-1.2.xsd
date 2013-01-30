@@ -15,6 +15,10 @@
     limitations under the License.
 -->
 
+<!--
+    version: $Id$
+-->
+
 <xsd:schema xmlns="http://mybatis.org/schema/mybatis-spring"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	xmlns:beans="http://www.springframework.org/schema/beans"

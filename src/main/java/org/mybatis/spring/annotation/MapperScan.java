@@ -54,7 +54,6 @@ import org.springframework.context.annotation.Import;
  *   public SqlSessionFactory sqlSessionFactory() throws Exception {
  *     SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
  *     sessionFactory.setDataSource(dataSource());
- *     sessionFactory.setTypeAliasesPackage("org.my.pkg.domain");
  *     return sessionFactory.getObject();
  *   }
  * }
@@ -63,6 +62,7 @@ import org.springframework.context.annotation.Import;
  * @since 1.2.0
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
+ * @version $Id$
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

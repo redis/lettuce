@@ -20,11 +20,16 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 /**
  * Namespace handler for the MyBatis namespace.
  *
+ * @see MapperScannerBeanDefinitionParser
  * @since 1.2.0
- *
+ * @version $Id$
  */
 public class NamespaceHandler extends NamespaceHandlerSupport {
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public void init() {
     registerBeanDefinitionParser("scan", new MapperScannerBeanDefinitionParser());
   }
