@@ -27,7 +27,7 @@
   </properties>
 
   <body>
-    <section name="Utilizar un SqlSession">
+    <section name="Uso de SqlSession">
       <p>
         En MyBatis usas un <code>SqlSessionFactory</code> para crear un <code>SqlSession</code>. 
         Una vez tienes una sesión, la usas para ejecutar tus mapped statements, hacer commit o rollback y finalmente
@@ -48,7 +48,7 @@
         Cuando se invoca a cualquier método SQL, incluyendo cualquier método de un mapper devuelto por 
         <code>getMapper()</code>, el <code>SqlSessionTemplate</code>
         se asegurará de que la <code>SqlSession</code> utilizada es la asociada con la transacción Spring en curso.
-        Adicionalemnte, se encarga de gestionar su ciclo de vida, incluyendo su cierre, commit o rollback de la sesión si fuera necesario.
+        Adicionalmente, se encarga de gestionar su ciclo de vida, incluyendo su cierre, commit o rollback de la sesión si fuera necesario.
       </p>
 
       <p>
@@ -112,10 +112,9 @@
       </p>
 
       <p>
-        La contrapartida de esto es que <strong>no es posible</strong> cambiar el méodo de ejeucción dentro de una transacción.
+        La contrapartida de esto es que <strong>no es posible</strong> cambiar el méodo de ejecución dentro de una transacción.
         Por tanto asegurate que o bien todas las llamadas a un <code>SqlSessionTemplate</code>s con distinto método de ejecución
-        se ejecutan en una transacción diferente (p.ej: with PROPAGATION_REQUIRES_NEW) o
-        completamente fuera de la transacción.
+        se ejecutan en una transacción diferente (p.ej: with PROPAGATION_REQUIRES_NEW) o completamente fuera de la transacción.
       </p>
     </subsection>
 
