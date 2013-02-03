@@ -35,13 +35,6 @@
         directamente porque puedes inyectar en tus beans una <code>SqlSession</code> thread safe (reentrante) 
         que hará de forma automática el commit, rollback y se cerrará conforme a la configuración de la transacción en Spring.
       </p>  
-    
-      <p>
-        Observa que normalmente no es necesario usar un <code>SqlSession</code> directamente.
-        En la mayoría de los cassos el <code>MapperFactoryBean</code>, que inyecta mappers en tus beans, es todo lo que necesitas. 
-        El <a href="mappers.html#MapperFactoryBean"><code>MapperFactoryBean</code></a>
-        se explicará en detalle en el siguiente capítulo. 
-      </p>  
 
     <subsection name="SqlSessionTemplate">
       <p>
@@ -147,7 +140,6 @@
       <p>
         <code>SqlSessionDaoSupport</code> que se informe la propiedad 
         <code>sqlSessionFactory</code> o la <code>sqlSessionTemplate</code>.
-        Ambos pueden ser informados explicitamente o ser autowired por Spring.
         Si se informan ambas propiedades, la <code>sqlSessionFactory</code> se ignora.
       </p>
 
