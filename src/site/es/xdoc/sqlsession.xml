@@ -39,7 +39,8 @@
     <subsection name="SqlSessionTemplate">
       <p>
         El <code>SqlSessionTemplate</code> is el corazón de MyBatis-Spring.
-        Esta clase es reponsable de gestionar las <code>SqlSessions</code> de MyBatis, llamar a los métodos SQL y traducir excepciones.
+        Implementa <code>SqlSession</code> y está pensado para que sea directamente reemplazable por cualquier código 
+        que actualmente use <code>SqlSession</code>.
         <code>SqlSessionTemplate</code> es thread safe y se puede compartir por más de un DAO.
       </p>
 
@@ -51,8 +52,6 @@
       </p>
 
       <p>
-        <code>SqlSessionTemplate</code> implementa <code>SqlSession</code>
-        y está pensado para que sea directamente reemplazable por cualquier código que actualmente use <code>SqlSession</code>.
         Se debe usar <strong>siempre</strong> un <code>SqlSessionTemplate</code> en lugar de la implementación de sesión 
         por default MyBatis: <code>DefaultSqlSession</code>
         porque el template puede participar en transacciones Spring y es thread safe con lo que puede ser inyectado
