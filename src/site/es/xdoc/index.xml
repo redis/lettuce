@@ -115,7 +115,7 @@
     <p>
       Queremos agradecer a la todos los que han hecho de este proyecto una realidad (en orden alfabético): 
       Eduardo Macarron, Hunter Presnall y Putthibong Boonbong por la codificación, pruebas y documentación; 
-      a Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan y Tomas Pinos 
+      a Andrius Juozapaitis, Giovanni Cuccu, Mike Lanyon, Raj Nagappan y Tomas Pinos 
       por sus contribuciones; y a Simone Tripodi por encontrarlos a todos y traerlos al proyecto MyBatis ;)
       Sin ellos este proyecto no existiría.
     </p>
@@ -123,25 +123,17 @@
   
   <subsection name="Colabora en mejorar esta documentación...">
 	<p>
-		Si ves que hay alguna carencia en esta documentación, o que falta
-		alguna característica
-		por documentar, te animamos a que lo
-		investigues y la documentes tu
-		mismo!
+		Si ves que hay alguna carencia en esta documentación, o que falta alguna característica por documentar, 
+		te animamos a que lo investigues y la documentes tu	mismo!
 	</p>
 	<p>
 		Las fuentes de este manual están disponibles en formato xdoc en el
-		<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">SVN del proyecto</a>
-		.
+		<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">SVN del proyecto</a>		.
 		Extraelas, actualizalas y envía tu parche al
-		<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>
-		.
+		<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>		.
 	</p>
 	<p>
-		Eres el mejor candidato para documentar porque los lectores de
-		esta
-		documentación son gente como
-		tú!
+		Eres el mejor candidato para documentar porque los lectores de esta	documentación son gente como tú!
 	</p>
   </subsection>
 </section>  
