@@ -10,7 +10,7 @@
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
@@ -33,27 +33,21 @@
         そして取得したセッションを使って Mapped Statement を実行し、接続をコミットあるいはロールバックした後、最終的に不要となったセッションをクローズする、というのが一連の流れでした。
         MyBatis-Spring では、SPring のトランザクション設定に基づいて自動的にコミット、ロールバック、クローズされるスレッドセーフな <code>SqlSession</code> が注入されるので、直接 <code>SqlSessionFactory</code> を使う必要はありません。
       </p>  
-    
-      <p>
-        また通常は、<code>SqlSession</code> を直接使用する必要もありません。
-        ほとんどの場合、<code>MapperFactoryBean</code> がインジェクト（注入）する Mapper があれば十分なはずです。
-        <a href="mappers.html#MapperFactoryBean"><code>MapperFactoryBean</code></a> については、次の章で説明します。
-      </p>  
 
     <subsection name="SqlSessionTemplate">
       <p>
         <code>SqlSessionTemplate</code> は MyBatis-Spring で最も重要なクラスです。
         このクラスが MyBatis の <code>SqlSession</code> を管理して、SQL メソッドの実行や例外の変換を行なっています。
-        <code>SqlSessionTemplate</code> はスレッドセーフで、複数の DAO 間で共有することができます。
+        このクラスは既存のコードで使用している <code>SqlSession</code> の代わりに使うことを前提に <code>SqlSession</code> インターフェイスを実装しています。
+        <code>SqlSessionTemplate</code> はスレッドセーフで、複数の DAO, Mapper 間で共有することができます。
       </p>
 
       <p>
         <code>getMapper()</code> から返された Mapper のメソッドも含めて、SQL メソッドを呼び出す場合、確実に現在の Spring トランザクションに付加された <code>SqlSession</code> が使われるようにするのも <code>SqlSessionTemplate</code> の仕事です。
-        またセッションのクローズや、状況に応じたコミットあるいはロールバックといったセッションのライフサイクルの管理も <code>SqlSessionTemplate</code> が行なっています。
+        それ以外にも、セッションのクローズや状況に応じたコミットあるいはロールバックといったライフサイクルの管理、更には MyBatis の例外を Spring の <code>DataAccessException</code> に変換する処理も行います。
       </p>
 
       <p>
-        <code>SqlSessionTemplate</code> は <code>SqlSession</code> を実装しており、既存のコードで <code>SqlSession</code> が使われている箇所にそのまま代入できるよう設計されています。
         <code>SqlSessionTemplate</code> は Spring が管理するトランザクション内で実行され、また Spring によってインジェクトされる複数の Mapper から呼び出すことができるようにスレッドセーフとなっているので、常にこのクラスを MyBatis のデフォルト実装である <code>DefaultSqlSession</code> の代わりに使用するべきです。
         同一アプリケーション内でこれら２つのクラスを混在させて使用するとデータの不整合などの問題が発生する可能性があります。
       </p>
@@ -132,7 +126,6 @@
 
       <p>
         <code>SqlSessionDaoSupport</code> を使用する際は、<code>sqlSessionFactory</code> または <code>sqlSessionTemplate</code> をセットする必要があります。
-        これらのプロパティは明示的にセットすることもできますし、Spring の Autowired を使ってセットすることもできます。
         もし両方のプロパティがセットされた場合、<code>sqlSessionFactory</code> は無視されます。
       </p>
 

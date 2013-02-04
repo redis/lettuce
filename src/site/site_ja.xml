@@ -36,7 +36,7 @@
       <item name="SqlSessionFactoryBean" href="factorybean.html"/>
       <item name="トランザクション" href="transactions.html" collapse="true">
         <item href="transactions.html#configuration" name="設定" />
-        <item href="transactions.html#container" name="CMT" />
+        <item href="transactions.html#container" name="コンテナ管理トランザクション（CMT）" />
         <item href="transactions.html#programmatic" name="プログラム的制御" />
       </item>
       <item name="SqlSession の利用" href="sqlsession.html" collapse="true">
@@ -44,8 +44,8 @@
         <item href="sqlsession.html#SqlSessionDaoSupport" name="SqlSessionDaoSupport" />
       </item>
       <item name="Mapper の注入" href="mappers.html" collapse="true">
-        <item href="mappers.html#MapperFactoryBean" name="MapperFactoryBean" />
-        <item href="mappers.html#MapperScannerConfigurer" name="MapperScannerConfigurer" />
+        <item href="mappers.html#register" name="Mapper の登録" />
+        <item href="mappers.html#scan" name="Mapper の自動検出" />
       </item>
       <item name="MyBatis API の使用" href="using-api.html"/>
       <item name="サンプルコード" href="sample.html"/>

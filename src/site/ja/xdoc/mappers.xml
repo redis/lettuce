@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2010-2012 The MyBatis Team
+  Copyright 2010-2013 The MyBatis Team
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -29,53 +29,18 @@
   <body>
     <section name="Mapper の注入">
       <p>
-        <code>SqlSessionDaoSupport</code> や <code>SqlSessionTemplate</code> を使って手動で DAO オブジェクトを定義する以外に、MyBatis-Spring が提供する <code>MapperFactoryBean</code> という Proxy Factory を使うこともできます。
-        このクラスを使うと、Mapper インターフェイスを直接他の Bean に注入することができます。
-        Mapper は DAO と同じように使うことができますが、MyBatis-Spring がプロクシを生成してくれるので、DAO の実装クラスを作成する必要がありません。
-      </p>
-      <p>
-        Mapper がインジェクトされることによって、あなたのコードは MyBatis や Spring、MyBatis-Spring への依存性から解放されます。
-        また、セッションのオープン、クローズや例外を Spring の <code>DataAccessException</code> に変換する処理、更には必要に応じて Spring のトランザクションを開始したり、実行中の有効なトランザクションを利用する処理も、全て <code>MapperFactoryBean</code> が生成したプロクシが行なってくれます。
+        MyBatis-Spring がスレッドセーフな Mapper を生成してくれるので、<code>SqlSessionDaoSupport</code> や <code>SqlSessionTemplate</code> を使って手動で DAO オブジェクトを生成するコードは不要となります。
+        生成された Mapper は他の Bean に注入することができます。
       </p>
 
-    <subsection name="MapperFactoryBean">
-      <p>
-        Mapper を Spring に登録するには、下記のように <code>MapperFactoryBean</code> を定義します。
-      </p>
-        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
-  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
-  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-</bean>]]></source>
-   
-      <p>
-        <code>MapperFactoryBean</code> は <code>UserMapper</code> インターフェイスを実装したプロクシクラスを生成し、アプリケーションに注入します。
-        プロクシは実行時に生成されるので、指定された Mapper は実装クラスではなくインターフェイスでなくてはなりません。
-      </p>
-
-      <p>
-        もし UserMapper に対応する MyBatis の XML Mapper ファイルが Mapper インターフェイスと同じクラスパスに存在する場合、<code>MapperFactoryBean</code> によって自動的に読み込まれます。
-        XML Mapper ファイルが異なるクラスパスに配置されているので無い限り、MyBatis の設定ファイルで Mapper を指定する必要はありません。
-        詳しくは、<code>SqlSessionFactoryBean</code> の <code><a href="factorybean.html">configLocation</a></code> プロパティについての説明を参照してください。
-      </p>
-
-      <p>
-        <code>MapperFactoryBean</code> は <code>SqlSessionFactory</code> あるいは <code>SqlSessionTemplate</code> を必要とします。
-        これらは、それぞれ <code>sqlSessionFactory</code> と <code>sqlSessionFactory</code> というプロパティ経由でセットすることもできますし、Spring の Autowired を利用してセットすることもできます。
-        もし両方のプロパティがセットされた場合、<code>SqlSessionFactory</code> は無視されます。
-        <code>SqlSessionTemplate</code> 自体に SqlSessionFactory がセットされていますので、この Factory が <code>MapperFactoryBean</code> でも使用されることになります。
-      </p>
-
-      <p>
-        Mapper は、他の Bean と同様にビジネス／サービス層のオブジェクトに直接インジェクト（注入）することができます
-      </p>
-         <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
+      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
   <property name="userMapper" ref="userMapper" />
 </bean>]]></source>
  
       <p>
-        注入された Bean は、アプリケーションのコードから直接利用することができます。
+        アプリケーション側の処理では、注入された Mapper のメソッドを呼び出すだけです。
       </p>
-         <source><![CDATA[public class FooServiceImpl implements FooService {
+        <source><![CDATA[public class FooServiceImpl implements FooService {
 
   private UserMapper userMapper;
 
@@ -88,53 +53,178 @@
   }
 }]]></source>
        <p>
-         このコードには <code>SqlSession</code> や MyBatis への参照が含まれていない点に注目してください。
-         また、セッションの生成やオープン、クローズも MyBatis-Spring が処理してくれるため不要となります。
+        このコードには <code>SqlSession</code> や MyBatis への参照が含まれていない点に注目してください。
+        また、セッションの生成やオープン、クローズも MyBatis-Spring が処理してくれるため不要となります。
        </p>
-    </subsection>
 
-    <subsection name="MapperScannerConfigurer">
+	<subsection name="Mapper の登録" id="register">
+	  <p>
+	    Mapper を Bean として登録する方法は、Spring の設定を XML ファイルを使って行う場合と Spring 3.0 以降で導入された Java Config (= @Configuration) を使う場合で異なります。</p>
+	
+      <h4>XML で設定する場合</h4>
+      
       <p>
-        あなたが用意した Mapper を全て Spring の XML ファイルに列挙する必要はありません。
-        <code>MapperScannerConfigurer</code> を使えば、クラスパス内の Mapper を検出して自動的に <code>MapperFactoryBean</code> として登録することができます。
+        XML ファイルを使って Spring を設定する場合、次のように <code>MapperFactoryBean</code> のエントリーを追加することで Mapper を Spring Bean として登録することができます。
+      </p>
+        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+  <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>]]></source>
+
+      <p>
+        ここで指定した UserMapper のインターフェイスと同じクラスパスに MyBatis の XML Mapper ファイルが配置されている場合は自動的にロードされます。
+        XML Mapper が異なるクラスパスに配置されている場合を除けば、MyBatis の設定ファイルでこの Mapper を指定する必要はありません。
+        詳しくは <code>SqlSessionFactoryBean</code> の <code><a href="factorybean.html">configLocation</a></code> プロパティの説明を参照してください。
       </p>
 
       <p>
-        <code>MapperScannerConfigurer</code> を使う場合は、次のような Spring Bean を定義します。
+        <code>MapperFactoryBean</code> を登録する際は <code>SqlSessionFactory</code> あるいは <code>SqlSessionTemplate</code> のどちらかを指定する必要があります。
+        指定対象のプロパティは、それぞれ <code>sqlSessionFactory</code> と <code>sqlSessionTemplate</code> です。
+        両方が指定された場合、 <code>SqlSessionFactory</code> の指定は無視され、<code>SqlSessionTemplate</code> の登録時に指定した Session Factory が使われます。
+      </p>
+      
+       <h4>Java Config で設定する場合</h4>
+       
+       <p>
+         Java Config を使って Spring を設定する場合は、次のようにして <code>SqlSessionTemplate</code> から直接 Mapper を取得することができます。
+       </p>
+        
+<source><![CDATA[    @Bean
+    public SqlSessionFactory sqlSessionFactory() throws Exception {
+      SqlSessionFactoryBean sqlSessionFactory = new SqlSessionFactoryBean();
+      sqlSessionFactory.setDataSource(dataSource());
+      return (SqlSessionFactory) sqlSessionFactory.getObject();
+    }
+
+    @Bean
+    public UserMapper userMapper() throws Exception {
+      SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+      return sessionTemplate.getMapper(UserMapper.class);
+    }
+]]></source>
+
+       <p>
+         ここで、MyBatis のデフォルトの <code>SqlSession</code> から取得した Mapper を返してはいけません。
+         なぜなら、この Mapper はスレッドセーフではなく、取得元の <code>SqlSession</code> がクローズされると破棄されてしまうからです。
+         上記の例のように、必ず <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> を使って Mapper を取得するようにしてください。
+       </p>
+    </subsection>
+
+    <subsection name="Mapper の自動検出" id="scan">
+      <p>
+        上で説明した方法では Mapper を個別に指定していましたが、MyBatis-Spring では特定のクラスパスに含まれる Mapper を自動検出させることもできます。     
+      </p>
+      
+      <p>
+        これには３通りの方法があります。
+      </p>
+      <ul>
+        <li><code>&lt;mybatis:scan/&gt;</code> 要素を使う。</li>
+        <li><code>@MapperScan</code> アノテーションを使う。</li>
+        <li>Spring の XML 設定ファイルに <code>MapperScannerConfigurer</code> のエントリーを追加する。</li>
+      </ul>
+      
+      <p><code>&lt;mybatis:scan/&gt;</code> または <code>@MapperScan</code> を使う場合は MyBatis-Spring 1.2.0 以降が必要です。また <code>@MapperScan</code> を使う場合は Spring 3.1 以降が必要となります。</p> 
+
+      <h4>&lt;mybatis:scan/&gt;</h4>
+      
+      <p>
+        <code>&lt;mybatis:scan/&gt;</code> は、Spring の <code>&lt;context:component-scan/&gt;</code> が Bean を検索するのと良く似た方法で Mapper を検出します。
+      </p>
+      
+      <p>XML 設定の例：</p>
+
+        <source><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:mybatis="http://www.mybatis.org/schema/mybatis"
+  xsi:schemaLocation="
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  http://www.mybatis.org/schema/mybatis http://www.mybatis.org/schema/mybatis/mybatis-spring.xsd">
+ 
+  <mybatis:scan base-package="org.mybatis.spring.sample.mapper" />
+
+</beans>]]></source>
+
+      <p>
+        <code>base-package</code> 属性で Mapper ファイルを含むパッケージを指定します。
+        セミコロンまたはカンマ区切りで複数のパッケージを指定することもできます。
+        また、指定されたパッケージが内包するパッケージも検索対象となります。
+      </p>
+
+      <p>
+        ここでは <code>&lt;mybatis:scan/&gt;</code> に <code>SqlSessionFactory</code> や <code>SqlSessionTemplate</code> を指定していませんが、この場合は Autowired 可能な <code>MapperFactoryBean</code> が自動的に生成されます。
+        ただし、複数の <code>DataSource</code> を利用する場合は Autowired に頼ることができないので、 <code>factory-ref</code> または <code>template-ref</code> 属性を使って適切な Bean を指定する必要があります。
+      </p>
+
+      <p>
+        <code>&lt;mybatis:scan/&gt;</code> を使う場合、マーカーインターフェイスまたはアノテーションを指定して Mapper をフィルタリングすることができます。
+        検出対象のアノテーションを指定するには <code>annotation</code> 属性を使います。
+        検出対象の Mapper が実装するインターフェイスを指定する場合は <code>marker-interface</code> 属性を使います。
+        両方の属性が指定された場合、どちらかの条件を満たすインターフェイスが Mapper として登録されます。
+        デフォルトではどちらも null となっており、<code>base-package</code> で指定したパッケージに含まれるすべてのインターフェイスが Mapper としてロードされます。
+      </p>
+
+      <p>
+        検出された Mapper は、Spring の自動検出コンポーネントに対するデフォルト命名規則によって Bean 名が決められます（Spring マニュアルの 3.14.4 節を参照してください）。
+        アノテーションによる指定がない場合はクラス名の先頭を小文字にした文字列が Bean 名となりますが、@Component あるいは JSR-330 の @Named アノテーションを使って Bean 名を明示的に指定することもできます。
+        先に説明した <code>annotation</code> 属性で <code>org.springframework.stereotype.Component</code> や <code>javax.inject.Named</code> （Java 6 以降を利用している場合のみ）を指定すれば、検出時のマーカーと Bean 名の指定を１つのアノテーションで兼ねることができます。
+        同じ目的で独自に定義したアノテーションを使うこともできますが、このアノテーション自体に @Component か @Named を付加しておく必要があります。
+      </p>
+
+      <p>
+        <span class="label important">NOTE</span> Spring 標準の <code>&lt;context:component-scan/&gt;</code> を使って Mapper を検出することはできません。
+        Mapper はインターフェイスなので、各 Mapper に対する <code>MapperFactoryBean</code> の生成方法が分かっていないと Spring Bean として登録することができないのです。
+      </p>
+
+      <h4>@MapperScan</h4>
+      
+      <p>
+        Java Config を使って Spring を設定しているのなら、<code>&lt;mybatis:scan/&gt;</code> よりも <code>@MapperScan</code> を使う方が気に入ると思います。
+      </p>
+      
+      <p><code>@MapperScan</code> アノテーションは次のように使用します。</p>
+   
+   <source><![CDATA[@Configuration
+@MapperScan("org.mybatis.spring.sample.mapper")
+public class AppConfig {
+
+  @Bean
+  public DataSource dataSource() {
+    return new EmbeddedDatabaseBuilder().addScript("schema.sql").build()
+  }
+
+  @Bean
+  public SqlSessionFactory sqlSessionFactory() throws Exception {
+    SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+    sessionFactory.setDataSource(dataSource());
+    return sessionFactory.getObject();
+  }
+}
+]]></source>
+	
+	  <p>
+    このアノテーションは前章で説明した <code>&lt;mybatis:scan/&gt;</code> と全く同じ要領で Mapper の検出を行います。
+    引数 <code>markerInterface</code>, <code>annotationClass</code> を使えば検出対象のマーカーインターフェイスとアノテーションを指定することもできますし、<code>sqlSessionFactory</code>, <code>sqlSessionTemplate</code> で <code>SqlSessionFactory</code> や <code>SqlSessionTemplate</code> を指定することができます。
+	  </p>
+     
+      <h4>MapperScannerConfigurer</h4>
+        
+      <p>
+        <code>MapperScannerConfigurer</code> は <code>BeanDefinitionRegistryPostProcessor</code> として定義されているので、従来の XML による設定で通常の Bean として登録することができます。
+        <code>MapperScannerConfigurer</code> の登録は次のように行います。
       </p>
         <source><![CDATA[<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
   <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
 </bean>]]></source>
-      <p>
-        <code>basePackage</code> プロパティで指定するのは、あなたの Mapper インターフェイスクラスを含むパッケージです。
-        セミコロンまたはカンマ区切りで複数のパッケージを指定することもできます。
-        Mapper の検索は、指定したパッケージを起点として再帰的に行われます。
-      </p>
 
       <p>
-        <code>MapperScannerConfigurer</code> が <code>MapperFactoryBean</code> を生成する際に Autowired によって注入されるので、ここでは <code>SqlSessionFactory</code> や <code>SqlSessionTemplate</code> の指定は必須ではありません。
-        ただし、あなたが複数の <code>DataSource</code> を利用している場合は Autowired が利用できないので、このようなケースでは <code>sqlSessionFactoryBeanName</code> または <code>sqlSessionTemplateBeanName</code> プロパティに注入対象の Bean 名を指定することができるようになっています。
-        ここでの指定は Bean の参照ではなく Bean 名である必要があるので、<code>ref</code> ではなく <code>value</code> 属性を使います。
+        特定の <code>sqlSessionFactory</code> または <code>sqlSessionTemplate</code> を指定する場合は、 Bean を参照ではなく <strong>名前で</strong> 指定する必要があるので、<code>ref</code> ではなく <code>value</code> を使います。
       </p>
       <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
     
       <p>
-        <span class="label important">NOTE</span> MyBatis-Spring 1.0.2 までは、指定可能なオプションは <code>sqlSessionFactoryBean</code> と <code>sqlSessionTemplateBean</code> プロパティのみでしたが、<code>MapperScannerConfigurer</code> が起動処理の過程で <code>PropertyPlaceholderConfigurer</code> よりも前に処理されるため、エラーが多発していました。
-        このため、MyBatis-Spring 1.1.0 以降ではこれらのプロパティは非推奨となり、新たに追加された <code>sqlSessionFactoryBeanName</code> および <code>sqlSessionTemplateBeanName</code> プロパティの使用が推奨されています。
-      </p>
-    
-      <p>
-        <code>MapperScannerConfigurer</code> では、マーカーインターフェイスまたはアノテーションを使って生成対象の Mapper をフィルタリングすることができます。
-        <code>annotationClass</code> プロパティには検索対象のアノテーションを指定します。
-        <code>markerInterface</code> プロパティには親となるインターフェイスを指定します。
-        両方のプロパティが指定された場合、<strong>どちらかの条件</strong>にマッチする Mapper が生成対象となります。
-        これらのプロパティのデフォルト値は null で、<code>basePackage</code> で指定された パッケージ内の全てのインターフェイスが Mapper としてロードされます。
-      </p>
-
-      <p>
-        検出された Mapper は Spring の標準的な命名規則によって命名されます（Spring マニュアルの 3.14.4 章参照）。
-        もしアノテーションがなければ、Mapper のクラス名の先頭を小文字にした名前となりますが、もし @Component あるいは JSR-330 の @Named アノテーションが指定されていた場合は、そのアノテーションで指定されている名前が使われます。
-        <code>annotationClass</code> に <code>org.springframework.stereotype.Component</code>, <code>javax.inject.Named</code>（JSE 6 の場合）あるいは独自に定義したアノテーション（それ自身にもアノテーションを付加しておく必要があります）を指定することで、そのアノテーションを検出対象のマーカーおよび Bean 名の取得元として使用することができます。
+        <span class="label important">NOTE</span> MyBatis-Spring 1.0.2 までは有効なプロパティは <code>sqlSessionFactoryBean</code> と <code>sqlSessionTemplateBean</code> のみでしたが、 <code>MapperScannerConfigurer</code> が <code>PropertyPlaceholderConfigurer</code> よりも先に読み込まれるためエラーの原因となっていました。
+        この問題を回避するため、これらのプロパティの使用は非推奨となり、新たに追加された <code>sqlSessionFactoryBeanName</code> と <code>sqlSessionTemplateBeanName</code> を使うことが推奨されています。
       </p>
       </subsection>
     </section>

@@ -88,7 +88,7 @@
 			</tr>
 			<tr>
 				<td>
-					1.1.0
+					1.1.0 or higher
 				</td>
 				<td>
 					3.1.0 or higher
@@ -105,7 +105,7 @@
     <p>
       このプロジェクトの実現にご協力頂いた次の方々に感謝します（アルファベット順）: 
       Eduardo Macarron, Hunter Presnall, Putthibong Boonbong（コーディング、テスト、ドキュメント作成）;
-      Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan, Tomas Pinos（コントリビューション）;
+      Andrius Juozapaitis, Giovanni Cuccu, Mike Lanyon, Raj Nagappan, Tomas Pinos（コントリビューション）;
       Simone Tripodi（メンバーを集め、MyBatis のサブプロジェクトとしてまとめてくれました）<br />
       このプロジェクトは彼らの協力なしには実現できなかったでしょう。
     </p>
