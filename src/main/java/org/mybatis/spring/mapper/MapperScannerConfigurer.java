@@ -46,6 +46,10 @@ import org.springframework.util.StringUtils;
  * interfaces and registers them as {@code MapperFactoryBean}. Note that only interfaces with at
  * least one method will be registered; concrete classes will be ignored.
  * <p>
+ * This class was a {code BeanFactoryPostProcessor} until 1.0.1 version. It changed to  
+ * {@code BeanDefinitionRegistryPostProcessor} in 1.0.2. See https://jira.springsource.org/browse/SPR-8269
+ * for the details.
+ * <p>
  * The {@code basePackage} property can contain more than one package name, separated by either
  * commas or semicolons.
  * <p>
@@ -56,14 +60,16 @@ import org.springframework.util.StringUtils;
  * these two properties are null, so all interfaces in the given {@code basePackage} are added as
  * mappers.
  * <p>
- * This configurer is usually used with autowire enabled so all the beans it creates are
+ * This configurer enables autowire for all the beans that it creates so that they are
  * automatically autowired with the proper {@code SqlSessionFactory} or {@code SqlSessionTemplate}.
  * If there is more than one {@code SqlSessionFactory} in the application, however, autowiring
  * cannot be used. In this case you must explicitly specify either an {@code SqlSessionFactory} or
  * an {@code SqlSessionTemplate} to use via the <em>bean name</em> properties. Bean names are used
  * rather than actual objects because Spring does not initialize property placeholders until after
- * this class is processed. Passing in an actual object which may require placeholders (i.e. DB user
- * / password) will fail. Using bean names defers actual object creation until later in the startup
+ * this class is processed. 
+ * <p>
+ * Passing in an actual object which may require placeholders (i.e. DB user password) will fail. 
+ * Using bean names defers actual object creation until later in the startup
  * process, after all placeholder substituation is completed. However, note that this configurer
  * does support property placeholders of its <em>own</em> properties. The <code>basePackage</code>
  * and bean name properties all support <code>${property}</code> style substitution.
@@ -279,10 +285,13 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * {@inheritDoc}
    */
   public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+    // left intentionally blank
   }
 
   /**
    * {@inheritDoc}
+   * 
+   * @since 1.0.2
    */
   public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
     if (this.processPropertyPlaceHolders) {
