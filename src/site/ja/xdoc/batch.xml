@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2013 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>MyBatis-Spring | Spring Batch</title>
+    <author email="mybatis-dev@googlegroups.com">The MyBatis Team</author>
+  </properties>
+
+  <body>
+    <section name="Spring Batch">
+      <p>
+        MyBatis-Spring 1.1.0 以降では、 Spring Batch を構築するための Bean として <code>MyBatisPagingItemReader</code> と <code>MyBatisBatchItemWriter</code> が用意されています。
+        これらの Bean 及びこのドキュメントは、いずれも Spring Batch の一部として提供されていた iBATIS 2.x 用のものを移植したものです。
+      </p>
+      
+      <p>
+        <span class="label important">NOTE</span> ここで扱うのは <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> を使ったバッチ処理で、MyBatis の SqlSession を利用したバッチ処理（「SqlSession の利用」参照）ではありません。
+      </p>
+      
+      <subsection name="MyBatisPagingItemReader">
+        <p>
+          この Bean は、MyBatis を利用してデータベースからページ単位でレコードを読み出す <code>ItemReader</code> です。
+        </p>
+        
+        <p>
+          結果を取得する際は setQueryId プロパティで指定したクエリが実行されます。
+          1ページあたりの件数は setPageSize プロパティで指定することができます。
+          <code>read()</code> メソッドが呼び出されると、必要に応じて追加のページを取得するクエリが実行されます。
+          実行されるクエリでは、Reader によって提供されるページング処理を行う際に必要となるパラメーターを使って期待される結果を返す SQL 文を記述することになります（実際の SQL 文は方言依存です）。
+          提供されるパラメーターは次の通りです。
+        </p>
+
+         <ul>
+         <li><code>_page</code>: 取得対象のページ番号（最初のページは０）</li>
+         <li><code>_pagesize</code>: １ページあたりの件数</li>
+         <li><code>_skiprows</code>: <code>_page</code> と <code>_pagesize</code> の積</li>
+         </ul>
+ 
+        <p>設定例：</p>
+        
+        <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="queryId" value="getEmployee" />
+</bean>]]></source>
+      </subsection>
+
+      <subsection name="MyBatisBatchItemWriter">
+      
+      <p>
+        <code>SqlSessionTemplate</code> のバッチ機能を使って渡された一連のアイテムを処理する <code>ItemWriter</code> です。
+      </p>
+ 
+      <p>
+        <code>write()</code> の呼び出し時に実行するステートメントの ID を指定しておく必要があります。
+        <code>write()</code> はトランザクション内で呼び出されることを前提としています。
+      </p>
+ 
+        <p>設定例：</p>
+        
+        <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="statementId" value="updateEmployee" />
+</bean>]]></source>
+ 
+      </subsection>
+    </section>
+  </body>
+</document>
