@@ -32,8 +32,8 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.DatabaseIdProvider;
-import org.apache.ibatis.mapping.DefaultDatabaseIdProvider;
 import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
@@ -100,7 +100,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private Class<?> typeAliasesSuperType;
 
-  private DatabaseIdProvider databaseIdProvider = new DefaultDatabaseIdProvider();
+  private DatabaseIdProvider databaseIdProvider = new VendorDatabaseIdProvider();
 
   private ObjectFactory objectFactory;
 
