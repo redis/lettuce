@@ -112,12 +112,14 @@
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
       <version>3.2.0-SNAPSHOT</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-jdbc</artifactId>
       <version>${spring.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -188,10 +190,6 @@
         <exclusion>
           <groupId>junit</groupId>
           <artifactId>junit</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>oro</groupId>
-          <artifactId>oro</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
