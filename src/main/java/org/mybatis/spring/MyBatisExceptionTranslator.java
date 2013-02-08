@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The MyBatis Team
+ *    Copyright 2010-2013 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -71,9 +71,8 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
         return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
       }
       return new MyBatisSystemException(e);
-    } else {
-      return null;
-    }
+    } 
+    return null;
   }
 
   /**
