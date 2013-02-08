@@ -84,7 +84,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private SqlSessionFactory sqlSessionFactory;
 
-  private String environment = SqlSessionFactoryBean.class.getSimpleName(); // EnvironmentWare requires spring 3.1
+  private String environment = SqlSessionFactoryBean.class.getSimpleName(); // EnvironmentAware requires spring 3.1
 
   private boolean failFast;
 
