@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2012 The MyBatis Team
+ *    Copyright 2010-2013 The MyBatis Team
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private SqlSessionFactory sqlSessionFactory;
 
-  private String environment = SqlSessionFactoryBean.class.getSimpleName();
+  private String environment = SqlSessionFactoryBean.class.getSimpleName(); // EnvironmentWare requires spring 3.1
 
   private boolean failFast;
 
