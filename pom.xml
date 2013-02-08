@@ -126,7 +126,7 @@
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
       <version>2.1.9.RELEASE</version>
-      <optional>true</optional>
+      <scope>provided</scope>
     </dependency>
 
     <!-- Test dependencies -->
