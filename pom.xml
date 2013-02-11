@@ -69,10 +69,19 @@
   </contributors>
 
   <scm>
-    <url>scm:svn:http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</url>
-    <connection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</connection>
-    <developerConnection>scm:svn:https://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk</developerConnection>
+    <url>http://github.com/mybatis/spring</url>
+    <connection>scm:git:ssh://github.com/mybatis/spring.git</connection>
+    <developerConnection>scm:git:git+ssh://git@github.com/mybatis/spring.git</developerConnection>
+    <tag>HEAD</tag>
   </scm>
+  <issueManagement>
+    <system>GitHub Issue Management</system>
+    <url>https://github.com/mybatis/spring/issues</url>
+  </issueManagement>
+  <ciManagement>
+    <system>Travis CI</system>
+    <url>https://travis-ci.org/mybatis/spring</url>
+  </ciManagement>
   <distributionManagement>
     <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
     <site>
