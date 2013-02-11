@@ -83,18 +83,9 @@
     <url>https://travis-ci.org/mybatis/spring</url>
   </ciManagement>
   <distributionManagement>
-    <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
     <site>
-      <id>mybatis.site</id>
-      <!--
-       | make it overridible, FTP is terribly slow when launched from Maven Wagon
-       | an alternative strategy could be deploying the site locally
-       |
-       |    -Dsite.deploymentUrl=file://...
-       |
-       | then async redeploying it via Filezilla/whatelese
-      -->
-      <url>${site.deploymentUrl}</url>
+      <id>github</id>
+      <url>gitsite:git@github.com/mybatis/spring.git</url>
     </site>
   </distributionManagement>
 
@@ -105,10 +96,6 @@
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <!--
-     | see distributionManagement.site.url
-    -->
-    <site.deploymentUrl>ftp://${mybatis.host}/spring/</site.deploymentUrl>
   </properties>
 
   <dependencies>
