@@ -260,15 +260,9 @@
           <locales>en,es,zh_CN,ja</locales>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <arguments>-Prelease,bundle,gupload</arguments>
-        </configuration>
-      </plugin>
     </plugins>
-        <resources>
+
+    <resources>
       <resource>
         <directory>${basedir}</directory>
         <targetPath>META-INF</targetPath>
