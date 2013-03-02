@@ -135,6 +135,16 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
         return dispatch(BRPOPLPUSH, new ValueOutput<K, V>(codec), args);
     }
 
+    public Future<K> clientGetname() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GETNAME);
+        return dispatch(CLIENT, new KeyOutput<K, V>(codec), args);
+    }
+
+    public Future<String> clientSetname(K name) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETNAME).addKey(name);
+        return dispatch(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
     public Future<String> clientKill(String addr) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL).add(addr);
         return dispatch(CLIENT, new StatusOutput<K, V>(codec), args);
@@ -339,6 +349,11 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
 
     public Future<String> info() {
         return dispatch(INFO, new StatusOutput<K, V>(codec));
+    }
+
+    public Future<String> info(String section) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(section);
+        return dispatch(INFO, new StatusOutput<K, V>(codec), args);
     }
 
     public Future<List<K>> keys(K pattern) {

@@ -20,11 +20,20 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void bgsave() throws Exception {
-        while (redis.info().contains("bgrewriteaof_in_progress:1")) {
+        while (redis.info().contains("aof_rewrite_in_progress:1")) {
             Thread.sleep(100);
         }
         String msg = "Background saving started";
         assertEquals(msg, redis.bgsave());
+    }
+
+    @Test
+    public void clientGetSetname() throws Exception {
+        assertNull(redis.clientGetname());
+        assertEquals("OK", redis.clientSetname("test"));
+        assertEquals("test", redis.clientGetname());
+        assertEquals("OK", redis.clientSetname(""));
+        assertNull(redis.clientGetname());
     }
 
     @Test
@@ -95,6 +104,7 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void info() throws Exception {
         assertTrue(redis.info().contains("redis_version"));
+        assertTrue(redis.info("server").contains("redis_version"));
     }
 
     @Test

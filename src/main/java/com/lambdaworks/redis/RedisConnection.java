@@ -106,6 +106,14 @@ public class RedisConnection<K, V> {
         return await(c.brpoplpush(timeout, source, destination), timeout2, SECONDS);
     }
 
+    public K clientGetname() {
+        return await(c.clientGetname());
+    }
+
+    public String clientSetname(K name) {
+        return await(c.clientSetname(name));
+    }
+
     public String clientKill(String addr) {
         return await(c.clientKill(addr));
     }
@@ -312,6 +320,10 @@ public class RedisConnection<K, V> {
 
     public String info() {
         return await(c.info());
+    }
+
+    public String info(String section) {
+        return await(c.info(section));
     }
 
     public List<K> keys(K pattern) {
