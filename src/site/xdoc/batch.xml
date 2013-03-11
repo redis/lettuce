@@ -34,8 +34,8 @@
       </p>
       
       <p>
-        <span class="label important">NOTE</span>This about <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> and not
-        about MyBatis batch SqlSessions. For information about batch sessions go to section: Using an SqlSession.
+        <span class="label important">NOTE</span> This is about <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> and not
+        about MyBatis batch SqlSessions. For information about batch sessions go to section <a href="sqlsession.html">Using an SqlSession</a>.
       </p>
       
       <subsection name="MyBatisPagingItemReader">
