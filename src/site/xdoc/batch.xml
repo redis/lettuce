@@ -43,42 +43,100 @@
           This bean is an <code>IteamReader</code> that reads records from a database using MyBatis in a paging fashion.
         </p>
         
-		<p>
-		  It executes the query specified as the setQueryId property to retrieve requested data. 
-		  The query is executed using paged requests of a size specified in setPageSize property. 
-		  Additional pages are requested when needed as <code>read()</code> method is called, returning an object corresponding
+        <p>
+          It executes the query specified as the <code>setQueryId</code> property to retrieve requested data.
+          The query is executed using paged requests of a size specified in <code>setPageSize</code> property.
+          Additional pages are requested when needed as <code>read()</code> method is called, returning an object corresponding
           to current position. 
           
           Some standard query parameters are provided by the reader and the SQL in the named query must use some or all of these parameters
           (depending on the SQL variant) to construct a result set of the required size. The parameters are:
         </p>
 
-		 <ul>
-		 <li><code>_page</code>: the page number to be read (starting at 0)</li>
-		 <li><code>_pagesize</code>: the size of the pages, i.e. the number of rows to return</li>
-		 <li><code>_skiprows</code>: the product of <code>_page</code> and
-		 <code>_pagesize</code></li>
-		 </ul>
- 
+        <ul>
+          <li><code>_page</code>: the page number to be read (starting at 0)</li>
+          <li><code>_pagesize</code>: the size of the pages, i.e. the number of rows to return</li>
+          <li><code>_skiprows</code>: the product of <code>_page</code> and
+          <code>_pagesize</code></li>
+        </ul>
+
+        <p>And they could be mapped as the follow in a select statement :</p>
+        <source>
+          <![CDATA[
+          <select id="getEmployee" resultMap="employeeBatchResult">
+            SELECT id, name, job FROM employees ORDER BY id ASC LIMIT #{_skiprows}, #{_pagesize}
+          </select>
+          ]]>
+        </source>
+
         <p>Follows below a sample configuration snippet:</p>
         
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="getEmployee" />
 </bean>]]></source>
+
+        <p><strong>Explaining a more complex example:</strong></p>
+
+        <source>
+          <![CDATA[
+          <bean id="dateBasedCriteriaReader"
+                class="org.mybatis.spring.batch.MyBatisPagingItemReader"
+                p:sqlSessionFactory-ref="batchReadingSessionFactory"
+                p:parameterValues-ref="datesParameters"
+                p:queryId="com.my.name.space.batch.ExampleMapper.queryUserInteractionsOnSpecificTimeSlot"
+                p:pageSize="${batch.export.interactions.chunk.size}"
+                scope="step"
+              />
+
+          <util:map id="datesParameters" key-type="or.joda.time.DateTime" scope="step">
+            <entry key="yesterday"
+                   value="#{jobExecutionContext['EXTRACTION_START_DATE']}"/>
+            <entry key="today"
+                   value="#{jobExecutionContext['TODAY_DATE']}"/>
+            <entry key="first_day_of_the_month"
+                   value="#{jobExecutionContext['FIRST_DAY_OF_THE_MONTH_DATE']}"/>
+            <entry key="first_day_of_the_previous_month"
+                   value="#{jobExecutionContext['FIRST_DAY_OF_THE_PREVIOUS_MONTH_DATE']}"/>
+          </util:map>
+          ]]>
+        </source>
+
+        <p>
+          The previous example makes use of a few different things :
+          <ul>
+            <li><code>sqlSessionFactory</code> : You can specify your own sessionFactory to the reader, it might be
+              useful if you want to read from several database</li>
+            <li><code>queryId</code>: If the base code have several tables or bases to read from, and that you have different
+              queries, it might be interesting to uses different mapper files with different namespaces.
+              so when referring to the query, don't forget about the namespace of the mapper file.</li>
+            <li><code>parameterValues</code>: You can pass additional parameters via this map, the example above uses
+              a map that is build by spring using a SpEL expression taking values from the <code>jobExecutionContext</code>.
+              The keys of the map will be used by MyBatis in the mapper file (ex:
+              <em>yesterday</em> could be used as <code>#{yesterday,jdbcType=TIMESTAMP}</code>).
+              Note that the map and the reader are both built in the <code>step</code> scope in order to be able to use
+              the Spring EL expression with the <code>jobExecutionContext</code>. Also if MyBatis type handlers
+              are correctly configured you can pass custom instances like the parameters of this map that are JodaTime
+              dates.</li>
+            <li><code>pageSize</code>: If the batch flow is configured with chunk size, it is relevant to pass this
+              information to the reader as well, which is done via this property.</li>
+          </ul>
+        </p>
+
       </subsection>
 
       <subsection name="MyBatisBatchItemWriter">
       
-      <p>
-        It is an <code>ItemWriter</code> that uses the batching features from <code>SqlSessionTemplate</code>
-        to execute a batch of statements for all items provided.
-      </p>
- 
-      <p>
-        The user must provide an mapped statement id that will be executed when <code>write()</code> is called.
-        It is expected that <code>write()</code> is called inside a transaction.<br/>
-      </p>
+        <p>
+          It is an <code>ItemWriter</code> that uses the batching features from <code>SqlSessionTemplate</code>
+          to execute a batch of statements for all items provided.
+          The <code>SqlSessionFactory</code> needs to be configured with a <code>BATCH</code> executor.</p>
+
+
+          <p>
+          The user must provide an mapped statement id that will be executed when <code>write()</code> is called.
+          It is expected that <code>write()</code> is called inside a transaction.<br/>
+        </p>
  
         <p>Follows below a sample configuration snippet:</p>
         
@@ -86,7 +144,116 @@
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="statementId" value="updateEmployee" />
 </bean>]]></source>
- 
+
+        <p><strong>Writing to different tables using composite writers (with some caveats) :</strong></p>
+
+        <p>This technique can only be used with version 3.2 of mybatis-spring, as there was an
+          <a href="http://code.google.com/p/mybatis/issues/detail?id=741">issue</a> in previous
+          versions that made the writer misbehave during.</p>
+
+        <p>If the batch needs to write complex data, like records with associations, or even to different databases, then
+          it is possible to work around the fact that insert statements only insert in one table. In order to make it
+          happen the batch have to prepare the <em>Item</em> to be written by the writer. However depending on the
+          constraints, opportunities or insight on the processed data it might be interesting to use the following technique.
+          The following trick can work on items with simple associations or just with unrelated tables.
+        </p>
+
+        <p>In a processor craft the Spring Batch Item in such way it will <em>hold</em> all the different records.
+          Suppose for each Item there is an <em>Interaction</em> that have one association
+          <em>InteractionMetadata</em>, and two non associated rows <em>VisitorInteraction</em> and
+          <em>CustomerInteraction</em>, the holder object will look like :</p>
+
+        <source>
+          <![CDATA[
+          public class InteractionRecordToWriteInMultipleTables {
+              private final VisitorInteraction visitorInteraction;
+              private final CustomerInteraction customerInteraction;
+              private final Interaction interaction;
+              // ...
+          }
+
+          public class Interaction {
+              private final InteractionMetadata interactionMetadata;
+          }
+          ]]>
+        </source>
+
+        <p>Then in the spring configuration there will be a <code>CompositeItemWriter</code> that will use delegate
+          writers specifically configured for each kind of records. Note that as the <em>InteractionMetadata</em> is
+          an association in the example it will need to be written first so that Interaction can have the updated key.</p>
+
+        <source>
+          <![CDATA[
+          <bean id="interactionsItemWriter"
+                class="org.springframework.batch.item.support.CompositeItemWriter">
+            <property name="delegates">
+              <list>
+                <ref bean="visitorInteractionsWriter"/>
+                <ref bean="customerInteractionsWriter"/>
+
+                <!-- Order is important -->
+                <ref bean="interactionMetadataWriter"/>
+                <ref bean="interactionWriter"/>
+              </list>
+            </property>
+          </bean>
+          ]]>
+        </source>
+
+        <p>Then each delegate writer will be configured as needed ; for example for <em>Interaction</em> and
+          <em>InteractionMetadata</em>:</p>
+
+        <source>
+          <![CDATA[
+          <bean id="interactionMetadataWriter"
+                class="org.mybatis.spring.batch.MyBatisBatchItemWriter"
+                p:sqlSessionTemplate-ref="batchSessionTemplate"
+                p:statementId="com.my.name.space.batch.InteractionRecordToWriteInMultipleTablesMapper.insertInteractionMetadata"
+              />
+          <bean id="interactionWriter"
+                class="org.mybatis.spring.batch.MyBatisBatchItemWriter"
+                p:sqlSessionTemplate-ref="batchSessionTemplate"
+                p:statementId="com.my.name.space.batch.InteractionRecordToWriteInMultipleTablesMapper.insertInteraction"
+              />
+          ]]>
+        </source>
+
+        <p>Same as the reader the <code>statementId</code> can refer to the statement with the prefixed namespace.</p>
+
+        <p>Now in the mapper file the statement have to be crafted for each kind of records in the following way:</p>
+
+        <source>
+          <![CDATA[
+          <insert id="insertInteractionMetadata"
+                  parameterType="com.my.batch.interactions.item.InteractionRecordToWriteInMultipleTables"
+                  useGeneratedKeys="true"
+                  keyProperty="interaction.interactionMetadata.id"
+                  keyColumn="id">
+            <!-- the insert statement using #{interaction.interactionMetadata.property,jdbcType=...} -->
+          </insert>
+          <insert id="insertInteraction"
+                  parameterType="com.my.batch.interactions.item.InteractionRecordToWriteInMultipleTables"
+                  useGeneratedKeys="true"
+                  keyProperty="interaction.id"
+                  keyColumn="id">
+            <!--
+             the insert statement using #{interaction.property,jdbcType=...} for regular properties
+             and #{interaction.interactionMetadata.property,jdbcType=...} for the InteractionMetadata property
+            -->
+          </insert>
+          ]]>
+        </source>
+
+        <p>What's happening is that first the <code>insertInteractionMetadata</code> will be called, and the update
+          statement is configured to return the ids created by the jdbc driver (<code>keyProperty</code> and <code>keyColumn</code>).
+          As the <code>InteractionMetadata</code> object were updated by this query the next query can be used to write the parent
+          object <code>Interaction</code> via <code>insertInteraction</code>.</p>
+
+        <p><strong><em>However note that JDBC driver don't behave the same in this regard. At the time of this writing
+          the H2 driver 1.3.168 will only return the latest index even in BATCH mode (see org.h2.jdbc.JdbcStatement#getGeneratedKeys),
+          while the MySQL JDBC driver will behave as expected and return all the IDs.</em></strong></p>
+
+
       </subsection>
     </section>
   </body>
