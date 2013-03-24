@@ -33,7 +33,7 @@
       </p>
       
       <p>
-        <span class="label important">NOTE</span> ここで扱うのは <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> を使ったバッチ処理で、MyBatis の SqlSession を利用したバッチ処理（「SqlSession の利用」参照）ではありません。
+        <span class="label important">NOTE</span> ここで扱うのは <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> を使ったバッチ処理で、MyBatis の <a href="sqlsession.html">SqlSession</a> を利用したバッチ処理ではありません。
       </p>
       
       <subsection name="MyBatisPagingItemReader">
@@ -42,31 +42,73 @@
         </p>
         
         <p>
-          結果を取得する際は setQueryId プロパティで指定したクエリが実行されます。
-          1ページあたりの件数は setPageSize プロパティで指定することができます。
+          結果を取得する際は <code>setQueryId</code> プロパティで指定したクエリが実行されます。
+          1ページあたりの件数は <code>setPageSize</code> プロパティで指定することができます。
           <code>read()</code> メソッドが呼び出されると、必要に応じて追加のページを取得するクエリが実行されます。
           実行されるクエリでは、Reader によって提供されるページング処理を行う際に必要となるパラメーターを使って期待される結果を返す SQL 文を記述することになります（実際の SQL 文は方言依存です）。
           提供されるパラメーターは次の通りです。
-        </p>
 
          <ul>
          <li><code>_page</code>: 取得対象のページ番号（最初のページは０）</li>
          <li><code>_pagesize</code>: １ページあたりの件数</li>
          <li><code>_skiprows</code>: <code>_page</code> と <code>_pagesize</code> の積</li>
          </ul>
- 
+         <p>
+
+        <p>これらのパラメーターは、例えば次のように SELECT 文中で指定することができます。</p>
+        <source><![CDATA[<select id="getEmployee" resultMap="employeeBatchResult">
+  SELECT id, name, job FROM employees ORDER BY id ASC LIMIT #{_skiprows}, #{_pagesize}
+</select>]]></source>
+
         <p>設定例：</p>
         
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="getEmployee" />
 </bean>]]></source>
+
+        <p><strong>さらに複雑な例：</strong></p>
+
+        <source><![CDATA[<bean id="dateBasedCriteriaReader"
+    class="org.mybatis.spring.batch.MyBatisPagingItemReader"
+    p:sqlSessionFactory-ref="batchReadingSessionFactory"
+    p:parameterValues-ref="datesParameters"
+    p:queryId="com.my.name.space.batch.ExampleMapper.queryUserInteractionsOnSpecificTimeSlot"
+    p:pageSize="${batch.export.interactions.chunk.size}"
+    scope="step"/>
+
+<util:map id="datesParameters" key-type="or.joda.time.DateTime" scope="step">
+  <entry key="yesterday" 
+    value="#{jobExecutionContext['EXTRACTION_START_DATE']}"/>
+  <entry key="today" 
+    value="#{jobExecutionContext['TODAY_DATE']}"/>
+  <entry key="first_day_of_the_month" 
+    value="#{jobExecutionContext['FIRST_DAY_OF_THE_MONTH_DATE']}"/>
+  <entry key="first_day_of_the_previous_month" 
+    value="#{jobExecutionContext['FIRST_DAY_OF_THE_PREVIOUS_MONTH_DATE']}"/>
+</util:map>]]></source>
+
+        <p>
+          The previous example makes use of a few different things:
+        </p>
+        
+        <ul>
+          <li><code>sqlSessionFactory</code>: あなた自身の sessionFactory を reader に指定することができます。複数のデータベースから読み取る場合は有用かも知れません。</li>
+          <li><code>queryId</code>: レコード取得時に実行されるクエリの ID を指定します。異なるネームスペースに属するクエリを指定する場合はネームスペースの指定を忘れないようにしてください。</li>
+          <li><code>parameterValues</code>: クエリ実行時に使用する追加のパラメーターを Map 形式で渡すことができます。上の例では Spring が<code>jobExecutionContext</code> から SpEL 式を使って取得した値をもとに構築した Map を指定しています。
+          MyBatis の Mapper ファイルでは Map のキーをパラメーター名として指定します（例： <em>yesterday</em> を指定する場合は <code>#{yesterday,jdbcType=TIMESTAMP}</code> のように指定します）。
+          <code>jobExecutionContext</code> と Spring EL 式を利用するため、Map および reader はどちらも <code>step</code> スコープ内で構築されているという点に注意してください。
+          また、MyBatis の Type Handler が正しく設定されていれば、この例のように JodaTime のようなカスタムのインスタンスを引数として渡すこともできます。</li>
+          <li><code>pageSize</code>: バッチ処理のチャンクサイズを指定します。</li>
+        </ul>
+
       </subsection>
 
       <subsection name="MyBatisBatchItemWriter">
       
       <p>
         <code>SqlSessionTemplate</code> のバッチ機能を使って渡された一連のアイテムを処理する <code>ItemWriter</code> です。
+        <code>SqlSessionFactory</code> は <code>ExecutorType.BATCH</code> を使って設定する必要があります。
       </p>
  
       <p>
@@ -81,6 +123,81 @@
   <property name="statementId" value="updateEmployee" />
 </bean>]]></source>
  
+        <p><strong>Composite Writer を使って複数のテーブルに書き込む（注意事項あり）</strong></p>
+
+        <p>このテクニックを使うには MyBatis 3.2 以降が必要です。それ以前のバージョンには <a href="http://code.google.com/p/mybatis/issues/detail?id=741">問題</a> があるため、Writer が期待通りに動作しません。
+        </p>
+
+        <p>まず、<em>Interaction</em> と１対１の関係にある <em>InteractionMetadata</em> と、これらとは独立した <em>VisitorInteraction</em> および <em>CustomerInteraction</em> を保持する Item クラスを用意します。
+        </p>
+
+        <source><![CDATA[public class InteractionRecordToWriteInMultipleTables {
+  private final VisitorInteraction visitorInteraction;
+  private final CustomerInteraction customerInteraction;
+  private final Interaction interaction;
+  // ...
+}
+
+public class Interaction {
+  private final InteractionMetadata interactionMetadata;
+}]]></source>
+
+        <p><code>CompositeItemWriter</code> の設定では、それぞれのオブジェクトの writer を順番に呼び出すように設定します。
+          この例では <em>Interaction</em> をアップデートするためのキーを取得するため、<em>InteractionMetadata</em> を先に書き込む必要があります。
+        </p>
+
+        <source><![CDATA[<bean id="interactionsItemWriter" class="org.springframework.batch.item.support.CompositeItemWriter">
+  <property name="delegates">
+    <list>
+      <ref bean="visitorInteractionsWriter"/>
+      <ref bean="customerInteractionsWriter"/>
+
+      <!-- Order is important -->
+      <ref bean="interactionMetadataWriter"/>
+      <ref bean="interactionWriter"/>
+    </list>
+  </property>
+</bean>]]></source>
+
+        <p>それぞれの writer を必要に応じて設定します。例えば <em>Interaction</em> と <em>InteractionMetadata</em> の設定は次のようになります。
+        </p>
+
+        <source><![CDATA[<bean id="interactionMetadataWriter"
+  class="org.mybatis.spring.batch.MyBatisBatchItemWriter"
+  p:sqlSessionTemplate-ref="batchSessionTemplate"
+  p:statementId="com.my.name.space.batch.InteractionRecordToWriteInMultipleTablesMapper.insertInteractionMetadata"/>
+<bean id="interactionWriter"
+  class="org.mybatis.spring.batch.MyBatisBatchItemWriter"
+  p:sqlSessionTemplate-ref="batchSessionTemplate"
+  p:statementId="com.my.name.space.batch.InteractionRecordToWriteInMultipleTablesMapper.insertInteraction"/>]]></source>
+
+        <p>reader の場合と同様、 <code>statementId</code> はネームスペースを含むステートメント ID です。</p>
+
+        <p>Mapper ファイルにステートメントを定義します。</p>
+
+        <source><![CDATA[<insert id="insertInteractionMetadata"
+  parameterType="com.my.batch.interactions.item.InteractionRecordToWriteInMultipleTables"
+  useGeneratedKeys="true"
+  keyProperty="interaction.interactionMetadata.id"
+  keyColumn="id">
+  <!-- the insert statement using #{interaction.interactionMetadata.property,jdbcType=...} -->
+</insert>
+<insert id="insertInteraction"
+  parameterType="com.my.batch.interactions.item.InteractionRecordToWriteInMultipleTables"
+  useGeneratedKeys="true"
+  keyProperty="interaction.id"
+  keyColumn="id">
+  <!--
+   the insert statement using #{interaction.property,jdbcType=...} for regular properties
+   and #{interaction.interactionMetadata.property,jdbcType=...} for the InteractionMetadata property
+  -->
+</insert>]]></source>
+
+        <p>はじめに <code>insertInteractionMetadata</code> が呼ばれ、その際に取得した主キーを使って親となる <code>Interaction</code> を <code>insertInteraction</code> を使って書き込むことができます。
+        </p>
+
+        <p><strong><em>JDBC ドライバによって動作が異なるので注意が必要です。例えば MySQL の JDBC ドライバは作成された全ての行の ID を返しますが、H2 バージョン 1.3.168 ではバッチモードでも最後に作成された行の ID のみが返されます。</em></strong>
+        </p>
       </subsection>
     </section>
   </body>
