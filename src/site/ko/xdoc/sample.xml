@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2010-2012 The MyBatis Team
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--  version: $Id$ -->
+
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>마이바티스 스프링 연동모듈 | 샘플코드</title>
+    <author email="mybatis-dev@googlegroups.com">마이바티스 팀</author>
+    <author email="fromm0@gmail.com">이동국(한국어 번역)</author>
+  </properties>
+
+  <body>
+    <section name="Sample Code">
+      <p>JPetStore 6은 마이바티스 3, <a href="http://www.springsource.org">스프링 3</a> 과 
+      <a href="http://www.stripesframework.org/">스트라이프(Stripes)</a>을 사용하는 완전한 웹 애플리케이션이다.
+       마이바티스 프로젝트 사이트에서 <a href="http://code.google.com/p/mybatis/downloads/list?q=Product=Sample">다운로드(downloads)</a> 
+       페이지에서 다운로드가 가능하다. 여기서는 샘플을 빌드하는 방법을 이해하고 실행하는 방법에 대해 배워볼것이다. </p>
+      <subsection name="Purpose">
+      	<p>새로운 JPetStore는 <strong>단순하게</strong>라는 이전버전과 동일한 생각으로 작성되었다. 
+      	JPetStore 6의 가장 중요한 목적은 최대한 적은 수의 클래스를 사용하고 좀더 중요한 것이 무엇인지 고려한 뒤 
+      	특별한 코딩기법은 최대한 배제한체 만들어진 웹 애플리케이션을 보여준다.
+      	그래서 흔히 접할 수 있는 자바의 특징과 SQL만을 알면된다. </p>
+      	<p>JPetStore의 6번째 버전은 그 동안 만들어진 것중에 가장 작다. 좋은 디자인과 프로그래밍 구조를 유지하는 반면에 24개의 클래스로만 사용한다. 
+      	뒤로가보면 JDBC코드, 객체 생성, 바인딩 코드 또는 트랜잭션을 다루는 코드등을 찾을수 없을것이다.
+      	조금더 인상적인 것은 <strong>마이바티스 API를 호출하는 코드도 찾을수 없을것이다</strong>.
+      	비록 비현실적인 얘기로 들릴수 있지만 마이바티스에 어떤 의존성을 가지지 않은 애플리케이션을 만들기 위해 
+      	마이바티스 매퍼와 의존성 삽입의 조합을 보게 될것이다. 	</p>
+      </subsection>
+      <subsection name="Program Structure">
+      	<p> JPetStore 6 은 다음의 일반적인 메이븐 프로젝트 구조를 따른다. </p>
+<pre>/jpetstore                    <tt>&lt;-- 메이븐 pom.xml 파일은 여기</tt>
+  /src
+    /main/
+      /java                   <tt>&lt;-- 자바코드는 여기</tt>
+        /org/
+          /mybatis
+            /jpetstore
+              /domain         <tt>&lt;-- 비즈니스 도메인 객체는 여기</tt>
+              /persistence    <tt>&lt;-- 매퍼 인터페이스는 여기</tt>
+              /service        <tt>&lt;-- 애플리케이션 로직은 여기</tt>
+              /web
+                /actions      <tt>&lt;-- 프리젠테이션 로직은 여기</tt>
+      /resources              <tt>&lt;-- 자바 이외의 파일은 여기</tt>
+        /org
+          /mybatis
+            /jpetstore
+              /persistence    <tt>&lt;-- 매퍼 XML파일은 여기</tt>
+        /database
+      /webapp
+        /css
+        /images
+        /WEB-INF              <tt>&lt;-- web.xml 과 applicationContext.xml 파일은 여기</tt>
+          /jsp                <tt>&lt;-- JSP 파일은 여기</tt>
+      </pre>
+      </subsection>
+
+      <subsection name="Configuration files">
+      <p>설정파일은 애플리케이션이 시작되는 동안 로드된다. 
+       설정파일의 목적은 애플리케이션을 구성하는 3개(스트라이프, 스프링과 마이바티스)의 프레임워크를 설정한다. 
+       우리는 두개의 파일(web.xml 과 applicationContext.xml)을 설정할 필요가 있다. </p>
+      <h4>web.xml</h4>
+      <p>먼저 스트라이프를 시작하기 위해 다음설정처럼 스트라이프 메뉴얼이 시키는데로 설정했다. 
+       메뉴얼은 디스패처(dispatcher) 서블릿과 필터를 셋팅하도록 언급하고 있다. 
+       그래서 다음처럼 설정했다. </p>
+<source><![CDATA[
+<filter>
+  <display-name>Stripes Filter</display-name>
+  <filter-name>StripesFilter</filter-name>
+  <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+</filter>
+<filter-mapping>
+  <filter-name>StripesFilter</filter-name>
+  <servlet-name>StripesDispatcher</servlet-name>
+  <dispatcher>REQUEST</dispatcher>
+</filter-mapping>
+<servlet>
+  <servlet-name>StripesDispatcher</servlet-name>
+  <servlet-class>net.sourceforge.stripes.controller.DispatcherServlet</servlet-class>
+  <load-on-startup>1</load-on-startup>
+</servlet>
+<servlet-mapping>
+  <servlet-name>StripesDispatcher</servlet-name>
+  <url-pattern>*.action</url-pattern>
+</servlet-mapping>
+]]></source>
+
+	<p>스트라이프는 ActionBean클래스를 찾을 수 있다. 
+	이러한 목적으로 검색할 기본 패키지는 반드시 셋업해야 한다. </p>
+
+<source><![CDATA[
+<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  <init-param>
+    <param-name>ActionResolver.Packages</param-name>
+    <param-value>org.mybatis.jpetstore.web</param-value>
+  </init-param>
+</filter>
+]]></source>
+
+	<p>스트라이프로 해야 할 일은 모두 했다. 그러면 다음으로 스프링을 보도록 하자. 
+	스프링 레퍼런스에 따르면 스프링을 시작할때 컨텍스트 리스너를 추가해야 한다. 
+	그래서 다음처럼 추가한다. </p>
+
+<source><![CDATA[
+<listener>
+  <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+</listener>
+]]></source>
+
+	<p>기본적으로 스프링은 다른 파일로 명시하지 않으면 <code>/WEB-INF/applicationContext.xml</code>를 사용할것이다.
+	디폴트 설정이 우리에겐 충분했다. </p>
+
+	<p>이제부터 스트라이프가 스프링과 함께 실행된다는 점을 알도록 해보자. 
+	이 방법으로 스프링 빈을 스트라이프 ActionBean에 직접 주입할 수 있을것이다. 
+	이러한 목적으로 다음 설정은 스트라이프 메뉴얼에 다시 한번더 나온다. 
+	다음의 설정처럼 인터셉터를 셋팅한다. </p>
+
+<source><![CDATA[
+<filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
+  ...
+  <init-param>
+    <param-name>Interceptor.Classes</param-name>
+    <param-value>net.sourceforge.stripes.integration.spring.SpringInterceptor</param-value>
+  </init-param>
+</filter>
+]]></source>
+
+      <p>web.xml 파일에는 필요한 작업을 모두 처리했다. 
+       앞서 언급한 것중에 마이바티스 3 설정은 아직 셋업하지 않았다.
+       그 설정은 스프링의 applicationContext.xml 에 들어간다. 
+       그리고 이 파일을 계속 살펴볼것이다. </p>
+
+      <h4>applicationContext.xml</h4>
+      <p>이미 아는 것처럼 applicationContext.xml은 스프링의 설정파일이다. 
+       스프링은 의존성 주입을 처리하는 프레임워크이고 어떤 빈을 생성해야 하는지 어떻게 바인딩을 해야 하는지와 
+      applicationContext.xml 파일이 어떤 역할을 하는지 알아야 한다. 그러면 이제부터 하나씩 살펴보자. </p>
+      <p>가장 먼저 쉽게 할수 있는 것은 스프링이 서비스 빈을 어디에 있는지 알아내게 하는 것이다. 
+       스프링이 클래스패스에서 빈을 찾도록 할것이다. 그러기 위해서는 검색할 기본 패키지를 지정할 필요가 있다. </p>
+
+<source><![CDATA[
+<context:component-scan base-package="org.mybatis.jpetstore.service" />
+]]></source>
+
+	  <p>
+	  <span class="label important">중요</span> 스프링의 컴포넌트 스캔기능으로 마이바티스 매퍼를 찾을수는 없다. 
+	  매퍼는 POJO와 같은 단순한 빈이 아니기 때문에 스프링이 배퍼를 인스턴스화하는 방법을 알지 못한다. 
+	  그래서 매퍼를 찾기 위해서 <code>MapperScannerConfigurer</code>가 필요하다. 
+	  <code>MapperScannerConfigurer</code>는 잠시 후 다시 볼것이다. </p>
+
+	  <p><code>DataSource</code> 와 <code>TransactionManager</code>가 필요하다. 
+	   데모 애플리케이션은 테스트용 스프링 <code>DataSource</code>를 사용한다. 
+	   테스트용 스프링 <code>DataSource</code>는 HSQL 이라는 인메모리 타입의 데이터베이스를 사용하고 데이터베이스 스크립트를 로드한 뒤 
+	   트랜잭션을 다루기 위해 스프링의 <code>DataSourceTransactionManager</code> 를 사용한다. </p>
+
+<source><![CDATA[
+<jdbc:embedded-database id="dataSource">
+  <jdbc:script location="classpath:database/jpetstore-hsqldb-schema.sql"/>
+  <jdbc:script location="classpath:database/jpetstore-hsqldb-dataload.sql"/>
+</jdbc:embedded-database>
+
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource" />
+</bean>
+]]></source>
+
+	  <p>지금까지 우리는 스트라이프와 스프링의 설정파일을 살펴봤다. 이제는 마이바티스를 다룰 차례이다. 
+	  마이바티스와 스프링을 셋업하는 메뉴얼에서 배운것처럼 최소한 두가지가 필요하다. 
+	  여기서 두가지는 <code>SqlSessionFactoryBean</code>과 매퍼 클래스이다. 
+	  먼저 <code>SqlSessionFactoryBean</code>를 정의해보자. </p>
+
+<source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+</bean>
+]]></source>
+
+      <p>그래서 지금은 매퍼를 셋업할 필요가 있다. 이러한 목적으로 스프링의 컴포넌트 스캔과 유사한 
+      <code>MapperScannerConfigurer</code> 를 사용할 것이다.
+       매퍼 클래스를 클래스패스에서 찾아서 마이바티스에 등록할 것이다.
+       스프링의 컴포넌트 스캔과 유사하게 검색할 기본 패키지를 설정해야 한다. </p>
+
+<source><![CDATA[
+<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+  <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
+</bean>
+]]></source>
+
+      <p>매퍼 XML파일을 작성할때 좀더 작성하기 수월하도록 하기 위해 빈의 짧은 별칭을 사용하고자 할것이다. 
+      <code>SqlSessionFactoryBean</code>은 빈을 검색할 수 있고 다음처럼 
+      <code>typeAliasPackage</code> 프로퍼티를 셋팅해서 별칭처럼 짧은 이름을 등록할수도 있다. </p>
+
+<source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="typeAliasesPackage" value="org.mybatis.jpetstore.domain" />
+</bean>
+]]></source>
+
+		<p>이제 애플리케이션은 설정이 완료되었고 실행할 준비가 되었다. 
+		하지만 실행하기전에 어떻게 돌아가는지 보기 위해 코드를 살펴보자. </p>
+
+      </subsection>
+
+      <subsection name="Code tour">
+      <p>JPetStore 6은 세개의 레이어(프리젠테이션, 로직 그리고 데이터접근)로 구성된 일반적인 MVC애플리케이션이다. </p>
+      <h4>프리젠테이션</h4>
+      <p>프리젠테이션 레이어는 JSP파일과 스트라이프 ActionBean으로 구성되었다. 
+      JSP는 평범한 HTML, JSTL태그 그리고 스트라이프 태그를 사용한다. 
+       그래서 이 샘플때문에 특별히 다른걸 공부해야 할 필요는 없을것이다.
+       스트라이프 ActionBean은 스트러츠 액션이나 스프링 MVC 컨트롤러와 비슷하다.
+       그래서 이 역시 특별히 다른걸 공부해야 할 필요는 없을것이다.  </p>
+      <p>여기서는 스트라이프와 스프링을 연동한다. 서비스를 ActionBean에 주입할수 있고 
+       생성이나 룩업에 대해서 특별히 걱정하지 않아도 사용할 수 있다.
+      <code>CatalogActionBean</code>를 살펴보자. </p>
+
+<source><![CDATA[
+@SessionScope
+public class CatalogActionBean extends AbstractActionBean {
+  ...
+  @SpringBean
+  private transient CatalogService catalogService;
+  ...
+  public ForwardResolution viewCategory() {
+    if (categoryId != null) {
+      productList = catalogService.getProductListByCategory(categoryId);
+      category = catalogService.getCategory(categoryId);
+    }
+    return new ForwardResolution(VIEW_CATEGORY);
+  }
+  ...
+]]></source>
+
+	  <p>스트라이프 애노테이션인 <code>@SpringBean</code>은 스프링의 빈을 찾아서 ActionBean에 주입한다. </p>
+
+      <h4>로직</h4>
+      <p>애플리케이션 로직은 서비스처럼 동작하는 자바빈과 도메인 모델처럼 동작하는 자바빈으로 구성된다.
+       이 레이어는 데이터베이스 데이터로 도메인 객체를 만들고 도메인 객체의 컨텐츠로 데이터베이스 데이터를 업데이트한다. 
+       이러한 작업을 처리하기 때문에 이 레이어는 트랜잭션을 처리할수 있어야 한다. 
+       그래야 데이터베이스 업데이트에서 원자성(atomic)을 보장할 수 있다. </p>
+      <p>트랜잭션을 처리하는 방법을 보기 위해 <code>OrderService</code> 코드를 보자. </p>
+
+<source><![CDATA[
+@Service
+public class OrderService {
+
+  @Autowired
+  private ItemMapper itemMapper;
+  @Autowired
+  private OrderMapper orderMapper;
+  @Autowired
+  private LineItemMapper lineItemMapper;
+
+  @Transactional
+  public void insertOrder(Order order) {
+    order.setOrderId(getNextId("ordernum"));
+    for (int i = 0; i < order.getLineItems().size(); i++) {
+      LineItem lineItem = (LineItem) order.getLineItems().get(i);
+      String itemId = lineItem.getItemId();
+      Integer increment = new Integer(lineItem.getQuantity());
+      Map<String, Object> param = new HashMap<String, Object>(2);
+      param.put("itemId", itemId);
+      param.put("increment", increment);
+      itemMapper.updateInventoryQuantity(param);
+    }
+
+    orderMapper.insertOrder(order);
+    orderMapper.insertOrderStatus(order);
+    for (int i = 0; i < order.getLineItems().size(); i++) {
+      LineItem lineItem = (LineItem) order.getLineItems().get(i);
+      lineItem.setOrderId(order.getOrderId());
+      lineItemMapper.insertLineItem(lineItem);
+    }
+  }
+]]></source>
+
+      <p>주의깊게 봐야할 첫번째는 서비스에 JDBC코드와 마이바티스 코드가 없다는 점이다.
+      DAO패턴과 데이터베이스 접근 코드를 데이터베이스 레이어에서만 사용해야 한다고 생각할지도 모르겠다. 
+       하지만 이후에 보는것처럼 데이터베이스 레이어는 평범한 자바 인터페이스인 마이바티스 매퍼로 작성되었다.
+       그래서 전체 애플리케이션에서 <strong>마이바티스 API를 호출하는 곳을 찾을수가 없을것이다</strong>.
+       사실 매퍼를 사용하면 마이바티스 API를 직접 사용할 필요가 없다. </p>
+
+      <p>주의깊게 봐야할 두번째는 커밋이나 롤백하는 코드가 없다는 점이다. 
+       스프링의 선언적인 트랜잭션 관리기능을 사용하기 때문에 가능하다.
+       이 선언적인 트랜잭션 관리는 마이바티스 스프링 연동모듈에서 모두 지원한다. 
+       스프링의 <code>@Transactional</code> 애노테이션은 이 메서드가 트랜잭션을 다루는 메서드임을 나타낸다. 
+       이 말은 <code>updateInventoryQuantity</code>, <code>insertOrder</code> 그리고 <code>insertLineItem</code> 
+       매퍼 호출이 성공하면 커밋되고 에러가 발생하면 롤백이 된다는 것을 의미한다. </p>
+
+      <h4>퍼시스턴스</h4>
+      <p>퍼시스턴스 레이어는 마이바티스 매퍼로 구성되었다. 
+       매퍼는 평범한 자바 인터페이스이고 매퍼 XML파일은 SQL구문을 가진다. 
+       이 레이어에는 개발자가 작성한 어떤 부가적인 자바코드도 없다. 
+      <code>getOrder</code> 메서드가 <code>OrderMapper</code> 인터페이스에서 호출되면
+       마이바티스는 OrderMapper.xml 파일의 getOrder SQL구문을 실행할것이고 
+       받은 데이터는 <code>Order</code> 도메인 빈을 생성한다.  </p>
+
+<source><![CDATA[
+public interface OrderMapper {
+  List<Order> getOrdersByUsername(String username);
+  Order getOrder(int orderId);
+  void insertOrder(Order order);
+  void insertOrderStatus(Order order);
+}]]></source>
+
+<source><![CDATA[
+<mapper namespace="org.mybatis.jpetstore.persistence.OrderMapper">
+
+  <cache />
+
+  <select id="getOrder" resultType="Order" parameterType="int">
+    SELECT
+      BILLADDR1 AS billAddress1,
+      BILLADDR2 AS billAddress2,
+      BILLCITY,
+      BILLCOUNTRY,
+      BILLSTATE,
+      BILLTOFIRSTNAME,
+      BILLTOLASTNAME,
+      BILLZIP,
+      SHIPADDR1 AS shipAddress1,
+      SHIPADDR2 AS shipAddress2,
+      SHIPCITY,
+      SHIPCOUNTRY,
+      SHIPSTATE,
+      SHIPTOFIRSTNAME,
+      SHIPTOLASTNAME,
+      SHIPZIP,
+      CARDTYPE,
+      COURIER,
+      CREDITCARD,
+      EXPRDATE AS expiryDate,
+      LOCALE,
+      ORDERDATE,
+      ORDERS.ORDERID,
+      TOTALPRICE,
+      USERID AS username,
+      STATUS
+    FROM ORDERS, ORDERSTATUS
+    WHERE ORDERS.ORDERID = #{value}
+      AND ORDERS.ORDERID = ORDERSTATUS.ORDERID
+  </select>
+  ...
+</mapper>
+]]></source>
+
+      <p>
+      <span class="label important">중요</span>
+       매퍼 XML파일에 &lt;cache /&gt; 엘리먼트를 추가해서 쿼리별로 캐시를 추가할 수 있다. 
+       아니면 스프링을 사용해서 매퍼와 서비스 메서드 전반에 좀더 높은 레벨에서 캐시를 사용할 수도 있다. </p>
+
+      </subsection>
+
+      <subsection name="Running JPetStore">
+        <p>물어보자. 더볼게 없나? "예"라고 답변한다면 이제 실행해보자. </p>
+        <p>당신의 컴퓨터가 깨끗한 상태라고 생각해보자. 톰캣 7과 NetBeans 7을 사용한다고 가정하면 다음단계를 거친다. </p>
+        <ul>
+          <li>톰캣 7과 NetBeans 7.x JEE 을 다운로드하고 설치</li>
+          <li>NetBeans 에서 Team/Subversion/Checkout 를 선택</li>
+          <li>저장소(repository) URL에 "http://mybatis.googlecode.com/svn" 입력</li>
+          <li>원격 저장소 폴더를 "sub-projects/jpetstore-6/trunk" 로 입력</li>
+          <li>프로젝트 폴더명을 적는다. 내 경우는 "/home/eduardo/NetBeansProjects/jpetstore6" 이다.</li>
+          <li>NetBeans가 "A new project was found do you want to open it"라고 물어보면 ok를 클릭</li>
+          <li>NetBeans 프로젝트 탭에 새로운 프로젝트명으로 "JPetStore Demo 6" 가 보일것이다. </li>
+          <li>jpetstore프로젝트를 선택하고 마우스 우측 버튼을 클릭 후 "Run"을 실행</li>
+          <li>톰캣 7 서버 선택</li>
+          <li>JPetStore 홈페이지가 보일것이다. </li>
+        </ul>
+        <p>이클립스에서 실행하기 위해 몇가지 단계가 있다. 
+        이클립스가 내장된 SVN과 메이븐을 지원하지 않고 톰캣을 별도로 설정해야 하기 때문에 과정이 다소 좀 오래걸린다.</p>
+        <ul>
+          <li>JDK 6 과 이상의 버전을 다운로드하고 설치</li>
+          <li>이클립스를 다운로드하고 압축을 해제</li>
+          <li>톰캣 7 을 다운로드하고 압축을 해제</li>
+          <li>이클립스 실행</li>
+          <li>이클립스에서 Help/Eclipse Marketplace 선택</li>
+          <li>m2e 플러그인(메이븐) 설치</li>
+          <li>m2e-wtp(wtp를 위한 메이븐) 플러그인 설치</li>
+          <li>subclipse 플러그인(서브버전) 설치</li>
+          <li>SVN 탭으로 이동</li>
+          <li>SVN 에서 새로운 저장소로 "http://mybatis.googlecode.com/svn" 추가</li>
+          <li>SVN 에서 "sub-projects/jpetstore-6/trunk" 로 이동</li>
+          <li>마우스 우측버튼을 클릭하고 "Check out" 선택, 프로젝트명은 "jpetstore" 로 셋팅</li>
+          <li>Java EE 탭으로 이동</li>
+          <li>jpetstore 프로젝트에서 마우스 우측 버튼을 클릭하고 "Configure/Convert to Maven Project" 를 선택</li>
+          <li>jpetstore 프로젝트에서 마우스 우측 버튼을 클릭하고 "run on server" 를 선택</li>
+          <li>톰캣 7 서버를 선택하고 설치디렉터리를 셋팅</li>
+          <li>JPetStore 홈페이지가 보일것이다. </li>
+        </ul>
+        <p>실행할 준비가 되었다면 스스로 원하는 것을 변경해보자. </p>
+        <p>버그를 찾았거나 일부 빠진 내용이 있고 개선이 가능한 내용이 있다면 변경해서 diff패치파일을 생성해서 
+        <a href="http://code.google.com/p/mybatis/issues/entry">트래커</a>에 이슈를 올려달라. </p>
+        <p>
+          <span class="label important">중요</span>
+		JPetStore 6 은 서블릿 2.5 와 JSP 2.1 과 호환되는 자바서버에서 돌아간다. 
+		Netbeans와 이클립스는 필요하지 않다. 선호하는 IDE나 명령창에서도 샘플을 실행할 수 있다. </p>
+      </subsection>
+    </section>
+  </body>
+</document>

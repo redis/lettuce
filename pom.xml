@@ -257,7 +257,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
         <configuration>
-          <locales>en,es,zh_CN,ja</locales>
+          <locales>en,es,zh_CN,ja,ko</locales>
         </configuration>
       </plugin>
     </plugins>
