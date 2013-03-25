@@ -47,13 +47,13 @@
           <code>read()</code> メソッドが呼び出されると、必要に応じて追加のページを取得するクエリが実行されます。
           実行されるクエリでは、Reader によって提供されるページング処理を行う際に必要となるパラメーターを使って期待される結果を返す SQL 文を記述することになります（実際の SQL 文は方言依存です）。
           提供されるパラメーターは次の通りです。
+        </p>
 
          <ul>
          <li><code>_page</code>: 取得対象のページ番号（最初のページは０）</li>
          <li><code>_pagesize</code>: １ページあたりの件数</li>
          <li><code>_skiprows</code>: <code>_page</code> と <code>_pagesize</code> の積</li>
          </ul>
-         <p>
 
         <p>これらのパラメーターは、例えば次のように SELECT 文中で指定することができます。</p>
         <source><![CDATA[<select id="getEmployee" resultMap="employeeBatchResult">
