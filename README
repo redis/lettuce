@@ -6,7 +6,7 @@ lettuce - A scalable Java Redis client
   Multiple connections are efficiently managed by the excellent netty NIO
   framework.
 
-  This version of lettuce has been tested against redis 2.6.10
+  This version of lettuce has been tested against redis 2.6.12
 
   Join the lambdaWorks-OSS Google Group to discuss this project:
 
@@ -72,5 +72,5 @@ Maven Artifacts
   <dependency>
     <groupId>com.lambdaworks</groupId>
     <artifactId>lettuce</artifactId>
-    <version>2.3.0</version>
+    <version>2.3.1</version>
   </dependency>
