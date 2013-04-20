@@ -80,7 +80,7 @@
     p:sqlSessionFactory-ref="batchReadingSessionFactory"
     p:parameterValues-ref="datesParameters"
     p:queryId="com.my.name.space.batch.ExampleMapper.queryUserInteractionsOnSpecificTimeSlot"
-    p:pageSize="${batch.export.interactions.chunk.size}"
+    p:pageSize="${200}"
     scope="step"/>
 
 <util:map id="datesParameters" key-type="or.joda.time.DateTime" scope="step">
