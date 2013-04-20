@@ -60,7 +60,7 @@ public class CommandArgs<K, V> {
 
     public CommandArgs<K, V> add(Map<K, V> map) {
         if (map.size() > 2) {
-            realloc(16 * map.size());
+            realloc(buffer.capacity() + 16 * map.size());
         }
 
         for (Map.Entry<K, V> entry : map.entrySet()) {
