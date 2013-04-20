@@ -116,8 +116,8 @@
       このドキュメントの中で誤りや特定の機能に関する記述が抜けていることに気づいたら、詳しく調べてドキュメントを更新して頂けると助かります。
     </p>
     <p>
-      このマニュアルのソースは xdoc 形式で、<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">プロジェクトの SVN リポジトリ</a>で配布されています。<br />
-      SVN からチェックアウトしたファイルを修正したら、<a href="http://code.google.com/p/mybatis/issues/entry">トラッカー</a>で新しいチケットを作成して変更箇所のパッチを添付してください。
+      このマニュアルのソースは xdoc 形式で、<a href="https://github.com/mybatis/spring/tree/master/src/site">プロジェクトの Git リポジトリ</a>で配布されています。<br />
+   リポジトリをフォーク、それらを更新します、とプルリクエストを送信します。
     </p>
     <p>
       このドキュメントを必要としている人、つまりあなたこそが最高の著者なのです！

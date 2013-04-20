@@ -128,9 +128,8 @@
 	</p>
 	<p>
 		Las fuentes de este manual están disponibles en formato xdoc en el
-		<a href="http://mybatis.googlecode.com/svn/sub-projects/mybatis-spring/trunk/src/site/">SVN del proyecto</a>		.
-		Extraelas, actualizalas y envía tu parche al
-		<a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>		.
+        <a href="https://github.com/mybatis/mybatis-3/tree/master/src/site">Git del proyecto</a>.
+        Haz un fork, cambialas y envía un pull request.
 	</p>
 	<p>
 		Eres el mejor candidato para documentar porque los lectores de esta	documentación son gente como tú!
