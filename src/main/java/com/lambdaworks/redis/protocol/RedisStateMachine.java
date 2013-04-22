@@ -98,15 +98,10 @@ public class RedisStateMachine<K, V> {
                         buffer.markReaderIndex();
                     }
 
-                    if (state.count == -1) {
-                        output.set(null);
-                        break;
-                    } else if (state.count == 0) {
-                        break;
-                    } else {
-                        state.count--;
-                        stack.addFirst(new State());
-                    }
+                    if (state.count <= 0) break;
+
+                    state.count--;
+                    stack.addFirst(new State());
                     continue loop;
                 case BYTES:
                     if ((bytes = readBytes(buffer, state.count)) == null) break loop;

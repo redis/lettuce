@@ -49,8 +49,10 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         redis.set(key, value + "X");
 
         async.multi();
+        Future<String> set = async.set(key, value);
         Future<Long> append = async.append(key, "foo");
         assertEquals(list(), async.exec().get());
+        assertNull(set.get());
         assertNull(append.get());
     }
 
