@@ -354,8 +354,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
       configuration = xmlConfigBuilder.getConfiguration();
     } else {
-      if (this.logger.isDebugEnabled()) {
-        this.logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
+      if (logger.isDebugEnabled()) {
+        logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
       }
       configuration = new Configuration();
       configuration.setVariables(this.configurationProperties);
@@ -375,8 +375,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       for (String packageToScan : typeAliasPackageArray) {
         configuration.getTypeAliasRegistry().registerAliases(packageToScan,
                 typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Scanned package: '" + packageToScan + "' for aliases");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Scanned package: '" + packageToScan + "' for aliases");
         }
       }
     }
@@ -384,8 +384,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     if (!isEmpty(this.typeAliases)) {
       for (Class<?> typeAlias : this.typeAliases) {
         configuration.getTypeAliasRegistry().registerAlias(typeAlias);
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Registered type alias: '" + typeAlias + "'");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Registered type alias: '" + typeAlias + "'");
         }
       }
     }
@@ -393,8 +393,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     if (!isEmpty(this.plugins)) {
       for (Interceptor plugin : this.plugins) {
         configuration.addInterceptor(plugin);
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Registered plugin: '" + plugin + "'");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Registered plugin: '" + plugin + "'");
         }
       }
     }
@@ -404,8 +404,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeHandlersPackageArray) {
         configuration.getTypeHandlerRegistry().register(packageToScan);
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Scanned package: '" + packageToScan + "' for type handlers");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Scanned package: '" + packageToScan + "' for type handlers");
         }
       }
     }
@@ -413,8 +413,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     if (!isEmpty(this.typeHandlers)) {
       for (TypeHandler<?> typeHandler : this.typeHandlers) {
         configuration.getTypeHandlerRegistry().register(typeHandler);
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Registered type handler: '" + typeHandler + "'");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Registered type handler: '" + typeHandler + "'");
         }
       }
     }
@@ -423,8 +423,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       try {
         xmlConfigBuilder.parse();
 
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Parsed configuration file: '" + this.configLocation + "'");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Parsed configuration file: '" + this.configLocation + "'");
         }
       } catch (Exception ex) {
         throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
@@ -464,13 +464,13 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
           ErrorContext.instance().reset();
         }
 
-        if (this.logger.isDebugEnabled()) {
-          this.logger.debug("Parsed mapper file: '" + mapperLocation + "'");
+        if (logger.isDebugEnabled()) {
+          logger.debug("Parsed mapper file: '" + mapperLocation + "'");
         }
       }
     } else {
-      if (this.logger.isDebugEnabled()) {
-        this.logger.debug("Property 'mapperLocations' was not specified or no matching resources found");
+      if (logger.isDebugEnabled()) {
+        logger.debug("Property 'mapperLocations' was not specified or no matching resources found");
       }
     }
 

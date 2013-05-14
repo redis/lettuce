@@ -81,8 +81,8 @@ public class SpringManagedTransaction implements Transaction {
     this.autoCommit = this.connection.getAutoCommit();
     this.isConnectionTransactional = isConnectionTransactional(this.connection, this.dataSource);
 
-    if (this.logger.isDebugEnabled()) {
-      this.logger.debug(
+    if (logger.isDebugEnabled()) {
+      logger.debug(
           "JDBC Connection ["
               + this.connection
               + "] will"
@@ -96,8 +96,8 @@ public class SpringManagedTransaction implements Transaction {
    */
   public void commit() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
-      if (this.logger.isDebugEnabled()) {
-        this.logger.debug("Committing JDBC Connection [" + this.connection + "]");
+      if (logger.isDebugEnabled()) {
+        logger.debug("Committing JDBC Connection [" + this.connection + "]");
       }
       this.connection.commit();
     }
@@ -108,8 +108,8 @@ public class SpringManagedTransaction implements Transaction {
    */
   public void rollback() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
-      if (this.logger.isDebugEnabled()) {
-        this.logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
+      if (logger.isDebugEnabled()) {
+        logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
       }
       this.connection.rollback();
     }
