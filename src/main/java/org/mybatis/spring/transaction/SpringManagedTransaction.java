@@ -43,7 +43,7 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
  */
 public class SpringManagedTransaction implements Transaction {
 
-  private final Log logger = LogFactory.getLog(getClass());
+  private static final Log logger = LogFactory.getLog(SpringManagedTransaction.class);
 
   private final DataSource dataSource;
 

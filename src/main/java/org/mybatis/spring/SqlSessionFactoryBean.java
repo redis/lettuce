@@ -68,7 +68,7 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean, ApplicationListener<ApplicationEvent> {
 
-  private final Log logger = LogFactory.getLog(getClass());
+  private static final Log logger = LogFactory.getLog(SqlSessionFactoryBean.class);
 
   private Resource configLocation;
 
