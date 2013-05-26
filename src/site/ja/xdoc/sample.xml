@@ -366,21 +366,8 @@ public interface OrderMapper {
 
       <subsection name="JPetStore の実行">
         <p>本当に動くの？と思うかも知れません。もちろんです！ 実際に試してみましょう。/</p>
-        <p>クリーンなコンピューターを持っているとして、NetBeans 7 上の Tomcat 7 を使ってサンプルを実行する手順を下記に示します。
+        <p>クリーンなコンピューターを持っているとして、Eclipse 上の Tomcat 7 を使ってサンプルを実行する手順を下記に示します。
         </p>
-        <ul>
-          <li>NetBeans 7.x JEE バージョンと Tomcat 7 をダウンロードしてインストールします。</li>
-          <li>NetBeans で、 Team/Subversion/Checkout を選択します。</li>
-          <li>リポジトリ URL として "http://mybatis.googlecode.com/svn" を入力します。</li>
-          <li>リモートリポジトリフォルダとして "sub-projects/jpetstore-6/trunk" を入力します。</li>
-          <li>プロジェクトフォルダ名を指定します。私の環境では "/home/eduardo/NetBeansProjects/jpetstore6" です。</li>
-          <li>"A new project was found do you want to open it" というダイアログが表示されたら OK を押します。</li>
-          <li>NetBeans の Project タブに "JPetStore Demo 6" という名前の新しいプロジェクトが表示されるはずです。</li>
-          <li>プロジェクトを右クリックして "Run" を選択します。</li>
-          <li>Tomcat 7 サーバーを選択します。</li>
-          <li>JPetStore のホームページが表示されるはずです！</li>
-        </ul>
-        <p>そして、下記が Eclipse での手順になります。Eclipse には内蔵の SVN, Maven サポートが無く、Tomcat をインストールするオプションも無いので若干ステップ数が多くなっています。</p>
         <ul>
           <li>JDK 6 以降をダウンロードしてインストールします。</li>
           <li>Eclipse をダウンロードして解凍します。</li>
@@ -389,10 +376,8 @@ public interface OrderMapper {
           <li>Help/Eclipse Marketplace を選択します。</li>
           <li>m2e plugin (maven) をインストールします。</li>
           <li>m2e-wtp plugin (maven for wtp) をインストールします。</li>
-          <li>subclipse plugin (subversion) をインストールします。</li>
-          <li>SVN タブを開きます。</li>
-          <li>新規のリポジトリ "http://mybatis.googlecode.com/svn" を追加します。</li>
-          <li>"sub-projects/jpetstore-6/trunk" へ移動します。</li>
+          <li>EGit plugin (git) をインストールします。</li>
+          <li>新規のリポジトリ "https://github.com/mybatis/jpetstore-6.git" を追加します。</li>
           <li>右クリックして "Check out" を選択し、プロジェクト名 "jpetstore" を入力します。</li>
           <li>Java EE タブを開きます。</li>
           <li>jpetstore プロジェクトを右クリックして "Configure/Convert to Maven Project" を選択します。</li>

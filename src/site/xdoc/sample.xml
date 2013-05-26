@@ -395,22 +395,8 @@ public interface OrderMapper {
       <subsection name="Running JPetStore">
         <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
         <p>Let's assume you have a clean computer. These are the steps you should follow to
-      have the sample running on Tomcat 7 with NetBeans 7:
+      have the sample running on Tomcat 7 with Eclipse:
         </p>
-        <ul>
-          <li>Download and install NetBeans 7.x JEE version with Tomcat 7</li>
-          <li>In NetBeans select Team/Subversion/Checkout</li>
-          <li>Enter "http://mybatis.googlecode.com/svn" as repository URL</li>
-          <li>Enter "sub-projects/jpetstore-6/trunk" as remote repository folder</li>
-          <li>Enter your projects folder name, in my case "/home/eduardo/NetBeansProjects/jpetstore6"</li>
-          <li>NetBeans will prompt "A new project was found do you want to open it". Press ok</li>
-          <li>A new project named "JPetStore Demo 6" will be shown in NetBeans projects tab</li>
-          <li>Right click on jpetstore project and select "Run"</li>
-          <li>Select Tomcat 7 Server</li>
-          <li>JPetStore home page should be shown!!</li>
-        </ul>
-        <p>These are the steps to run it in Eclipse. The process is a bit longer because Eclipse does not provide
-        built-in SVN and maven support and does not provide an option to install Tomcat.</p>
         <ul>
           <li>Download and install a JDK 6 or later</li>
           <li>Download and upzip Eclipse</li>
@@ -419,11 +405,10 @@ public interface OrderMapper {
           <li>In eclipse, go to Help/Eclipse Marketplace</li>
           <li>Install m2e plugin (maven)</li>
           <li>Install m2e-wtp plugin (maven for wtp)</li>
-          <li>Install subclipse plugin (subversion)</li>
-          <li>Go to SVN tab</li>
-          <li>In SVN add a new repository "http://mybatis.googlecode.com/svn"</li>
-          <li>In SVN go to "sub-projects/jpetstore-6/trunk" </li>
-          <li>Mouse right click and select "Check out", name the project as "jpetstore"</li>
+          <li>Install EGit plugin (git)</li>
+          <li>Go to Git tab</li>
+          <li>Add a new repo from https://github.com/mybatis/jpetstore-6.git</li>
+          <li>Select working directory, right click and select Import Projects</li>
           <li>Go to Java EE tab</li>
           <li>Right click on jpetstore project and select "Configure/Convert to Maven Project"</li>
           <li>Right click on jpetstore project and select "run on server"</li>
