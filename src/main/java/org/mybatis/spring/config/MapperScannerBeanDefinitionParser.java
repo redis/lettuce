@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2013 The MyBatis Team
+ *    Copyright 2010-2013 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ import org.w3c.dom.Element;
 /**
  * A {#code BeanDefinitionParser} that handles the element scan of the MyBatis.
  * namespace
+ * 
+ * @author Lishu Luo
+ * @author Eduardo Macarron
  *
  * @since 1.2.0
  * @see MapperFactoryBean

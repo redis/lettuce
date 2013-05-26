@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2013 The MyBatis Team
+ *    Copyright 2010-2013 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import org.springframework.dao.support.DaoSupport;
  * <p>
  * {code Autowired} was removed from setSqlSessionTemplate and setSqlSessionFactory
  * in version 1.2.0.
+ * 
+ * @author Putthibong Boonbong
  *
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate

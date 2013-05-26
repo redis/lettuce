@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2013 The MyBatis Team
+ *    Copyright 2010-2013 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -47,6 +47,9 @@ import org.springframework.util.StringUtils;
  * This functionality was previously a private class of
  * {@link MapperScannerConfigurer}, but was broken out in version 1.2.0.
  *
+ * @author Hunter Presnall
+ * @author Eduardo Macarron
+ * 
  * @see MapperFactoryBean
  * @since 1.2.0
  * @version $Id$

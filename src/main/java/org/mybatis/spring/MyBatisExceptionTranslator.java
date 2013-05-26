@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2013 The MyBatis Team
+ *    Copyright 2010-2013 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
  * Can load {@code SQLExceptionTranslator} eagerly of when the
  * first exception is translated.
  *
+ * @author Eduardo Macarron
+ * 
  * @version $Id$
  */
 public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {

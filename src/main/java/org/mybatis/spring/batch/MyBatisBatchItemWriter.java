@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2013 The MyBatis Team
+ *    Copyright 2010-2013 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  * The writer is thread safe after its properties are set (normal singleton
  * behavior), so it can be used to write in multiple concurrent transactions.
  *
+ * @author Eduardo Macarron
+ * 
  * @since 1.1.0
  * @version $Id$
  */

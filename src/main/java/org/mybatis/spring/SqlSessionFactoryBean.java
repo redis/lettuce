@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2013 The MyBatis Team
+ *    Copyright 2010-2013 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -62,6 +62,10 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
  * demarcation in combination with a {@code SqlSessionFactory}. JTA should be used for transactions
  * which span multiple databases or when container managed transactions (CMT) are being used.
  *
+ * @author Putthibong Boonbong
+ * @author Hunter Presnall
+ * @author Eduardo Macarron
+ * 
  * @see #setConfigLocation
  * @see #setDataSource
  * @version $Id$
