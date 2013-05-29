@@ -243,6 +243,7 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
     public Future<List<Object>> exec() {
         MultiOutput<K, V> multi = this.multi;
         this.multi = null;
+        if (multi == null) multi = new MultiOutput<K, V>(codec);
         return dispatch(EXEC, multi);
     }
 

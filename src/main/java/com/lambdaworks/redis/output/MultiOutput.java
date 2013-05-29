@@ -39,7 +39,8 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void setError(ByteBuffer error) {
-        queue.peek().getOutput().setError(error);
+        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
+        output.setError(decodeAscii(error));
     }
 
     @Override

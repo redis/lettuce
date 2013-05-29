@@ -2,7 +2,9 @@
 
 package com.lambdaworks.redis;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +12,9 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class TransactionCommandTest extends AbstractCommandTest {
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
+
     @Test
     public void discard() throws Exception {
         assertEquals("OK", redis.multi());
@@ -74,6 +79,13 @@ public class TransactionCommandTest extends AbstractCommandTest {
         assertEquals("OK", values.get(0));
         assertTrue(values.get(1) instanceof RedisException);
         assertEquals(value, values.get(2));
+    }
+
+    @Test
+    public void execWithoutMulti() throws Exception {
+        exception.expect(RedisException.class);
+        exception.expectMessage("ERR EXEC without MULTI");
+        redis.exec();
     }
 
     protected List<Object> list(Object... args) {
