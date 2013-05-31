@@ -94,7 +94,7 @@
     <spring.version>3.1.3.RELEASE</spring.version>
     <clirr.comparisonVersion>1.1.1</clirr.comparisonVersion>
     <gcu.product>Spring</gcu.product>
-    <osgi.import>org.springframework.batch;resolution:=optional,*</osgi.import>
+    <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
   </properties>
 
