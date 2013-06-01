@@ -38,15 +38,17 @@
       </p>
       <subsection name="Purpose">
       	<p>
-      	This new JPetStore comes with the same idea in mind than for its predecessors: <strong>keep it simple</strong>. The main purpose behind JPetStore 6
-      	is to demonstrate that a full web application can be built with just a few classes, and what is more important, with no advanced coding
-      	skills. You just need to know plain Java and SQL.
+      	This new JPetStore comes with the same idea in mind than its predecessors: <strong>keep it simple</strong>. 
+      	The purpose of JPetStore 6 is to demonstrate how to build a web application with very few classes and no advanced coding skills. 
+      	You just need to know plain Java and SQL.
       	</p>
       	<p>
-      	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping a good design and program structure.
-      	As we will see a bit later, you will not find JDBC code, object creation, binding code or transaction handling code. What is more
-      	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will see that the
-      	combination of MyBatis mappers and dependency injection lets you build applications with no dependency on MyBatis.
+      	The 6th version of JPetStore is the smallest one in the family. 
+      	It uses just 24 java classes while keeping a good design and program structure.
+      	As we will see later on, you will find no code for dealing with JDBC, for creating objects or bind them or to handle transactions. 
+      	What is more impressive is that you <strong>will not find any call to the MyBatis API</strong>. 
+      	Although this sounds magical, you will see that the combination of MyBatis mappers and dependency injection lets you 
+      	build applications without dependencies.
       	</p>
       </subsection>
       <subsection name="Program Structure">
@@ -171,8 +173,8 @@
 
 	  <p>
 	  <span class="label important">NOTE</span> Spring's component scan feature is not able to find MyBatis mappers.
-	  A mapper is not a plain bean and Spring would not know how to instantiate it. We will need a
-	  <code>MapperScannerConfigurer</code> for that, as we will see soon.
+	  A mapper is not a plain bean and Spring would not know how to instantiate it. We will see how to search for
+	  mappers soon.
 	  </p>
 
 	  <p>We will also need a <code>DataSource</code> and a <code>TransactionManager</code>. Given that this is a demo application
