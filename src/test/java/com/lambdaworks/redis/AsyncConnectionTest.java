@@ -56,6 +56,14 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertNull(append.get());
     }
 
+    @Test(timeout = 100)
+    public void discardCompletesFutures() throws Exception {
+        async.multi();
+        Future<String> set = async.set(key, value);
+        async.discard();
+        assertNull(set.get());
+    }
+
     @Test
     public void awaitAll() throws Exception {
         Future<String> get1 = async.get(key);

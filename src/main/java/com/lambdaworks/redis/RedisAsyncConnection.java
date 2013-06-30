@@ -194,7 +194,10 @@ public class RedisAsyncConnection<K, V> extends SimpleChannelUpstreamHandler {
     }
 
     public Future<String> discard() {
-        multi = null;
+        if (multi != null) {
+            multi.cancel();
+            multi = null;
+        }
         return dispatch(DISCARD, new StatusOutput<K, V>(codec));
     }
 

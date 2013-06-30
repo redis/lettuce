@@ -27,6 +27,12 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         queue.add(cmd);
     }
 
+    public void cancel() {
+        for (Command<K, V, ?> c : queue) {
+            c.complete();
+        }
+    }
+
     @Override
     public void set(long integer) {
         queue.peek().getOutput().set(integer);
