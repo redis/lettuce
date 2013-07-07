@@ -369,43 +369,28 @@ public interface OrderMapper {
 
       <subsection name="Running JPetStore">
         <p>물어보자. 더볼게 없나? "예"라고 답변한다면 이제 실행해보자. </p>
-        <p>당신의 컴퓨터가 깨끗한 상태라고 생각해보자. 톰캣 7과 NetBeans 7을 사용한다고 가정하면 다음단계를 거친다. </p>
+        <p>Let's assume you have a clean computer. These are the steps you should follow to
+      have the sample running on Tomcat with Eclipse:
+        </p>
         <ul>
-          <li>톰캣 7과 NetBeans 7.x JEE 을 다운로드하고 설치</li>
-          <li>NetBeans 에서 Team/Subversion/Checkout 를 선택</li>
-          <li>저장소(repository) URL에 "http://mybatis.googlecode.com/svn" 입력</li>
-          <li>원격 저장소 폴더를 "sub-projects/jpetstore-6/trunk" 로 입력</li>
-          <li>프로젝트 폴더명을 적는다. 내 경우는 "/home/eduardo/NetBeansProjects/jpetstore6" 이다.</li>
-          <li>NetBeans가 "A new project was found do you want to open it"라고 물어보면 ok를 클릭</li>
-          <li>NetBeans 프로젝트 탭에 새로운 프로젝트명으로 "JPetStore Demo 6" 가 보일것이다. </li>
-          <li>jpetstore프로젝트를 선택하고 마우스 우측 버튼을 클릭 후 "Run"을 실행</li>
-          <li>톰캣 7 서버 선택</li>
-          <li>JPetStore 홈페이지가 보일것이다. </li>
-        </ul>
-        <p>이클립스에서 실행하기 위해 몇가지 단계가 있다. 
-        이클립스가 내장된 SVN과 메이븐을 지원하지 않고 톰캣을 별도로 설정해야 하기 때문에 과정이 다소 좀 오래걸린다.</p>
-        <ul>
-          <li>JDK 6 과 이상의 버전을 다운로드하고 설치</li>
-          <li>이클립스를 다운로드하고 압축을 해제</li>
-          <li>톰캣 7 을 다운로드하고 압축을 해제</li>
-          <li>이클립스 실행</li>
-          <li>이클립스에서 Help/Eclipse Marketplace 선택</li>
-          <li>m2e 플러그인(메이븐) 설치</li>
-          <li>m2e-wtp(wtp를 위한 메이븐) 플러그인 설치</li>
-          <li>subclipse 플러그인(서브버전) 설치</li>
-          <li>SVN 탭으로 이동</li>
-          <li>SVN 에서 새로운 저장소로 "http://mybatis.googlecode.com/svn" 추가</li>
-          <li>SVN 에서 "sub-projects/jpetstore-6/trunk" 로 이동</li>
-          <li>마우스 우측버튼을 클릭하고 "Check out" 선택, 프로젝트명은 "jpetstore" 로 셋팅</li>
-          <li>Java EE 탭으로 이동</li>
-          <li>jpetstore 프로젝트에서 마우스 우측 버튼을 클릭하고 "Configure/Convert to Maven Project" 를 선택</li>
-          <li>jpetstore 프로젝트에서 마우스 우측 버튼을 클릭하고 "run on server" 를 선택</li>
-          <li>톰캣 7 서버를 선택하고 설치디렉터리를 셋팅</li>
-          <li>JPetStore 홈페이지가 보일것이다. </li>
+          <li>Download and install a JDK 6 or later</li>
+          <li>Download and upzip Eclipse</li>
+          <li>Download and unzip Tomcat</li>
+          <li>Run Eclipse</li>
+          <li>Go to Git tab</li>
+          <li>Clone the repo https://github.com/mybatis/jpetstore-6.git</li>
+          <li>Select working directory, right click and select Import Projects (general)</li>
+          <li>Go to Java EE tab</li>
+          <li>Right click on jpetstore project and select "Configure/Convert to Maven Project"</li>
+          <li>Right click on jpetstore project and select "run on server"</li>
+          <li>Select Tomcat Server and set your installation directory</li>
+          <li>JPetStore home page should be shown!!</li>
         </ul>
         <p>실행할 준비가 되었다면 스스로 원하는 것을 변경해보자. </p>
-        <p>버그를 찾았거나 일부 빠진 내용이 있고 개선이 가능한 내용이 있다면 변경해서 diff패치파일을 생성해서 
-        <a href="http://code.google.com/p/mybatis/issues/entry">트래커</a>에 이슈를 올려달라. </p>
+        <p>
+          And remember that if you find a bug or something that is missing or can be improved (for example the missing tests!),
+          fork the repo, change it, and open a pull request. Thanks in advance!!!
+        </p>
         <p>
           <span class="label important">중요</span>
 		JPetStore 6 은 서블릿 2.5 와 JSP 2.1 과 호환되는 자바서버에서 돌아간다. 

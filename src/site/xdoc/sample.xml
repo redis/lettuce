@@ -397,24 +397,20 @@ public interface OrderMapper {
       <subsection name="Running JPetStore">
         <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
         <p>Let's assume you have a clean computer. These are the steps you should follow to
-      have the sample running on Tomcat 7 with Eclipse:
+      have the sample running on Tomcat with Eclipse:
         </p>
         <ul>
           <li>Download and install a JDK 6 or later</li>
           <li>Download and upzip Eclipse</li>
-          <li>Download and unzip Tomcat 7</li>
+          <li>Download and unzip Tomcat</li>
           <li>Run Eclipse</li>
-          <li>In eclipse, go to Help/Eclipse Marketplace</li>
-          <li>Install m2e plugin (maven)</li>
-          <li>Install m2e-wtp plugin (maven for wtp)</li>
-          <li>Install EGit plugin (git)</li>
           <li>Go to Git tab</li>
-          <li>Add a new repo from https://github.com/mybatis/jpetstore-6.git</li>
-          <li>Select working directory, right click and select Import Projects</li>
+          <li>Clone the repo https://github.com/mybatis/jpetstore-6.git</li>
+          <li>Select working directory, right click and select Import Projects (general)</li>
           <li>Go to Java EE tab</li>
           <li>Right click on jpetstore project and select "Configure/Convert to Maven Project"</li>
           <li>Right click on jpetstore project and select "run on server"</li>
-          <li>Select Tomcat 7 Server and set your installation directory</li>
+          <li>Select Tomcat Server and set your installation directory</li>
           <li>JPetStore home page should be shown!!</li>
         </ul>
         <p>
@@ -422,12 +418,11 @@ public interface OrderMapper {
         </p>
         <p>
           And remember that if you find a bug or something that is missing or can be improved (for example the missing tests!),
-          change it, create a diff patch file and fill an issue with it in the
-           <a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>. Thanks in advance!!!
+          fork the repo, change it, and open a pull request. Thanks in advance!!!
         </p>
         <p>
           <span class="label important">NOTE</span>
-		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Netbeans or Eclipse are not needed
+		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Eclipse is not needed
 		either, you can run the sample from your favorite IDE or the command line.
         </p>
       </subsection>

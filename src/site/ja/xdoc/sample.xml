@@ -366,23 +366,19 @@ public interface OrderMapper {
 
       <subsection name="JPetStore の実行">
         <p>本当に動くの？と思うかも知れません。もちろんです！ 実際に試してみましょう。/</p>
-        <p>クリーンなコンピューターを持っているとして、Eclipse 上の Tomcat 7 を使ってサンプルを実行する手順を下記に示します。
+        <p>クリーンなコンピューターを持っているとして、Eclipse 上の Tomcat を使ってサンプルを実行する手順を下記に示します。
         </p>
         <ul>
           <li>JDK 6 以降をダウンロードしてインストールします。</li>
           <li>Eclipse をダウンロードして解凍します。</li>
-          <li>Tomcat 7 をダウンロードして解凍します。</li>
+          <li>Tomcat をダウンロードして解凍します。</li>
           <li>Eclipse を起動します。</li>
-          <li>Help/Eclipse Marketplace を選択します。</li>
-          <li>m2e plugin (maven) をインストールします。</li>
-          <li>m2e-wtp plugin (maven for wtp) をインストールします。</li>
-          <li>EGit plugin (git) をインストールします。</li>
           <li>新規のリポジトリ "https://github.com/mybatis/jpetstore-6.git" を追加します。</li>
           <li>右クリックして "Check out" を選択し、プロジェクト名 "jpetstore" を入力します。</li>
           <li>Java EE タブを開きます。</li>
           <li>jpetstore プロジェクトを右クリックして "Configure/Convert to Maven Project" を選択します。</li>
           <li>jpetstore プロジェクトを右クリックして "run on server" を選択します。</li>
-          <li>Tomcat 7 Server を選び、Tomcat 7 をインストールしたディレクトリを指定します。</li>
+          <li>Tomcat Server を選び、Tomcat 7 をインストールしたディレクトリを指定します。</li>
           <li>JPetStore のホームページが表示されるはずです！</li>
         </ul>
         <p>

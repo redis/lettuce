@@ -23,9 +23,7 @@
 
   <properties>
     <title>MyBatis-Spring | Sample Code</title>
-    <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
-    <author email="nanlei1987@gmail.com">Nan Lei</author>
   </properties>
 
   <body>
@@ -40,15 +38,17 @@
       </p>
       <subsection name="Purpose">
       	<p>
-      	This new JPetStore comes with the same idea in mind than for its predecessors: <strong>keep it simple</strong>. The main purpose behind JPetStore 6
-      	is to demonstrate that a full web application can be built with just a few classes, and what is more important, with no advanced coding
-      	skills. You just need to know plain Java and SQL.
+      	This new JPetStore comes with the same idea in mind than its predecessors: <strong>keep it simple</strong>. 
+      	The purpose of JPetStore 6 is to demonstrate how to build a web application with very few classes and no advanced coding skills. 
+      	You just need to know plain Java and SQL.
       	</p>
       	<p>
-      	The 6th version of JPetStore is the smallest one in the family. It uses just 24 java classes while keeping a good design and program structure.
-      	As we will see a bit later, you will not find JDBC code, object creation, binding code or transaction handling code. What is more
-      	impressive is that you <strong>will not even find any call to the MyBatis API</strong>. Although this sounds magical, you will see that the
-      	combination of MyBatis mappers and dependency injection lets you build applications with no dependency on MyBatis.
+      	The 6th version of JPetStore is the smallest one in the family. 
+      	It uses just 24 java classes while keeping a good design and program structure.
+      	As we will see later on, you will find no code for dealing with JDBC, for creating objects or bind them or to handle transactions. 
+      	What is more impressive is that you <strong>will not find any call to the MyBatis API</strong>. 
+      	Although this sounds magical, you will see that the combination of MyBatis mappers and dependency injection lets you 
+      	build applications without dependencies.
       	</p>
       </subsection>
       <subsection name="Program Structure">
@@ -173,8 +173,8 @@
 
 	  <p>
 	  <span class="label important">NOTE</span> Spring's component scan feature is not able to find MyBatis mappers.
-	  A mapper is not a plain bean and Spring would not know how to instantiate it. We will need a
-	  <code>MapperScannerConfigurer</code> for that, as we will see soon.
+	  A mapper is not a plain bean and Spring would not know how to instantiate it. We will see how to search for
+	  mappers soon.
 	  </p>
 
 	  <p>We will also need a <code>DataSource</code> and a <code>TransactionManager</code>. Given that this is a demo application
@@ -397,39 +397,20 @@ public interface OrderMapper {
       <subsection name="Running JPetStore">
         <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
         <p>Let's assume you have a clean computer. These are the steps you should follow to
-      have the sample running on Tomcat 7 with NetBeans 7:
+      have the sample running on Tomcat with Eclipse:
         </p>
-        <ul>
-          <li>Download and install NetBeans 7.x JEE version with Tomcat 7</li>
-          <li>In NetBeans select Team/Subversion/Checkout</li>
-          <li>Enter "http://mybatis.googlecode.com/svn" as repository URL</li>
-          <li>Enter "sub-projects/jpetstore-6/trunk" as remote repository folder</li>
-          <li>Enter your projects folder name, in my case "/home/eduardo/NetBeansProjects/jpetstore6"</li>
-          <li>NetBeans will prompt "A new project was found do you want to open it". Press ok</li>
-          <li>A new project named "JPetStore Demo 6" will be shown in NetBeans projects tab</li>
-          <li>Right click on jpetstore project and select "Run"</li>
-          <li>Select Tomcat 7 Server</li>
-          <li>JPetStore home page should be shown!!</li>
-        </ul>
-        <p>These are the steps to run it in Eclipse. The process is a bit longer because Eclipse does not provide
-        built-in SVN and maven support and does not provide an option to install Tomcat.</p>
         <ul>
           <li>Download and install a JDK 6 or later</li>
           <li>Download and upzip Eclipse</li>
-          <li>Download and unzip Tomcat 7</li>
+          <li>Download and unzip Tomcat</li>
           <li>Run Eclipse</li>
-          <li>In eclipse, go to Help/Eclipse Marketplace</li>
-          <li>Install m2e plugin (maven)</li>
-          <li>Install m2e-wtp plugin (maven for wtp)</li>
-          <li>Install subclipse plugin (subversion)</li>
-          <li>Go to SVN tab</li>
-          <li>In SVN add a new repository "http://mybatis.googlecode.com/svn"</li>
-          <li>In SVN go to "sub-projects/jpetstore-6/trunk" </li>
-          <li>Mouse right click and select "Check out", name the project as "jpetstore"</li>
+          <li>Go to Git tab</li>
+          <li>Clone the repo https://github.com/mybatis/jpetstore-6.git</li>
+          <li>Select working directory, right click and select Import Projects (general)</li>
           <li>Go to Java EE tab</li>
           <li>Right click on jpetstore project and select "Configure/Convert to Maven Project"</li>
           <li>Right click on jpetstore project and select "run on server"</li>
-          <li>Select Tomcat 7 Server and set your installation directory</li>
+          <li>Select Tomcat Server and set your installation directory</li>
           <li>JPetStore home page should be shown!!</li>
         </ul>
         <p>
@@ -437,12 +418,11 @@ public interface OrderMapper {
         </p>
         <p>
           And remember that if you find a bug or something that is missing or can be improved (for example the missing tests!),
-          change it, create a diff patch file and fill an issue with it in the
-           <a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>. Thanks in advance!!!
+          fork the repo, change it, and open a pull request. Thanks in advance!!!
         </p>
         <p>
           <span class="label important">NOTE</span>
-		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Netbeans or Eclipse are not needed
+		JPetStore 6 should run in any Servlet 2.5 y JSP 2.1 compliant Java server. Eclipse is not needed
 		either, you can run the sample from your favorite IDE or the command line.
         </p>
       </subsection>

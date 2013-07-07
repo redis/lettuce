@@ -406,21 +406,17 @@ public interface OrderMapper {
 
       <subsection name="Running JPetStore">
         <p>Te prenguntarás. ¿Esto funciona? ¡Sí! Ejecutémoslo.</p>
-        <p>Asumiendo que tienes un PC limpio estos son los pasos que debes seguir para ejecutar el ejemplo en Tomcat 7 y Eclipse.</p>
+        <p>Asumiendo que tienes un PC limpio estos son los pasos que debes seguir para ejecutar el ejemplo en Tomcat y Eclipse.</p>
         <ul>
           <li>Descarga e instala un JDK 6 o posterior</li>
           <li>Descarga y descomprime Eclipse</li>
-          <li>Descarga y descomprime Tomcat 7</li>
+          <li>Descarga y descomprime Tomcat</li>
           <li>Ejecuta Eclipse</li>
-          <li>En eclipse, ve a Help/Eclipse Marketplace</li>
-          <li>Instala m2e plugin (maven)</li>
-          <li>Instala m2e-wtp plugin (maven for wtp)</li>
-          <li>Instala Egit (git)</li>
           <li>Ve a la pestaña Git</li>
-          <li>En SVN añade un nuevo repositorio "http://mybatis.googlecode.com/svn"</li>
-          <li>En SVN ve al directorio "sub-projects/jpetstore-6/trunk" </li>
-          <li>Botón derecho de ratón y selecciona "Check out", nombra el proyecto como "jpetstore"</li>
-          <li>Aparecerá un nuevo proyecto llamado"jpetstore"</li>
+          <li>Clona el repositorio https://github.com/mybatis/jpetstore-6.git</li>
+          <li>Selecciona working directory, pulsa botón derecho y selecciona Import Projects (general)</li>
+          <li>Ve a la pestaña Java EE</li>
+          <li>Botón derecho en el projecto jpetstore y selecciona "Configure/Convert to Maven project"</li>
           <li>Botón derecho en el proyecto jpetstore y selecciona "run on server"</li>
           <li>Selecciona Tomcat 7 Server y configura el directorio donde lo descomprimiste</li>
           <li>¡¡La home de JPetStore debería mostrarse!!</li>
@@ -430,9 +426,8 @@ public interface OrderMapper {
           Ya estás listo para jugar con la demo, experimentar tus propios cambios o lo que tú quieras.
         </p>
         <p>
-          Y recuerda que si encuentras un bug o ves que falta algo o que hay algo mejorable (por ejemplo faltan los tests!),m
-          cambialo, crea un fichero diff patch y rellena un issue con él en el
-          <a href="http://code.google.com/p/mybatis/issues/entry">tracker</a>. Gracias de antemano!
+          Y recuerda que si encuentras un bug o ves que falta algo o que hay algo mejorable (por ejemplo faltan los tests!),
+          haz un fork del repositorio, cámbialo y abre un pull request. Gracias de antemano!
         </p>
         <p>
           <span class="label important">NOTE</span>
