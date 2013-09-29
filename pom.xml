@@ -24,7 +24,7 @@
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
-  <version>1.2.1-SNAPSHOT</version>
+  <version>1.2.1</version>
   <packaging>jar</packaging>
 
   <name>MyBatis-Spring</name>
@@ -72,7 +72,7 @@
     <url>http://github.com/mybatis/spring</url>
     <connection>scm:git:ssh://github.com/mybatis/spring.git</connection>
     <developerConnection>scm:git:git+ssh://git@github.com/mybatis/spring.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>mybatis-spring-1.2.1</tag>
   </scm>
   <issueManagement>
     <system>GitHub Issue Management</system>
@@ -103,7 +103,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.2.3-SNAPSHOT</version>
+      <version>3.2.3</version>
       <scope>provided</scope>
     </dependency>
 
