@@ -25,7 +25,15 @@
 	</properties>
 
 	<body>
-		<release version="1.2.0" date="TBD" description="1.2.0 release">
+		<release version="1.2.1" date="2013-09-30" description="1.2.1 release">
+			<action type="fix" issue="9">
+				mybatis-spring OSGi imports - Spring batch should be optional
+			</action>
+			<action type="fix" issue="6">
+				org.mybatis.spring.transaction.SpringManagedTransaction.logger should be static
+			</action>
+		</release>
+		<release version="1.2.0" date="2013-02-21" description="1.2.0 release">
 			<action type="update" issue="131">
 				Build a namespace for MyBatis
 			</action>
