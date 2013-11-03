@@ -1,5 +1,6 @@
 package org.mybatis.spring.submitted.xa;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,10 +13,23 @@ public class UserServiceTest {
   
   @Autowired
   private UserService userService;
-
+  
   @Test
-  public void testSave() {
+  public void testCommit() {
     User user = new User(1, "Pocoyo");
-    userService.save(user);
+    userService.saveWithNoFailure(user);
+    Assert.assertTrue(userService.checkUserExists(user.getId()));
   }
+  
+  @Test
+  public void testRollback() {
+    User user = new User(2, "Pocoyo");
+    try {
+      userService.saveWithFailure(user);
+    } catch (RuntimeException ignore) {
+      // ignored
+    }
+    Assert.assertFalse(userService.checkUserExists(user.getId()));
+  }
+
 }

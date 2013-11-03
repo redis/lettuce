@@ -13,9 +13,21 @@ public class UserServiceImpl implements UserService {
   private UserMapper userMapperSlave;
 
   @Transactional
-  public void save(User user) {
+  public void saveWithNoFailure(User user) {
     userMapperMaster.save(user);
-    user.setId(user.getId() + 1);
     userMapperSlave.save(user);
+  }
+  
+  @Transactional
+  public void saveWithFailure(User user) {
+    userMapperMaster.save(user);
+    userMapperSlave.save(user);
+    throw new RuntimeException("failed!");
+  }
+
+  public boolean checkUserExists(int id) {
+    if (userMapperMaster.select(id) != null) return true;
+    if (userMapperSlave.select(id) != null) return true;
+    return false;
   }
 }
