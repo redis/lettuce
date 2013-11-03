@@ -26,22 +26,49 @@
 			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
 			http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd">
 
-	<bean id="atomikosTransactionManager" class="com.atomikos.icatch.jta.UserTransactionManager"
-		init-method="init" destroy-method="close">
-		<property name="forceShutdown" value="true" />
+	<bean id="userTransactionService" class="com.atomikos.icatch.config.UserTransactionServiceImp"
+		init-method="init" destroy-method="shutdownForce">
+		<constructor-arg>
+			<!-- Seems these settings make no difference -->
+			<props>
+				<prop key="com.atomikos.icatch.threaded_2pc">
+					true
+				</prop>
+				<prop key="com.atomikos.icatch.serial_jta_transactions">
+					false
+				</prop>
+			</props>
+		</constructor-arg>
 	</bean>
 
-	<bean id="atomikosUserTransaction" class="com.atomikos.icatch.jta.UserTransactionImp">
-		<property name="transactionTimeout" value="3000" />
+	<!-- Construct Atomikos UserTransactionManager, needed to configure Spring -->
+	<bean id="AtomikosTransactionManager" class="com.atomikos.icatch.jta.UserTransactionManager"
+		init-method="init" destroy-method="close" depends-on="userTransactionService">
+
+		<!-- IMPORTANT: disable startup because the userTransactionService above 
+			does this -->
+		<property name="startupTransactionService" value="false" />
+
+		<!-- when close is called, should we force transactions to terminate or 
+			not? -->
+		<property name="forceShutdown" value="false" />
 	</bean>
 
-	<bean id="jtaTransactionManager"
-		class="org.springframework.transaction.jta.JtaTransactionManager">
-		<property name="transactionManager" ref="atomikosTransactionManager" />
-		<property name="userTransaction" ref="atomikosUserTransaction" />
+	<!-- Also use Atomikos UserTransactionImp, needed to configure Spring -->
+	<bean id="AtomikosUserTransaction" class="com.atomikos.icatch.jta.UserTransactionImp"
+		depends-on="userTransactionService">
+		<property name="transactionTimeout" value="300" />
 	</bean>
 
-	<tx:annotation-driven transaction-manager="jtaTransactionManager" />
+	<!-- Configure the Spring framework to use JTA transactions from Atomikos -->
+	<bean id="JtaTransactionManager"
+		class="org.springframework.transaction.jta.JtaTransactionManager"
+		depends-on="userTransactionService">
+		<property name="transactionManager" ref="AtomikosTransactionManager" />
+		<property name="userTransaction" ref="AtomikosUserTransaction" />
+	</bean>
+
+	<tx:annotation-driven transaction-manager="JtaTransactionManager" />
 
 	<context:component-scan base-package="org.mybatis.spring.submitted.xa" />
 
@@ -59,7 +86,7 @@
 			<props>
 				<prop key="databaseName">memory:masterDB</prop>
 				<prop key="createDatabase">create</prop>
- 			</props>
+			</props>
 		</property>
 	</bean>
 
@@ -77,16 +104,18 @@
 			<props>
 				<prop key="databaseName">memory:slaveDB</prop>
 				<prop key="createDatabase">create</prop>
- 			</props>
+			</props>
 		</property>
 	</bean>
 
 	<jdbc:initialize-database data-source="master">
-		<jdbc:script location="classpath:org/mybatis/spring/submitted/xa/database-schema.sql" />
+		<jdbc:script
+			location="classpath:org/mybatis/spring/submitted/xa/database-schema.sql" />
 	</jdbc:initialize-database>
 
 	<jdbc:initialize-database data-source="slave">
-		<jdbc:script location="classpath:org/mybatis/spring/submitted/xa/database-schema.sql" />
+		<jdbc:script
+			location="classpath:org/mybatis/spring/submitted/xa/database-schema.sql" />
 	</jdbc:initialize-database>
 
 	<bean id="sqlSessionFactoryMaster" class="org.mybatis.spring.SqlSessionFactoryBean">
