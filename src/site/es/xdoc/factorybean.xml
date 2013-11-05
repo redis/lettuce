@@ -110,6 +110,34 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
         Otra propiedad que puede ser necesaria en un entorno con transacciones gestionadas por contenedor es la 
         <code>transactionFactoryClass</code>. Lee la sección de transacciones para obtener más detalles.
       </p>
+      
+      <p>
+         En caso de usar la característica multi-db necesitarás informar la propiedad <code>databaseIdProvider</code> 
+         de la siguiente forma:  
+      </p>
+      
+<source><![CDATA[      
+<bean id="vendorProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+    <property name="properties">
+        <props>
+            <prop key="SQL Server">sqlserver</prop>
+            <prop key="DB2">db2</prop>
+            <prop key="Oracle">oracle</prop>
+            <prop key="MySQL">mysql</prop>
+        </props>
+    </property>
+</bean>
+
+<bean id="databaseIdProvider" class="org.apache.ibatis.mapping.VendorDatabaseIdProvider">
+    <property name="properties" ref="vendorProperties"/>
+</bean>
+
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource" />
+    <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
+    <property name="databaseIdProvider" ref="databaseIdProvider"/>
+</bean>]]></source>
+      
       </subsection>
     </section>
   </body>

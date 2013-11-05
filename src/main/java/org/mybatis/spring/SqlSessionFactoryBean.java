@@ -33,7 +33,6 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.DatabaseIdProvider;
 import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
@@ -104,7 +103,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private Class<?> typeAliasesSuperType;
 
-  private DatabaseIdProvider databaseIdProvider = new VendorDatabaseIdProvider();
+  private DatabaseIdProvider databaseIdProvider; // issue #19. No default provider.
 
   private ObjectFactory objectFactory;
 
@@ -130,8 +129,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     this.objectWrapperFactory = objectWrapperFactory;
   }
 
-    /**
-   * Sets the DatabaseIdProvider.
+  /**
+   * Gets the DatabaseIdProvider
    *
    * @since 1.1.0
    * @return
@@ -141,7 +140,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   }
 
   /**
-   * Gets the DatabaseIdProvider
+   * Sets the DatabaseIdProvider.
+   * As of version 1.2.2 this variable is not initialized by default. 
    *
    * @since 1.1.0
    * @param databaseIdProvider
