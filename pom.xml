@@ -157,7 +157,13 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
-
+<dependency>
+	<groupId>org.jboss.byteman</groupId>
+	<artifactId>byteman-bmunit</artifactId>
+	<version>2.1.3</version>
+	<scope>test</scope>
+</dependency>
+            
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>

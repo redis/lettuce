@@ -34,7 +34,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 // tests basic usage and implementation only
 // MapperFactoryBeanTest handles testing the transactional functions in SqlSessionTemplate
-public final class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
+public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
 
   private static SqlSession sqlSessionTemplate;
 
