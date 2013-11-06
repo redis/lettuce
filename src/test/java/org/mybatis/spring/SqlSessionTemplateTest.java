@@ -180,7 +180,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     sqlSessionTemplate.getMapper(TestMapper.class).findTest();
 
     txManager.commit(status);
-
+    
     assertCommit();
     assertSingleConnection();
   }
