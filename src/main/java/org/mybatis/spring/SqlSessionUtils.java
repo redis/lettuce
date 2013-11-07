@@ -249,17 +249,23 @@ public final class SqlSessionUtils {
      */
     @Override
     public void beforeCommit(boolean readOnly) {
-      // Flush BATCH statements so they are actually executed before the connection is committed.
-      // If there is no tx active data will be rolled back so there is no need to flush batches
-      if (this.holder.getExecutorType() == ExecutorType.BATCH && TransactionSynchronizationManager.isActualTransactionActive()) {
+      // Connection commit or rollback will be handled by ConnectionSynchronization or
+      // DataSourceTransactionManager.
+      // But, do cleanup the SqlSession / Executor, including flushing BATCH statements so
+      // they are actually executed.
+      // SpringManagedTransaction will no-op the commit over the jdbc connection
+      // TODO This updates 2nd level caches but the tx may be rolledback later on! 
+      if (TransactionSynchronizationManager.isActualTransactionActive()) {
         try {
           if (logger.isDebugEnabled()) {
-            logger.debug("Transaction synchronization flushing SqlSession [" + this.holder.getSqlSession() + "]");
+            logger.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
           }
-          this.holder.getSqlSession().flushStatements();
+          this.holder.getSqlSession().commit();
         } catch (PersistenceException p) {
           if (this.holder.getPersistenceExceptionTranslator() != null) {
-            DataAccessException translated = this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
+            DataAccessException translated = this.holder
+                .getPersistenceExceptionTranslator()
+                .translateExceptionIfPossible(p);
             if (translated != null) {
               throw translated;
             }
@@ -274,7 +280,7 @@ public final class SqlSessionUtils {
      */
     @Override
     public void beforeCompletion() {
-      // Issue #18 Unbind the SqlSession from tx synchronization now
+      // Issue #18 Close SqlSession and deregister it now
       // because afterCompletion may be called from a different thread
       if (!this.holder.isOpen()) {
         if (logger.isDebugEnabled()) {
@@ -282,58 +288,32 @@ public final class SqlSessionUtils {
         }
         TransactionSynchronizationManager.unbindResource(sessionFactory);
         this.holderActive = false;
+        if (logger.isDebugEnabled()) {
+          logger.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
+        }
+        this.holder.getSqlSession().close();
       }
     }
-
+   
     /**
      * {@inheritDoc}
      */
     @Override
     public void afterCompletion(int status) {
-      // Note, commit/rollback is needed to ensure 2nd level cache is properly updated
-      // SpringTransaction will no-op the connection commit/rollback
-      try {
-        // Do not call commit unless there is really a transaction; 
-        // no need to commit if just tx synchronization is active but no transaction was started
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-          switch (status) {
-          case STATUS_COMMITTED:
-            if (logger.isDebugEnabled()) {
-              logger.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
-            }
-            this.holder.getSqlSession().commit();
-            break;
-          case STATUS_ROLLED_BACK:
-            if (logger.isDebugEnabled()) {
-              logger.debug("Transaction synchronization rolling back SqlSession [" + this.holder.getSqlSession() + "]");
-            }
-            this.holder.getSqlSession().rollback();
-            break;
-          default:
-            if (logger.isDebugEnabled()) {
-              logger.debug("Transaction synchronization ended with unknown status for SqlSession [" + this.holder.getSqlSession() + "]");
-            }
-          }
+      if (this.holderActive) {
+        // afterCompletion may have been called from a different thread
+        // so avoid failing if there is nothing in this one
+        if (logger.isDebugEnabled()) {
+          logger.debug("Transaction synchronization deregistering SqlSession [" + this.holder.getSqlSession() + "]");
         }
-      } finally {
-        if (this.holderActive) {
-          // afterCompletion may have been called from a different thread 
-          // so avoid failing if there is nothing in this one
-          if (logger.isDebugEnabled()) {
-            logger.debug("Transaction synchronization deregistering SqlSession [" + this.holder.getSqlSession() + "]");
-          }
-          TransactionSynchronizationManager.unbindResourceIfPossible(sessionFactory);
-          this.holderActive = false;
+        TransactionSynchronizationManager.unbindResourceIfPossible(sessionFactory);
+        this.holderActive = false;
+        if (logger.isDebugEnabled()) {
+          logger.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
         }
-        try {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
-          }
-          this.holder.getSqlSession().close();
-        } finally {
-          this.holder.reset();
-        }
+        this.holder.getSqlSession().close();
       }
+      this.holder.reset();
     }
   }
 

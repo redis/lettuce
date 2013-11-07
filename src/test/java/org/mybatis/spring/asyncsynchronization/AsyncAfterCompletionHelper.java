@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * For use as ByteMan helper
@@ -44,7 +43,6 @@ public class AsyncAfterCompletionHelper {
       InvocationHandler {
 
     private Object target;
-    private Boolean txActive;
 
     AsynchAfterCompletionInvocationHandler(Object target) {
       this.target = target;
@@ -53,16 +51,12 @@ public class AsyncAfterCompletionHelper {
     public Object invoke(final Object proxy, final Method method,
         final Object[] args) throws Throwable {
       if ("afterCompletion".equals(method.getName())) {
-        txActive = TransactionSynchronizationManager
-            .isActualTransactionActive();
         final Set<Object> retValSet = new HashSet<Object>();
         final Set<Throwable> exceptionSet = new HashSet<Throwable>();
         Thread thread = new Thread() {
           @Override
           public void run() {
             try {
-              TransactionSynchronizationManager
-                  .setActualTransactionActive(txActive);
               retValSet.add(method.invoke(target, args));
             } catch (InvocationTargetException ite) {
               exceptionSet.add(ite.getCause());
@@ -77,7 +71,6 @@ public class AsyncAfterCompletionHelper {
         };
         thread.start();
         thread.join();
-        txActive = null;
         if (exceptionSet.isEmpty()) {
           return retValSet.iterator().next();
         } else {

@@ -15,8 +15,6 @@
  */
 package org.mybatis.spring.transaction;
 
-import static org.springframework.jdbc.datasource.DataSourceUtils.isConnectionTransactional;
-import static org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection;
 import static org.springframework.util.Assert.notNull;
 
 import java.sql.Connection;
@@ -82,7 +80,7 @@ public class SpringManagedTransaction implements Transaction {
   private void openConnection() throws SQLException {
     this.connection = DataSourceUtils.getConnection(this.dataSource);
     this.autoCommit = this.connection.getAutoCommit();
-    this.isConnectionTransactional = isConnectionTransactional(this.connection, this.dataSource);
+    this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
 
     if (logger.isDebugEnabled()) {
       logger.debug(
@@ -122,7 +120,7 @@ public class SpringManagedTransaction implements Transaction {
    * {@inheritDoc}
    */
   public void close() throws SQLException {
-    releaseConnection(this.connection, this.dataSource);
+    DataSourceUtils.releaseConnection(this.connection, this.dataSource);
   }
 
 }
