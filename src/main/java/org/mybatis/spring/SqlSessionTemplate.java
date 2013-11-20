@@ -350,7 +350,7 @@ public class SqlSessionTemplate implements SqlSession {
    */
   private class SqlSessionInterceptor implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      final SqlSession sqlSession = getSqlSession(
+      SqlSession sqlSession = getSqlSession(
           SqlSessionTemplate.this.sqlSessionFactory,
           SqlSessionTemplate.this.executorType,
           SqlSessionTemplate.this.exceptionTranslator);
@@ -365,6 +365,9 @@ public class SqlSessionTemplate implements SqlSession {
       } catch (Throwable t) {
         Throwable unwrapped = unwrapThrowable(t);
         if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
+          // release the connection to avoid a deadlock if the translator is no loaded. See issue #22
+          closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+          sqlSession = null;
           Throwable translated = SqlSessionTemplate.this.exceptionTranslator.translateExceptionIfPossible((PersistenceException) unwrapped);
           if (translated != null) {
             unwrapped = translated;
@@ -372,7 +375,9 @@ public class SqlSessionTemplate implements SqlSession {
         }
         throw unwrapped;
       } finally {
-        closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+        if (sqlSession != null) {
+          closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+        }
       }
     }
   }
