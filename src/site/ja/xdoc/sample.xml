@@ -31,7 +31,7 @@
   <body>
     <section name="サンプルコード">
       <p>
-        JPetStore 6 は MyBatis 3, <a href="http://www.springsource.org">Spring 3</a> そして <a href="http://www.stripesframework.org/">Stripes</a> を使って構築された Web Application で、<a href="http://code.google.com/p/mybatis/downloads/list?q=Product=Sample">downloads</a> セクションからダウンロードすることができます。
+        JPetStore 6 は MyBatis 3, <a href="http://www.springsource.org">Spring 3</a> そして <a href="http://www.stripesframework.org/">Stripes</a> を使って構築された Web Application で、<a href="https://github.com/mybatis/jpetstore-6/releases">downloads</a> セクションからダウンロードすることができます。
         この章では、このサンプルを見ながら実用的な Web Application の構築方法と実行方法について説明します。
       </p>
       <subsection name="目的">

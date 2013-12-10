@@ -31,7 +31,7 @@
     <section name="Sample Code">
       <p>JPetStore 6은 마이바티스 3, <a href="http://www.springsource.org">스프링 3</a> 과 
       <a href="http://www.stripesframework.org/">스트라이프(Stripes)</a>을 사용하는 완전한 웹 애플리케이션이다.
-       마이바티스 프로젝트 사이트에서 <a href="http://code.google.com/p/mybatis/downloads/list?q=Product=Sample">다운로드(downloads)</a> 
+       마이바티스 프로젝트 사이트에서 <a href="https://github.com/mybatis/jpetstore-6/releases">다운로드(downloads)</a> 
        페이지에서 다운로드가 가능하다. 여기서는 샘플을 빌드하는 방법을 이해하고 실행하는 방법에 대해 배워볼것이다. </p>
       <subsection name="Purpose">
       	<p>새로운 JPetStore는 <strong>단순하게</strong>라는 이전버전과 동일한 생각으로 작성되었다. 
