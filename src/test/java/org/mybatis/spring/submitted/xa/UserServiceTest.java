@@ -15,6 +15,8 @@
  */
 package org.mybatis.spring.submitted.xa;
 
+import javax.transaction.UserTransaction;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +27,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(value = SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:org/mybatis/spring/submitted/xa/applicationContext.xml")
 public class UserServiceTest {
+
+  @Autowired UserTransaction userTransaction;
   
   @Autowired
   private UserService userService;
@@ -47,4 +51,22 @@ public class UserServiceTest {
     Assert.assertFalse(userService.checkUserExists(user.getId()));
   }
 
+  @Test
+  public void testCommitWithExistingTx() throws Exception {
+    userTransaction.begin();
+    User user = new User(3, "Pocoyo");
+    userService.saveWithNoFailure(user);
+    userTransaction.commit();
+    Assert.assertTrue(userService.checkUserExists(user.getId()));
+  }
+
+  @Test
+  public void testRollbackWithExistingTx() throws Exception {
+    userTransaction.begin();
+    User user = new User(4, "Pocoyo");
+    userService.saveWithNoFailure(user);
+    userTransaction.rollback();
+    Assert.assertFalse(userService.checkUserExists(user.getId()));
+  }
+  
 }

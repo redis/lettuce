@@ -24,7 +24,8 @@
      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
      http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd
-     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd"
+     default-autowire="byName">
 
 	<bean id="userTransactionService" class="com.atomikos.icatch.config.UserTransactionServiceImp"
 		init-method="init" destroy-method="shutdownForce">
@@ -42,7 +43,7 @@
 	</bean>
 
 	<!-- Construct Atomikos UserTransactionManager, needed to configure Spring -->
-	<bean id="AtomikosTransactionManager" class="com.atomikos.icatch.jta.UserTransactionManager"
+	<bean id="transactionManager" class="com.atomikos.icatch.jta.UserTransactionManager"
 		init-method="init" destroy-method="close" depends-on="userTransactionService">
 
 		<!-- IMPORTANT: disable startup because the userTransactionService above 
@@ -55,7 +56,7 @@
 	</bean>
 
 	<!-- Also use Atomikos UserTransactionImp, needed to configure Spring -->
-	<bean id="AtomikosUserTransaction" class="com.atomikos.icatch.jta.UserTransactionImp"
+	<bean id="userTransaction" class="com.atomikos.icatch.jta.UserTransactionImp"
 		depends-on="userTransactionService">
 		<property name="transactionTimeout" value="300" />
 	</bean>
@@ -64,8 +65,8 @@
 	<bean id="JtaTransactionManager"
 		class="org.springframework.transaction.jta.JtaTransactionManager"
 		depends-on="userTransactionService">
-		<property name="transactionManager" ref="AtomikosTransactionManager" />
-		<property name="userTransaction" ref="AtomikosUserTransaction" />
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="userTransaction" ref="userTransaction" />
 	</bean>
 
 	<tx:annotation-driven transaction-manager="JtaTransactionManager" />
