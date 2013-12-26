@@ -60,10 +60,14 @@ public class UserServiceTest {
     Assert.assertTrue(userService.checkUserExists(user.getId()));
   }
 
+  // TODO when the outer JTA tx is rolledback, 
+  // SqlSession should be rolledback but it is committed
+  // because Spring calls beforeCommmit from its TX interceptor
+  // then, the JTA TX may be rolledback.
   @Test
   public void testRollbackWithExistingTx() throws Exception {
     userTransaction.begin();
-    User user = new User(4, "Pocoyo");
+    User user = new User(5, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.rollback();
     Assert.assertFalse(userService.checkUserExists(user.getId()));
