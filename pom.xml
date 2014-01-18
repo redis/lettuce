@@ -109,7 +109,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.2.4</version>
+      <version>3.2.3</version>
       <scope>provided</scope>
     </dependency>
 
