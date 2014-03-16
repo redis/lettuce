@@ -33,18 +33,40 @@
         JPetStore 6 es una aplicación web completa construida sobre MyBatis 3,
       	<a href="http://www.springsource.org">Spring 3</a> y <a href="http://www.stripesframework.org/">Stripes</a>.
         Está disponible para su descarga en la sección de
-        <a href="https://github.com/mybatis/jpetstore-6/releases">downloads</a>
-        del site de MyBatis.
+        <a href="https://github.com/mybatis/jpetstore-6/releases">downloads</a> del repositorio Github de MyBatis 3.
         En esta sección haremos un recorrido por este ejemplo para comprender cómo está construido y cómo ejecutarlo.
       </p>
       <subsection name="Propósito">
       	<p>
-      	Esta nueva versión de JPetStore viene con la misma idea en mente que sus precedesores: <strong>hazlo fácil</strong>. El propósito principal
-      	tras JPetStore 6 es demostrar que una aplicación web completa puede construirse con sólo unas pocas clases, y lo que es más importante,
-      	sin necesidad de tener grandes conocimientos de programación. Sólo necesitas saber java básico y SQL.
+      	Esta nueva versión de JPetStore viene con la misma idea en mente que sus precedesores: <strong>hazlo fácil</strong>. 
+      	El propósito principal de JPetStore 6 es demostrar que una aplicación web completa puede construirse con sólo unas pocas clases, 
+      	y lo que es más importante,	sin necesidad de tener grandes conocimientos de programación. Sólo necesitas saber java básico y SQL.
       	</p>
       	<p>
-      	La sexta versión de JPetStore es la más pequeña de la familia. Sólo usa 24 clases y conserva un buen diseño y estructura de programa.
+      	La sexta versión de JPetStore es la más pequeña de la familia, un 20% más pequeña que su predecesora. 
+      	Sólo usa 24 clases y conserva un buen diseño y estructura de programa.
+      	</p>
+      	<pre>
+eduardo@nomada ~ $ ./cloc-1.60.pl ~/git/jpetstore-6/src/main/
+      60 text files.
+      60 unique files.                              
+       3 files ignored.
+
+http://cloc.sourceforge.net v 1.60  T=0.28 s (209.8 files/s, 17722.9 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Java                            24            480            462           1429
+JSP                             20            148              0            984
+XML                              9             79            120            405
+CSS                              1             46              0            277
+SQL                              2             26             30            226
+HTML                             2             44              0            143
+-------------------------------------------------------------------------------
+SUM:                            58            823            612           3464
+-------------------------------------------------------------------------------
+      	</pre>      	
+      	<p>
       	Como veremos un poco después, no encontrarás código JDBC, de creación de objetos, de enlace de objetos o de gestión de transacciones.
       	Y lo que es más sorprendente es que <strong>¡no encontrarás ninguna llamada al API de MyBatis!</strong>. A pesar de que esto suena a mágia,
       	verás que la combinación de los mappers de MyBatis con la inyección de dependencias te permite realizar aplicaciones libres de dependencia
@@ -336,13 +358,14 @@ public class OrderService {
       la demarcación de transacciones declarativa de Spring que se soporta completamente en MyBatis-Spring.
       La anotación <code>@Transactional</code> de Spring indica que este método es transaccional,
       lo que significa que todas las llamadas a mappers <code>updateInventoryQuantity</code>, <code>insertOrder</code> and
-      <code>insertLineItem</code> deben finalizar con éxito o no hacerlo ninguna.</p>
+      <code>insertLineItem</code> deben finalizar con éxito. En caso de que alguna de ellas falle, todas las actualizaciones
+      que se hubieran hecho antes se desharán.</p>
 
       <h4>Persistencia</h4>
       <p>
-      La capa de persistencia está compuesta por mappers de MyBatis. Los mappers son interfaces Java simples y ficheros XML que contienen
-      las sentencias SQL. No hay código Java en esta capa. Cuando se ejecuta el método
-      <code>getOrder</code> del mapper interface <code>OrderMapper</code>,
+      La capa de persistencia está compuesta por mappers de MyBatis. 
+      Los mappers son interfaces Java simples y ficheros XML que contienen las sentencias SQL. No hay código Java en esta capa.
+      Cuando se ejecuta el método <code>getOrder</code> del mapper interface <code>OrderMapper</code>,
       MyBatis ejecuta la sentencia SQL del stamtent getOrder del ficheroOrderMapper.xml file y rellena el bean
       de dominio <code>Order</code> con los datos obtenidos.
       </p>
@@ -398,8 +421,7 @@ public interface OrderMapper {
 
       <p>
       <span class="label important">NOTE</span>
-      Puedes añadir caché a tus queries fácilmente añadiendo un elemento &lt;cache /&gt; a tu fichero de mapeo XML
-      O, si lo prefieres, Spring puede cachear a más alto nivel, cacheando completamente la llamada al mapper o a todo el servicio.
+      Puedes añadir caché a tus queries fácilmente añadiendo un elemento &lt;cache /&gt; a tu fichero de mapeo XML.
       </p>
 
       </subsection>
