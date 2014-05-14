@@ -2,17 +2,19 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisCommandInterruptedException;
-import org.jboss.netty.buffer.ChannelBuffer;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import java.util.concurrent.*;
+import com.lambdaworks.redis.RedisCommandInterruptedException;
+import io.netty.buffer.ByteBuf;
 
 /**
- * A redis command and its result. All successfully executed commands will
- * eventually return a {@link CommandOutput} object.
- *
+ * A redis command and its result. All successfully executed commands will eventually return a {@link CommandOutput} object.
+ * 
  * @param <T> Command output type.
- *
+ * 
  * @author Will Glozer
  */
 public class Command<K, V, T> implements Future<T> {
@@ -25,25 +27,39 @@ public class Command<K, V, T> implements Future<T> {
 
     /**
      * Create a new command with the supplied type and args.
-     *
-     * @param type      Command type.
-     * @param output    Command output.
-     * @param args      Command args, if any.
-     * @param multi     Flag indicating if MULTI active.
+     * 
+     * @param type Command type.
+     * @param output Command output.
+     * @param args Command args, if any.
      */
-    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
-        this.type   = type;
-        this.output = output;
-        this.args   = args;
-        this.latch  = new CountDownLatch(multi ? 2 : 1);
+    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+        this(type, output, args, false);
     }
 
     /**
-     * Cancel the command and notify any waiting consumers. This does
-     * not cause the redis server to stop executing the command.
-     *
+     * Create a new command with the supplied type and args.
+     * 
+     * @param type Command type.
+     * @param output Command output.
+     * @param args Command args, if any.
+     * @param multi Flag indicating if MULTI active.
+     */
+    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
+        this.type = type;
+        this.output = output;
+        this.args = args;
+        setMulti(multi);
+    }
+
+    public void setMulti(boolean multi) {
+        this.latch = new CountDownLatch(multi ? 2 : 1);
+    }
+
+    /**
+     * Cancel the command and notify any waiting consumers. This does not cause the redis server to stop executing the command.
+     * 
      * @param ignored Ignored parameter.
-     *
+     * 
      * @return true if the command was cancelled.
      */
     @Override
@@ -59,7 +75,7 @@ public class Command<K, V, T> implements Future<T> {
 
     /**
      * Check if the command has been cancelled.
-     *
+     * 
      * @return True if the command was cancelled.
      */
     @Override
@@ -69,7 +85,7 @@ public class Command<K, V, T> implements Future<T> {
 
     /**
      * Check if the command has completed.
-     *
+     * 
      * @return true if the command has completed.
      */
     @Override
@@ -78,9 +94,8 @@ public class Command<K, V, T> implements Future<T> {
     }
 
     /**
-     * Get the command output and if the command hasn't completed
-     * yet, wait until it does.
-     *
+     * Get the command output and if the command hasn't completed yet, wait until it does.
+     * 
      * @return The command output.
      */
     @Override
@@ -94,14 +109,13 @@ public class Command<K, V, T> implements Future<T> {
     }
 
     /**
-     * Get the command output and if the command hasn't completed yet,
-     * wait up to the specified time until it does.
-     *
-     * @param timeout   Maximum time to wait for a result.
-     * @param unit      Unit of time for the timeout.
-     *
+     * Get the command output and if the command hasn't completed yet, wait up to the specified time until it does.
+     * 
+     * @param timeout Maximum time to wait for a result.
+     * @param unit Unit of time for the timeout.
+     * 
      * @return The command output.
-     *
+     * 
      * @throws TimeoutException if the wait timed out.
      */
     @Override
@@ -117,12 +131,11 @@ public class Command<K, V, T> implements Future<T> {
     }
 
     /**
-     * Wait up to the specified time for the command output to become
-     * available.
-     *
-     * @param timeout   Maximum time to wait for a result.
-     * @param unit      Unit of time for the timeout.
-     *
+     * Wait up to the specified time for the command output to become available.
+     * 
+     * @param timeout Maximum time to wait for a result.
+     * @param unit Unit of time for the timeout.
+     * 
      * @return true if the output became available.
      */
     public boolean await(long timeout, TimeUnit unit) {
@@ -135,8 +148,8 @@ public class Command<K, V, T> implements Future<T> {
 
     /**
      * Get the object that holds this command's output.
-     *
-     * @return  The command output object.
+     * 
+     * @return The command output object.
      */
     public CommandOutput<K, V, T> getOutput() {
         return output;
@@ -150,12 +163,12 @@ public class Command<K, V, T> implements Future<T> {
     }
 
     /**
-     * Encode and write this command to the supplied buffer using the new
-     * <a href="http://redis.io/topics/protocol">Unified Request Protocol</a>.
-     *
+     * Encode and write this command to the supplied buffer using the new <a href="http://redis.io/topics/protocol">Unified
+     * Request Protocol</a>.
+     * 
      * @param buf Buffer to write to.
      */
-    void encode(ChannelBuffer buf) {
+    void encode(ByteBuf buf) {
         buf.writeByte('*');
         writeInt(buf, 1 + (args != null ? args.count() : 0));
         buf.writeBytes(CRLF);
@@ -171,11 +184,11 @@ public class Command<K, V, T> implements Future<T> {
 
     /**
      * Write the textual value of a positive integer to the supplied buffer.
-     *
-     * @param buf   Buffer to write to.
+     * 
+     * @param buf Buffer to write to.
      * @param value Value to write.
      */
-    protected static void writeInt(ChannelBuffer buf, int value) {
+    protected static void writeInt(ByteBuf buf, int value) {
         if (value < 10) {
             buf.writeByte('0' + value);
             return;

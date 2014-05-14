@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 
 public class AsyncConnectionTest extends AbstractCommandTest {
-    private RedisAsyncConnection<String,String> async;
+    private RedisAsyncConnection<String, String> async;
 
     @Rule
     public ExpectedException exception = ExpectedException.none();
@@ -71,7 +71,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         Future<String> get2 = async.get(key);
         Future<Long> append = async.append(key, value);
 
-        assertTrue(async.awaitAll(get1, set, get2, append));
+        assertTrue(Futures.awaitAll(1, TimeUnit.SECONDS, get1, set, get2, append));
 
         assertNull(get1.get());
         assertEquals("OK", set.get());
@@ -82,6 +82,6 @@ public class AsyncConnectionTest extends AbstractCommandTest {
     @Test(timeout = 100)
     public void awaitAllTimeout() throws Exception {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
-        assertFalse(async.awaitAll(1, TimeUnit.NANOSECONDS, blpop));
+        assertFalse(Futures.awaitAll(1, TimeUnit.NANOSECONDS, blpop));
     }
 }

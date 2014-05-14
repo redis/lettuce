@@ -2,13 +2,12 @@
 
 package com.lambdaworks.redis;
 
+import static org.junit.Assert.*;
 import com.lambdaworks.redis.pubsub.*;
 import org.junit.*;
 
 import java.util.concurrent.*;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
 
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
     private RedisPubSubConnection<String, String> pubsub;

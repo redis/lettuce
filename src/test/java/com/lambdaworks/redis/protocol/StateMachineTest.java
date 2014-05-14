@@ -6,8 +6,8 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.*;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -61,7 +61,7 @@ public class StateMachineTest {
     @Test
     public void multi() throws Exception {
         CommandOutput<String, String, List<String>> output = new ValueListOutput<String, String>(codec);
-        ChannelBuffer buffer = buffer("*2\r\n$-1\r\n$2\r\nok\r\n");
+        ByteBuf buffer = buffer("*2\r\n$-1\r\n$2\r\nok\r\n");
         assertTrue(rsm.decode(buffer, output));
         assertEquals(Arrays.asList(null, "ok"), output.get());
     }
@@ -85,7 +85,7 @@ public class StateMachineTest {
         assertEquals(State.Type.SINGLE, State.Type.valueOf("SINGLE"));
     }
 
-    protected ChannelBuffer buffer(String content) {
-        return ChannelBuffers.copiedBuffer(content, charset);
+    protected ByteBuf buffer(String content) {
+        return Unpooled.copiedBuffer(content, charset);
     }
 }

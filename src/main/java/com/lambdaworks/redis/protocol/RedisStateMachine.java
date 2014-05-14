@@ -3,7 +3,7 @@
 package com.lambdaworks.redis.protocol;
 
 import com.lambdaworks.redis.RedisException;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -12,18 +12,21 @@ import static com.lambdaworks.redis.protocol.Charsets.buffer;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 /**
- * State machine that decodes redis server responses encoded according to the
- * <a href="http://redis.io/topics/protocol">Unified Request Protocol</a>.
- *
+ * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
+ * Request Protocol</a>.
+ * 
  * @author Will Glozer
  */
 public class RedisStateMachine<K, V> {
     private static final ByteBuffer QUEUED = buffer("QUEUED");
 
     static class State {
-        enum Type { SINGLE, ERROR, INTEGER, BULK, MULTI, BYTES }
-        Type type  = null;
-        int  count = -1;
+        enum Type {
+            SINGLE, ERROR, INTEGER, BULK, MULTI, BYTES
+        }
+
+        Type type = null;
+        int count = -1;
     }
 
     private LinkedList<State> stack;
@@ -36,20 +39,23 @@ public class RedisStateMachine<K, V> {
     }
 
     /**
-     * Attempt to decode a redis response and return a flag indicating whether a complete
-     * response was read.
-     *
-     * @param buffer    Buffer containing data from the server.
-     * @param output    Current command output.
-     *
+     * Attempt to decode a redis response and return a flag indicating whether a complete response was read.
+     * 
+     * @param buffer Buffer containing data from the server.
+     * @param output Current command output.
+     * 
      * @return true if a complete response was read.
      */
-    public boolean decode(ChannelBuffer buffer, CommandOutput<K, V, ?> output) {
+    public boolean decode(ByteBuf buffer, CommandOutput<K, V, ?> output) {
         int length, end;
         ByteBuffer bytes;
 
         if (stack.isEmpty()) {
             stack.add(new State());
+        }
+
+        if (output == null) {
+            return stack.isEmpty();
         }
 
         loop:
@@ -58,28 +64,33 @@ public class RedisStateMachine<K, V> {
             State state = stack.peek();
 
             if (state.type == null) {
-                if (!buffer.readable()) break;
+                if (!buffer.isReadable())
+                    break;
                 state.type = readReplyType(buffer);
                 buffer.markReaderIndex();
             }
 
             switch (state.type) {
                 case SINGLE:
-                    if ((bytes = readLine(buffer)) == null) break loop;
+                    if ((bytes = readLine(buffer)) == null)
+                        break loop;
                     if (!QUEUED.equals(bytes)) {
                         output.set(bytes);
                     }
                     break;
                 case ERROR:
-                    if ((bytes = readLine(buffer)) == null) break loop;
+                    if ((bytes = readLine(buffer)) == null)
+                        break loop;
                     output.setError(bytes);
                     break;
                 case INTEGER:
-                    if ((end = findLineEnd(buffer)) == -1) break loop;
+                    if ((end = findLineEnd(buffer)) == -1)
+                        break loop;
                     output.set(readLong(buffer, buffer.readerIndex(), end));
                     break;
                 case BULK:
-                    if ((end = findLineEnd(buffer)) == -1) break loop;
+                    if ((end = findLineEnd(buffer)) == -1)
+                        break loop;
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
                     if (length == -1) {
                         output.set(null);
@@ -92,19 +103,22 @@ public class RedisStateMachine<K, V> {
                     break;
                 case MULTI:
                     if (state.count == -1) {
-                        if ((end = findLineEnd(buffer)) == -1) break loop;
+                        if ((end = findLineEnd(buffer)) == -1)
+                            break loop;
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
                         state.count = length;
                         buffer.markReaderIndex();
                     }
 
-                    if (state.count <= 0) break;
+                    if (state.count <= 0)
+                        break;
 
                     state.count--;
                     stack.addFirst(new State());
                     continue loop;
                 case BYTES:
-                    if ((bytes = readBytes(buffer, state.count)) == null) break loop;
+                    if ((bytes = readBytes(buffer, state.count)) == null)
+                        break loop;
                     output.set(bytes);
             }
 
@@ -116,24 +130,30 @@ public class RedisStateMachine<K, V> {
         return stack.isEmpty();
     }
 
-    private int findLineEnd(ChannelBuffer buffer) {
+    private int findLineEnd(ByteBuf buffer) {
         int start = buffer.readerIndex();
         int index = buffer.indexOf(start, buffer.writerIndex(), (byte) '\n');
         return (index > 0 && buffer.getByte(index - 1) == '\r') ? index : -1;
     }
 
-    private State.Type readReplyType(ChannelBuffer buffer) {
+    private State.Type readReplyType(ByteBuf buffer) {
         switch (buffer.readByte()) {
-            case '+': return SINGLE;
-            case '-': return ERROR;
-            case ':': return INTEGER;
-            case '$': return BULK;
-            case '*': return MULTI;
-            default:  throw new RedisException("Invalid first byte");
+            case '+':
+                return SINGLE;
+            case '-':
+                return ERROR;
+            case ':':
+                return INTEGER;
+            case '$':
+                return BULK;
+            case '*':
+                return MULTI;
+            default:
+                throw new RedisException("Invalid first byte");
         }
     }
 
-    private long readLong(ChannelBuffer buffer, int start, int end) {
+    private long readLong(ByteBuf buffer, int start, int end) {
         long value = 0;
 
         boolean negative = buffer.getByte(start) == '-';
@@ -142,27 +162,28 @@ public class RedisStateMachine<K, V> {
             int digit = buffer.getByte(offset++) - '0';
             value = value * 10 - digit;
         }
-        if (!negative) value = -value;
+        if (!negative)
+            value = -value;
         buffer.readerIndex(end + 1);
 
         return value;
     }
 
-    private ByteBuffer readLine(ChannelBuffer buffer) {
+    private ByteBuffer readLine(ByteBuf buffer) {
         ByteBuffer bytes = null;
         int end = findLineEnd(buffer);
         if (end > -1) {
             int start = buffer.readerIndex();
-            bytes = buffer.toByteBuffer(start, end - start - 1);
+            bytes = buffer.nioBuffer(start, end - start - 1);
             buffer.readerIndex(end + 1);
         }
         return bytes;
     }
 
-    private ByteBuffer readBytes(ChannelBuffer buffer, int count) {
+    private ByteBuffer readBytes(ByteBuf buffer, int count) {
         ByteBuffer bytes = null;
         if (buffer.readableBytes() >= count) {
-            bytes = buffer.toByteBuffer(buffer.readerIndex(), count - 2);
+            bytes = buffer.nioBuffer(buffer.readerIndex(), count - 2);
             buffer.readerIndex(buffer.readerIndex() + count);
         }
         return bytes;

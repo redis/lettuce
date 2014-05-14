@@ -7,16 +7,18 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.protocol.*;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.*;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.util.HashedWheelTimer;
-import org.jboss.netty.util.Timer;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.ChannelGroupFuture;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.concurrent.GlobalEventExecutor;
 
+import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.concurrent.*;
 
 /**
@@ -27,11 +29,13 @@ import java.util.concurrent.*;
  * @author Will Glozer
  */
 public class RedisClient {
-    private ClientBootstrap bootstrap;
-    private Timer timer;
+    private EventLoopGroup group;
+    private Bootstrap bootstrap;
+    private HashedWheelTimer timer;
     private ChannelGroup channels;
     private long timeout;
     private TimeUnit unit;
+    private RedisCodec<?, ?> codec = new Utf8StringCodec();
 
     /**
      * Create a new client that connects to the supplied host on the default port.
@@ -53,17 +57,17 @@ public class RedisClient {
     public RedisClient(String host, int port) {
         ExecutorService connectors = Executors.newFixedThreadPool(1);
         ExecutorService workers    = Executors.newCachedThreadPool();
-        ClientSocketChannelFactory factory = new NioClientSocketChannelFactory(connectors, workers);
 
         InetSocketAddress addr = new InetSocketAddress(host, port);
 
-        bootstrap = new ClientBootstrap(factory);
-        bootstrap.setOption("remoteAddress", addr);
+        group = new NioEventLoopGroup();
+        bootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group).remoteAddress(addr);
 
         setDefaultTimeout(60, TimeUnit.SECONDS);
 
-        channels = new DefaultChannelGroup();
+        channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer    = new HashedWheelTimer();
+        timer.start();
     }
 
     /**
@@ -77,7 +81,7 @@ public class RedisClient {
     public void setDefaultTimeout(long timeout, TimeUnit unit) {
         this.timeout = timeout;
         this.unit    = unit;
-        bootstrap.setOption("connectTimeoutMillis", unit.toMillis(timeout));
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
     }
 
     /**
@@ -87,7 +91,7 @@ public class RedisClient {
      * @return A new connection.
      */
     public RedisConnection<String, String> connect() {
-        return connect(new Utf8StringCodec());
+        return connect((RedisCodec) codec);
     }
 
     /**
@@ -97,7 +101,7 @@ public class RedisClient {
      * @return A new connection.
      */
     public RedisAsyncConnection<String, String> connectAsync() {
-        return connectAsync(new Utf8StringCodec());
+        return connectAsync((RedisCodec) codec);
     }
 
     /**
@@ -107,19 +111,23 @@ public class RedisClient {
      * @return A new connection.
      */
     public RedisPubSubConnection<String, String> connectPubSub() {
-        return connectPubSub(new Utf8StringCodec());
+        return connectPubSub((RedisCodec) codec);
     }
 
     /**
-     * Open a new synchronous connection to the redis server. Use the supplied
-     * {@link RedisCodec codec} to encode/decode keys and values.
-     *
+     * Open a new synchronous connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
+     * and values.
+     * 
      * @param codec Use this codec to encode/decode keys and values.
-     *
+     * 
      * @return A new connection.
      */
     public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
-        return new RedisConnection<K, V>(connectAsync(codec));
+
+        FutureSyncInvocationHandler h = new FutureSyncInvocationHandler(connectAsyncImpl(codec));
+        Object o = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { RedisConnection.class }, h);
+
+        return (RedisConnection) o;
     }
 
     /**
@@ -131,12 +139,16 @@ public class RedisClient {
      * @return A new connection.
      */
     public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
+        return connectAsyncImpl(codec);
+    }
+
+    private <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec) {
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
-        RedisAsyncConnection<K, V> connection = new RedisAsyncConnection<K, V>(queue, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(queue, codec, timeout, unit);
 
-        return connect(handler, connection);
+       return connect(handler, connection);
     }
 
     /**
@@ -156,20 +168,19 @@ public class RedisClient {
         return connect(handler, connection);
     }
 
-    private <K, V, T extends RedisAsyncConnection<K, V>> T connect(CommandHandler<K, V> handler, T connection) {
-        try {
-            ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
-            ChannelPipeline pipeline = Channels.pipeline(watchdog, handler, connection);
-            Channel channel = bootstrap.getFactory().newChannel(pipeline);
+    private <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connect(final CommandHandler<K, V> handler, final T connection) {
+     try {
+            final ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
+            bootstrap.handler(new ChannelInitializer<Channel>() {
+                @Override
+                protected void initChannel(Channel ch) throws Exception {
+                    ch.pipeline().addLast(watchdog, handler, connection);
+                }
+            });
 
-            ChannelFuture future = channel.connect((SocketAddress) bootstrap.getOption("remoteAddress"));
-            future.await();
+            bootstrap.connect().sync();
 
-            if (!future.isSuccess()) {
-                throw future.getCause();
-            }
-
-            watchdog.setReconnect(true);
+  watchdog.setReconnect(true);
 
             return connection;
         } catch (Throwable e) {
@@ -183,13 +194,13 @@ public class RedisClient {
      */
     public void shutdown() {
         for (Channel c : channels) {
-            ChannelPipeline pipeline = c.getPipeline();
-            RedisAsyncConnection<?, ?> connection = pipeline.get(RedisAsyncConnection.class);
+            ChannelPipeline pipeline = c.pipeline();
+            RedisAsyncConnectionImpl<?, ?> connection = pipeline.get(RedisAsyncConnectionImpl.class);
             connection.close();
         }
         ChannelGroupFuture future = channels.close();
         future.awaitUninterruptibly();
-        bootstrap.releaseExternalResources();
+        group.shutdownGracefully().syncUninterruptibly();
+        timer.stop();
     }
 }
-

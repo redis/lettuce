@@ -9,13 +9,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
 
 public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void bgrewriteaof() throws Exception {
-        String msg = "Background append only file rewriting started";
-        assertEquals(msg, redis.bgrewriteaof());
+        String msg = "Background append only file rewriting";
+        assertThat(redis.bgrewriteaof(), containsString(msg));
     }
 
     @Test

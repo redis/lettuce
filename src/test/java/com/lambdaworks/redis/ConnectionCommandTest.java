@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -10,6 +11,7 @@ import static org.junit.Assert.*;
 
 public class ConnectionCommandTest extends AbstractCommandTest {
     @Test
+    @Ignore
     public void auth() throws Exception {
         new WithPasswordRequired() {
             @Override

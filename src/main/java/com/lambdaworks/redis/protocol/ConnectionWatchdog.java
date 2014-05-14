@@ -2,23 +2,28 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.util.*;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
-import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A netty {@link ChannelHandler} responsible for monitoring the channel and
- * reconnecting when the connection is lost.
- *
+ * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
+ * 
  * @author Will Glozer
  */
-public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements TimerTask {
-    private ClientBootstrap bootstrap;
+@ChannelHandler.Sharable
+public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements TimerTask {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionWatchdog.class);
+    public static final int RETRY_TIMEOUT_MAX = 14;
+    private Bootstrap bootstrap;
     private Channel channel;
     private ChannelGroup channels;
     private Timer timer;
@@ -26,17 +31,16 @@ public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements 
     private int attempts;
 
     /**
-     * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup}
-     * and establishes a new {@link Channel} when disconnected, while reconnect is true.
-     *
+     * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
+     * {@link Channel} when disconnected, while reconnect is true.
+     * 
      * @param bootstrap Configuration for new channels.
-     * @param channels  ChannelGroup to add new channels to.
-     * @param timer     Timer used for delayed reconnect.
+     * @param timer Timer used for delayed reconnect.
      */
-    public ConnectionWatchdog(ClientBootstrap bootstrap, ChannelGroup channels, Timer timer) {
+    public ConnectionWatchdog(Bootstrap bootstrap, ChannelGroup channels, Timer timer) {
         this.bootstrap = bootstrap;
-        this.channels  = channels;
-        this.timer     = timer;
+        this.channels = channels;
+        this.timer = timer;
     }
 
     public void setReconnect(boolean reconnect) {
@@ -44,46 +48,52 @@ public class ConnectionWatchdog extends SimpleChannelUpstreamHandler implements 
     }
 
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        channel = ctx.getChannel();
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        channel = ctx.channel();
         channels.add(channel);
         attempts = 0;
-        ctx.sendUpstream(e);
+        ctx.fireChannelActive();
     }
 
     @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         if (reconnect) {
-            if (attempts < 8) attempts++;
+            scheduleReconnect();
+        }
+        ctx.fireChannelInactive();
+    }
+
+    private void scheduleReconnect() {
+        if (!channel.isActive()) {
+            if (attempts < RETRY_TIMEOUT_MAX)
+                attempts++;
             int timeout = 2 << attempts;
             timer.newTimeout(this, timeout, TimeUnit.MILLISECONDS);
         }
-        ctx.sendUpstream(e);
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        ctx.getChannel().close();
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        ctx.channel().close();
     }
 
     /**
-     * Reconnect to the remote address that the closed channel was connected to.
-     * This creates a new {@link ChannelPipeline} with the same handler instances
-     * contained in the old channel's pipeline.
-     *
+     * Reconnect to the remote address that the closed channel was connected to. This creates a new {@link ChannelPipeline} with
+     * the same handler instances contained in the old channel's pipeline.
+     * 
      * @param timeout Timer task handle.
-     *
+     * 
      * @throws Exception when reconnection fails.
      */
     @Override
     public void run(Timeout timeout) throws Exception {
-        ChannelPipeline old = channel.getPipeline();
-        CommandHandler<?, ?> handler = old.get(CommandHandler.class);
-        RedisAsyncConnection<?, ?> connection = old.get(RedisAsyncConnection.class);
-        ChannelPipeline pipeline = Channels.pipeline(this, handler, connection);
 
-        Channel c = bootstrap.getFactory().newChannel(pipeline);
-        c.getConfig().setOptions(bootstrap.getOptions());
-        c.connect((SocketAddress) bootstrap.getOption("remoteAddress"));
+        try {
+            logger.info("Connecting");
+            bootstrap.connect().sync();
+        } catch (Exception e) {
+            scheduleReconnect();
+            logger.warn("Cannot connect: " + e.getMessage());
+        }
     }
 }
