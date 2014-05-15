@@ -128,7 +128,7 @@ public class KeyCommandTest extends AbstractCommandTest {
 
     @Test
     public void pttl() throws Exception {
-        assertEquals(-1, (long) redis.pttl(key));
+        assertEquals(-2, (long) redis.pttl(key));
         redis.set(key, value);
         assertEquals(-1, (long) redis.pttl(key));
         redis.pexpire(key, 10);
@@ -203,7 +203,7 @@ public class KeyCommandTest extends AbstractCommandTest {
 
     @Test
     public void ttl() throws Exception {
-        assertEquals(-1, (long) redis.ttl(key));
+        assertEquals(-2, (long) redis.ttl(key));
         redis.set(key, value);
         assertEquals(-1, (long) redis.ttl(key));
         redis.expire(key, 10);

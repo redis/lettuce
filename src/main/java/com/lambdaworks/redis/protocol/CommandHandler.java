@@ -70,7 +70,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler {
         ByteBuf buf = ctx.alloc().heapBuffer();
         cmd.encode(buf);
         if (logger.isDebugEnabled()) {
-            logger.debug("Received: " + buf.toString(Charset.defaultCharset()).trim());
+            logger.debug("Sent: " + buf.toString(Charset.defaultCharset()).trim());
         }
         ctx.write(buf, promise);
     }

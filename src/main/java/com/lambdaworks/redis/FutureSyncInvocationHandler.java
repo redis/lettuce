@@ -37,8 +37,15 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
             Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
 
             Object result = targetMethod.invoke(connection, args);
+
             if (result instanceof Command) {
                 Command command = (Command) result;
+                if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
+                    if (connection.isMulti()) {
+                        return null;
+                    }
+                }
+
                 return connection.await(command, timeout, unit);
             }
 

@@ -11,7 +11,6 @@ import static org.junit.Assert.*;
 
 public class ConnectionCommandTest extends AbstractCommandTest {
     @Test
-    @Ignore
     public void auth() throws Exception {
         new WithPasswordRequired() {
             @Override
@@ -21,7 +20,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
                     connection.ping();
                     fail("Server doesn't require authentication");
                 } catch (RedisException e) {
-                    assertEquals("ERR operation not permitted", e.getMessage());
+                    assertEquals("NOAUTH Authentication required.", e.getMessage());
                     assertEquals("OK", connection.auth(passwd));
                     assertEquals("OK", connection.set(key, value));
                 }

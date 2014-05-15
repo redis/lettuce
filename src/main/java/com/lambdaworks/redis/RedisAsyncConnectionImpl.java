@@ -1016,7 +1016,9 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
     public synchronized void close() {
         if (!closed && channel != null) {
             ConnectionWatchdog watchdog = channel.pipeline().get(ConnectionWatchdog.class);
-            watchdog.setReconnect(false);
+            if (watchdog != null) {
+                watchdog.setReconnect(false);
+            }
             closed = true;
             channel.close();
         }
@@ -1159,5 +1161,9 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
             return (n > 0) ? "+inf" : "-inf";
         }
         return Double.toString(n);
+    }
+
+    public boolean isMulti() {
+        return multi != null;
     }
 }

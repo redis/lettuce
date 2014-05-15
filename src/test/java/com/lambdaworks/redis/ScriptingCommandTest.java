@@ -85,6 +85,7 @@ public class ScriptingCommandTest extends AbstractCommandTest {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
             async.eval("while true do end", STATUS, new String[0]);
+            Thread.sleep(100);
             assertEquals("OK", redis.scriptKill());
         } finally {
             async.close();
