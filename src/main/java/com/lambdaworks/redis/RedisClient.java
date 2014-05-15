@@ -135,6 +135,11 @@ public class RedisClient {
                     public RedisConnection<String, String> createConnection() {
                         return connect(codec, false);
                     }
+
+                    @Override
+                    public Class<RedisConnection<String, String>> getComponentType() {
+                        return (Class) RedisConnection.class;
+                    }
                 }, maxActive, maxIdle, maxWait);
         return pool;
     }
@@ -151,6 +156,11 @@ public class RedisClient {
                     @Override
                     public RedisAsyncConnection<String, String> createConnection() {
                         return (RedisAsyncConnection<String, String>) connectAsyncImpl(codec, false);
+                    }
+
+                    @Override
+                    public Class<RedisAsyncConnection<String, String>> getComponentType() {
+                        return (Class) RedisAsyncConnection.class;
                     }
                 }, maxActive, maxIdle, maxWait);
         return pool;
