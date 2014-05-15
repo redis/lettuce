@@ -1,9 +1,12 @@
 package com.lambdaworks.redis;
 
-import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.PooledObjectFactory;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
@@ -16,30 +19,35 @@ public class RedisConnectionPool<T> {
     public RedisConnectionPool(RedisConnectionProvider<T> redisConnectionProvider, int maxActive, int maxIdle, long maxWait) {
         this.redisConnectionProvider = redisConnectionProvider;
 
-        objectPool = new GenericObjectPool<T>(createFactory(redisConnectionProvider), maxActive,
-                GenericObjectPool.WHEN_EXHAUSTED_FAIL, maxWait, maxIdle, true, false);
+        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        config.setMaxIdle(maxIdle);
+        config.setMaxTotal(maxActive);
+        config.setMaxWaitMillis(maxWait);
+        config.setTestOnBorrow(true);
+
+        objectPool = new GenericObjectPool<T>(createFactory(redisConnectionProvider), config);
     }
 
-    private PoolableObjectFactory<T> createFactory(final RedisConnectionProvider<T> redisConnectionProvider) {
-        return new BasePoolableObjectFactory() {
+    private PooledObjectFactory<T> createFactory(final RedisConnectionProvider<T> redisConnectionProvider) {
+        return new BasePooledObjectFactory<T>() {
             @Override
-            public Object makeObject() throws Exception {
+            public T create() throws Exception {
                 return redisConnectionProvider.createConnection();
             }
 
             @Override
-            public boolean validateObject(Object obj) {
-                return Connections.isValid(obj);
+            public PooledObject<T> wrap(T obj) {
+                return new DefaultPooledObject<T>(obj);
             }
 
             @Override
-            public void destroyObject(Object obj) throws Exception {
-                Connections.close(obj);
+            public boolean validateObject(PooledObject<T> p) {
+                return Connections.isValid(p.getObject());
             }
 
             @Override
-            public void passivateObject(Object obj) throws Exception {
-                super.passivateObject(obj);
+            public void destroyObject(PooledObject<T> p) throws Exception {
+                Connections.close(p.getObject());
             }
         };
     }
@@ -67,7 +75,6 @@ public class RedisConnectionPool<T> {
     }
 
     public void close() throws Exception {
-        objectPool.clear();
         objectPool.close();
     }
 }
