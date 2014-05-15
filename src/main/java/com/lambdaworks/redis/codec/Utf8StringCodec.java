@@ -7,10 +7,11 @@ import java.nio.CharBuffer;
 import java.nio.charset.*;
 
 import static java.nio.charset.CoderResult.OVERFLOW;
+import com.lambdaworks.redis.protocol.Charsets;
 
 /**
  * A {@link RedisCodec} that handles UTF-8 encoded keys and values.
- *
+ * 
  * @author Will Glozer
  */
 public class Utf8StringCodec extends RedisCodec<String, String> {
@@ -19,13 +20,12 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
     private CharBuffer chars;
 
     /**
-     * Initialize a new instance that encodes and decodes strings using
-     * the UTF-8 charset;
+     * Initialize a new instance that encodes and decodes strings using the UTF-8 charset;
      */
     public Utf8StringCodec() {
-        charset = Charset.forName("UTF-8");
+        charset = Charsets.UTF8;
         decoder = charset.newDecoder();
-        chars   = CharBuffer.allocate(1024);
+        chars = CharBuffer.allocate(1024);
     }
 
     @Override

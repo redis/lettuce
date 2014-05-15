@@ -2,14 +2,10 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.AUTH;
 import static com.lambdaworks.redis.protocol.CommandType.EXEC;
-import static com.lambdaworks.redis.protocol.CommandType.MULTI;
-import static com.lambdaworks.redis.protocol.CommandType.SELECT;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -32,10 +28,8 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
@@ -47,17 +41,13 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  * @author Will Glozer
  */
 @ChannelHandler.Sharable
-public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter implements RedisAsyncConnection<K, V> {
-    protected BlockingQueue<Command<K, V, ?>> queue;
-    protected RedisCodec<K, V> codec;
-    protected Channel channel;
-    protected long timeout;
-    protected TimeUnit unit;
+public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisAsyncConnection<K, V> {
+
     protected MultiOutput<K, V> multi;
     private String password;
     private int db;
-    private boolean closed;
-    private RedisCommandBuilder<K, V> commandBuilder;
+    protected RedisCommandBuilder<K, V> commandBuilder;
+    protected RedisCodec<K, V> codec;
 
     /**
      * Initialize a new connection.
@@ -68,24 +58,10 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
      * @param unit Unit of time for the timeout.
      */
     public RedisAsyncConnectionImpl(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        this.queue = queue;
+        super(queue, timeout, unit);
         this.codec = codec;
-        this.timeout = timeout;
-        this.unit = unit;
-
         commandBuilder = new RedisCommandBuilder<K, V>(codec);
-    }
 
-    /**
-     * Set the command timeout for this connection.
-     * 
-     * @param timeout Command timeout.
-     * @param unit Unit of time for the timeout.
-     */
-    @Override
-    public void setTimeout(long timeout, TimeUnit unit) {
-        this.timeout = timeout;
-        this.unit = unit;
     }
 
     @Override
@@ -96,7 +72,7 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
     @Override
     public String auth(String password) {
         Command<K, V, String> cmd = dispatch(commandBuilder.auth(password));
-        String status = await(cmd, timeout, unit);
+        String status = Futures.await(cmd, timeout, unit);
         if ("OK".equals(status))
             this.password = password;
         return status;
@@ -483,7 +459,8 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
 
     @Override
     public Future<String> multi() {
-        Command<K, V, String> cmd = dispatch(MULTI, new StatusOutput<K, V>(codec));
+
+        Command<K, V, String> cmd = dispatch(commandBuilder.multi());
         multi = (multi == null ? new MultiOutput<K, V>(codec) : multi);
         return cmd;
     }
@@ -641,7 +618,7 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
     @Override
     public String select(int db) {
         Command<K, V, String> cmd = dispatch(commandBuilder.select(db));
-        String status = await(cmd, timeout, unit);
+        String status = Futures.await(cmd, timeout, unit);
         if ("OK".equals(status))
             this.db = db;
         return status;
@@ -998,32 +975,6 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
     }
 
-    /**
-     * Wait until commands are complete or the connection timeout is reached.
-     * 
-     * @param futures Futures to wait for.
-     * 
-     * @return True if all futures complete in time.
-     */
-    public boolean awaitAll(Future<?>... futures) {
-        return Futures.awaitAll(timeout, unit, futures);
-    }
-
-    /**
-     * Close the connection.
-     */
-    @Override
-    public synchronized void close() {
-        if (!closed && channel != null) {
-            ConnectionWatchdog watchdog = channel.pipeline().get(ConnectionWatchdog.class);
-            if (watchdog != null) {
-                watchdog.setReconnect(false);
-            }
-            closed = true;
-            channel.close();
-        }
-    }
-
     @Override
     public String digest(V script) {
         try {
@@ -1035,128 +986,25 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
         }
     }
 
-    @Override
-    public synchronized void channelActive(ChannelHandlerContext ctx) throws Exception {
-        channel = ctx.channel();
-
-        List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
-
-        if (password != null) {
-            CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
-            tmp.add(new Command<K, V, String>(AUTH, new StatusOutput<K, V>(codec), args, false));
-        }
-
-        if (db != 0) {
-            CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(db);
-            tmp.add(new Command<K, V, String>(SELECT, new StatusOutput<K, V>(codec), args, false));
-        }
-
-        tmp.addAll(queue);
-        queue.clear();
-
-        for (Command<K, V, ?> cmd : tmp) {
-            if (!cmd.isCancelled()) {
-                queue.add(cmd);
-                channel.writeAndFlush(cmd);
-            }
-        }
-
-        tmp.clear();
-    }
-
-    @Override
-    public synchronized void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (closed) {
-            for (Command<K, V, ?> cmd : queue) {
-                if (cmd.getOutput() != null) {
-                    cmd.getOutput().setError("Connection closed");
-                }
-                cmd.complete();
-            }
-            queue.clear();
-            queue = null;
-            channel = null;
-        }
-    }
-
     public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
-        return dispatch(type, output, (CommandArgs<K, V>) null);
+        return dispatch(type, output, null);
     }
 
     public synchronized <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         Command<K, V, T> cmd = new Command<K, V, T>(type, output, args, multi != null);
-
-        try {
-            if (multi != null) {
-                multi.add(cmd);
-            }
-
-            queue.put(cmd);
-
-            if (channel != null) {
-                channel.writeAndFlush(cmd);
-            }
-        } catch (NullPointerException e) {
-            throw new RedisException("Connection is closed");
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
-        }
-
-        return cmd;
+        return dispatch(cmd);
     }
 
     public synchronized <T> Command<K, V, T> dispatch(Command<K, V, T> cmd) {
 
-        try {
-            if (multi != null) {
-                cmd.setMulti(true);
-                multi.add(cmd);
-            }
-
-            queue.put(cmd);
-
-            if (channel != null) {
-                channel.writeAndFlush(cmd);
-            }
-        } catch (NullPointerException e) {
-            throw new RedisException("Connection is closed");
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
+        if (multi != null) {
+            cmd.setMulti(true);
+            multi.add(cmd);
         }
-
-        return cmd;
+        return super.dispatch(cmd);
     }
 
-    public <T> T await(Command<K, V, T> cmd, long timeout, TimeUnit unit) {
-        if (!cmd.await(timeout, unit)) {
-            cmd.cancel(true);
-            throw new RedisException("Command timed out");
-        }
-        CommandOutput<K, V, T> output = cmd.getOutput();
-        if (output.hasError())
-            throw new RedisException(output.getError());
-        return output.get();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <K, V, T> CommandOutput<K, V, T> newScriptOutput(RedisCodec<K, V> codec, ScriptOutputType type) {
-        switch (type) {
-            case BOOLEAN:
-                return (CommandOutput<K, V, T>) new BooleanOutput<K, V>(codec);
-            case INTEGER:
-                return (CommandOutput<K, V, T>) new IntegerOutput<K, V>(codec);
-            case STATUS:
-                return (CommandOutput<K, V, T>) new StatusOutput<K, V>(codec);
-            case MULTI:
-                return (CommandOutput<K, V, T>) new NestedMultiOutput<K, V>(codec);
-            case VALUE:
-                return (CommandOutput<K, V, T>) new ValueOutput<K, V>(codec);
-            default:
-                throw new RedisException("Unsupported script output type");
-        }
-    }
-
-    public String string(double n) {
+    public static String string(double n) {
         if (Double.isInfinite(n)) {
             return (n > 0) ? "+inf" : "-inf";
         }
@@ -1165,5 +1013,21 @@ public class RedisAsyncConnectionImpl<K, V> extends ChannelInboundHandlerAdapter
 
     public boolean isMulti() {
         return multi != null;
+    }
+
+    @Override
+    public synchronized void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        channel = ctx.channel();
+        if (password != null) {
+            channel.writeAndFlush(commandBuilder.auth(password));
+        }
+
+        if (db != 0) {
+            channel.writeAndFlush(commandBuilder.select(db));
+        }
+
+        super.channelActive(ctx);
+
     }
 }

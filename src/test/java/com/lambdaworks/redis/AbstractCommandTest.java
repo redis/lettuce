@@ -8,18 +8,22 @@ import java.util.*;
 
 public abstract class AbstractCommandTest {
     public static final String host = "localhost";
-    public static final int    port = 6379;
+    public static final int port = 6379;
 
     public static final String passwd = "passwd";
 
     protected static RedisClient client;
     protected RedisConnection<String, String> redis;
-    protected String key   = "key";
+    protected String key = "key";
     protected String value = "value";
 
     @BeforeClass
     public static void setupClient() {
-        client = new RedisClient(host, port);
+        client = getRedisClient();
+    }
+
+    protected static RedisClient getRedisClient() {
+        return new RedisClient(host, port);
     }
 
     @AfterClass
@@ -28,13 +32,13 @@ public abstract class AbstractCommandTest {
     }
 
     @Before
-    public final void openConnection() throws Exception {
+    public void openConnection() throws Exception {
         redis = client.connect();
         redis.flushall();
     }
 
     @After
-    public final void closeConnection() throws Exception {
+    public void closeConnection() throws Exception {
         redis.close();
     }
 
@@ -70,7 +74,7 @@ public abstract class AbstractCommandTest {
                 redis.configSet("requirepass", passwd);
                 redis.auth(passwd);
 
-                RedisClient client = new RedisClient(host, port);
+                RedisClient client = getRedisClient();
                 try {
                     run(client);
                 } finally {

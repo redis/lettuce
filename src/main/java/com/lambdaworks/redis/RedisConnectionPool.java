@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
 import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -14,7 +13,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
  */
 public class RedisConnectionPool<T> {
     private RedisConnectionProvider<T> redisConnectionProvider;
-    private ObjectPool<T> objectPool;
+    private GenericObjectPool<T> objectPool;
 
     public RedisConnectionPool(RedisConnectionProvider<T> redisConnectionProvider, int maxActive, int maxIdle, long maxWait) {
         this.redisConnectionProvider = redisConnectionProvider;
@@ -62,7 +61,7 @@ public class RedisConnectionPool<T> {
         }
     }
 
-    public void freeConnection(T t) throws Exception {
+    public void freeConnection(T t) {
         objectPool.returnObject(t);
     }
 
@@ -76,5 +75,9 @@ public class RedisConnectionPool<T> {
 
     public void close() throws Exception {
         objectPool.close();
+    }
+
+    public Class<T> getComponentType() {
+        return redisConnectionProvider.getComponentType();
     }
 }

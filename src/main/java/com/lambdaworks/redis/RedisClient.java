@@ -2,11 +2,16 @@
 
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.lang.reflect.Proxy;
-import java.net.InetSocketAddress;
+import java.net.ConnectException;
+import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
@@ -18,6 +23,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
@@ -29,6 +35,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
@@ -37,8 +45,12 @@ import io.netty.util.concurrent.GlobalEventExecutor;
  * @author Will Glozer
  */
 public class RedisClient {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
+
     private EventLoopGroup group;
-    private Bootstrap bootstrap;
+    private Bootstrap redisBootstrap;
+    private Bootstrap sentinelBootstrap;
     private HashedWheelTimer timer;
     private ChannelGroup channels;
     private long timeout;
@@ -76,10 +88,10 @@ public class RedisClient {
      */
     public RedisClient(RedisURI redisURI) {
         this.redisURI = redisURI;
-        InetSocketAddress addr = new InetSocketAddress(redisURI.getHost(), redisURI.getPort());
-
         group = new NioEventLoopGroup();
-        bootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group).remoteAddress(addr);
+
+        redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
+        sentinelBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
 
         setDefaultTimeout(redisURI.getTimeout(), redisURI.getUnit());
 
@@ -98,7 +110,7 @@ public class RedisClient {
     public void setDefaultTimeout(long timeout, TimeUnit unit) {
         this.timeout = timeout;
         this.unit = unit;
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
+        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
     }
 
     /**
@@ -199,7 +211,7 @@ public class RedisClient {
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
         RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(queue, codec, timeout, unit);
 
-        return connect(handler, connection, withReconnect);
+        return connectAsyncImpl(handler, connection, withReconnect);
     }
 
     /**
@@ -216,19 +228,27 @@ public class RedisClient {
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
         RedisPubSubConnection<K, V> connection = new RedisPubSubConnection<K, V>(queue, codec, timeout, unit);
 
-        return connect(handler, connection, true);
+        return connectAsyncImpl(handler, connection, true);
     }
 
-    private <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connect(final CommandHandler<K, V> handler, final T connection,
-            final boolean withReconnect) {
+    private <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
+            final T connection, final boolean withReconnect) {
         try {
 
-            bootstrap.handler(new ChannelInitializer<Channel>() {
+            SocketAddress redisAddress = null;
+
+            if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
+                redisAddress = lookupRedis(redisURI.getSentinelMasterId());
+            } else {
+                redisAddress = redisURI.getResolvedAddress();
+            }
+
+            redisBootstrap.handler(new ChannelInitializer<Channel>() {
                 @Override
                 protected void initChannel(Channel ch) throws Exception {
 
                     if (withReconnect) {
-                        ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, channels, timer);
+                        ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, channels, timer);
                         ch.pipeline().addLast(watchdog);
                         watchdog.setReconnect(true);
                     }
@@ -237,7 +257,7 @@ public class RedisClient {
                 }
             });
 
-            bootstrap.connect().sync();
+            redisBootstrap.connect(redisAddress).sync();
 
             if (redisURI.getPassword() != null) {
                 connection.auth(redisURI.getPassword());
@@ -253,14 +273,82 @@ public class RedisClient {
         }
     }
 
+    private SocketAddress lookupRedis(String sentinelMasterId) throws InterruptedException, TimeoutException,
+            ExecutionException {
+        RedisSentinelConnectionImpl connection = connectSentinelAsync();
+        try {
+            return (SocketAddress) connection.getMasterAddrByName(sentinelMasterId).get(timeout, unit);
+        } finally {
+            connection.close();
+        }
+    }
+
+    public <K, V> RedisSentinelConnectionImpl connectSentinelAsync() throws InterruptedException {
+
+        checkState(!redisURI.getSentinels().isEmpty(), "cannot connect Redis Sentinel, redisSentinelAddress is not set");
+
+        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+
+        final CommandHandler commandHandler = new CommandHandler(queue);
+        final RedisSentinelConnectionImpl connection = new RedisSentinelConnectionImpl(codec, queue, timeout, unit);
+
+        sentinelBootstrap.handler(new ChannelInitializer<Channel>() {
+            @Override
+            protected void initChannel(Channel ch) throws Exception {
+
+                ConnectionWatchdog watchdog = new ConnectionWatchdog(sentinelBootstrap, channels, timer);
+                ch.pipeline().addLast(watchdog);
+                watchdog.setReconnect(true);
+
+                ch.pipeline().addLast(watchdog, commandHandler, connection);
+            }
+        });
+
+        boolean connected = false;
+        Exception causingException = null;
+        for (RedisURI uri : redisURI.getSentinels()) {
+
+            sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) uri.getUnit().toMillis(uri.getTimeout()));
+            ChannelFuture connect = sentinelBootstrap.connect(uri.getResolvedAddress());
+            try {
+                connect.sync();
+                connected = true;
+            } catch (Exception e) {
+                logger.warn("Cannot connect sentinel at " + uri.getHost() + ":" + uri.getPort() + ": " + e.toString());
+                if (causingException == null) {
+                    causingException = e;
+                } else {
+                    causingException.addSuppressed(e);
+                }
+                if (e instanceof ConnectException) {
+                    continue;
+                }
+            }
+        }
+
+        if (!connected) {
+            throw new RedisException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
+        }
+
+        return connection;
+    }
+
     /**
      * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
      */
     public void shutdown() {
         for (Channel c : channels) {
             ChannelPipeline pipeline = c.pipeline();
-            RedisAsyncConnectionImpl<?, ?> connection = pipeline.get(RedisAsyncConnectionImpl.class);
-            connection.close();
+
+            RedisAsyncConnectionImpl<?, ?> asyncConnection = pipeline.get(RedisAsyncConnectionImpl.class);
+            if (asyncConnection != null) {
+                asyncConnection.close();
+            }
+
+            RedisSentinelConnectionImpl<?, ?> sentinelConnection = pipeline.get(RedisSentinelConnectionImpl.class);
+            if (sentinelConnection != null) {
+                sentinelConnection.close();
+            }
         }
         ChannelGroupFuture future = channels.close();
         future.awaitUninterruptibly();

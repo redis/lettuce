@@ -37,12 +37,6 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-codec</artifactId>
-            <version>4.0.19.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
             <artifactId>netty-buffer</artifactId>
             <version>4.0.19.Final</version>
         </dependency>
@@ -76,10 +70,36 @@
             <artifactId>guava</artifactId>
             <version>17.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <version>2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>3.1.4.RELEASE</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>3.1.4.RELEASE</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
         </dependency>
 
 

@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
  * @since 14.05.14 12:21
  */
-public interface RedisConnection<K, V> {
+public interface RedisConnection<K, V> extends AutoCloseable {
     Long append(K key, V value);
 
     String auth(String password);

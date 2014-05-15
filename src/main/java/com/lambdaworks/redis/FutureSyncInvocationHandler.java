@@ -46,7 +46,7 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                     }
                 }
 
-                return connection.await(command, timeout, unit);
+                return Futures.await(command, timeout, unit);
             }
 
             return result;

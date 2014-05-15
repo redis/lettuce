@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
  * @since 14.05.14 12:24
  */
-public interface RedisAsyncConnection<K, V> {
+public interface RedisAsyncConnection<K, V> extends AutoCloseable {
     void setTimeout(long timeout, TimeUnit unit);
 
     Future<Long> append(K key, V value);
