@@ -7,7 +7,7 @@ import io.netty.util.internal.ConcurrentSet;
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 16.05.14 10:59
  */
 public class CloseEvents {

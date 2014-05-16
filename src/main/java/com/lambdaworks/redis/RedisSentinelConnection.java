@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 21:04
  */
 public interface RedisSentinelConnection<K, V> extends AutoCloseable {

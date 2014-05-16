@@ -11,12 +11,17 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:09
  */
 public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
+
     protected BlockingQueue<Command<K, V, ?>> queue;
     protected Channel channel;
     protected long timeout;
@@ -46,6 +51,8 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
      * Close the connection.
      */
     public synchronized void close() {
+        logger.debug("close()");
+
         if (closed) {
             throw new IllegalStateException("Already closed");
         }
@@ -68,6 +75,7 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
 
     @Override
     public synchronized void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.debug("channelActive()");
         channel = ctx.channel();
 
         List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
@@ -87,6 +95,7 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
 
     @Override
     public synchronized void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.debug("channelInactive()");
         if (closed) {
             for (Command<K, V, ?> cmd : queue) {
                 if (cmd.getOutput() != null) {

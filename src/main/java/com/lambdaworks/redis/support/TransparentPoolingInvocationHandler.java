@@ -9,24 +9,28 @@ import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.RedisConnectionPool;
 
 /**
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * Invocation Handler with transparent pooling. This handler is thread-safe.
+ * 
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 21:14
  */
 public class TransparentPoolingInvocationHandler extends AbstractInvocationHandler {
 
     private RedisConnectionPool pool;
-    private long recheckInterval;
-    private TimeUnit unit;
     private long lastCheck;
     private long intervalMs;
 
     private Object cachedConnection;
     private Map<Method, Method> methodCache = new ConcurrentHashMap<Method, Method>();
 
+    /**
+     * 
+     * @param pool
+     * @param recheckInterval
+     * @param unit
+     */
     public TransparentPoolingInvocationHandler(RedisConnectionPool pool, long recheckInterval, TimeUnit unit) {
         this.pool = pool;
-        this.recheckInterval = recheckInterval;
-        this.unit = unit;
         intervalMs = TimeUnit.MILLISECONDS.convert(recheckInterval, unit);
     }
 
@@ -57,6 +61,13 @@ public class TransparentPoolingInvocationHandler extends AbstractInvocationHandl
         }
     }
 
+    /**
+     * Lookup the target method using a cache.
+     * 
+     * @param method
+     * @return
+     * @throws NoSuchMethodException
+     */
     private Method getMethod(Method method) throws NoSuchMethodException {
         Method targetMethod = methodCache.get(method);
         if (targetMethod == null) {

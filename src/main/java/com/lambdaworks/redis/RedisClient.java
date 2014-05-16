@@ -273,10 +273,15 @@ public class RedisClient {
             SocketAddress redisAddress;
 
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
+                logger.debug("Connecting to Redis using Sentinels " + redisURI.getSentinels() + ", MasterId "
+                        + redisURI.getSentinelMasterId());
                 redisAddress = lookupRedis(redisURI.getSentinelMasterId());
+
             } else {
                 redisAddress = redisURI.getResolvedAddress();
             }
+
+            logger.debug("Connecting to Redis, address: " + redisAddress);
 
             redisBootstrap.handler(new ChannelInitializer<Channel>() {
                 @Override
@@ -335,6 +340,8 @@ public class RedisClient {
         final CommandHandler commandHandler = new CommandHandler(queue);
         final RedisSentinelConnectionImpl connection = new RedisSentinelConnectionImpl(codec, queue, timeout, unit);
 
+        logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
+
         sentinelBootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel ch) throws Exception {
@@ -353,6 +360,7 @@ public class RedisClient {
 
             sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) uri.getUnit().toMillis(uri.getTimeout()));
             ChannelFuture connect = sentinelBootstrap.connect(uri.getResolvedAddress());
+            logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
             try {
                 connect.sync();
                 connected = true;

@@ -17,7 +17,7 @@ import com.lambdaworks.redis.protocol.Command;
 import io.netty.channel.ChannelHandler;
 
 /**
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:27
  */
 @ChannelHandler.Sharable
