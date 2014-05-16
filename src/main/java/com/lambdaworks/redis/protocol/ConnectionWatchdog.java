@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
+import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
@@ -32,6 +33,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private Timer timer;
     private boolean reconnect;
     private int attempts;
+    private SocketAddress remoteAddress;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -53,7 +55,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         channel = ctx.channel();
         attempts = 0;
-        ctx.fireChannelActive();
+        remoteAddress = channel.remoteAddress();
+        super.channelActive(ctx);
     }
 
     @Override
@@ -61,7 +64,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         if (reconnect) {
             scheduleReconnect();
         }
-        ctx.fireChannelInactive();
+        super.channelInactive(ctx);
     }
 
     private void scheduleReconnect() {
@@ -86,10 +89,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         try {
             logger.info("Connecting");
-            bootstrap.connect().sync();
+            bootstrap.connect(remoteAddress).sync();
         } catch (Exception e) {
             scheduleReconnect();
-            logger.warn("Cannot connect: " + e.getMessage());
+            logger.warn("Cannot connect: " + e.toString());
         }
     }
 }

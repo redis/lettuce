@@ -2,13 +2,14 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class ClientTest extends AbstractCommandTest {
     @Rule
@@ -26,6 +27,34 @@ public class ClientTest extends AbstractCommandTest {
         RedisConnection<String, String> connection = client.connect();
         client.shutdown();
         connection.get(key);
+    }
+
+    @Test
+    public void listenerTest() throws Exception {
+
+        TestConnectionListener listener = new TestConnectionListener();
+
+        RedisClient client = new RedisClient(host);
+        client.addListener(listener);
+
+        assertNull(listener.onConnected);
+        assertNull(listener.onDisconnected);
+        assertNull(listener.onException);
+
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+
+        Thread.sleep(100);
+
+        assertEquals(connection, listener.onConnected);
+        assertNull(listener.onDisconnected);
+
+        connection.set(key, value).get();
+        connection.close();
+        Thread.sleep(100);
+
+        assertEquals(connection, listener.onConnected);
+        assertEquals(connection, listener.onDisconnected);
+
     }
 
     @Test(expected = RedisException.class, timeout = 100)
@@ -61,5 +90,28 @@ public class ClientTest extends AbstractCommandTest {
         exception.expect(RedisException.class);
         exception.expectMessage("Unable to connect");
         client.connectPubSub();
+    }
+
+    private class TestConnectionListener implements RedisConnectionStateListener {
+
+        public RedisChannelHandler onConnected;
+        public RedisChannelHandler onDisconnected;
+        public RedisChannelHandler onException;
+
+        @Override
+        public void onRedisConnected(RedisChannelHandler connection) {
+            onConnected = connection;
+        }
+
+        @Override
+        public void onRedisDisconnected(RedisChannelHandler connection) {
+            onDisconnected = connection;
+        }
+
+        @Override
+        public void onRedisExceptionCaught(RedisChannelHandler connection, Throwable cause) {
+            onException = connection;
+
+        }
     }
 }

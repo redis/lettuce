@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
@@ -22,11 +21,10 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.SetArgs;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
@@ -62,7 +60,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<Long> append(K key, V value) {
+    public RedisFuture<Long> append(K key, V value) {
         return dispatch(commandBuilder.append(key, value));
     }
 
@@ -76,122 +74,122 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<String> bgrewriteaof() {
+    public RedisFuture<String> bgrewriteaof() {
         return dispatch(commandBuilder.bgrewriteaof());
     }
 
     @Override
-    public Future<String> bgsave() {
+    public RedisFuture<String> bgsave() {
         return dispatch(commandBuilder.bgsave());
     }
 
     @Override
-    public Future<Long> bitcount(K key) {
+    public RedisFuture<Long> bitcount(K key) {
         return dispatch(commandBuilder.bitcount(key));
     }
 
     @Override
-    public Future<Long> bitcount(K key, long start, long end) {
+    public RedisFuture<Long> bitcount(K key, long start, long end) {
         return dispatch(commandBuilder.bitcount(key, start, end));
     }
 
     @Override
-    public Future<Long> bitopAnd(K destination, K... keys) {
+    public RedisFuture<Long> bitopAnd(K destination, K... keys) {
         return dispatch(commandBuilder.bitopAnd(destination, keys));
     }
 
     @Override
-    public Future<Long> bitopNot(K destination, K source) {
+    public RedisFuture<Long> bitopNot(K destination, K source) {
         return dispatch(commandBuilder.bitopNot(destination, source));
     }
 
     @Override
-    public Future<Long> bitopOr(K destination, K... keys) {
+    public RedisFuture<Long> bitopOr(K destination, K... keys) {
         return dispatch(commandBuilder.bitopOr(destination, keys));
     }
 
     @Override
-    public Future<Long> bitopXor(K destination, K... keys) {
+    public RedisFuture<Long> bitopXor(K destination, K... keys) {
         return dispatch(commandBuilder.bitopXor(destination, keys));
     }
 
     @Override
-    public Future<KeyValue<K, V>> blpop(long timeout, K... keys) {
+    public RedisFuture<KeyValue<K, V>> blpop(long timeout, K... keys) {
         return dispatch(commandBuilder.blpop(timeout, keys));
     }
 
     @Override
-    public Future<KeyValue<K, V>> brpop(long timeout, K... keys) {
+    public RedisFuture<KeyValue<K, V>> brpop(long timeout, K... keys) {
         return dispatch(commandBuilder.brpop(timeout, keys));
     }
 
     @Override
-    public Future<V> brpoplpush(long timeout, K source, K destination) {
+    public RedisFuture<V> brpoplpush(long timeout, K source, K destination) {
         return dispatch(commandBuilder.brpoplpush(timeout, source, destination));
     }
 
     @Override
-    public Future<K> clientGetname() {
+    public RedisFuture<K> clientGetname() {
         return dispatch(commandBuilder.clientGetname());
     }
 
     @Override
-    public Future<String> clientSetname(K name) {
+    public RedisFuture<String> clientSetname(K name) {
         return dispatch(commandBuilder.clientSetname(name));
     }
 
     @Override
-    public Future<String> clientKill(String addr) {
+    public RedisFuture<String> clientKill(String addr) {
         return dispatch(commandBuilder.clientKill(addr));
     }
 
     @Override
-    public Future<String> clientList() {
+    public RedisFuture<String> clientList() {
         return dispatch(commandBuilder.clientList());
     }
 
     @Override
-    public Future<List<String>> configGet(String parameter) {
+    public RedisFuture<List<String>> configGet(String parameter) {
         return dispatch(commandBuilder.configGet(parameter));
     }
 
     @Override
-    public Future<String> configResetstat() {
+    public RedisFuture<String> configResetstat() {
         return dispatch(commandBuilder.configResetstat());
     }
 
     @Override
-    public Future<String> configSet(String parameter, String value) {
+    public RedisFuture<String> configSet(String parameter, String value) {
         return dispatch(commandBuilder.configSet(parameter, value));
     }
 
     @Override
-    public Future<Long> dbsize() {
+    public RedisFuture<Long> dbsize() {
         return dispatch(commandBuilder.dbsize());
     }
 
     @Override
-    public Future<String> debugObject(K key) {
+    public RedisFuture<String> debugObject(K key) {
         return dispatch(commandBuilder.debugObject(key));
     }
 
     @Override
-    public Future<Long> decr(K key) {
+    public RedisFuture<Long> decr(K key) {
         return dispatch(commandBuilder.decr(key));
     }
 
     @Override
-    public Future<Long> decrby(K key, long amount) {
+    public RedisFuture<Long> decrby(K key, long amount) {
         return dispatch(commandBuilder.decrby(key, amount));
     }
 
     @Override
-    public Future<Long> del(K... keys) {
+    public RedisFuture<Long> del(K... keys) {
         return dispatch(commandBuilder.del(keys));
     }
 
     @Override
-    public Future<String> discard() {
+    public RedisFuture<String> discard() {
         if (multi != null) {
             multi.cancel();
             multi = null;
@@ -200,58 +198,58 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<byte[]> dump(K key) {
+    public RedisFuture<byte[]> dump(K key) {
         return dispatch(commandBuilder.dump(key));
     }
 
     @Override
-    public Future<V> echo(V msg) {
+    public RedisFuture<V> echo(V msg) {
         return dispatch(commandBuilder.echo(msg));
     }
 
     @Override
-    public <T> Future<T> eval(V script, ScriptOutputType type, K... keys) {
-        return (Future) dispatch(commandBuilder.eval(script, type, keys));
+    public <T> RedisFuture<T> eval(V script, ScriptOutputType type, K... keys) {
+        return (RedisFuture) dispatch(commandBuilder.eval(script, type, keys));
     }
 
     @Override
-    public <T> Future<T> eval(V script, ScriptOutputType type, K[] keys, V... values) {
-        return (Future) dispatch(commandBuilder.eval(script, type, keys, values));
+    public <T> RedisFuture<T> eval(V script, ScriptOutputType type, K[] keys, V... values) {
+        return (RedisFuture) dispatch(commandBuilder.eval(script, type, keys, values));
     }
 
     @Override
-    public <T> Future<T> evalsha(String digest, ScriptOutputType type, K... keys) {
-        return (Future) dispatch(commandBuilder.evalsha(digest, type, keys));
+    public <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K... keys) {
+        return (RedisFuture) dispatch(commandBuilder.evalsha(digest, type, keys));
     }
 
     @Override
-    public <T> Future<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
-        return (Future) dispatch(commandBuilder.evalsha(digest, type, keys, values));
+    public <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
+        return (RedisFuture) dispatch(commandBuilder.evalsha(digest, type, keys, values));
     }
 
     @Override
-    public Future<Boolean> exists(K key) {
+    public RedisFuture<Boolean> exists(K key) {
         return dispatch(commandBuilder.exists(key));
     }
 
     @Override
-    public Future<Boolean> expire(K key, long seconds) {
+    public RedisFuture<Boolean> expire(K key, long seconds) {
         return dispatch(commandBuilder.expire(key, seconds));
     }
 
     @Override
-    public Future<Boolean> expireat(K key, Date timestamp) {
+    public RedisFuture<Boolean> expireat(K key, Date timestamp) {
 
         return expireat(key, timestamp.getTime() / 1000);
     }
 
     @Override
-    public Future<Boolean> expireat(K key, long timestamp) {
+    public RedisFuture<Boolean> expireat(K key, long timestamp) {
         return dispatch(commandBuilder.expireat(key, timestamp));
     }
 
     @Override
-    public Future<List<Object>> exec() {
+    public RedisFuture<List<Object>> exec() {
         MultiOutput<K, V> multi = this.multi;
         this.multi = null;
         if (multi == null)
@@ -260,202 +258,202 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<String> flushall() throws Exception {
+    public RedisFuture<String> flushall() throws Exception {
         return dispatch(commandBuilder.flushall());
     }
 
     @Override
-    public Future<String> flushdb() throws Exception {
+    public RedisFuture<String> flushdb() throws Exception {
         return dispatch(commandBuilder.flushdb());
     }
 
     @Override
-    public Future<V> get(K key) {
+    public RedisFuture<V> get(K key) {
         return dispatch(commandBuilder.get(key));
     }
 
     @Override
-    public Future<Long> getbit(K key, long offset) {
+    public RedisFuture<Long> getbit(K key, long offset) {
         return dispatch(commandBuilder.getbit(key, offset));
     }
 
     @Override
-    public Future<V> getrange(K key, long start, long end) {
+    public RedisFuture<V> getrange(K key, long start, long end) {
         return dispatch(commandBuilder.getrange(key, start, end));
     }
 
     @Override
-    public Future<V> getset(K key, V value) {
+    public RedisFuture<V> getset(K key, V value) {
         return dispatch(commandBuilder.getset(key, value));
     }
 
     @Override
-    public Future<Long> hdel(K key, K... fields) {
+    public RedisFuture<Long> hdel(K key, K... fields) {
         return dispatch(commandBuilder.hdel(key, fields));
     }
 
     @Override
-    public Future<Boolean> hexists(K key, K field) {
+    public RedisFuture<Boolean> hexists(K key, K field) {
         return dispatch(commandBuilder.hexists(key, field));
     }
 
     @Override
-    public Future<V> hget(K key, K field) {
+    public RedisFuture<V> hget(K key, K field) {
         return dispatch(commandBuilder.hget(key, field));
     }
 
     @Override
-    public Future<Long> hincrby(K key, K field, long amount) {
+    public RedisFuture<Long> hincrby(K key, K field, long amount) {
         return dispatch(commandBuilder.hincrby(key, field, amount));
     }
 
     @Override
-    public Future<Double> hincrbyfloat(K key, K field, double amount) {
+    public RedisFuture<Double> hincrbyfloat(K key, K field, double amount) {
         return dispatch(commandBuilder.hincrbyfloat(key, field, amount));
     }
 
     @Override
-    public Future<Map<K, V>> hgetall(K key) {
+    public RedisFuture<Map<K, V>> hgetall(K key) {
         return dispatch(commandBuilder.hgetall(key));
     }
 
     @Override
-    public Future<List<K>> hkeys(K key) {
+    public RedisFuture<List<K>> hkeys(K key) {
         return dispatch(commandBuilder.hkeys(key));
     }
 
     @Override
-    public Future<Long> hlen(K key) {
+    public RedisFuture<Long> hlen(K key) {
         return dispatch(commandBuilder.hlen(key));
     }
 
     @Override
-    public Future<List<V>> hmget(K key, K... fields) {
+    public RedisFuture<List<V>> hmget(K key, K... fields) {
         return dispatch(commandBuilder.hmget(key, fields));
     }
 
     @Override
-    public Future<String> hmset(K key, Map<K, V> map) {
+    public RedisFuture<String> hmset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hmset(key, map));
     }
 
     @Override
-    public Future<Boolean> hset(K key, K field, V value) {
+    public RedisFuture<Boolean> hset(K key, K field, V value) {
         return dispatch(commandBuilder.hset(key, field, value));
     }
 
     @Override
-    public Future<Boolean> hsetnx(K key, K field, V value) {
+    public RedisFuture<Boolean> hsetnx(K key, K field, V value) {
         return dispatch(commandBuilder.hsetnx(key, field, value));
     }
 
     @Override
-    public Future<List<V>> hvals(K key) {
+    public RedisFuture<List<V>> hvals(K key) {
         return dispatch(commandBuilder.hvals(key));
     }
 
     @Override
-    public Future<Long> incr(K key) {
+    public RedisFuture<Long> incr(K key) {
         return dispatch(commandBuilder.incr(key));
     }
 
     @Override
-    public Future<Long> incrby(K key, long amount) {
+    public RedisFuture<Long> incrby(K key, long amount) {
         return dispatch(commandBuilder.incrby(key, amount));
     }
 
     @Override
-    public Future<Double> incrbyfloat(K key, double amount) {
+    public RedisFuture<Double> incrbyfloat(K key, double amount) {
         return dispatch(commandBuilder.incrbyfloat(key, amount));
     }
 
     @Override
-    public Future<String> info() {
+    public RedisFuture<String> info() {
         return dispatch(commandBuilder.info());
     }
 
     @Override
-    public Future<String> info(String section) {
+    public RedisFuture<String> info(String section) {
         return dispatch(commandBuilder.info(section));
     }
 
     @Override
-    public Future<List<K>> keys(K pattern) {
+    public RedisFuture<List<K>> keys(K pattern) {
         return dispatch(commandBuilder.keys(pattern));
     }
 
     @Override
-    public Future<Date> lastsave() {
+    public RedisFuture<Date> lastsave() {
         return dispatch(commandBuilder.lastsave());
     }
 
     @Override
-    public Future<V> lindex(K key, long index) {
+    public RedisFuture<V> lindex(K key, long index) {
         return dispatch(commandBuilder.lindex(key, index));
     }
 
     @Override
-    public Future<Long> linsert(K key, boolean before, V pivot, V value) {
+    public RedisFuture<Long> linsert(K key, boolean before, V pivot, V value) {
         return dispatch(commandBuilder.linsert(key, before, pivot, value));
     }
 
     @Override
-    public Future<Long> llen(K key) {
+    public RedisFuture<Long> llen(K key) {
         return dispatch(commandBuilder.llen(key));
     }
 
     @Override
-    public Future<V> lpop(K key) {
+    public RedisFuture<V> lpop(K key) {
         return dispatch(commandBuilder.lpop(key));
     }
 
     @Override
-    public Future<Long> lpush(K key, V... values) {
+    public RedisFuture<Long> lpush(K key, V... values) {
         return dispatch(commandBuilder.lpush(key, values));
     }
 
     @Override
-    public Future<Long> lpushx(K key, V value) {
+    public RedisFuture<Long> lpushx(K key, V value) {
         return dispatch(commandBuilder.lpushx(key, value));
     }
 
     @Override
-    public Future<List<V>> lrange(K key, long start, long stop) {
+    public RedisFuture<List<V>> lrange(K key, long start, long stop) {
         return dispatch(commandBuilder.lrange(key, start, stop));
     }
 
     @Override
-    public Future<Long> lrem(K key, long count, V value) {
+    public RedisFuture<Long> lrem(K key, long count, V value) {
         return dispatch(commandBuilder.lrem(key, count, value));
     }
 
     @Override
-    public Future<String> lset(K key, long index, V value) {
+    public RedisFuture<String> lset(K key, long index, V value) {
         return dispatch(commandBuilder.lset(key, index, value));
     }
 
     @Override
-    public Future<String> ltrim(K key, long start, long stop) {
+    public RedisFuture<String> ltrim(K key, long start, long stop) {
         return dispatch(commandBuilder.ltrim(key, start, stop));
     }
 
     @Override
-    public Future<String> migrate(String host, int port, K key, int db, long timeout) {
+    public RedisFuture<String> migrate(String host, int port, K key, int db, long timeout) {
         return dispatch(commandBuilder.migrate(host, port, key, db, timeout));
     }
 
     @Override
-    public Future<List<V>> mget(K... keys) {
+    public RedisFuture<List<V>> mget(K... keys) {
         return dispatch(commandBuilder.mget(keys));
     }
 
     @Override
-    public Future<Boolean> move(K key, int db) {
+    public RedisFuture<Boolean> move(K key, int db) {
         return dispatch(commandBuilder.move(key, db));
     }
 
     @Override
-    public Future<String> multi() {
+    public RedisFuture<String> multi() {
 
         Command<K, V, String> cmd = dispatch(commandBuilder.multi());
         multi = (multi == null ? new MultiOutput<K, V>(codec) : multi);
@@ -463,152 +461,152 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<String> mset(Map<K, V> map) {
+    public RedisFuture<String> mset(Map<K, V> map) {
         return dispatch(commandBuilder.mset(map));
     }
 
     @Override
-    public Future<Boolean> msetnx(Map<K, V> map) {
+    public RedisFuture<Boolean> msetnx(Map<K, V> map) {
         return dispatch(commandBuilder.msetnx(map));
     }
 
     @Override
-    public Future<String> objectEncoding(K key) {
+    public RedisFuture<String> objectEncoding(K key) {
         return dispatch(commandBuilder.objectEncoding(key));
     }
 
     @Override
-    public Future<Long> objectIdletime(K key) {
+    public RedisFuture<Long> objectIdletime(K key) {
         return dispatch(commandBuilder.objectIdletime(key));
     }
 
     @Override
-    public Future<Long> objectRefcount(K key) {
+    public RedisFuture<Long> objectRefcount(K key) {
         return dispatch(commandBuilder.objectRefcount(key));
     }
 
     @Override
-    public Future<Boolean> persist(K key) {
+    public RedisFuture<Boolean> persist(K key) {
         return dispatch(commandBuilder.persist(key));
     }
 
     @Override
-    public Future<Boolean> pexpire(K key, long milliseconds) {
+    public RedisFuture<Boolean> pexpire(K key, long milliseconds) {
         return dispatch(commandBuilder.pexpire(key, milliseconds));
     }
 
     @Override
-    public Future<Boolean> pexpireat(K key, Date timestamp) {
+    public RedisFuture<Boolean> pexpireat(K key, Date timestamp) {
         return pexpireat(key, timestamp.getTime());
     }
 
     @Override
-    public Future<Boolean> pexpireat(K key, long timestamp) {
+    public RedisFuture<Boolean> pexpireat(K key, long timestamp) {
         return dispatch(commandBuilder.pexpireat(key, timestamp));
     }
 
     @Override
-    public Future<String> ping() {
+    public RedisFuture<String> ping() {
         return dispatch(commandBuilder.ping());
     }
 
     @Override
-    public Future<Long> pttl(K key) {
+    public RedisFuture<Long> pttl(K key) {
         return dispatch(commandBuilder.pttl(key));
     }
 
     @Override
-    public Future<Long> publish(K channel, V message) {
+    public RedisFuture<Long> publish(K channel, V message) {
         return dispatch(commandBuilder.publish(channel, message));
     }
 
     @Override
-    public Future<String> quit() {
+    public RedisFuture<String> quit() {
         return dispatch(commandBuilder.quit());
     }
 
     @Override
-    public Future<V> randomkey() {
+    public RedisFuture<V> randomkey() {
         return dispatch(commandBuilder.randomkey());
     }
 
     @Override
-    public Future<String> rename(K key, K newKey) {
+    public RedisFuture<String> rename(K key, K newKey) {
         return dispatch(commandBuilder.rename(key, newKey));
     }
 
     @Override
-    public Future<Boolean> renamenx(K key, K newKey) {
+    public RedisFuture<Boolean> renamenx(K key, K newKey) {
         return dispatch(commandBuilder.renamenx(key, newKey));
     }
 
     @Override
-    public Future<String> restore(K key, long ttl, byte[] value) {
+    public RedisFuture<String> restore(K key, long ttl, byte[] value) {
         return dispatch(commandBuilder.restore(key, ttl, value));
     }
 
     @Override
-    public Future<V> rpop(K key) {
+    public RedisFuture<V> rpop(K key) {
         return dispatch(commandBuilder.rpop(key));
     }
 
     @Override
-    public Future<V> rpoplpush(K source, K destination) {
+    public RedisFuture<V> rpoplpush(K source, K destination) {
         return dispatch(commandBuilder.rpoplpush(source, destination));
     }
 
     @Override
-    public Future<Long> rpush(K key, V... values) {
+    public RedisFuture<Long> rpush(K key, V... values) {
         return dispatch(commandBuilder.rpush(key, values));
     }
 
     @Override
-    public Future<Long> rpushx(K key, V value) {
+    public RedisFuture<Long> rpushx(K key, V value) {
         return dispatch(commandBuilder.rpushx(key, value));
     }
 
     @Override
-    public Future<Long> sadd(K key, V... members) {
+    public RedisFuture<Long> sadd(K key, V... members) {
         return dispatch(commandBuilder.sadd(key, members));
     }
 
     @Override
-    public Future<String> save() {
+    public RedisFuture<String> save() {
         return dispatch(commandBuilder.save());
     }
 
     @Override
-    public Future<Long> scard(K key) {
+    public RedisFuture<Long> scard(K key) {
         return dispatch(commandBuilder.scard(key));
     }
 
     @Override
-    public Future<List<Boolean>> scriptExists(String... digests) {
+    public RedisFuture<List<Boolean>> scriptExists(String... digests) {
         return dispatch(commandBuilder.scriptExists(digests));
     }
 
     @Override
-    public Future<String> scriptFlush() {
+    public RedisFuture<String> scriptFlush() {
         return dispatch(commandBuilder.scriptFlush());
     }
 
     @Override
-    public Future<String> scriptKill() {
+    public RedisFuture<String> scriptKill() {
         return dispatch(commandBuilder.scriptKill());
     }
 
     @Override
-    public Future<String> scriptLoad(V script) {
+    public RedisFuture<String> scriptLoad(V script) {
         return dispatch(commandBuilder.scriptLoad(script));
     }
 
     @Override
-    public Future<Set<V>> sdiff(K... keys) {
+    public RedisFuture<Set<V>> sdiff(K... keys) {
         return dispatch(commandBuilder.sdiff(keys));
     }
 
     @Override
-    public Future<Long> sdiffstore(K destination, K... keys) {
+    public RedisFuture<Long> sdiffstore(K destination, K... keys) {
         return dispatch(commandBuilder.sdiffstore(destination, keys));
     }
 
@@ -622,27 +620,32 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<String> set(K key, V value) {
+    public RedisFuture<String> set(K key, V value) {
         return dispatch(commandBuilder.set(key, value));
     }
 
     @Override
-    public Future<Long> setbit(K key, long offset, int value) {
+    public RedisFuture<V> set(K key, V value, SetArgs setArgs) {
+        return dispatch(commandBuilder.set(key, value, setArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> setbit(K key, long offset, int value) {
         return dispatch(commandBuilder.setbit(key, offset, value));
     }
 
     @Override
-    public Future<String> setex(K key, long seconds, V value) {
+    public RedisFuture<String> setex(K key, long seconds, V value) {
         return dispatch(commandBuilder.setex(key, seconds, value));
     }
 
     @Override
-    public Future<Boolean> setnx(K key, V value) {
+    public RedisFuture<Boolean> setnx(K key, V value) {
         return dispatch(commandBuilder.setnx(key, value));
     }
 
     @Override
-    public Future<Long> setrange(K key, long offset, V value) {
+    public RedisFuture<Long> setrange(K key, long offset, V value) {
         return dispatch(commandBuilder.setrange(key, offset, value));
     }
 
@@ -657,318 +660,318 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public Future<Set<V>> sinter(K... keys) {
+    public RedisFuture<Set<V>> sinter(K... keys) {
         return dispatch(commandBuilder.sinter(keys));
     }
 
     @Override
-    public Future<Long> sinterstore(K destination, K... keys) {
+    public RedisFuture<Long> sinterstore(K destination, K... keys) {
         return dispatch(commandBuilder.sinterstore(destination, keys));
     }
 
     @Override
-    public Future<Boolean> sismember(K key, V member) {
+    public RedisFuture<Boolean> sismember(K key, V member) {
         return dispatch(commandBuilder.sismember(key, member));
     }
 
     @Override
-    public Future<Boolean> smove(K source, K destination, V member) {
+    public RedisFuture<Boolean> smove(K source, K destination, V member) {
         return dispatch(commandBuilder.smove(source, destination, member));
     }
 
     @Override
-    public Future<String> slaveof(String host, int port) {
+    public RedisFuture<String> slaveof(String host, int port) {
         return dispatch(commandBuilder.slaveof(host, port));
     }
 
     @Override
-    public Future<String> slaveofNoOne() {
+    public RedisFuture<String> slaveofNoOne() {
         return dispatch(commandBuilder.slaveofNoOne());
     }
 
     @Override
-    public Future<List<Object>> slowlogGet() {
+    public RedisFuture<List<Object>> slowlogGet() {
         return dispatch(commandBuilder.slowlogGet());
     }
 
     @Override
-    public Future<List<Object>> slowlogGet(int count) {
+    public RedisFuture<List<Object>> slowlogGet(int count) {
         return dispatch(commandBuilder.slowlogGet(count));
     }
 
     @Override
-    public Future<Long> slowlogLen() {
+    public RedisFuture<Long> slowlogLen() {
         return dispatch(commandBuilder.slowlogLen());
     }
 
     @Override
-    public Future<String> slowlogReset() {
+    public RedisFuture<String> slowlogReset() {
         return dispatch(commandBuilder.slowlogReset());
     }
 
     @Override
-    public Future<Set<V>> smembers(K key) {
+    public RedisFuture<Set<V>> smembers(K key) {
         return dispatch(commandBuilder.smembers(key));
     }
 
     @Override
-    public Future<List<V>> sort(K key) {
+    public RedisFuture<List<V>> sort(K key) {
         return dispatch(commandBuilder.sort(key));
     }
 
     @Override
-    public Future<List<V>> sort(K key, SortArgs sortArgs) {
+    public RedisFuture<List<V>> sort(K key, SortArgs sortArgs) {
         return dispatch(commandBuilder.sort(key, sortArgs));
     }
 
     @Override
-    public Future<Long> sortStore(K key, SortArgs sortArgs, K destination) {
+    public RedisFuture<Long> sortStore(K key, SortArgs sortArgs, K destination) {
         return dispatch(commandBuilder.sortStore(key, sortArgs, destination));
     }
 
     @Override
-    public Future<V> spop(K key) {
+    public RedisFuture<V> spop(K key) {
         return dispatch(commandBuilder.spop(key));
     }
 
     @Override
-    public Future<V> srandmember(K key) {
+    public RedisFuture<V> srandmember(K key) {
         return dispatch(commandBuilder.srandmember(key));
     }
 
     @Override
-    public Future<Set<V>> srandmember(K key, long count) {
+    public RedisFuture<Set<V>> srandmember(K key, long count) {
         return dispatch(commandBuilder.srandmember(key, count));
     }
 
     @Override
-    public Future<Long> srem(K key, V... members) {
+    public RedisFuture<Long> srem(K key, V... members) {
         return dispatch(commandBuilder.srem(key, members));
     }
 
     @Override
-    public Future<Set<V>> sunion(K... keys) {
+    public RedisFuture<Set<V>> sunion(K... keys) {
         return dispatch(commandBuilder.sunion(keys));
     }
 
     @Override
-    public Future<Long> sunionstore(K destination, K... keys) {
+    public RedisFuture<Long> sunionstore(K destination, K... keys) {
         return dispatch(commandBuilder.sunionstore(destination, keys));
     }
 
     @Override
-    public Future<String> sync() {
+    public RedisFuture<String> sync() {
         return dispatch(commandBuilder.sync());
     }
 
     @Override
-    public Future<Long> strlen(K key) {
+    public RedisFuture<Long> strlen(K key) {
         return dispatch(commandBuilder.strlen(key));
     }
 
     @Override
-    public Future<Long> ttl(K key) {
+    public RedisFuture<Long> ttl(K key) {
         return dispatch(commandBuilder.ttl(key));
     }
 
     @Override
-    public Future<String> type(K key) {
+    public RedisFuture<String> type(K key) {
         return dispatch(commandBuilder.type(key));
     }
 
     @Override
-    public Future<String> watch(K... keys) {
+    public RedisFuture<String> watch(K... keys) {
         return dispatch(commandBuilder.watch(keys));
     }
 
     @Override
-    public Future<String> unwatch() {
+    public RedisFuture<String> unwatch() {
         return dispatch(commandBuilder.unwatch());
     }
 
     @Override
-    public Future<Long> zadd(K key, double score, V member) {
+    public RedisFuture<Long> zadd(K key, double score, V member) {
         return dispatch(commandBuilder.zadd(key, score, member));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Future<Long> zadd(K key, Object... scoresAndValues) {
+    public RedisFuture<Long> zadd(K key, Object... scoresAndValues) {
         return dispatch(commandBuilder.zadd(key, scoresAndValues));
     }
 
     @Override
-    public Future<Long> zcard(K key) {
+    public RedisFuture<Long> zcard(K key) {
         return dispatch(commandBuilder.zcard(key));
     }
 
     @Override
-    public Future<Long> zcount(K key, double min, double max) {
+    public RedisFuture<Long> zcount(K key, double min, double max) {
         return dispatch(commandBuilder.zcount(key, min, max));
     }
 
     @Override
-    public Future<Long> zcount(K key, String min, String max) {
+    public RedisFuture<Long> zcount(K key, String min, String max) {
         return dispatch(commandBuilder.zcount(key, min, max));
     }
 
     @Override
-    public Future<Double> zincrby(K key, double amount, K member) {
+    public RedisFuture<Double> zincrby(K key, double amount, K member) {
         return dispatch(commandBuilder.zincrby(key, amount, member));
     }
 
     @Override
-    public Future<Long> zinterstore(K destination, K... keys) {
+    public RedisFuture<Long> zinterstore(K destination, K... keys) {
         return dispatch(commandBuilder.zinterstore(destination, keys));
     }
 
     @Override
-    public Future<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
+    public RedisFuture<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zinterstore(destination, storeArgs, keys));
     }
 
     @Override
-    public Future<List<V>> zrange(K key, long start, long stop) {
+    public RedisFuture<List<V>> zrange(K key, long start, long stop) {
         return dispatch(commandBuilder.zrange(key, start, stop));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrangeWithScores(K key, long start, long stop) {
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, long start, long stop) {
         return dispatch(commandBuilder.zrangeWithScores(key, start, stop));
     }
 
     @Override
-    public Future<List<V>> zrangebyscore(K key, double min, double max) {
+    public RedisFuture<List<V>> zrangebyscore(K key, double min, double max) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max));
     }
 
     @Override
-    public Future<List<V>> zrangebyscore(K key, String min, String max) {
+    public RedisFuture<List<V>> zrangebyscore(K key, String min, String max) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max));
     }
 
     @Override
-    public Future<List<V>> zrangebyscore(K key, double min, double max, long offset, long count) {
+    public RedisFuture<List<V>> zrangebyscore(K key, double min, double max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
     @Override
-    public Future<List<V>> zrangebyscore(K key, String min, String max, long offset, long count) {
+    public RedisFuture<List<V>> zrangebyscore(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max) {
+    public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max) {
+    public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
+    public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
+    public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
     @Override
-    public Future<Long> zrank(K key, V member) {
+    public RedisFuture<Long> zrank(K key, V member) {
         return dispatch(commandBuilder.zrank(key, member));
     }
 
     @Override
-    public Future<Long> zrem(K key, V... members) {
+    public RedisFuture<Long> zrem(K key, V... members) {
         return dispatch(commandBuilder.zrem(key, members));
     }
 
     @Override
-    public Future<Long> zremrangebyrank(K key, long start, long stop) {
+    public RedisFuture<Long> zremrangebyrank(K key, long start, long stop) {
         return dispatch(commandBuilder.zremrangebyrank(key, start, stop));
     }
 
     @Override
-    public Future<Long> zremrangebyscore(K key, double min, double max) {
+    public RedisFuture<Long> zremrangebyscore(K key, double min, double max) {
         return dispatch(commandBuilder.zremrangebyscore(key, min, max));
     }
 
     @Override
-    public Future<Long> zremrangebyscore(K key, String min, String max) {
+    public RedisFuture<Long> zremrangebyscore(K key, String min, String max) {
         return dispatch(commandBuilder.zremrangebyscore(key, min, max));
     }
 
     @Override
-    public Future<List<V>> zrevrange(K key, long start, long stop) {
+    public RedisFuture<List<V>> zrevrange(K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrange(key, start, stop));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrangeWithScores(key, start, stop));
     }
 
     @Override
-    public Future<List<V>> zrevrangebyscore(K key, double max, double min) {
+    public RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min));
     }
 
     @Override
-    public Future<List<V>> zrevrangebyscore(K key, String max, String min) {
+    public RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min));
     }
 
     @Override
-    public Future<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count) {
+    public RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
     @Override
-    public Future<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count) {
+    public RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     @Override
-    public Future<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     @Override
-    public Future<Long> zrevrank(K key, V member) {
+    public RedisFuture<Long> zrevrank(K key, V member) {
         return dispatch(commandBuilder.zrevrank(key, member));
     }
 
     @Override
-    public Future<Double> zscore(K key, V member) {
+    public RedisFuture<Double> zscore(K key, V member) {
         return dispatch(commandBuilder.zscore(key, member));
     }
 
     @Override
-    public Future<Long> zunionstore(K destination, K... keys) {
+    public RedisFuture<Long> zunionstore(K destination, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, keys));
     }
 
     @Override
-    public Future<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
+    public RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
     }
 
@@ -981,6 +984,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         } catch (NoSuchAlgorithmException e) {
             throw new RedisException("JVM does not support SHA1");
         }
+    }
+
+    @Override
+    public RedisFuture<List<V>> time() {
+        return dispatch(commandBuilder.time());
     }
 
     public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {

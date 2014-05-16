@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.protocol.SetArgs;
+
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 12:21
@@ -233,6 +235,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     String set(K key, V value);
 
+    V set(K key, V value, SetArgs setArgs);
+
     Long setbit(K key, long offset, int value);
 
     String setex(K key, long seconds, V value);
@@ -368,6 +372,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
     Long zunionstore(K destination, K... keys);
 
     Long zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
+    List<V> time();
 
     void close();
 

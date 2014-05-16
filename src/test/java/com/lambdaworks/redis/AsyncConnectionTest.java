@@ -2,14 +2,24 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.*;
-import org.junit.rules.ExpectedException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class AsyncConnectionTest extends AbstractCommandTest {
     private RedisAsyncConnection<String, String> async;
@@ -54,6 +64,67 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertEquals(list(), async.exec().get());
         assertNull(set.get());
         assertNull(append.get());
+    }
+
+    @Test(timeout = 10000)
+    public void futureListener() throws Exception {
+
+        final List<Object> run = new ArrayList<Object>();
+
+        Runnable listener = new Runnable() {
+            @Override
+            public void run() {
+                run.add(new Object());
+            }
+        };
+
+        for (int i = 0; i < 30000; i++) {
+            redis.lpush(key, "" + i);
+        }
+        ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
+
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+
+        Long len = connection.llen(key).get();
+        assertEquals(30000, len.intValue());
+
+        RedisFuture<List<String>> sort = connection.sort(key);
+        assertFalse(sort.isDone());
+        assertFalse(sort.isCancelled());
+
+        sort.addListener(listener, executor);
+
+        while (!sort.isDone()) {
+            Thread.sleep(50);
+        }
+
+        assertEquals(1, run.size());
+
+    }
+
+    @Test
+    public void futureListenerCompleted() throws Exception {
+
+        final List<Object> run = new ArrayList<Object>();
+
+        Runnable listener = new Runnable() {
+            @Override
+            public void run() {
+                run.add(new Object());
+            }
+        };
+
+        ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
+
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+
+        RedisFuture<String> set = connection.set(key, value);
+        set.get();
+
+        set.addListener(listener, executor);
+
+        assertEquals(1, run.size());
+
     }
 
     @Test(timeout = 100)

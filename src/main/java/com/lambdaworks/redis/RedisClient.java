@@ -61,6 +61,7 @@ public class RedisClient {
     private TimeUnit unit;
     private RedisCodec<?, ?> codec = new Utf8StringCodec();
     private RedisURI redisURI;
+    private ConnectionEvents connectionEvents = new ConnectionEvents();
     private Set<AutoCloseable> closeableResources = new ConcurrentSet<AutoCloseable>();
 
     /**
@@ -293,7 +294,8 @@ public class RedisClient {
                         watchdog.setReconnect(true);
                     }
 
-                    ch.pipeline().addLast(new ChannelListener(channels), handler, connection);
+                    ch.pipeline().addLast(new ChannelListener(channels),
+                            new ConnectionEventTrigger(connectionEvents, connection), handler, connection);
                 }
             });
 
@@ -350,7 +352,8 @@ public class RedisClient {
                 ch.pipeline().addLast(watchdog);
                 watchdog.setReconnect(true);
 
-                ch.pipeline().addLast(new ChannelListener(channels), watchdog, commandHandler, connection);
+                ch.pipeline().addLast(new ChannelListener(channels), watchdog, commandHandler, connection,
+                        new ConnectionEventTrigger(connectionEvents, connection));
             }
         });
 
@@ -431,5 +434,13 @@ public class RedisClient {
 
     protected int getChannelCount() {
         return channels.size();
+    }
+
+    public void addListener(RedisConnectionStateListener listener) {
+        connectionEvents.addListener(listener);
+    }
+
+    public void removeListener(RedisConnectionStateListener listener) {
+        connectionEvents.removeListener(listener);
     }
 }

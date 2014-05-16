@@ -3,11 +3,12 @@
 package com.lambdaworks.redis.protocol;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.util.concurrent.AbstractFuture;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisFuture;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -17,7 +18,7 @@ import io.netty.buffer.ByteBuf;
  * 
  * @author Will Glozer
  */
-public class Command<K, V, T> implements Future<T> {
+public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T> {
     private static final byte[] CRLF = "\r\n".getBytes(Charsets.ASCII);
 
     public final CommandType type;
@@ -160,6 +161,9 @@ public class Command<K, V, T> implements Future<T> {
      */
     public void complete() {
         latch.countDown();
+        if (latch.getCount() == 0) {
+            set(output.get());
+        }
     }
 
     /**
@@ -204,5 +208,10 @@ public class Command<K, V, T> implements Future<T> {
         for (int i = sb.length() - 1; i >= 0; i--) {
             buf.writeByte(sb.charAt(i));
         }
+    }
+
+    @Override
+    public String getError() {
+        return output.getError();
     }
 }

@@ -29,6 +29,7 @@ import com.lambdaworks.redis.output.ValueSetOutput;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.SetArgs;
 
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
@@ -535,6 +536,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SET, new StatusOutput<K, V>(codec), key, value);
     }
 
+    public Command<K, V, V> set(K key, V value, SetArgs setArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(value);
+        setArgs.build(args);
+        return createCommand(SET, new ValueOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> setbit(K key, long offset, int value) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(offset).add(value);
         return createCommand(SETBIT, new IntegerOutput<K, V>(codec), args);
@@ -867,6 +874,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(destination).add(keys.length).addKeys(keys);
         storeArgs.build(args);
         return createCommand(ZUNIONSTORE, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<V>> time() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        return createCommand(TIME, new ValueListOutput<K, V>(codec), args);
     }
 
 }

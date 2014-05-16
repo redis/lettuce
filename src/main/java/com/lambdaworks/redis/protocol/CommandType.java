@@ -60,6 +60,9 @@ public enum CommandType {
 
     BITCOUNT, BITOP, GETBIT, SETBIT,
 
+    // Others
+    TIME,
+
     // SENTINEL
     SENTINEL;
 

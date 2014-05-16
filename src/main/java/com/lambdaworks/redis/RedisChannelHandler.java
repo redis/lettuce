@@ -54,7 +54,8 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
         logger.debug("close()");
 
         if (closed) {
-            throw new IllegalStateException("Already closed");
+            logger.warn("Client is already closed");
+            return;
         }
 
         if (!closed && channel != null) {
