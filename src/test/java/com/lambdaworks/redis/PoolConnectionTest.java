@@ -92,4 +92,40 @@ public class PoolConnectionTest extends AbstractCommandTest {
         c1.ping();
     }
 
+    @Test
+    public void testResourceCleaning() throws Exception {
+
+        RedisClient redisClient = getRedisClient();
+
+        assertEquals(0, redisClient.getChannelCount());
+        assertEquals(0, redisClient.getResourceCount());
+
+        RedisConnectionPool<RedisAsyncConnection<String, String>> pool1 = redisClient.asyncPool();
+
+        assertEquals(0, redisClient.getChannelCount());
+        assertEquals(1, redisClient.getResourceCount());
+
+        pool1.allocateConnection();
+
+        assertEquals(1, redisClient.getChannelCount());
+        assertEquals(2, redisClient.getResourceCount());
+
+        RedisConnectionPool<RedisConnection<String, String>> pool2 = redisClient.pool();
+
+        assertEquals(3, redisClient.getResourceCount());
+
+        pool2.allocateConnection();
+
+        assertEquals(4, redisClient.getResourceCount());
+
+        redisClient.pool().close();
+        assertEquals(4, redisClient.getResourceCount());
+
+        redisClient.shutdown();
+
+        assertEquals(0, redisClient.getChannelCount());
+        assertEquals(0, redisClient.getResourceCount());
+
+    }
+
 }

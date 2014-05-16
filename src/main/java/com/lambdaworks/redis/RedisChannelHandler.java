@@ -1,20 +1,16 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.AUTH;
-import static com.lambdaworks.redis.protocol.CommandType.SELECT;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 /**
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
@@ -26,6 +22,7 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
     protected long timeout;
     protected TimeUnit unit;
 
+    private CloseEvents closeEvents = new CloseEvents();
     private boolean closed;
 
     public RedisChannelHandler(BlockingQueue<Command<K, V, ?>> queue, long timeout, TimeUnit unit) {
@@ -49,6 +46,10 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
      * Close the connection.
      */
     public synchronized void close() {
+        if (closed) {
+            throw new IllegalStateException("Already closed");
+        }
+
         if (!closed && channel != null) {
             ConnectionWatchdog watchdog = channel.pipeline().get(ConnectionWatchdog.class);
             if (watchdog != null) {
@@ -56,7 +57,13 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
             }
             closed = true;
             channel.close();
+
+            channel = null;
+
+            closeEvents.fireEventClosed(this);
+            closeEvents = null;
         }
+
     }
 
     @Override
@@ -109,5 +116,17 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
         }
 
         return cmd;
+    }
+
+    public void addListener(CloseEvents.CloseListener listener) {
+        closeEvents.addListener(listener);
+    }
+
+    public void removeListener(CloseEvents.CloseListener listener) {
+        closeEvents.removeListener(listener);
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }

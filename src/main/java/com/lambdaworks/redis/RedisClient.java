@@ -7,14 +7,17 @@ import static com.google.common.base.Preconditions.checkState;
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.protocol.ChannelListener;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
@@ -35,6 +38,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -57,6 +61,7 @@ public class RedisClient {
     private TimeUnit unit;
     private RedisCodec<?, ?> codec = new Utf8StringCodec();
     private RedisURI redisURI;
+    private Set<AutoCloseable> closeableResources = new ConcurrentSet<AutoCloseable>();
 
     /**
      * Create a new client that connects to the supplied host on the default port.
@@ -141,6 +146,16 @@ public class RedisClient {
                         return (Class) RedisConnection.class;
                     }
                 }, maxActive, maxIdle, maxWait);
+
+        pool.addListener(new CloseEvents.CloseListener() {
+            @Override
+            public void resourceClosed(Object resource) {
+                closeableResources.remove(resource);
+            }
+        });
+
+        closeableResources.add(pool);
+
         return pool;
     }
 
@@ -163,6 +178,16 @@ public class RedisClient {
                         return (Class) RedisAsyncConnection.class;
                     }
                 }, maxActive, maxIdle, maxWait);
+
+        pool.addListener(new CloseEvents.CloseListener() {
+            @Override
+            public void resourceClosed(Object resource) {
+                closeableResources.remove(resource);
+            }
+        });
+
+        closeableResources.add(pool);
+
         return pool;
     }
 
@@ -245,7 +270,7 @@ public class RedisClient {
             final T connection, final boolean withReconnect) {
         try {
 
-            SocketAddress redisAddress = null;
+            SocketAddress redisAddress;
 
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
                 redisAddress = lookupRedis(redisURI.getSentinelMasterId());
@@ -258,16 +283,24 @@ public class RedisClient {
                 protected void initChannel(Channel ch) throws Exception {
 
                     if (withReconnect) {
-                        ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, channels, timer);
+                        ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, timer);
                         ch.pipeline().addLast(watchdog);
                         watchdog.setReconnect(true);
                     }
 
-                    ch.pipeline().addLast(handler, connection);
+                    ch.pipeline().addLast(new ChannelListener(channels), handler, connection);
                 }
             });
 
             redisBootstrap.connect(redisAddress).sync();
+
+            connection.addListener(new CloseEvents.CloseListener() {
+                @Override
+                public void resourceClosed(Object resource) {
+                    closeableResources.remove(resource);
+                }
+            });
+            closeableResources.add(connection);
 
             if (redisURI.getPassword() != null) {
                 connection.auth(redisURI.getPassword());
@@ -306,11 +339,11 @@ public class RedisClient {
             @Override
             protected void initChannel(Channel ch) throws Exception {
 
-                ConnectionWatchdog watchdog = new ConnectionWatchdog(sentinelBootstrap, channels, timer);
+                ConnectionWatchdog watchdog = new ConnectionWatchdog(sentinelBootstrap, timer);
                 ch.pipeline().addLast(watchdog);
                 watchdog.setReconnect(true);
 
-                ch.pipeline().addLast(watchdog, commandHandler, connection);
+                ch.pipeline().addLast(new ChannelListener(channels), watchdog, commandHandler, connection);
             }
         });
 
@@ -340,6 +373,13 @@ public class RedisClient {
             throw new RedisException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
         }
 
+        connection.addListener(new CloseEvents.CloseListener() {
+            @Override
+            public void resourceClosed(Object resource) {
+                closeableResources.remove(resource);
+            }
+        });
+
         return connection;
     }
 
@@ -347,16 +387,27 @@ public class RedisClient {
      * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
      */
     public void shutdown() {
+
+        ImmutableList<AutoCloseable> autoCloseables = ImmutableList.copyOf(closeableResources);
+        for (AutoCloseable closeableResource : autoCloseables) {
+            try {
+                closeableResource.close();
+            } catch (Exception e) {
+                logger.debug("Exception on Close: " + e.getMessage(), e);
+
+            }
+        }
+
         for (Channel c : channels) {
             ChannelPipeline pipeline = c.pipeline();
 
             RedisAsyncConnectionImpl<?, ?> asyncConnection = pipeline.get(RedisAsyncConnectionImpl.class);
-            if (asyncConnection != null) {
+            if (asyncConnection != null && !asyncConnection.isClosed()) {
                 asyncConnection.close();
             }
 
             RedisSentinelConnectionImpl<?, ?> sentinelConnection = pipeline.get(RedisSentinelConnectionImpl.class);
-            if (sentinelConnection != null) {
+            if (sentinelConnection != null && !sentinelConnection.isClosed()) {
                 sentinelConnection.close();
             }
         }
@@ -364,5 +415,13 @@ public class RedisClient {
         future.awaitUninterruptibly();
         group.shutdownGracefully().syncUninterruptibly();
         timer.stop();
+    }
+
+    protected int getResourceCount() {
+        return closeableResources.size();
+    }
+
+    protected int getChannelCount() {
+        return channels.size();
     }
 }

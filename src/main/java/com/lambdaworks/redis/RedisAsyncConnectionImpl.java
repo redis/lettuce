@@ -16,12 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.BooleanOutput;
-import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.ValueOutput;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
@@ -1030,4 +1025,5 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         super.channelActive(ctx);
 
     }
+
 }

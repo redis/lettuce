@@ -7,6 +7,7 @@ import java.net.URI;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
+import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 
@@ -37,11 +38,36 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
                 checkArgument(StringUtils.isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
                 String masterId = uri.getFragment();
 
-                if (uri.getPort() != -1) {
-                    builder = RedisURI.Builder.sentinel(uri.getHost(), masterId, uri.getPort());
-                } else {
-                    builder = RedisURI.Builder.sentinel(uri.getHost(), masterId);
+                if (StringUtils.isNotEmpty(uri.getHost())) {
+                    if (uri.getPort() != -1) {
+                        builder = RedisURI.Builder.sentinel(uri.getHost(), masterId, uri.getPort());
+                    } else {
+                        builder = RedisURI.Builder.sentinel(uri.getHost(), masterId);
+                    }
                 }
+
+                if (builder == null && StringUtils.isNotEmpty(uri.getAuthority())) {
+                    String hosts[] = uri.getAuthority().split("\\,");
+                    for (String host : hosts) {
+                        HostAndPort hostAndPort = HostAndPort.fromString(host);
+                        if (builder == null) {
+                            if (hostAndPort.hasPort()) {
+                                builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId, hostAndPort.getPort());
+                            } else {
+                                builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId);
+                            }
+                        } else {
+                            if (hostAndPort.hasPort()) {
+                                builder.sentinel(hostAndPort.getHostText(), hostAndPort.getPort());
+                            } else {
+                                builder.sentinel(hostAndPort.getHostText());
+                            }
+                        }
+                    }
+
+                }
+
+                checkArgument(builder != null, "Invalid URI, cannot get host part");
 
             } else {
 
@@ -58,7 +84,12 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
             }
 
             if (StringUtils.isNotEmpty(uri.getPath())) {
-                builder.withDatabase(Integer.parseInt(uri.getPath()));
+                String pathSuffix = uri.getPath().substring(1);
+
+                if (StringUtils.isNotEmpty(pathSuffix)) {
+
+                    builder.withDatabase(Integer.parseInt(pathSuffix));
+                }
             }
 
             setRedisURI(builder.build());

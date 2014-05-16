@@ -11,9 +11,11 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
  * @since 14.05.14 21:58
  */
-public class RedisConnectionPool<T> {
+public class RedisConnectionPool<T> implements AutoCloseable {
+
     private RedisConnectionProvider<T> redisConnectionProvider;
     private GenericObjectPool<T> objectPool;
+    private CloseEvents closeEvents = new CloseEvents();
 
     public RedisConnectionPool(RedisConnectionProvider<T> redisConnectionProvider, int maxActive, int maxIdle, long maxWait) {
         this.redisConnectionProvider = redisConnectionProvider;
@@ -75,9 +77,21 @@ public class RedisConnectionPool<T> {
 
     public void close() throws Exception {
         objectPool.close();
+        objectPool = null;
+
+        closeEvents.fireEventClosed(this);
+        closeEvents = null;
     }
 
     public Class<T> getComponentType() {
         return redisConnectionProvider.getComponentType();
+    }
+
+    public void addListener(CloseEvents.CloseListener listener) {
+        closeEvents.addListener(listener);
+    }
+
+    public void removeListener(CloseEvents.CloseListener listener) {
+        closeEvents.removeListener(listener);
     }
 }
