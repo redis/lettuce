@@ -1,0 +1,27 @@
+package com.lambdaworks.redis;
+
+import java.util.List;
+
+/**
+ * Asynchronous executed commands for Scripting.
+ * 
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 17.05.14 21:28
+ */
+public interface RedisScriptingAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+    <T> RedisFuture<T> eval(V script, ScriptOutputType type, K... keys);
+
+    <T> RedisFuture<T> eval(V script, ScriptOutputType type, K[] keys, V... values);
+
+    <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K... keys);
+
+    <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values);
+
+    RedisFuture<List<Boolean>> scriptExists(String... digests);
+
+    RedisFuture<String> scriptFlush();
+
+    RedisFuture<String> scriptKill();
+
+    RedisFuture<String> scriptLoad(V script);
+}

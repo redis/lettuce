@@ -21,7 +21,7 @@ public class PoolingProxyFactory {
      * @param <T> Type of the connection.
      * @return Transparent pooling proxy.
      */
-    public static <T> T create(RedisConnectionPool<T> connectionPool) {
+    public static <T, C extends T> C create(RedisConnectionPool<T> connectionPool) {
         return create(connectionPool, 5, TimeUnit.SECONDS);
     }
 
@@ -34,14 +34,14 @@ public class PoolingProxyFactory {
      * @param <T> Type of the connection.
      * @return Transparent pooling proxy
      */
-    public static <T> T create(RedisConnectionPool<T> connectionPool, long recheckInterval, TimeUnit unit) {
+    public static <T, C extends T> C create(RedisConnectionPool<T> connectionPool, long recheckInterval, TimeUnit unit) {
         Class<T> componentType = connectionPool.getComponentType();
 
         TransparentPoolingInvocationHandler h = new TransparentPoolingInvocationHandler(connectionPool, recheckInterval, unit);
 
         Object o = Proxy.newProxyInstance(PoolingProxyFactory.class.getClassLoader(), new Class[] { componentType }, h);
 
-        return (T) o;
+        return (C) o;
     }
 
 }

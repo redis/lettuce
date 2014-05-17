@@ -7,7 +7,7 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 17:21
  */
 public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T> {

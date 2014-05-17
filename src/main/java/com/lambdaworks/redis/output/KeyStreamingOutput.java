@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Streaming-Output of Keys. Returns the count of all keys (including null).
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <V> Value type.
  */
 public class KeyStreamingOutput<K, V> extends CommandOutput<K, V, Long> {

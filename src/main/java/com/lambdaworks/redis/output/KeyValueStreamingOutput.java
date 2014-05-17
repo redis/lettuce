@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @param <K> Key type.
  * @param <V> Value type.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
     private K key;

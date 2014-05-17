@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Streaming-Output of Values. Returns the count of all values (including null).
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <V> Value type.
  */
 public class ValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {

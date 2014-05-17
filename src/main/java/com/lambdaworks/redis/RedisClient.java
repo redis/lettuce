@@ -124,15 +124,15 @@ public class RedisClient {
      * 
      * @return A new connection.
      */
-    public RedisConnection<String, String> connect() {
-        return connect((RedisCodec) codec);
+    public <T extends BaseRedisConnection<String, String>> T connect() {
+        return (T) connect((RedisCodec) codec);
     }
 
-    public RedisConnectionPool<RedisConnection<String, String>> pool() {
+    public <T extends BaseRedisConnection<String, String>> RedisConnectionPool<T> pool() {
         return pool(5, 20);
     }
 
-    public RedisConnectionPool<RedisConnection<String, String>> pool(int maxIdle, int maxActive) {
+    public <T extends BaseRedisConnection<String, String>> RedisConnectionPool<T> pool(int maxIdle, int maxActive) {
 
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
         RedisConnectionPool<RedisConnection<String, String>> pool = new RedisConnectionPool<RedisConnection<String, String>>(
@@ -157,14 +157,14 @@ public class RedisClient {
 
         closeableResources.add(pool);
 
-        return pool;
+        return (RedisConnectionPool<T>) pool;
     }
 
-    public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool() {
+    public <T extends BaseRedisAsyncConnection<String, String>> RedisConnectionPool<T> asyncPool() {
         return asyncPool(5, 20);
     }
 
-    public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool(int maxIdle, int maxActive) {
+    public <T extends BaseRedisAsyncConnection<String, String>> RedisConnectionPool<T> asyncPool(int maxIdle, int maxActive) {
 
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
         RedisConnectionPool<RedisAsyncConnection<String, String>> pool = new RedisConnectionPool<RedisAsyncConnection<String, String>>(
@@ -189,7 +189,7 @@ public class RedisClient {
 
         closeableResources.add(pool);
 
-        return pool;
+        return (RedisConnectionPool<T>) pool;
     }
 
     /**
@@ -197,8 +197,8 @@ public class RedisClient {
      * 
      * @return A new connection.
      */
-    public RedisAsyncConnection<String, String> connectAsync() {
-        return connectAsync((RedisCodec) codec);
+    public <T extends BaseRedisAsyncConnection<String, String>> T connectAsync() {
+        return (T) connectAsync((RedisCodec) codec);
     }
 
     /**
@@ -218,10 +218,10 @@ public class RedisClient {
      * 
      * @return A new connection.
      */
-    public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
+    public <K, V, T extends BaseRedisConnection<K, V>> T connect(RedisCodec<K, V> codec) {
 
-        RedisConnection c = connect(codec, true);
-        return c;
+        RedisConnection<K, V> c = connect(codec, true);
+        return (T) c;
     }
 
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect) {
@@ -237,8 +237,8 @@ public class RedisClient {
      * 
      * @return A new connection.
      */
-    public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
-        return connectAsyncImpl(codec, true);
+    public <K, V, T extends BaseRedisAsyncConnection<K, V>> T connectAsync(RedisCodec<K, V> codec) {
+        return (T) connectAsyncImpl(codec, true);
     }
 
     private <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, boolean withReconnect) {
