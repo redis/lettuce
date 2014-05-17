@@ -15,7 +15,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.MultiOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
@@ -318,8 +322,18 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
+        return dispatch(commandBuilder.hgetall(channel, key));
+    }
+
+    @Override
     public RedisFuture<List<K>> hkeys(K key) {
         return dispatch(commandBuilder.hkeys(key));
+    }
+
+    @Override
+    public RedisFuture<Long> hkeys(KeyStreamingChannel<K> channel, K key) {
+        return dispatch(commandBuilder.hkeys(channel, key));
     }
 
     @Override
@@ -330,6 +344,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<V>> hmget(K key, K... fields) {
         return dispatch(commandBuilder.hmget(key, fields));
+    }
+
+    @Override
+    public RedisFuture<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
+        return dispatch(commandBuilder.hmget(channel, key, fields));
     }
 
     @Override
@@ -350,6 +369,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<V>> hvals(K key) {
         return dispatch(commandBuilder.hvals(key));
+    }
+
+    @Override
+    public RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key) {
+        return dispatch(commandBuilder.hvals(channel, key));
     }
 
     @Override
@@ -380,6 +404,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<K>> keys(K pattern) {
         return dispatch(commandBuilder.keys(pattern));
+    }
+
+    @Override
+    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        return dispatch(commandBuilder.keys(channel, pattern));
     }
 
     @Override
@@ -423,6 +452,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return dispatch(commandBuilder.lrange(channel, key, start, stop));
+    }
+
+    @Override
     public RedisFuture<Long> lrem(K key, long count, V value) {
         return dispatch(commandBuilder.lrem(key, count, value));
     }
@@ -445,6 +479,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<V>> mget(K... keys) {
         return dispatch(commandBuilder.mget(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+        return dispatch(commandBuilder.mget(channel, keys));
     }
 
     @Override
@@ -606,6 +645,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> sdiff(ValueStreamingChannel<V> channel, K... keys) {
+        return dispatch(commandBuilder.sdiff(channel, keys));
+    }
+
+    @Override
     public RedisFuture<Long> sdiffstore(K destination, K... keys) {
         return dispatch(commandBuilder.sdiffstore(destination, keys));
     }
@@ -665,6 +709,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> sinter(ValueStreamingChannel<V> channel, K... keys) {
+        return dispatch(commandBuilder.sinter(channel, keys));
+    }
+
+    @Override
     public RedisFuture<Long> sinterstore(K destination, K... keys) {
         return dispatch(commandBuilder.sinterstore(destination, keys));
     }
@@ -715,13 +764,28 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> smembers(ValueStreamingChannel<V> channel, K key) {
+        return dispatch(commandBuilder.smembers(channel, key));
+    }
+
+    @Override
     public RedisFuture<List<V>> sort(K key) {
         return dispatch(commandBuilder.sort(key));
     }
 
     @Override
+    public RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key) {
+        return dispatch(commandBuilder.sort(channel, key));
+    }
+
+    @Override
     public RedisFuture<List<V>> sort(K key, SortArgs sortArgs) {
         return dispatch(commandBuilder.sort(key, sortArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        return dispatch(commandBuilder.sort(channel, key, sortArgs));
     }
 
     @Override
@@ -745,6 +809,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
+        return dispatch(commandBuilder.srandmember(channel, key, count));
+    }
+
+    @Override
     public RedisFuture<Long> srem(K key, V... members) {
         return dispatch(commandBuilder.srem(key, members));
     }
@@ -752,6 +821,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<Set<V>> sunion(K... keys) {
         return dispatch(commandBuilder.sunion(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
+        return dispatch(commandBuilder.sunion(channel, keys));
     }
 
     @Override
@@ -880,6 +954,62 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
+    //
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return dispatch(commandBuilder.zrange(channel, key, start, stop));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return dispatch(commandBuilder.zrangeWithScores(channel, key, start, stop));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
+        return dispatch(commandBuilder.zrangebyscore(channel, key, min, max));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
+        return dispatch(commandBuilder.zrangebyscore(channel, key, min, max));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count) {
+        return dispatch(commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count) {
+        return dispatch(commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+            long offset, long count) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+            long offset, long count) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+    }
+
     @Override
     public RedisFuture<Long> zrank(K key, V member) {
         return dispatch(commandBuilder.zrank(key, member));
@@ -953,6 +1083,60 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return dispatch(commandBuilder.zrevrange(channel, key, start, stop));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return dispatch(commandBuilder.zrevrangeWithScores(channel, key, start, stop));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
+        return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
+        return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count) {
+        return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count) {
+        return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+            long offset, long count) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+            long offset, long count) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
     @Override

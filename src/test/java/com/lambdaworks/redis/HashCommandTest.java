@@ -2,13 +2,16 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class HashCommandTest extends AbstractCommandTest {
     @Test
@@ -44,6 +47,22 @@ public class HashCommandTest extends AbstractCommandTest {
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         Map<String, String> map = redis.hgetall(key);
+        assertEquals(2, map.size());
+        assertEquals("1", map.get("one"));
+        assertEquals("2", map.get("two"));
+    }
+
+    @Test
+    public void hgetallStreaming() throws Exception {
+
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+
+        assertTrue(redis.hgetall(key).isEmpty());
+        redis.hset(key, "one", "1");
+        redis.hset(key, "two", "2");
+        Long count = redis.hgetall(adapter, key);
+        Map<String, String> map = adapter.getMap();
+        assertEquals(2, count.intValue());
         assertEquals(2, map.size());
         assertEquals("1", map.get("one"));
         assertEquals("2", map.get("two"));

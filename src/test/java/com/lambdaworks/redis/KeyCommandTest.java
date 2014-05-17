@@ -2,16 +2,19 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class KeyCommandTest extends AbstractCommandTest {
     @Rule
@@ -66,6 +69,25 @@ public class KeyCommandTest extends AbstractCommandTest {
         map.put("three", "3");
         redis.mset(map);
         List<String> keys = redis.keys("???");
+        assertEquals(2, keys.size());
+        assertTrue(keys.contains("one"));
+        assertTrue(keys.contains("two"));
+    }
+
+    @Test
+    public void keysStreaming() throws Exception {
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        assertEquals(list(), redis.keys("*"));
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("one", "1");
+        map.put("two", "2");
+        map.put("three", "3");
+        redis.mset(map);
+        Long count = redis.keys(adapter, "???");
+        assertEquals(2, count.intValue());
+
+        List<String> keys = adapter.getList();
         assertEquals(2, keys.size());
         assertTrue(keys.contains("one"));
         assertTrue(keys.contains("two"));

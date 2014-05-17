@@ -6,6 +6,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingOutput;
 import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
@@ -113,11 +118,17 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
 
     RedisFuture<Map<K, V>> hgetall(K key);
 
+    RedisFuture<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key);
+
     RedisFuture<List<K>> hkeys(K key);
+
+    RedisFuture<Long> hkeys(KeyStreamingChannel<K> channel, K key);
 
     RedisFuture<Long> hlen(K key);
 
     RedisFuture<List<V>> hmget(K key, K... fields);
+
+    RedisFuture<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields);
 
     RedisFuture<String> hmset(K key, Map<K, V> map);
 
@@ -126,6 +137,8 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
     RedisFuture<Boolean> hsetnx(K key, K field, V value);
 
     RedisFuture<List<V>> hvals(K key);
+
+    RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
 
     RedisFuture<Long> incr(K key);
 
@@ -138,6 +151,8 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
     RedisFuture<String> info(String section);
 
     RedisFuture<List<K>> keys(K pattern);
+
+    RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     RedisFuture<Date> lastsave();
 
@@ -155,6 +170,8 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
 
     RedisFuture<List<V>> lrange(K key, long start, long stop);
 
+    RedisFuture<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
     RedisFuture<Long> lrem(K key, long count, V value);
 
     RedisFuture<String> lset(K key, long index, V value);
@@ -164,6 +181,8 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
     RedisFuture<String> migrate(String host, int port, K key, int db, long timeout);
 
     RedisFuture<List<V>> mget(K... keys);
+
+    RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys);
 
     RedisFuture<Boolean> move(K key, int db);
 
@@ -227,6 +246,8 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
 
     RedisFuture<Set<V>> sdiff(K... keys);
 
+    RedisFuture<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
+
     RedisFuture<Long> sdiffstore(K destination, K... keys);
 
     String select(int db);
@@ -246,6 +267,8 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
     void shutdown(boolean save);
 
     RedisFuture<Set<V>> sinter(K... keys);
+
+    RedisFuture<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
 
     RedisFuture<Long> sinterstore(K destination, K... keys);
 
@@ -267,9 +290,15 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
 
     RedisFuture<Set<V>> smembers(K key);
 
+    RedisFuture<Long> smembers(ValueStreamingChannel<V> channel, K key);
+
     RedisFuture<List<V>> sort(K key);
 
+    RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key);
+
     RedisFuture<List<V>> sort(K key, SortArgs sortArgs);
+
+    RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
     RedisFuture<Long> sortStore(K key, SortArgs sortArgs, K destination);
 
@@ -279,9 +308,13 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
 
     RedisFuture<Set<V>> srandmember(K key, long count);
 
+    RedisFuture<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count);
+
     RedisFuture<Long> srem(K key, V... members);
 
     RedisFuture<Set<V>> sunion(K... keys);
+
+    RedisFuture<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
 
     RedisFuture<Long> sunionstore(K destination, K... keys);
 
@@ -334,6 +367,28 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
 
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
 
+    RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
+
+    RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
+
+    RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+
+    RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
+
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
+
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+            long offset, long count);
+
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+            long offset, long count);
+
     RedisFuture<Long> zrank(K key, V member);
 
     RedisFuture<Long> zrem(K key, V... members);
@@ -363,6 +418,28 @@ public interface RedisAsyncConnection<K, V> extends AutoCloseable {
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
 
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
+
+    RedisFuture<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
+
+    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
+
+    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+
+    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
+
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
+
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+            long offset, long count);
+
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+            long offset, long count);
 
     RedisFuture<Long> zrevrank(K key, V member);
 

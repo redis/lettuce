@@ -2,12 +2,14 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class ListCommandTest extends AbstractCommandTest {
     @Test
@@ -95,6 +97,24 @@ public class ListCommandTest extends AbstractCommandTest {
         assertTrue(redis.lrange(key, 0, 10).isEmpty());
         redis.rpush(key, "one", "two", "three");
         List<String> range = redis.lrange(key, 0, 1);
+        assertEquals(2, range.size());
+        assertEquals("one", range.get(0));
+        assertEquals("two", range.get(1));
+        assertEquals(3, redis.lrange(key, 0, -1).size());
+    }
+
+    @Test
+    public void lrangeStreaming() throws Exception {
+        assertTrue(redis.lrange(key, 0, 10).isEmpty());
+        redis.rpush(key, "one", "two", "three");
+
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        Long count = redis.lrange(adapter, key, 0, 1);
+        assertEquals(2, count.longValue());
+
+        List<String> range = adapter.getList();
+
         assertEquals(2, range.size());
         assertEquals("one", range.get(0));
         assertEquals("two", range.get(1));

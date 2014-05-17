@@ -2,10 +2,14 @@
 
 package com.lambdaworks.redis;
 
-import java.util.Set;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import static org.junit.Assert.*;
+import java.util.Set;
+
+import org.junit.Test;
 
 public class SetCommandTest extends AbstractCommandTest {
     @Test
@@ -117,6 +121,21 @@ public class SetCommandTest extends AbstractCommandTest {
         redis.sadd("key2", "c");
         redis.sadd("key3", "a", "c", "e");
         assertEquals(set("a", "b", "c", "d", "e"), redis.sunion("key1", "key2", "key3"));
+    }
+
+    @Test
+    public void sunionStreaming() throws Exception {
+        redis.sadd("key1", "a", "b", "c", "d");
+        redis.sadd("key2", "c");
+        redis.sadd("key3", "a", "c", "e");
+
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        Long count = redis.sunion(adapter, "key1", "key2", "key3");
+
+        assertEquals(5, count.longValue());
+
+        assertEquals(list("c", "a", "b", "e", "d"), adapter.getList());
     }
 
     @Test

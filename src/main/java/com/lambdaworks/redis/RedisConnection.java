@@ -6,6 +6,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
@@ -115,11 +119,15 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     Map<K, V> hgetall(K key);
 
+    Long hgetall(KeyValueStreamingChannel<K, V> channel, K key);
+
     List<K> hkeys(K key);
 
     Long hlen(K key);
 
     List<V> hmget(K key, K... fields);
+
+    Long hmget(ValueStreamingChannel<V> channel, K key, K... fields);
 
     String hmset(K key, Map<K, V> map);
 
@@ -128,6 +136,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
     Boolean hsetnx(K key, K field, V value);
 
     List<V> hvals(K key);
+
+    Long hvals(ValueStreamingChannel<V> channel, K key);
 
     Long incr(K key);
 
@@ -140,6 +150,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
     String info(String section);
 
     List<K> keys(K pattern);
+
+    Long keys(KeyStreamingChannel<K> channel, K pattern);
 
     Date lastsave();
 
@@ -157,6 +169,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     List<V> lrange(K key, long start, long stop);
 
+    Long lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
     Long lrem(K key, long count, V value);
 
     String lset(K key, long index, V value);
@@ -166,6 +180,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
     String migrate(String host, int port, K key, int db, long timeout);
 
     List<V> mget(K... keys);
+
+    Long mget(ValueStreamingChannel<V> channel, K... keys);
 
     Boolean move(K key, int db);
 
@@ -229,6 +245,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     Set<V> sdiff(K... keys);
 
+    Long sdiff(ValueStreamingChannel<V> channel, K... keys);
+
     Long sdiffstore(K destination, K... keys);
 
     String select(int db);
@@ -248,6 +266,8 @@ public interface RedisConnection<K, V> extends AutoCloseable {
     void shutdown(boolean save);
 
     Set<V> sinter(K... keys);
+
+    Long sinter(ValueStreamingChannel<V> channel, K... keys);
 
     Long sinterstore(K destination, K... keys);
 
@@ -269,7 +289,13 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     Set<V> smembers(K key);
 
+    Long smembers(ValueStreamingChannel<V> channel, K key);
+
     List<V> sort(K key);
+
+    Long sort(ValueStreamingChannel<V> channel, K key);
+
+    Long sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
     List<V> sort(K key, SortArgs sortArgs);
 
@@ -281,9 +307,13 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     Set<V> srandmember(K key, long count);
 
+    Long srandmember(ValueStreamingChannel<V> channel, K key, long count);
+
     Long srem(K key, V... members);
 
     Set<V> sunion(K... keys);
+
+    Long sunion(ValueStreamingChannel<V> channel, K... keys);
 
     Long sunionstore(K destination, K... keys);
 
@@ -335,6 +365,26 @@ public interface RedisConnection<K, V> extends AutoCloseable {
 
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
 
+    Long zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    Long zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    Long zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
+
+    Long zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
+
+    Long zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+
+    Long zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
+
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
+
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+
     Long zrank(K key, V member);
 
     Long zrem(K key, V... members);
@@ -364,6 +414,28 @@ public interface RedisConnection<K, V> extends AutoCloseable {
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
 
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
+
+    Long zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    Long zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
+
+    Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
+
+    Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+
+    Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+
+    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
+
+    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
+
+    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count);
+
+    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count);
 
     Long zrevrank(K key, V member);
 

@@ -9,23 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.BooleanListOutput;
-import com.lambdaworks.redis.output.BooleanOutput;
-import com.lambdaworks.redis.output.ByteArrayOutput;
-import com.lambdaworks.redis.output.DateOutput;
-import com.lambdaworks.redis.output.DoubleOutput;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.KeyListOutput;
-import com.lambdaworks.redis.output.KeyOutput;
-import com.lambdaworks.redis.output.KeyValueOutput;
-import com.lambdaworks.redis.output.MapOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.ScoredValueListOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.StringListOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
-import com.lambdaworks.redis.output.ValueOutput;
-import com.lambdaworks.redis.output.ValueSetOutput;
+import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
@@ -260,8 +244,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HGETALL, new MapOutput<K, V>(codec), key);
     }
 
+    public Command<K, V, Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
+        return createCommand(HGETALL, new KeyValueStreamingOutput<K, V>(codec, channel), key);
+    }
+
     public Command<K, V, List<K>> hkeys(K key) {
         return createCommand(HKEYS, new KeyListOutput<K, V>(codec), key);
+    }
+
+    public Command<K, V, Long> hkeys(KeyStreamingChannel<K> channel, K key) {
+        return createCommand(HKEYS, new KeyStreamingOutput<K, V>(codec, channel), key);
     }
 
     public Command<K, V, Long> hlen(K key) {
@@ -271,6 +263,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, List<V>> hmget(K key, K... fields) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
         return createCommand(HMGET, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
+        return createCommand(HMGET, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
     public Command<K, V, String> hmset(K key, Map<K, V> map) {
@@ -290,6 +287,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, List<V>> hvals(K key) {
         return createCommand(HVALS, new ValueListOutput<K, V>(codec), key);
+    }
+
+    public Command<K, V, Long> hvals(ValueStreamingChannel<V> channel, K key) {
+        return createCommand(HVALS, new ValueStreamingOutput<K, V>(codec, channel), key);
     }
 
     public Command<K, V, Long> incr(K key) {
@@ -317,6 +318,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, List<K>> keys(K pattern) {
         return createCommand(KEYS, new KeyListOutput<K, V>(codec), pattern);
+    }
+
+    public Command<K, V, Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        return createCommand(KEYS, new KeyStreamingOutput<K, V>(codec, channel), pattern);
     }
 
     public Command<K, V, Date> lastsave() {
@@ -355,6 +360,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(LRANGE, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
+        return createCommand(LRANGE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
     public Command<K, V, Long> lrem(K key, long count, V value) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(count).addValue(value);
         return createCommand(LREM, new IntegerOutput<K, V>(codec), args);
@@ -379,6 +389,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, List<V>> mget(K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
     public Command<K, V, Boolean> move(K key, int db) {
@@ -522,6 +537,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SDIFF, new ValueSetOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> sdiff(ValueStreamingChannel<V> channel, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(SDIFF, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
     public Command<K, V, Long> sdiffstore(K destination, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(destination).addKeys(keys);
         return createCommand(SDIFFSTORE, new IntegerOutput<K, V>(codec), args);
@@ -576,6 +596,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SINTER, new ValueSetOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> sinter(ValueStreamingChannel<V> channel, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(SINTER, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
     public Command<K, V, Long> sinterstore(K destination, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(destination).addKeys(keys);
         return createCommand(SINTERSTORE, new IntegerOutput<K, V>(codec), args);
@@ -624,6 +649,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SMEMBERS, new ValueSetOutput<K, V>(codec), key);
     }
 
+    public Command<K, V, Long> smembers(ValueStreamingChannel<V> channel, K key) {
+        return createCommand(SMEMBERS, new ValueStreamingOutput<K, V>(codec, channel), key);
+    }
+
     public Command<K, V, List<V>> sort(K key) {
         return createCommand(SORT, new ValueListOutput<K, V>(codec), key);
     }
@@ -632,6 +661,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
         sortArgs.build(args, null);
         return createCommand(SORT, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> sort(ValueStreamingChannel<V> channel, K key) {
+        return createCommand(SORT, new ValueStreamingOutput<K, V>(codec, channel), key);
+    }
+
+    public Command<K, V, Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        sortArgs.build(args, null);
+        return createCommand(SORT, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
     public Command<K, V, Long> sortStore(K key, SortArgs sortArgs, K destination) {
@@ -653,6 +692,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SRANDMEMBER, new ValueSetOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(count);
+        return createCommand(SRANDMEMBER, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
     public Command<K, V, Long> srem(K key, V... members) {
         return createCommand(SREM, new IntegerOutput<K, V>(codec), key, members);
     }
@@ -660,6 +704,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, Set<V>> sunion(K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(SUNION, new ValueSetOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(SUNION, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
     public Command<K, V, Long> sunionstore(K destination, K... keys) {
@@ -785,6 +834,60 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
+        return createCommand(ZRANGE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(start).add(stop).add(WITHSCORES);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
+        return zrangebyscore(channel, key, string(min), string(max));
+    }
+
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min).add(max);
+        return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count) {
+        return zrangebyscore(channel, key, string(min), string(max), offset, count);
+    }
+
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max).add(LIMIT).add(offset).add(count);
+        return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
+        return zrangebyscoreWithScores(channel, key, string(min), string(max));
+    }
+
+    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max).add(WITHSCORES);
+        return createCommand(ZRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+            long offset, long count) {
+        return zrangebyscoreWithScores(channel, key, string(min), string(max), offset, count);
+    }
+
+    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+            long offset, long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max).add(WITHSCORES).add(LIMIT).add(offset).add(count);
+        return createCommand(ZRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
     public Command<K, V, Long> zrank(K key, V member) {
         return createCommand(ZRANK, new IntegerOutput<K, V>(codec), key, member);
     }
@@ -855,6 +958,60 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.addKey(key).add(max).add(min).add(WITHSCORES).add(LIMIT).add(offset).add(count);
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
+        return createCommand(ZREVRANGE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(start).add(stop).add(WITHSCORES);
+        return createCommand(ZREVRANGE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
+        return zrevrangebyscore(channel, key, string(max), string(min));
+    }
+
+    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(max).add(min);
+        return createCommand(ZREVRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count) {
+        return zrevrangebyscore(channel, key, string(max), string(min), offset, count);
+    }
+
+    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(max).add(min).add(LIMIT).add(offset).add(count);
+        return createCommand(ZREVRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
+        return zrevrangebyscoreWithScores(channel, key, string(max), string(min));
+    }
+
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(max).add(min).add(WITHSCORES);
+        return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max,
+            double min, long offset, long count) {
+        return zrevrangebyscoreWithScores(channel, key, string(max), string(min), offset, count);
+    }
+
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max,
+            String min, long offset, long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(max).add(min).add(WITHSCORES).add(LIMIT).add(offset).add(count);
+        return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
     }
 
     public Command<K, V, Long> zrevrank(K key, V member) {
