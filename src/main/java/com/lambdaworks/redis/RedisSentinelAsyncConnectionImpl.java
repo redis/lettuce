@@ -21,10 +21,10 @@ import io.netty.channel.ChannelHandler;
  * @since 15.05.14 16:27
  */
 @ChannelHandler.Sharable
-public class RedisSentinelConnectionImpl<K, V> extends RedisChannelHandler implements RedisSentinelConnection<K, V> {
+public class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler implements RedisSentinelAsyncConnection<K, V> {
     private SentinelCommandBuilder<K, V> commandBuilder;
 
-    public RedisSentinelConnectionImpl(RedisCodec<K, V> codec, BlockingQueue queue, long timeout, TimeUnit unit) {
+    public RedisSentinelAsyncConnectionImpl(RedisCodec<K, V> codec, BlockingQueue queue, long timeout, TimeUnit unit) {
         super(queue, timeout, unit);
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
 

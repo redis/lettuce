@@ -1,0 +1,15 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
+        <property name="password" value="mypassword" />
+        <!-- Redis Uri Format: redis://host[:port]/database -->
+        <!-- Redis Uri: Specify Database as Path -->
+        <property name="uri" value="redis://localhost/12" />
+
+        <!-- Redis Sentinel Uri Format: redis-sentinel://host[:port][,host[:port][,host[:port]]/database#masterId -->
+        <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Master Id as Fragment. -->
+        <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster" />
+    </bean>
+</beans>

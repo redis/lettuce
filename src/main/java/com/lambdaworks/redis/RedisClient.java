@@ -2,8 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -13,6 +11,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -128,10 +128,26 @@ public class RedisClient {
         return (T) connect((RedisCodec) codec);
     }
 
+    /**
+     * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
+     * in mind to free all collections and close the pool once you do not need it anymore.
+     * 
+     * @param <T>
+     * @return The connection pool.
+     */
     public <T extends BaseRedisConnection<String, String>> RedisConnectionPool<T> pool() {
         return pool(5, 20);
     }
 
+    /**
+     * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
+     * once you do not need it anymore.
+     * 
+     * @param maxIdle max idle connections (or min pool size)
+     * @param maxActive max active connections.
+     * @param <T>
+     * @return The connection pool.
+     */
     public <T extends BaseRedisConnection<String, String>> RedisConnectionPool<T> pool(int maxIdle, int maxActive) {
 
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
@@ -160,10 +176,26 @@ public class RedisClient {
         return (RedisConnectionPool<T>) pool;
     }
 
+    /**
+     * Creates a connection pool for asynchronous connections. 5 max idle connections and 20 max active connections. Please keep
+     * in mind to free all collections and close the pool once you do not need it anymore.
+     * 
+     * @param <T>
+     * @return The connection pool.
+     */
     public <T extends BaseRedisAsyncConnection<String, String>> RedisConnectionPool<T> asyncPool() {
         return asyncPool(5, 20);
     }
 
+    /**
+     * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
+     * once you do not need it anymore.
+     * 
+     * @param maxIdle max idle connections (or min pool size)
+     * @param maxActive max active connections.
+     * @param <T>
+     * @return The connection pool.
+     */
     public <T extends BaseRedisAsyncConnection<String, String>> RedisConnectionPool<T> asyncPool(int maxIdle, int maxActive) {
 
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
@@ -325,22 +357,38 @@ public class RedisClient {
 
     private SocketAddress lookupRedis(String sentinelMasterId) throws InterruptedException, TimeoutException,
             ExecutionException {
-        RedisSentinelConnectionImpl connection = connectSentinelAsync();
+        RedisSentinelAsyncConnection<String, String> connection = connectSentinelAsync();
         try {
-            return (SocketAddress) connection.getMasterAddrByName(sentinelMasterId).get(timeout, unit);
+            return connection.getMasterAddrByName(sentinelMasterId).get(timeout, unit);
         } finally {
             connection.close();
         }
     }
 
-    public <K, V> RedisSentinelConnectionImpl connectSentinelAsync() throws InterruptedException {
+    /**
+     * Creates an asynchronous connection to Sentinel. You must supply a valid RedisURI containing one or more sentinels.
+     * 
+     * @return
+     * @throws InterruptedException
+     */
+    public RedisSentinelAsyncConnection<String, String> connectSentinelAsync() throws InterruptedException {
+        return connectSentinelAsync((RedisCodec) codec);
+    }
 
-        checkState(!redisURI.getSentinels().isEmpty(), "cannot connect Redis Sentinel, redisSentinelAddress is not set");
+    /**
+     * Creates an asynchronous connection to Sentinel. You must supply a valid RedisURI containing one or more sentinels.
+     * 
+     * @param <K>
+     * @param <V>
+     * @return
+     * @throws InterruptedException
+     */
+    public <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsync(RedisCodec<K, V> codec) throws InterruptedException {
 
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
         final CommandHandler commandHandler = new CommandHandler(queue);
-        final RedisSentinelConnectionImpl connection = new RedisSentinelConnectionImpl(codec, queue, timeout, unit);
+        final RedisSentinelAsyncConnectionImpl connection = new RedisSentinelAsyncConnectionImpl(codec, queue, timeout, unit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
@@ -357,31 +405,39 @@ public class RedisClient {
             }
         });
 
-        boolean connected = false;
-        Exception causingException = null;
-        for (RedisURI uri : redisURI.getSentinels()) {
+        if (redisURI.getSentinels().isEmpty() && StringUtils.isNotEmpty(redisURI.getHost())) {
+            sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                    (int) redisURI.getUnit().toMillis(redisURI.getTimeout()));
+            ChannelFuture connect = sentinelBootstrap.connect(redisURI.getResolvedAddress());
+            logger.debug("Connecting to Sentinel, address: " + redisURI.getResolvedAddress());
+            connect.sync();
+        } else {
 
-            sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) uri.getUnit().toMillis(uri.getTimeout()));
-            ChannelFuture connect = sentinelBootstrap.connect(uri.getResolvedAddress());
-            logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
-            try {
-                connect.sync();
-                connected = true;
-            } catch (Exception e) {
-                logger.warn("Cannot connect sentinel at " + uri.getHost() + ":" + uri.getPort() + ": " + e.toString());
-                if (causingException == null) {
-                    causingException = e;
-                } else {
-                    causingException.addSuppressed(e);
-                }
-                if (e instanceof ConnectException) {
-                    continue;
+            boolean connected = false;
+            Exception causingException = null;
+            for (RedisURI uri : redisURI.getSentinels()) {
+
+                sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) uri.getUnit().toMillis(uri.getTimeout()));
+                ChannelFuture connect = sentinelBootstrap.connect(uri.getResolvedAddress());
+                logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
+                try {
+                    connect.sync();
+                    connected = true;
+                } catch (Exception e) {
+                    logger.warn("Cannot connect sentinel at " + uri.getHost() + ":" + uri.getPort() + ": " + e.toString());
+                    if (causingException == null) {
+                        causingException = e;
+                    } else {
+                        causingException.addSuppressed(e);
+                    }
+                    if (e instanceof ConnectException) {
+                        continue;
+                    }
                 }
             }
-        }
-
-        if (!connected) {
-            throw new RedisException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
+            if (!connected) {
+                throw new RedisException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
+            }
         }
 
         connection.addListener(new CloseEvents.CloseListener() {
@@ -417,7 +473,7 @@ public class RedisClient {
                 asyncConnection.close();
             }
 
-            RedisSentinelConnectionImpl<?, ?> sentinelConnection = pipeline.get(RedisSentinelConnectionImpl.class);
+            RedisSentinelAsyncConnectionImpl<?, ?> sentinelConnection = pipeline.get(RedisSentinelAsyncConnectionImpl.class);
             if (sentinelConnection != null && !sentinelConnection.isClosed()) {
                 sentinelConnection.close();
             }
@@ -436,10 +492,23 @@ public class RedisClient {
         return channels.size();
     }
 
+    /**
+     * Add a listener for the RedisConnectionState. The listener is notified every time a connect/disconnect/IO exception
+     * happens. The listeners are not bound to a specific connection, so every time a connection event happens on any
+     * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
+     * event.
+     * 
+     * @param listener
+     */
     public void addListener(RedisConnectionStateListener listener) {
         connectionEvents.addListener(listener);
     }
 
+    /**
+     * Removes a listener.
+     * 
+     * @param listener
+     */
     public void removeListener(RedisConnectionStateListener listener) {
         connectionEvents.removeListener(listener);
     }

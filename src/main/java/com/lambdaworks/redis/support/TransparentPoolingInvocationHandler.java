@@ -76,4 +76,12 @@ public class TransparentPoolingInvocationHandler extends AbstractInvocationHandl
         }
         return targetMethod;
     }
+
+    public RedisConnectionPool getPool() {
+        return pool;
+    }
+
+    public Object getCachedConnection() {
+        return cachedConnection;
+    }
 }

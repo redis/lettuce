@@ -13,7 +13,7 @@ import com.lambdaworks.redis.RedisURI;
 
 /**
  * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Formats: <code>
- *     redis-sentinel://host[:port][/databaseNumber]#sentinelMasterId
+ *     redis-withSentinel://host[:port][/databaseNumber]#sentinelMasterId
  * </code> <br/>
  * <code>
  *     redis://host[:port][/databaseNumber]
@@ -40,7 +40,7 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
 
                 if (StringUtils.isNotEmpty(uri.getHost())) {
                     if (uri.getPort() != -1) {
-                        builder = RedisURI.Builder.sentinel(uri.getHost(), masterId, uri.getPort());
+                        builder = RedisURI.Builder.sentinel(uri.getHost(), uri.getPort(), masterId);
                     } else {
                         builder = RedisURI.Builder.sentinel(uri.getHost(), masterId);
                     }
@@ -52,15 +52,15 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
                         HostAndPort hostAndPort = HostAndPort.fromString(host);
                         if (builder == null) {
                             if (hostAndPort.hasPort()) {
-                                builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId, hostAndPort.getPort());
+                                builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), hostAndPort.getPort(), masterId);
                             } else {
                                 builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId);
                             }
                         } else {
                             if (hostAndPort.hasPort()) {
-                                builder.sentinel(hostAndPort.getHostText(), hostAndPort.getPort());
+                                builder.withSentinel(hostAndPort.getHostText(), hostAndPort.getPort());
                             } else {
-                                builder.sentinel(hostAndPort.getHostText());
+                                builder.withSentinel(hostAndPort.getHostText());
                             }
                         }
                     }
