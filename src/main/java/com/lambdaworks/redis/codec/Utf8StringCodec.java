@@ -7,7 +7,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.*;
 
 import static java.nio.charset.CoderResult.OVERFLOW;
-import com.lambdaworks.redis.protocol.Charsets;
+import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
  * A {@link RedisCodec} that handles UTF-8 encoded keys and values.
@@ -23,7 +23,7 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
      * Initialize a new instance that encodes and decodes strings using the UTF-8 charset;
      */
     public Utf8StringCodec() {
-        charset = Charsets.UTF8;
+        charset = LettuceCharsets.UTF8;
         decoder = charset.newDecoder();
         chars = CharBuffer.allocate(1024);
     }

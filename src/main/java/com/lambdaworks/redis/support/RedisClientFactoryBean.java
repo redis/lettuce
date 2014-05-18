@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.URI;
 
-import org.apache.commons.lang3.StringUtils;
+import com.lambdaworks.redis.LettuceStrings;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
 import com.google.common.net.HostAndPort;
@@ -35,10 +35,10 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
             RedisURI.Builder builder = null;
             if (uri.getScheme().equals("redis-sentinel")) {
 
-                checkArgument(StringUtils.isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
+                checkArgument(LettuceStrings.isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
                 String masterId = uri.getFragment();
 
-                if (StringUtils.isNotEmpty(uri.getHost())) {
+                if (LettuceStrings.isNotEmpty(uri.getHost())) {
                     if (uri.getPort() != -1) {
                         builder = RedisURI.Builder.sentinel(uri.getHost(), uri.getPort(), masterId);
                     } else {
@@ -46,7 +46,7 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
                     }
                 }
 
-                if (builder == null && StringUtils.isNotEmpty(uri.getAuthority())) {
+                if (builder == null && LettuceStrings.isNotEmpty(uri.getAuthority())) {
                     String hosts[] = uri.getAuthority().split("\\,");
                     for (String host : hosts) {
                         HostAndPort hostAndPort = HostAndPort.fromString(host);
@@ -79,14 +79,14 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
 
             }
 
-            if (StringUtils.isNotEmpty(password)) {
+            if (LettuceStrings.isNotEmpty(password)) {
                 builder.withPassword(password);
             }
 
-            if (StringUtils.isNotEmpty(uri.getPath())) {
+            if (LettuceStrings.isNotEmpty(uri.getPath())) {
                 String pathSuffix = uri.getPath().substring(1);
 
-                if (StringUtils.isNotEmpty(pathSuffix)) {
+                if (LettuceStrings.isNotEmpty(pathSuffix)) {
 
                     builder.withDatabase(Integer.parseInt(pathSuffix));
                 }

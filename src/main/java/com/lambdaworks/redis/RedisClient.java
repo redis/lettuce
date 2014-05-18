@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis;
 
+import java.io.Closeable;
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -11,8 +12,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -62,7 +61,7 @@ public class RedisClient {
     private RedisCodec<?, ?> codec = new Utf8StringCodec();
     private RedisURI redisURI;
     private ConnectionEvents connectionEvents = new ConnectionEvents();
-    private Set<AutoCloseable> closeableResources = new ConcurrentSet<AutoCloseable>();
+    private Set<Closeable> closeableResources = new ConcurrentSet<Closeable>();
 
     /**
      * Create a new client that connects to the supplied host on the default port.
@@ -369,9 +368,8 @@ public class RedisClient {
      * Creates an asynchronous connection to Sentinel. You must supply a valid RedisURI containing one or more sentinels.
      * 
      * @return
-     * @throws InterruptedException
      */
-    public RedisSentinelAsyncConnection<String, String> connectSentinelAsync() throws InterruptedException {
+    public RedisSentinelAsyncConnection<String, String> connectSentinelAsync() {
         return connectSentinelAsync((RedisCodec) codec);
     }
 
@@ -381,9 +379,8 @@ public class RedisClient {
      * @param <K>
      * @param <V>
      * @return
-     * @throws InterruptedException
      */
-    public <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsync(RedisCodec<K, V> codec) throws InterruptedException {
+    public <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsync(RedisCodec<K, V> codec) {
 
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
@@ -405,12 +402,16 @@ public class RedisClient {
             }
         });
 
-        if (redisURI.getSentinels().isEmpty() && StringUtils.isNotEmpty(redisURI.getHost())) {
+        if (redisURI.getSentinels().isEmpty() && LettuceStrings.isNotEmpty(redisURI.getHost())) {
             sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
                     (int) redisURI.getUnit().toMillis(redisURI.getTimeout()));
             ChannelFuture connect = sentinelBootstrap.connect(redisURI.getResolvedAddress());
             logger.debug("Connecting to Sentinel, address: " + redisURI.getResolvedAddress());
-            connect.sync();
+            try {
+                connect.sync();
+            } catch (InterruptedException e) {
+                throw new RedisException(e.getMessage(), e);
+            }
         } else {
 
             boolean connected = false;
@@ -427,8 +428,6 @@ public class RedisClient {
                     logger.warn("Cannot connect sentinel at " + uri.getHost() + ":" + uri.getPort() + ": " + e.toString());
                     if (causingException == null) {
                         causingException = e;
-                    } else {
-                        causingException.addSuppressed(e);
                     }
                     if (e instanceof ConnectException) {
                         continue;
@@ -455,8 +454,8 @@ public class RedisClient {
      */
     public void shutdown() {
 
-        ImmutableList<AutoCloseable> autoCloseables = ImmutableList.copyOf(closeableResources);
-        for (AutoCloseable closeableResource : autoCloseables) {
+        ImmutableList<Closeable> autoCloseables = ImmutableList.copyOf(closeableResources);
+        for (Closeable closeableResource : autoCloseables) {
             try {
                 closeableResource.close();
             } catch (Exception e) {

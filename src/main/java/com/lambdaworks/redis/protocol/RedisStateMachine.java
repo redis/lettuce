@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
-import static com.lambdaworks.redis.protocol.Charsets.buffer;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 /**

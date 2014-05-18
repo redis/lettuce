@@ -19,7 +19,7 @@ import io.netty.buffer.ByteBuf;
  * @author Will Glozer
  */
 public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T> {
-    private static final byte[] CRLF = "\r\n".getBytes(Charsets.ASCII);
+    private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
     public final CommandType type;
     protected CommandArgs<K, V> args;

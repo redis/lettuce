@@ -13,6 +13,6 @@ public enum CommandKeyword {
     public byte[] bytes;
 
     private CommandKeyword() {
-        bytes = name().getBytes(Charsets.ASCII);
+        bytes = name().getBytes(LettuceCharsets.ASCII);
     }
 }

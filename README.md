@@ -13,6 +13,18 @@ lettuce - A scalable Java Redis client
 
     http://groups.google.com/group/lambdaworks-oss
     lambdaworks-oss@googlegroups.com
+    
+Maven Artifacts
+----------------
+
+  Releases of lettuce are available in the maven central repository.
+
+    <dependency>
+      <groupId>com.lambdaworks</groupId>
+      <artifactId>lettuce</artifactId>
+      <version>2.3.3</version>
+    </dependency>
+    
 
 Basic Usage
 -----------
@@ -69,7 +81,7 @@ Streaming API
 -------------
   
   Redis can contain a huge set of data. Collections can burst your memory, when the amount of data is too massive for your heap.
-  lettuce can return your collection data either as List/Set/Map or can push the data on StreamingChannel interfaces.
+  Lettuce can return your collection data either as List/Set/Map or can push the data on StreamingChannel interfaces.
   StreamingChannels are similar to callback methods. Every method, which can return bulk data (except transactions/multi and some
   config methods) specifies beside a regular method with a collection return class also method which accepts a StreamingChannel.
     
@@ -98,7 +110,7 @@ Streaming API
 Sentinel
 --------
 
-  There are two ways, how to use Redis sentinel with lettuce. 
+  There are two ways, how to use Redis sentinel with Lettuce. 
   
   1. Direct connection to sentinel, for issuing sentinel commands
   2. Redis discovery using sentinel.
@@ -211,7 +223,7 @@ Codecs
 Spring Support
 --------------
   
-  lettuce provides a factory for the RedisClient. You need to specify a redisUri or a URI string in order to
+  Lettuce provides a factory for the RedisClient. You need to specify a redisUri or a URI string in order to
   create the client.
   
      <bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
@@ -224,14 +236,3 @@ Spring Support
         <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Master Id as Fragment. -->
         <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster"/>
     </bean>
-
-Maven Artifacts
-----------------
-
-  Releases of lettuce are available in the maven central repository.
-
-    <dependency>
-      <groupId>com.lambdaworks</groupId>
-      <artifactId>lettuce</artifactId>
-      <version>2.3.3</version>
-    </dependency>

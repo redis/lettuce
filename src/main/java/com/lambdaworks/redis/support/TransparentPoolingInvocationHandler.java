@@ -35,6 +35,7 @@ public class TransparentPoolingInvocationHandler extends AbstractInvocationHandl
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         long now = System.currentTimeMillis();
@@ -64,10 +65,11 @@ public class TransparentPoolingInvocationHandler extends AbstractInvocationHandl
     /**
      * Lookup the target method using a cache.
      * 
-     * @param method
-     * @return
+     * @param method source method
+     * @return the target method
      * @throws NoSuchMethodException
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private Method getMethod(Method method) throws NoSuchMethodException {
         Method targetMethod = methodCache.get(method);
         if (targetMethod == null) {

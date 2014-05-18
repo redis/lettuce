@@ -46,7 +46,7 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                     }
                 }
 
-                return Futures.await(command, timeout, unit);
+                return LettuceFutures.await(command, timeout, unit);
             }
 
             return result;

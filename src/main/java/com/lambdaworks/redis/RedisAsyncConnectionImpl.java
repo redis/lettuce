@@ -71,7 +71,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public String auth(String password) {
         Command<K, V, String> cmd = dispatch(commandBuilder.auth(password));
-        String status = Futures.await(cmd, timeout, unit);
+        String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status))
             this.password = password;
         return status;
@@ -657,7 +657,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public String select(int db) {
         Command<K, V, String> cmd = dispatch(commandBuilder.select(db));
-        String status = Futures.await(cmd, timeout, unit);
+        String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status))
             this.db = db;
         return status;

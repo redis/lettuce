@@ -7,11 +7,13 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
+import java.io.Closeable;
+
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 21:58
  */
-public class RedisConnectionPool<T> implements AutoCloseable {
+public class RedisConnectionPool<T> implements Closeable {
 
     private RedisConnectionProvider<T> redisConnectionProvider;
     private GenericObjectPool<T> objectPool;
@@ -75,7 +77,7 @@ public class RedisConnectionPool<T> implements AutoCloseable {
         return objectPool.getNumActive();
     }
 
-    public void close() throws Exception {
+    public void close() {
         objectPool.close();
         objectPool = null;
 

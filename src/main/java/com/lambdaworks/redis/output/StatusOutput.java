@@ -7,11 +7,11 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 
 import java.nio.ByteBuffer;
 
-import static com.lambdaworks.redis.protocol.Charsets.buffer;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 
 /**
  * Status message output.
- *
+ * 
  * @author Will Glozer
  */
 public class StatusOutput<K, V> extends CommandOutput<K, V, String> {

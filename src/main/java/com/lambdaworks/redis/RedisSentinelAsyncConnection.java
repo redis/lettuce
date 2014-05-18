@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -10,7 +11,7 @@ import java.util.concurrent.Future;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 21:04
  */
-public interface RedisSentinelAsyncConnection<K, V> extends AutoCloseable {
+public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
     Future<SocketAddress> getMasterAddrByName(K key);
 
     Future<Map<K, V>> getMaster(K key);

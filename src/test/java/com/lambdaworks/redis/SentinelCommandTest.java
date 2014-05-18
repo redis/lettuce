@@ -22,7 +22,7 @@ import com.lambdaworks.redis.protocol.Command;
 public class SentinelCommandTest extends AbstractCommandTest {
 
     private static RedisClient sentinelClient;
-    private RedisSentinelAsyncConnectionImpl sentinel;
+    private RedisSentinelAsyncConnection sentinel;
 
     @BeforeClass
     public static void setupClient() {

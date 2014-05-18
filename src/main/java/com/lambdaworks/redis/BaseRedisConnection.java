@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:05
  */
-public interface BaseRedisConnection<K, V> extends AutoCloseable {
+public interface BaseRedisConnection<K, V> extends Closeable {
     void setTimeout(long timeout, TimeUnit unit);
 
     String auth(String password);

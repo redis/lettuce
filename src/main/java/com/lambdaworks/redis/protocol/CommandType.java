@@ -69,6 +69,6 @@ public enum CommandType {
     public byte[] bytes;
 
     private CommandType() {
-        bytes = name().getBytes(Charsets.ASCII);
+        bytes = name().getBytes(LettuceCharsets.ASCII);
     }
 }

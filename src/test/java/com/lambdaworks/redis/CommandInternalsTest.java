@@ -13,7 +13,7 @@ import org.junit.Test;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.lambdaworks.redis.protocol.Charsets.buffer;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -122,6 +122,6 @@ public class CommandInternalsTest {
         assertEquals(CommandKeyword.AFTER, CommandKeyword.valueOf("AFTER"));
         assertNotNull(new ZStoreArgs.Builder());
         assertNotNull(new SortArgs.Builder());
-        assertNotNull(new Charsets());
+        assertNotNull(new LettuceCharsets());
     }
 }
