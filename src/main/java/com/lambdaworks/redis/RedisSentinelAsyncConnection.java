@@ -14,9 +14,9 @@ import java.util.concurrent.Future;
 public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
     Future<SocketAddress> getMasterAddrByName(K key);
 
-    Future<Map<K, V>> getMaster(K key);
+    Future<Map<K, V>> master(K key);
 
-    Future<Map<K, V>> getSlaves(K key);
+    Future<Map<K, V>> slaves(K key);
 
     Future<Long> reset(K key);
 

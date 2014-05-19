@@ -68,7 +68,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaveDownstate() throws Exception {
 
-        Future<Map> result = sentinel.getMaster("myslave");
+        Future<Map> result = sentinel.master("myslave");
         Map map = result.get();
         assertThat((String) map.get("flags"), containsString("disconnected"));
 
@@ -77,7 +77,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getMaster() throws Exception {
 
-        Future<Map> result = sentinel.getMaster("mymaster");
+        Future<Map> result = sentinel.master("mymaster");
         Map map = result.get();
         System.out.println(map);
         assertEquals("127.0.0.1", map.get("ip")); // !! IPv4/IPv6
@@ -88,7 +88,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaves() throws Exception {
 
-        Future<Map> result = sentinel.getSlaves("mymaster");
+        Future<Map> result = sentinel.slaves("mymaster");
         Map map = result.get();
 
     }
