@@ -20,11 +20,11 @@ Maven Artifacts
   Releases of lettuce are available in the maven central repository.
 
 ```xml
-    <dependency>
-      <groupId>com.lambdaworks</groupId>
-      <artifactId>lettuce</artifactId>
-      <version>2.3.3</version>
-    </dependency>
+<dependency>
+  <groupId>com.lambdaworks</groupId>
+  <artifactId>lettuce</artifactId>
+  <version>2.3.3</version>
+</dependency>
 ```    
 
 Basic Usage
@@ -101,14 +101,14 @@ Streaming API
   The result of the steaming methods is the count of keys/values/key-value pairs as long value.
   
 ```java
-    Long count = redis.hgetall(new KeyValueStreamingChannel<String, String>()
+Long count = redis.hgetall(new KeyValueStreamingChannel<String, String>()
+    {
+        @Override
+        public void onKeyValue(String key, String value)
         {
-            @Override
-            public void onKeyValue(String key, String value)
-            {
-                ...
-            }
-        }, key);
+            ...
+        }
+    }, key);
 ```
 
   Streaming happens real-time to the redis responses. The method call (future) completes after the last call to the StreamingChannel.
@@ -131,21 +131,21 @@ Sentinel
 ### Sentinel connection
 
 ```java
-    RedisURI redisUri = RedisURI.Builder.sentinel("sentinelhost1", "mymaster").withSentinel("sentinelhost2").build();
-    RedisClient client = new RedisClient(redisUri);
-    
-    RedisSentinelAsyncConnection<String, String>  connection = client.connectSentinelAsync();
-    
-    Map<String, String> map = connection.master("mymaster").get();
+RedisURI redisUri = RedisURI.Builder.sentinel("sentinelhost1", "mymaster").withSentinel("sentinelhost2").build();
+RedisClient client = new RedisClient(redisUri);
+
+RedisSentinelAsyncConnection<String, String>  connection = client.connectSentinelAsync();
+
+Map<String, String> map = connection.master("mymaster").get();
 ```
   
 ### Redis discovery
 
 ```java
-    RedisURI redisUri = RedisURI.Builder.sentinel("sentinelhost1", "mymaster").withSentinel("sentinelhost2").build();
-    RedisClient client = new RedisClient(redisUri);
-    
-    RedisConnection<String, String> connection = client.connect();
+RedisURI redisUri = RedisURI.Builder.sentinel("sentinelhost1", "mymaster").withSentinel("sentinelhost2").build();
+RedisClient client = new RedisClient(redisUri);
+
+RedisConnection<String, String> connection = client.connect();
 ```
     
   Please note: Every time you connect to redis using sentinel, the redis master is discovered using a new connection to a sentinel. This
@@ -186,15 +186,15 @@ Connection Pooling
   The built-in connection pooling provides managed connections. Every pool can allocate sync and async connections.
   
 ```java  
-    RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-    
-    RedisConnection<String, String> connection = pool.allocateConnection();
-    
-    try {
-        connection.set("key", "value");
-    } finally {    
-        pool.freeConnection(connection);
-    }
+RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+
+RedisConnection<String, String> connection = pool.allocateConnection();
+
+try {
+    connection.set("key", "value");
+} finally {    
+    pool.freeConnection(connection);
+}
 ```
     
   Every pool keeps its connections until you explicitly close the pool.
@@ -202,13 +202,13 @@ Connection Pooling
   This client also provides transparent pooling, so yo don't have to bother yourself with allocating/freeing connections. 
   
 ```java  
-    RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-    RedisConnection<String, String> connection = PoolingProxyFactory.create(pool);
-    
-    connection.set("a", "b");
-    connection.set("x", "y");
-    
-    pool.close();
+RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+RedisConnection<String, String> connection = PoolingProxyFactory.create(pool);
+
+connection.set("a", "b");
+connection.set("x", "y");
+
+pool.close();
 ```  
 
 Codecs
@@ -221,9 +221,9 @@ Codecs
   RedisClient.connect methods:
 
 ```java
-    RedisConnection<K, V> connect(RedisCodec<K, V> codec)
-    RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec)
-    RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec)
+RedisConnection<K, V> connect(RedisCodec<K, V> codec)
+RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec)
+RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec)
 ```
 
   For pub/sub connections channel names and patterns are treated as keys,
@@ -237,15 +237,15 @@ Spring Support
   create the client.
 
 ```xml  
-     <bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
-        <property name="password" value="mypassword"/>
-        <!-- Redis Uri Format: redis://host[:port]/database -->
-        <!-- Redis Uri: Specify Database as Path -->
-        <property name="uri" value="redis://localhost/12"/>
-        
-        <!-- Redis Sentinel Uri Format: redis-sentinel://host[:port][,host[:port][,host[:port]]/database#masterId -->
-        <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Master Id as Fragment. -->
-        <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster"/>
-    </bean>
+<bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
+    <property name="password" value="mypassword"/>
+    <!-- Redis Uri Format: redis://host[:port]/database -->
+    <!-- Redis Uri: Specify Database as Path -->
+    <property name="uri" value="redis://localhost/12"/>
+    
+    <!-- Redis Sentinel Uri Format: redis-sentinel://host[:port][,host[:port][,host[:port]]/database#masterId -->
+    <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Master Id as Fragment. -->
+    <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster"/>
+</bean>
 ```
     
