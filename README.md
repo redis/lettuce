@@ -30,9 +30,11 @@ Maven Artifacts
 Basic Usage
 -----------
 
+```java
   RedisClient client = new RedisClient("localhost")
   RedisStringsConnection<String, String> connection = client.connect()
   String value = connection.get("key")
+```
 
   Each redis command is implemented by one or more methods with names identical
   to the lowercase redis command name. Complex commands with multiple modifiers
