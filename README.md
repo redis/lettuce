@@ -52,23 +52,23 @@ Asynchronous Connections
 ------------------------
 
 ```java
-    RedisStringsConnection<String, String> async = client.connectAsync()
-    RedisFuture<String> set = async.set("key", "value")
-    RedisFuture<String> get = async.get("key")
+RedisStringsConnection<String, String> async = client.connectAsync()
+RedisFuture<String> set = async.set("key", "value")
+RedisFuture<String> get = async.get("key")
 
-    async.awaitAll(set, get) == true
+async.awaitAll(set, get) == true
 
-    set.get() == "OK"
-    get.get() == "value"
+set.get() == "OK"
+get.get() == "value"
  ```
 
 Pub/Sub
 -------
 
 ```java
-    RedisPubSubConnection<String, String> connection = client.connectPubSub()
-    connection.addListener(new RedisPubSubListener<String, String>() { ... })
-    connection.subscribe("channel")
+RedisPubSubConnection<String, String> connection = client.connectPubSub()
+connection.addListener(new RedisPubSubListener<String, String>() { ... })
+connection.subscribe("channel")
 ```
 
 Advanced Usage
@@ -78,9 +78,9 @@ Advanced Usage
   sentinel details. You can build your own RedisURI or use the RedisUI Builder.
   
 ```java
-    RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").withDatabase(2).build;
-  
-    RedisClient client = new RedisClient(rediUri);    
+RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").withDatabase(2).build;
+
+RedisClient client = new RedisClient(rediUri);    
 ```
   
 Streaming API
