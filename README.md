@@ -11,12 +11,12 @@ lettuce - A scalable Java Redis client
   
   Currently following commands are __not yet__ supported:
   
-  * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX, 
-  * HyperLogLog: PFADD, PFCOUNT, PFMERGE
+  * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
+  * HyperLogLog: PFADD, PFCOUNT, PFMERGE 
   * Server Commands: DEBUG SEGFAULT, MONITOR
 
 
-  Join the lambdaWorks-OSS Google Group to discuss this project:
+Join the lambdaWorks-OSS Google Group to discuss this project:
 
     http://groups.google.com/group/lambdaworks-oss
     lambdaworks-oss@googlegroups.com
