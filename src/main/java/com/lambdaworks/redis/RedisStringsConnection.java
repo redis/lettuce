@@ -20,6 +20,10 @@ public interface RedisStringsConnection<K, V> extends BaseRedisConnection<K, V> 
 
     Long bitcount(K key, long start, long end);
 
+    Long bitpos(K key, boolean state);
+
+    Long bitpos(K key, boolean state, long start, long end);
+
     Long bitopAnd(K destination, K... keys);
 
     Long bitopNot(K destination, K source);
@@ -61,6 +65,8 @@ public interface RedisStringsConnection<K, V> extends BaseRedisConnection<K, V> 
     Long setbit(K key, long offset, int value);
 
     String setex(K key, long seconds, V value);
+
+    String psetex(K key, long milliseconds, V value);
 
     Boolean setnx(K key, V value);
 

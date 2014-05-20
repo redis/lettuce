@@ -20,11 +20,15 @@ public interface RedisServerAsyncConnection<K, V> extends BaseRedisAsyncConnecti
 
     RedisFuture<String> clientKill(String addr);
 
+    RedisFuture<String> clientPause(long timeout);
+
     RedisFuture<String> clientList();
 
     RedisFuture<List<String>> configGet(String parameter);
 
     RedisFuture<String> configResetstat();
+
+    RedisFuture<String> configRewrite();
 
     RedisFuture<String> configSet(String parameter, String value);
 

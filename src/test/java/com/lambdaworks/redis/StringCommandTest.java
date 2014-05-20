@@ -146,6 +146,13 @@ public class StringCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void psetex() throws Exception {
+        assertEquals("OK", redis.psetex(key, 20000, value));
+        assertEquals(value, redis.get(key));
+        assertTrue(redis.pttl(key) >= 19000);
+    }
+
+    @Test
     public void setnx() throws Exception {
         assertTrue(redis.setnx(key, value));
         assertFalse(redis.setnx(key, value));

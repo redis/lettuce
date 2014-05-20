@@ -2,12 +2,15 @@
 
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.codec.Utf8StringCodec;
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 public class BitCommandTest extends AbstractCommandTest {
     protected RedisConnection<String, String> bitstring;
@@ -29,8 +32,35 @@ public class BitCommandTest extends AbstractCommandTest {
         redis.setbit(key, 1, 1);
         redis.setbit(key, 2, 1);
         assertEquals(3, (long) redis.bitcount(key));
-        //assertEquals(2, (long) redis.bitcount(key, 1, 3));
+        // assertEquals(2, (long) redis.bitcount(key, 1, 3));
         assertEquals(0, (long) redis.bitcount(key, 3, -1));
+    }
+
+    @Test
+    public void bitpos() throws Exception {
+        assertEquals(0, (long) redis.bitcount(key));
+        redis.setbit(key, 0, 0);
+        redis.setbit(key, 1, 1);
+
+        assertEquals("00000010", bitstring.get(key));
+        assertEquals(1, (long) redis.bitpos(key, true));
+    }
+
+    @Test
+    public void bitposOffset() throws Exception {
+        assertEquals(0, (long) redis.bitcount(key));
+        redis.setbit(key, 0, 1);
+        redis.setbit(key, 1, 1);
+        redis.setbit(key, 2, 0);
+        redis.setbit(key, 3, 0);
+        redis.setbit(key, 4, 0);
+        redis.setbit(key, 5, 1);
+
+        assertEquals(1, (long) bitstring.getbit(key, 1));
+        assertEquals(0, (long) bitstring.getbit(key, 4));
+        assertEquals(1, (long) bitstring.getbit(key, 5));
+        assertEquals("00100011", bitstring.get(key));
+        assertEquals(2, (long) redis.bitpos(key, false, 0, 0));
     }
 
     @Test
@@ -95,5 +125,5 @@ public class BitCommandTest extends AbstractCommandTest {
             }
             return bits.toString();
         }
-     }
+    }
 }

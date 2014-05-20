@@ -20,11 +20,15 @@ public interface RedisServerConnection<K, V> extends BaseRedisConnection<K, V> {
 
     String clientKill(String addr);
 
+    String clientPause(long timeout);
+
     String clientList();
 
     List<String> configGet(String parameter);
 
     String configResetstat();
+
+    String configRewrite();
 
     String configSet(String parameter, String value);
 

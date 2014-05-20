@@ -22,7 +22,7 @@ public enum CommandType {
 
     // String
 
-    APPEND, GET, GETRANGE, GETSET, MGET, MSET, MSETNX, SET, SETEX, SETNX, SETRANGE, STRLEN,
+    APPEND, GET, GETRANGE, GETSET, MGET, MSET, MSETNX, SET, SETEX, PSETEX, SETNX, SETRANGE, STRLEN,
 
     // Numeric
 
@@ -58,7 +58,7 @@ public enum CommandType {
 
     // Bits
 
-    BITCOUNT, BITOP, GETBIT, SETBIT,
+    BITCOUNT, BITOP, GETBIT, SETBIT, BITPOS,
 
     // Others
     TIME,

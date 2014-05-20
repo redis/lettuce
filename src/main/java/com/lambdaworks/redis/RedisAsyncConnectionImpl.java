@@ -98,6 +98,16 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> bitpos(K key, boolean state) {
+        return dispatch(commandBuilder.bitpos(key, state));
+    }
+
+    @Override
+    public RedisFuture<Long> bitpos(K key, boolean state, long start, long end) {
+        return dispatch(commandBuilder.bitpos(key, state, start, end));
+    }
+
+    @Override
     public RedisFuture<Long> bitopAnd(K destination, K... keys) {
         return dispatch(commandBuilder.bitopAnd(destination, keys));
     }
@@ -148,6 +158,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<String> clientPause(long timeout) {
+        return dispatch(commandBuilder.clientPause(timeout));
+    }
+
+    @Override
     public RedisFuture<String> clientList() {
         return dispatch(commandBuilder.clientList());
     }
@@ -165,6 +180,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<String> configSet(String parameter, String value) {
         return dispatch(commandBuilder.configSet(parameter, value));
+    }
+
+    @Override
+    public RedisFuture<String> configRewrite() {
+        return dispatch(commandBuilder.configRewrite());
     }
 
     @Override
@@ -681,6 +701,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<String> setex(K key, long seconds, V value) {
         return dispatch(commandBuilder.setex(key, seconds, value));
+    }
+
+    @Override
+    public RedisFuture<String> psetex(K key, long milliseconds, V value) {
+        return dispatch(commandBuilder.psetex(key, milliseconds, value));
     }
 
     @Override

@@ -20,6 +20,10 @@ public interface RedisStringsAsyncConnection<K, V> extends BaseRedisAsyncConnect
 
     RedisFuture<Long> bitcount(K key, long start, long end);
 
+    RedisFuture<Long> bitpos(K key, boolean state);
+
+    RedisFuture<Long> bitpos(K key, boolean state, long start, long end);
+
     RedisFuture<Long> bitopAnd(K destination, K... keys);
 
     RedisFuture<Long> bitopNot(K destination, K source);
@@ -61,6 +65,8 @@ public interface RedisStringsAsyncConnection<K, V> extends BaseRedisAsyncConnect
     RedisFuture<Long> setbit(K key, long offset, int value);
 
     RedisFuture<String> setex(K key, long seconds, V value);
+
+    RedisFuture<String> psetex(K key, long milliseconds, V value);
 
     RedisFuture<Boolean> setnx(K key, V value);
 

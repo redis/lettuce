@@ -2,15 +2,18 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class ServerCommandTest extends AbstractCommandTest {
     @Test
@@ -35,6 +38,11 @@ public class ServerCommandTest extends AbstractCommandTest {
         assertEquals("test", redis.clientGetname());
         assertEquals("OK", redis.clientSetname(""));
         assertNull(redis.clientGetname());
+    }
+
+    @Test
+    public void clientPause() throws Exception {
+        assertEquals("OK", redis.clientPause(1000));
     }
 
     @Test
@@ -69,6 +77,10 @@ public class ServerCommandTest extends AbstractCommandTest {
         assertEquals("OK", redis.configSet("maxmemory", "1024"));
         assertEquals("1024", redis.configGet("maxmemory").get(1));
         redis.configSet("maxmemory", maxmemory);
+    }
+
+    @Test
+    public void configRewrite() throws Exception {
     }
 
     @Test

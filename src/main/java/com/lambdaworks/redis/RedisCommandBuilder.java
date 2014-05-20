@@ -55,6 +55,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITCOUNT, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> bitpos(K key, boolean state) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(state ? 1 : 0);
+        return createCommand(BITPOS, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> bitpos(K key, boolean state, long start, long end) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(state ? 1 : 0).add(start).add(end);
+        return createCommand(BITPOS, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> bitopAnd(K destination, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.add(AND).addKey(destination).addKeys(keys);
@@ -110,9 +122,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, String> clientPause(long timeout) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(PAUSE).add(timeout);
+        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> clientList() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LIST);
         return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> configRewrite() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(REWRITE);
+        return createCommand(CONFIG, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, List<String>> configGet(String parameter) {
@@ -576,6 +598,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> setex(K key, long seconds, V value) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(seconds).addValue(value);
         return createCommand(SETEX, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> psetex(K key, long milliseconds, V value) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(milliseconds).addValue(value);
+        return createCommand(PSETEX, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Boolean> setnx(K key, V value) {

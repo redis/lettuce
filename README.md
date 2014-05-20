@@ -7,7 +7,13 @@ lettuce - A scalable Java Redis client
   Multiple connections are efficiently managed by the excellent netty NIO
   framework.
 
-  This version of lettuce has been tested against redis 2.8.9
+  This version of lettuce has been tested against redis 2.8.9.
+  
+  Currently following commands are __not yet__ supported:
+  
+  * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX, 
+  * HyperLogLog: PFADD, PFCOUNT, PFMERGE
+  * Server Commands: DEBUG SEGFAULT, MONITOR
 
   Join the lambdaWorks-OSS Google Group to discuss this project:
 
