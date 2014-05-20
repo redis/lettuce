@@ -15,6 +15,7 @@ lettuce - A scalable Java Redis client
   * HyperLogLog: PFADD, PFCOUNT, PFMERGE
   * Server Commands: DEBUG SEGFAULT, MONITOR
 
+
   Join the lambdaWorks-OSS Google Group to discuss this project:
 
     http://groups.google.com/group/lambdaworks-oss
