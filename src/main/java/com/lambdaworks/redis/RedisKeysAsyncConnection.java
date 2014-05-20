@@ -70,4 +70,32 @@ public interface RedisKeysAsyncConnection<K, V> extends BaseRedisAsyncConnection
     RedisFuture<Long> ttl(K key);
 
     RedisFuture<String> type(K key);
+
+    RedisFuture<KeyScanCursor<K>> scan();
+
+    RedisFuture<KeyScanCursor<K>> scan(long count);
+
+    RedisFuture<KeyScanCursor<K>> scan(long count, K match);
+
+    RedisFuture<KeyScanCursor<K>> scan(String cursor, long count);
+
+    RedisFuture<KeyScanCursor<K>> scan(String cursor);
+
+    RedisFuture<KeyScanCursor<K>> scan(String cursor, K match);
+
+    RedisFuture<KeyScanCursor<K>> scan(String cursor, K match, long count);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count, K match);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match, long count);
+
+    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, long count);
 }

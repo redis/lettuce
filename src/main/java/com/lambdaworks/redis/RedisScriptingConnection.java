@@ -10,9 +10,9 @@ import java.util.List;
  * @since 17.05.14 21:28
  */
 public interface RedisScriptingConnection<K, V> extends BaseRedisConnection<K, V> {
-    <T> T eval(V script, ScriptOutputType type, K... keys);
+    <T> T eval(String script, ScriptOutputType type, K... keys);
 
-    <T> T eval(V script, ScriptOutputType type, K[] keys, V... values);
+    <T> T eval(String script, ScriptOutputType type, K[] keys, V... values);
 
     <T> T evalsha(String digest, ScriptOutputType type, K... keys);
 

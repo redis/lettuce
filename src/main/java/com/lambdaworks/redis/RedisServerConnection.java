@@ -30,9 +30,9 @@ public interface RedisServerConnection<K, V> extends BaseRedisConnection<K, V> {
 
     String debugObject(K key);
 
-    String flushall() throws Exception;
+    String flushall();
 
-    String flushdb() throws Exception;
+    String flushdb();
 
     String info();
 

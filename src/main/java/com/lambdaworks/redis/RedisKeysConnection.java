@@ -71,4 +71,33 @@ public interface RedisKeysConnection<K, V> extends BaseRedisConnection<K, V> {
     Long ttl(K key);
 
     String type(K key);
+
+    KeyScanCursor<K> scan();
+
+    KeyScanCursor<K> scan(long count);
+
+    KeyScanCursor<K> scan(long count, K match);
+
+    KeyScanCursor<K> scan(String cursor, long count);
+
+    KeyScanCursor<K> scan(String cursor);
+
+    KeyScanCursor<K> scan(String cursor, K match);
+
+    KeyScanCursor<K> scan(String cursor, K match, long count);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, long count);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, long count, K match);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor, K match);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor, K match, long count);
+
+    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor, long count);
+
 }

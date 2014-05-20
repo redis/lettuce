@@ -30,9 +30,9 @@ public interface RedisServerAsyncConnection<K, V> extends BaseRedisAsyncConnecti
 
     RedisFuture<String> debugObject(K key);
 
-    RedisFuture<String> flushall() throws Exception;
+    RedisFuture<String> flushall();
 
-    RedisFuture<String> flushdb() throws Exception;
+    RedisFuture<String> flushdb();
 
     RedisFuture<String> info();
 

@@ -212,12 +212,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public <T> RedisFuture<T> eval(V script, ScriptOutputType type, K... keys) {
+    public <T> RedisFuture<T> eval(String script, ScriptOutputType type, K... keys) {
         return (RedisFuture) dispatch(commandBuilder.eval(script, type, keys));
     }
 
     @Override
-    public <T> RedisFuture<T> eval(V script, ScriptOutputType type, K[] keys, V... values) {
+    public <T> RedisFuture<T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
         return (RedisFuture) dispatch(commandBuilder.eval(script, type, keys, values));
     }
 
@@ -262,12 +262,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<String> flushall() throws Exception {
+    public RedisFuture<String> flushall() {
         return dispatch(commandBuilder.flushall());
     }
 
     @Override
-    public RedisFuture<String> flushdb() throws Exception {
+    public RedisFuture<String> flushdb() {
         return dispatch(commandBuilder.flushdb());
     }
 
@@ -1157,6 +1157,77 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan() {
+        return dispatch(commandBuilder.scan("0", null, null));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan(long count) {
+        return dispatch(commandBuilder.scan("0", count, null));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan(String cursor, long count) {
+
+        return dispatch(commandBuilder.scan(cursor, count, null));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan(long count, K match) {
+        return dispatch(commandBuilder.scan(null, count, match));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan(String cursor, K match) {
+        return dispatch(commandBuilder.scan(cursor, null, match));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan(String cursor, K match, long count) {
+        return dispatch(commandBuilder.scan(cursor, count, match));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> scan(String cursor) {
+        return dispatch(commandBuilder.scan(cursor, null, null));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel) {
+        return dispatch(commandBuilder.scan(channel, "0", null, null));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count, K match) {
+        return dispatch(commandBuilder.scan(channel, "0", count, match));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count) {
+        return dispatch(commandBuilder.scan(channel, "0", count, null));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor) {
+        return dispatch(commandBuilder.scan(channel, cursor, null, null));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match) {
+        return dispatch(commandBuilder.scan(channel, cursor, null, match));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match, long count) {
+        return dispatch(commandBuilder.scan(channel, cursor, count, match));
+    }
+
+    @Override
+    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, long count) {
+        return dispatch(commandBuilder.scan(channel, cursor, count, null));
     }
 
     @Override

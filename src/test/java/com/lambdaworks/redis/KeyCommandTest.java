@@ -4,13 +4,17 @@ package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -250,5 +254,77 @@ public class KeyCommandTest extends AbstractCommandTest {
 
         redis.zadd(key + "Z", 1, "1");
         assertEquals("zset", redis.type(key + "Z"));
+    }
+
+    @Test
+    public void scan() throws Exception {
+        RedisAsyncConnection<String, String> async = client.connectAsync();
+        async.set(key, value).get();
+        RedisFuture<KeyScanCursor<String>> future = async.scan();
+
+        KeyScanCursor<String> cursor = future.get();
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(list(key), cursor.getKeys());
+
+    }
+
+    @Test
+    public void scanStreaming() throws Exception {
+        redis.set(key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        ScanCursor<Long> cursor = redis.scan(adapter, 100, "*");
+
+        assertEquals(1, cursor.getResult().intValue());
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(list(key), adapter.getList());
+
+    }
+
+    @Test
+    public void scanMultiple() throws Exception {
+
+        Set<String> expect = new HashSet<String>();
+        Set<String> check = new HashSet<String>();
+        setup100KeyValues(expect);
+
+        KeyScanCursor<String> cursor = redis.scan(12);
+
+        assertNotNull(cursor.getCursor());
+        assertNotEquals("0", cursor.getCursor());
+        assertFalse(cursor.isFinished());
+
+        assertEquals(12, cursor.getKeys().size());
+        check.addAll(cursor.getKeys());
+
+        while (!cursor.isFinished()) {
+            cursor = redis.scan(cursor.getCursor());
+            check.addAll(cursor.getKeys());
+        }
+
+        assertEquals(expect, check);
+    }
+
+    @Test
+    public void scanMatch() throws Exception {
+
+        Set<String> expect = new HashSet<String>();
+        setup100KeyValues(expect);
+
+        KeyScanCursor<String> cursor = redis.scan(100, "key1*");
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+
+        assertEquals(11, cursor.getKeys().size());
+    }
+
+    protected void setup100KeyValues(Set<String> expect) {
+        for (int i = 0; i < 100; i++) {
+            redis.set(key + i, value + i);
+            expect.add(key + i);
+        }
     }
 }

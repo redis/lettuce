@@ -15,6 +15,12 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.SetArgs;
 
+/**
+ * 
+ * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @param <K>
+ * @param <V>
+ */
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public RedisCommandBuilder(RedisCodec<K, V> codec) {
@@ -161,9 +167,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ECHO, new ValueOutput<K, V>(codec), args);
     }
 
-    public <T> Command<K, V, T> eval(V script, ScriptOutputType type, K[] keys, V... values) {
+    public <T> Command<K, V, T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addValue(script).add(keys.length).addKeys(keys).addValues(values);
+        args.add(script).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
         return createCommand(EVAL, output, args);
     }
@@ -189,11 +195,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIREAT, new BooleanOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, String> flushall() throws Exception {
+    public Command<K, V, String> flushall() {
         return createCommand(FLUSHALL, new StatusOutput<K, V>(codec));
     }
 
-    public Command<K, V, String> flushdb() throws Exception {
+    public Command<K, V, String> flushdb() {
         return createCommand(FLUSHDB, new StatusOutput<K, V>(codec));
     }
 
@@ -1038,4 +1044,43 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TIME, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, KeyScanCursor<K>> scan(String cursor, Long count, K pattern) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        if (LettuceStrings.isNotEmpty(cursor)) {
+            args.add(cursor);
+        } else {
+            args.add("0");
+        }
+
+        if (pattern != null) {
+            args.add(MATCH).addKey(pattern);
+        }
+
+        if (count != null) {
+            args.add(COUNT).add(count);
+        }
+
+        KeyScanOutput<K, V> nested = new KeyScanOutput(codec);
+        return createCommand(SCAN, nested, args);
+    }
+
+    public Command<K, V, ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, Long count, K pattern) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        if (LettuceStrings.isNotEmpty(cursor)) {
+            args.add(cursor);
+        } else {
+            args.add("0");
+        }
+
+        if (pattern != null) {
+            args.add(MATCH).addKey(pattern);
+        }
+
+        if (count != null) {
+            args.add(COUNT).add(count);
+        }
+
+        KeyScanStreamingOutput<K, V> nested = new KeyScanStreamingOutput(codec, channel);
+        return createCommand(SCAN, nested, args);
+    }
 }

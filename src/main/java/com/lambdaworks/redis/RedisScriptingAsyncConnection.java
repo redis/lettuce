@@ -9,9 +9,9 @@ import java.util.List;
  * @since 17.05.14 21:28
  */
 public interface RedisScriptingAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
-    <T> RedisFuture<T> eval(V script, ScriptOutputType type, K... keys);
+    <T> RedisFuture<T> eval(String script, ScriptOutputType type, K... keys);
 
-    <T> RedisFuture<T> eval(V script, ScriptOutputType type, K[] keys, V... values);
+    <T> RedisFuture<T> eval(String script, ScriptOutputType type, K[] keys, V... values);
 
     <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K... keys);
 
