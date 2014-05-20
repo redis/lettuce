@@ -1,0 +1,22 @@
+package com.lambdaworks.redis;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Cursor providing a list of {@link com.lambdaworks.redis.ScoredValue}
+ * 
+ * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @since 20.05.14 14:40
+ */
+public class ScoredValueScanCursor<V> extends ScanCursor {
+
+    private List<ScoredValue<V>> values = new ArrayList<ScoredValue<V>>();
+
+    public ScoredValueScanCursor() {
+    }
+
+    public List<ScoredValue<V>> getValues() {
+        return values;
+    }
+}

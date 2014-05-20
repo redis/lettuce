@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 17:21
  */
-public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T> {
+public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T>,
+        ScoredValueStreamingChannel<T> {
     private List<T> list = new ArrayList<T>();
 
     @Override
@@ -26,5 +28,10 @@ public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStr
 
     public List<T> getList() {
         return list;
+    }
+
+    @Override
+    public void onValue(ScoredValue<T> value) {
+        list.add(value.value);
     }
 }

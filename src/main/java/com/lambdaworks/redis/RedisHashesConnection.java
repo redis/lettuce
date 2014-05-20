@@ -14,7 +14,6 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @since 17.05.14 21:07
  */
 public interface RedisHashesConnection<K, V> extends BaseRedisConnection<K, V> {
-    String configResetstat();
 
     Long hdel(K key, K... fields);
 
@@ -49,4 +48,20 @@ public interface RedisHashesConnection<K, V> extends BaseRedisConnection<K, V> {
     List<V> hvals(K key);
 
     Long hvals(ValueStreamingChannel<V> channel, K key);
+
+    MapScanCursor<K, V> hscan(K key);
+
+    MapScanCursor<K, V> hscan(K key, ScanArgs scanArgs);
+
+    MapScanCursor<K, V> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    MapScanCursor<K, V> hscan(K key, ScanCursor scanCursor);
+
+    StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key);
+
+    StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
+
+    StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
 }

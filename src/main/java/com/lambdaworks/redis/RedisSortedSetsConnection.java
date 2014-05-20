@@ -134,4 +134,20 @@ public interface RedisSortedSetsConnection<K, V> extends BaseRedisConnection<K, 
     Long zunionstore(K destination, K... keys);
 
     Long zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
+    ScoredValueScanCursor<V> zscan(K key);
+
+    ScoredValueScanCursor<V> zscan(K key, ScanArgs scanArgs);
+
+    ScoredValueScanCursor<V> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    ScoredValueScanCursor<V> zscan(K key, ScanCursor scanCursor);
+
+    StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key);
+
+    StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
+
+    StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }

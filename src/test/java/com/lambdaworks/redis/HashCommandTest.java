@@ -4,6 +4,7 @@ package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 public class HashCommandTest extends AbstractCommandTest {
     @Test
@@ -137,5 +140,77 @@ public class HashCommandTest extends AbstractCommandTest {
         List<String> values = redis.hvals(key);
         assertEquals(2, values.size());
         assertTrue(values.containsAll(list("1", "1")));
+    }
+
+    @Test
+    public void hscan() throws Exception {
+        redis.hset(key, key, value);
+        MapScanCursor<String, String> cursor = redis.hscan(key);
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(ImmutableMap.of(key, value), cursor.getMap());
+
+    }
+
+    @Test
+    public void hscanStreaming() throws Exception {
+        redis.hset(key, key, value);
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+
+        StreamScanCursor cursor = redis.hscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+
+        assertEquals(1, cursor.getCount());
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(ImmutableMap.of(key, value), adapter.getMap());
+
+    }
+
+    @Test
+    public void hscanMultiple() throws Exception {
+
+        Map<String, String> expect = new HashMap<String, String>();
+        Map<String, String> check = new HashMap<String, String>();
+        setup100KeyValues(expect);
+
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.count(5));
+
+        assertNotNull(cursor.getCursor());
+        assertEquals(100, cursor.getMap().size());
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+
+        check.putAll(cursor.getMap());
+
+        while (!cursor.isFinished()) {
+            cursor = redis.hscan(key, cursor);
+            check.putAll(cursor.getMap());
+        }
+
+        assertEquals(expect, check);
+    }
+
+    @Test
+    public void hscanMatch() throws Exception {
+
+        Map<String, String> expect = new HashMap<String, String>();
+        setup100KeyValues(expect);
+
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.count(100).match("key1*"));
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+
+        assertEquals(11, cursor.getMap().size());
+    }
+
+    protected void setup100KeyValues(Map<String, String> expect) {
+        for (int i = 0; i < 100; i++) {
+            expect.put(key + i, value + 1);
+        }
+
+        redis.hmset(key, expect);
     }
 }

@@ -1044,43 +1044,193 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TIME, new ValueListOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, KeyScanCursor<K>> scan(String cursor, Long count, K pattern) {
+    public Command<K, V, KeyScanCursor<K>> scan() {
+        return scan(null, null);
+    }
+
+    public Command<K, V, KeyScanCursor<K>> scan(ScanCursor scanCursor) {
+        return scan(scanCursor, null);
+    }
+
+    public Command<K, V, KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+        return scan(null, scanArgs);
+    }
+
+    public Command<K, V, KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        if (LettuceStrings.isNotEmpty(cursor)) {
-            args.add(cursor);
+
+        scanArgs(scanCursor, scanArgs, args);
+
+        KeyScanOutput<K, V> output = new KeyScanOutput(codec);
+        return createCommand(SCAN, output, args);
+    }
+
+    protected void scanArgs(ScanCursor scanCursor, ScanArgs scanArgs, CommandArgs<K, V> args) {
+        if (scanCursor != null) {
+            args.add(scanCursor.getCursor());
         } else {
             args.add("0");
         }
 
-        if (pattern != null) {
-            args.add(MATCH).addKey(pattern);
+        if (scanArgs != null) {
+            scanArgs.build(args);
         }
-
-        if (count != null) {
-            args.add(COUNT).add(count);
-        }
-
-        KeyScanOutput<K, V> nested = new KeyScanOutput(codec);
-        return createCommand(SCAN, nested, args);
     }
 
-    public Command<K, V, ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, Long count, K pattern) {
+    public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel) {
+        return scanStreaming(channel, null, null);
+    }
+
+    public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
+        return scanStreaming(channel, scanCursor, null);
+    }
+
+    public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+        return scanStreaming(channel, null, scanArgs);
+    }
+
+    public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        if (LettuceStrings.isNotEmpty(cursor)) {
-            args.add(cursor);
-        } else {
-            args.add("0");
-        }
+        scanArgs(scanCursor, scanArgs, args);
 
-        if (pattern != null) {
-            args.add(MATCH).addKey(pattern);
-        }
-
-        if (count != null) {
-            args.add(COUNT).add(count);
-        }
-
-        KeyScanStreamingOutput<K, V> nested = new KeyScanStreamingOutput(codec, channel);
-        return createCommand(SCAN, nested, args);
+        KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput(codec, channel);
+        return createCommand(SCAN, output, args);
     }
+
+    public Command<K, V, ValueScanCursor<V>> sscan(K key) {
+        return sscan(key, null, null);
+    }
+
+    public Command<K, V, ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
+        return sscan(key, scanCursor, null);
+    }
+
+    public Command<K, V, ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
+        return sscan(key, null, scanArgs);
+    }
+
+    public Command<K, V, ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key);
+
+        scanArgs(scanCursor, scanArgs, args);
+
+        ValueScanOutput<K, V> output = new ValueScanOutput<K, V>(codec);
+        return createCommand(SSCAN, output, args);
+    }
+
+    public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key) {
+        return sscanStreaming(channel, key, null, null);
+    }
+
+    public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return sscanStreaming(channel, key, scanCursor, null);
+    }
+
+    public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return sscanStreaming(channel, key, null, scanArgs);
+    }
+
+    public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+
+        args.addKey(key);
+        scanArgs(scanCursor, scanArgs, args);
+
+        ValueScanStreamingOutput<K, V> output = new ValueScanStreamingOutput(codec, channel);
+        return createCommand(SSCAN, output, args);
+    }
+
+    public Command<K, V, MapScanCursor<K, V>> hscan(K key) {
+        return hscan(key, null, null);
+    }
+
+    public Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
+        return hscan(key, scanCursor, null);
+    }
+
+    public Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
+        return hscan(key, null, scanArgs);
+    }
+
+    public Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key);
+
+        scanArgs(scanCursor, scanArgs, args);
+
+        MapScanOutput<K, V> output = new MapScanOutput<K, V>(codec);
+        return createCommand(HSCAN, output, args);
+    }
+
+    public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key) {
+        return hscanStreaming(channel, key, null, null);
+    }
+
+    public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
+        return hscanStreaming(channel, key, scanCursor, null);
+    }
+
+    public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
+        return hscanStreaming(channel, key, null, scanArgs);
+    }
+
+    public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+
+        args.addKey(key);
+        scanArgs(scanCursor, scanArgs, args);
+
+        KeyValueScanStreamingOutput<K, V> output = new KeyValueScanStreamingOutput(codec, channel);
+        return createCommand(HSCAN, output, args);
+    }
+
+    public Command<K, V, ScoredValueScanCursor<V>> zscan(K key) {
+        return zscan(key, null, null);
+    }
+
+    public Command<K, V, ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
+        return zscan(key, scanCursor, null);
+    }
+
+    public Command<K, V, ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
+        return zscan(key, null, scanArgs);
+    }
+
+    public Command<K, V, ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key);
+
+        scanArgs(scanCursor, scanArgs, args);
+
+        ScoredValueScanOutput<K, V> output = new ScoredValueScanOutput<K, V>(codec);
+        return createCommand(ZSCAN, output, args);
+    }
+
+    public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key) {
+        return zscanStreaming(channel, key, null, null);
+    }
+
+    public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return zscanStreaming(channel, key, scanCursor, null);
+    }
+
+    public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return zscanStreaming(channel, key, null, scanArgs);
+    }
+
+    public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+
+        args.addKey(key);
+        scanArgs(scanCursor, scanArgs, args);
+
+        ScoredValueScanStreamingOutput<K, V> output = new ScoredValueScanStreamingOutput(codec, channel);
+        return createCommand(ZSCAN, output, args);
+    }
+
 }

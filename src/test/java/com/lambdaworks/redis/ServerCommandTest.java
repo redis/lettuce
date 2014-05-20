@@ -116,6 +116,10 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void save() throws Exception {
+
+        while (redis.info().contains("aof_rewrite_in_progress:1")) {
+            Thread.sleep(100);
+        }
         assertEquals("OK", redis.save());
     }
 

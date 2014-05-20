@@ -50,4 +50,20 @@ public interface RedisSetsAsyncConnection<K, V> extends BaseRedisAsyncConnection
     RedisFuture<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
 
     RedisFuture<Long> sunionstore(K destination, K... keys);
+
+    RedisFuture<ValueScanCursor<V>> sscan(K key);
+
+    RedisFuture<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs);
+
+    RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor);
+
+    RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key);
+
+    RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
+
+    RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }

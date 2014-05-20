@@ -2,12 +2,21 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
-
-import static com.lambdaworks.redis.ZStoreArgs.Builder.*;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.max;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.min;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.sum;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.weights;
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.Test;
 
 public class SortedSetCommandTest extends AbstractCommandTest {
     @Test
@@ -49,7 +58,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zinterstore() throws Exception {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
@@ -65,7 +74,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zrangeWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")), redis.zrangeWithScores(key, 0, -1));
@@ -83,13 +92,15 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zrangebyscoreWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(svlist(sv(2.0, "b"), sv(3.0, "c")), redis.zrangebyscoreWithScores(key, 2.0, 3.0));
         assertEquals(svlist(sv(2.0, "b"), sv(3.0, "c")), redis.zrangebyscoreWithScores(key, "(1.0", "(4.0"));
-        assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")), redis.zrangebyscoreWithScores(key, NEGATIVE_INFINITY, POSITIVE_INFINITY));
-        assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")), redis.zrangebyscoreWithScores(key, "-inf", "+inf"));
+        assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")),
+                redis.zrangebyscoreWithScores(key, NEGATIVE_INFINITY, POSITIVE_INFINITY));
+        assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")),
+                redis.zrangebyscoreWithScores(key, "-inf", "+inf"));
         assertEquals(svlist(sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")), redis.zrangebyscoreWithScores(key, 0.0, 4.0, 1, 3));
         assertEquals(svlist(sv(3.0, "c"), sv(4.0, "d")), redis.zrangebyscoreWithScores(key, "-inf", "+inf", 2, 2));
     }
@@ -141,7 +152,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zrevrangeWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c");
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangeWithScores(key, 0, -1));
@@ -159,13 +170,15 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zrevrangebyscoreWithScores() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b")), redis.zrevrangebyscoreWithScores(key, 3.0, 2.0));
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b")), redis.zrevrangebyscoreWithScores(key, "(4.0", "(1.0"));
-        assertEquals(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangebyscoreWithScores(key, POSITIVE_INFINITY, NEGATIVE_INFINITY));
-        assertEquals(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangebyscoreWithScores(key, "+inf", "-inf"));
+        assertEquals(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")),
+                redis.zrevrangebyscoreWithScores(key, POSITIVE_INFINITY, NEGATIVE_INFINITY));
+        assertEquals(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")),
+                redis.zrevrangebyscoreWithScores(key, "+inf", "-inf"));
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangebyscoreWithScores(key, 4.0, 0.0, 1, 3));
         assertEquals(svlist(sv(2.0, "b"), sv(1.0, "a")), redis.zrevrangebyscoreWithScores(key, "+inf", "-inf", 2, 2));
     }
@@ -186,7 +199,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zunionstore() throws Exception {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
@@ -208,7 +221,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({ "unchecked", "varargs" })
     public void zStoreArgs() throws Exception {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
@@ -233,5 +246,70 @@ public class SortedSetCommandTest extends AbstractCommandTest {
 
         assertEquals(2, redis.zinterstore(key, weights(2, 3).max(), "zset1", "zset2"), 0.0);
         assertEquals(svlist(sv(6.0, "a"), sv(9.0, "b")), redis.zrangeWithScores(key, 0, -1));
+    }
+
+    @Test
+    public void zsscan() throws Exception {
+        redis.zadd(key, 1, value);
+        ScoredValueScanCursor<String> cursor = redis.zscan(key);
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(new ScoredValue<String>(1, value), cursor.getValues().get(0));
+
+    }
+
+    @Test
+    public void zscanStreaming() throws Exception {
+        redis.zadd(key, 1, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        StreamScanCursor cursor = redis.zscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+
+        assertEquals(1, cursor.getCount());
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(value, adapter.getList().get(0));
+
+    }
+
+    @Test
+    public void zscanMultiple() throws Exception {
+
+        Set<String> expect = new HashSet<String>();
+        Set<String> check = new HashSet<String>();
+        setup100KeyValues(expect);
+
+        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.count(5));
+
+        assertNotNull(cursor.getCursor());
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+
+        assertEquals(100, cursor.getValues().size());
+
+    }
+
+    @Test
+    public void zscanMatch() throws Exception {
+
+        Set<String> expect = new HashSet<String>();
+        setup100KeyValues(expect);
+
+        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.count(10).match("val*"));
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+
+        assertEquals(100, cursor.getValues().size());
+    }
+
+    protected void setup100KeyValues(Set<String> expect) {
+        for (int i = 0; i < 100; i++) {
+            redis.zadd(key + 1, i, value + i);
+            redis.zadd(key, i, value + i);
+            expect.add(value + i);
+        }
+
     }
 }

@@ -50,4 +50,20 @@ public interface RedisSetsConnection<K, V> extends BaseRedisConnection<K, V> {
     Long sunion(ValueStreamingChannel<V> channel, K... keys);
 
     Long sunionstore(K destination, K... keys);
+
+    ValueScanCursor<V> sscan(K key);
+
+    ValueScanCursor<V> sscan(K key, ScanArgs scanArgs);
+
+    ValueScanCursor<V> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    ValueScanCursor<V> sscan(K key, ScanCursor scanCursor);
+
+    StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key);
+
+    StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
+
+    StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }

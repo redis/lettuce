@@ -4,10 +4,14 @@ package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Test;
 
@@ -135,7 +139,7 @@ public class SetCommandTest extends AbstractCommandTest {
 
         assertEquals(5, count.longValue());
 
-        assertEquals(list("c", "a", "b", "e", "d"), adapter.getList());
+        assertEquals(new TreeSet(list("c", "a", "b", "e", "d")), new TreeSet(adapter.getList()));
     }
 
     @Test
@@ -145,5 +149,75 @@ public class SetCommandTest extends AbstractCommandTest {
         redis.sadd("key3", "a", "c", "e");
         assertEquals(5, (long) redis.sunionstore("newset", "key1", "key2", "key3"));
         assertEquals(set("a", "b", "c", "d", "e"), redis.smembers("newset"));
+    }
+
+    @Test
+    public void sscan() throws Exception {
+        redis.sadd(key, value);
+        ValueScanCursor<String> cursor = redis.sscan(key);
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(list(value), cursor.getValues());
+
+    }
+
+    @Test
+    public void sscanStreaming() throws Exception {
+        redis.sadd(key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        StreamScanCursor cursor = redis.sscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+
+        assertEquals(1, cursor.getCount());
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(list(value), adapter.getList());
+
+    }
+
+    @Test
+    public void sscanMultiple() throws Exception {
+
+        Set<String> expect = new HashSet<String>();
+        Set<String> check = new HashSet<String>();
+        setup100KeyValues(expect);
+
+        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(5));
+
+        assertNotNull(cursor.getCursor());
+        assertNotEquals("0", cursor.getCursor());
+        assertFalse(cursor.isFinished());
+
+        assertEquals(5, cursor.getValues().size());
+        check.addAll(cursor.getValues());
+
+        while (!cursor.isFinished()) {
+            cursor = redis.sscan(key, cursor);
+            check.addAll(cursor.getValues());
+        }
+
+        assertEquals(new TreeSet(expect), new TreeSet(check));
+    }
+
+    @Test
+    public void scanMatch() throws Exception {
+
+        Set<String> expect = new HashSet<String>();
+        setup100KeyValues(expect);
+
+        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(100).match("value1*"));
+
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+
+        assertEquals(11, cursor.getValues().size());
+    }
+
+    protected void setup100KeyValues(Set<String> expect) {
+        for (int i = 0; i < 100; i++) {
+            redis.sadd(key, value + i);
+            expect.add(value + i);
+        }
     }
 }

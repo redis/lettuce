@@ -24,6 +24,8 @@ public interface RedisServerConnection<K, V> extends BaseRedisConnection<K, V> {
 
     List<String> configGet(String parameter);
 
+    String configResetstat();
+
     String configSet(String parameter, String value);
 
     Long dbsize();

@@ -73,29 +73,18 @@ public interface RedisKeysAsyncConnection<K, V> extends BaseRedisAsyncConnection
 
     RedisFuture<KeyScanCursor<K>> scan();
 
-    RedisFuture<KeyScanCursor<K>> scan(long count);
+    RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
-    RedisFuture<KeyScanCursor<K>> scan(long count, K match);
+    RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
-    RedisFuture<KeyScanCursor<K>> scan(String cursor, long count);
+    RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
-    RedisFuture<KeyScanCursor<K>> scan(String cursor);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
-    RedisFuture<KeyScanCursor<K>> scan(String cursor, K match);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
-    RedisFuture<KeyScanCursor<K>> scan(String cursor, K match, long count);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count);
-
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count, K match);
-
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor);
-
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match);
-
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match, long count);
-
-    RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, long count);
 }

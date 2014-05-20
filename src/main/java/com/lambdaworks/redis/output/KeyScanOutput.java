@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -15,7 +14,6 @@ public class KeyScanOutput<K, V> extends ScanOutput<K, V, KeyScanCursor<K>> {
 
     public KeyScanOutput(RedisCodec<K, V> codec) {
         super(codec, new KeyScanCursor<K>());
-        output.setResult(new ArrayList<K>());
     }
 
     @Override

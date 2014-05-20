@@ -24,6 +24,8 @@ public interface RedisServerAsyncConnection<K, V> extends BaseRedisAsyncConnecti
 
     RedisFuture<List<String>> configGet(String parameter);
 
+    RedisFuture<String> configResetstat();
+
     RedisFuture<String> configSet(String parameter, String value);
 
     RedisFuture<Long> dbsize();

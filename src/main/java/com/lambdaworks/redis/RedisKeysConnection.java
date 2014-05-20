@@ -74,30 +74,17 @@ public interface RedisKeysConnection<K, V> extends BaseRedisConnection<K, V> {
 
     KeyScanCursor<K> scan();
 
-    KeyScanCursor<K> scan(long count);
+    KeyScanCursor<K> scan(ScanArgs scanArgs);
 
-    KeyScanCursor<K> scan(long count, K match);
+    KeyScanCursor<K> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
-    KeyScanCursor<K> scan(String cursor, long count);
+    KeyScanCursor<K> scan(ScanCursor scanCursor);
 
-    KeyScanCursor<K> scan(String cursor);
+    StreamScanCursor scan(KeyStreamingChannel<K> channel);
 
-    KeyScanCursor<K> scan(String cursor, K match);
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
-    KeyScanCursor<K> scan(String cursor, K match, long count);
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel);
-
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, long count);
-
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, long count, K match);
-
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor);
-
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor, K match);
-
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor, K match, long count);
-
-    ScanCursor<Long> scan(KeyStreamingChannel<K> channel, String cursor, long count);
-
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }

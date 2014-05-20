@@ -14,7 +14,6 @@ import java.util.Map;
  * @since 17.05.14 21:07
  */
 public interface RedisHashesAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
-    RedisFuture<String> configResetstat();
 
     RedisFuture<Long> hdel(K key, K... fields);
 
@@ -49,4 +48,20 @@ public interface RedisHashesAsyncConnection<K, V> extends BaseRedisAsyncConnecti
     RedisFuture<List<V>> hvals(K key);
 
     RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
+
+    RedisFuture<MapScanCursor<K, V>> hscan(K key);
+
+    RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs);
+
+    RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
+
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
+
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
+
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
 }

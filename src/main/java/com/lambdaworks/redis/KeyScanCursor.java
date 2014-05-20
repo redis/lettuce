@@ -4,20 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Cursor providing a list of keys.
+ * 
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
  * @since 20.05.14 14:40
  */
-public class KeyScanCursor<K> extends ScanCursor<List<K>> {
+public class KeyScanCursor<K> extends ScanCursor {
 
-    public KeyScanCursor() {
-        this(new ArrayList<K>());
-    }
-
-    public KeyScanCursor(List<K> list) {
-        setResult(list);
-    }
+    private List<K> keys = new ArrayList<K>();
 
     public List<K> getKeys() {
-        return getResult();
+        return keys;
     }
 }

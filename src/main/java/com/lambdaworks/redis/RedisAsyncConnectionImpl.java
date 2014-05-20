@@ -1161,73 +1161,164 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan() {
-        return dispatch(commandBuilder.scan("0", null, null));
+        return dispatch(commandBuilder.scan());
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(long count) {
-        return dispatch(commandBuilder.scan("0", count, null));
+    public RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+        return dispatch(commandBuilder.scan(scanArgs));
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(String cursor, long count) {
-
-        return dispatch(commandBuilder.scan(cursor, count, null));
+    public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.scan(scanArgs));
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(long count, K match) {
-        return dispatch(commandBuilder.scan(null, count, match));
+    public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
+        return dispatch(commandBuilder.scan(scanCursor));
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(String cursor, K match) {
-        return dispatch(commandBuilder.scan(cursor, null, match));
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
+        return dispatch(commandBuilder.scanStreaming(channel));
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(String cursor, K match, long count) {
-        return dispatch(commandBuilder.scan(cursor, count, match));
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.scanStreaming(channel, scanArgs));
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(String cursor) {
-        return dispatch(commandBuilder.scan(cursor, null, null));
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel) {
-        return dispatch(commandBuilder.scan(channel, "0", null, null));
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.scanStreaming(channel, scanCursor));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count, K match) {
-        return dispatch(commandBuilder.scan(channel, "0", count, match));
+    public RedisFuture<ValueScanCursor<V>> sscan(K key) {
+        return dispatch(commandBuilder.sscan(key));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, long count) {
-        return dispatch(commandBuilder.scan(channel, "0", count, null));
+    public RedisFuture<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.sscan(key, scanArgs));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor) {
-        return dispatch(commandBuilder.scan(channel, cursor, null, null));
+    public RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.sscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match) {
-        return dispatch(commandBuilder.scan(channel, cursor, null, match));
+    public RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.sscan(key, scanCursor));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, K match, long count) {
-        return dispatch(commandBuilder.scan(channel, cursor, count, match));
+    public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key) {
+        return dispatch(commandBuilder.sscanStreaming(channel, key));
     }
 
     @Override
-    public RedisFuture<ScanCursor<Long>> scan(KeyStreamingChannel<K> channel, String cursor, long count) {
-        return dispatch(commandBuilder.scan(channel, cursor, count, null));
+    public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.sscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.sscanStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.sscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<MapScanCursor<K, V>> hscan(K key) {
+        return dispatch(commandBuilder.hscan(key));
+    }
+
+    @Override
+    public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscan(key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscan(key, scanCursor, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.hscan(key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key) {
+        return dispatch(commandBuilder.hscanStreaming(channel, key));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.hscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<ScoredValueScanCursor<V>> zscan(K key) {
+        return dispatch(commandBuilder.zscan(key));
+    }
+
+    @Override
+    public RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.zscan(key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.zscan(key, scanCursor, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.zscan(key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key) {
+        return dispatch(commandBuilder.zscanStreaming(channel, key));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.zscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        return dispatch(commandBuilder.zscanStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.zscanStreaming(channel, key, scanCursor));
     }
 
     @Override

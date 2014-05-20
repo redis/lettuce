@@ -1,12 +1,13 @@
 package com.lambdaworks.redis;
 
 /**
+ * Generic Cursor data structure.
+ * 
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
  * @since 20.05.14 14:35
  */
-public class ScanCursor<T> {
+public class ScanCursor {
     private String cursor;
-    private T result;
     private boolean finished;
 
     public String getCursor() {
@@ -17,19 +18,23 @@ public class ScanCursor<T> {
         this.cursor = cursor;
     }
 
-    public T getResult() {
-        return result;
-    }
-
-    public void setResult(T result) {
-        this.result = result;
-    }
-
     public boolean isFinished() {
         return finished;
     }
 
     public void setFinished(boolean finished) {
         this.finished = finished;
+    }
+
+    /**
+     * Creates a Scan-Cursor reference.
+     * 
+     * @param cursor
+     * @return ScanCursor
+     */
+    public static ScanCursor of(String cursor) {
+        ScanCursor scanCursor = new ScanCursor();
+        scanCursor.setCursor(cursor);
+        return scanCursor;
     }
 }

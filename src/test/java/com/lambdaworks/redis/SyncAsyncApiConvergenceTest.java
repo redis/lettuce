@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -59,13 +61,16 @@ public class SyncAsyncApiConvergenceTest {
 
                 assertEquals(this.method.getReturnType(), Object.class);
                 return;
-
             }
 
             if (actualTypeArguments[0] instanceof ParameterizedType) {
 
                 ParameterizedType parameterizedType = (ParameterizedType) actualTypeArguments[0];
                 returnType = (Class) parameterizedType.getRawType();
+            } else if (actualTypeArguments[0] instanceof GenericArrayType) {
+
+                GenericArrayType arrayType = (GenericArrayType) actualTypeArguments[0];
+                returnType = Array.newInstance((Class) arrayType.getGenericComponentType(), 0).getClass();
             } else {
                 returnType = (Class) actualTypeArguments[0];
             }

@@ -3,6 +3,7 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.ScanCursor;
+import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
@@ -11,20 +12,19 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * 
  * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
  */
-public class KeyScanStreamingOutput<K, V> extends ScanOutput<K, V, ScanCursor<Long>> {
+public class KeyScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 
     private KeyStreamingChannel<K> channel;
 
     public KeyScanStreamingOutput(RedisCodec<K, V> codec, KeyStreamingChannel<K> channel) {
-        super(codec, new ScanCursor<Long>());
+        super(codec, new StreamScanCursor());
         this.channel = channel;
-        output.setResult(Long.valueOf(0));
     }
 
     @Override
     protected void setOutput(ByteBuffer bytes) {
         channel.onKey(bytes == null ? null : codec.decodeKey(bytes));
-        output.setResult(output.getResult() + 1);
+        output.setCount(output.getCount() + 1);
     }
 
 }

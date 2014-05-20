@@ -136,4 +136,20 @@ public interface RedisSortedSetsAsyncConnection<K, V> extends BaseRedisAsyncConn
     RedisFuture<Long> zunionstore(K destination, K... keys);
 
     RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
+    RedisFuture<ScoredValueScanCursor<V>> zscan(K key);
+
+    RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs);
+
+    RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor);
+
+    RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key);
+
+    RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
+
+    RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }
