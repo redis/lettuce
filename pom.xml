@@ -26,6 +26,10 @@
             <id>will</id>
             <name>Will Glozer</name>
         </developer>
+        <developer>
+            <id>mp911de</id>
+            <name>Mark Paluch</name>
+        </developer>
     </developers>
 
     <dependencies>
@@ -136,22 +140,11 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.5</version>
+                <configuration>
+                    <skip>${skipSigning}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -167,6 +160,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Not every build should be signed, disabled by default -->
+        <skipSigning>true</skipSigning>
+
+        <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
+        <skipTests>true</skipTests>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
     </properties>
 
     <scm>
