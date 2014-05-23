@@ -34,12 +34,14 @@ public class PoolingProxyFactory {
      * @param <T> Type of the connection.
      * @return Transparent pooling proxy
      */
+    @SuppressWarnings("unchecked")
     public static <T, C extends T> C create(RedisConnectionPool<T> connectionPool, long recheckInterval, TimeUnit unit) {
-        Class<T> componentType = connectionPool.getComponentType();
+        Class<?> componentType = connectionPool.getComponentType();
 
-        TransparentPoolingInvocationHandler h = new TransparentPoolingInvocationHandler(connectionPool, recheckInterval, unit);
+        TransparentPoolingInvocationHandler<T> h = new TransparentPoolingInvocationHandler<T>(connectionPool, recheckInterval,
+                unit);
 
-        Object o = Proxy.newProxyInstance(PoolingProxyFactory.class.getClassLoader(), new Class[] { componentType }, h);
+        Object o = Proxy.newProxyInstance(PoolingProxyFactory.class.getClassLoader(), new Class<?>[] { componentType }, h);
 
         return (C) o;
     }

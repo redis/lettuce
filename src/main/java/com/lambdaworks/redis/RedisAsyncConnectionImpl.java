@@ -232,23 +232,27 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> RedisFuture<T> eval(String script, ScriptOutputType type, K... keys) {
-        return (RedisFuture) dispatch(commandBuilder.eval(script, type, keys));
+        return (RedisFuture<T>) dispatch(commandBuilder.eval(script, type, keys));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> RedisFuture<T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
-        return (RedisFuture) dispatch(commandBuilder.eval(script, type, keys, values));
+        return (RedisFuture<T>) dispatch(commandBuilder.eval(script, type, keys, values));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K... keys) {
-        return (RedisFuture) dispatch(commandBuilder.evalsha(digest, type, keys));
+        return (RedisFuture<T>) dispatch(commandBuilder.evalsha(digest, type, keys));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
-        return (RedisFuture) dispatch(commandBuilder.evalsha(digest, type, keys, values));
+        return (RedisFuture<T>) dispatch(commandBuilder.evalsha(digest, type, keys, values));
     }
 
     @Override

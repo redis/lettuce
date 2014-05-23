@@ -5,6 +5,8 @@ package com.lambdaworks.redis.protocol;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Supplier;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -34,6 +36,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private boolean reconnect;
     private int attempts;
     private SocketAddress remoteAddress;
+    private Supplier<SocketAddress> socketAddressSupplier;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -43,6 +46,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * @param timer Timer used for delayed reconnect.
      */
     public ConnectionWatchdog(Bootstrap bootstrap, Timer timer) {
+        this(bootstrap, timer, null);
+    }
+
+    /**
+     * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
+     * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
+     * 
+     * @param bootstrap Configuration for new channels.
+     * @param timer Timer used for delayed reconnect.
+     * @param socketAddressSupplier
+     */
+    public ConnectionWatchdog(Bootstrap bootstrap, Timer timer, Supplier<SocketAddress> socketAddressSupplier) {
         this.bootstrap = bootstrap;
         this.timer = timer;
     }
@@ -89,6 +104,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         try {
             logger.info("Connecting");
+            if (socketAddressSupplier != null) {
+                try {
+                    remoteAddress = socketAddressSupplier.get();
+                } catch (RuntimeException e) {
+                    logger.warn("Cannot retrieve the current address from socketAddressSupplier: " + e.toString());
+                }
+            }
+
             bootstrap.connect(remoteAddress).sync();
         } catch (Exception e) {
             scheduleReconnect();

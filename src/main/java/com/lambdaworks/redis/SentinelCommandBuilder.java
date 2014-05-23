@@ -21,10 +21,8 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:35
  */
-class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder
-
-{
-    public SentinelCommandBuilder(RedisCodec codec) {
+class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
+    public SentinelCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -35,32 +33,32 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder
 
     public Command<K, V, Map<K, V>> master(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("master").addKey(key);
-        return createCommand(SENTINEL, new MapOutput(codec), args);
+        return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Map<K, V>> slaves(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("slaves").addKey(key);
-        return createCommand(SENTINEL, new MapOutput(codec), args);
+        return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> reset(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("reset").addKey(key);
-        return createCommand(SENTINEL, new IntegerOutput(codec), args);
+        return createCommand(SENTINEL, new IntegerOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> failover(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("failover").addKey(key);
-        return createCommand(SENTINEL, new IntegerOutput(codec), args);
+        return createCommand(SENTINEL, new IntegerOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> monitor(K key, String ip, int port, int quorum) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(MONITOR).addKey(key).add(ip).add(port).add(quorum);
-        return createCommand(SENTINEL, new StatusOutput(codec), args);
+        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> set(K key, String option, V value) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SET).addKey(key).add(option).addValue(value);
-        return createCommand(SENTINEL, new StatusOutput(codec), args);
+        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> ping() {
@@ -69,6 +67,6 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder
 
     public Command<K, V, String> remove(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(CommandKeyword.REMOVE).addKey(key);
-        return createCommand(SENTINEL, new StatusOutput(codec), args);
+        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
     }
 }

@@ -14,13 +14,13 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 21:14
  */
-public class TransparentPoolingInvocationHandler extends AbstractInvocationHandler {
+public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHandler {
 
-    private RedisConnectionPool pool;
+    private RedisConnectionPool<T> pool;
     private long lastCheck;
     private long intervalMs;
 
-    private Object cachedConnection;
+    private T cachedConnection;
     private Map<Method, Method> methodCache = new ConcurrentHashMap<Method, Method>();
 
     /**
@@ -29,7 +29,7 @@ public class TransparentPoolingInvocationHandler extends AbstractInvocationHandl
      * @param recheckInterval
      * @param unit
      */
-    public TransparentPoolingInvocationHandler(RedisConnectionPool pool, long recheckInterval, TimeUnit unit) {
+    public TransparentPoolingInvocationHandler(RedisConnectionPool<T> pool, long recheckInterval, TimeUnit unit) {
         this.pool = pool;
         intervalMs = TimeUnit.MILLISECONDS.convert(recheckInterval, unit);
     }
@@ -79,7 +79,7 @@ public class TransparentPoolingInvocationHandler extends AbstractInvocationHandl
         return targetMethod;
     }
 
-    public RedisConnectionPool getPool() {
+    public RedisConnectionPool<T> getPool() {
         return pool;
     }
 

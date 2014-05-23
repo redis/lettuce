@@ -11,9 +11,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 @ChannelHandler.Sharable
 public class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
     private ConnectionEvents connectionEvents;
-    private RedisChannelHandler connection;
+    private RedisChannelHandler<?, ?> connection;
 
-    public ConnectionEventTrigger(ConnectionEvents connectionEvents, RedisChannelHandler connection) {
+    public ConnectionEventTrigger(ConnectionEvents connectionEvents, RedisChannelHandler<?, ?> connection) {
         this.connectionEvents = connectionEvents;
         this.connection = connection;
     }

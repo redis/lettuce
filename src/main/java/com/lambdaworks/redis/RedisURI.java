@@ -18,6 +18,9 @@ import java.util.concurrent.TimeUnit;
  * @since 14.05.14 21:30
  */
 public class RedisURI implements Serializable {
+
+    private static final long serialVersionUID = 42L;
+
     public static final int DEFAULT_SENTINEL_PORT = 26379;
     public static final int DEFAULT_REDIS_PORT = 6379;
 

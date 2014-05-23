@@ -14,19 +14,19 @@ import io.netty.util.internal.ConcurrentSet;
 public class ConnectionEvents {
     private Set<RedisConnectionStateListener> listeners = new ConcurrentSet<RedisConnectionStateListener>();
 
-    protected void fireEventRedisConnected(RedisChannelHandler connection) {
+    protected void fireEventRedisConnected(RedisChannelHandler<?, ?> connection) {
         for (RedisConnectionStateListener listener : listeners) {
             listener.onRedisConnected(connection);
         }
     }
 
-    protected void fireEventRedisDisconnected(RedisChannelHandler connection) {
+    protected void fireEventRedisDisconnected(RedisChannelHandler<?, ?> connection) {
         for (RedisConnectionStateListener listener : listeners) {
             listener.onRedisDisconnected(connection);
         }
     }
 
-    protected void fireEventRedisExceptionCaught(RedisChannelHandler connection, Throwable cause) {
+    protected void fireEventRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
         for (RedisConnectionStateListener listener : listeners) {
             listener.onRedisExceptionCaught(connection, cause);
         }

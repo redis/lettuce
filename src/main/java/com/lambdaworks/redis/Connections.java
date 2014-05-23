@@ -12,8 +12,8 @@ public class Connections {
     public final static boolean isValid(Object connection) {
 
         checkNotNull(connection, "connection must not be null");
-        if (connection instanceof RedisAsyncConnection) {
-            RedisAsyncConnection redisAsyncConnection = (RedisAsyncConnection) connection;
+        if (connection instanceof RedisAsyncConnection<?, ?>) {
+            RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
             try {
                 redisAsyncConnection.ping().get();
                 return true;
@@ -26,8 +26,8 @@ public class Connections {
             }
         }
 
-        if (connection instanceof RedisConnection) {
-            RedisConnection redisConnection = (RedisConnection) connection;
+        if (connection instanceof RedisConnection<?, ?>) {
+            RedisConnection<?, ?> redisConnection = (RedisConnection<?, ?>) connection;
             try {
                 redisConnection.ping();
                 return true;
@@ -43,13 +43,13 @@ public class Connections {
 
         checkNotNull(connection, "connection must not be null");
         try {
-            if (connection instanceof RedisAsyncConnection) {
-                RedisAsyncConnection redisAsyncConnection = (RedisAsyncConnection) connection;
+            if (connection instanceof RedisAsyncConnection<?, ?>) {
+                RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
                 redisAsyncConnection.close();
             }
 
-            if (connection instanceof RedisConnection) {
-                RedisConnection redisConnection = (RedisConnection) connection;
+            if (connection instanceof RedisConnection<?, ?>) {
+                RedisConnection<?, ?> redisConnection = (RedisConnection<?, ?>) connection;
                 redisConnection.close();
             }
         } catch (RuntimeException e) {

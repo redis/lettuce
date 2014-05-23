@@ -189,11 +189,25 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ECHO, new ValueOutput<K, V>(codec), args);
     }
 
+    public <T> Command<K, V, T> eval(String script, ScriptOutputType type, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(script).add(keys.length).addKeys(keys);
+        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+        return createCommand(EVAL, output, args);
+    }
+
     public <T> Command<K, V, T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.add(script).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
         return createCommand(EVAL, output, args);
+    }
+
+    public <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K... keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.add(digest).add(keys.length).addKeys(keys);
+        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+        return createCommand(EVALSHA, output, args);
     }
 
     public <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
@@ -1088,7 +1102,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         scanArgs(scanCursor, scanArgs, args);
 
-        KeyScanOutput<K, V> output = new KeyScanOutput(codec);
+        KeyScanOutput<K, V> output = new KeyScanOutput<K, V>(codec);
         return createCommand(SCAN, output, args);
     }
 
@@ -1121,7 +1135,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         scanArgs(scanCursor, scanArgs, args);
 
-        KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput(codec, channel);
+        KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput<K, V>(codec, channel);
         return createCommand(SCAN, output, args);
     }
 
@@ -1166,7 +1180,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(key);
         scanArgs(scanCursor, scanArgs, args);
 
-        ValueScanStreamingOutput<K, V> output = new ValueScanStreamingOutput(codec, channel);
+        ValueScanStreamingOutput<K, V> output = new ValueScanStreamingOutput<K, V>(codec, channel);
         return createCommand(SSCAN, output, args);
     }
 
@@ -1211,7 +1225,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(key);
         scanArgs(scanCursor, scanArgs, args);
 
-        KeyValueScanStreamingOutput<K, V> output = new KeyValueScanStreamingOutput(codec, channel);
+        KeyValueScanStreamingOutput<K, V> output = new KeyValueScanStreamingOutput<K, V>(codec, channel);
         return createCommand(HSCAN, output, args);
     }
 
@@ -1256,7 +1270,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(key);
         scanArgs(scanCursor, scanArgs, args);
 
-        ScoredValueScanStreamingOutput<K, V> output = new ScoredValueScanStreamingOutput(codec, channel);
+        ScoredValueScanStreamingOutput<K, V> output = new ScoredValueScanStreamingOutput<K, V>(codec, channel);
         return createCommand(ZSCAN, output, args);
     }
 

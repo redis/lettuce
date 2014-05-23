@@ -85,7 +85,7 @@ public class RedisConnectionPool<T> implements Closeable {
         closeEvents = null;
     }
 
-    public Class<T> getComponentType() {
+    public Class<?> getComponentType() {
         return redisConnectionProvider.getComponentType();
     }
 
