@@ -1,11 +1,14 @@
 package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
+
+import com.google.common.base.Stopwatch;
 
 public class PoolConnectionTest extends AbstractCommandTest {
 
@@ -35,24 +38,35 @@ public class PoolConnectionTest extends AbstractCommandTest {
     }
 
     @Test
-    public void differentConnectionAfterClosedConnection() throws Exception {
+    public void releaseConnectionWithClose() throws Exception {
 
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
-
-        c1.ping();
         c1.close();
 
-        try {
-            c1.ping();
-            fail("Missing Exception: Connection closed");
-        } catch (Exception e) {
-        }
-
-        pool.freeConnection(c1);
-
         RedisConnection<String, String> c2 = pool.allocateConnection();
-        assertNotSame(c1, c2);
+        assertSame(c1, c2);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void unsupportedAuthOnPooledConnection() throws Exception {
+
+        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        pool.allocateConnection().auth("");
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void unsupportedSelectOnPooledConnection() throws Exception {
+
+        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        pool.allocateConnection().select(99);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void unsupportedQuitOnPooledConnection() throws Exception {
+
+        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        pool.allocateConnection().quit();
     }
 
     @Test
@@ -125,6 +139,42 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         assertEquals(0, redisClient.getChannelCount());
         assertEquals(0, redisClient.getResourceCount());
+
+    }
+
+    @Test
+    public void syncPoolPerformanceTest() throws Exception {
+
+        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnection<String, String> c1 = pool.allocateConnection();
+
+        Stopwatch stopwatch = Stopwatch.createStarted();
+
+        for (int i = 0; i < 1000; i++) {
+            c1.ping();
+        }
+
+        long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
+
+        System.out.println("syncPoolPerformanceTest Duration: " + elapsed + "ms");
+
+    }
+
+    @Test
+    public void asyncPoolPerformanceTest() throws Exception {
+
+        RedisConnectionPool<RedisAsyncConnection<String, String>> pool = client.asyncPool();
+        RedisAsyncConnection<String, String> c1 = pool.allocateConnection();
+
+        Stopwatch stopwatch = Stopwatch.createStarted();
+
+        for (int i = 0; i < 1000; i++) {
+            c1.ping();
+        }
+
+        long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
+
+        System.out.println("asyncPoolPerformanceTest Duration: " + elapsed + "ms");
 
     }
 

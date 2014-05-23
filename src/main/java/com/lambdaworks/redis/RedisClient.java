@@ -355,7 +355,7 @@ public class RedisClient {
             closeableResources.add(connection);
 
             if (redisURI.getPassword() != null) {
-                connection.auth(redisURI.getPassword());
+                connection.auth(new String(redisURI.getPassword()));
             }
 
             if (redisURI.getDatabase() != 0) {

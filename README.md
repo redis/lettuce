@@ -7,12 +7,17 @@ lettuce - A scalable Java Redis client
   Multiple connections are efficiently managed by the excellent netty NIO
   framework.
 
-  This version of lettuce has been tested against redis 2.8.9.
+  This version of lettuce has been tested against redis 2.8.9. 
+  
+  Lettuce works with:
+  
+  * Java 6
+  * Java 7
+  * Java 8
   
   Currently following commands are __not yet__ supported:
   
   * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
-  * HyperLogLog: PFADD, PFCOUNT, PFMERGE 
   * Server Commands: DEBUG SEGFAULT, MONITOR
 
 
@@ -257,4 +262,10 @@ Spring Support
     <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster"/>
 </bean>
 ```
+
+Performance
+-----------
+
+Lettuce is made for performance. Issuing (and returning) 1000 PING's over the sync API takes on a MacBook with Intel i7 an average of 190ms to complete all.
+The async API can issue 1000 commands within 20ms.
     

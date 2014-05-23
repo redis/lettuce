@@ -1,9 +1,10 @@
-package com.lambdaworks.redis.support;
+package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 
+import com.lambdaworks.redis.support.RedisClientFactoryBean;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisURI;
@@ -24,7 +25,7 @@ public class RedisClientFactoryBeanTest {
         assertEquals(2, redisURI.getDatabase());
         assertEquals("localhost", redisURI.getHost());
         assertEquals(RedisURI.DEFAULT_REDIS_PORT, redisURI.getPort());
-        assertEquals("password", redisURI.getPassword());
+        assertEquals("password", new String(redisURI.getPassword()));
 
     }
 
@@ -67,7 +68,7 @@ public class RedisClientFactoryBeanTest {
         assertEquals(0, redisURI.getDatabase());
         assertEquals("localhost", redisURI.getHost());
         assertEquals(1234, redisURI.getPort());
-        assertEquals("password", redisURI.getPassword());
+        assertEquals("password", new String(redisURI.getPassword()));
     }
 
     @Test
@@ -85,7 +86,7 @@ public class RedisClientFactoryBeanTest {
         RedisURI sentinelUri = redisURI.getSentinels().get(0);
         assertEquals("localhost", sentinelUri.getHost());
         assertEquals(RedisURI.DEFAULT_SENTINEL_PORT, sentinelUri.getPort());
-        assertEquals("password", redisURI.getPassword());
+        assertEquals("password", new String(redisURI.getPassword()));
         assertEquals("myMaster", redisURI.getSentinelMasterId());
     }
 
@@ -104,7 +105,7 @@ public class RedisClientFactoryBeanTest {
         RedisURI sentinelUri = redisURI.getSentinels().get(0);
         assertEquals("localhost", sentinelUri.getHost());
         assertEquals(1234, sentinelUri.getPort());
-        assertEquals("password", redisURI.getPassword());
+        assertEquals("password", new String(redisURI.getPassword()));
         assertEquals("myMaster", redisURI.getSentinelMasterId());
     }
 

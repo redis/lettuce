@@ -28,7 +28,7 @@ public class RedisURI implements Serializable {
     private String sentinelMasterId;
     private int port;
     private int database;
-    private String password;
+    private char[] password;
     private long timeout = 60;
     private TimeUnit unit = TimeUnit.SECONDS;
     private List<RedisURI> sentinels = new ArrayList<RedisURI>();
@@ -79,12 +79,12 @@ public class RedisURI implements Serializable {
         this.port = port;
     }
 
-    public String getPassword() {
+    char[] getPassword() {
         return password;
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = password.toCharArray();
     }
 
     public long getTimeout() {

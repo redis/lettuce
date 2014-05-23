@@ -43,7 +43,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisAsyncConnection<K, V> {
 
     protected MultiOutput<K, V> multi;
-    private String password;
+    private char[] password;
     private int db;
     protected RedisCommandBuilder<K, V> commandBuilder;
     protected RedisCodec<K, V> codec;
@@ -73,7 +73,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         Command<K, V, String> cmd = dispatch(commandBuilder.auth(password));
         String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status))
-            this.password = password;
+            this.password = password.toCharArray();
         return status;
     }
 
@@ -1415,7 +1415,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
         channel = ctx.channel();
         if (password != null) {
-            channel.writeAndFlush(commandBuilder.auth(password));
+            channel.writeAndFlush(commandBuilder.auth(new String(password)));
         }
 
         if (db != 0) {

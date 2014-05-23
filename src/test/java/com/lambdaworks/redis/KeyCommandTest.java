@@ -109,7 +109,7 @@ public class KeyCommandTest extends AbstractCommandTest {
     @Test
     public void objectEncoding() throws Exception {
         redis.set(key, value);
-        assertEquals("raw", redis.objectEncoding(key));
+        assertEquals("embstr", redis.objectEncoding(key));
         redis.set(key, String.valueOf(1));
         assertEquals("int", redis.objectEncoding(key));
     }
@@ -296,7 +296,7 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertNotEquals("0", cursor.getCursor());
         assertFalse(cursor.isFinished());
 
-        assertEquals(12, cursor.getKeys().size());
+        assertEquals(13, cursor.getKeys().size());
         check.addAll(cursor.getKeys());
 
         while (!cursor.isFinished()) {

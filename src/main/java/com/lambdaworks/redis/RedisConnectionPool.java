@@ -1,13 +1,14 @@
 package com.lambdaworks.redis;
 
+import java.io.Closeable;
+import java.lang.reflect.Proxy;
+
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-
-import java.io.Closeable;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -35,7 +36,14 @@ public class RedisConnectionPool<T> implements Closeable {
         return new BasePooledObjectFactory<T>() {
             @Override
             public T create() throws Exception {
-                return redisConnectionProvider.createConnection();
+
+                T connection = redisConnectionProvider.createConnection();
+                PooledConnectionInvocationHandler<T> h = new PooledConnectionInvocationHandler<T>(connection,
+                        RedisConnectionPool.this);
+                Object proxy = Proxy.newProxyInstance(getClass().getClassLoader(),
+                        new Class<?>[] { redisConnectionProvider.getComponentType() }, h);
+
+                return (T) proxy;
             }
 
             @Override
@@ -50,7 +58,16 @@ public class RedisConnectionPool<T> implements Closeable {
 
             @Override
             public void destroyObject(PooledObject<T> p) throws Exception {
-                Connections.close(p.getObject());
+
+                T object = p.getObject();
+                if (Proxy.isProxyClass(object.getClass())) {
+                    PooledConnectionInvocationHandler<T> invocationHandler = (PooledConnectionInvocationHandler<T>) Proxy
+                            .getInvocationHandler(object);
+
+                    object = invocationHandler.getConnection();
+                }
+
+                Connections.close(object);
             }
         };
     }
