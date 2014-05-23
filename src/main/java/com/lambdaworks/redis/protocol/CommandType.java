@@ -40,6 +40,10 @@ public enum CommandType {
 
     DISCARD, EXEC, MULTI, UNWATCH, WATCH,
 
+    // HyperLogLog
+
+    PFADD, PFCOUNT, PFMERGE,
+
     // Pub/Sub
 
     PSUBSCRIBE, PUBLISH, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE,

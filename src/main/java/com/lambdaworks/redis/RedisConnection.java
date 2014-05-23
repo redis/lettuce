@@ -9,6 +9,6 @@ package com.lambdaworks.redis;
  */
 public interface RedisConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
-        RedisScriptingConnection<K, V>, RedisServerConnection<K, V> {
+        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V> {
 
 }

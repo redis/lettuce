@@ -1274,4 +1274,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZSCAN, output, args);
     }
 
+    public Command<K, V, Long> pfadd(K key, V value, V... moreValues) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(value).addValues(moreValues);
+        return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> pfcount(K key, K... moreKeys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(moreKeys);
+        return createCommand(PFCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKey(sourcekey).addKeys(moreSourceKeys);
+        return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
+    }
+
 }

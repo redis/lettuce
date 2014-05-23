@@ -1366,6 +1366,21 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.time());
     }
 
+    @Override
+    public RedisFuture<Long> pfadd(K key, V value, V... moreValues) {
+        return dispatch(commandBuilder.pfadd(key, value, moreValues));
+    }
+
+    @Override
+    public RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
+        return dispatch(commandBuilder.pfmerge(destkey, sourcekey, moreSourceKeys));
+    }
+
+    @Override
+    public RedisFuture<Long> pfcount(K key, K... moreKeys) {
+        return dispatch(commandBuilder.pfcount(key, moreKeys));
+    }
+
     public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
         return dispatch(type, output, null);
     }
