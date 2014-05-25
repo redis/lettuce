@@ -121,10 +121,18 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <level>public</level>
                     <links>
-                        <link>http://docs.jboss.org/netty/3.2/api/</link>
+                        <link>http://netty.io/4.0/api/</link>
                     </links>
                 </configuration>
             </plugin>
@@ -138,6 +146,59 @@
                 </configuration>
             </plugin>
 
+            <!-- Prepared shaded Jar. Should be within an own project in order to provide two distributions:
+            lettuce with dependencies to apache commons pool guava and netty (ca. 180KB JAR)
+            lettuce with packaged apache commons pool guava and netty (ca. 3.1MB JAR)
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>com.google.guava:guava</artifact>
+                                    <excludes>
+                                        <exclude>com/google/common/cache/**</exclude>
+                                        <exclude>com/google/common/escape/**</exclude>
+                                        <exclude>com/google/common/eventbus/**</exclude>
+                                        <exclude>com/google/common/hash/**</exclude>
+                                        <exclude>com/google/common/html/**</exclude>
+                                        <exclude>com/google/common/math/**</exclude>
+                                        <exclude>com/google/common/primitives/**</exclude>
+                                        <exclude>com/google/common/xml/**</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>com.lambdaworks.com.google</shadedPattern>
+                                </relocation>
+
+                                <relocation>
+                                    <pattern>org.apache</pattern>
+                                    <shadedPattern>com.lambdaworks.org.apache</shadedPattern>
+                                </relocation>
+
+                                <relocation>
+                                    <pattern>io.netty</pattern>
+                                    <shadedPattern>com.lambdaworks.io.netty</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <minimizeJar>false</minimizeJar>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+                       -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -155,6 +216,21 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -165,8 +241,6 @@
 
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
     </properties>
 
     <scm>
