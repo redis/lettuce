@@ -10,11 +10,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.MultiOutput;
@@ -27,9 +27,6 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.SetArgs;
 
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
  * provided they avoid blocking and transactional operations such as {@link #blpop} and {@link #multi()}/{@link #exec}.
@@ -39,7 +36,6 @@ import io.netty.channel.ChannelHandlerContext;
  * 
  * @author Will Glozer
  */
-@ChannelHandler.Sharable
 public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisAsyncConnection<K, V> {
 
     protected MultiOutput<K, V> multi;
@@ -51,13 +47,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     /**
      * Initialize a new connection.
      * 
-     * @param queue Command queue.
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.
      */
-    public RedisAsyncConnectionImpl(BlockingQueue<Command<K, V, ?>> queue, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        super(queue, timeout, unit);
+    public RedisAsyncConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        super(writer, timeout, unit);
         this.codec = codec;
         commandBuilder = new RedisCommandBuilder<K, V>(codec);
 
@@ -1411,19 +1406,13 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public synchronized void channelActive(ChannelHandlerContext ctx) throws Exception {
-
-        channel = ctx.channel();
+    public void activated() {
         if (password != null) {
-            channel.writeAndFlush(commandBuilder.auth(new String(password)));
+            auth(new String(password));
         }
 
         if (db != 0) {
-            channel.writeAndFlush(commandBuilder.select(db));
+            select(db);
         }
-
-        super.channelActive(ctx);
-
     }
-
 }

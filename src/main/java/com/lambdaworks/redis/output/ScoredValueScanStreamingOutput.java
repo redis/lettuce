@@ -9,7 +9,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * Streaming-Output of of values and their associated scores. Returns the count of all values (including null).
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 

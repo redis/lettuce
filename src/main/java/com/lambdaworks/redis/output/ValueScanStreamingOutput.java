@@ -9,7 +9,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * Streaming API for multiple Values. You can implement this interface in order to receive a call to <code>onValue</code> on
  * every key.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 

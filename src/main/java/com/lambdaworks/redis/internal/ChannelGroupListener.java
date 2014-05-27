@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis.protocol;
+package com.lambdaworks.redis.internal;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,16 +10,17 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A netty {@link io.netty.channel.ChannelHandler} responsible for monitoring the channel.
+ * A netty {@link io.netty.channel.ChannelHandler} responsible for monitoring the channel and adding/removing the channel
+ * from/to the ChannelGroup.
  * 
  * @author Will Glozer
  */
 @ChannelHandler.Sharable
-public class ChannelListener extends ChannelInboundHandlerAdapter {
+public class ChannelGroupListener extends ChannelInboundHandlerAdapter {
 
     private ChannelGroup channels;
 
-    public ChannelListener(ChannelGroup channels) {
+    public ChannelGroupListener(ChannelGroup channels) {
         this.channels = channels;
     }
 

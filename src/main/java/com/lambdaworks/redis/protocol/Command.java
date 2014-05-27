@@ -214,4 +214,8 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T
     public String getError() {
         return output.getError();
     }
+
+    public CommandArgs<K, V> getArgs() {
+        return args;
+    }
 }

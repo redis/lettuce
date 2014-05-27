@@ -2,11 +2,9 @@
 
 package com.lambdaworks.redis;
 
-import java.io.Closeable;
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -14,33 +12,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.protocol.ChannelListener;
+import com.lambdaworks.redis.internal.ChannelGroupListener;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.ChannelGroupFuture;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.concurrent.GlobalEventExecutor;
-import io.netty.util.internal.ConcurrentSet;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
@@ -48,21 +34,10 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * 
  * @author Will Glozer
  */
-public class RedisClient {
+public class RedisClient extends AbstractRedisClient {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
-
-    private EventLoopGroup group;
-    private Bootstrap redisBootstrap;
-    private Bootstrap sentinelBootstrap;
-    private HashedWheelTimer timer;
-    private ChannelGroup channels;
-    private long timeout;
-    private TimeUnit unit;
     private RedisCodec<?, ?> codec = new Utf8StringCodec();
     private RedisURI redisURI;
-    private ConnectionEvents connectionEvents = new ConnectionEvents();
-    private Set<Closeable> closeableResources = new ConcurrentSet<Closeable>();
 
     /**
      * Create a new client that connects to the supplied host on the default port.
@@ -93,30 +68,12 @@ public class RedisClient {
      * @param redisURI Redis URI.
      */
     public RedisClient(RedisURI redisURI) {
+        super();
         this.redisURI = redisURI;
-        group = new NioEventLoopGroup();
-
-        redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
-        sentinelBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
 
         setDefaultTimeout(redisURI.getTimeout(), redisURI.getUnit());
 
-        channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-        timer = new HashedWheelTimer();
         timer.start();
-    }
-
-    /**
-     * Set the default timeout for {@link RedisConnection connections} created by this client. The timeout applies to connection
-     * attempts and non-blocking commands.
-     * 
-     * @param timeout Default connection timeout.
-     * @param unit Unit of time for the timeout.
-     */
-    public void setDefaultTimeout(long timeout, TimeUnit unit) {
-        this.timeout = timeout;
-        this.unit = unit;
-        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
     }
 
     /**
@@ -162,15 +119,15 @@ public class RedisClient {
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
         RedisConnectionPool<RedisConnection<K, V>> pool = new RedisConnectionPool<RedisConnection<K, V>>(
                 new RedisConnectionProvider<RedisConnection<K, V>>() {
-                   @Override
+                    @Override
                     public RedisConnection<K, V> createConnection() {
-                      return connect(codec, false);
+                        return connect(codec, false);
                     }
 
                     @Override
                     public Class<?> getComponentType() {
                         return RedisConnection.class;
-                }
+                    }
                 }, maxActive, maxIdle, maxWait);
 
         pool.addListener(new CloseEvents.CloseListener() {
@@ -218,16 +175,16 @@ public class RedisClient {
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
         RedisConnectionPool<RedisAsyncConnection<K, V>> pool = new RedisConnectionPool<RedisAsyncConnection<K, V>>(
                 new RedisConnectionProvider<RedisAsyncConnection<K, V>>() {
-            @Override
+                    @Override
                     public RedisAsyncConnection<K, V> createConnection() {
                         return connectAsyncImpl(codec, false);
-    }
+                    }
 
                     @Override
                     public Class<?> getComponentType() {
                         return RedisAsyncConnection.class;
                     }
-      }, maxActive, maxIdle, maxWait);
+                }, maxActive, maxIdle, maxWait);
 
         pool.addListener(new CloseEvents.CloseListener() {
             @Override
@@ -257,7 +214,7 @@ public class RedisClient {
      * @return A new connection.
      */
     @SuppressWarnings("unchecked")
-    public RedisPubSubConnection<String, String> connectPubSub() {
+    public RedisPubSubConnectionImpl<String, String> connectPubSub() {
         return connectPubSub((RedisCodec) codec);
     }
 
@@ -299,9 +256,24 @@ public class RedisClient {
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
-        RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(queue, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(handler, codec, timeout, unit);
 
         return connectAsyncImpl(handler, connection, withReconnect);
+    }
+
+    private <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(CommandHandler<K, V> handler,
+            RedisAsyncConnectionImpl<K, V> connection, boolean withReconnect) {
+
+        connectAsyncImpl(handler, connection, getSocketAddressSupplier(), withReconnect);
+        if (redisURI.getPassword() != null) {
+            connection.auth(new String(redisURI.getPassword()));
+        }
+
+        if (redisURI.getDatabase() != 0) {
+            connection.select(redisURI.getDatabase());
+        }
+
+        return (T) connection;
     }
 
     /**
@@ -312,60 +284,13 @@ public class RedisClient {
      * 
      * @return A new pub/sub connection.
      */
-    public <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
+    public <K, V> RedisPubSubConnectionImpl<K, V> connectPubSub(RedisCodec<K, V> codec) {
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
-        RedisPubSubConnection<K, V> connection = new RedisPubSubConnection<K, V>(queue, codec, timeout, unit);
+        RedisPubSubConnectionImpl<K, V> connection = new RedisPubSubConnectionImpl<K, V>(handler, codec, timeout, unit);
 
         return connectAsyncImpl(handler, connection, true);
-    }
-
-    private <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
-            final T connection, final boolean withReconnect) {
-        try {
-
-            SocketAddress redisAddress = getSocketAddress();
-
-            logger.debug("Connecting to Redis, address: " + redisAddress);
-
-            redisBootstrap.handler(new ChannelInitializer<Channel>() {
-                @Override
-                protected void initChannel(Channel ch) throws Exception {
-
-                    if (withReconnect) {
-                        ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, timer, getSocketAddressSupplier());
-                        ch.pipeline().addLast(watchdog);
-                        watchdog.setReconnect(true);
-                    }
-
-                    ch.pipeline().addLast(new ChannelListener(channels),
-                            new ConnectionEventTrigger(connectionEvents, connection), handler, connection);
-                }
-            });
-
-            redisBootstrap.connect(redisAddress).sync();
-
-            connection.addListener(new CloseEvents.CloseListener() {
-                @Override
-                public void resourceClosed(Object resource) {
-                    closeableResources.remove(resource);
-                }
-            });
-            closeableResources.add(connection);
-
-            if (redisURI.getPassword() != null) {
-                connection.auth(new String(redisURI.getPassword()));
-            }
-
-            if (redisURI.getDatabase() != 0) {
-                connection.select(redisURI.getDatabase());
-            }
-
-            return connection;
-        } catch (Throwable e) {
-            throw new RedisException("Unable to connect", e);
-        }
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier() {
@@ -431,11 +356,11 @@ public class RedisClient {
         BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
         final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(queue);
-        final RedisSentinelAsyncConnectionImpl<K, V> connection = new RedisSentinelAsyncConnectionImpl<K, V>(codec, queue,
-                timeout, unit);
+        final RedisSentinelAsyncConnectionImpl<K, V> connection = new RedisSentinelAsyncConnectionImpl<K, V>(commandHandler,
+                codec, timeout, unit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
-
+        final Bootstrap sentinelBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
         sentinelBootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel ch) throws Exception {
@@ -444,7 +369,7 @@ public class RedisClient {
                 ch.pipeline().addLast(watchdog);
                 watchdog.setReconnect(true);
 
-                ch.pipeline().addLast(new ChannelListener(channels), watchdog, commandHandler, connection,
+                ch.pipeline().addLast(new ChannelGroupListener(channels), watchdog, commandHandler,
                         new ConnectionEventTrigger(connectionEvents, connection));
             }
         });
@@ -496,66 +421,4 @@ public class RedisClient {
         return connection;
     }
 
-    /**
-     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
-     */
-    public void shutdown() {
-
-        ImmutableList<Closeable> autoCloseables = ImmutableList.copyOf(closeableResources);
-        for (Closeable closeableResource : autoCloseables) {
-            try {
-                closeableResource.close();
-            } catch (Exception e) {
-                logger.debug("Exception on Close: " + e.getMessage(), e);
-
-            }
-        }
-
-        for (Channel c : channels) {
-            ChannelPipeline pipeline = c.pipeline();
-
-            RedisAsyncConnectionImpl<?, ?> asyncConnection = pipeline.get(RedisAsyncConnectionImpl.class);
-            if (asyncConnection != null && !asyncConnection.isClosed()) {
-                asyncConnection.close();
-            }
-
-            RedisSentinelAsyncConnectionImpl<?, ?> sentinelConnection = pipeline.get(RedisSentinelAsyncConnectionImpl.class);
-            if (sentinelConnection != null && !sentinelConnection.isClosed()) {
-                sentinelConnection.close();
-            }
-        }
-        ChannelGroupFuture future = channels.close();
-        future.awaitUninterruptibly();
-        group.shutdownGracefully().syncUninterruptibly();
-        timer.stop();
-    }
-
-    protected int getResourceCount() {
-        return closeableResources.size();
-    }
-
-    protected int getChannelCount() {
-        return channels.size();
-    }
-
-    /**
-     * Add a listener for the RedisConnectionState. The listener is notified every time a connect/disconnect/IO exception
-     * happens. The listeners are not bound to a specific connection, so every time a connection event happens on any
-     * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
-     * event.
-     * 
-     * @param listener
-     */
-    public void addListener(RedisConnectionStateListener listener) {
-        connectionEvents.addListener(listener);
-    }
-
-    /**
-     * Removes a listener.
-     * 
-     * @param listener
-     */
-    public void removeListener(RedisConnectionStateListener listener) {
-        connectionEvents.removeListener(listener);
-    }
 }

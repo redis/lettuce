@@ -6,31 +6,27 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.Command;
-import io.netty.channel.ChannelHandler;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:27
  */
-@ChannelHandler.Sharable
 public class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
         RedisSentinelAsyncConnection<K, V> {
 
     private SentinelCommandBuilder<K, V> commandBuilder;
 
-    public RedisSentinelAsyncConnectionImpl(RedisCodec<K, V> codec, BlockingQueue<Command<K, V, ?>> queue, long timeout,
-            TimeUnit unit) {
-        super(queue, timeout, unit);
+    public RedisSentinelAsyncConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        super(writer, timeout, unit);
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
-
     }
 
     @Override

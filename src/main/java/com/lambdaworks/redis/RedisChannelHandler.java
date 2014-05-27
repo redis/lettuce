@@ -1,14 +1,10 @@
 package com.lambdaworks.redis;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.internal.logging.InternalLogger;
@@ -22,18 +18,19 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
-    protected BlockingQueue<Command<K, V, ?>> queue;
-    protected Channel channel;
     protected long timeout;
     protected TimeUnit unit;
 
     private CloseEvents closeEvents = new CloseEvents();
     private boolean closed;
+    private RedisChannelWriter<K, V> channelWriter;
 
-    public RedisChannelHandler(BlockingQueue<Command<K, V, ?>> queue, long timeout, TimeUnit unit) {
-        this.queue = queue;
+    public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
         this.unit = unit;
         this.timeout = timeout;
+        this.channelWriter = writer;
+        writer.setRedisChannelHandler(this);
+
     }
 
     /**
@@ -58,16 +55,9 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
             return;
         }
 
-        if (!closed && channel != null) {
-            ConnectionWatchdog watchdog = channel.pipeline().get(ConnectionWatchdog.class);
-            if (watchdog != null) {
-                watchdog.setReconnect(false);
-            }
+        if (!closed) {
             closed = true;
-            channel.close();
-
-            channel = null;
-
+            channelWriter.close();
             closeEvents.fireEventClosed(this);
             closeEvents = null;
         }
@@ -75,56 +65,17 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public synchronized void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("channelActive()");
-        channel = ctx.channel();
-
-        List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
-
-        tmp.addAll(queue);
-        queue.clear();
-
-        for (Command<K, V, ?> cmd : tmp) {
-            if (!cmd.isCancelled()) {
-                queue.add(cmd);
-                channel.writeAndFlush(cmd);
-            }
-        }
-
-        tmp.clear();
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        channelRead(msg);
     }
 
-    @Override
-    public synchronized void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("channelInactive()");
-        if (closed) {
-            for (Command<K, V, ?> cmd : queue) {
-                if (cmd.getOutput() != null) {
-                    cmd.getOutput().setError("Connection closed");
-                }
-                cmd.complete();
-            }
-            queue.clear();
-            queue = null;
-            channel = null;
-        }
+    public void channelRead(Object msg) {
+
     }
 
     public synchronized <T> Command<K, V, T> dispatch(Command<K, V, T> cmd) {
 
-        try {
-
-            queue.put(cmd);
-
-            if (channel != null) {
-                channel.writeAndFlush(cmd);
-            }
-        } catch (NullPointerException e) {
-            throw new RedisException("Connection is closed");
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
-        }
-
+        channelWriter.write(cmd);
         return cmd;
     }
 
@@ -138,5 +89,17 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
 
     public boolean isClosed() {
         return closed;
+    }
+
+    public void activated() {
+
+    }
+
+    public void deactivated() {
+
+    }
+
+    public RedisChannelWriter<K, V> getChannelWriter() {
+        return channelWriter;
     }
 }

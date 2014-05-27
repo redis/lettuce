@@ -10,7 +10,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Cursor handling output.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public abstract class ScanOutput<K, V, T extends ScanCursor> extends CommandOutput<K, V, T> {
 

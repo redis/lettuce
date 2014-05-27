@@ -8,7 +8,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * {@link com.lambdaworks.redis.ValueScanCursor} for scan cursor output.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ValueScanOutput<K, V> extends ScanOutput<K, V, ValueScanCursor<V>> {
 

@@ -2,13 +2,15 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.codec.RedisCodec;
+import static java.lang.Math.max;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import static java.lang.Math.max;
+import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * Redis command argument encoder.
@@ -21,6 +23,7 @@ public class CommandArgs<K, V> {
     private RedisCodec<K, V> codec;
     private ByteBuffer buffer;
     private int count;
+    private List<K> keys = new ArrayList<K>();
 
     public CommandArgs(RedisCodec<K, V> codec) {
         this.codec = codec;
@@ -37,6 +40,7 @@ public class CommandArgs<K, V> {
     }
 
     public CommandArgs<K, V> addKey(K key) {
+        keys.add(key);
         return write(codec.encodeKey(key));
     }
 
@@ -175,5 +179,13 @@ public class CommandArgs<K, V> {
         buffer.put(this.buffer);
         buffer.mark();
         this.buffer = buffer;
+    }
+
+    public List<K> getKeys() {
+        return keys;
+    }
+
+    public byte[] getEncodedKey(int index) {
+        return codec.encodeKey(keys.get(index));
     }
 }

@@ -8,7 +8,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * {@link com.lambdaworks.redis.KeyScanCursor} for scan cursor output.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class KeyScanOutput<K, V> extends ScanOutput<K, V, KeyScanCursor<K>> {
 

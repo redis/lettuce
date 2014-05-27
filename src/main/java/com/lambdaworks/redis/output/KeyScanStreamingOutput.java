@@ -10,7 +10,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * Streaming API for multiple Keys. You can implement this interface in order to receive a call to <code>onKey</code> on every
  * key. Key uniqueness is not guaranteed.
  * 
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class KeyScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 

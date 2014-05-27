@@ -2,12 +2,16 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.*;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-
 import java.util.concurrent.BlockingQueue;
+
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.CommandOutput;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis pub/sub commands and reading the response stream from the

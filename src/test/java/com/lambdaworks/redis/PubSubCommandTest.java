@@ -8,9 +8,8 @@ import org.junit.*;
 
 import java.util.concurrent.*;
 
-
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
-    private RedisPubSubConnection<String, String> pubsub;
+    private RedisPubSubConnectionImpl<String, String> pubsub;
 
     private BlockingQueue<String> channels;
     private BlockingQueue<String> patterns;
@@ -28,7 +27,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         channels = new LinkedBlockingQueue<String>();
         patterns = new LinkedBlockingQueue<String>();
         messages = new LinkedBlockingQueue<String>();
-        counts   = new LinkedBlockingQueue<Long>();
+        counts = new LinkedBlockingQueue<Long>();
     }
 
     @After
@@ -41,7 +40,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubConnection<String, String> connection = client.connectPubSub();
+                RedisPubSubConnectionImpl<String, String> connection = client.connectPubSub();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
 
