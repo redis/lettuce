@@ -15,7 +15,8 @@ lettuce - A scalable Java Redis client
   * Java 7
   * Java 8
   
-  Currently following commands are __not yet__ supported:
+
+Currently following commands are __not yet__ supported:
   
   * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
   * Server Commands: DEBUG SEGFAULT, MONITOR
@@ -178,14 +179,14 @@ RedisClusterClient client = new RedisClusterClient(rediUri);
 RedisClusterAsyncConnection<String, String> client = clusterClient.connectClusterAsync()
 ```
 
-  The clustering support covers:
+The clustering support covers:
   
   * Support of all CLUSTER commands
   * Cluster node selection (initial) based on key hash-slot
   * (to be done) MOVED redirection handling
   * Node authentication
 
-  The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 
+The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 
   The client maintains multiple connections, which are selected based on the topology and hash. In case your requests
   run into MOVED errors (because of slot imports/migrations), you can reload the partitions using 
   
