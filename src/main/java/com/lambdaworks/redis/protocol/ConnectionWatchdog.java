@@ -87,7 +87,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     private void scheduleReconnect() {
-        if (!channel.isActive()) {
+        if (channel == null || !channel.isActive()) {
             if (attempts < RETRY_TIMEOUT_MAX)
                 attempts++;
             int timeout = 2 << attempts;

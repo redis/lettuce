@@ -56,6 +56,7 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
         }
 
         if (!closed) {
+            active = false;
             closed = true;
             channelWriter.close();
             closeEvents.fireEventClosed(this);
