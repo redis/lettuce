@@ -35,6 +35,8 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
 
     RedisFuture<String> unwatch();
 
+    RedisFuture<Long> waitForReplication(int replicas, long timeout);
+
     boolean isOpen();
 
 }

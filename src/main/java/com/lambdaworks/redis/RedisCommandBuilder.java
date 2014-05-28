@@ -784,6 +784,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(WATCH, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> wait(int replicas, long timeout) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(replicas).add(timeout);
+
+        return createCommand(WAIT, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> unwatch() {
         return createCommand(UNWATCH, new StatusOutput<K, V>(codec));
     }

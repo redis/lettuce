@@ -34,6 +34,8 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     String unwatch();
 
+    Long waitForReplication(int replicas, long timeout);
+
     boolean isOpen();
 
 }

@@ -3,6 +3,15 @@
 package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
@@ -18,14 +27,6 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.SetArgs;
 import io.netty.channel.ChannelHandler;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
@@ -1361,6 +1362,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<V>> time() {
         return dispatch(commandBuilder.time());
+    }
+
+    @Override
+    public RedisFuture<Long> waitForReplication(int replicas, long timeout) {
+        return dispatch(commandBuilder.wait(replicas, timeout));
     }
 
     @Override

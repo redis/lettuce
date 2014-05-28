@@ -1,24 +1,24 @@
 lettuce - A scalable Java Redis client
 ======================================
 
-  Lettuce is a scalable thread-safe Redis client providing both synchronous and
-  asyncronous connections. Multiple threads may share one connection provided
-  they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
-  Multiple connections are efficiently managed by the excellent netty NIO
-  framework.
+Lettuce is a scalable thread-safe Redis client providing both synchronous and
+asynchronous connections. Multiple threads may share one connection provided
+they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
+Multiple connections are efficiently managed by the excellent netty NIO
+framework.
 
-  This version of lettuce has been tested against redis 2.8.9. 
-  
-  Lettuce works with:
-  
-  * Java 6
-  * Java 7
-  * Java 8
-  
-  Currently following commands are __not yet__ supported:
-  
-  * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
-  * Server Commands: DEBUG SEGFAULT, MONITOR
+This version of lettuce has been tested against redis 2.8.9. 
+
+Lettuce works with:
+
+* Java 6
+* Java 7
+* Java 8
+
+Currently following commands are __not yet__ supported:
+
+* Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
+* Server Commands: DEBUG SEGFAULT, MONITOR, PUBSUB
 
 
 Join the lambdaWorks-OSS Google Group to discuss this project:
