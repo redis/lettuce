@@ -1,14 +1,13 @@
 package com.lambdaworks.redis;
 
-import java.util.concurrent.TimeUnit;
-
 import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.Command;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -24,6 +23,7 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
     private CloseEvents closeEvents = new CloseEvents();
     private boolean closed;
     private RedisChannelWriter<K, V> channelWriter;
+    private boolean active = true;
 
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
         this.unit = unit;
@@ -92,14 +92,19 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
     }
 
     public void activated() {
+        active = true;
 
     }
 
     public void deactivated() {
-
+        active = false;
     }
 
     public RedisChannelWriter<K, V> getChannelWriter() {
         return channelWriter;
+    }
+
+    public boolean isOpen() {
+        return active;
     }
 }

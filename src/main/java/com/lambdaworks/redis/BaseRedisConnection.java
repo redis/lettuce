@@ -40,4 +40,6 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     String unwatch();
 
+    boolean isOpen();
+
 }

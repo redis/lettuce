@@ -3,7 +3,6 @@
 package com.lambdaworks.redis.protocol;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -18,9 +17,6 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.net.SocketAddress;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,7 +36,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private int attempts;
     private SocketAddress remoteAddress;
     private Supplier<SocketAddress> socketAddressSupplier;
-    private List<ChannelHandler> handlers = Lists.newArrayList();
+    private boolean firstReconnect = false;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -72,22 +68,19 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        firstReconnect = false;
         channel = ctx.channel();
         attempts = 0;
         remoteAddress = channel.remoteAddress();
-        handlers.clear();
-        Iterator<Map.Entry<String, ChannelHandler>> iterator = channel.pipeline().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, ChannelHandler> next = iterator.next();
-
-            handlers.add(next.getValue());
-        }
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+
+        channel = null;
         if (reconnect) {
+            firstReconnect = true;
             scheduleReconnect();
         }
         super.channelInactive(ctx);
@@ -114,20 +107,29 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void run(Timeout timeout) throws Exception {
 
         try {
-            logger.info("Connecting");
+            if (firstReconnect) {
+                logger.info("Connecting");
+            }
             if (socketAddressSupplier != null) {
                 try {
                     remoteAddress = socketAddressSupplier.get();
                 } catch (RuntimeException e) {
-                    logger.warn("Cannot retrieve the current address from socketAddressSupplier: " + e.toString());
+                    if (firstReconnect) {
+                        logger.warn("Cannot retrieve the current address from socketAddressSupplier: " + e.toString());
+                    }
                 }
             }
 
             bootstrap.connect(remoteAddress).sync().channel();
             logger.info("Reconnected to " + remoteAddress);
         } catch (Exception e) {
+
+            if (firstReconnect) {
+                logger.warn("Cannot connect: " + e.toString());
+            }
             scheduleReconnect();
-            logger.warn("Cannot connect: " + e.toString());
+        } finally {
+            firstReconnect = false;
         }
     }
 }

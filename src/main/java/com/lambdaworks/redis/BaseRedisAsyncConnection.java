@@ -40,4 +40,6 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
 
     RedisFuture<String> unwatch();
 
+    boolean isOpen();
+
 }

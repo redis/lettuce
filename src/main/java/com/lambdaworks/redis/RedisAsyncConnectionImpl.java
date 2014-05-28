@@ -1488,14 +1488,18 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public void activated() {
+    public void activated()
+    {
 
+        super.activated();
         // do not block in here, since the channel flow will be interrupted.
-        if (password != null) {
+        if (password != null)
+        {
             dispatch(commandBuilder.auth(new String(password)));
         }
 
-        if (db != 0) {
+        if (db != 0)
+        {
             dispatch(commandBuilder.select(db));
         }
     }
