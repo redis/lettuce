@@ -2,16 +2,10 @@
 
 package com.lambdaworks.redis.protocol;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -20,6 +14,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -83,7 +82,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         Command<?, ?, ?> cmd = (Command<?, ?, ?>) msg;
-        Channel channel = ctx.channel();
         ByteBuf buf = ctx.alloc().heapBuffer();
         cmd.encode(buf);
         if (logger.isDebugEnabled()) {
@@ -101,10 +99,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+
         logger.debug("channelActive()");
         this.channel = ctx.channel();
-
         List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
 
         tmp.addAll(queue);
@@ -117,7 +115,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         for (Command<K, V, ?> cmd : tmp) {
             if (!cmd.isCancelled()) {
                 queue.add(cmd);
-                channel.writeAndFlush(cmd);
+                logger.debug("Triggering command " + cmd);
+                ctx.channel().writeAndFlush(cmd);
             }
         }
 
@@ -128,6 +127,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.debug("channelInactive()");
+        this.channel = null;
         if (closed) {
             for (Command<K, V, ?> cmd : queue) {
                 if (cmd.getOutput() != null) {
@@ -137,7 +137,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
             queue.clear();
             queue = null;
-            this.channel = null;
+
         }
 
         if (redisChannelHandler != null) {
@@ -154,7 +154,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             queue.put(command);
-
             if (channel != null) {
                 channel.writeAndFlush(command);
             }

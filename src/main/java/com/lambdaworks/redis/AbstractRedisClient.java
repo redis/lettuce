@@ -1,17 +1,11 @@
 package com.lambdaworks.redis;
 
-import java.io.Closeable;
-import java.net.SocketAddress;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.internal.ChannelGroupListener;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -29,6 +23,11 @@ import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
+import java.io.Closeable;
+import java.net.SocketAddress;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:28
@@ -45,7 +44,7 @@ public abstract class AbstractRedisClient {
 
     public AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        group = new NioEventLoopGroup();
+        group = new NioEventLoopGroup(20);
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     }
 

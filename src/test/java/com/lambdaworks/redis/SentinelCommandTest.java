@@ -61,7 +61,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
-        assertEquals(6381, socketAddress.getPort());
+        assertEquals(16379, socketAddress.getPort());
 
     }
 

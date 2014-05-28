@@ -2,9 +2,15 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractCommandTest {
     public static final String host = "localhost";
@@ -81,7 +87,15 @@ public abstract class AbstractCommandTest {
                     client.shutdown();
                 }
             } finally {
-                redis.configSet("requirepass", "");
+
+                RedisClient client = getRedisClient();
+                try {
+                    RedisConnection<String, String> connect = client.connect();
+                    connect.auth(passwd);
+                    connect.configSet("requirepass", "");
+                } finally {
+                    client.shutdown();
+                }
             }
         }
     }

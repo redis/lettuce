@@ -2,11 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
-import java.net.SocketAddress;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Supplier;
-
+import com.google.common.collect.Lists;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -19,6 +16,12 @@ import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.net.SocketAddress;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
@@ -37,6 +40,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private int attempts;
     private SocketAddress remoteAddress;
     private Supplier<SocketAddress> socketAddressSupplier;
+    private List<ChannelHandler> handlers = Lists.newArrayList();
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -71,6 +75,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         channel = ctx.channel();
         attempts = 0;
         remoteAddress = channel.remoteAddress();
+        handlers.clear();
+        Iterator<Map.Entry<String, ChannelHandler>> iterator = channel.pipeline().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, ChannelHandler> next = iterator.next();
+
+            handlers.add(next.getValue());
+        }
         super.channelActive(ctx);
     }
 
@@ -112,7 +123,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 }
             }
 
-            bootstrap.connect(remoteAddress).sync();
+            bootstrap.connect(remoteAddress).sync().channel();
+            logger.info("Reconnected to " + remoteAddress);
         } catch (Exception e) {
             scheduleReconnect();
             logger.warn("Cannot connect: " + e.toString());

@@ -1,3 +1,7 @@
 target/
 *.rdb
 
+-
+atlassian-ide-plugin.xml
+lettuce.iml
+redis-git

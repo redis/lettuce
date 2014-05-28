@@ -2,15 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import java.lang.reflect.Proxy;
-import java.net.ConnectException;
-import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
@@ -20,13 +11,21 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
+
+import java.lang.reflect.Proxy;
+import java.net.ConnectException;
+import java.net.SocketAddress;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
@@ -318,6 +317,11 @@ public class RedisClient extends AbstractRedisClient {
                     + redisURI.getSentinelMasterId());
             redisAddress = lookupRedis(redisURI.getSentinelMasterId());
 
+            if (redisAddress == null) {
+                throw new RedisException("Cannot provide redisAddress using sentinel for masterId "
+                        + redisURI.getSentinelMasterId());
+            }
+
         } else {
             redisAddress = redisURI.getResolvedAddress();
         }
@@ -371,6 +375,7 @@ public class RedisClient extends AbstractRedisClient {
 
                 ch.pipeline().addLast(new ChannelGroupListener(channels), watchdog, commandHandler,
                         new ConnectionEventTrigger(connectionEvents, connection));
+
             }
         });
 

@@ -1,6 +1,11 @@
 package com.lambdaworks.redis;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.protocol.Command;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -8,12 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.Command;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -38,6 +37,10 @@ public class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<
         Future<SocketAddress> result = Futures.lazyTransform(future, new Function<List<V>, SocketAddress>() {
             @Override
             public SocketAddress apply(List<V> input) {
+                if (input.isEmpty()) {
+                    return null;
+                }
+
                 checkArgument(input.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
                 String hostname = (String) input.get(0);
                 String port = (String) input.get(1);

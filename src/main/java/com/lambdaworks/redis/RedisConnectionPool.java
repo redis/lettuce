@@ -1,14 +1,14 @@
 package com.lambdaworks.redis;
 
-import java.io.Closeable;
-import java.lang.reflect.Proxy;
-
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
+import java.io.Closeable;
+import java.lang.reflect.Proxy;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>

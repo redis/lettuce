@@ -2,12 +2,12 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Ignore;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-
-import static org.junit.Assert.*;
 
 public class ConnectionCommandTest extends AbstractCommandTest {
     @Test
@@ -62,6 +62,13 @@ public class ConnectionCommandTest extends AbstractCommandTest {
     @Test
     public void selectReconnect() throws Exception {
         redis.select(1);
+        redis.set(key, value);
+        redis.quit();
+        assertEquals(value, redis.get(key));
+    }
+
+    @Test
+    public void getSetReconnect() throws Exception {
         redis.set(key, value);
         redis.quit();
         assertEquals(value, redis.get(key));

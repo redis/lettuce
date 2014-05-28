@@ -4,12 +4,12 @@ package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
-import java.util.concurrent.TimeUnit;
-
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import java.util.concurrent.TimeUnit;
 
 public class ClientTest extends AbstractCommandTest {
     @Rule
@@ -22,6 +22,7 @@ public class ClientTest extends AbstractCommandTest {
     }
 
     @Test(expected = RedisException.class)
+    @Ignore
     public void shutdown() throws Exception {
         RedisClient client = new RedisClient(host);
         RedisConnection<String, String> connection = client.connect();

@@ -3,15 +3,6 @@
 package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.CommandType.EXEC;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
@@ -26,6 +17,15 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.SetArgs;
+import io.netty.channel.ChannelHandler;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
@@ -36,6 +36,7 @@ import com.lambdaworks.redis.protocol.SetArgs;
  * 
  * @author Will Glozer
  */
+@ChannelHandler.Sharable
 public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisAsyncConnection<K, V>,
         RedisClusterAsyncConnection<K, V> {
 
@@ -1488,12 +1489,14 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public void activated() {
+
+        // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            auth(new String(password));
+            dispatch(commandBuilder.auth(new String(password)));
         }
 
         if (db != 0) {
-            select(db);
+            dispatch(commandBuilder.select(db));
         }
     }
 }
