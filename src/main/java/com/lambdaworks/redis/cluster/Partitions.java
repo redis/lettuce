@@ -9,15 +9,29 @@ import com.google.common.collect.Lists;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:11
  */
-class Partitions implements Iterable<RedisClusterPartition> {
-    private List<RedisClusterPartition> partitions = Lists.newArrayList();
+class Partitions implements Iterable<RedisClusterNode> {
+    private List<RedisClusterNode> partitions = Lists.newArrayList();
 
-    public RedisClusterPartition getPartitionByHash(int hash) {
+    public RedisClusterNode getPartitionBySlot(int slot) {
+
+        for (RedisClusterNode partition : partitions) {
+            if (partition.getSlots().contains(slot)) {
+                return partition;
+            }
+        }
         return null;
     }
 
     @Override
-    public Iterator<RedisClusterPartition> iterator() {
+    public Iterator<RedisClusterNode> iterator() {
         return Lists.newArrayList(partitions).iterator();
+    }
+
+    public List<RedisClusterNode> getPartitions() {
+        return partitions;
+    }
+
+    public void addPartition(RedisClusterNode partition) {
+        partitions.add(partition);
     }
 }

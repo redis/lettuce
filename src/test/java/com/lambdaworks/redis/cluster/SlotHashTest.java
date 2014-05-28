@@ -14,4 +14,11 @@ public class SlotHashTest {
         assertEquals(0x31C3, result);
 
     }
+
+    @Test
+    public void testHashWithHash() throws Exception {
+        int result = SlotHash.getSlot("key{123456789}a".getBytes());
+        assertEquals(0x31C3, result);
+
+    }
 }

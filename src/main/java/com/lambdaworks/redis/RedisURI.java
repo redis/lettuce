@@ -79,7 +79,7 @@ public class RedisURI implements Serializable {
         this.port = port;
     }
 
-    char[] getPassword() {
+    public char[] getPassword() {
         return password;
     }
 

@@ -1289,4 +1289,104 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, String> clusterMeet(String ip, int port) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(MEET).add(ip).add(port);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterForget(String nodeId) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FORGET).add(nodeId);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterAddslots(int[] slots) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(ADDSLOTS);
+
+        for (int slot : slots) {
+            args.add(slot);
+        }
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterDelslots(int[] slots) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(DELSLOTS);
+
+        for (int slot : slots) {
+            args.add(slot);
+        }
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<String>> clusterInfo() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(INFO);
+
+        return createCommand(CLUSTER, new StringListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterNodes() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NODES);
+
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<K>> clusterGetKeysInSlot(int slot, int count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GETKEYSINSLOT).add(slot).add(count);
+        return createCommand(CLUSTER, new KeyListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterSetSlotNode(int slot, String nodeId) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(NODE).add(nodeId);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterSetSlotMigrating(int slot, String nodeId) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(MIGRATING).add(nodeId);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterSetSlotImporting(int slot, String nodeId) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(IMPORTING).add(nodeId);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterReplicate(String nodeId) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(REPLICATE).add(nodeId);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> asking() {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        return createCommand(ASKING, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterFlushslots() {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FLUSHSLOTS);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterFailover(boolean force) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FAILOVER);
+        if (force) {
+            args.add(FORCE);
+        }
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterReset(boolean hard) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESET);
+        if (hard) {
+            args.add(HARD);
+        } else {
+            args.add(SOFT);
+        }
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
 }

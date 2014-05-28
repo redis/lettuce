@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Arrays;
-
 import com.google.common.primitives.Chars;
 import com.lambdaworks.codec.CRC16;
 
@@ -11,8 +9,8 @@ import com.lambdaworks.codec.CRC16;
  */
 public class SlotHash {
 
-    public final static byte SUBKEY_START = Chars.toByteArray('{')[0];
-    public final static byte SUBKEY_END = Chars.toByteArray('}')[0];
+    public final static byte SUBKEY_START = Chars.toByteArray('{')[1];
+    public final static byte SUBKEY_END = Chars.toByteArray('}')[1];
 
     private SlotHash() {
 
@@ -20,15 +18,31 @@ public class SlotHash {
 
     public final static int getSlot(byte[] key) {
         byte finalKey[] = key;
-        int s = Arrays.binarySearch(key, SUBKEY_START);
-        if (s > -1) {
-            int e = Arrays.binarySearch(key, s + 1, key.length, SUBKEY_END);
-            if (e > -1 && e != s + 1) {
+        int start = indexOf(key, SUBKEY_START);
+        if (start != -1) {
+            int end = indexOf(key, start + 1, SUBKEY_END);
+            if (end != -1 && end != start + 1) {
 
-                finalKey = new byte[e - s + 1];
-                System.arraycopy(key, s + 1, finalKey, 0, finalKey.length);
+                finalKey = new byte[end - (start + 1)];
+                System.arraycopy(key, start + 1, finalKey, 0, finalKey.length);
             }
         }
         return CRC16.crc16(finalKey) % 16384;
+    }
+
+    private static int indexOf(byte[] haystack, byte needle) {
+        return indexOf(haystack, 0, needle);
+    }
+
+    private static int indexOf(byte[] haystack, int start, byte needle) {
+
+        for (int i = start; i < haystack.length; i++) {
+
+            if (haystack[i] == needle) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }

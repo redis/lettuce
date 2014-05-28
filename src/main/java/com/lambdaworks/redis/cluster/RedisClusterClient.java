@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -74,18 +75,42 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private void initializePartitions() {
 
-        List<String> partitionLines = Lists.newArrayList();
+        Partitions partitions = getPartitions();
+        this.partitions = partitions;
+
+    }
+
+    private Partitions getPartitions() {
+        String clusterNodes = null;
+        RedisURI nodeUri = null;
         for (RedisURI initialUri : initialUris) {
 
             RedisAsyncConnectionImpl<String, String> connection = connectAsyncImpl(initialUri.getResolvedAddress());
+            nodeUri = initialUri;
 
+            try {
+                clusterNodes = connection.clusterNodes().get();
+            } catch (InterruptedException e) {
+                throw new RedisException(e);
+            } catch (ExecutionException e) {
+                throw new RedisException(e);
+            }
             connection.close();
+            break;
         }
 
-        if (partitionLines.isEmpty()) {
+        if (clusterNodes == null) {
             throw new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + initialUris);
         }
 
+        Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
+
+        for (RedisClusterNode partition : partitions) {
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                partition.setUri(nodeUri);
+            }
+        }
+        return partitions;
     }
 
     RedisAsyncConnectionImpl<String, String> connectAsyncImpl(final SocketAddress socketAddress) {
@@ -131,11 +156,18 @@ public class RedisClusterClient extends AbstractRedisClient {
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
         RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(handler, codec, timeout, unit);
 
-        return connectAsyncImpl(handler, connection, socketAddressSupplier, true);
+        RedisAsyncConnectionImpl<K, V> result = connectAsyncImpl(handler, connection, socketAddressSupplier, true);
+
+        if (initialUris.get(0).getPassword() != null) {
+            result.auth(new String(initialUris.get(0).getPassword()));
+        }
+
+        return result;
+
     }
 
-    protected RedisClusterPartition getPartition(int hash) {
-        return partitions.getPartitionByHash(hash);
+    protected RedisClusterNode getPartition(int hash) {
+        return partitions.getPartitionBySlot(hash);
     }
 
     public void shutdown() {

@@ -68,7 +68,10 @@ public enum CommandType {
     TIME,
 
     // SENTINEL
-    SENTINEL;
+    SENTINEL,
+
+    // CLUSTER
+    ASKING, CLUSTER;
 
     public byte[] bytes;
 

@@ -36,7 +36,8 @@ import com.lambdaworks.redis.protocol.SetArgs;
  * 
  * @author Will Glozer
  */
-public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisAsyncConnection<K, V> {
+public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisAsyncConnection<K, V>,
+        RedisClusterAsyncConnection<K, V> {
 
     protected MultiOutput<K, V> multi;
     private char[] password;
@@ -1374,6 +1375,86 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<Long> pfcount(K key, K... moreKeys) {
         return dispatch(commandBuilder.pfcount(key, moreKeys));
+    }
+
+    @Override
+    public RedisFuture<String> clusterMeet(String ip, int port) {
+        return dispatch(commandBuilder.clusterMeet(ip, port));
+    }
+
+    @Override
+    public RedisFuture<String> clusterForget(String nodeId) {
+        return dispatch(commandBuilder.clusterForget(nodeId));
+    }
+
+    @Override
+    public RedisFuture<String> clusterAddSlots(int... slots) {
+        return dispatch(commandBuilder.clusterAddslots(slots));
+    }
+
+    @Override
+    public RedisFuture<String> clusterDelSlots(int... slots) {
+        return dispatch(commandBuilder.clusterDelslots(slots));
+    }
+
+    @Override
+    public RedisFuture<List<String>> clusterInfo() {
+        return dispatch(commandBuilder.clusterInfo());
+    }
+
+    @Override
+    public RedisFuture<String> clusterNodes() {
+        return dispatch(commandBuilder.clusterNodes());
+    }
+
+    @Override
+    public RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count) {
+        return dispatch(commandBuilder.clusterGetKeysInSlot(slot, count));
+    }
+
+    @Override
+    public RedisFuture<String> clusterSetSlotNode(int slot, String nodeId) {
+        return dispatch(commandBuilder.clusterSetSlotNode(slot, nodeId));
+    }
+
+    @Override
+    public RedisFuture<String> clusterSetSlotMigrating(int slot, String nodeId) {
+        return dispatch(commandBuilder.clusterSetSlotMigrating(slot, nodeId));
+    }
+
+    @Override
+    public RedisFuture<String> clusterSetSlotImporting(int slot, String nodeId) {
+        return dispatch(commandBuilder.clusterSetSlotImporting(slot, nodeId));
+    }
+
+    @Override
+    public RedisFuture<String> clusterFailover(boolean force) {
+        return dispatch(commandBuilder.clusterFailover(force));
+    }
+
+    @Override
+    public RedisFuture<String> clusterReset(boolean hard) {
+        return dispatch(commandBuilder.clusterReset(hard));
+    }
+
+    @Override
+    public RedisFuture<String> asking() {
+        return dispatch(commandBuilder.asking());
+    }
+
+    @Override
+    public RedisFuture<String> clusterReplicate(String nodeId) {
+        return dispatch(commandBuilder.clusterReplicate(nodeId));
+    }
+
+    @Override
+    public RedisFuture<String> clusterFlushslots() {
+        return dispatch(commandBuilder.clusterFlushslots());
+    }
+
+    @Override
+    public RedisFuture<Map<K, V>> clusterSlaves() {
+        return null;
     }
 
     public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
