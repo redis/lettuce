@@ -3,7 +3,9 @@
 package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,7 +28,11 @@ public class ClientTest extends AbstractCommandTest {
     public void shutdown() throws Exception {
         RedisClient client = new RedisClient(host);
         RedisConnection<String, String> connection = client.connect();
+
+        assertTrue(connection.isOpen());
         client.shutdown();
+
+        assertFalse(connection.isOpen());
         connection.get(key);
     }
 
@@ -67,6 +73,10 @@ public class ClientTest extends AbstractCommandTest {
     @Test
     public void reconnect() throws Exception {
         redis.set(key, value);
+        redis.quit();
+        assertEquals(value, redis.get(key));
+        redis.quit();
+        assertEquals(value, redis.get(key));
         redis.quit();
         assertEquals(value, redis.get(key));
     }

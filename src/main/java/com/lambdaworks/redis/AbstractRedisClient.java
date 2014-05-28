@@ -71,14 +71,15 @@ public abstract class AbstractRedisClient {
             final Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
 
+            final ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, timer, socketAddressSupplier);
+
             redisBootstrap.handler(new ChannelInitializer<Channel>() {
                 @Override
                 protected void initChannel(Channel ch) throws Exception {
 
                     if (withReconnect) {
-                        ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, timer, socketAddressSupplier);
-                        ch.pipeline().addLast(watchdog);
                         watchdog.setReconnect(true);
+                        ch.pipeline().addLast(watchdog);
                     }
 
                     ch.pipeline().addLast(new ChannelGroupListener(channels),

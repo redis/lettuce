@@ -365,15 +365,14 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
         final Bootstrap sentinelBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
+        final ConnectionWatchdog watchdog = new ConnectionWatchdog(sentinelBootstrap, timer);
+        watchdog.setReconnect(true);
+
         sentinelBootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel ch) throws Exception {
 
-                ConnectionWatchdog watchdog = new ConnectionWatchdog(sentinelBootstrap, timer);
-                ch.pipeline().addLast(watchdog);
-                watchdog.setReconnect(true);
-
-                ch.pipeline().addLast(new ChannelGroupListener(channels), watchdog, commandHandler,
+                ch.pipeline().addLast(watchdog, new ChannelGroupListener(channels), watchdog, commandHandler,
                         new ConnectionEventTrigger(connectionEvents, connection));
 
             }
