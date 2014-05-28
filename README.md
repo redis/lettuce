@@ -112,7 +112,7 @@ Streaming API
   * KeyValueStreamingChannel
   * ScoredValueStreamingChannel
   
-  The result of the steaming methods is the count of keys/values/key-value pairs as long value.
+The result of the steaming methods is the count of keys/values/key-value pairs as long value.
   
 ```java
 Long count = redis.hgetall(new KeyValueStreamingChannel<String, String>()
@@ -136,7 +136,7 @@ Sentinel
   1. Direct connection to sentinel, for issuing sentinel commands
   2. Redis discovery using sentinel.
   
-  In both cases you've to supply a RedisURI since the Redis Sentinel integration supports multiple Sentinel hosts to
+In both cases you've to supply a RedisURI since the Redis Sentinel integration supports multiple Sentinel hosts to
   provide a high availability.
   
   Please note: Redis Sentinel integration provides only async connections and no connection pooling until now.
@@ -178,14 +178,14 @@ RedisClusterClient client = new RedisClusterClient(rediUri);
 RedisClusterAsyncConnection<String, String> client = clusterClient.connectClusterAsync()
 ```
 
-  The clustering support covers:
+The clustering support covers:
   
   * Support of all CLUSTER commands
   * Cluster node selection (initial) based on key hash-slot
   * (to be done) MOVED redirection handling
   * Node authentication
 
-  The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 
+The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 
   The client maintains multiple connections, which are selected based on the topology and hash. In case your requests
   run into MOVED errors (because of slot imports/migrations), you can reload the partitions using 
   
@@ -207,7 +207,7 @@ Connection Interfaces
   * RedisSortedSetsConnection
   * RedisStringsConnection
 
-  Every of these interfaces is available though the connect() method. Same applies for the async interfaces:
+Every of these interfaces is available though the connect() method. Same applies for the async interfaces:
 
   * RedisHashesAsyncConnection
   * RedisKeysAsyncConnection
@@ -218,14 +218,14 @@ Connection Interfaces
   * RedisSortedSetsAsyncConnection
   * RedisStringsAsyncConnection
 
-  These interfaces are implemented by the merged connection classes of RedisConnection for the sync execution and 
-  RedisAsyncConnection for async execution which are also available using connect() or connectAsync(). The grouping is
-  derived from the redis command grouping.
+These interfaces are implemented by the merged connection classes of RedisConnection for the sync execution and 
+RedisAsyncConnection for async execution which are also available using connect() or connectAsync(). The grouping is
+derived from the redis command grouping.
 
 Connection Pooling
 ------------------
 
-  The built-in connection pooling provides managed connections. Every pool can allocate sync and async connections.
+The built-in connection pooling provides managed connections. Every pool can allocate sync and async connections.
   
 ```java  
 RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
