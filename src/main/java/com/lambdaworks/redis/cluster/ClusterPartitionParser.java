@@ -9,6 +9,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 
 /**
@@ -17,7 +18,7 @@ import com.lambdaworks.redis.RedisURI;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:20
  */
-class ClusterPartitionParser {
+public class ClusterPartitionParser {
 
     private static final String TOKEN_MYSELF = "myself";
     private static final String TOKEN_SLOT_IMPORT = "-<-";
@@ -52,10 +53,14 @@ class ClusterPartitionParser {
 
         Iterator<String> iterator = Splitter.on(TOKEN_NODE_SEPARATOR).omitEmptyStrings().split(nodes).iterator();
 
-        while (iterator.hasNext()) {
-            String node = iterator.next();
-            RedisClusterNode partition = parseNode(node);
-            result.addPartition(partition);
+        try {
+            while (iterator.hasNext()) {
+                String node = iterator.next();
+                RedisClusterNode partition = parseNode(node);
+                result.addPartition(partition);
+            }
+        } catch (Exception e) {
+            throw new RedisException("Cannot parse " + nodes, e);
         }
 
         return result;

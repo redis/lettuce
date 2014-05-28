@@ -10,7 +10,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:16
  */
-public interface RedisSetsConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisSetsConnection<K, V> {
     Long sadd(K key, V... members);
 
     Long scard(K key);

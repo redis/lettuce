@@ -9,7 +9,7 @@ import java.util.List;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:28
  */
-public interface RedisScriptingConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisScriptingConnection<K, V> {
     <T> T eval(String script, ScriptOutputType type, K... keys);
 
     <T> T eval(String script, ScriptOutputType type, K[] keys, V... values);

@@ -13,7 +13,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:10
  */
-public interface RedisKeysConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisKeysConnection<K, V> {
     Long del(K... keys);
 
     byte[] dump(K key);

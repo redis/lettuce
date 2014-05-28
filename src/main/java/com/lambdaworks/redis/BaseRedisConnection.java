@@ -2,7 +2,6 @@ package com.lambdaworks.redis;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 
@@ -12,9 +11,6 @@ import java.util.concurrent.TimeUnit;
  * @since 17.05.14 21:05
  */
 public interface BaseRedisConnection<K, V> extends Closeable {
-    void setTimeout(long timeout, TimeUnit unit);
-
-    String auth(String password);
 
     Long publish(K channel, V message);
 
@@ -23,8 +19,6 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     String ping();
 
     String quit();
-
-    String select(int db);
 
     void close();
 

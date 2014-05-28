@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.SetArgs;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:12
  */
-public interface RedisStringsConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisStringsConnection<K, V> {
     Long append(K key, V value);
 
     Long bitcount(K key);

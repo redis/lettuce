@@ -1,5 +1,6 @@
 target/
 *.rdb
+*.aof
 
 -
 atlassian-ide-plugin.xml

@@ -9,7 +9,7 @@ import java.util.List;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:32
  */
-public interface RedisServerConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisServerConnection<K, V> {
     String bgrewriteaof();
 
     String bgsave();

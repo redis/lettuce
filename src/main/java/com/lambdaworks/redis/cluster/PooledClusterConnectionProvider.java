@@ -11,7 +11,6 @@ import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
 import com.google.common.base.Supplier;
-import com.lambdaworks.redis.Connections;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
@@ -19,11 +18,17 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 /**
+ * Connection provider with built-in pooling
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:54
  */
 public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
     private KeyedObjectPool<PoolKey, RedisAsyncConnection<K, V>> partitionPool;
     private Partitions partitions;
     private RedisClusterClient redisClusterClient;
@@ -46,6 +51,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
 
     @Override
     public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
+        logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
 
         try {
@@ -61,6 +67,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     @Override
     public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
         try {
+            logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
             PoolKey key = new PoolKey(intent, host, port);
             RedisAsyncConnection<K, V> connection = partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
@@ -81,7 +88,9 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
 
         @Override
         public RedisAsyncConnection<K, V> create(final PoolKey key) throws Exception {
-            return redisClusterClient.connectCluster(redisCodec, new Supplier<SocketAddress>() {
+
+            logger.debug("createConnection(" + key.getIntent() + ", " + key.getSocketAddress() + ")");
+            return redisClusterClient.connectClusterAsyncImpl(redisCodec, new Supplier<SocketAddress>() {
                 @Override
                 public SocketAddress get() {
                     return key.getSocketAddress();
@@ -91,7 +100,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
 
         @Override
         public boolean validateObject(PoolKey key, PooledObject<RedisAsyncConnection<K, V>> p) {
-            return Connections.isValid(p);
+            return p.getObject().isOpen();
         }
 
         @Override
@@ -103,6 +112,14 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
         public PooledObject<RedisAsyncConnection<K, V>> wrap(RedisAsyncConnection<K, V> value) {
             return new DefaultPooledObject<RedisAsyncConnection<K, V>>(value);
         }
+    }
+
+    @Override
+    public void close() {
+        if (partitionPool != null) {
+            partitionPool.close();
+        }
+        partitionPool = null;
     }
 
     private static class PoolKey {

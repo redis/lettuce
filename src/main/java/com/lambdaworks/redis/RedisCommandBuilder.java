@@ -1370,6 +1370,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<String>> clusterSlaves(String nodeId) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLAVES).add(nodeId);
+        return createCommand(CLUSTER, new StringListOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> clusterFailover(boolean force) {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FAILOVER);

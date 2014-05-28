@@ -10,7 +10,7 @@ import java.util.List;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:14
  */
-public interface RedisListsAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisListsAsyncConnection<K, V> {
     RedisFuture<KeyValue<K, V>> blpop(long timeout, K... keys);
 
     RedisFuture<KeyValue<K, V>> brpop(long timeout, K... keys);

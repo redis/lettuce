@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.support;
 
 import java.lang.reflect.Proxy;
-import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisConnectionPool;
 
@@ -22,24 +21,9 @@ public class PoolingProxyFactory {
      * @return Transparent pooling proxy.
      */
     public static <T, C extends T> C create(RedisConnectionPool<T> connectionPool) {
-        return create(connectionPool, 5, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Creates a transparent connection pooling proxy.
-     * 
-     * @param connectionPool The Redis connection pool
-     * @param recheckInterval interval for connection-checking
-     * @param unit unit of the interval.
-     * @param <T> Type of the connection.
-     * @return Transparent pooling proxy
-     */
-    @SuppressWarnings("unchecked")
-    public static <T, C extends T> C create(RedisConnectionPool<T> connectionPool, long recheckInterval, TimeUnit unit) {
         Class<?> componentType = connectionPool.getComponentType();
 
-        TransparentPoolingInvocationHandler<T> h = new TransparentPoolingInvocationHandler<T>(connectionPool, recheckInterval,
-                unit);
+        TransparentPoolingInvocationHandler<T> h = new TransparentPoolingInvocationHandler<T>(connectionPool);
 
         Object o = Proxy.newProxyInstance(PoolingProxyFactory.class.getClassLoader(), new Class<?>[] { componentType }, h);
 

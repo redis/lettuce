@@ -11,7 +11,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:18
  */
-public interface RedisSortedSetsConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisSortedSetsConnection<K, V> {
     Long zadd(K key, double score, V member);
 
     /**

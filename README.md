@@ -92,7 +92,7 @@ Advanced Usage
   sentinel details. You can build your own RedisURI or use the RedisUI Builder.
   
 ```java
-RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").withDatabase(2).build;
+RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").withDatabase(2).build();
 
 RedisClient client = new RedisClient(rediUri);    
 ```
@@ -164,6 +164,34 @@ RedisConnection<String, String> connection = client.connect();
     
   Please note: Every time you connect to redis using sentinel, the redis master is discovered using a new connection to a sentinel. This
   can be time consuming, especially when multiple sentinels are tried and run perhaps into timeouts.
+  
+  
+Clustering
+--------
+
+  lettuce supports redis cluster (v3.0) operations. 
+
+```java
+RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").build();
+
+RedisClusterClient client = new RedisClusterClient(rediUri);
+RedisClusterAsyncConnection<String, String> client = clusterClient.connectClusterAsync()
+```
+
+  The clustering support covers:
+  
+  * Support of all CLUSTER commands
+  * Cluster node selection (initial) based on key hash-slot
+  * (to be done) MOVED redirection handling
+  * Node authentication
+
+  The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 
+  The client maintains multiple connections, which are selected based on the topology and hash. In case your requests
+  run into MOVED errors (because of slot imports/migrations), you can reload the partitions using 
+  
+    RedisClusterClient.reloadPartitions
+    
+
 
 Connection Interfaces
 ---------------------

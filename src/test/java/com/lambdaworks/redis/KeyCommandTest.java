@@ -312,7 +312,7 @@ public class KeyCommandTest extends AbstractCommandTest {
         Set<String> expect = new HashSet<String>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.count(100).match("key1*"));
+        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.count(200).match("key1*"));
 
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());

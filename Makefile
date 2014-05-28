@@ -228,25 +228,9 @@ stop:
 test:
 	make start
 	sleep 2
-	mvn -Dtest=${TEST} clean compile test
+	mvn -skipTests=false clean compile test
 	make stop
 
-package:
-	make start
-	mvn clean package
-	make stop
-
-deploy:
-	make start
-	mvn clean deploy
-	make stop
-
-release:
-	make start
-	mvn release:clean
-	mvn release:prepare
-	mvn release:perform
-	make stop
 
 travis-install:
 	[ ! -e redis-git ] && git clone https://github.com/antirez/redis.git redis-git || true

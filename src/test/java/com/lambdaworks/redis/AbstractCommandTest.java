@@ -41,6 +41,7 @@ public abstract class AbstractCommandTest {
     public void openConnection() throws Exception {
         redis = client.connect();
         redis.flushall();
+        redis.flushdb();
     }
 
     @After

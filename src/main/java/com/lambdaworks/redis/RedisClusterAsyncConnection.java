@@ -1,15 +1,18 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Asynchronous executed commands for HyperLogLog (PF* commands).
+ * Complete asynchronous cluster Redis API with 400+ Methods..
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:14
  */
-public interface RedisClusterAsyncConnection<K, V> {
+public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
+        RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
+        RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
+        RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V> {
+
     RedisFuture<String> clusterMeet(String ip, int port);
 
     RedisFuture<String> clusterForget(String nodeId);
@@ -40,6 +43,6 @@ public interface RedisClusterAsyncConnection<K, V> {
 
     RedisFuture<String> clusterFlushslots();
 
-    RedisFuture<Map<K, V>> clusterSlaves();
+    RedisFuture<List<String>> clusterSlaves(String nodeId);
 
 }

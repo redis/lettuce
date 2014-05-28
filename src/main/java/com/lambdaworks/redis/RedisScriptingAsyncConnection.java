@@ -8,7 +8,7 @@ import java.util.List;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:28
  */
-public interface RedisScriptingAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisScriptingAsyncConnection<K, V> {
     <T> RedisFuture<T> eval(String script, ScriptOutputType type, K... keys);
 
     <T> RedisFuture<T> eval(String script, ScriptOutputType type, K[] keys, V... values);

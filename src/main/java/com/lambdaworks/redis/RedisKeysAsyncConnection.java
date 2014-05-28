@@ -12,7 +12,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:10
  */
-public interface RedisKeysAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisKeysAsyncConnection<K, V> {
     RedisFuture<Long> del(K... keys);
 
     RedisFuture<byte[]> dump(K key);

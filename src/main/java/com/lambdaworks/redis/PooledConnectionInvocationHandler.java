@@ -29,8 +29,13 @@ public class PooledConnectionInvocationHandler<T> extends AbstractInvocationHand
             throw new UnsupportedOperationException("Calls to " + method.getName() + " are not supported on pooled connections");
         }
 
+        if (connection == null) {
+            throw new RedisException("Connection is deallocated and cannot be used anymore.");
+        }
+
         if (method.getName().equals("close")) {
             pool.freeConnection((T) proxy);
+            connection = null;
             return null;
         }
 

@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.SetArgs;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:12
  */
-public interface RedisStringsAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisStringsAsyncConnection<K, V> {
     RedisFuture<Long> append(K key, V value);
 
     RedisFuture<Long> bitcount(K key);

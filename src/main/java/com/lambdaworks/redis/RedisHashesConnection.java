@@ -13,7 +13,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:07
  */
-public interface RedisHashesConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisHashesConnection<K, V> {
 
     Long hdel(K key, K... fields);
 

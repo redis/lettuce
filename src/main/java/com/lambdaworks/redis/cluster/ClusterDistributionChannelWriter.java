@@ -7,12 +7,16 @@ import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
+ * Channel writer for cluster operation. This writer looks up the right partition by hash/slot for the operation.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:46
  */
 public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V> {
+
     private RedisChannelWriter<K, V> defaultWriter;
     private ClusterConnectionProvider clusterConnectionProvider;
+    private boolean closed = true;
 
     public ClusterDistributionChannelWriter(RedisChannelWriter<K, V> defaultWriter,
             ClusterConnectionProvider clusterConnectionProvider) {
@@ -27,10 +31,17 @@ public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWrite
         if (args != null && !args.getKeys().isEmpty()) {
 
             int hash = getHash(args.getEncodedKey(0));
-            RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(null, hash);
+            RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
+                    ClusterConnectionProvider.Intent.WRITE, hash);
 
-            if (connection.getChannelWriter() != this) {
-                connection.getChannelWriter().write(command);
+            RedisChannelWriter<K, V> channelWriter = connection.getChannelWriter();
+            if (channelWriter instanceof ClusterDistributionChannelWriter) {
+                ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) channelWriter;
+                channelWriter = writer.defaultWriter;
+            }
+
+            if (channelWriter != this && channelWriter != defaultWriter) {
+                channelWriter.write(command);
                 return;
             }
         }
@@ -44,7 +55,22 @@ public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWrite
 
     @Override
     public void close() {
-        defaultWriter.close();
+
+        if (closed) {
+            return;
+        }
+
+        closed = true;
+
+        if (defaultWriter != null) {
+            defaultWriter.close();
+            defaultWriter = null;
+        }
+
+        if (clusterConnectionProvider != null) {
+            clusterConnectionProvider.close();
+            clusterConnectionProvider = null;
+        }
 
     }
 

@@ -11,7 +11,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:14
  */
-public interface RedisListsConnection<K, V> extends BaseRedisConnection<K, V> {
+public interface RedisListsConnection<K, V> {
     KeyValue<K, V> blpop(long timeout, K... keys);
 
     KeyValue<K, V> brpop(long timeout, K... keys);

@@ -13,7 +13,7 @@ import java.util.Map;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:07
  */
-public interface RedisHashesAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisHashesAsyncConnection<K, V> {
 
     RedisFuture<Long> hdel(K key, K... fields);
 

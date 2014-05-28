@@ -6,7 +6,7 @@ package com.lambdaworks.redis;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:14
  */
-public interface RedisHLLAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisHLLAsyncConnection<K, V> {
     RedisFuture<Long> pfadd(K key, V value, V... moreValues);
 
     RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys);

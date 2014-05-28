@@ -10,7 +10,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:16
  */
-public interface RedisSetsAsyncConnection<K, V> extends BaseRedisAsyncConnection<K, V> {
+public interface RedisSetsAsyncConnection<K, V> {
     RedisFuture<Long> sadd(K key, V... members);
 
     RedisFuture<Long> scard(K key);
