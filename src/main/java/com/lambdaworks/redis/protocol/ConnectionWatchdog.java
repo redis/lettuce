@@ -108,12 +108,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void run(Timeout timeout) throws Exception {
 
         boolean shouldLog = shouldLog();
-        lastReconnectionLogging = System.currentTimeMillis();
 
         InternalLogLevel infoLevel = InternalLogLevel.INFO;
         InternalLogLevel warnLevel = InternalLogLevel.WARN;
 
-        if (!shouldLog) {
+        if (shouldLog) {
+            lastReconnectionLogging = System.currentTimeMillis();
+        } else {
             warnLevel = InternalLogLevel.DEBUG;
             infoLevel = InternalLogLevel.DEBUG;
         }
