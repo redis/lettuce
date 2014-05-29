@@ -2,8 +2,11 @@ package com.lambdaworks.redis.cluster;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +20,7 @@ import org.junit.Test;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
@@ -245,6 +249,40 @@ public class RedisClusterClientTest {
 
         RedisFuture<String> setD = connection.set("d", "myValue2");
         assertEquals("OK", setB.get());
+
+    }
+
+    @Test
+    public void testClusterConnectionStability() throws Exception {
+
+        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl<String, String>) clusterClient
+                .connectClusterAsync();
+
+        connection.set("a", "b");
+
+        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) connection.getChannelWriter();
+
+        RedisAsyncConnectionImpl<Object, Object> backendConnection = writer.getClusterConnectionProvider().getConnection(
+                ClusterConnectionProvider.Intent.WRITE, 3300);
+
+        backendConnection.set("a", "b");
+        backendConnection.close();
+
+        assertTrue(backendConnection.isClosed());
+        assertFalse(backendConnection.isOpen());
+
+        assertTrue(connection.isOpen());
+        assertFalse(connection.isClosed());
+
+        connection.set("a", "b");
+
+        RedisAsyncConnectionImpl<Object, Object> backendConnection2 = writer.getClusterConnectionProvider().getConnection(
+                ClusterConnectionProvider.Intent.WRITE, 3300);
+
+        assertTrue(backendConnection2.isOpen());
+        assertFalse(backendConnection2.isClosed());
+
+        assertNotSame(backendConnection, backendConnection2);
 
     }
 

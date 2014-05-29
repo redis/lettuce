@@ -111,20 +111,23 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
     }
 
+    RedisAsyncConnectionImpl<String, String> connectAsyncImpl(SocketAddress socketAddress) {
+        return connectAsyncImpl(codec, socketAddress);
+    }
+
     /**
      * Create a connection to a redis socket address.
      * 
      * @param socketAddress
      * @return RedisAsyncConnectionImpl<String, String>
      */
-    RedisAsyncConnectionImpl<String, String> connectAsyncImpl(final SocketAddress socketAddress) {
+    <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
 
         logger.debug("connectAsyncImpl(" + socketAddress + ")");
-        BlockingQueue<Command<String, String, ?>> queue = new LinkedBlockingQueue<Command<String, String, ?>>();
+        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
 
-        CommandHandler<String, String> handler = new CommandHandler<String, String>(queue);
-        RedisAsyncConnectionImpl<String, String> connection = new RedisAsyncConnectionImpl<String, String>(handler, codec,
-                timeout, unit);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
+        RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, new Supplier<SocketAddress>() {
             @Override

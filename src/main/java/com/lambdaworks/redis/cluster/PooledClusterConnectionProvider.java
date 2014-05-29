@@ -90,12 +90,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
         public RedisAsyncConnection<K, V> create(final PoolKey key) throws Exception {
 
             logger.debug("createConnection(" + key.getIntent() + ", " + key.getSocketAddress() + ")");
-            return redisClusterClient.connectClusterAsyncImpl(redisCodec, new Supplier<SocketAddress>() {
-                @Override
-                public SocketAddress get() {
-                    return key.getSocketAddress();
-                }
-            });
+            return redisClusterClient.connectAsyncImpl(redisCodec, key.getSocketAddress());
         }
 
         @Override

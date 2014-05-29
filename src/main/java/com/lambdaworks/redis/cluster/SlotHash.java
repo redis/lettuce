@@ -4,6 +4,8 @@ import com.google.common.primitives.Chars;
 import com.lambdaworks.codec.CRC16;
 
 /**
+ * Utility to calculate the slot from a key.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 27.05.14 08:38
  */
@@ -16,6 +18,22 @@ public class SlotHash {
 
     }
 
+    /**
+     * Calculate the slot from the given key.
+     * 
+     * @param key
+     * @return
+     */
+    public final static int getSlot(String key) {
+        return getSlot(key.getBytes());
+    }
+
+    /**
+     * Calculate the slot from the given key.
+     * 
+     * @param key
+     * @return slot
+     */
     public final static int getSlot(byte[] key) {
         byte finalKey[] = key;
         int start = indexOf(key, SUBKEY_START);

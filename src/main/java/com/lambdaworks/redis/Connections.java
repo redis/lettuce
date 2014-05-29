@@ -39,6 +39,22 @@ public class Connections {
         throw new IllegalArgumentException("Connection class " + connection.getClass() + " not supported");
     }
 
+    public final static boolean isOpen(Object connection) {
+
+        checkNotNull(connection, "connection must not be null");
+        if (connection instanceof RedisAsyncConnection<?, ?>) {
+            RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
+            return redisAsyncConnection.isOpen();
+        }
+
+        if (connection instanceof RedisConnection<?, ?>) {
+            RedisConnection<?, ?> redisConnection = (RedisConnection<?, ?>) connection;
+            return redisConnection.isOpen();
+        }
+
+        throw new IllegalArgumentException("Connection class " + connection.getClass() + " not supported");
+    }
+
     public static void close(Object connection) {
 
         checkNotNull(connection, "connection must not be null");

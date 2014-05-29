@@ -78,4 +78,8 @@ public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWrite
     public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
         defaultWriter.setRedisChannelHandler(redisChannelHandler);
     }
+
+    public ClusterConnectionProvider getClusterConnectionProvider() {
+        return clusterConnectionProvider;
+    }
 }

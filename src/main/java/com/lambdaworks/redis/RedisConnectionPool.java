@@ -54,7 +54,7 @@ public class RedisConnectionPool<T> implements Closeable {
 
             @Override
             public boolean validateObject(PooledObject<T> p) {
-                return Connections.isValid(p.getObject());
+                return Connections.isOpen(p.getObject());
             }
 
             @Override
@@ -73,6 +73,12 @@ public class RedisConnectionPool<T> implements Closeable {
         };
     }
 
+    /**
+     * Allocate a connection from the pool. It must be returned using freeConnection (or alternatively call <code>close()</code>
+     * on the connection).
+     * 
+     * @return a pooled connection.
+     */
     public T allocateConnection() {
         try {
             return objectPool.borrowObject();
@@ -83,18 +89,34 @@ public class RedisConnectionPool<T> implements Closeable {
         }
     }
 
+    /**
+     * Return a connection into the pool.
+     * 
+     * @param t the connection.
+     */
     public void freeConnection(T t) {
         objectPool.returnObject(t);
     }
 
+    /**
+     * 
+     * @return the number of idle connections
+     */
     public int getNumIdle() throws UnsupportedOperationException {
         return objectPool.getNumIdle();
     }
 
+    /**
+     * 
+     * @return the number of active connections.
+     */
     public int getNumActive() throws UnsupportedOperationException {
         return objectPool.getNumActive();
     }
 
+    /**
+     * Close the pool and close all idle connections. Active connections won't be closed.
+     */
     public void close() {
         objectPool.close();
         objectPool = null;

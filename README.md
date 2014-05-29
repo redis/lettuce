@@ -29,7 +29,7 @@ Join the lambdaWorks-OSS Google Group to discuss this project:
 Maven Artifacts
 ----------------
 
-  Releases of lettuce are available in the maven central repository.
+Releases of lettuce are available in the maven central repository.
 
 ```xml
 <dependency>
@@ -48,19 +48,19 @@ Basic Usage
   String value = connection.get("key")
 ```
 
-  Each redis command is implemented by one or more methods with names identical
-  to the lowercase redis command name. Complex commands with multiple modifiers
-  that change the result type include the CamelCased modifier as part of the
-  command name, e.g. zrangebyscore and zrangebyscoreWithScores.
+Each redis command is implemented by one or more methods with names identical
+to the lowercase redis command name. Complex commands with multiple modifiers
+that change the result type include the CamelCased modifier as part of the
+command name, e.g. zrangebyscore and zrangebyscoreWithScores.
 
-  Redis connections are designed to be long-lived, and if the connection is lost
-  will reconnect until close() is called. Pending commands that have not timed
-  out will be (re)sent after successful reconnection.
+Redis connections are designed to be long-lived, and if the connection is lost
+will reconnect until close() is called. Pending commands that have not timed
+out will be (re)sent after successful reconnection.
 
-  All connections inherit a default timeout from their RedisClient and
-  and will throw a RedisException when non-blocking commands fail to return a
-  result before the timeout expires. The timeout defaults to 60 seconds and
-  may be changed in the RedisClient or for each individual connection.
+All connections inherit a default timeout from their RedisClient and
+and will throw a RedisException when non-blocking commands fail to return a
+result before the timeout expires. The timeout defaults to 60 seconds and
+may be changed in the RedisClient or for each individual connection.
 
 Asynchronous Connections
 ------------------------
@@ -88,8 +88,8 @@ connection.subscribe("channel")
 Advanced Usage
 --------------
   
-  RedisClient can take a RedisURI object for connecting. RedisURI contains host, authentication, database, timeout and
-  sentinel details. You can build your own RedisURI or use the RedisUI Builder.
+RedisClient can take a RedisURI object for connecting. RedisURI contains host, authentication, database, timeout and
+sentinel details. You can build your own RedisURI or use the RedisUI Builder.
   
 ```java
 RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").withDatabase(2).build();
@@ -100,12 +100,12 @@ RedisClient client = new RedisClient(rediUri);
 Streaming API
 -------------
   
-  Redis can contain a huge set of data. Collections can burst your memory, when the amount of data is too massive for your heap.
-  Lettuce can return your collection data either as List/Set/Map or can push the data on StreamingChannel interfaces.
-  StreamingChannels are similar to callback methods. Every method, which can return bulk data (except transactions/multi and some
-  config methods) specifies beside a regular method with a collection return class also method which accepts a StreamingChannel.
-    
-  There are 4 StreamingChannels accepting different data types:
+Redis can contain a huge set of data. Collections can burst your memory, when the amount of data is too massive for your heap.
+Lettuce can return your collection data either as List/Set/Map or can push the data on StreamingChannel interfaces.
+StreamingChannels are similar to callback methods. Every method, which can return bulk data (except transactions/multi and some
+config methods) specifies beside a regular method with a collection return class also method which accepts a StreamingChannel.
+
+There are 4 StreamingChannels accepting different data types:
      
   * KeyStreamingChannel
   * ValueStreamingChannel
@@ -125,7 +125,7 @@ Long count = redis.hgetall(new KeyValueStreamingChannel<String, String>()
     }, key);
 ```
 
-  Streaming happens real-time to the redis responses. The method call (future) completes after the last call to the StreamingChannel.
+Streaming happens real-time to the redis responses. The method call (future) completes after the last call to the StreamingChannel.
     
     
 Sentinel
@@ -137,9 +137,9 @@ Sentinel
   2. Redis discovery using sentinel.
   
 In both cases you've to supply a RedisURI since the Redis Sentinel integration supports multiple Sentinel hosts to
-  provide a high availability.
+provide a high availability.
   
-  Please note: Redis Sentinel integration provides only async connections and no connection pooling until now.
+Please note: Redis Sentinel integration provides only async connections and no connection pooling until now.
   
 
 ### Sentinel connection
@@ -162,14 +162,14 @@ RedisClient client = new RedisClient(redisUri);
 RedisConnection<String, String> connection = client.connect();
 ```
     
-  Please note: Every time you connect to redis using sentinel, the redis master is discovered using a new connection to a sentinel. This
-  can be time consuming, especially when multiple sentinels are tried and run perhaps into timeouts.
+Please note: Every time you connect to redis using sentinel, the redis master is discovered using a new connection to a sentinel. This
+can be time consuming, especially when multiple sentinels are tried and run perhaps into timeouts.
   
   
 Clustering
 --------
 
-  lettuce supports redis cluster (v3.0) operations. 
+lettuce supports redis cluster (v3.0) operations. 
 
 ```java
 RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").build();
@@ -186,8 +186,8 @@ The clustering support covers:
   * Node authentication
 
 The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 
-  The client maintains multiple connections, which are selected based on the topology and hash. In case your requests
-  run into MOVED errors (because of slot imports/migrations), you can reload the partitions using 
+The client maintains multiple connections, which are selected based on the topology and hash. In case your requests
+run into MOVED errors (because of slot imports/migrations), you can reload the partitions using 
   
     RedisClusterClient.reloadPartitions
     
@@ -256,11 +256,11 @@ pool.close();
 Codecs
 ------
 
-  Lettuce supports pluggable codecs responsible for encoding and decoding keys
-  and values. The default codec supports UTF-8 encoded String keys and values.
+Lettuce supports pluggable codecs responsible for encoding and decoding keys
+and values. The default codec supports UTF-8 encoded String keys and values.
 
-  Each connection may have its own codec passed to the extended
-  RedisClient.connect methods:
+Each connection may have its own codec passed to the extended
+RedisClient.connect methods:
 
 ```java
 RedisConnection<K, V> connect(RedisCodec<K, V> codec)
@@ -268,15 +268,15 @@ RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec)
 RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec)
 ```
 
-  For pub/sub connections channel names and patterns are treated as keys,
-  messages are treated as values.
+For pub/sub connections channel names and patterns are treated as keys,
+messages are treated as values.
 
   
 Spring Support
 --------------
   
-  Lettuce provides a factory for the RedisClient. You need to specify a redisUri or a URI string in order to
-  create the client.
+Lettuce provides a factory for the RedisClient. You need to specify a redisUri or a URI string in order to
+create the client.
 
 ```xml  
 <bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
