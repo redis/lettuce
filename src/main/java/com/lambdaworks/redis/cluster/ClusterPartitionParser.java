@@ -46,7 +46,7 @@ public class ClusterPartitionParser {
      * Parse partition lines into Partitions object.
      * 
      * @param nodes
-     * @return
+     * @return the partitions object.
      */
     public static Partitions parse(String nodes) {
         Partitions result = new Partitions();

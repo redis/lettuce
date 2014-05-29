@@ -4,7 +4,9 @@ package com.lambdaworks.redis;
 
 /**
  * A key-value pair.
- *
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class KeyValue<K, V> {
@@ -12,13 +14,15 @@ public class KeyValue<K, V> {
     public final V value;
 
     public KeyValue(K key, V value) {
-        this.key   = key;
+        this.key = key;
         this.value = value;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         KeyValue<?, ?> that = (KeyValue<?, ?>) o;
         return key.equals(that.key) && value.equals(that.value);
     }

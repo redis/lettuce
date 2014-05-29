@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Complete async Redis API with 400+ Methods.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 12:24
  */

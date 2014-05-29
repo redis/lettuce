@@ -8,12 +8,17 @@ import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.protocol.Command;
 
 /**
+ * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
+ * sync class which just delegates every request.
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 12:28
  */
 public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
-    private RedisAsyncConnectionImpl<K, V> connection;
+    private final RedisAsyncConnectionImpl<K, V> connection;
     protected long timeout;
     protected TimeUnit unit;
 
@@ -23,6 +28,11 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         this.unit = connection.unit;
     }
 
+    /**
+     * 
+     * @see com.google.common.reflect.AbstractInvocationHandler#handleInvocation(java.lang.Object, java.lang.reflect.Method,
+     *      java.lang.Object[])
+     */
     @Override
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 

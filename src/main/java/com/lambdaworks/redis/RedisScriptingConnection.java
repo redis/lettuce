@@ -3,9 +3,10 @@ package com.lambdaworks.redis;
 import java.util.List;
 
 /**
- * 
  * Synchronous executed commands for Scripting.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:28
  */

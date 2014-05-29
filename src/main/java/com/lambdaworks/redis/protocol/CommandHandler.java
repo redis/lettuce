@@ -2,10 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisCommandInterruptedException;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -20,9 +16,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.internal.RedisChannelWriter;
+
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 @ChannelHandler.Sharable
@@ -32,8 +35,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected BlockingQueue<Command<K, V, ?>> queue;
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
-    private Command<K, V, ?> authentication;
-    private Command<K, V, ?> database;
     private Channel channel;
     private boolean closed;
     private RedisChannelHandler<K, V> redisChannelHandler;
@@ -47,23 +48,36 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         this.queue = queue;
     }
 
+    /**
+     * 
+     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRegistered(io.netty.channel.ChannelHandlerContext)
+     */
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         buffer = ctx.alloc().heapBuffer();
         rsm = new RedisStateMachine<K, V>();
     }
 
+    /**
+     * 
+     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelUnregistered(io.netty.channel.ChannelHandlerContext)
+     */
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         buffer.release();
     }
 
+    /**
+     * 
+     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf input = (ByteBuf) msg;
         try {
-            if (!input.isReadable())
+            if (!input.isReadable()) {
                 return;
+            }
 
             buffer.discardReadBytes();
             buffer.writeBytes(input);
@@ -79,6 +93,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
+    /**
+     * 
+     * @see io.netty.channel.ChannelDuplexHandler#write(io.netty.channel.ChannelHandlerContext, java.lang.Object,
+     *      io.netty.channel.ChannelPromise)
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         Command<?, ?, ?> cmd = (Command<?, ?, ?>) msg;
@@ -98,6 +117,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
+    /**
+     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelActive(io.netty.channel.ChannelHandlerContext)
+     */
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 
@@ -124,6 +146,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     }
 
+    /**
+     * 
+     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelInactive(io.netty.channel.ChannelHandlerContext)
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.debug("channelInactive()");
@@ -168,6 +194,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     /**
      * Close the connection.
      */
+    @Override
     public synchronized void close() {
         logger.debug("close()");
 
@@ -193,6 +220,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return closed;
     }
 
+    @Override
     public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
         this.redisChannelHandler = redisChannelHandler;
     }

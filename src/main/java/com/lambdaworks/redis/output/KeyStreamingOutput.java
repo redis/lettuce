@@ -8,11 +8,13 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Streaming-Output of Keys. Returns the count of all keys (including null).
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @param <K> Key type.
  * @param <V> Value type.
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * 
  */
 public class KeyStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
-    private KeyStreamingChannel<K> channel;
+    private final KeyStreamingChannel<K> channel;
 
     public KeyStreamingOutput(RedisCodec<K, V> codec, KeyStreamingChannel<K> channel) {
         super(codec, Long.valueOf(0));

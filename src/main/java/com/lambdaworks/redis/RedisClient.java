@@ -2,6 +2,13 @@
 
 package com.lambdaworks.redis;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioSocketChannel;
+
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -21,13 +28,6 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioSocketChannel;
-
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
  * avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
@@ -36,8 +36,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  */
 public class RedisClient extends AbstractRedisClient {
 
-    private RedisCodec<?, ?> codec = new Utf8StringCodec();
-    private RedisURI redisURI;
+    private final RedisCodec<String, String> codec = new Utf8StringCodec();
+    private final RedisURI redisURI;
 
     /**
      * Create a new client that connects to the supplied host on the default port.
@@ -78,7 +78,6 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    @SuppressWarnings("unchecked")
     public RedisConnection<String, String> connect() {
         return (RedisConnection<String, String>) connect(codec);
     }
@@ -101,10 +100,9 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxActive max active connections.
      * @return The connection pool.
      */
-    @SuppressWarnings("unchecked")
     public RedisConnectionPool<RedisConnection<String, String>> pool(int maxIdle, int maxActive) {
 
-        return (RedisConnectionPool) pool(codec, maxIdle, maxActive);
+        return pool(codec, maxIdle, maxActive);
     }
 
     /**
@@ -114,8 +112,8 @@ public class RedisClient extends AbstractRedisClient {
      * @param codec
      * @param maxIdle
      * @param maxActive
-     * @param <K> Key-Type
-     * @param <V> Value-Type
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return RedisConnectionPool<RedisConnection<K, V>>
      */
     @SuppressWarnings("unchecked")
@@ -165,10 +163,9 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxActive max active connections.
      * @return The connection pool.
      */
-    @SuppressWarnings("unchecked")
     public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool(int maxIdle, int maxActive) {
 
-        return (RedisConnectionPool) asyncPool(codec, maxIdle, maxActive);
+        return asyncPool(codec, maxIdle, maxActive);
     }
 
     /**
@@ -178,13 +175,12 @@ public class RedisClient extends AbstractRedisClient {
      * @param codec
      * @param maxIdle
      * @param maxActive
-     * @param <K> Key-Type
-     * @param <V> Value-Type
-     * @return RedisConnectionPool<RedisAsyncConnection<String, String>>
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection pool.
      */
-    @SuppressWarnings("unchecked")
-    public <K, V> RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool(final RedisCodec<K, V> codec,
-            int maxIdle, int maxActive) {
+    public <K, V> RedisConnectionPool<RedisAsyncConnection<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
+            int maxActive) {
 
         long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
         RedisConnectionPool<RedisAsyncConnection<K, V>> pool = new RedisConnectionPool<RedisAsyncConnection<K, V>>(
@@ -209,7 +205,7 @@ public class RedisClient extends AbstractRedisClient {
 
         closeableResources.add(pool);
 
-        return (RedisConnectionPool) pool;
+        return pool;
     }
 
     /**
@@ -217,9 +213,8 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    @SuppressWarnings("unchecked")
     public RedisAsyncConnection<String, String> connectAsync() {
-        return (RedisAsyncConnection<String, String>) connectAsync(codec);
+        return connectAsync(codec);
     }
 
     /**
@@ -227,9 +222,8 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    @SuppressWarnings("unchecked")
     public RedisPubSubConnectionImpl<String, String> connectPubSub() {
-        return connectPubSub((RedisCodec) codec);
+        return connectPubSub(codec);
     }
 
     /**
@@ -261,7 +255,6 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    @SuppressWarnings("unchecked")
     public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
         return connectAsyncImpl(codec, true);
     }
@@ -358,19 +351,19 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates an asynchronous connection to Sentinel. You must supply a valid RedisURI containing one or more sentinels.
      * 
-     * @return
+     * @return a new connection.
      */
-    @SuppressWarnings("unchecked")
     public RedisSentinelAsyncConnection<String, String> connectSentinelAsync() {
-        return connectSentinelAsync((RedisCodec) codec);
+        return connectSentinelAsync(codec);
     }
 
     /**
      * Creates an asynchronous connection to Sentinel. You must supply a valid RedisURI containing one or more sentinels.
      * 
-     * @param <K> Key-Type
-     * @param <V> Value-Type
-     * @return RedisSentinelAsyncConnection<K, V>
+     * @param codec Use this codec to encode/decode keys and values.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection.
      */
     public <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsync(RedisCodec<K, V> codec) {
 

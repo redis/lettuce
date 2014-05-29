@@ -1,15 +1,17 @@
 package com.lambdaworks.redis;
 
+import java.util.List;
+import java.util.Map;
+
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * Asynchronous executed commands for Hashes (Key-Value pairs).
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:07
  */

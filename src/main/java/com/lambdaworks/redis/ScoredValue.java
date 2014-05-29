@@ -4,7 +4,8 @@ package com.lambdaworks.redis;
 
 /**
  * A value and its associated score from a ZSET.
- *
+ * 
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class ScoredValue<V> {
@@ -18,7 +19,9 @@ public class ScoredValue<V> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ScoredValue<?> that = (ScoredValue<?>) o;
         return Double.compare(that.score, score) == 0 && value.equals(that.value);
     }

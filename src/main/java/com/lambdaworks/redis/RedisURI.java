@@ -1,14 +1,14 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide as well the database, password and
@@ -31,7 +31,7 @@ public class RedisURI implements Serializable {
     private char[] password;
     private long timeout = 60;
     private TimeUnit unit = TimeUnit.SECONDS;
-    private List<RedisURI> sentinels = new ArrayList<RedisURI>();
+    private final List<RedisURI> sentinels = new ArrayList<RedisURI>();
     private transient SocketAddress resolvedAddress;
 
     /**
@@ -137,7 +137,7 @@ public class RedisURI implements Serializable {
      */
     public static class Builder {
 
-        private RedisURI redisURI = new RedisURI();
+        private final RedisURI redisURI = new RedisURI();
 
         /**
          * Set Redis host. Creates a new builder.
@@ -218,7 +218,7 @@ public class RedisURI implements Serializable {
          * Add a withSentinel host to the existing builder.
          * 
          * @param host
-         * @return
+         * @return the builder
          */
         public Builder withSentinel(String host) {
             return withSentinel(host, DEFAULT_SENTINEL_PORT);
@@ -229,7 +229,7 @@ public class RedisURI implements Serializable {
          * 
          * @param host
          * @param port
-         * @return
+         * @return the builder
          */
         public Builder withSentinel(String host, int port) {
             checkState(redisURI.host == null, "Cannot use with Redis mode.");
@@ -242,7 +242,7 @@ public class RedisURI implements Serializable {
          * Adds port information to the builder. Does only affect Redis URI, cannot be used with Sentinel connections.
          * 
          * @param port
-         * @return
+         * @return the builder
          */
         public Builder withPort(int port) {
             checkState(redisURI.host != null, "Host is null. Cannot use in Sentinel mode.");
@@ -254,7 +254,7 @@ public class RedisURI implements Serializable {
          * Adds database selection.
          * 
          * @param database
-         * @return
+         * @return the builder
          */
         public Builder withDatabase(int database) {
             redisURI.setDatabase(database);
@@ -265,7 +265,7 @@ public class RedisURI implements Serializable {
          * Adds authentication.
          * 
          * @param password
-         * @return
+         * @return the builder
          */
         public Builder withPassword(String password) {
             checkNotNull(password, "password must not be null");
@@ -278,7 +278,7 @@ public class RedisURI implements Serializable {
          * 
          * @param timeout
          * @param unit
-         * @return
+         * @return the builder
          */
         public Builder withTimeout(long timeout, TimeUnit unit) {
             checkNotNull(unit, "unit must not be null");

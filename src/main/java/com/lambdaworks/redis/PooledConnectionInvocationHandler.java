@@ -8,20 +8,24 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.AbstractInvocationHandler;
 
 /**
+ * Invocation handler which takes care of connection.close(). Connections are returned to the pool on a close()-call.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @param <T> Connection type.
  * @since 23.05.14 22:14
  */
 public class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
     public final static Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit");
 
     private T connection;
-    private RedisConnectionPool<T> pool;
+    private final RedisConnectionPool<T> pool;
 
     public PooledConnectionInvocationHandler(T connection, RedisConnectionPool<T> pool) {
         this.connection = connection;
         this.pool = pool;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 

@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 /**
  * Synchronous executed commands for HyperLogLog (PF* commands).
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:14
  */

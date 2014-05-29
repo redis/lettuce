@@ -1,8 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
@@ -26,8 +25,9 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandHandler;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection
@@ -39,7 +39,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
-    private RedisCodec<String, String> codec = new Utf8StringCodec();
+    private final RedisCodec<String, String> codec = new Utf8StringCodec();
     private Partitions partitions;
 
     private List<RedisURI> initialUris = Lists.newArrayList();
@@ -75,7 +75,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public RedisClusterConnection<String, String> connectCluster() {
 
-        return connectCluster((RedisCodec) codec);
+        return connectCluster(codec);
     }
 
     /**
@@ -85,6 +85,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param codec Use this codec to encode/decode keys and values.
      * @return A new connection.
      */
+    @SuppressWarnings("unchecked")
     public <K, V> RedisClusterConnection<K, V> connectCluster(RedisCodec<K, V> codec) {
 
         FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connectClusterAsyncImpl(codec));
@@ -98,7 +99,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection.
      */
     public RedisClusterAsyncConnection<String, String> connectClusterAsync() {
-        return connectClusterAsyncImpl((RedisCodec) codec, getSocketAddressSupplier());
+        return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
     }
 
     /**
@@ -206,7 +207,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Reload partitions and re-initialize the distribution table.
      */
     public void reloadPartitions() {
-        if (this.partitions == null) {
+        if (partitions == null) {
             initializePartitions();
         } else {
             Partitions partitions = getPartitions();
@@ -247,10 +248,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (clusterNodes == null) {
             if (lastException == null) {
                 throw new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + initialUris);
-            } else {
-                throw new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + initialUris,
-                        lastException);
             }
+
+            throw new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + initialUris,
+                    lastException);
         }
 
         Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
@@ -260,7 +261,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 partition.setUri(nodeUri);
             }
 
-            if (nodeUri.getPassword() != null) {
+            if (nodeUri != null && nodeUri.getPassword() != null) {
                 partition.getUri().setPassword(new String(nodeUri.getPassword()));
             }
         }
@@ -269,7 +270,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     protected RedisURI getFirstUri() {
         checkState(!initialUris.isEmpty(), "initialUris must not be empty");
-        return this.initialUris.get(0);
+        return initialUris.get(0);
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier() {

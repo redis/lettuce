@@ -9,6 +9,8 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 /**
  * Asynchronous executed commands for Keys (Key manipulation/querying).
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:10
  */

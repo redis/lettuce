@@ -2,14 +2,16 @@
 
 package com.lambdaworks.redis.output;
 
+import java.nio.ByteBuffer;
+
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
-import java.nio.ByteBuffer;
-
 /**
  * Byte array output.
- *
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class ByteArrayOutput<K, V> extends CommandOutput<K, V, byte[]> {

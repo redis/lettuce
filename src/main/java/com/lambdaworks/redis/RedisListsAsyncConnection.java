@@ -1,12 +1,14 @@
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-
 import java.util.List;
+
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Lists.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:14
  */

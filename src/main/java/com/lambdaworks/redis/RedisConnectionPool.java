@@ -11,12 +11,15 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
+ * Connection pool for redis connections.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @param <T> Connection type.
  * @since 14.05.14 21:58
  */
 public class RedisConnectionPool<T> implements Closeable {
 
-    private RedisConnectionProvider<T> redisConnectionProvider;
+    private final RedisConnectionProvider<T> redisConnectionProvider;
     private GenericObjectPool<T> objectPool;
     private CloseEvents closeEvents = new CloseEvents();
 
@@ -102,7 +105,7 @@ public class RedisConnectionPool<T> implements Closeable {
      * 
      * @return the number of idle connections
      */
-    public int getNumIdle() throws UnsupportedOperationException {
+    public int getNumIdle() {
         return objectPool.getNumIdle();
     }
 
@@ -110,13 +113,14 @@ public class RedisConnectionPool<T> implements Closeable {
      * 
      * @return the number of active connections.
      */
-    public int getNumActive() throws UnsupportedOperationException {
+    public int getNumActive() {
         return objectPool.getNumActive();
     }
 
     /**
      * Close the pool and close all idle connections. Active connections won't be closed.
      */
+    @Override
     public void close() {
         objectPool.close();
         objectPool = null;

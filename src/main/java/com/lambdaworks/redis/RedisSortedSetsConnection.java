@@ -8,6 +8,8 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 /**
  * Synchronous executed commands for Sorted Sets.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 17.05.14 21:18
  */
@@ -18,9 +20,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * 
      * @param key
      * @param scoresAndValues tuples with (double) score, (V) value
-     * @return
+     * @return Long
      */
-    @SuppressWarnings("unchecked")
     Long zadd(K key, Object... scoresAndValues);
 
     Long zcard(K key);

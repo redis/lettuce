@@ -2,14 +2,16 @@
 
 package com.lambdaworks.redis.output;
 
+import java.util.Date;
+
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
-import java.util.Date;
-
 /**
  * Date output with no milliseconds.
- *
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class DateOutput<K, V> extends CommandOutput<K, V, Date> {

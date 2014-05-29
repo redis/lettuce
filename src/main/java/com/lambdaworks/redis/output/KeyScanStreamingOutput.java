@@ -2,7 +2,6 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 
-import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.codec.RedisCodec;
 
@@ -10,11 +9,13 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * Streaming API for multiple Keys. You can implement this interface in order to receive a call to <code>onKey</code> on every
  * key. Key uniqueness is not guaranteed.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class KeyScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 
-    private KeyStreamingChannel<K> channel;
+    private final KeyStreamingChannel<K> channel;
 
     public KeyScanStreamingOutput(RedisCodec<K, V> codec, KeyStreamingChannel<K> channel) {
         super(codec, new StreamScanCursor());

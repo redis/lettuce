@@ -8,11 +8,12 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Streaming-Output of Values. Returns the count of all values (including null).
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @param <K> Key type.
  * @param <V> Value type.
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
-    private ValueStreamingChannel<V> channel;
+    private final ValueStreamingChannel<V> channel;
 
     public ValueStreamingOutput(RedisCodec<K, V> codec, ValueStreamingChannel<V> channel) {
         super(codec, Long.valueOf(0));

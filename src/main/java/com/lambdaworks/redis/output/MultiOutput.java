@@ -2,21 +2,26 @@
 
 package com.lambdaworks.redis.output;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
 /**
  * Output of all commands within a MULTI block.
- *
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private Queue<Command<K, V, ?>> queue;
+    private final Queue<Command<K, V, ?>> queue;
 
     public MultiOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<Object>());

@@ -9,12 +9,14 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * Streaming-Output of of values and their associated scores. Returns the count of all values (including null).
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 
     private V value;
-    private ScoredValueStreamingChannel<V> channel;
+    private final ScoredValueStreamingChannel<V> channel;
 
     public ScoredValueScanStreamingOutput(RedisCodec<K, V> codec, ScoredValueStreamingChannel<V> channel) {
         super(codec, new StreamScanCursor());

@@ -10,6 +10,9 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Cursor handling output.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @param <T> Cursor type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public abstract class ScanOutput<K, V, T extends ScanCursor> extends CommandOutput<K, V, T> {

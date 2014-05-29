@@ -8,12 +8,16 @@ import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
+ * Streaming adapter which stores every key or/and value in a list. This adapter can be used in KeyStreamingChannels and
+ * ValueStreamingChannels.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @param <T> Valu-Type.
  * @since 17.05.14 17:21
  */
 public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T>,
         ScoredValueStreamingChannel<T> {
-    private List<T> list = new ArrayList<T>();
+    private final List<T> list = new ArrayList<T>();
 
     @Override
     public void onKey(T key) {

@@ -2,11 +2,6 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
-
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,6 +15,11 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
+import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
+
 /**
  * An asynchronous thread-safe pub/sub connection to a redis server. After one or more channels are subscribed to only pub/sub
  * related commands or {@link #quit} may be called.
@@ -30,16 +30,19 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * A {@link com.lambdaworks.redis.protocol.ConnectionWatchdog} monitors each connection and reconnects automatically until
  * {@link #close} is called. Channel and pattern subscriptions are renewed after reconnecting.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K, V> implements RedisPubSubConnection<K, V> {
-    private List<RedisPubSubListener<K, V>> listeners;
-    private Set<K> channels;
-    private Set<K> patterns;
+    private final List<RedisPubSubListener<K, V>> listeners;
+    private final Set<K> channels;
+    private final Set<K> patterns;
 
     /**
      * Initialize a new connection.
      * 
+     * @param writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a responses.
      * @param unit Unit of time for the timeout.
@@ -69,18 +72,22 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
         listeners.remove(listener);
     }
 
+    @Override
     public void psubscribe(K... patterns) {
         dispatch(PSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
     }
 
+    @Override
     public void punsubscribe(K... patterns) {
         dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
     }
 
+    @Override
     public void subscribe(K... channels) {
         dispatch(SUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
     }
 
+    @Override
     public void unsubscribe(K... channels) {
         dispatch(UNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
     }

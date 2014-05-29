@@ -1,12 +1,5 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.Command;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
@@ -14,14 +7,24 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.protocol.Command;
+
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:27
  */
 public class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
         RedisSentinelAsyncConnection<K, V> {
 
-    private SentinelCommandBuilder<K, V> commandBuilder;
+    private final SentinelCommandBuilder<K, V> commandBuilder;
 
     public RedisSentinelAsyncConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(writer, timeout, unit);

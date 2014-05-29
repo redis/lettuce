@@ -2,21 +2,22 @@
 
 package com.lambdaworks.redis.pubsub;
 
+import java.nio.ByteBuffer;
+
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
-import java.nio.ByteBuffer;
-
 /**
- * One element of the redis pub/sub stream. May be a message or notification
- * of subscription details.
- *
- * @param <V> Value type.
- *
+ * One element of the redis pub/sub stream. May be a message or notification of subscription details.
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type. *
  * @author Will Glozer
  */
 public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
-    enum Type { message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe }
+    enum Type {
+        message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe
+    }
 
     private Type type;
     private K channel;

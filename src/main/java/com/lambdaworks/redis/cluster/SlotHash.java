@@ -22,7 +22,7 @@ public class SlotHash {
      * Calculate the slot from the given key.
      * 
      * @param key
-     * @return
+     * @return slot
      */
     public final static int getSlot(String key) {
         return getSlot(key.getBytes());

@@ -1,5 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
@@ -10,7 +13,6 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
-import com.google.common.base.Supplier;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
@@ -18,26 +20,22 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-
 /**
  * Connection provider with built-in pooling
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:54
  */
 public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
     private KeyedObjectPool<PoolKey, RedisAsyncConnection<K, V>> partitionPool;
-    private Partitions partitions;
-    private RedisClusterClient redisClusterClient;
-    private RedisCodec<K, V> redisCodec;
+    private final Partitions partitions;
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, Partitions partitions,
             RedisCodec<K, V> redisCodec) {
         this.partitions = partitions;
-        this.redisClusterClient = redisClusterClient;
 
         GenericKeyedObjectPoolConfig config = new GenericKeyedObjectPoolConfig();
         config.setMaxIdlePerKey(1);
@@ -78,8 +76,8 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     private static class KeyedConnectionFactory<K, V> extends BaseKeyedPooledObjectFactory<PoolKey, RedisAsyncConnection<K, V>> {
-        private RedisClusterClient redisClusterClient;
-        private RedisCodec<K, V> redisCodec;
+        private final RedisClusterClient redisClusterClient;
+        private final RedisCodec<K, V> redisCodec;
 
         private KeyedConnectionFactory(RedisClusterClient redisClusterClient, RedisCodec<K, V> redisCodec) {
             this.redisClusterClient = redisClusterClient;
@@ -118,10 +116,10 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     private static class PoolKey {
-        private ClusterConnectionProvider.Intent intent;
+        private final ClusterConnectionProvider.Intent intent;
         private SocketAddress socketAddress;
-        private String host;
-        private int port;
+        private final String host;
+        private final int port;
 
         private PoolKey(ClusterConnectionProvider.Intent intent, RedisURI uri) {
             this.intent = intent;

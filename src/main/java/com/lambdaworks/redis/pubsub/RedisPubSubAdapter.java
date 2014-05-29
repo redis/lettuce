@@ -3,11 +3,11 @@
 package com.lambdaworks.redis.pubsub;
 
 /**
- * Convenience adapter with an empty implementation of all
- * {@link RedisPubSubListener} callback methods.
- *
+ * Convenience adapter with an empty implementation of all {@link RedisPubSubListener} callback methods.
+ * 
+ * @param <K> Key type.
  * @param <V> Value type.
- *
+ * 
  * @author Will Glozer
  */
 public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {

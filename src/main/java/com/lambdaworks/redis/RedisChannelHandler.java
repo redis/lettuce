@@ -1,7 +1,5 @@
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.internal.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.Command;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.internal.logging.InternalLogger;
@@ -9,11 +7,18 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.protocol.Command;
+
 /**
+ * Abstract base for every redis connection. Provides basic connection functionality and tracks open resources.
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:09
  */
-public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
+public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
@@ -22,7 +27,7 @@ public class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
 
     private CloseEvents closeEvents = new CloseEvents();
     private boolean closed;
-    private RedisChannelWriter<K, V> channelWriter;
+    private final RedisChannelWriter<K, V> channelWriter;
     private boolean active = true;
 
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {

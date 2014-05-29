@@ -8,6 +8,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * {@link com.lambdaworks.redis.MapScanCursor} for scan cursor output.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class MapScanOutput<K, V> extends ScanOutput<K, V, MapScanCursor<K, V>> {

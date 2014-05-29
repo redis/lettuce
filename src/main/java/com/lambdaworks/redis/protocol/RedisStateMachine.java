@@ -2,19 +2,27 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisException;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
+import com.lambdaworks.redis.RedisException;
+
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BULK;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BYTES;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.ERROR;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.INTEGER;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.MULTI;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE;
 
 /**
  * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
  * Request Protocol</a>.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class RedisStateMachine<K, V> {
@@ -29,7 +37,7 @@ public class RedisStateMachine<K, V> {
         int count = -1;
     }
 
-    private LinkedList<State> stack;
+    private final LinkedList<State> stack;
 
     /**
      * Initialize a new instance.
@@ -64,33 +72,38 @@ public class RedisStateMachine<K, V> {
             State state = stack.peek();
 
             if (state.type == null) {
-                if (!buffer.isReadable())
+                if (!buffer.isReadable()) {
                     break;
+                }
                 state.type = readReplyType(buffer);
                 buffer.markReaderIndex();
             }
 
             switch (state.type) {
                 case SINGLE:
-                    if ((bytes = readLine(buffer)) == null)
+                    if ((bytes = readLine(buffer)) == null) {
                         break loop;
+                    }
                     if (!QUEUED.equals(bytes)) {
                         output.set(bytes);
                     }
                     break;
                 case ERROR:
-                    if ((bytes = readLine(buffer)) == null)
+                    if ((bytes = readLine(buffer)) == null) {
                         break loop;
+                    }
                     output.setError(bytes);
                     break;
                 case INTEGER:
-                    if ((end = findLineEnd(buffer)) == -1)
+                    if ((end = findLineEnd(buffer)) == -1) {
                         break loop;
+                    }
                     output.set(readLong(buffer, buffer.readerIndex(), end));
                     break;
                 case BULK:
-                    if ((end = findLineEnd(buffer)) == -1)
+                    if ((end = findLineEnd(buffer)) == -1) {
                         break loop;
+                    }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
                     if (length == -1) {
                         output.set(null);
@@ -103,22 +116,25 @@ public class RedisStateMachine<K, V> {
                     break;
                 case MULTI:
                     if (state.count == -1) {
-                        if ((end = findLineEnd(buffer)) == -1)
+                        if ((end = findLineEnd(buffer)) == -1) {
                             break loop;
+                        }
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
                         state.count = length;
                         buffer.markReaderIndex();
                     }
 
-                    if (state.count <= 0)
+                    if (state.count <= 0) {
                         break;
+                    }
 
                     state.count--;
                     stack.addFirst(new State());
                     continue loop;
                 case BYTES:
-                    if ((bytes = readBytes(buffer, state.count)) == null)
+                    if ((bytes = readBytes(buffer, state.count)) == null) {
                         break loop;
+                    }
                     output.set(bytes);
             }
 
@@ -162,8 +178,9 @@ public class RedisStateMachine<K, V> {
             int digit = buffer.getByte(offset++) - '0';
             value = value * 10 - digit;
         }
-        if (!negative)
+        if (!negative) {
             value = -value;
+        }
         buffer.readerIndex(end + 1);
 
         return value;

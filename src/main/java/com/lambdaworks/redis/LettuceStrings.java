@@ -9,6 +9,9 @@ public class LettuceStrings {
      * <p>
      * Checks if a CharSequence is empty ("") or null.
      * </p>
+     * 
+     * @param cs the char sequence
+     * @return true if empty
      */
     public static boolean isEmpty(final CharSequence cs) {
         return cs == null || cs.length() == 0;
@@ -18,6 +21,9 @@ public class LettuceStrings {
      * <p>
      * Checks if a CharSequence is not empty ("") and not null.
      * </p>
+     * 
+     * @param cs the char sequence
+     * @return true if not empty
      * 
      */
     public static boolean isNotEmpty(final CharSequence cs) {

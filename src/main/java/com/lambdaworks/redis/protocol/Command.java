@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
+import io.netty.buffer.ByteBuf;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -9,11 +11,12 @@ import java.util.concurrent.TimeoutException;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
-import io.netty.buffer.ByteBuf;
 
 /**
  * A redis command and its result. All successfully executed commands will eventually return a {@link CommandOutput} object.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @param <T> Command output type.
  * 
  * @author Will Glozer

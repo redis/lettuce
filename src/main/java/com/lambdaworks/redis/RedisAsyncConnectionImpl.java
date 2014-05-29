@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import io.netty.channel.ChannelHandler;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,7 +26,8 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.SetArgs;
-import io.netty.channel.ChannelHandler;
+
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
@@ -35,6 +36,8 @@ import io.netty.channel.ChannelHandler;
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 @ChannelHandler.Sharable
@@ -50,6 +53,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     /**
      * Initialize a new connection.
      * 
+     * @param writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.
@@ -70,8 +74,9 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     public String auth(String password) {
         Command<K, V, String> cmd = dispatch(commandBuilder.auth(password));
         String status = LettuceFutures.await(cmd, timeout, unit);
-        if ("OK".equals(status))
+        if ("OK".equals(status)) {
             this.password = password.toCharArray();
+        }
         return status;
     }
 
@@ -278,8 +283,9 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     public RedisFuture<List<Object>> exec() {
         MultiOutput<K, V> multi = this.multi;
         this.multi = null;
-        if (multi == null)
+        if (multi == null) {
             multi = new MultiOutput<K, V>(codec);
+        }
         return dispatch(EXEC, multi);
     }
 
@@ -680,8 +686,9 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     public String select(int db) {
         Command<K, V, String> cmd = dispatch(commandBuilder.select(db));
         String status = LettuceFutures.await(cmd, timeout, unit);
-        if ("OK".equals(status))
+        if ("OK".equals(status)) {
             this.db = db;
+        }
         return status;
     }
 
@@ -1473,6 +1480,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(cmd);
     }
 
+    @Override
     public synchronized <T> Command<K, V, T> dispatch(Command<K, V, T> cmd) {
 
         if (multi != null) {

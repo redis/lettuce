@@ -8,6 +8,8 @@ import java.util.concurrent.Future;
 /**
  * Asynchronous executed commands for Sentinel.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 21:04
  */
@@ -30,5 +32,6 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
 
     Future<String> ping();
 
+    @Override
     void close();
 }

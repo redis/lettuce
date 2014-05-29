@@ -9,6 +9,8 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 /**
  * Channel writer for cluster operation. This writer looks up the right partition by hash/slot for the operation.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:46
  */
@@ -36,7 +38,7 @@ public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWrite
 
             RedisChannelWriter<K, V> channelWriter = connection.getChannelWriter();
             if (channelWriter instanceof ClusterDistributionChannelWriter) {
-                ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) channelWriter;
+                ClusterDistributionChannelWriter<K, V> writer = (ClusterDistributionChannelWriter<K, V>) channelWriter;
                 channelWriter = writer.defaultWriter;
             }
 

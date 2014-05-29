@@ -2,18 +2,19 @@
 
 package com.lambdaworks.redis.output;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.CommandOutput;
+
 /**
  * {@link List} of keys output.
- *
+ * 
  * @param <K> Key type.
- *
+ * @param <V> Value type.
+ * 
  * @author Will Glozer
  */
 public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> {

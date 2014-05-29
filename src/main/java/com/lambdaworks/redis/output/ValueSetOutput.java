@@ -2,18 +2,19 @@
 
 package com.lambdaworks.redis.output;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
-
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.CommandOutput;
+
 /**
  * {@link Set} of value output.
- *
+ * 
+ * @param <K> Key type.
  * @param <V> Value type.
- *
+ * 
  * @author Will Glozer
  */
 public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {

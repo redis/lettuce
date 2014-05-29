@@ -17,7 +17,7 @@ import com.lambdaworks.redis.RedisException;
 public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHandler {
 
     private RedisConnectionPool<T> pool;
-    private Map<Method, Method> methodCache = new ConcurrentHashMap<Method, Method>();
+    private final Map<Method, Method> methodCache = new ConcurrentHashMap<Method, Method>();
 
     /**
      * 
@@ -28,7 +28,6 @@ public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHa
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         Method targetMethod = getMethod(method);
@@ -59,7 +58,6 @@ public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHa
      * @return the target method
      * @throws NoSuchMethodException
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private Method getMethod(Method method) throws NoSuchMethodException {
         Method targetMethod = methodCache.get(method);
         if (targetMethod == null) {

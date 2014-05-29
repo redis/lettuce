@@ -46,7 +46,7 @@ class BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings("unchecked")
-    protected <K, V, T> CommandOutput<K, V, T> newScriptOutput(RedisCodec<K, V> codec, ScriptOutputType type) {
+    protected <T> CommandOutput<K, V, T> newScriptOutput(RedisCodec<K, V> codec, ScriptOutputType type) {
         switch (type) {
             case BOOLEAN:
                 return (CommandOutput<K, V, T>) new BooleanOutput<K, V>(codec);

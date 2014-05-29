@@ -9,6 +9,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * {@link com.lambdaworks.redis.ScoredValueScanCursor} for scan cursor output.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueScanCursor<V>> {

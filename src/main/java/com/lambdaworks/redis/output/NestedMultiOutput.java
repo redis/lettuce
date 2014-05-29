@@ -2,20 +2,24 @@
 
 package com.lambdaworks.redis.output;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
 /**
  * {@link List} of command outputs, possibly deeply nested.
- *
+ * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Will Glozer
  */
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private LinkedList<List<Object>> stack;
+    private final LinkedList<List<Object>> stack;
     private int depth;
 
     public NestedMultiOutput(RedisCodec<K, V> codec) {

@@ -8,6 +8,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * {@link com.lambdaworks.redis.KeyScanCursor} for scan cursor output.
  * 
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class KeyScanOutput<K, V> extends ScanOutput<K, V, KeyScanCursor<K>> {
