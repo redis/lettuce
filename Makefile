@@ -226,7 +226,7 @@ stop:
 test:
 	make start
 	sleep 2
-	mvn -skipTests=false clean compile test
+	mvn -DskipTests=false clean compile test
 	make stop
 
 travis-install:
