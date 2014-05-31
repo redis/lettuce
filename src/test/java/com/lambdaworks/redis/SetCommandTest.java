@@ -189,7 +189,6 @@ public class SetCommandTest extends AbstractCommandTest {
         assertNotEquals("0", cursor.getCursor());
         assertFalse(cursor.isFinished());
 
-        assertEquals(5, cursor.getValues().size());
         check.addAll(cursor.getValues());
 
         while (!cursor.isFinished()) {
