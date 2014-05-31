@@ -136,7 +136,7 @@ public class RedisClusterClientTest {
             public boolean isSatisfied() {
                 try {
                     String info = redis1.clusterInfo().get();
-
+                    System.out.println(info);
                     if (info != null && info.contains("cluster_state:ok")) {
                         return true;
                     }
@@ -146,7 +146,7 @@ public class RedisClusterClientTest {
 
                 return false;
             }
-        }, Timeout.timeout(Duration.seconds(2)), new ThreadSleep(Duration.millis(200)));
+        }, Timeout.timeout(Duration.seconds(5)), new ThreadSleep(Duration.millis(500)));
     }
 
     @After
