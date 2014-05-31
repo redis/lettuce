@@ -45,7 +45,7 @@ public abstract class AbstractRedisClient {
 
     public AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        group = new NioEventLoopGroup(20);
+        group = new NioEventLoopGroup();
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
     }

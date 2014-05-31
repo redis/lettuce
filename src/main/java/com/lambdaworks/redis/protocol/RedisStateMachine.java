@@ -2,13 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import io.netty.buffer.ByteBuf;
-
-import java.nio.ByteBuffer;
-import java.util.LinkedList;
-
-import com.lambdaworks.redis.RedisException;
-
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BULK;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BYTES;
@@ -16,6 +9,15 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.ERROR;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.INTEGER;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.MULTI;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE;
+
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+
+import com.lambdaworks.redis.RedisException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
@@ -26,6 +28,7 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE
  * @author Will Glozer
  */
 public class RedisStateMachine<K, V> {
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
     private static final ByteBuffer QUEUED = buffer("QUEUED");
 
     static class State {
@@ -46,6 +49,10 @@ public class RedisStateMachine<K, V> {
         stack = new LinkedList<State>();
     }
 
+    public boolean decode(ByteBuf buffer, CommandOutput<K, V, ?> output) {
+        return decode(buffer, null, output);
+    }
+
     /**
      * Attempt to decode a redis response and return a flag indicating whether a complete response was read.
      * 
@@ -54,9 +61,13 @@ public class RedisStateMachine<K, V> {
      * 
      * @return true if a complete response was read.
      */
-    public boolean decode(ByteBuf buffer, CommandOutput<K, V, ?> output) {
+    public boolean decode(ByteBuf buffer, RedisCommand command, CommandOutput<K, V, ?> output) {
         int length, end;
         ByteBuffer bytes;
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Decode " + command);
+        }
 
         if (stack.isEmpty()) {
             stack.add(new State());
@@ -65,6 +76,7 @@ public class RedisStateMachine<K, V> {
         if (output == null) {
             return stack.isEmpty();
         }
+        int start = buffer.readerIndex();
 
         loop:
 
@@ -141,6 +153,11 @@ public class RedisStateMachine<K, V> {
             buffer.markReaderIndex();
             stack.remove();
             output.complete(stack.size());
+
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Decoded " + command + ", empty stack: " + stack.isEmpty());
         }
 
         return stack.isEmpty();
@@ -193,6 +210,7 @@ public class RedisStateMachine<K, V> {
             int start = buffer.readerIndex();
             bytes = buffer.nioBuffer(start, end - start - 1);
             buffer.readerIndex(end + 1);
+            buffer.markReaderIndex();
         }
         return bytes;
     }

@@ -27,7 +27,7 @@ public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWrite
 
     private RedisChannelWriter<K, V> defaultWriter;
     private ClusterConnectionProvider clusterConnectionProvider;
-    private boolean closed = true;
+    private boolean closed = false;
     private int executionLimit = 5;
 
     public ClusterDistributionChannelWriter(RedisChannelWriter<K, V> defaultWriter,

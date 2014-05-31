@@ -8,9 +8,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +15,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class KeyCommandTest extends AbstractCommandTest {
     @Rule
@@ -295,7 +296,6 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertNotEquals("0", cursor.getCursor());
         assertFalse(cursor.isFinished());
 
-        assertEquals(12, cursor.getKeys().size());
         check.addAll(cursor.getKeys());
 
         while (!cursor.isFinished()) {
@@ -304,6 +304,7 @@ public class KeyCommandTest extends AbstractCommandTest {
         }
 
         assertEquals(expect, check);
+        assertEquals(100, check.size());
     }
 
     @Test

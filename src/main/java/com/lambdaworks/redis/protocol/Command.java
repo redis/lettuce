@@ -227,4 +227,15 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     public CommandArgs<K, V> getArgs() {
         return args;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [type=").append(type);
+        sb.append(", output=").append(output);
+        sb.append(']');
+        return sb.toString();
+    }
+
 }

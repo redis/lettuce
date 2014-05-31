@@ -2,11 +2,13 @@
 
 package com.lambdaworks.redis.codec;
 
+import static java.nio.charset.CoderResult.OVERFLOW;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 
-import static java.nio.charset.CoderResult.OVERFLOW;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
@@ -49,16 +51,18 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
     }
 
     private String decode(ByteBuffer bytes) {
-        chars.clear();
-        bytes.mark();
+        synchronized (chars) {
+            chars.clear();
+            bytes.mark();
 
-        decoder.reset();
-        while (decoder.decode(bytes, chars, true) == OVERFLOW || decoder.flush(chars) == OVERFLOW) {
-            chars = CharBuffer.allocate(chars.capacity() * 2);
-            bytes.reset();
+            decoder.reset();
+            while (decoder.decode(bytes, chars, true) == OVERFLOW || decoder.flush(chars) == OVERFLOW) {
+                chars = CharBuffer.allocate(chars.capacity() * 2);
+                bytes.reset();
+            }
+
+            return chars.flip().toString();
         }
-
-        return chars.flip().toString();
     }
 
     private byte[] encode(String string) {

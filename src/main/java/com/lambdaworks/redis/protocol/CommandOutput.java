@@ -112,4 +112,14 @@ public abstract class CommandOutput<K, V, T> {
         }
         return new String(chars);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [output=").append(output);
+        sb.append(", error='").append(error).append('\'');
+        sb.append(']');
+        return sb.toString();
+    }
 }
