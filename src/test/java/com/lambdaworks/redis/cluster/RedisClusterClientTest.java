@@ -8,7 +8,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
@@ -17,8 +16,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.Duration;
+import com.google.code.tempusfugit.temporal.ThreadSleep;
+import com.google.code.tempusfugit.temporal.Timeout;
+import com.google.code.tempusfugit.temporal.WaitFor;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisClient;
@@ -120,9 +126,25 @@ public class RedisClusterClientTest {
             cleanup();
             addSlots();
 
-            Thread.sleep(500);
             setup = true;
         }
+
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                try {
+                    String info = redis1.clusterInfo().get();
+
+                    if (info != null && info.contains("cluster_state:ok")) {
+                        return true;
+                    }
+                } catch (Exception e) {
+
+                }
+
+                return false;
+            }
+        }, Timeout.timeout(Duration.seconds(2)), new ThreadSleep(Duration.millis(200)));
     }
 
     @After
@@ -176,13 +198,9 @@ public class RedisClusterClientTest {
     @Test
     public void testClusterInfo() throws Exception {
 
-        RedisFuture<List<String>> future = redis1.clusterInfo();
+        RedisFuture<String> future = redis1.clusterInfo();
 
-        List<String> list = future.get();
-
-        Collections.sort(list);
-
-        String status = list.get(0);
+        String status = future.get();
 
         assertThat(status, containsString("cluster_known_nodes:"));
         assertThat(status, containsString("cluster_slots_fail:0"));
@@ -206,17 +224,20 @@ public class RedisClusterClientTest {
 
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
 
-        String masterId = null;
-        for (RedisClusterNode partition : partitions) {
-            if (!partition.getSlots().isEmpty()) {
-                masterId = partition.getNodeId();
-                RedisFuture<String> result = redis4.clusterReplicate(masterId);
-                break;
+        RedisClusterNode node1 = Iterables.find(partitions, new Predicate<RedisClusterNode>() {
+            @Override
+            public boolean apply(RedisClusterNode input) {
+                return input.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF);
             }
-        }
+        });
 
-        RedisFuture<List<String>> future = redis1.clusterSlaves(masterId);
+        RedisFuture<String> replicate = redis4.clusterReplicate(node1.getNodeId());
+        replicate.get();
+        assertNull(replicate.getError());
+        assertEquals("OK", replicate.get());
 
+        RedisFuture<List<String>> future = redis1.clusterSlaves(node1.getNodeId());
+        Thread.sleep(500);
         List<String> result = future.get();
 
         assertEquals(1, result.size());
@@ -233,8 +254,9 @@ public class RedisClusterClientTest {
         assertEquals("OK", redis3.set("a", "value").get());
 
         RedisFuture<String> resultMoved = redis1.set("a", "value");
-        assertEquals(null, resultMoved.get());
+        resultMoved.get();
         assertThat(resultMoved.getError(), containsString("MOVED 15495"));
+        assertEquals(null, resultMoved.get());
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 

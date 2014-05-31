@@ -51,6 +51,9 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
         logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
+        if (partition == null) {
+            throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
+        }
 
         try {
             PoolKey key = new PoolKey(intent, partition.getUri());

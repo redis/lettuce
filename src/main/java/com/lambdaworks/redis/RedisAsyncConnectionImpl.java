@@ -1412,7 +1412,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<List<String>> clusterInfo() {
+    public RedisFuture<String> clusterInfo() {
         return dispatch(commandBuilder.clusterInfo());
     }
 

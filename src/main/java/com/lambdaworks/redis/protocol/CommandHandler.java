@@ -2,15 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +11,15 @@ import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -209,7 +209,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 watchdog.setReconnect(false);
             }
             closed = true;
-            channel.close();
+            try {
+                channel.close().sync();
+            } catch (InterruptedException e) {
+                throw new RedisException(e);
+            }
 
             channel = null;
         }

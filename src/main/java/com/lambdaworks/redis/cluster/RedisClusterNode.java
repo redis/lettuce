@@ -125,6 +125,23 @@ public class RedisClusterNode {
         return result;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [uri=").append(uri);
+        sb.append(", nodeId='").append(nodeId).append('\'');
+        sb.append(", connected=").append(connected);
+        sb.append(", slaveOf='").append(slaveOf).append('\'');
+        sb.append(", pingSentTimestamp=").append(pingSentTimestamp);
+        sb.append(", pongReceivedTimestamp=").append(pongReceivedTimestamp);
+        sb.append(", configEpoch=").append(configEpoch);
+        sb.append(", flags=").append(flags);
+        sb.append(", slot count=").append(slots.size());
+        sb.append(']');
+        return sb.toString();
+    }
+
     public enum NodeFlag {
         NOFLAGS, MYSELF, SLAVE, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }

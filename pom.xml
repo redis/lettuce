@@ -92,6 +92,14 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.code.tempus-fugit</groupId>
+            <artifactId>tempus-fugit</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -145,6 +153,7 @@
                     <useFile>false</useFile>
                 </configuration>
             </plugin>
+
 
             <!-- Prepared shaded Jar. Should be within an own project in order to provide two distributions:
             lettuce with dependencies to apache commons pool guava and netty (ca. 180KB JAR)

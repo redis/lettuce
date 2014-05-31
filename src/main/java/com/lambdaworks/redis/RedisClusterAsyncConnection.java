@@ -23,7 +23,7 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     RedisFuture<String> clusterDelSlots(int... slots);
 
-    RedisFuture<List<String>> clusterInfo();
+    RedisFuture<String> clusterInfo();
 
     RedisFuture<String> clusterNodes();
 

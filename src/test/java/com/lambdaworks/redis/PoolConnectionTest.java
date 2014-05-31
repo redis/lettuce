@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.concurrent.TimeUnit;
@@ -42,10 +43,12 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
+        assertEquals(1, pool.getNumActive());
         c1.close();
+        assertEquals(0, pool.getNumActive());
 
         RedisConnection<String, String> c2 = pool.allocateConnection();
-        assertSame(c1, c2);
+        assertEquals(1, pool.getNumActive());
     }
 
     @Test(expected = UnsupportedOperationException.class)

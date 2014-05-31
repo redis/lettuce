@@ -1323,10 +1323,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<String>> clusterInfo() {
+    public Command<K, V, String> clusterInfo() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(INFO);
 
-        return createCommand(CLUSTER, new StringListOutput<K, V>(codec), args);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterNodes() {
