@@ -171,7 +171,11 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     public void complete() {
         latch.countDown();
         if (latch.getCount() == 0) {
-            set(output.get());
+            if (output == null) {
+                set(null);
+            } else {
+                set(output.get());
+            }
         }
     }
 

@@ -75,7 +75,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf input = (ByteBuf) msg;
         try {
-            if (!input.isReadable()) {
+            if (!input.isReadable() || input.refCnt() == 0) {
                 return;
             }
 

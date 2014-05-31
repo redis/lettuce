@@ -22,7 +22,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 public class SentinelCommandTest extends AbstractCommandTest {
 
     private static RedisClient sentinelClient;
-    private RedisSentinelAsyncConnection sentinel;
+    private RedisSentinelAsyncConnection<String, String> sentinel;
 
     @BeforeClass
     public static void setupClient() {
@@ -68,18 +68,17 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaveDownstate() throws Exception {
 
-        Future<Map> result = sentinel.master("myslave");
-        Map map = result.get();
-        assertThat((String) map.get("flags"), containsString("disconnected"));
+        Future<Map<String, String>> result = sentinel.master("myslave");
+        Map<String, String> map = result.get();
+        assertThat(map.get("flags"), containsString("disconnected"));
 
     }
 
     @Test
     public void getMaster() throws Exception {
 
-        Future<Map> result = sentinel.master("mymaster");
-        Map map = result.get();
-        System.out.println(map);
+        Future<Map<String, String>> result = sentinel.master("mymaster");
+        Map<String, String> map = result.get();
         assertEquals("127.0.0.1", map.get("ip")); // !! IPv4/IPv6
         assertEquals("master", map.get("role-reported"));
 
@@ -88,8 +87,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaves() throws Exception {
 
-        Future<Map> result = sentinel.slaves("mymaster");
-        Map map = result.get();
+        Future<Map<String, String>> result = sentinel.slaves("mymaster");
+        Map<String, String> map = result.get();
 
     }
 
