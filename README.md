@@ -20,11 +20,7 @@ Currently following commands are __not yet__ supported:
 * Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
 * Server Commands: DEBUG SEGFAULT, MONITOR, PUBSUB
 
-
-Join the lambdaWorks-OSS Google Group to discuss this project:
-
-    http://groups.google.com/group/lambdaworks-oss
-    lambdaworks-oss@googlegroups.com
+I'm pursuing the client code as a fork since the latest changes weren't back-merged into https://github/wg/lettuce
     
 Maven Artifacts
 ----------------
@@ -33,11 +29,13 @@ Releases of lettuce are available in the maven central repository.
 
 ```xml
 <dependency>
-  <groupId>com.lambdaworks</groupId>
+  <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>2.3.3</version>
+  <version>3.0-SNAPSHOT</version>
 </dependency>
 ```    
+
+Or snapshots at https://oss.sonatype.org/content/repositories/snapshots/
 
 Basic Usage
 -----------
