@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -81,6 +82,8 @@ public class RedisClusterClientTest {
             connection.clusterMeet(host, port3);
             connection.clusterMeet(host, port4);
         }
+
+        connection.close();
 
         slots1 = createSlots(0, 8000);
         slots2 = createSlots(8000, 12000);
@@ -217,6 +220,7 @@ public class RedisClusterClientTest {
     }
 
     @Test
+    @Ignore
     public void clusterSlaves() throws Exception {
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
 
