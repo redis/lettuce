@@ -1,14 +1,14 @@
 package com.lambdaworks.redis;
 
+import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.protocol.RedisCommand;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.internal.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.Command;
 
 /**
  * Abstract base for every redis connection. Provides basic connection functionality and tracks open resources.
@@ -79,10 +79,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     }
 
-    public synchronized <T> Command<K, V, T> dispatch(Command<K, V, T> cmd) {
+    public synchronized <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
 
-        channelWriter.write(cmd);
-        return cmd;
+        return channelWriter.write(cmd);
     }
 
     public void addListener(CloseEvents.CloseListener listener) {

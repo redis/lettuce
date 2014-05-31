@@ -26,6 +26,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
@@ -149,11 +150,6 @@ public class RedisClusterClientTest {
 
     @After
     public void after() throws Exception {
-        redis1.flushall();
-        redis2.flushall();
-        redis3.flushall();
-        redis4.flushall();
-
         redis1.close();
         redis2.close();
         redis3.close();
@@ -271,6 +267,51 @@ public class RedisClusterClientTest {
 
         RedisFuture<String> setD = connection.set("d", "myValue2");
         assertEquals("OK", setB.get());
+
+    }
+
+    @Test
+    public void testClusterRedirection() throws Exception {
+
+        int slot1 = SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
+        int slot2 = SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
+
+        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+        Partitions partitions = clusterClient.getPartitions();
+
+        for (RedisClusterNode partition : partitions) {
+            partition.getSlots().clear();
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                partition.getSlots().addAll(Ints.asList(slots1));
+                partition.getSlots().addAll(Ints.asList(slots2));
+                partition.getSlots().addAll(Ints.asList(slots3));
+            }
+        }
+
+        // appropriate cluster node
+        RedisFuture<String> setB = connection.set("b", "myValue1");
+
+        assertTrue(setB instanceof ClusterCommand);
+
+        ClusterCommand clusterCommandB = (ClusterCommand) setB;
+        setB.get();
+        assertNull(setB.getError());
+        assertEquals(1, clusterCommandB.getExecutions());
+        assertEquals("OK", setB.get());
+        assertFalse(clusterCommandB.isMoved());
+
+        // gets redirection to node 3
+        RedisFuture<String> setA = connection.set("a", "myValue1");
+
+        assertTrue(setA instanceof ClusterCommand);
+
+        ClusterCommand clusterCommandA = (ClusterCommand) setA;
+        setA.get();
+        assertNull(setA.getError());
+        assertEquals(2, clusterCommandA.getExecutions());
+        assertEquals(5, clusterCommandA.getExecutionLimit());
+        assertEquals("OK", setA.get());
+        assertFalse(clusterCommandA.isMoved());
 
     }
 

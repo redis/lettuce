@@ -32,7 +32,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
-    protected BlockingQueue<Command<K, V, ?>> queue;
+    protected BlockingQueue<RedisCommand<K, V, ?>> queue;
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     private Channel channel;
@@ -44,7 +44,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      * 
      * @param queue The command queue.
      */
-    public CommandHandler(BlockingQueue<Command<K, V, ?>> queue) {
+    public CommandHandler(BlockingQueue<RedisCommand<K, V, ?>> queue) {
         this.queue = queue;
     }
 
@@ -100,7 +100,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        Command<?, ?, ?> cmd = (Command<?, ?, ?>) msg;
+        RedisCommand<?, ?, ?> cmd = (RedisCommand<?, ?, ?>) msg;
         ByteBuf buf = ctx.alloc().heapBuffer();
         cmd.encode(buf);
         if (logger.isDebugEnabled()) {
@@ -112,7 +112,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
         while (!queue.isEmpty() && rsm.decode(buffer, queue.peek().getOutput())) {
-            Command<K, V, ?> cmd = queue.take();
+            RedisCommand<K, V, ?> cmd = queue.take();
             cmd.complete();
         }
     }
@@ -125,7 +125,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         logger.debug("channelActive()");
         this.channel = ctx.channel();
-        List<Command<K, V, ?>> tmp = new ArrayList<Command<K, V, ?>>(queue.size() + 2);
+        List<RedisCommand<K, V, ?>> tmp = new ArrayList<RedisCommand<K, V, ?>>(queue.size() + 2);
 
         tmp.addAll(queue);
         queue.clear();
@@ -134,7 +134,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             redisChannelHandler.activated();
         }
 
-        for (Command<K, V, ?> cmd : tmp) {
+        for (RedisCommand<K, V, ?> cmd : tmp) {
             if (!cmd.isCancelled()) {
                 queue.add(cmd);
                 logger.debug("Triggering command " + cmd);
@@ -155,7 +155,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         logger.debug("channelInactive()");
         this.channel = null;
         if (closed) {
-            for (Command<K, V, ?> cmd : queue) {
+            for (RedisCommand<K, V, ?> cmd : queue) {
                 if (cmd.getOutput() != null) {
                     cmd.getOutput().setError("Connection closed");
                 }
@@ -172,7 +172,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     @Override
-    public void write(Command<K, V, ?> command) {
+    public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
         try {
 
             if (closed) {
@@ -189,6 +189,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throw new RedisCommandInterruptedException(e);
         }
 
+        return command;
     }
 
     /**

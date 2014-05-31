@@ -1,11 +1,11 @@
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandOutput;
-
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -52,7 +52,7 @@ public class LettuceFutures {
         return complete;
     }
 
-    public static <K, V, T> T await(Command<K, V, T> cmd, long timeout, TimeUnit unit) {
+    public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
         if (!cmd.await(timeout, unit)) {
             cmd.cancel(true);
             throw new RedisException("Command timed out");

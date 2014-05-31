@@ -182,7 +182,7 @@ The clustering support covers:
   
   * Support of all CLUSTER commands
   * Cluster node selection (initial) based on key hash-slot
-  * (to be done) MOVED redirection handling
+  * MOVED redirection handling
   * Node authentication
 
 The clustering needs one or more initial nodes in order to resolve the cluster topology (partitions). 

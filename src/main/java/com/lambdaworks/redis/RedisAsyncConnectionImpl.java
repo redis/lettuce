@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import io.netty.channel.ChannelHandler;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,9 +25,9 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.SetArgs;
-
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import io.netty.channel.ChannelHandler;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
@@ -72,7 +72,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public String auth(String password) {
-        Command<K, V, String> cmd = dispatch(commandBuilder.auth(password));
+        RedisCommand<K, V, String> cmd = dispatch(commandBuilder.auth(password));
         String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status)) {
             this.password = password.toCharArray();
@@ -522,7 +522,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<String> multi() {
 
-        Command<K, V, String> cmd = dispatch(commandBuilder.multi());
+        RedisCommand<K, V, String> cmd = dispatch(commandBuilder.multi());
         multi = (multi == null ? new MultiOutput<K, V>(codec) : multi);
         return cmd;
     }
@@ -684,7 +684,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public String select(int db) {
-        Command<K, V, String> cmd = dispatch(commandBuilder.select(db));
+        RedisCommand<K, V, String> cmd = dispatch(commandBuilder.select(db));
         String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status)) {
             this.db = db;
@@ -1471,20 +1471,21 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.clusterSlaves(nodeId));
     }
 
-    public <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
+    public <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
         return dispatch(type, output, null);
     }
 
-    public synchronized <T> Command<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+    public synchronized <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
+            CommandArgs<K, V> args) {
         Command<K, V, T> cmd = new Command<K, V, T>(type, output, args, multi != null);
         return dispatch(cmd);
     }
 
     @Override
-    public synchronized <T> Command<K, V, T> dispatch(Command<K, V, T> cmd) {
-
-        if (multi != null) {
-            cmd.setMulti(true);
+    public synchronized <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+        if (multi != null && cmd instanceof Command) {
+            Command<K, V, T> command = (Command<K, V, T>) cmd;
+            command.setMulti(true);
             multi.add(cmd);
         }
         return super.dispatch(cmd);

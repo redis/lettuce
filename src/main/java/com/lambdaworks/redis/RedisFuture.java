@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -17,4 +19,6 @@ public interface RedisFuture<V> extends ListenableFuture<V> {
      * @return error text, if any error occured.
      */
     String getError();
+
+    boolean await(long timeout, TimeUnit unit);
 }

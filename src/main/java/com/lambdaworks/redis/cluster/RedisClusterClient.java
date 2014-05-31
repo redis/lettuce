@@ -1,7 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
@@ -22,12 +23,11 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection
@@ -125,7 +125,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
 
         logger.debug("connectAsyncImpl(" + socketAddress + ")");
-        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
         RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(handler, codec, timeout, unit);
@@ -169,7 +169,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
-        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
 
@@ -218,8 +218,12 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private void initializePartitions() {
 
-        Partitions partitions = getPartitions();
+        Partitions partitions = loadPartitions();
         this.partitions = partitions;
+    }
+
+    protected Partitions getPartitions() {
+        return this.partitions;
     }
 
     /**
@@ -227,7 +231,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * 
      * @return
      */
-    private Partitions getPartitions() {
+    protected Partitions loadPartitions() {
         String clusterNodes = null;
         RedisURI nodeUri = null;
         Exception lastException = null;

@@ -2,15 +2,13 @@
 
 package com.lambdaworks.redis.protocol;
 
-import io.netty.buffer.ByteBuf;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
-import com.lambdaworks.redis.RedisFuture;
+import io.netty.buffer.ByteBuf;
 
 /**
  * A redis command and its result. All successfully executed commands will eventually return a {@link CommandOutput} object.
@@ -21,13 +19,14 @@ import com.lambdaworks.redis.RedisFuture;
  * 
  * @author Will Glozer
  */
-public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T> {
+public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
     private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
     public final CommandType type;
     protected CommandArgs<K, V> args;
     protected CommandOutput<K, V, T> output;
     protected CountDownLatch latch;
+    private boolean multi;
 
     /**
      * Create a new command with the supplied type and args.
@@ -57,6 +56,11 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T
 
     public void setMulti(boolean multi) {
         this.latch = new CountDownLatch(multi ? 2 : 1);
+        this.multi = multi;
+    }
+
+    public boolean isMulti() {
+        return multi;
     }
 
     /**
@@ -155,6 +159,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T
      * 
      * @return The command output object.
      */
+    @Override
     public CommandOutput<K, V, T> getOutput() {
         return output;
     }
@@ -162,6 +167,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T
     /**
      * Mark this command complete and notify all waiting threads.
      */
+    @Override
     public void complete() {
         latch.countDown();
         if (latch.getCount() == 0) {
@@ -175,7 +181,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisFuture<T
      * 
      * @param buf Buffer to write to.
      */
-    void encode(ByteBuf buf) {
+    public void encode(ByteBuf buf) {
         buf.writeByte('*');
         writeInt(buf, 1 + (args != null ? args.count() : 0));
         buf.writeBytes(CRLF);

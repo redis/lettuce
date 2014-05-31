@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -48,7 +49,7 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
 
             Object result = targetMethod.invoke(connection, args);
 
-            if (result instanceof Command) {
+            if (result instanceof RedisCommand) {
                 Command<?, ?, ?> command = (Command<?, ?, ?>) result;
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
                     if (connection.isMulti()) {

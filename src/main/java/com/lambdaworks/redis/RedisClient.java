@@ -2,13 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioSocketChannel;
-
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -22,11 +15,18 @@ import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.ChannelGroupListener;
-import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
@@ -260,7 +260,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, boolean withReconnect) {
-        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
         RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(handler, codec, timeout, unit);
@@ -292,7 +292,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new pub/sub connection.
      */
     public <K, V> RedisPubSubConnectionImpl<K, V> connectPubSub(RedisCodec<K, V> codec) {
-        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = new RedisPubSubConnectionImpl<K, V>(handler, codec, timeout, unit);
@@ -367,7 +367,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsync(RedisCodec<K, V> codec) {
 
-        BlockingQueue<Command<K, V, ?>> queue = new LinkedBlockingQueue<Command<K, V, ?>>();
+        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(queue);
         final RedisSentinelAsyncConnectionImpl<K, V> connection = new RedisSentinelAsyncConnectionImpl<K, V>(commandHandler,

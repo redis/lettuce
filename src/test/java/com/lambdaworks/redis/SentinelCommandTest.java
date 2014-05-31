@@ -17,7 +17,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 public class SentinelCommandTest extends AbstractCommandTest {
 
@@ -105,7 +105,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void failover() throws Exception {
 
-        Command result = (Command) sentinel.failover("mymaster");
+        RedisCommand result = (RedisCommand) sentinel.failover("mymaster");
         result.get();
 
     }

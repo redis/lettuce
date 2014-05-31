@@ -3,7 +3,7 @@ package com.lambdaworks.redis.internal;
 import java.io.Closeable;
 
 import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Writer for a channel. Writers push commands on to the communication channel and maintain a state for the commands.
@@ -20,7 +20,7 @@ public interface RedisChannelWriter<K, V> extends Closeable {
      * 
      * @param command
      */
-    void write(Command<K, V, ?> command);
+    <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
 
     @Override
     void close();

@@ -10,8 +10,8 @@ import java.util.Queue;
 
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Output of all commands within a MULTI block.
@@ -21,19 +21,19 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @author Will Glozer
  */
 public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private final Queue<Command<K, V, ?>> queue;
+    private final Queue<RedisCommand<K, V, ?>> queue;
 
     public MultiOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<Object>());
-        queue = new LinkedList<Command<K, V, ?>>();
+        queue = new LinkedList<RedisCommand<K, V, ?>>();
     }
 
-    public void add(Command<K, V, ?> cmd) {
+    public void add(RedisCommand<K, V, ?> cmd) {
         queue.add(cmd);
     }
 
     public void cancel() {
-        for (Command<K, V, ?> c : queue) {
+        for (RedisCommand<K, V, ?> c : queue) {
             c.complete();
         }
     }
@@ -57,12 +57,12 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     @Override
     public void complete(int depth) {
         if (depth == 1) {
-            Command<K, V, ?> cmd = queue.remove();
+            RedisCommand<K, V, ?> cmd = queue.remove();
             CommandOutput<K, V, ?> o = cmd.getOutput();
             output.add(!o.hasError() ? o.get() : new RedisException(o.getError()));
             cmd.complete();
         } else if (depth == 0 && !queue.isEmpty()) {
-            for (Command<K, V, ?> cmd : queue) {
+            for (RedisCommand<K, V, ?> cmd : queue) {
                 cmd.complete();
             }
         }
