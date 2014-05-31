@@ -15,7 +15,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -72,19 +71,6 @@ public class RedisClusterClientTest {
         client3 = new RedisClient(host, port3);
         client4 = new RedisClient(host, port4);
 
-        RedisClusterAsyncConnection<String, String> connection = (RedisClusterAsyncConnection) client1.connectAsync();
-        String nodes = connection.clusterNodes().get();
-
-        if (Splitter.on('\n').trimResults().splitToList(nodes).size() < 3) {
-
-            connection.clusterMeet(host, port1);
-            connection.clusterMeet(host, port2);
-            connection.clusterMeet(host, port3);
-            connection.clusterMeet(host, port4);
-        }
-
-        connection.close();
-
         slots1 = createSlots(0, 8000);
         slots2 = createSlots(8000, 12000);
         slots3 = createSlots(12000, 16384);
@@ -123,8 +109,22 @@ public class RedisClusterClientTest {
         redis4 = (RedisClusterAsyncConnection) client4.connectAsync();
 
         if (!setup) {
-            cleanup();
-            addSlots();
+
+            String info = redis1.clusterInfo().get();
+            if (info != null && !info.contains("cluster_state:ok")) {
+                addSlots();
+            }
+
+            String nodes = redis1.clusterNodes().get();
+
+            if (Splitter.on('\n').trimResults().splitToList(nodes).size() < 3) {
+
+                redis1.clusterMeet(host, port1).get();
+                redis1.clusterMeet(host, port2).get();
+                redis1.clusterMeet(host, port3).get();
+                redis1.clusterMeet(host, port4).get();
+                Thread.sleep(500);
+            }
 
             setup = true;
         }
@@ -139,7 +139,6 @@ public class RedisClusterClientTest {
             public boolean isSatisfied() {
                 try {
                     String info = redis1.clusterInfo().get();
-                    System.out.println(info);
                     if (info != null && info.contains("cluster_state:ok")) {
                         return true;
                     }
@@ -162,18 +161,20 @@ public class RedisClusterClientTest {
 
     protected void addSlots() throws InterruptedException, java.util.concurrent.ExecutionException {
 
-        RedisFuture<String> f1 = redis1.clusterAddSlots(slots1);
-        RedisFuture<String> f2 = redis2.clusterAddSlots(slots2);
-        RedisFuture<String> f3 = redis3.clusterAddSlots(slots3);
-
-        f1.get();
-        f2.get();
-        f3.get();
+        for (int i : slots1) {
+            redis1.clusterAddSlots(i);
+        }
+        for (int i : slots2) {
+            redis2.clusterAddSlots(i);
+        }
+        for (int i : slots3) {
+            redis3.clusterAddSlots(i);
+        }
     }
 
     public void cleanup() throws Exception {
 
-        int slots[] = createSlots(0, 16384);
+        int slots[] = createSlots(1, 16385);
         List<RedisFuture<?>> futures = Lists.newArrayList();
 
         for (int i = 0; i < slots.length; i++) {
@@ -220,7 +221,6 @@ public class RedisClusterClientTest {
     }
 
     @Test
-    @Ignore
     public void clusterSlaves() throws Exception {
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
 
