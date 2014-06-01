@@ -21,14 +21,14 @@ public class PoolingProxyFactory {
      * @return Transparent pooling proxy.
      */
     @SuppressWarnings("unchecked")
-    public static <T, C extends T> C create(RedisConnectionPool<T> connectionPool) {
+    public static <T> T create(RedisConnectionPool<T> connectionPool) {
         Class<?> componentType = connectionPool.getComponentType();
 
         TransparentPoolingInvocationHandler<T> h = new TransparentPoolingInvocationHandler<T>(connectionPool);
 
         Object o = Proxy.newProxyInstance(PoolingProxyFactory.class.getClassLoader(), new Class<?>[] { componentType }, h);
 
-        return (C) o;
+        return (T) o;
     }
 
 }

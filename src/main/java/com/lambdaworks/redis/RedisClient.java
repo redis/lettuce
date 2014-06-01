@@ -236,9 +236,8 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection.
      */
     @SuppressWarnings("unchecked")
-    public <K, V, T extends BaseRedisConnection<K, V>> T connect(RedisCodec<K, V> codec) {
-
-        return (T) connect(codec, true);
+    public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
+        return connect(codec, true);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
