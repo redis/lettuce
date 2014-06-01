@@ -16,21 +16,21 @@ import java.util.concurrent.Future;
 public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
     Future<SocketAddress> getMasterAddrByName(K key);
 
-    Future<Map<K, V>> master(K key);
+    RedisFuture<Map<K, V>> master(K key);
 
-    Future<Map<K, V>> slaves(K key);
+    RedisFuture<Map<K, V>> slaves(K key);
 
-    Future<Long> reset(K key);
+    RedisFuture<Long> reset(K key);
 
-    Future<Long> failover(K key);
+    RedisFuture<String> failover(K key);
 
-    Future<String> monitor(K key, String ip, int port, int quorum);
+    RedisFuture<String> monitor(K key, String ip, int port, int quorum);
 
-    Future<String> set(K key, String option, V value);
+    RedisFuture<String> set(K key, String option, V value);
 
-    Future<String> remove(K key);
+    RedisFuture<String> remove(K key);
 
-    Future<String> ping();
+    RedisFuture<String> ping();
 
     @Override
     void close();

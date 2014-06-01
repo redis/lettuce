@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
@@ -12,8 +14,6 @@ import com.google.common.util.concurrent.Futures;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.Command;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * @param <K> Key type.
@@ -55,48 +55,48 @@ public class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<
     }
 
     @Override
-    public Future<Map<K, V>> master(K key) {
+    public RedisFuture<Map<K, V>> master(K key) {
 
         return dispatch(commandBuilder.master(key));
     }
 
     @Override
-    public Future<Map<K, V>> slaves(K key) {
+    public RedisFuture<Map<K, V>> slaves(K key) {
 
         return dispatch(commandBuilder.slaves(key));
     }
 
     @Override
-    public Future<Long> reset(K key) {
+    public RedisFuture<Long> reset(K key) {
 
         return dispatch(commandBuilder.reset(key));
     }
 
     @Override
-    public Future<Long> failover(K key) {
+    public RedisFuture<String> failover(K key) {
 
         return dispatch(commandBuilder.failover(key));
     }
 
     @Override
-    public Future<String> monitor(K key, String ip, int port, int quorum) {
+    public RedisFuture<String> monitor(K key, String ip, int port, int quorum) {
 
         return dispatch(commandBuilder.monitor(key, ip, port, quorum));
     }
 
     @Override
-    public Future<String> set(K key, String option, V value) {
+    public RedisFuture<String> set(K key, String option, V value) {
 
         return dispatch(commandBuilder.set(key, option, value));
     }
 
     @Override
-    public Future<String> remove(K key) {
+    public RedisFuture<String> remove(K key) {
         return dispatch(commandBuilder.remove(key));
     }
 
     @Override
-    public Future<String> ping() {
+    public RedisFuture<String> ping() {
         return dispatch(commandBuilder.ping());
     }
 }

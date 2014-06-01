@@ -46,9 +46,9 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SENTINEL, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Long> failover(K key) {
+    public Command<K, V, String> failover(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("failover").addKey(key);
-        return createCommand(SENTINEL, new IntegerOutput<K, V>(codec), args);
+        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> monitor(K key, String ip, int port, int quorum) {

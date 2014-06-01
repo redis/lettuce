@@ -37,7 +37,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         async.close();
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void multi() throws Exception {
         assertEquals("OK", async.multi().get());
         Future<String> set = async.set(key, value);
@@ -52,7 +52,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertEquals(list("1", "2"), lrange.get());
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void watch() throws Exception {
         assertEquals("OK", async.watch(key).get());
 
@@ -102,7 +102,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void futureListenerCompleted() throws Exception {
 
         final List<Object> run = new ArrayList<Object>();
@@ -135,7 +135,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertNull(set.get());
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void awaitAll() throws Exception {
         Future<String> get1 = async.get(key);
         Future<String> set = async.set(key, value);

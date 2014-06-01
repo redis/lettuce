@@ -2,9 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertNull;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -15,7 +14,7 @@ import org.junit.Test;
 public class SentinelFailoverTest extends AbstractCommandTest {
 
     private static RedisClient sentinelClient;
-    private RedisSentinelAsyncConnection sentinel;
+    private RedisSentinelAsyncConnection<String, String> sentinel;
 
     @BeforeClass
     public static void setupClient() {
@@ -42,31 +41,11 @@ public class SentinelFailoverTest extends AbstractCommandTest {
         RedisConnection<String, String> connect = sentinelClient.connect();
         connect.ping();
 
-        String info = connect.info();
-        assertThat(info, containsString("tcp_port:6381"));
-        assertThat(info, containsString("role:master"));
+        RedisFuture<String> future = this.sentinel.failover("mymaster");
 
-        assertEquals("OK", connect.set(key, value));
-        sentinel.failover("mymaster").get();
-        Thread.sleep(1500);
-
-        assertEquals("OK", connect.set(key, value));
-
-        RedisConnection<String, String> connect2 = sentinelClient.connect();
-        assertEquals("OK", connect2.set(key, value));
-
-        String info2 = connect2.info();
-        assertThat(info2, containsString("tcp_port:6382"));
-        assertThat(info2, containsString("role:master"));
-
-
-        String infoAfterFailover = connect.info();
-        assertThat(infoAfterFailover, containsString("tcp_port:6381"));
-
-        sentinel.failover("mymaster").get();
-
-        connect.close();
-        connect2.close();
+        future.get();
+        assertNull(future.getError());
+        assertEquals("OK", future.get());
     }
 
     protected static RedisClient getRedisSentinelClient() {
