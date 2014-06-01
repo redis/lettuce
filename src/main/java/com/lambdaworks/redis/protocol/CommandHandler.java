@@ -92,7 +92,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         while (!queue.isEmpty() && rsm.decode(buffer, queue.peek(), queue.peek().getOutput())) {
             RedisCommand<K, V, ?> cmd = queue.take();
             cmd.complete();
-            buffer.discardReadBytes();
+            if (buffer != null && buffer.refCnt() != 0) {
+                buffer.discardReadBytes();
+            }
         }
     }
 

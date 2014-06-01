@@ -1,6 +1,5 @@
 language: java
 jdk:
-  - oraclejdk6
   - oraclejdk7
 install: make travis-install
 script: make test
