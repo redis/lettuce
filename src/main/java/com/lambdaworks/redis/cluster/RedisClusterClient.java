@@ -90,7 +90,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connectClusterAsyncImpl(codec));
         return (RedisClusterConnection<K, V>) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class[] { RedisClusterConnection.class }, h);
+                new Class<?>[] { RedisClusterConnection.class }, h);
     }
 
     /**
@@ -223,13 +223,13 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     protected Partitions getPartitions() {
-        return this.partitions;
+        return partitions;
     }
 
     /**
      * Retrieve partitions.
      * 
-     * @return
+     * @return Partitions
      */
     protected Partitions loadPartitions() {
         String clusterNodes = null;

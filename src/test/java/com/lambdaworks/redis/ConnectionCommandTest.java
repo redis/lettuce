@@ -5,10 +5,14 @@ package com.lambdaworks.redis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-import org.junit.Test;
 
 import java.lang.reflect.Field;
 
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConnectionCommandTest extends AbstractCommandTest {
     @Test
     public void auth() throws Exception {

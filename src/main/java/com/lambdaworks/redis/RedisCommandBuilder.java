@@ -554,8 +554,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, List<Boolean>> scriptExists(String... digests) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(EXISTS);
-        for (String sha : digests)
+        for (String sha : digests) {
             args.add(sha);
+        }
         return createCommand(SCRIPT, new BooleanListOutput<K, V>(codec), args);
     }
 
@@ -1290,6 +1291,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PFCOUNT, new IntegerOutput<K, V>(codec), args);
     }
 
+    @SuppressWarnings("unchecked")
     public Command<K, V, Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKey(sourcekey).addKeys(moreSourceKeys);
         return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);

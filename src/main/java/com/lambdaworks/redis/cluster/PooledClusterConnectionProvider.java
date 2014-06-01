@@ -48,7 +48,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
     public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
         logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
@@ -58,7 +58,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
 
         try {
             PoolKey key = new PoolKey(intent, partition.getUri());
-            RedisAsyncConnection connection = (RedisAsyncConnection) partitionPool.borrowObject(key);
+            RedisAsyncConnection connection = partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
             return (RedisAsyncConnectionImpl<K, V>) connection;
         } catch (Exception e) {
@@ -67,12 +67,12 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
     public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
         try {
             logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
             PoolKey key = new PoolKey(intent, host, port);
-            RedisAsyncConnection connection = (RedisAsyncConnection) partitionPool.borrowObject(key);
+            RedisAsyncConnection connection = partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
             return (RedisAsyncConnectionImpl<K, V>) connection;
         } catch (Exception e) {

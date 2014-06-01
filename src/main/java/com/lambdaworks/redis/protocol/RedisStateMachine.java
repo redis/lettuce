@@ -61,7 +61,7 @@ public class RedisStateMachine<K, V> {
      * 
      * @return true if a complete response was read.
      */
-    public boolean decode(ByteBuf buffer, RedisCommand command, CommandOutput<K, V, ?> output) {
+    public boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command, CommandOutput<K, V, ?> output) {
         int length, end;
         ByteBuffer bytes;
 
@@ -76,7 +76,6 @@ public class RedisStateMachine<K, V> {
         if (output == null) {
             return stack.isEmpty();
         }
-        int start = buffer.readerIndex();
 
         loop:
 

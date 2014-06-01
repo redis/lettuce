@@ -26,6 +26,9 @@ public class ClusterPartitionParser {
     private static final String TOKEN_SLOT_IN_TRANSITION = "[";
     private static final char TOKEN_NODE_SEPARATOR = '\n';
     private static final Map<String, RedisClusterNode.NodeFlag> FLAG_MAPPING = new HashMap<String, RedisClusterNode.NodeFlag>() {
+
+        private static final long serialVersionUID = 1L;
+
         {
             put("noflags", RedisClusterNode.NodeFlag.NOFLAGS);
             put("myself", RedisClusterNode.NodeFlag.MYSELF);
