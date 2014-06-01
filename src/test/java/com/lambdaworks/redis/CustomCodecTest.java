@@ -2,20 +2,25 @@
 
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+
+import com.lambdaworks.redis.codec.RedisCodec;
 
 public class CustomCodecTest extends AbstractCommandTest {
     @Test
     public void test() throws Exception {
-        RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec());
+        RedisConnection<String, Object> connection = (RedisConnection) client.connect(new SerializedObjectCodec());
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertEquals(list, connection.get(key));

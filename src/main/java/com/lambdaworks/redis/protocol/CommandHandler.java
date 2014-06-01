@@ -107,6 +107,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      *      io.netty.channel.ChannelPromise)
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
         final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;

@@ -78,6 +78,7 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
+    @SuppressWarnings("unchecked")
     public RedisConnection<String, String> connect() {
         return (RedisConnection<String, String>) connect((RedisCodec) codec);
     }

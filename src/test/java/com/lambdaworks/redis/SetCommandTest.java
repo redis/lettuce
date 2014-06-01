@@ -15,6 +15,7 @@ import java.util.TreeSet;
 
 import org.junit.Test;
 
+@SuppressWarnings("unchecked")
 public class SetCommandTest extends AbstractCommandTest {
     @Test
     public void sadd() throws Exception {

@@ -38,6 +38,7 @@ public class RedisConnectionPool<T> implements Closeable {
     private PooledObjectFactory<T> createFactory(final RedisConnectionProvider<T> redisConnectionProvider) {
         return new BasePooledObjectFactory<T>() {
             @Override
+            @SuppressWarnings("unckecked")
             public T create() throws Exception {
 
                 T connection = redisConnectionProvider.createConnection();

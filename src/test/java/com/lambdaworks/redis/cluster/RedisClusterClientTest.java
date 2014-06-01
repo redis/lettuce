@@ -35,6 +35,7 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@SuppressWarnings("unchecked")
 public class RedisClusterClientTest {
 
     public static final String host = "127.0.0.1";
