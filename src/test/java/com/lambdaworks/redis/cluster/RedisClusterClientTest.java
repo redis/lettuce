@@ -24,7 +24,6 @@ import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -56,13 +55,8 @@ public class RedisClusterClientTest {
     protected RedisClusterAsyncConnection<String, String> redis3;
     protected RedisClusterAsyncConnection<String, String> redis4;
 
-    private static int slots1[];
-    private static int slots2[];
-    private static int slots3[];
-
     protected String key = "key";
     protected String value = "value";
-    private static boolean setup = false;
 
     @BeforeClass
     public static void setupClient() throws Exception {
@@ -70,13 +64,6 @@ public class RedisClusterClientTest {
         client2 = new RedisClient(host, port2);
         client3 = new RedisClient(host, port3);
         client4 = new RedisClient(host, port4);
-
-        slots1 = createSlots(0, 8000);
-        slots2 = createSlots(8000, 12000);
-        slots3 = createSlots(12000, 16384);
-
-        slots1[7000] = 12001;
-        slots3[1] = 7000;
 
         clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
 
@@ -108,27 +95,6 @@ public class RedisClusterClientTest {
         redis3 = (RedisClusterAsyncConnection) client3.connectAsync();
         redis4 = (RedisClusterAsyncConnection) client4.connectAsync();
 
-        if (!setup) {
-
-            String info = redis1.clusterInfo().get();
-            if (info != null && !info.contains("cluster_state:ok")) {
-                addSlots();
-            }
-
-            String nodes = redis1.clusterNodes().get();
-
-            if (Splitter.on('\n').trimResults().splitToList(nodes).size() < 3) {
-
-                redis1.clusterMeet(host, port1).get();
-                redis1.clusterMeet(host, port2).get();
-                redis1.clusterMeet(host, port3).get();
-                redis1.clusterMeet(host, port4).get();
-                Thread.sleep(500);
-            }
-
-            setup = true;
-        }
-
         redis1.flushall();
         redis2.flushall();
         redis3.flushall();
@@ -157,19 +123,6 @@ public class RedisClusterClientTest {
         redis2.close();
         redis3.close();
         redis4.close();
-    }
-
-    protected void addSlots() throws InterruptedException, java.util.concurrent.ExecutionException {
-
-        for (int i : slots1) {
-            redis1.clusterAddSlots(i);
-        }
-        for (int i : slots2) {
-            redis2.clusterAddSlots(i);
-        }
-        for (int i : slots3) {
-            redis3.clusterAddSlots(i);
-        }
     }
 
     public void cleanup() throws Exception {
@@ -298,9 +251,7 @@ public class RedisClusterClientTest {
         for (RedisClusterNode partition : partitions) {
             partition.getSlots().clear();
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                partition.getSlots().addAll(Ints.asList(slots1));
-                partition.getSlots().addAll(Ints.asList(slots2));
-                partition.getSlots().addAll(Ints.asList(slots3));
+                partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
         }
 

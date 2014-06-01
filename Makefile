@@ -106,72 +106,104 @@ define REDIS_CLUSTER_NODE1_CONF
 daemonize yes
 port 7379
 cluster-node-timeout 50
-pidfile work/redis_cluster_node1-7379.pid
-logfile work/redis_cluster_node1-7379.log
+pidfile work/redis-cluster-node1-7379.pid
+logfile work/redis-cluster-node1-7379.log
 save ""
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis_cluster_config1-7379.conf
+cluster-config-file work/redis-cluster-config1-7379.conf
+endef
+
+define REDIS_CLUSTER_CONFIG1
+adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 myself,master - 0 0 1 connected 0-6999 7001-7999 12001
+d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 master - 0 1401604930675 0 connected 8000-11999
+94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 master - 0 1401604930675 2 connected 7000 12000 12002-16383
+7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 master - 1401604930675 1401604930575 3 connected
+vars currentEpoch 3 lastVoteEpoch 0
 endef
 
 define REDIS_CLUSTER_NODE2_CONF
 daemonize yes
 port 7380
 cluster-node-timeout 50
-pidfile work/redis_cluster_node2-7380.pid
-logfile work/redis_cluster_node2-7380.log
+pidfile work/redis-cluster-node2-7380.pid
+logfile work/redis-cluster-node2-7380.log
 save ""
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis_cluster_config2-7380.conf
+cluster-config-file work/redis-cluster-config2-7380.conf
+endef
+
+define REDIS_CLUSTER_CONFIG2
+adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 master - 1401604930525 1401604930354 1 connected 0-6999 7001-7999 12001
+d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 myself,master - 0 0 0 connected 8000-11999
+94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 master - 1401604930525 1401604930354 2 connected 7000 12000 12002-16383
+7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 master - 1401604930525 1401604930355 3 connected
+vars currentEpoch 3 lastVoteEpoch 0
 endef
 
 define REDIS_CLUSTER_NODE3_CONF
 daemonize yes
 port 7381
 cluster-node-timeout 50
-pidfile work/redis_cluster_node3-7381.pid
-logfile work/redis_cluster_node3-7381.log
+pidfile work/redis-cluster-node3-7381.pid
+logfile work/redis-cluster-node3-7381.log
 save ""
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis_cluster_config3-7381.conf
+cluster-config-file work/redis-cluster-config3-7381.conf
+endef
+
+define REDIS_CLUSTER_CONFIG3
+adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 master - 0 1401604930425 1 connected 0-6999 7001-7999 12001
+d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 master - 1401604930425 1401604930325 0 connected 8000-11999
+94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 myself,master - 0 0 2 connected 7000 12000 12002-16383
+7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 master - 1401604930425 1401604930325 3 connected
+vars currentEpoch 3 lastVoteEpoch 0
 endef
 
 define REDIS_CLUSTER_NODE4_CONF
 daemonize yes
 port 7382
 cluster-node-timeout 50
-pidfile work/redis_cluster_node4-7382.pid
-logfile work/redis_cluster_node4-7382.log
+pidfile work/redis-cluster-node4-7382.pid
+logfile work/redis-cluster-node4-7382.log
 save ""
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis_cluster_config4-7382.conf
+cluster-config-file work/redis-cluster-config4-7382.conf
+endef
+
+define REDIS_CLUSTER_CONFIG4
+adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 master - 0 1401604930688 1 connected 0-6999 7001-7999 12001
+d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 master - 0 1401604930688 0 connected 8000-11999
+94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 master - 1401604930687 1401604930574 2 connected 7000 12000 12002-16383
+7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 myself,master - 0 0 3 connected
+vars currentEpoch 3 lastVoteEpoch 0
 endef
 
 define REDIS_CLUSTER_NODE5_CONF
 daemonize yes
 port 7383
 cluster-node-timeout 5000
-pidfile work/redis_cluster_node5-7383.pid
-logfile work/redis_cluster_node5-7383.log
+pidfile work/redis-cluster-node5-7383.pid
+logfile work/redis-cluster-node5-7383.log
 save ""
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis_cluster_config5-7383.conf
+cluster-config-file work/redis-cluster-config5-7383.conf
 endef
 
 define REDIS_CLUSTER_NODE6_CONF
 daemonize yes
 port 7384
 cluster-node-timeout 5000
-pidfile work/redis_cluster_node6-7384.pid
-logfile work/redis_cluster_node6-7384.log
+pidfile work/redis-cluster-node6-7384.pid
+logfile work/redis-cluster-node6-7384.log
 save ""
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis_cluster_config6-7384.conf
+cluster-config-file work/redis-cluster-config6-7384.conf
 endef
 
 export REDIS1_CONF
@@ -185,9 +217,13 @@ export REDIS_SENTINEL1
 export REDIS_SENTINEL2
 export REDIS_SENTINEL3
 export REDIS_CLUSTER_NODE1_CONF
+export REDIS_CLUSTER_CONFIG1
 export REDIS_CLUSTER_NODE2_CONF
+export REDIS_CLUSTER_CONFIG2
 export REDIS_CLUSTER_NODE3_CONF
+export REDIS_CLUSTER_CONFIG3
 export REDIS_CLUSTER_NODE4_CONF
+export REDIS_CLUSTER_CONFIG4
 export REDIS_CLUSTER_NODE5_CONF
 export REDIS_CLUSTER_NODE6_CONF
 
@@ -204,6 +240,12 @@ start: cleanup
 	echo "$$REDIS_SENTINEL2" > work/sentinel2-26380.conf && redis-server work/sentinel2-26380.conf --sentinel
 	@sleep 0.5
 	echo "$$REDIS_SENTINEL3" > work/sentinel3-26381.conf && redis-server work/sentinel3-26381.conf --sentinel
+
+	echo "$$REDIS_CLUSTER_CONFIG1" > work/redis-cluster-config1-7379.conf
+	echo "$$REDIS_CLUSTER_CONFIG2" > work/redis-cluster-config2-7380.conf
+	echo "$$REDIS_CLUSTER_CONFIG3" > work/redis-cluster-config3-7381.conf
+	echo "$$REDIS_CLUSTER_CONFIG4" > work/redis-cluster-config4-7382.conf
+
 	echo "$$REDIS_CLUSTER_NODE1_CONF" > work/redis-clusternode1-7379.conf && redis-server work/redis-clusternode1-7379.conf
 	echo "$$REDIS_CLUSTER_NODE2_CONF" > work/redis-clusternode2-7380.conf && redis-server work/redis-clusternode2-7380.conf
 	echo "$$REDIS_CLUSTER_NODE3_CONF" > work/redis-clusternode3-7381.conf && redis-server work/redis-clusternode3-7381.conf
@@ -213,7 +255,7 @@ start: cleanup
 
 cleanup: stop
 	- mkdir -p work
-	rm -f work/redis_cluster_node*.conf 2>/dev/null
+	rm -f work/redis-cluster-node*.conf 2>/dev/null
 	rm -f work/dump.rdb work/appendonly.aof work/*.conf work/*.log 2>/dev/null
 
 stop:
@@ -230,6 +272,8 @@ test:
 	make stop
 
 travis-install:
+	pkill redis-server || true
+	pkill redis-sentinel || true
 	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git work/redis-git && cd work/redis-git|| true
 	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull || true
 	make -C work/redis-git clean
