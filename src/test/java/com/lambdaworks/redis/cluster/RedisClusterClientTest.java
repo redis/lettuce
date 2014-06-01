@@ -320,7 +320,7 @@ public class RedisClusterClientTest {
 
     }
 
-    @Test(timeout = 10000)
+    @Test(timeout = 15000)
     public void massiveClusteredAccess() throws Exception {
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();

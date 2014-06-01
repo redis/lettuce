@@ -2,11 +2,20 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.*;
-import com.lambdaworks.redis.pubsub.*;
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
+import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
     private RedisPubSubConnectionImpl<String, String> pubsub;
@@ -50,7 +59,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         };
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void message() throws Exception {
         pubsub.subscribe(channel);
         assertEquals(channel, channels.take());
@@ -60,7 +69,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(message, messages.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void pmessage() throws Exception {
         pubsub.psubscribe(pattern);
         assertEquals(pattern, patterns.take());
@@ -76,35 +85,35 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals("msg 2!", messages.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void psubscribe() throws Exception {
         pubsub.psubscribe(pattern);
         assertEquals(pattern, patterns.take());
         assertEquals(1, (long) counts.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void punsubscribe() throws Exception {
         pubsub.punsubscribe(pattern);
         assertEquals(pattern, patterns.take());
         assertEquals(0, (long) counts.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void subscribe() throws Exception {
         pubsub.subscribe(channel);
         assertEquals(channel, channels.take());
         assertEquals(1, (long) counts.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void unsubscribe() throws Exception {
         pubsub.unsubscribe(channel);
         assertEquals(channel, channels.take());
         assertEquals(0, (long) counts.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void utf8Channel() throws Exception {
         String channel = "channelλ";
         String message = "αβγ";
@@ -117,7 +126,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(message, messages.take());
     }
 
-    @Test(timeout = 1000)
+    @Test(timeout = 2000)
     public void resubscribeChannelsOnReconnect() throws Exception {
         pubsub.subscribe(channel);
         assertEquals(channel, channels.take());
@@ -133,7 +142,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(message, messages.take());
     }
 
-    @Test(timeout = 1000)
+    @Test(timeout = 2000)
     public void resubscribePatternsOnReconnect() throws Exception {
         pubsub.psubscribe(pattern);
         assertEquals(pattern, patterns.take());
@@ -149,7 +158,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(message, messages.take());
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 200)
     public void adapter() throws Exception {
         final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
 
@@ -180,7 +189,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertEquals(0L, (long) localCounts.take());
     }
 
-    @Test(timeout = 1000)
+    @Test(timeout = 2000)
     public void removeListener() throws Exception {
         pubsub.subscribe(channel);
         assertEquals(channel, channels.take());
