@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.URI;
 
-import com.lambdaworks.redis.LettuceStrings;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 
@@ -98,6 +98,11 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
 
         super.afterPropertiesSet();
 
+    }
+
+    @Override
+    protected void destroyInstance(RedisClient instance) throws Exception {
+        instance.shutdown();
     }
 
     @Override

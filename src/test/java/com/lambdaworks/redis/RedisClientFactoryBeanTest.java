@@ -4,13 +4,18 @@ import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 
-import com.lambdaworks.redis.support.RedisClientFactoryBean;
+import org.junit.After;
 import org.junit.Test;
 
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.support.RedisClientFactoryBean;
 
 public class RedisClientFactoryBeanTest {
     private RedisClientFactoryBean sut = new RedisClientFactoryBean();
+
+    @After
+    public void tearDown() throws Exception {
+        sut.destroy();
+    }
 
     @Test
     public void testSimpleUri() throws Exception {
@@ -26,6 +31,8 @@ public class RedisClientFactoryBeanTest {
         assertEquals("localhost", redisURI.getHost());
         assertEquals(RedisURI.DEFAULT_REDIS_PORT, redisURI.getPort());
         assertEquals("password", new String(redisURI.getPassword()));
+
+
 
     }
 
