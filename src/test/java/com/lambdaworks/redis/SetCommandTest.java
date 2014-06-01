@@ -205,7 +205,7 @@ public class SetCommandTest extends AbstractCommandTest {
         Set<String> expect = new HashSet<String>();
         setup100KeyValues(expect);
 
-        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(100).match("value1*"));
+        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(200).match("value1*"));
 
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());
