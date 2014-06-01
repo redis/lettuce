@@ -51,7 +51,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
-        assertEquals("localhost", socketAddress.getHostName());
+        assertThat(socketAddress.getHostName(), containsString("localhost"));
     }
 
     @Test
