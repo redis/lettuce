@@ -79,7 +79,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection.
      */
     public RedisConnection<String, String> connect() {
-        return (RedisConnection<String, String>) connect(codec);
+        return (RedisConnection<String, String>) connect((RedisCodec) codec);
     }
 
     /**

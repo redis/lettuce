@@ -48,6 +48,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
         logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
@@ -66,7 +67,8 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     @Override
-    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
+    @SuppressWarnings("unchecked")
+    public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
         try {
             logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
             PoolKey key = new PoolKey(intent, host, port);

@@ -61,6 +61,7 @@ public class RedisConnectionPool<T> implements Closeable {
             }
 
             @Override
+            @SuppressWarnings("unchecked")
             public void destroyObject(PooledObject<T> p) throws Exception {
 
                 T object = p.getObject();

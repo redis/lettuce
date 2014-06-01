@@ -109,7 +109,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
-        final RedisCommand<?, ?, ?> cmd = (RedisCommand<?, ?, ?>) msg;
+        final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
         ByteBuf buf = ctx.alloc().heapBuffer();
         cmd.encode(buf);
         if (logger.isDebugEnabled()) {
@@ -118,7 +118,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         synchronized (queue) {
             if (!queue.contains(cmd)) {
-                queue.put((RedisCommand) cmd);
+                queue.put(cmd);
             }
             ctx.write(buf, promise);
         }
