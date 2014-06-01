@@ -1,8 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
@@ -19,6 +16,9 @@ import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
+
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Connection provider with built-in pooling
@@ -48,7 +48,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
     }
 
     @Override
-    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
+    public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
         logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
         if (partition == null) {
@@ -57,7 +57,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
 
         try {
             PoolKey key = new PoolKey(intent, partition.getUri());
-            RedisAsyncConnection<K, V> connection = partitionPool.borrowObject(key);
+            RedisAsyncConnection connection = (RedisAsyncConnection) partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
             return (RedisAsyncConnectionImpl<K, V>) connection;
         } catch (Exception e) {
@@ -70,7 +70,7 @@ public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionP
         try {
             logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
             PoolKey key = new PoolKey(intent, host, port);
-            RedisAsyncConnection<K, V> connection = partitionPool.borrowObject(key);
+            RedisAsyncConnection connection = (RedisAsyncConnection) partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
             return (RedisAsyncConnectionImpl<K, V>) connection;
         } catch (Exception e) {

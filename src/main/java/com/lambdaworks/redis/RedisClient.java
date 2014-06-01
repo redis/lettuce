@@ -319,7 +319,7 @@ public class RedisClient extends AbstractRedisClient {
         };
     }
 
-    private SocketAddress getSocketAddress() throws InterruptedException, TimeoutException, ExecutionException {
+    protected SocketAddress getSocketAddress() throws InterruptedException, TimeoutException, ExecutionException {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {

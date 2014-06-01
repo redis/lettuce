@@ -170,7 +170,8 @@ public class RedisStateMachine<K, V> {
     }
 
     private State.Type readReplyType(ByteBuf buffer) {
-        switch (buffer.readByte()) {
+        byte b = buffer.readByte();
+        switch (b) {
             case '+':
                 return SINGLE;
             case '-':
@@ -182,7 +183,7 @@ public class RedisStateMachine<K, V> {
             case '*':
                 return MULTI;
             default:
-                throw new RedisException("Invalid first byte");
+                throw new RedisException("Invalid first byte: " + Byte.toString(b));
         }
     }
 

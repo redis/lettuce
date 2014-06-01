@@ -242,4 +242,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         return sb.toString();
     }
 
+    public void setOutput(CommandOutput<K, V, T> output) {
+        this.output = output;
+    }
 }

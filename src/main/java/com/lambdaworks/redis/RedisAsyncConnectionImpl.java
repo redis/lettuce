@@ -1515,4 +1515,5 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
             dispatch(commandBuilder.select(db));
         }
     }
+
 }
