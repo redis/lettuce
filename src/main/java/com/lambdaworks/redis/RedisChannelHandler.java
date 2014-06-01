@@ -79,7 +79,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     }
 
-    public synchronized <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+    public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
 
         return channelWriter.write(cmd);
     }

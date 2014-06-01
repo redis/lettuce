@@ -385,6 +385,14 @@ public class RedisClusterClientTest {
             RedisFuture<String> setB = connection.get("b" + i);
             RedisFuture<String> setD = connection.get("d" + i);
 
+            setA.get();
+            setB.get();
+            setD.get();
+
+            assertNull(setA.getError());
+            assertNull(setB.getError());
+            assertNull(setD.getError());
+
             assertEquals("myValue1" + i, setA.get());
             assertEquals("myValue2" + i, setB.get());
             assertEquals("myValue3" + i, setD.get());
