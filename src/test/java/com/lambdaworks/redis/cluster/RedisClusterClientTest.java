@@ -326,10 +326,15 @@ public class RedisClusterClientTest {
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
+        List<RedisFuture<?>> futures = Lists.newArrayList();
         for (int i = 0; i < 10000; i++) {
-            connection.set("a" + i, "myValue1" + i).get();
-            connection.set("b" + i, "myValue2" + i).get();
-            connection.set("d" + i, "myValue3" + i).get();
+            futures.add(connection.set("a" + i, "myValue1" + i));
+            futures.add(connection.set("b" + i, "myValue2" + i));
+            futures.add(connection.set("d" + i, "myValue3" + i));
+        }
+
+        for (RedisFuture<?> future : futures) {
+            future.get();
         }
 
         for (int i = 0; i < 10000; i++) {

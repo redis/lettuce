@@ -60,15 +60,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     /**
      * 
-     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelUnregistered(io.netty.channel.ChannelHandlerContext)
-     */
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        buffer.release();
-    }
-
-    /**
-     * 
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
      */
     @Override
@@ -79,6 +70,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 return;
             }
 
+            if (buffer == null) {
+                logger.warn("CommandHandler is closed, incoming response will be discarded.");
+                return;
+            }
             buffer.writeBytes(input);
 
             if (logger.isDebugEnabled()) {
@@ -98,7 +93,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             RedisCommand<K, V, ?> cmd = queue.take();
             cmd.complete();
             buffer.discardReadBytes();
-       }
+        }
     }
 
     /**
@@ -218,6 +213,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (closed) {
             logger.warn("Client is already closed");
             return;
+        }
+
+        if (buffer != null) {
+            buffer.release();
+            buffer = null;
         }
 
         if (!closed && channel != null) {
