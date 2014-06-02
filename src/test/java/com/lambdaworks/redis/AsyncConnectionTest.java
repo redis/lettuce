@@ -94,9 +94,8 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
         sort.addListener(listener, executor);
 
-        while (!sort.isDone()) {
-            Thread.sleep(50);
-        }
+        sort.get();
+        Thread.sleep(100);
 
         assertEquals(1, run.size());
 
@@ -154,5 +153,41 @@ public class AsyncConnectionTest extends AbstractCommandTest {
     public void awaitAllTimeout() throws Exception {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
         assertFalse(LettuceFutures.awaitAll(1, TimeUnit.NANOSECONDS, blpop));
+    }
+
+    @Test
+    public void leakDiscovery() throws Exception {
+
+        for (int i = 0; i < 100; i++) {
+            RedisAsyncConnection<String, String> c2 = client.connectAsync();
+            async.ping();
+            RedisFuture<String> set = async.set("key", "value");
+            c2.set("key1", "value").get();
+            set.get();
+            async.close();
+            async = client.connectAsync();
+            c2.close();
+        }
+
+        List<Future> futuresSet = new ArrayList<Future>();
+        List<Future> futuresGet = new ArrayList<Future>();
+
+        for (int i = 0; i < 10000; i++) {
+            futuresSet.add(async.set("key" + i, "value" + i));
+        }
+
+        for (int i = 0; i < 10000; i++) {
+            futuresGet.add(async.get("key" + i));
+        }
+
+        for (Future future : futuresSet) {
+            future.get();
+
+        }
+
+        for (int i = 0; i < futuresGet.size(); i++) {
+            Future f = futuresGet.get(i);
+            assertEquals("value" + i, f.get());
+        }
     }
 }
