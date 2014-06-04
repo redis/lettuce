@@ -6,3 +6,5 @@ target/
 atlassian-ide-plugin.xml
 *.iml
 redis-git
+*.releaseBackup
+release.properties

@@ -89,6 +89,8 @@
                     <releaseProfiles>sonatype-oss-release</releaseProfiles>
                     <arguments>-DskipSigning=false</arguments>
                     <goals>deploy</goals>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
 
