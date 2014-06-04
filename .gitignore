@@ -4,5 +4,5 @@ target/
 
 -
 atlassian-ide-plugin.xml
-lettuce.iml
+*.iml
 redis-git
