@@ -3,7 +3,7 @@
 
     <groupId>biz.paluch.redis</groupId>
     <artifactId>lettuce-parent</artifactId>
-    <version>3.0.Beta1</version>
+    <version>3.1.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -137,10 +137,10 @@
     </properties>
 
     <scm>
-        <connection>scm:git:git://github.com/mp911de/lettuce.git</connection>
-        <developerConnection>scm:git:git://github.com/mp911de/lettuce.git</developerConnection>
+        <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
+        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
         <url>http://github.com/mp911de/lettuce</url>
-      <tag>3.0.Beta1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>
