@@ -263,6 +263,8 @@ stop:
 	pkill redis-sentinel || true
 	sleep 2
 	rm -f work/dump.rdb work/appendonly.aof work/*.conf work/*.log || true
+	rm -f *.aof
+	rm -f *.rdb
 
 
 test:

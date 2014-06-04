@@ -32,7 +32,7 @@
         </developer>
     </developers>
 
-     <modules>
+    <modules>
         <module>lettuce</module>
         <module>lettuce-shaded</module>
     </modules>
@@ -81,6 +81,16 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <releaseProfiles>sonatype-oss-release</releaseProfiles>
+                    <arguments>-DskipSigning=false</arguments>
+                    <goals>deploy</goals>
+                </configuration>
+            </plugin>
 
 
             <plugin>
