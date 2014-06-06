@@ -2,16 +2,10 @@
 
 package com.lambdaworks.redis.protocol;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -20,6 +14,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -38,6 +37,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private Channel channel;
     private boolean closed;
     private RedisChannelHandler<K, V> redisChannelHandler;
+    private Object lock = new Object();
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -70,17 +70,20 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 return;
             }
 
-            if (buffer == null) {
-                logger.warn("CommandHandler is closed, incoming response will be discarded.");
-                return;
-            }
-            buffer.writeBytes(input);
+            synchronized (lock) {
+                if (buffer == null) {
+                    logger.warn("CommandHandler is closed, incoming response will be discarded.");
+                    return;
+                }
+                buffer.writeBytes(input);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("[" + channel.remoteAddress() + "] Received: " + buffer.toString(Charset.defaultCharset()).trim());
-            }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[" + channel.remoteAddress() + "] Received: "
+                            + buffer.toString(Charset.defaultCharset()).trim());
+                }
 
-            decode(ctx, buffer);
+                decode(ctx, buffer);
+            }
 
         } finally {
             input.release();
@@ -218,7 +221,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         if (buffer != null) {
-            buffer.release();
+            synchronized (lock) {
+                buffer.release();
+            }
             buffer = null;
         }
 

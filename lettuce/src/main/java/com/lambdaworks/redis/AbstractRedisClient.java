@@ -21,6 +21,7 @@ import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.internal.ConcurrentSet;
+import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -35,7 +36,19 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractRedisClient {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
-    protected EventLoopGroup group;
+
+    private static final int DEFAULT_EVENT_LOOP_THREADS;
+
+    static {
+        DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil
+                .getInt("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 4));
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);
+        }
+    }
+
+    protected EventLoopGroup eventLoopGroup;
 
     protected HashedWheelTimer timer;
     protected ChannelGroup channels;
@@ -46,7 +59,7 @@ public abstract class AbstractRedisClient {
 
     public AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        group = new NioEventLoopGroup();
+        eventLoopGroup = new NioEventLoopGroup(Math.max(DEFAULT_EVENT_LOOP_THREADS, 8));
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
     }
@@ -71,7 +84,7 @@ public abstract class AbstractRedisClient {
 
             logger.debug("Connecting to Redis, address: " + redisAddress);
 
-            final Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
+            final Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
 
             final ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, timer, socketAddressSupplier);
@@ -135,7 +148,7 @@ public abstract class AbstractRedisClient {
             }
         }
         ChannelGroupFuture closeFuture = channels.close();
-        Future<?> groupCloseFuture = group.shutdownGracefully();
+        Future<?> groupCloseFuture = eventLoopGroup.shutdownGracefully();
         try {
             closeFuture.get();
             groupCloseFuture.get();
