@@ -7,17 +7,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
-
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
@@ -33,6 +22,15 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+
+import java.util.List;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -107,7 +105,19 @@ public class RedisClusterClientTest {
                 try {
                     String info = redis1.clusterInfo().get();
                     if (info != null && info.contains("cluster_state:ok")) {
+
+                        String s = redis1.clusterNodes().get();
+                        Partitions parse = ClusterPartitionParser.parse(s);
+
+                        for (RedisClusterNode redisClusterNode : parse) {
+                            if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.FAIL)
+                                    || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL)) {
+                                return false;
+                            }
+                        }
+
                         return true;
+
                     }
                 } catch (Exception e) {
 
@@ -124,30 +134,6 @@ public class RedisClusterClientTest {
         redis2.close();
         redis3.close();
         redis4.close();
-    }
-
-    public void cleanup() throws Exception {
-
-        int slots[] = createSlots(1, 16385);
-        List<RedisFuture<?>> futures = Lists.newArrayList();
-
-        for (int i = 0; i < slots.length; i++) {
-            futures.add(redis1.clusterDelSlots(i));
-            futures.add(redis2.clusterDelSlots(i));
-            futures.add(redis3.clusterDelSlots(i));
-            futures.add(redis4.clusterDelSlots(i));
-        }
-
-        for (int i = 0; i < slots.length; i++) {
-            futures.add(redis1.clusterDelSlots(i));
-            futures.add(redis2.clusterDelSlots(i));
-            futures.add(redis3.clusterDelSlots(i));
-            futures.add(redis4.clusterDelSlots(i));
-        }
-
-        for (RedisFuture<?> future : futures) {
-            future.get();
-        }
     }
 
     @Test
@@ -175,7 +161,7 @@ public class RedisClusterClientTest {
     }
 
     @Test
-    public void clusterSlaves() throws Exception {
+    public void zzzLastClusterSlaves() throws Exception {
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
 
         final RedisClusterNode node1 = Iterables.find(partitions, new Predicate<RedisClusterNode>() {
@@ -327,7 +313,7 @@ public class RedisClusterClientTest {
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
         List<RedisFuture<?>> futures = Lists.newArrayList();
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
             futures.add(connection.set("a" + i, "myValue1" + i));
             futures.add(connection.set("b" + i, "myValue2" + i));
             futures.add(connection.set("d" + i, "myValue3" + i));
@@ -337,7 +323,7 @@ public class RedisClusterClientTest {
             future.get();
         }
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
             RedisFuture<String> setA = connection.get("a" + i);
             RedisFuture<String> setB = connection.get("b" + i);
             RedisFuture<String> setD = connection.get("d" + i);

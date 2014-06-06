@@ -1,17 +1,11 @@
 package com.lambdaworks.redis;
 
-import java.io.Closeable;
-import java.net.SocketAddress;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.internal.ChannelGroupListener;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -24,10 +18,16 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
+import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.io.Closeable;
+import java.net.SocketAddress;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -36,6 +36,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public abstract class AbstractRedisClient {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
     protected EventLoopGroup group;
+
     protected HashedWheelTimer timer;
     protected ChannelGroup channels;
     protected long timeout;
@@ -89,7 +90,7 @@ public abstract class AbstractRedisClient {
                 }
             });
 
-            redisBootstrap.connect(redisAddress).sync();
+            redisBootstrap.connect(redisAddress).get();
 
             connection.addListener(new CloseEvents.CloseListener() {
                 @Override
@@ -100,7 +101,7 @@ public abstract class AbstractRedisClient {
             closeableResources.add(connection);
 
             return connection;
-        } catch (Throwable e) {
+        } catch (Exception e) {
             throw new RedisException("Unable to connect", e);
         }
     }
@@ -133,9 +134,14 @@ public abstract class AbstractRedisClient {
                 psCommandHandler.close();
             }
         }
-        ChannelGroupFuture future = channels.close();
-        future.awaitUninterruptibly();
-        group.shutdownGracefully().syncUninterruptibly();
+        ChannelGroupFuture closeFuture = channels.close();
+        Future<?> groupCloseFuture = group.shutdownGracefully();
+        try {
+            closeFuture.get();
+            groupCloseFuture.get();
+        } catch (Exception e) {
+            throw new RedisException(e);
+        }
         timer.stop();
     }
 
