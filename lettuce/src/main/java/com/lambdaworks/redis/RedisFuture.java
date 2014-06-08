@@ -20,5 +20,13 @@ public interface RedisFuture<V> extends ListenableFuture<V> {
      */
     String getError();
 
+    /**
+     * Wait up to the specified time for the command output to become available.
+     *
+     * @param timeout Maximum time to wait for a result.
+     * @param unit Unit of time for the timeout.
+     *
+     * @return true if the output became available.
+     */
     boolean await(long timeout, TimeUnit unit);
 }
