@@ -1,4 +1,4 @@
-<project name="Logstash/Gelf Loggers">
+<project name="lettuce">
     <bannerLeft>
         <name>lettuce - A scalable Java Redis client</name>
         <href>http://redis.paluch.biz/</href>
