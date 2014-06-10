@@ -28,7 +28,7 @@ public class ClientTest extends AbstractCommandTest {
 
         TestConnectionListener listener = new TestConnectionListener();
 
-        RedisClient client = new RedisClient(host);
+        RedisClient client = new RedisClient(host, port);
         client.addListener(listener);
 
         assertNull(listener.onConnected);

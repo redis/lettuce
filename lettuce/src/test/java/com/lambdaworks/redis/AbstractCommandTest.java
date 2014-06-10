@@ -14,7 +14,7 @@ import java.util.Set;
 
 public abstract class AbstractCommandTest {
     public static final String host = "localhost";
-    public static final int port = 6379;
+    public static final int port = 6479;
 
     public static final String passwd = "passwd";
 

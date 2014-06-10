@@ -2,9 +2,9 @@ PATH := ./work/redis-git/src:${PATH}
 
 define REDIS1_CONF
 daemonize yes
-port 6379
-pidfile work/redis1-6379.pid
-logfile work/redis1-6379.log
+port 6479
+pidfile work/redis1-6479.pid
+logfile work/redis1-6479.log
 save ""
 appendonly no
 client-output-buffer-limit pubsub 256k 128k 5
@@ -12,65 +12,65 @@ endef
 
 define REDIS2_CONF
 daemonize yes
-port 6380
-pidfile work/redis2-6380.pid
-logfile work/redis2-6380.log
+port 6480
+pidfile work/redis2-6480.pid
+logfile work/redis2-6480.log
 save ""
 appendonly no
 endef
 
 define REDIS3_CONF
 daemonize yes
-port 6381
-pidfile work/redis3-6381.pid
-logfile work/redis3-6381.log
+port 6481
+pidfile work/redis3-6481.pid
+logfile work/redis3-6481.log
 save ""
 appendonly no
 endef
 
 define REDIS4_CONF
 daemonize yes
-port 6382
-pidfile work/redis4-6382.pid
-logfile work/redis4-6382.log
+port 6482
+pidfile work/redis4-6482.pid
+logfile work/redis4-6482.log
 save ""
 appendonly no
-slaveof localhost 6381
+slaveof localhost 6481
 endef
 
 define REDIS5_CONF
 daemonize yes
-port 6383
-pidfile work/redis5-6383.pid
-logfile work/redis5-6383.log
+port 6483
+pidfile work/redis5-6483.pid
+logfile work/redis5-6483.log
 save ""
 appendonly no
 endef
 
 define REDIS6_CONF
 daemonize yes
-port 6384
-pidfile work/redis6-6384.pid
-logfile work/redis6-6384.log
+port 6484
+pidfile work/redis6-6484.pid
+logfile work/redis6-6484.log
 save ""
 appendonly no
 endef
 
 define REDIS7_CONF
 daemonize yes
-port 6385
-pidfile work/redis7-6385.pid
-logfile work/redis7-6385.log
+port 6485
+pidfile work/redis7-6485.pid
+logfile work/redis7-6485.log
 save ""
 appendonly no
-slaveof localhost 6384
+slaveof localhost 6484
 endef
 
 # SENTINELS
 define REDIS_SENTINEL1
 port 26379
 daemonize yes
-sentinel monitor mymaster 127.0.0.1 6379 1
+sentinel monitor mymaster 127.0.0.1 6479 1
 sentinel monitor myslave 127.0.0.1 16379 1
 sentinel down-after-milliseconds mymaster 2000
 sentinel failover-timeout mymaster 120000
@@ -82,7 +82,7 @@ endef
 define REDIS_SENTINEL2
 port 26380
 daemonize yes
-sentinel monitor mymaster 127.0.0.1 6381 1
+sentinel monitor mymaster 127.0.0.1 6481 1
 sentinel down-after-milliseconds mymaster 2000
 sentinel parallel-syncs mymaster 1
 sentinel failover-timeout mymaster 120000
@@ -93,7 +93,7 @@ endef
 define REDIS_SENTINEL3
 port 26381
 daemonize yes
-sentinel monitor mymasterfailover 127.0.0.1 6384 1
+sentinel monitor mymasterfailover 127.0.0.1 6484 1
 sentinel down-after-milliseconds mymasterfailover 2000
 sentinel failover-timeout mymasterfailover 120000
 sentinel parallel-syncs mymasterfailover 1
@@ -228,13 +228,13 @@ export REDIS_CLUSTER_NODE5_CONF
 export REDIS_CLUSTER_NODE6_CONF
 
 start: cleanup
-	echo "$$REDIS1_CONF" > work/redis1-6379.conf && redis-server work/redis1-6379.conf
-	echo "$$REDIS2_CONF" > work/redis2-6380.conf && redis-server work/redis2-6380.conf
-	echo "$$REDIS3_CONF" > work/redis3-6381.conf && redis-server work/redis3-6381.conf
-	echo "$$REDIS4_CONF" > work/redis3-6382.conf &&	redis-server work/redis3-6382.conf
-	echo "$$REDIS5_CONF" > work/redis2-6383.conf &&  redis-server work/redis2-6383.conf
-	echo "$$REDIS6_CONF" > work/redis2-6384.conf && redis-server work/redis2-6384.conf
-	echo "$$REDIS7_CONF" > work/redis2-6385.conf && redis-server work/redis2-6385.conf
+	echo "$$REDIS1_CONF" > work/redis1-6479.conf && redis-server work/redis1-6479.conf
+	echo "$$REDIS2_CONF" > work/redis2-6480.conf && redis-server work/redis2-6480.conf
+	echo "$$REDIS3_CONF" > work/redis3-6481.conf && redis-server work/redis3-6481.conf
+	echo "$$REDIS4_CONF" > work/redis3-6482.conf &&	redis-server work/redis3-6482.conf
+	echo "$$REDIS5_CONF" > work/redis2-6483.conf &&  redis-server work/redis2-6483.conf
+	echo "$$REDIS6_CONF" > work/redis2-6484.conf && redis-server work/redis2-6484.conf
+	echo "$$REDIS7_CONF" > work/redis2-6485.conf && redis-server work/redis2-6485.conf
 	echo "$$REDIS_SENTINEL1" > work/sentinel1-26379.conf && redis-server work/sentinel1-26379.conf --sentinel
 	@sleep 0.5
 	echo "$$REDIS_SENTINEL2" > work/sentinel2-26380.conf && redis-server work/sentinel2-26380.conf --sentinel
