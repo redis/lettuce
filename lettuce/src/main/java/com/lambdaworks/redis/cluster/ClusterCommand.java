@@ -1,10 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.common.util.concurrent.AbstractFuture;
 import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -12,6 +7,13 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -23,6 +25,7 @@ public class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisC
     private RedisChannelWriter<K, V> retry;
     private int executions;
     private int executionLimit;
+    private List<Throwable> exceptions = new ArrayList<Throwable>();
 
     public ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
         this.command = command;
@@ -110,5 +113,11 @@ public class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisC
     @Override
     public void encode(ByteBuf buf) {
         command.encode(buf);
+    }
+
+    @Override
+    public boolean setException(Throwable exception) {
+        exceptions.add(exception);
+        return command.setException(exception);
     }
 }

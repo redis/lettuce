@@ -23,19 +23,6 @@ public class ClientTest extends AbstractCommandTest {
         redis.get(key);
     }
 
-    @Test(expected = RedisException.class)
-    @Ignore
-    public void shutdown() throws Exception {
-        RedisClient client = new RedisClient(host);
-        RedisConnection<String, String> connection = client.connect();
-
-        assertTrue(connection.isOpen());
-        client.shutdown();
-
-        assertFalse(connection.isOpen());
-        connection.get(key);
-    }
-
     @Test
     public void listenerTest() throws Exception {
 

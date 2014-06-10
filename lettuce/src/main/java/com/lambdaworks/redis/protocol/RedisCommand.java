@@ -16,4 +16,6 @@ public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<
     CommandArgs<K, V> getArgs();
 
     void encode(ByteBuf buf);
+
+    boolean setException(Throwable e);
 }

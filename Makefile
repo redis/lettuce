@@ -276,8 +276,8 @@ test:
 travis-install:
 	pkill redis-server || true
 	pkill redis-sentinel || true
-	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git work/redis-git && cd work/redis-git|| true
-	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull || true
+	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch 3.0 --single-branch work/redis-git && cd work/redis-git|| true
+	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull && git checkout 3.0 || true
 	make -C work/redis-git clean
 	make -C work/redis-git -j4
 

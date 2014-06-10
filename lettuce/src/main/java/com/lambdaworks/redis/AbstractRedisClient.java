@@ -59,7 +59,7 @@ public abstract class AbstractRedisClient {
 
     public AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        eventLoopGroup = new NioEventLoopGroup(Math.max(DEFAULT_EVENT_LOOP_THREADS, 8));
+        eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
     }
@@ -147,6 +147,7 @@ public abstract class AbstractRedisClient {
                 psCommandHandler.close();
             }
         }
+
         ChannelGroupFuture closeFuture = channels.close();
         Future<?> groupCloseFuture = eventLoopGroup.shutdownGracefully();
         try {
