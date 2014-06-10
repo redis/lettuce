@@ -3,15 +3,13 @@
 package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Ignore;
+
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.util.concurrent.TimeUnit;
 
 public class ClientTest extends AbstractCommandTest {
     @Rule
@@ -51,10 +49,10 @@ public class ClientTest extends AbstractCommandTest {
 
     }
 
-    @Test(expected = RedisException.class, timeout = 100)
+    @Test(expected = RedisException.class)
     public void timeout() throws Exception {
         redis.setTimeout(0, TimeUnit.MICROSECONDS);
-        redis.get(key);
+        redis.eval(" os.execute(\"sleep \" .. tonumber(1))", ScriptOutputType.STATUS);
     }
 
     @Test
