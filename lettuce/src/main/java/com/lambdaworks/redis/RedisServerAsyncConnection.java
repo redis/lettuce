@@ -38,6 +38,8 @@ public interface RedisServerAsyncConnection<K, V> {
 
     RedisFuture<String> debugObject(K key);
 
+    void debugSegfault();
+
     RedisFuture<String> flushall();
 
     RedisFuture<String> flushdb();

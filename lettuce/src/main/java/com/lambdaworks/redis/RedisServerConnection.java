@@ -38,6 +38,8 @@ public interface RedisServerConnection<K, V> {
 
     String debugObject(K key);
 
+    void debugSegfault();
+
     String flushall();
 
     String flushdb();

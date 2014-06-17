@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ServerCommandTest extends AbstractCommandTest {
@@ -94,6 +95,12 @@ public class ServerCommandTest extends AbstractCommandTest {
     public void debugObject() throws Exception {
         redis.set(key, value);
         redis.debugObject(key);
+    }
+
+    @Test
+    @Ignore("This test will kill your redis server, therefore it's disabled by default")
+    public void debugSegfault() throws Exception {
+        redis.debugSegfault();
     }
 
     @Test

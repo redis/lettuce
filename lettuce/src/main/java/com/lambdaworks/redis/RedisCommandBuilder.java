@@ -162,6 +162,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEBUG, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Void> debugSegfault() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SEGFAULT);
+        return createCommand(DEBUG, new VoidOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> decr(K key) {
         return createCommand(DECR, new IntegerOutput<K, V>(codec), key);
     }

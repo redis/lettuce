@@ -201,6 +201,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public void debugSegfault() {
+        dispatch(commandBuilder.debugSegfault());
+    }
+
+    @Override
     public RedisFuture<Long> decr(K key) {
         return dispatch(commandBuilder.decr(key));
     }
