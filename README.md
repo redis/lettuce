@@ -17,7 +17,6 @@ Lettuce works with:
 
 Currently following commands are __not yet__ supported:
 
-* Sorted Sets: ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX 
 * Server Commands: DEBUG SEGFAULT, MONITOR, PUBSUB
 
 I'm pursuing the client code as a fork since the latest changes weren't merged back into https://github/wg/lettuce

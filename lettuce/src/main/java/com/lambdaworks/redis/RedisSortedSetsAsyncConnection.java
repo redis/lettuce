@@ -153,4 +153,12 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
+    RedisFuture<Long> zlexcount(K key, String min, String max);
+
+    RedisFuture<Long> zremrangebylex(K key, String min, String max);
+
+    RedisFuture<List<V>> zrangebylex(K key, String min, String max);
+
+    RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count);
 }

@@ -13,6 +13,7 @@ import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
@@ -1087,6 +1088,30 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZUNIONSTORE, new IntegerOutput<K, V>(codec), args);
     }
 
+    public RedisCommand<K, V, Long> zlexcount(K key, String min, String max) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max);
+        return createCommand(ZLEXCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public RedisCommand<K, V, Long> zremrangebylex(K key, String min, String max) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max);
+        return createCommand(ZREMRANGEBYLEX, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max);
+        return createCommand(ZRANGEBYLEX, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max, long offset, long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min).add(max).add(LIMIT).add(offset).add(count);
+        return createCommand(ZRANGEBYLEX, new ValueListOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, List<V>> time() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         return createCommand(TIME, new ValueListOutput<K, V>(codec), args);
@@ -1403,4 +1428,5 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
+
 }

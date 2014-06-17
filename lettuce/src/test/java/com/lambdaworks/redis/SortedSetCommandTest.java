@@ -14,6 +14,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
@@ -302,6 +303,38 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertTrue(cursor.isFinished());
 
         assertEquals(100, cursor.getValues().size());
+    }
+
+    @Test
+    public void zlexcount() throws Exception {
+        setup100KeyValues(new HashSet<String>());
+        Long result = redis.zlexcount(key, "-", "+");
+
+        assertEquals(100, result.longValue());
+
+        Long resultFromTo = redis.zlexcount(key, "[value", "[zzz");
+        assertEquals(100, resultFromTo.longValue());
+    }
+
+    @Test
+    public void zrangebylex() throws Exception {
+        setup100KeyValues(new HashSet<String>());
+        List<String> result = redis.zrangebylex(key, "-", "+");
+
+        assertEquals(100, result.size());
+
+        List<String> result2 = redis.zrangebylex(key, "-", "+", 10, 10);
+
+        assertEquals(10, result2.size());
+    }
+
+    @Test
+    public void zremrangebylex() throws Exception {
+        setup100KeyValues(new HashSet<String>());
+        Long result = redis.zremrangebylex(key, "(aaa", "[zzz");
+
+        assertEquals(100, result.longValue());
+
     }
 
     protected void setup100KeyValues(Set<String> expect) {

@@ -1471,6 +1471,26 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.clusterSlaves(nodeId));
     }
 
+    @Override
+    public RedisFuture<Long> zlexcount(K key, String min, String max) {
+        return dispatch(commandBuilder.zlexcount(key, min, max));
+    }
+
+    @Override
+    public RedisFuture<Long> zremrangebylex(K key, String min, String max) {
+        return dispatch(commandBuilder.zremrangebylex(key, min, max));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrangebylex(K key, String min, String max) {
+        return dispatch(commandBuilder.zrangebylex(key, min, max));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count) {
+        return dispatch(commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
     public <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
         return dispatch(type, output, null);
     }

@@ -151,4 +151,12 @@ public interface RedisSortedSetsConnection<K, V> {
     StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
+    Long zlexcount(K key, String min, String max);
+
+    Long zremrangebylex(K key, String min, String max);
+
+    List<V> zrangebylex(K key, String min, String max);
+
+    List<V> zrangebylex(K key, String min, String max, long offset, long count);
 }
