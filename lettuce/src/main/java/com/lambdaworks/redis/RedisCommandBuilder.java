@@ -506,6 +506,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PUBLISH, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<K>> pubsubChannels() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(CHANNELS);
+        return createCommand(PUBSUB, new KeyListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<K>> pubsubChannels(K pattern) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(CHANNELS).addKey(pattern);
+        return createCommand(PUBSUB, new KeyListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Map<K, Long>> pubsubNumsub(K... pattern) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NUMSUB).addKeys(pattern);
+        return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
+    }
+
+    public Command<K, V, Long> pubsubNumpat() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NUMPAT);
+        return createCommand(PUBSUB, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> quit() {
         return createCommand(QUIT, new StatusOutput<K, V>(codec));
     }

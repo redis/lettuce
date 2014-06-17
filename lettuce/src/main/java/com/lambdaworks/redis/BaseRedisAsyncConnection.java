@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -15,6 +16,14 @@ import java.util.List;
 public interface BaseRedisAsyncConnection<K, V> extends Closeable {
 
     RedisFuture<Long> publish(K channel, V message);
+
+    RedisFuture<List<K>> pubsubChannels();
+
+    RedisFuture<List<K>> pubsubChannels(K channel);
+
+    RedisFuture<Map<K, Long>> pubsubNumsub(K... channels);
+
+    RedisFuture<Long> pubsubNumpat();
 
     RedisFuture<V> echo(V msg);
 

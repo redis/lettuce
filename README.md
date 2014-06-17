@@ -17,7 +17,7 @@ Lettuce works with:
 
 Currently following commands are __not yet__ supported:
 
-* Server Commands: DEBUG SEGFAULT, MONITOR, PUBSUB
+* Server Commands: MONITOR
 
 I'm pursuing the client code as a fork since the latest changes weren't merged back into https://github/wg/lettuce
 I'd love not adding yet another Java redis client, but unfortunately it's the current situation.

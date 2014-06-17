@@ -593,6 +593,26 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<List<K>> pubsubChannels() {
+        return dispatch(commandBuilder.pubsubChannels());
+    }
+
+    @Override
+    public RedisFuture<List<K>> pubsubChannels(K channel) {
+        return dispatch(commandBuilder.pubsubChannels(channel));
+    }
+
+    @Override
+    public RedisFuture<Map<K, Long>> pubsubNumsub(K... channels) {
+        return dispatch(commandBuilder.pubsubNumsub(channels));
+    }
+
+    @Override
+    public RedisFuture<Long> pubsubNumpat() {
+        return dispatch(commandBuilder.pubsubNumpat());
+    }
+
+    @Override
     public RedisFuture<String> quit() {
         return dispatch(commandBuilder.quit());
     }
