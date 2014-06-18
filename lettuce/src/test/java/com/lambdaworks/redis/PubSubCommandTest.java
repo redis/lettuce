@@ -13,12 +13,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
@@ -100,7 +100,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     @Test
     public void pubsubChannels() throws Exception {
         pubsub.subscribe(channel);
-
+        Thread.sleep(100);
         List<String> result = redis.pubsubChannels();
         assertThat(result, hasItem(channel));
     }
@@ -108,7 +108,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     @Test
     public void pubsubChannelsWithArg() throws Exception {
         pubsub.subscribe(channel);
-
+        Thread.sleep(100);
         List<String> result = redis.pubsubChannels(pattern);
         assertThat(result, hasItem(channel));
     }
@@ -117,6 +117,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     public void pubsubNumsub() throws Exception {
 
         pubsub.subscribe(channel);
+        Thread.sleep(100);
 
         Map<String, Long> result = redis.pubsubNumsub(channel);
         assertEquals(1, result.size());
@@ -127,7 +128,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     public void pubsubNumpat() throws Exception {
 
         pubsub.psubscribe(pattern);
-
+        Thread.sleep(100);
         Long result = redis.pubsubNumpat();
         assertEquals(1L, result.longValue());
     }
