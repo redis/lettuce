@@ -31,9 +31,6 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     String quit();
 
-    @Override
-    void close();
-
     String digest(V script);
 
     String discard();
@@ -48,6 +45,16 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     Long waitForReplication(int replicas, long timeout);
 
+    /**
+     * Close the connection. The connection will become not usable anymore as soon as this method was called.
+     */
+    @Override
+    void close();
+
+    /**
+     * 
+     * @return true if the connection is open (connected and not closed).
+     */
     boolean isOpen();
 
 }
