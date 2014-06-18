@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +23,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
-    private RedisPubSubConnectionImpl<String, String> pubsub;
+    private RedisPubSubConnection<String, String> pubsub;
 
     private BlockingQueue<String> channels;
     private BlockingQueue<String> patterns;
