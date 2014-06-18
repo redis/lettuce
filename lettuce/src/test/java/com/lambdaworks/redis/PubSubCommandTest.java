@@ -2,9 +2,13 @@
 
 package com.lambdaworks.redis;
 
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -14,11 +18,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
-    private RedisPubSubConnectionImpl<String, String> pubsub;
+    private RedisPubSubConnection<String, String> pubsub;
 
     private BlockingQueue<String> channels;
     private BlockingQueue<String> patterns;
@@ -90,6 +95,42 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         pubsub.psubscribe(pattern);
         assertEquals(pattern, patterns.take());
         assertEquals(1, (long) counts.take());
+    }
+
+    @Test
+    public void pubsubChannels() throws Exception {
+        pubsub.subscribe(channel);
+        Thread.sleep(100);
+        List<String> result = redis.pubsubChannels();
+        assertThat(result, hasItem(channel));
+    }
+
+    @Test
+    public void pubsubChannelsWithArg() throws Exception {
+        pubsub.subscribe(channel);
+        Thread.sleep(100);
+        List<String> result = redis.pubsubChannels(pattern);
+        assertThat(result, hasItem(channel));
+    }
+
+    @Test
+    public void pubsubNumsub() throws Exception {
+
+        pubsub.subscribe(channel);
+        Thread.sleep(100);
+
+        Map<String, Long> result = redis.pubsubNumsub(channel);
+        assertEquals(1, result.size());
+        assertEquals("1", result.get(channel));
+    }
+
+    @Test
+    public void pubsubNumpat() throws Exception {
+
+        pubsub.psubscribe(pattern);
+        Thread.sleep(100);
+        Long result = redis.pubsubNumpat();
+        assertEquals(1L, result.longValue());
     }
 
     @Test(timeout = 200)

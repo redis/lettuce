@@ -5,10 +5,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.concurrent.ExecutionException;
 
 /**
+ * Utility for checking a connection's state.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 22:05
  */
 public class Connections {
+
+    /**
+     * 
+     * @param connection
+     * @return true if the connection is valid (ping works).
+     */
     public final static boolean isValid(Object connection) {
 
         checkNotNull(connection, "connection must not be null");
@@ -39,6 +47,11 @@ public class Connections {
         throw new IllegalArgumentException("Connection class " + connection.getClass() + " not supported");
     }
 
+    /**
+     * 
+     * @param connection
+     * @return true if the connection is open.
+     */
     public final static boolean isOpen(Object connection) {
 
         checkNotNull(connection, "connection must not be null");
@@ -55,6 +68,11 @@ public class Connections {
         throw new IllegalArgumentException("Connection class " + connection.getClass() + " not supported");
     }
 
+    /**
+     * Closes a connection.
+     * 
+     * @param connection
+     */
     public static void close(Object connection) {
 
         checkNotNull(connection, "connection must not be null");
