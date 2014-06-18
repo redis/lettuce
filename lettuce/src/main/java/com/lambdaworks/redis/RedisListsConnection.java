@@ -66,7 +66,7 @@ public interface RedisListsConnection<K, V> {
      * @param key the key
      * @param before the where type: enum
      * @param pivot the pivot type: value
-     * @param value the value type: value
+     * @param value the value
      * @return Long integer-reply the length of the list after the insert operation, or `-1` when the value `pivot` was not
      *         found.
      */
@@ -92,7 +92,7 @@ public interface RedisListsConnection<K, V> {
      * Prepend one or multiple values to a list.
      * 
      * @param key the key
-     * @param values the value type: value
+     * @param values the value
      * @return Long integer-reply the length of the list after the push operations.
      */
     Long lpush(K key, V... values);
@@ -101,7 +101,7 @@ public interface RedisListsConnection<K, V> {
      * Prepend a value to a list, only if the list exists.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return Long integer-reply the length of the list after the push operation.
      */
     Long lpushx(K key, V value);
@@ -128,7 +128,7 @@ public interface RedisListsConnection<K, V> {
      * 
      * @param key the key
      * @param count the count type: long
-     * @param value the value type: value
+     * @param value the value
      * @return Long integer-reply the number of removed elements.
      */
     Long lrem(K key, long count, V value);
@@ -138,7 +138,7 @@ public interface RedisListsConnection<K, V> {
      * 
      * @param key the key
      * @param index the index type: long
-     * @param value the value type: value
+     * @param value the value
      * @return String simple-string-reply
      */
     String lset(K key, long index, V value);
@@ -174,7 +174,7 @@ public interface RedisListsConnection<K, V> {
      * Append one or multiple values to a list.
      * 
      * @param key the key
-     * @param values the value type: value
+     * @param values the value
      * @return Long integer-reply the length of the list after the push operation.
      */
     Long rpush(K key, V... values);
@@ -183,7 +183,7 @@ public interface RedisListsConnection<K, V> {
      * Append a value to a list, only if the list exists.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return Long integer-reply the length of the list after the push operation.
      */
     Long rpushx(K key, V value);

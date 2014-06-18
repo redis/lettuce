@@ -65,7 +65,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param before the where type: enum
      * @param pivot the pivot type: value
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<Long> integer-reply the length of the list after the insert operation, or `-1` when the value `pivot`
      *         was not found.
      */
@@ -91,7 +91,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * Prepend one or multiple values to a list.
      * 
      * @param key the key
-     * @param values the value type: value
+     * @param values the value
      * @return RedisFuture<Long> integer-reply the length of the list after the push operations.
      */
     RedisFuture<Long> lpush(K key, V... values);
@@ -100,7 +100,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * Prepend a value to a list, only if the list exists.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
      */
     RedisFuture<Long> lpushx(K key, V value);
@@ -127,7 +127,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param count the count type: long
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<Long> integer-reply the number of removed elements.
      */
     RedisFuture<Long> lrem(K key, long count, V value);
@@ -137,7 +137,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param index the index type: long
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<String> simple-string-reply
      */
     RedisFuture<String> lset(K key, long index, V value);
@@ -173,16 +173,17 @@ public interface RedisListsAsyncConnection<K, V> {
      * Append one or multiple values to a list.
      * 
      * @param key the key
-     * @param values the value type: value
+     * @param values the value
      * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
      */
     RedisFuture<Long> rpush(K key, V... values);
 
     /**
-	 * Append a value to a list, only if the list exists.
-	 * @param key the key
-	 * @param value the value type: value
-	 * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
-	 */
+     * Append a value to a list, only if the list exists.
+     * 
+     * @param key the key
+     * @param value the value
+     * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
+     */
     RedisFuture<Long> rpushx(K key, V value);
 }

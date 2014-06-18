@@ -19,7 +19,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Append a value to a key.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<Long> integer-reply the length of the string after the append operation.
      */
     RedisFuture<Long> append(K key, V value);
@@ -142,7 +142,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Set the string value of a key and return its old value.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<V> bulk-string-reply the old value stored at `key`, or `nil` when `key` did not exist.
      */
     RedisFuture<V> getset(K key, V value);
@@ -235,7 +235,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param seconds the seconds type: long
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<String> simple-string-reply
      */
     RedisFuture<String> setex(K key, long seconds, V value);
@@ -245,28 +245,29 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param milliseconds the milliseconds type: long
-     * @param value the value type: value
+     * @param value the value
      */
     RedisFuture<String> psetex(K key, long milliseconds, V value);
 
     /**
-	 * Set the value of a key, only if the key does not exist.
-	 * @param key the key
-	 * @param value the value type: value
-	 * @return RedisFuture<Boolean> integer-reply specifically:
-
-	 * `1` if the key was set
-	 * `0` if the key was not set
-	 */
+     * Set the value of a key, only if the key does not exist.
+     * 
+     * @param key the key
+     * @param value the value
+     * @return RedisFuture<Boolean> integer-reply specifically:
+     * 
+     *         `1` if the key was set `0` if the key was not set
+     */
     RedisFuture<Boolean> setnx(K key, V value);
 
     /**
-	 * Overwrite part of a string at key starting at the specified offset.
-	 * @param key the key
-	 * @param offset the offset type: long
-	 * @param value the value type: value
-	 * @return RedisFuture<Long> integer-reply the length of the string after it was modified by the command.
-	 */
+     * Overwrite part of a string at key starting at the specified offset.
+     * 
+     * @param key the key
+     * @param offset the offset type: long
+     * @param value the value
+     * @return RedisFuture<Long> integer-reply the length of the string after it was modified by the command.
+     */
     RedisFuture<Long> setrange(K key, long offset, V value);
 
     /**

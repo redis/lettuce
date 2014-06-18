@@ -138,7 +138,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param field the field type: key
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<Boolean> integer-reply specifically:
      * 
      *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field` already exists in the hash and the
@@ -151,7 +151,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param field the field type: key
-     * @param value the value type: value
+     * @param value the value
      * @return RedisFuture<Boolean> integer-reply specifically:
      * 
      *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field` already exists in the hash and no

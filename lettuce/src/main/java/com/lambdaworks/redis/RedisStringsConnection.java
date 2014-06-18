@@ -19,7 +19,7 @@ public interface RedisStringsConnection<K, V> {
      * Append a value to a key.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return Long integer-reply the length of the string after the append operation.
      */
     Long append(K key, V value);
@@ -140,7 +140,7 @@ public interface RedisStringsConnection<K, V> {
      * Set the string value of a key and return its old value.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return V bulk-string-reply the old value stored at `key`, or `nil` when `key` did not exist.
      */
     V getset(K key, V value);
@@ -233,7 +233,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param seconds the seconds type: long
-     * @param value the value type: value
+     * @param value the value
      * @return String simple-string-reply
      */
     String setex(K key, long seconds, V value);
@@ -243,7 +243,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param milliseconds the milliseconds type: long
-     * @param value the value type: value
+     * @param value the value
      */
     String psetex(K key, long milliseconds, V value);
 
@@ -251,7 +251,7 @@ public interface RedisStringsConnection<K, V> {
      * Set the value of a key, only if the key does not exist.
      * 
      * @param key the key
-     * @param value the value type: value
+     * @param value the value
      * @return Boolean integer-reply specifically:
      * 
      *         `1` if the key was set `0` if the key was not set
@@ -263,7 +263,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param offset the offset type: long
-     * @param value the value type: value
+     * @param value the value
      * @return Long integer-reply the length of the string after it was modified by the command.
      */
     Long setrange(K key, long offset, V value);
