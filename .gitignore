@@ -8,3 +8,4 @@ atlassian-ide-plugin.xml
 redis-git
 *.releaseBackup
 release.properties
+work/
