@@ -10,10 +10,10 @@ import io.netty.util.internal.ConcurrentSet;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 16.05.14 10:59
  */
-public class CloseEvents {
+class CloseEvents {
     private Set<CloseListener> listeners = new ConcurrentSet<CloseListener>();
 
-    protected void fireEventClosed(Object resource) {
+    public void fireEventClosed(Object resource) {
         for (CloseListener listener : listeners) {
             listener.resourceClosed(resource);
         }

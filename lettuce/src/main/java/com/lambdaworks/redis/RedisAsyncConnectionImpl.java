@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.MultiOutput;
@@ -27,6 +26,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.SetArgs;
+import com.lambdaworks.redis.support.LettuceFutures;
 import io.netty.channel.ChannelHandler;
 
 /**

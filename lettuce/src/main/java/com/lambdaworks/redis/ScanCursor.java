@@ -10,6 +10,10 @@ public class ScanCursor {
     private String cursor;
     private boolean finished;
 
+    /**
+     * 
+     * @return cursor
+     */
     public String getCursor() {
         return cursor;
     }
@@ -18,6 +22,10 @@ public class ScanCursor {
         this.cursor = cursor;
     }
 
+    /**
+     * 
+     * @return true if the scan operation of this cursor is finished.
+     */
     public boolean isFinished() {
         return finished;
     }

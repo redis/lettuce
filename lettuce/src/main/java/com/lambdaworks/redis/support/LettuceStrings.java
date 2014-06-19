@@ -1,4 +1,4 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.support;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>>

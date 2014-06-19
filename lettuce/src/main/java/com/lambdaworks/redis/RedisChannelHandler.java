@@ -1,8 +1,10 @@
 package com.lambdaworks.redis;
 
+import java.io.Closeable;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -82,6 +84,18 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
 
         return channelWriter.write(cmd);
+    }
+
+    public void registerCloseables(final Collection<Closeable> registry, final Closeable... closeables) {
+        registry.addAll(Arrays.asList(closeables));
+
+        addListener(new CloseEvents.CloseListener() {
+            @Override
+            public void resourceClosed(Object resource) {
+                registry.removeAll(Arrays.asList(closeables));
+
+            }
+        });
     }
 
     public void addListener(CloseEvents.CloseListener listener) {

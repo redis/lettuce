@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis.internal;
+package com.lambdaworks.redis;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,7 +14,7 @@ import io.netty.channel.group.ChannelGroup;
  * @author Will Glozer
  */
 @ChannelHandler.Sharable
-public class ChannelGroupListener extends ChannelInboundHandlerAdapter {
+class ChannelGroupListener extends ChannelInboundHandlerAdapter {
 
     private ChannelGroup channels;
 

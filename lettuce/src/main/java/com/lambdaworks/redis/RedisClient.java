@@ -2,23 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import com.google.common.base.Supplier;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.internal.ChannelGroupListener;
-import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioSocketChannel;
-
-import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
@@ -26,6 +9,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.google.common.base.Supplier;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
+import com.lambdaworks.redis.support.LettuceStrings;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
@@ -241,9 +241,7 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connectAsyncImpl(codec, withReconnect));
-        return (RedisConnection<K, V>) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class[] { RedisConnection.class }, h);
+        return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect), RedisConnection.class);
     }
 
     /**
@@ -424,12 +422,7 @@ public class RedisClient extends AbstractRedisClient {
             }
         }
 
-        connection.addListener(new CloseEvents.CloseListener() {
-            @Override
-            public void resourceClosed(Object resource) {
-                closeableResources.remove(resource);
-            }
-        });
+        connection.registerCloseables(closeableResources, connection);
 
         return connection;
     }

@@ -1,11 +1,17 @@
 package com.lambdaworks.redis;
 
+import java.io.Closeable;
+import java.lang.reflect.Proxy;
+import java.net.SocketAddress;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.lambdaworks.redis.internal.ChannelGroupListener;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -25,11 +31,6 @@ import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-import java.io.Closeable;
-import java.net.SocketAddress;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:28
@@ -40,8 +41,8 @@ public abstract class AbstractRedisClient {
     private static final int DEFAULT_EVENT_LOOP_THREADS;
 
     static {
-        DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil
-                .getInt("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 4));
+        DEFAULT_EVENT_LOOP_THREADS = Math.max(1,
+                SystemPropertyUtil.getInt("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 4));
 
         if (logger.isDebugEnabled()) {
             logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);
@@ -105,13 +106,7 @@ public abstract class AbstractRedisClient {
 
             redisBootstrap.connect(redisAddress).get();
 
-            connection.addListener(new CloseEvents.CloseListener() {
-                @Override
-                public void resourceClosed(Object resource) {
-                    closeableResources.remove(resource);
-                }
-            });
-            closeableResources.add(connection);
+            connection.registerCloseables(closeableResources, connection);
 
             return connection;
         } catch (Exception e) {
@@ -165,6 +160,11 @@ public abstract class AbstractRedisClient {
 
     protected int getChannelCount() {
         return channels.size();
+    }
+
+    protected <K, V> Object syncHandler(RedisAsyncConnectionImpl<K, V> connection, Class<?> interfaceClass) {
+        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connection);
+        return Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { interfaceClass }, h);
     }
 
     /**

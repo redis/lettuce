@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandOutput;

@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;

@@ -7,7 +7,6 @@ import java.net.URI;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
 import com.google.common.net.HostAndPort;
-import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 

@@ -1,9 +1,11 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.support;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 

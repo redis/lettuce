@@ -1,6 +1,9 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.support;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisConnection;
 
 import java.util.concurrent.ExecutionException;
 

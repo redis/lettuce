@@ -5,8 +5,10 @@ import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.reflect.AbstractInvocationHandler;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.support.LettuceFutures;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -17,7 +19,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 12:28
  */
-public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
+class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final RedisAsyncConnectionImpl<K, V> connection;
     protected long timeout;

@@ -2,7 +2,7 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 
-import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.support.LettuceStrings;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;

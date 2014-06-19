@@ -7,7 +7,7 @@ package com.lambdaworks.redis;
  * @param <T> Connection type.
  * @since 14.05.14 21:58
  */
-public interface RedisConnectionProvider<T> {
+interface RedisConnectionProvider<T> {
     T createConnection();
 
     Class<?> getComponentType();

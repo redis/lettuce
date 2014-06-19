@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.Command;
 
 /**
@@ -21,8 +20,7 @@ import com.lambdaworks.redis.protocol.Command;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:27
  */
-public class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
-        RedisSentinelAsyncConnection<K, V> {
+class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisSentinelAsyncConnection<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
 

@@ -8,7 +8,7 @@ import java.util.Map;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.support.LettuceStrings;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 

@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
@@ -14,8 +13,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.CloseEvents;
-import com.lambdaworks.redis.FutureSyncInvocationHandler;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
@@ -88,9 +85,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     @SuppressWarnings("unchecked")
     public <K, V> RedisClusterConnection<K, V> connectCluster(RedisCodec<K, V> codec) {
 
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connectClusterAsyncImpl(codec));
-        return (RedisClusterConnection<K, V>) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class<?>[] { RedisClusterConnection.class }, h);
+        return (RedisClusterConnection<K, V>) syncHandler(connectClusterAsyncImpl(codec), RedisClusterConnection.class);
     }
 
     /**
@@ -137,13 +132,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         }, true);
 
-        connection.addListener(new CloseEvents.CloseListener() {
-            @Override
-            public void resourceClosed(Object resource) {
-                closeableResources.remove(resource);
-            }
-        });
-        closeableResources.add(connection);
+        connection.registerCloseables(closeableResources, connection);
 
         return connection;
     }
@@ -182,18 +171,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connectAsyncImpl(handler, connection, socketAddressSupplier, true);
 
-        connection.addListener(new CloseEvents.CloseListener() {
-            @Override
-            public void resourceClosed(Object resource) {
-                closeableResources.remove(resource);
-                closeableResources.remove(clusterWriter);
-                closeableResources.remove(pooledClusterConnectionProvider);
-            }
-        });
-
-        closeableResources.add(connection);
-        closeableResources.add(clusterWriter);
-        closeableResources.add(pooledClusterConnectionProvider);
+        connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
 
         if (getFirstUri().getPassword() != null) {
             connection.auth(new String(getFirstUri().getPassword()));

@@ -1,8 +1,7 @@
-package com.lambdaworks.redis.internal;
+package com.lambdaworks.redis;
 
 import java.io.Closeable;
 
-import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**

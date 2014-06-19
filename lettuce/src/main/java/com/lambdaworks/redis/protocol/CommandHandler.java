@@ -10,7 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.internal.RedisChannelWriter;
+import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.output.VoidOutput;
 
 import io.netty.buffer.ByteBuf;

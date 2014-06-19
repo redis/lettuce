@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
-import io.netty.util.internal.ConcurrentSet;
-
 import java.util.Set;
+
+import io.netty.util.internal.ConcurrentSet;
 
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners.
@@ -10,7 +10,7 @@ import java.util.Set;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 16.05.14 10:59
  */
-public class ConnectionEvents {
+class ConnectionEvents {
     private final Set<RedisConnectionStateListener> listeners = new ConcurrentSet<RedisConnectionStateListener>();
 
     protected void fireEventRedisConnected(RedisChannelHandler<?, ?> connection) {

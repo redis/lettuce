@@ -1,4 +1,4 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.support;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -6,6 +6,8 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.AbstractInvocationHandler;
+import com.lambdaworks.redis.RedisConnectionPool;
+import com.lambdaworks.redis.RedisException;
 
 /**
  * Invocation handler which takes care of connection.close(). Connections are returned to the pool on a close()-call.

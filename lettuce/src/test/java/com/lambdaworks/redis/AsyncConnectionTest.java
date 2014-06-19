@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.support.LettuceFutures;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -78,7 +79,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
             }
         };
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             redis.lpush(key, "" + i);
         }
         ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
@@ -86,10 +87,9 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
         Long len = connection.llen(key).get();
-        assertEquals(100, len.intValue());
+        assertEquals(1000, len.intValue());
 
         RedisFuture<List<String>> sort = connection.sort(key);
-        assertFalse(sort.isDone());
         assertFalse(sort.isCancelled());
 
         sort.addListener(listener, executor);

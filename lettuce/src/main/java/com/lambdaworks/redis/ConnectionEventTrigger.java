@@ -9,7 +9,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  * @since 16.05.14 21:18
  */
 @ChannelHandler.Sharable
-public class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
+class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
     private ConnectionEvents connectionEvents;
     private RedisChannelHandler<?, ?> connection;
 

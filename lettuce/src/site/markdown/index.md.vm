@@ -17,11 +17,11 @@ Maven:
     <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>${project.artifactId}</artifactId>
-        <version>${lettuce.release.version}</version>
+        <version>${lettuce-release-version}</version>
     </dependency>
 
 
-All versions: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22biz.paluch.redis%22%20AND%20a%3A%22lettuce%22
+All versions: [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22biz.paluch.redis%22%20AND%20a%3A%22lettuce%22)
 
-Snapshots: https://oss.sonatype.org/#nexus-search;gav~biz.paluch.redis~lettuce~~~ 
+Snapshots: [Sonatype OSS Repository](https://oss.sonatype.org/#nexus-search;gav~biz.paluch.redis~lettuce~~~) 
 
