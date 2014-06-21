@@ -106,10 +106,11 @@ public abstract class AbstractRedisClient {
 
             redisBootstrap.connect(redisAddress).get();
 
-            connection.registerCloseables(closeableResources, connection);
+            connection.registerCloseables(closeableResources, connection, handler);
 
             return connection;
         } catch (Exception e) {
+            connection.close();
             throw new RedisException("Unable to connect", e);
         }
     }
@@ -119,14 +120,14 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown() {
 
-        ImmutableList<Closeable> autoCloseables = ImmutableList.copyOf(closeableResources);
-        for (Closeable closeableResource : autoCloseables) {
+        while (!closeableResources.isEmpty()) {
+            Closeable closeableResource = closeableResources.iterator().next();
             try {
                 closeableResource.close();
             } catch (Exception e) {
                 logger.debug("Exception on Close: " + e.getMessage(), e);
-
             }
+            closeableResources.remove(closeableResource);
         }
 
         for (Channel c : channels) {

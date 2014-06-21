@@ -261,7 +261,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         logger.debug("close()");
 
         if (closed) {
-            logger.warn("Client is already closed");
             return;
         }
 
@@ -276,12 +275,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             buffer = null;
         }
 
-        if (!closed && channel != null) {
+        closed = true;
+
+        if (channel != null) {
             ConnectionWatchdog watchdog = channel.pipeline().get(ConnectionWatchdog.class);
             if (watchdog != null) {
                 watchdog.setReconnect(false);
             }
-            closed = true;
+
             try {
                 channel.close().sync();
             } catch (InterruptedException e) {
@@ -289,9 +290,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             channel = null;
-
         }
-
     }
 
     public boolean isClosed() {

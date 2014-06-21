@@ -1,6 +1,7 @@
 package com.lambdaworks.redis;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +21,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:09
  */
-public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
+public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter implements Closeable {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
@@ -65,7 +66,6 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         if (!closed) {
             active = false;
             closed = true;
-            channelWriter.close();
             closeEvents.fireEventClosed(this);
             closeEvents = null;
         }
@@ -92,8 +92,19 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         addListener(new CloseEvents.CloseListener() {
             @Override
             public void resourceClosed(Object resource) {
-                registry.removeAll(Arrays.asList(closeables));
+                for (Closeable closeable : closeables) {
+                    if (closeable == RedisChannelHandler.this) {
+                        continue;
+                    }
 
+                    try {
+                        closeable.close();
+                    } catch (IOException e) {
+                        logger.debug(e.toString(), e);
+                    }
+                }
+
+                registry.removeAll(Arrays.asList(closeables));
             }
         });
     }

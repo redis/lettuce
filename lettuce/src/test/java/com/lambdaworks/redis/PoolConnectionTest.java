@@ -124,18 +124,18 @@ public class PoolConnectionTest extends AbstractCommandTest {
         pool1.allocateConnection();
 
         assertEquals(1, redisClient.getChannelCount());
-        assertEquals(2, redisClient.getResourceCount());
+        assertEquals(3, redisClient.getResourceCount());
 
         RedisConnectionPool<RedisConnection<String, String>> pool2 = redisClient.pool();
 
-        assertEquals(3, redisClient.getResourceCount());
+        assertEquals(4, redisClient.getResourceCount());
 
         pool2.allocateConnection();
 
-        assertEquals(4, redisClient.getResourceCount());
+        assertEquals(6, redisClient.getResourceCount());
 
         redisClient.pool().close();
-        assertEquals(4, redisClient.getResourceCount());
+        assertEquals(6, redisClient.getResourceCount());
 
         redisClient.shutdown();
 
