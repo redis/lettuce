@@ -20,7 +20,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 public class CustomCodecTest extends AbstractCommandTest {
     @Test
     public void test() throws Exception {
-        RedisConnection<String, Object> connection = (RedisConnection) client.connect(new SerializedObjectCodec());
+        RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec());
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertEquals(list, connection.get(key));

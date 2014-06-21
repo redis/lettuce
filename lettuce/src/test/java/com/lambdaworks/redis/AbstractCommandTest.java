@@ -2,16 +2,16 @@
 
 package com.lambdaworks.redis;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public abstract class AbstractCommandTest {
     public static final String host = "localhost";
@@ -27,6 +27,8 @@ public abstract class AbstractCommandTest {
 
     @BeforeClass
     public static void setupClient() {
+        // LogManager.resetConfiguration();
+        // PropertyConfigurator.configure(AbstractCommandTest.class.getClassLoader().getResource("log4j.properties"));
         client = getRedisClient();
     }
 

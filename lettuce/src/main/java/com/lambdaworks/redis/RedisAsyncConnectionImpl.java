@@ -603,7 +603,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<Map<K, Long>> pubsubNumsub(K... channels) {
+    public RedisFuture<Map<K, String>> pubsubNumsub(K... channels) {
         return dispatch(commandBuilder.pubsubNumsub(channels));
     }
 

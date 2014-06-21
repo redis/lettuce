@@ -516,7 +516,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PUBSUB, new KeyListOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Map<K, Long>> pubsubNumsub(K... pattern) {
+    @SuppressWarnings("unchecked")
+    public Command<K, V, Map<K, String>> pubsubNumsub(K... pattern) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NUMSUB).addKeys(pattern);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
     }
