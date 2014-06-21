@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis;
 
+import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -19,6 +20,7 @@ public abstract class AbstractCommandTest {
     public static final String passwd = "passwd";
 
     protected static RedisClient client;
+    protected Logger log = Logger.getLogger(getClass());
     protected RedisConnection<String, String> redis;
     protected String key = "key";
     protected String value = "value";
