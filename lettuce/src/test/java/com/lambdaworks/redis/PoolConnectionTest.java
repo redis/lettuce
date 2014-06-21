@@ -150,6 +150,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
 
+        c1.ping();
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         for (int i = 0; i < 1000; i++) {
@@ -168,6 +169,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnectionPool<RedisAsyncConnection<String, String>> pool = client.asyncPool();
         RedisAsyncConnection<String, String> c1 = pool.allocateConnection();
 
+        c1.ping();
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         for (int i = 0; i < 1000; i++) {
