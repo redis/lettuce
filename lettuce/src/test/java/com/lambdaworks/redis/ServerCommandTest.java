@@ -48,8 +48,10 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void clientKill() throws Exception {
-        Pattern p = Pattern.compile("addr=(\\S+)");
-        Matcher m = p.matcher(redis.clientList());
+        Pattern p = Pattern.compile(".*addr=([^ ]+).*");
+        String clients = redis.clientList();
+        Matcher m = p.matcher(clients);
+
         assertTrue(m.lookingAt());
         assertEquals("OK", redis.clientKill(m.group(1)));
     }

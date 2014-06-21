@@ -124,18 +124,18 @@ public class PoolConnectionTest extends AbstractCommandTest {
         pool1.allocateConnection();
 
         assertEquals(1, redisClient.getChannelCount());
-        assertEquals(2, redisClient.getResourceCount());
+        assertEquals(3, redisClient.getResourceCount());
 
         RedisConnectionPool<RedisConnection<String, String>> pool2 = redisClient.pool();
 
-        assertEquals(3, redisClient.getResourceCount());
+        assertEquals(4, redisClient.getResourceCount());
 
         pool2.allocateConnection();
 
-        assertEquals(4, redisClient.getResourceCount());
+        assertEquals(6, redisClient.getResourceCount());
 
         redisClient.pool().close();
-        assertEquals(4, redisClient.getResourceCount());
+        assertEquals(6, redisClient.getResourceCount());
 
         redisClient.shutdown();
 
@@ -150,6 +150,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
 
+        c1.ping();
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         for (int i = 0; i < 1000; i++) {
@@ -168,6 +169,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnectionPool<RedisAsyncConnection<String, String>> pool = client.asyncPool();
         RedisAsyncConnection<String, String> c1 = pool.allocateConnection();
 
+        c1.ping();
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         for (int i = 0; i < 1000; i++) {
