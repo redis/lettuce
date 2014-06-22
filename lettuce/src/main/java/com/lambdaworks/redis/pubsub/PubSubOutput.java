@@ -73,6 +73,8 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
             case unsubscribe:
                 channel = codec.decodeKey(bytes);
                 break;
+            default:
+                throw new UnsupportedOperationException("Operation " + type + " not supported");
         }
     }
 

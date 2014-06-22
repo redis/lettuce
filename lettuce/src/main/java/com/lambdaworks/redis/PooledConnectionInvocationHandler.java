@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.support;
+package com.lambdaworks.redis;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -6,8 +6,6 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.AbstractInvocationHandler;
-import com.lambdaworks.redis.RedisConnectionPool;
-import com.lambdaworks.redis.RedisException;
 
 /**
  * Invocation handler which takes care of connection.close(). Connections are returned to the pool on a close()-call.
@@ -16,8 +14,8 @@ import com.lambdaworks.redis.RedisException;
  * @param <T> Connection type.
  * @since 23.05.14 22:14
  */
-public class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
-    public final static Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit");
+class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
+    public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit");
 
     private T connection;
     private final RedisConnectionPool<T> pool;

@@ -14,7 +14,6 @@ import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.output.VoidOutput;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -173,7 +172,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             logger.trace("[" + ctx.channel().remoteAddress() + "] Sent: " + buf.toString(Charset.defaultCharset()).trim());
         }
 
-        if (cmd.getOutput() instanceof VoidOutput) {
+        if (cmd.getOutput() == null) {
             ctx.write(buf, promise);
             cmd.complete();
         } else {
@@ -194,29 +193,31 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         try {
             writeLock.lock();
-            this.channel.set(ctx.channel());
 
-            tmp.addAll(queue);
             tmp.addAll(commandBuffer);
+            tmp.addAll(queue);
 
             queue.clear();
             commandBuffer.clear();
+
+            this.channel.set(ctx.channel());
 
             if (redisChannelHandler != null) {
                 redisChannelHandler.activated();
             }
 
-            for (RedisCommand<K, V, ?> cmd : tmp) {
-                if (!cmd.isCancelled()) {
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[" + this + "] channelActive() triggering command " + cmd);
-                    }
-                    ctx.channel().writeAndFlush(cmd);
-                }
-            }
         } finally {
             writeLock.unlock();
+        }
+
+        for (RedisCommand<K, V, ?> cmd : tmp) {
+            if (!cmd.isCancelled()) {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[" + this + "] channelActive() triggering command " + cmd);
+                }
+                ctx.channel().writeAndFlush(cmd);
+            }
         }
 
         tmp.clear();

@@ -14,7 +14,15 @@ public class LettuceCharsets {
     public static final Charset ASCII = Charset.forName("US-ASCII");
     public static final Charset UTF8 = Charset.forName("UTF-8");
 
+    /**
+     * Utility constructor.
+     */
+    private LettuceCharsets() {
+
+    }
+
     public static ByteBuffer buffer(String s) {
         return ByteBuffer.wrap(s.getBytes(ASCII));
     }
+
 }

@@ -26,7 +26,6 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.SetArgs;
-import com.lambdaworks.redis.support.LettuceFutures;
 import io.netty.channel.ChannelHandler;
 
 /**

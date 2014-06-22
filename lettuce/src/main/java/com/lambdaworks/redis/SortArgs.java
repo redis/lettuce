@@ -2,20 +2,24 @@
 
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ALPHA;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ASC;
+import static com.lambdaworks.redis.protocol.CommandKeyword.BY;
+import static com.lambdaworks.redis.protocol.CommandKeyword.DESC;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.STORE;
+import static com.lambdaworks.redis.protocol.CommandType.GET;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
-import static com.lambdaworks.redis.protocol.CommandType.GET;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the redis <a href="http://redis.io/commands/sort">SORT</a>
- * command. Static import the methods from {@link Builder} and chain the method calls:
- * <code>by("weight_*").desc().limit(0, 2)</code>.
- *
+ * Argument list builder for the redis <a href="http://redis.io/commands/sort">SORT</a> command. Static import the methods from
+ * {@link Builder} and chain the method calls: <code>by("weight_*").desc().limit(0, 2)</code>.
+ * 
  * @author Will Glozer
  */
 public class SortArgs {
@@ -29,6 +33,13 @@ public class SortArgs {
      * Static builder methods.
      */
     public static class Builder {
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+
+        }
+
         public static SortArgs by(String pattern) {
             return new SortArgs().by(pattern);
         }
@@ -61,7 +72,7 @@ public class SortArgs {
 
     public SortArgs limit(long offset, long count) {
         this.offset = offset;
-        this.count  = count;
+        this.count = count;
         return this;
     }
 

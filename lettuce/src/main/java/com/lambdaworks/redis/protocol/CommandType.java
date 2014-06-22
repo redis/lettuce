@@ -73,7 +73,7 @@ public enum CommandType {
     // CLUSTER
     ASKING, CLUSTER;
 
-    public byte[] bytes;
+    public final byte[] bytes;
 
     private CommandType() {
         bytes = name().getBytes(LettuceCharsets.ASCII);

@@ -11,7 +11,9 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.MULTI;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE;
 
 import java.nio.ByteBuffer;
+import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 
 import com.lambdaworks.redis.RedisException;
 
@@ -40,7 +42,7 @@ public class RedisStateMachine<K, V> {
         int count = -1;
     }
 
-    private final LinkedList<State> stack;
+    private final Deque<State> stack;
 
     /**
      * Initialize a new instance.
@@ -147,6 +149,9 @@ public class RedisStateMachine<K, V> {
                         break loop;
                     }
                     output.set(bytes);
+                    break;
+                default:
+                    throw new IllegalStateException("State " + state.type + " not supported");
             }
 
             buffer.markReaderIndex();

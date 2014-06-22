@@ -27,8 +27,6 @@ public abstract class AbstractCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        // LogManager.resetConfiguration();
-        // PropertyConfigurator.configure(AbstractCommandTest.class.getClassLoader().getResource("log4j.properties"));
         client = getRedisClient();
     }
 

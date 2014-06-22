@@ -2,13 +2,13 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.google.common.util.concurrent.AbstractFuture;
-import com.lambdaworks.redis.RedisCommandInterruptedException;
-import io.netty.buffer.ByteBuf;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.google.common.util.concurrent.AbstractFuture;
+import com.lambdaworks.redis.RedisCommandInterruptedException;
+import io.netty.buffer.ByteBuf;
 
 /**
  * A redis command and its result. All successfully executed commands will eventually return a {@link CommandOutput} object.
@@ -20,12 +20,14 @@ import java.util.concurrent.TimeoutException;
  * @author Will Glozer
  */
 public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
+
     private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
-    public final CommandType type;
     protected CommandArgs<K, V> args;
     protected CommandOutput<K, V, T> output;
     protected CountDownLatch latch;
+
+    private final CommandType type;
     private boolean multi;
     private Throwable exception;
 
@@ -235,7 +237,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [type=").append(type);
         sb.append(", output=").append(output);
@@ -255,4 +257,5 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         this.exception = exception;
         return true;
     }
+
 }

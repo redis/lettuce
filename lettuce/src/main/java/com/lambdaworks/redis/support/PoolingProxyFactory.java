@@ -14,6 +14,13 @@ import com.lambdaworks.redis.RedisConnectionPool;
 public class PoolingProxyFactory {
 
     /**
+     * Utility constructor.
+     */
+    private PoolingProxyFactory() {
+
+    }
+
+    /**
      * Creates a transparent connection pooling proxy. Will re-check the connection every 5 secs.
      * 
      * @param connectionPool The Redis connection pool

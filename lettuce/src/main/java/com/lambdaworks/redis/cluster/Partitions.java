@@ -37,7 +37,7 @@ class Partitions implements Iterable<RedisClusterNode> {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" ").append(partitions);
         return sb.toString();

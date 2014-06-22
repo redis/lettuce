@@ -2,21 +2,28 @@
 
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.protocol.CommandKeyword.AGGREGATE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MAX;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MIN;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SUM;
+import static com.lambdaworks.redis.protocol.CommandKeyword.WEIGHTS;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import com.lambdaworks.redis.protocol.CommandArgs;
 
-import java.util.*;
-
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
-
 /**
- * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a>
- * and <a href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the
- * methods from {@link Builder} and chain the method calls: <code>weights(1, 2).max()</code>.
- *
+ * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and <a
+ * href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
+ * chain the method calls: <code>weights(1, 2).max()</code>.
+ * 
  * @author Will Glozer
  */
 public class ZStoreArgs {
-    private static enum Aggregate { SUM, MIN, MAX }
+    private static enum Aggregate {
+        SUM, MIN, MAX
+    }
 
     private List<Long> weights;
     private Aggregate aggregate;
@@ -25,6 +32,14 @@ public class ZStoreArgs {
      * Static builder methods.
      */
     public static class Builder {
+
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+
+        }
+
         public static ZStoreArgs weights(long... weights) {
             return new ZStoreArgs().weights(weights);
         }
@@ -85,6 +100,8 @@ public class ZStoreArgs {
                 case MAX:
                     args.add(MAX);
                     break;
+                default:
+                    throw new IllegalArgumentException("Aggregation " + aggregate + " not supported");
             }
         }
     }

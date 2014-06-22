@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.support.LettuceFutures;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

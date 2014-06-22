@@ -10,5 +10,5 @@ package com.lambdaworks.redis;
 interface RedisConnectionProvider<T> {
     T createConnection();
 
-    Class<?> getComponentType();
+    Class<? extends T> getComponentType();
 }

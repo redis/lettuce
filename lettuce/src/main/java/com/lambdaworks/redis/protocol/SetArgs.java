@@ -16,6 +16,13 @@ public class SetArgs {
     private boolean xx = false;
 
     public static class Builder {
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+
+        }
+
         public static SetArgs ex(long ex) {
             return new SetArgs().ex(ex);
         }

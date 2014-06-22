@@ -115,7 +115,7 @@ public abstract class CommandOutput<K, V, T> {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [output=").append(output);
         sb.append(", error='").append(error).append('\'');
