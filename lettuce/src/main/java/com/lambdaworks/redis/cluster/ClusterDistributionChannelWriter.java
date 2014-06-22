@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
-import com.lambdaworks.redis.support.LettuceStrings;
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;

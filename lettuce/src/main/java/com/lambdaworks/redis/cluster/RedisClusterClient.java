@@ -188,9 +188,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (partitions == null) {
             initializePartitions();
         } else {
-            Partitions partitions = getPartitions();
+            Partitions loadedPartitions = getPartitions();
             this.partitions.getPartitions().clear();
-            this.partitions.getPartitions().addAll(partitions.getPartitions());
+            this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
         }
     }
 

@@ -1,9 +1,6 @@
-package com.lambdaworks.redis.support;
+package com.lambdaworks.redis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisConnection;
 
 import java.util.concurrent.ExecutionException;
 
@@ -13,14 +10,21 @@ import java.util.concurrent.ExecutionException;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 22:05
  */
-public class Connections {
+class Connections {
+
+    /**
+     * Utility constructor.
+     */
+    private Connections() {
+
+    }
 
     /**
      * 
      * @param connection
      * @return true if the connection is valid (ping works).
      */
-    public final static boolean isValid(Object connection) {
+    public static final boolean isValid(Object connection) {
 
         checkNotNull(connection, "connection must not be null");
         if (connection instanceof RedisAsyncConnection<?, ?>) {
@@ -55,7 +59,7 @@ public class Connections {
      * @param connection
      * @return true if the connection is open.
      */
-    public final static boolean isOpen(Object connection) {
+    public static final boolean isOpen(Object connection) {
 
         checkNotNull(connection, "connection must not be null");
         if (connection instanceof RedisAsyncConnection<?, ?>) {

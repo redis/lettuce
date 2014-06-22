@@ -104,8 +104,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void failover() throws Exception {
 
-        RedisCommand result = (RedisCommand) sentinel.failover("mymaster");
-        result.get();
+        RedisFuture<String> mymaster = sentinel.failover("mymaster");
+        mymaster.get();
 
     }
 

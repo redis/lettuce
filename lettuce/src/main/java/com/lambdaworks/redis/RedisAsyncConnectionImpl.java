@@ -26,7 +26,6 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.SetArgs;
-import com.lambdaworks.redis.support.LettuceFutures;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -603,7 +602,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<Map<K, Long>> pubsubNumsub(K... channels) {
+    public RedisFuture<Map<K, String>> pubsubNumsub(K... channels) {
         return dispatch(commandBuilder.pubsubNumsub(channels));
     }
 

@@ -6,7 +6,14 @@ package com.lambdaworks.codec;
  */
 public class CRC16 {
 
-    public final static int polynomial = 0x1021;
+    public static final int polynomial = 0x1021;
+
+    /**
+     * Utility constructor.
+     */
+    private CRC16() {
+
+    }
 
     public static int crc16(byte[] bytes) {
         int crc = 0;
@@ -16,8 +23,9 @@ public class CRC16 {
                 boolean c15 = ((crc >> 15 & 1) == 1);
                 crc <<= 1;
 
-                if (c15 ^ bit)
+                if (c15 ^ bit) {
                     crc ^= polynomial;
+                }
             }
         }
 

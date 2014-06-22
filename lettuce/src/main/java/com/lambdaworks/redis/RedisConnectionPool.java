@@ -3,8 +3,6 @@ package com.lambdaworks.redis;
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
 
-import com.lambdaworks.redis.support.Connections;
-import com.lambdaworks.redis.support.PooledConnectionInvocationHandler;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
@@ -134,7 +132,7 @@ public class RedisConnectionPool<T> implements Closeable {
         closeEvents = null;
     }
 
-    public Class<?> getComponentType() {
+    public Class<? extends T> getComponentType() {
         return redisConnectionProvider.getComponentType();
     }
 

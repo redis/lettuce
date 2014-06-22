@@ -45,7 +45,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * @param channels
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
-    RedisFuture<Map<K, Long>> pubsubNumsub(K... channels);
+    RedisFuture<Map<K, String>> pubsubNumsub(K... channels);
 
     /**
      * Returns the number of subscriptions to patterns.

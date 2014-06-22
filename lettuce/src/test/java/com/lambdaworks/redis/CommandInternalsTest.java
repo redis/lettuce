@@ -120,8 +120,5 @@ public class CommandInternalsTest {
     public void sillyTestsForEmmaCoverage() throws Exception {
         assertEquals(CommandType.APPEND, CommandType.valueOf("APPEND"));
         assertEquals(CommandKeyword.AFTER, CommandKeyword.valueOf("AFTER"));
-        assertNotNull(new ZStoreArgs.Builder());
-        assertNotNull(new SortArgs.Builder());
-        assertNotNull(new LettuceCharsets());
     }
 }

@@ -17,7 +17,7 @@ public class BitCommandTest extends AbstractCommandTest {
 
     @Before
     public final void openBitStringConnection() throws Exception {
-        bitstring = (RedisConnection) client.connect(new BitStringCodec());
+        bitstring = client.connect(new BitStringCodec());
     }
 
     @After

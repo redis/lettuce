@@ -159,7 +159,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
 
-        System.out.println("syncPoolPerformanceTest Duration: " + elapsed + "ms");
+        log.info("syncPoolPerformanceTest Duration: " + elapsed + "ms");
 
     }
 
@@ -178,7 +178,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
 
-        System.out.println("asyncPoolPerformanceTest Duration: " + elapsed + "ms");
+        log.info("asyncPoolPerformanceTest Duration: " + elapsed + "ms");
 
     }
 

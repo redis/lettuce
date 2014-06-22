@@ -231,8 +231,8 @@ start: cleanup
 	echo "$$REDIS1_CONF" > work/redis1-6479.conf && redis-server work/redis1-6479.conf
 	echo "$$REDIS2_CONF" > work/redis2-6480.conf && redis-server work/redis2-6480.conf
 	echo "$$REDIS3_CONF" > work/redis3-6481.conf && redis-server work/redis3-6481.conf
-	echo "$$REDIS4_CONF" > work/redis3-6482.conf &&	redis-server work/redis3-6482.conf
-	echo "$$REDIS5_CONF" > work/redis2-6483.conf &&  redis-server work/redis2-6483.conf
+	echo "$$REDIS4_CONF" > work/redis3-6482.conf && redis-server work/redis3-6482.conf
+	echo "$$REDIS5_CONF" > work/redis2-6483.conf && redis-server work/redis2-6483.conf
 	echo "$$REDIS6_CONF" > work/redis2-6484.conf && redis-server work/redis2-6484.conf
 	echo "$$REDIS7_CONF" > work/redis2-6485.conf && redis-server work/redis2-6485.conf
 	echo "$$REDIS_SENTINEL1" > work/sentinel1-26379.conf && redis-server work/sentinel1-26379.conf --sentinel

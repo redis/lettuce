@@ -7,6 +7,17 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
@@ -22,15 +33,6 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
-
-import java.util.List;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -227,6 +229,7 @@ public class RedisClusterClientTest {
     }
 
     @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testClusterRedirection() throws Exception {
 
         int slot1 = SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
@@ -287,6 +290,7 @@ public class RedisClusterClientTest {
         backendConnection.set("a", "b");
         backendConnection.close();
 
+        Thread.sleep(100);
         assertTrue(backendConnection.isClosed());
         assertFalse(backendConnection.isOpen());
 
@@ -308,12 +312,12 @@ public class RedisClusterClientTest {
     }
 
     @Test(timeout = 20000)
-    public void massiveClusteredAccess() throws Exception {
+    public void distributedClusteredAccess() throws Exception {
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
         List<RedisFuture<?>> futures = Lists.newArrayList();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             futures.add(connection.set("a" + i, "myValue1" + i));
             futures.add(connection.set("b" + i, "myValue2" + i));
             futures.add(connection.set("d" + i, "myValue3" + i));
@@ -323,7 +327,7 @@ public class RedisClusterClientTest {
             future.get();
         }
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             RedisFuture<String> setA = connection.get("a" + i);
             RedisFuture<String> setB = connection.get("b" + i);
             RedisFuture<String> setD = connection.get("d" + i);

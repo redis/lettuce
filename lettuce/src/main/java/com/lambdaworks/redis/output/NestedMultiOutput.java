@@ -4,6 +4,7 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @author Will Glozer
  */
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private final LinkedList<List<Object>> stack;
+    private final Deque<List<Object>> stack;
     private int depth;
 
     public NestedMultiOutput(RedisCodec<K, V> codec) {

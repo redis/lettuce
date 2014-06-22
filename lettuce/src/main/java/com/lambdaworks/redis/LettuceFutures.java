@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.support;
+package com.lambdaworks.redis;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +36,9 @@ public class LettuceFutures {
             long time = System.nanoTime();
 
             for (Future<?> f : futures) {
-                if (nanos < 0)
+                if (nanos < 0) {
                     return false;
+                }
                 f.get(nanos, TimeUnit.NANOSECONDS);
                 long now = System.nanoTime();
                 nanos -= now - time;
@@ -60,8 +61,9 @@ public class LettuceFutures {
             throw new RedisException("Command timed out");
         }
         CommandOutput<K, V, T> output = cmd.getOutput();
-        if (output.hasError())
+        if (output.hasError()) {
             throw new RedisException(output.getError());
+        }
         return output.get();
     }
 }

@@ -8,9 +8,9 @@ import java.util.Map;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.lambdaworks.redis.support.LettuceStrings;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.LettuceStrings;
 
 /**
  * Parser for node information output (CLUSTER NODES).
@@ -20,9 +20,6 @@ import com.lambdaworks.redis.RedisURI;
  */
 public class ClusterPartitionParser {
 
-    private static final String TOKEN_MYSELF = "myself";
-    private static final String TOKEN_SLOT_IMPORT = "-<-";
-    private static final String TOKEN_SLOT_MIGRATING = "->-";
     private static final String TOKEN_SLOT_IN_TRANSITION = "[";
     private static final char TOKEN_NODE_SEPARATOR = '\n';
     private static final Map<String, RedisClusterNode.NodeFlag> FLAG_MAPPING = new HashMap<String, RedisClusterNode.NodeFlag>() {
@@ -41,6 +38,9 @@ public class ClusterPartitionParser {
         }
     };
 
+    /**
+     * Utility constructor.
+     */
     private ClusterPartitionParser() {
 
     }

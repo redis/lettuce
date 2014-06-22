@@ -33,10 +33,4 @@ class ChannelGroupListener extends ChannelInboundHandlerAdapter {
         channels.remove(ctx.channel());
         super.channelInactive(ctx);
     }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
-    }
-
 }
