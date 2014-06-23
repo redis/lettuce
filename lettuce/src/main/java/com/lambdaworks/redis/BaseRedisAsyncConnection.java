@@ -20,14 +20,15 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * 
      * @param channel the channel type: key
      * @param message the message type: value
-     * @return RedisFuture<Long> integer-reply the number of clients that received the message.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of clients that received the message.
      */
     RedisFuture<Long> publish(K channel, V message);
 
     /**
      * Lists the currently *active channels*.
      * 
-     * @return RedisFuture<List<K>> array-reply a list of active channels, optionally matching the specified pattern.
+     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply a list of active channels, optionally matching the specified
+     *         pattern.
      */
     RedisFuture<List<K>> pubsubChannels();
 
@@ -35,7 +36,8 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * Lists the currently *active channels*.
      * 
      * @param channel the key
-     * @return RedisFuture<List<K>> array-reply a list of active channels, optionally matching the specified pattern.
+     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply a list of active channels, optionally matching the specified
+     *         pattern.
      */
     RedisFuture<List<K>> pubsubChannels(K channel);
 
@@ -50,7 +52,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
     /**
      * Returns the number of subscriptions to patterns.
      * 
-     * @return RedisFuture<Long> integer-reply the number of patterns all the clients are subscribed to.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of patterns all the clients are subscribed to.
      */
     RedisFuture<Long> pubsubNumpat();
 
@@ -58,21 +60,21 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * Echo the given string.
      * 
      * @param msg the message type: value
-     * @return RedisFuture<V> bulk-string-reply
+     * @return RedisFuture&lt;V&gt; bulk-string-reply
      */
     RedisFuture<V> echo(V msg);
 
     /**
      * Ping the server.
      * 
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> ping();
 
     /**
      * Close the connection.
      * 
-     * @return RedisFuture<String> simple-string-reply always OK.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always OK.
      */
     RedisFuture<String> quit();
 
@@ -87,24 +89,24 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
     /**
      * Discard all commands issued after MULTI.
      * 
-     * @return RedisFuture<String> simple-string-reply always `OK`.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
      */
     RedisFuture<String> discard();
 
     /**
      * Execute all commands issued after MULTI.
      * 
-     * @return RedisFuture<List<Object>> array-reply each element being the reply to each of the commands in the atomic
-     *         transaction.
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply each element being the reply to each of the commands in the
+     *         atomic transaction.
      * 
-     *         When using `WATCH`, `EXEC` can return a
+     *         When using <code>WATCH</code>, <code>EXEC</code> can return a
      */
     RedisFuture<List<Object>> exec();
 
     /**
      * Mark the start of a transaction block.
      * 
-     * @return RedisFuture<String> simple-string-reply always `OK`.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
      */
     RedisFuture<String> multi();
 
@@ -112,14 +114,14 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * Watch the given keys to determine execution of the MULTI/EXEC block.
      * 
      * @param keys the key
-     * @return RedisFuture<String> simple-string-reply always `OK`.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
      */
     RedisFuture<String> watch(K... keys);
 
     /**
      * Forget about all watched keys.
      * 
-     * @return RedisFuture<String> simple-string-reply always `OK`.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
      */
     RedisFuture<String> unwatch();
 

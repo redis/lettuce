@@ -9,3 +9,7 @@ redis-git
 *.releaseBackup
 release.properties
 work/
+.project
+.classpath
+.settings
+dependency-reduced-pom.xml

@@ -18,11 +18,11 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param timeout the key
      * @param keys the timeout type: long
-     * @return RedisFuture<KeyValue<K,V>> array-reply specifically:
+     * @return RedisFuture&lt;KeyValue&lt;K,V&gt;&gt; array-reply specifically:
      * 
-     *         A `nil` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with the
-     *         first element being the name of the key where an element was popped and the second element being the value of the
-     *         popped element.
+     *         A <code>nil</code> multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         with the first element being the name of the key where an element was popped and the second element being the
+     *         value of the popped element.
      */
     RedisFuture<KeyValue<K, V>> blpop(long timeout, K... keys);
 
@@ -31,11 +31,11 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param timeout the key
      * @param keys the timeout type: long
-     * @return RedisFuture<KeyValue<K,V>> array-reply specifically:
+     * @return RedisFuture&lt;KeyValue&lt;K,V&gt;&gt; array-reply specifically:
      * 
-     *         A `nil` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with the
-     *         first element being the name of the key where an element was popped and the second element being the value of the
-     *         popped element.
+     *         A <code>nil</code> multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         with the first element being the name of the key where an element was popped and the second element being the
+     *         value of the popped element.
      */
     RedisFuture<KeyValue<K, V>> brpop(long timeout, K... keys);
 
@@ -45,8 +45,8 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param timeout the source type: key
      * @param source the destination type: key
      * @param destination the timeout type: long
-     * @return RedisFuture<V> bulk-string-reply the element being popped from `source` and pushed to `destination`. If `timeout`
-     *         is reached, a
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the element being popped from <code>source</code> and pushed to
+     *         <code>destination</code>. If <code>timeout</code> is reached, a
      */
     RedisFuture<V> brpoplpush(long timeout, K source, K destination);
 
@@ -55,7 +55,8 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param index the index type: long
-     * @return RedisFuture<V> bulk-string-reply the requested element, or `nil` when `index` is out of range.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the requested element, or <code>nil</code> when <code>index</code> is out
+     *         of range.
      */
     RedisFuture<V> lindex(K key, long index);
 
@@ -66,8 +67,8 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param before the before
      * @param pivot the pivot
      * @param value the value
-     * @return RedisFuture<Long> integer-reply the length of the list after the insert operation, or `-1` when the value `pivot`
-     *         was not found.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the insert operation, or <code>-1</code> when
+     *         the value <code>pivot</code> was not found.
      */
     RedisFuture<Long> linsert(K key, boolean before, V pivot, V value);
 
@@ -75,7 +76,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * Get the length of a list.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply the length of the list at `key`.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list at <code>key</code>.
      */
     RedisFuture<Long> llen(K key);
 
@@ -83,7 +84,8 @@ public interface RedisListsAsyncConnection<K, V> {
      * Remove and get the first element in a list.
      * 
      * @param key the key
-     * @return RedisFuture<V> bulk-string-reply the value of the first element, or `nil` when `key` does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the value of the first element, or <code>nil</code> when <code>key</code>
+     *         does not exist.
      */
     RedisFuture<V> lpop(K key);
 
@@ -92,7 +94,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param values the value
-     * @return RedisFuture<Long> integer-reply the length of the list after the push operations.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operations.
      */
     RedisFuture<Long> lpush(K key, V... values);
 
@@ -101,7 +103,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param value the value
-     * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operation.
      */
     RedisFuture<Long> lpushx(K key, V value);
 
@@ -111,7 +113,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified range.
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of elements in the specified range.
      */
     RedisFuture<List<V>> lrange(K key, long start, long stop);
 
@@ -122,7 +124,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
-     * @return RedisFuture<Long> count of elements in the specified range.
+     * @return RedisFuture&lt;Long&gt; count of elements in the specified range.
      */
     RedisFuture<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
@@ -132,7 +134,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param count the count type: long
      * @param value the value
-     * @return RedisFuture<Long> integer-reply the number of removed elements.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of removed elements.
      */
     RedisFuture<Long> lrem(K key, long count, V value);
 
@@ -142,7 +144,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param index the index type: long
      * @param value the value
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> lset(K key, long index, V value);
 
@@ -152,7 +154,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> ltrim(K key, long start, long stop);
 
@@ -160,7 +162,8 @@ public interface RedisListsAsyncConnection<K, V> {
      * Remove and get the last element in a list.
      * 
      * @param key the key
-     * @return RedisFuture<V> bulk-string-reply the value of the last element, or `nil` when `key` does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the value of the last element, or <code>nil</code> when <code>key</code>
+     *         does not exist.
      */
     RedisFuture<V> rpop(K key);
 
@@ -169,7 +172,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param source the source type: key
      * @param destination the destination type: key
-     * @return RedisFuture<V> bulk-string-reply the element being popped and pushed.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the element being popped and pushed.
      */
     RedisFuture<V> rpoplpush(K source, K destination);
 
@@ -178,7 +181,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param values the value
-     * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operation.
      */
     RedisFuture<Long> rpush(K key, V... values);
 
@@ -187,7 +190,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param value the value
-     * @return RedisFuture<Long> integer-reply the length of the list after the push operation.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operation.
      */
     RedisFuture<Long> rpushx(K key, V value);
 }

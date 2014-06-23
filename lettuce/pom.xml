@@ -13,6 +13,12 @@
     <artifactId>lettuce</artifactId>
     <name>Java redis client</name>
 
+    <scm>
+        <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
+        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
+        <url>http://github.com/mp911de/lettuce</url>
+    </scm>
+
     <dependencies>
         <dependency>
             <groupId>io.netty</groupId>

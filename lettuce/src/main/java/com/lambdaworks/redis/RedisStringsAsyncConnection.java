@@ -20,7 +20,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param value the value
-     * @return RedisFuture<Long> integer-reply the length of the string after the append operation.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the string after the append operation.
      */
     RedisFuture<Long> append(K key, V value);
 
@@ -29,7 +29,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * 
-     * @return RedisFuture<Long> integer-reply The number of bits set to 1.
+     * @return RedisFuture&lt;Long&gt; integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key);
 
@@ -40,7 +40,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param start the start
      * @param end the end
      * 
-     * @return RedisFuture<Long> integer-reply The number of bits set to 1.
+     * @return RedisFuture&lt;Long&gt; integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key, long start, long end);
 
@@ -50,22 +50,22 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param state the state
      * 
-     * @return RedisFuture<Long> integer-reply The command returns the position of the first bit set to 1 or 0 according to the
-     *         request.
+     * @return RedisFuture&lt;Long&gt; integer-reply The command returns the position of the first bit set to 1 or 0 according
+     *         to the request.
      * 
      *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
      *         returned.
      * 
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
      *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *         command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
+     *         command <code>BITPOS key 0</code> will return 24, since up to bit 23 all the bits are 1.
      * 
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
-     *         specify no range or the _start_ argument **only**.
+     *         specify no range or the <em>start</em> argument <strong>only</strong>.
      * 
-     *         However this behavior changes if you are looking for clear bits and specify a range with both __start__ and
-     *         __end__. If no clear bit is found in the specified range, the function returns -1 as the user specified a clear
-     *         range and there are no 0 bits in that range.
+     *         However this behavior changes if you are looking for clear bits and specify a range with both
+     *         <strong>end</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
+     *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
     RedisFuture<Long> bitpos(K key, boolean state);
 
@@ -76,22 +76,22 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param state the bit type: long
      * @param start the start type: long
      * @param end the end type: long
-     * @return RedisFuture<Long> integer-reply The command returns the position of the first bit set to 1 or 0 according to the
-     *         request.
+     * @return RedisFuture&lt;Long&gt; integer-reply The command returns the position of the first bit set to 1 or 0 according
+     *         to the request.
      * 
      *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
      *         returned.
      * 
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
      *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *         command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
+     *         command <code>BITPOS key 0</code> will return 24, since up to bit 23 all the bits are 1.
      * 
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
-     *         specify no range or the _start_ argument **only**.
+     *         specify no range or the <em>start</em> argument <strong>only</strong>.
      * 
-     *         However this behavior changes if you are looking for clear bits and specify a range with both __start__ and
-     *         __end__. If no clear bit is found in the specified range, the function returns -1 as the user specified a clear
-     *         range and there are no 0 bits in that range.
+     *         However this behavior changes if you are looking for clear bits and specify a range with both
+     *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
+     *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
     RedisFuture<Long> bitpos(K key, boolean state, long start, long end);
 
@@ -100,8 +100,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param destination result key of the operation
      * @param keys operation input key names
-     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
-     *         of the longest input string.
+     * @return RedisFuture&lt;Long&gt; integer-reply The size of the string stored in the destination key, that is equal to the
+     *         size of the longest input string.
      */
     RedisFuture<Long> bitopAnd(K destination, K... keys);
 
@@ -110,8 +110,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param destination result key of the operation
      * @param source operation input key names
-     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
-     *         of the longest input string.
+     * @return RedisFuture&lt;Long&gt; integer-reply The size of the string stored in the destination key, that is equal to the
+     *         size of the longest input string.
      */
     RedisFuture<Long> bitopNot(K destination, K source);
 
@@ -120,8 +120,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param destination result key of the operation
      * @param keys operation input key names
-     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
-     *         of the longest input string.
+     * @return RedisFuture&lt;Long&gt; integer-reply The size of the string stored in the destination key, that is equal to the
+     *         size of the longest input string.
      */
     RedisFuture<Long> bitopOr(K destination, K... keys);
 
@@ -130,8 +130,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param destination result key of the operation
      * @param keys operation input key names
-     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
-     *         of the longest input string.
+     * @return RedisFuture&lt;Long&gt; integer-reply The size of the string stored in the destination key, that is equal to the
+     *         size of the longest input string.
      */
     RedisFuture<Long> bitopXor(K destination, K... keys);
 
@@ -139,7 +139,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Decrement the integer value of a key by one.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply the value of `key` after the decrement
+     * @return RedisFuture&lt;Long&gt; integer-reply the value of <code>key</code> after the decrement
      */
     RedisFuture<Long> decr(K key);
 
@@ -148,7 +148,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param amount the decrement type: long
-     * @return RedisFuture<Long> integer-reply the value of `key` after the decrement
+     * @return RedisFuture&lt;Long&gt; integer-reply the value of <code>key</code> after the decrement
      */
     RedisFuture<Long> decrby(K key, long amount);
 
@@ -156,7 +156,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Get the value of a key.
      * 
      * @param key the key
-     * @return RedisFuture<V> bulk-string-reply the value of `key`, or `nil` when `key` does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the value of <code>key</code>, or <code>nil</code> when <code>key</code>
+     *         does not exist.
      */
     RedisFuture<V> get(K key);
 
@@ -165,7 +166,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param offset the offset type: long
-     * @return RedisFuture<Long> integer-reply the bit value stored at _offset_.
+     * @return RedisFuture&lt;Long&gt; integer-reply the bit value stored at <em>offset</em>.
      */
     RedisFuture<Long> getbit(K key, long offset);
 
@@ -175,7 +176,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param start the start type: long
      * @param end the end type: long
-     * @return RedisFuture<V> bulk-string-reply
+     * @return RedisFuture&lt;V&gt; bulk-string-reply
      */
     RedisFuture<V> getrange(K key, long start, long end);
 
@@ -184,7 +185,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param value the value
-     * @return RedisFuture<V> bulk-string-reply the old value stored at `key`, or `nil` when `key` did not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the old value stored at <code>key</code>, or <code>nil</code> when
+     *         <code>key</code> did not exist.
      */
     RedisFuture<V> getset(K key, V value);
 
@@ -192,7 +194,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Increment the integer value of a key by one.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply the value of `key` after the increment
+     * @return RedisFuture&lt;Long&gt; integer-reply the value of <code>key</code> after the increment
      */
     RedisFuture<Long> incr(K key);
 
@@ -201,7 +203,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param amount the increment type: long
-     * @return RedisFuture<Long> integer-reply the value of `key` after the increment
+     * @return RedisFuture&lt;Long&gt; integer-reply the value of <code>key</code> after the increment
      */
     RedisFuture<Long> incrby(K key, long amount);
 
@@ -210,7 +212,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param amount the increment type: double
-     * @return RedisFuture<Double> bulk-string-reply the value of `key` after the increment.
+     * @return RedisFuture&lt;Double;&gt; bulk-string-reply the value of <code>key</code> after the increment.
      */
     RedisFuture<Double> incrbyfloat(K key, double amount);
 
@@ -218,7 +220,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Get the values of all the given keys.
      * 
      * @param keys the key
-     * @return RedisFuture<List<V>> array-reply list of values at the specified keys.
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
      */
     RedisFuture<List<V>> mget(K... keys);
 
@@ -228,7 +230,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param channel the channel
      * @param keys the keys
      * 
-     * @return RedisFuture<Long> array-reply list of values at the specified keys.
+     * @return RedisFuture&lt;Long&gt; array-reply list of values at the specified keys.
      */
     RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys);
 
@@ -236,7 +238,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Set multiple keys to multiple values.
      * 
      * @param map the null
-     * @return RedisFuture<String> simple-string-reply always `OK` since `MSET` can't fail.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code> since <code>MSET</code> can't fail.
      */
     RedisFuture<String> mset(Map<K, V> map);
 
@@ -244,9 +246,9 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Set multiple keys to multiple values, only if none of the keys exist.
      * 
      * @param map the null
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the all the keys were set. `0` if no key was set (at least one key already existed).
+     *         <code>1</code> if the all the keys were set. <code>0</code> if no key was set (at least one key already existed).
      */
     RedisFuture<Boolean> msetnx(Map<K, V> map);
 
@@ -256,7 +258,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param value the value
      * 
-     * @return RedisFuture<String> simple-string-reply `OK` if `SET` was executed correctly.
+     * @return RedisFuture&lt;String&gt; simple-string-reply <code>OK</code> if <code>SET</code> was executed correctly.
      */
     RedisFuture<String> set(K key, V value);
 
@@ -267,7 +269,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param value the value
      * @param setArgs the setArgs
      * 
-     * @return RedisFuture<V> simple-string-reply `OK` if `SET` was executed correctly.
+     * @return RedisFuture&lt;V&gt; simple-string-reply <code>OK</code> if <code>SET</code> was executed correctly.
      */
     RedisFuture<V> set(K key, V value, SetArgs setArgs);
 
@@ -277,7 +279,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param offset the offset type: long
      * @param value the value type: string
-     * @return RedisFuture<Long> integer-reply the original bit value stored at _offset_.
+     * @return RedisFuture&lt;Long&gt; integer-reply the original bit value stored at <em>offset</em>.
      */
     RedisFuture<Long> setbit(K key, long offset, int value);
 
@@ -287,7 +289,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param seconds the seconds type: long
      * @param value the value
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> setex(K key, long seconds, V value);
 
@@ -297,7 +299,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param milliseconds the milliseconds type: long
      * @param value the value
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> psetex(K key, long milliseconds, V value);
 
@@ -306,9 +308,9 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param value the value
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the key was set `0` if the key was not set
+     *         <code>1</code> if the key was set <code>0</code> if the key was not set
      */
     RedisFuture<Boolean> setnx(K key, V value);
 
@@ -318,7 +320,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param offset the offset type: long
      * @param value the value
-     * @return RedisFuture<Long> integer-reply the length of the string after it was modified by the command.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the string after it was modified by the command.
      */
     RedisFuture<Long> setrange(K key, long offset, V value);
 
@@ -326,7 +328,8 @@ public interface RedisStringsAsyncConnection<K, V> {
      * Get the length of the value stored in a key.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply the length of the string at `key`, or `0` when `key` does not exist.
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the string at <code>key</code>, or <code>0</code> when
+     *         <code>key</code> does not exist.
      */
     RedisFuture<Long> strlen(K key);
 }

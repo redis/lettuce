@@ -37,7 +37,7 @@ public interface RedisKeysConnection<K, V> {
      * @param key the key
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the key exists. `0` if the key does not exist.
+     *         <code>1</code> if the key exists. <code>0</code> if the key does not exist.
      */
     Boolean exists(K key);
 
@@ -48,7 +48,8 @@ public interface RedisKeysConnection<K, V> {
      * @param seconds the seconds type: long
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set.
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set.
      */
     Boolean expire(K key, long seconds);
 
@@ -59,7 +60,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     Boolean expireat(K key, Date timestamp);
 
@@ -70,7 +72,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     Boolean expireat(K key, long timestamp);
 
@@ -78,7 +81,7 @@ public interface RedisKeysConnection<K, V> {
      * Find all keys matching the given pattern.
      * 
      * @param pattern the pattern type: patternkey (pattern)
-     * @return List<K> array-reply list of keys matching `pattern`.
+     * @return List&lt;K&gt; array-reply list of keys matching <code>pattern</code>.
      */
     List<K> keys(K pattern);
 
@@ -87,7 +90,7 @@ public interface RedisKeysConnection<K, V> {
      * 
      * @param channel the channel
      * @param pattern the pattern
-     * @return Long array-reply list of keys matching `pattern`.
+     * @return Long array-reply list of keys matching <code>pattern</code>.
      */
     Long keys(KeyStreamingChannel<K> channel, K pattern);
 
@@ -143,7 +146,8 @@ public interface RedisKeysConnection<K, V> {
      * @param key the key
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the timeout was removed. `0` if `key` does not exist or does not have an associated timeout.
+     *         <code>1</code> if the timeout was removed. <code>0</code> if <code>key</code> does not exist or does not have an
+     *         associated timeout.
      */
     Boolean persist(K key);
 
@@ -154,7 +158,8 @@ public interface RedisKeysConnection<K, V> {
      * @param milliseconds the milliseconds type: long
      * @return integer-reply, specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set.
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set.
      */
     Boolean pexpire(K key, long milliseconds);
 
@@ -165,7 +170,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     Boolean pexpireat(K key, Date timestamp);
 
@@ -176,7 +182,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     Boolean pexpireat(K key, long timestamp);
 
@@ -192,7 +199,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Return a random key from the keyspace.
      * 
-     * @return V bulk-string-reply the random key, or `nil` when the database is empty.
+     * @return V bulk-string-reply the random key, or <code>nil</code> when the database is empty.
      */
     V randomkey();
 
@@ -212,7 +219,8 @@ public interface RedisKeysConnection<K, V> {
      * @param newKey the newkey type: key
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if `key` was renamed to `newkey`. `0` if `newkey` already exists.
+     *         <code>1</code> if <code>key</code> was renamed to <code>newkey</code>. <code>0</code> if <code>newkey</code>
+     *         already exists.
      */
     Boolean renamenx(K key, K newKey);
 
@@ -229,7 +237,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return List<V> array-reply list of sorted elements.
+     * @return List&lt;V&gt; array-reply list of sorted elements.
      */
     List<V> sort(K key);
 
@@ -243,7 +251,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return List<V> array-reply list of sorted elements.
+     * @return List&lt;V&gt; array-reply list of sorted elements.
      */
     List<V> sort(K key, SortArgs sortArgs);
 
@@ -268,7 +276,7 @@ public interface RedisKeysConnection<K, V> {
      * Determine the type stored at key.
      * 
      * @param key the key
-     * @return String simple-string-reply type of `key`, or `none` when `key` does not exist.
+     * @return String simple-string-reply type of <code>key</code>, or <code>none</code> when <code>key</code> does not exist.
      */
     String type(K key);
 

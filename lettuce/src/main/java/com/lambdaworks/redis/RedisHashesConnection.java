@@ -34,7 +34,8 @@ public interface RedisHashesConnection<K, V> {
      * @param field the field type: key
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the hash contains `field`. `0` if the hash does not contain `field`, or `key` does not exist.
+     *         <code>1</code> if the hash contains <code>field</code>. <code>0</code> if the hash does not contain
+     *         <code>field</code>, or <code>key</code> does not exist.
      */
     Boolean hexists(K key, K field);
 
@@ -43,8 +44,8 @@ public interface RedisHashesConnection<K, V> {
      * 
      * @param key the key
      * @param field the field type: key
-     * @return V bulk-string-reply the value associated with `field`, or `nil` when `field` is not present in the hash or `key`
-     *         does not exist.
+     * @return V bulk-string-reply the value associated with <code>field</code>, or <code>nil</code> when <code>field</code> is
+     *         not present in the hash or <code>key</code> does not exist.
      */
     V hget(K key, K field);
 
@@ -54,7 +55,7 @@ public interface RedisHashesConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param amount the increment type: long
-     * @return Long integer-reply the value at `field` after the increment operation.
+     * @return Long integer-reply the value at <code>field</code> after the increment operation.
      */
     Long hincrby(K key, K field, long amount);
 
@@ -64,7 +65,7 @@ public interface RedisHashesConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param amount the increment type: double
-     * @return Double bulk-string-reply the value of `field` after the increment.
+     * @return Double bulk-string-reply the value of <code>field</code> after the increment.
      */
     Double hincrbyfloat(K key, K field, double amount);
 
@@ -72,8 +73,8 @@ public interface RedisHashesConnection<K, V> {
      * Get all the fields and values in a hash.
      * 
      * @param key the key
-     * @return Map<K,V> array-reply list of fields and their values stored in the hash, or an empty list when `key` does not
-     *         exist.
+     * @return Map&lt;K,V&gt; array-reply list of fields and their values stored in the hash, or an empty list when
+     *         <code>key</code> does not exist.
      */
     Map<K, V> hgetall(K key);
 
@@ -91,7 +92,7 @@ public interface RedisHashesConnection<K, V> {
      * Get all the fields in a hash.
      * 
      * @param key the key
-     * @return List<K> array-reply list of fields in the hash, or an empty list when `key` does not exist.
+     * @return List&lt;K&gt; array-reply list of fields in the hash, or an empty list when <code>key</code> does not exist.
      */
     List<K> hkeys(K key);
 
@@ -109,7 +110,7 @@ public interface RedisHashesConnection<K, V> {
      * Get the number of fields in a hash.
      * 
      * @param key the key
-     * @return Long integer-reply number of fields in the hash, or `0` when `key` does not exist.
+     * @return Long integer-reply number of fields in the hash, or <code>0</code> when <code>key</code> does not exist.
      */
     Long hlen(K key);
 
@@ -118,7 +119,7 @@ public interface RedisHashesConnection<K, V> {
      * 
      * @param key the key
      * @param fields the field type: key
-     * @return List<V> array-reply list of values associated with the given fields, in the same
+     * @return List&lt;V&gt; array-reply list of values associated with the given fields, in the same
      */
     List<V> hmget(K key, K... fields);
 
@@ -150,8 +151,8 @@ public interface RedisHashesConnection<K, V> {
      * @param value the value
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field` already exists in the hash and the
-     *         value was updated.
+     *         <code>1</code> if <code>field</code> is a new field in the hash and <code>value</code> was set. <code>0</code> if
+     *         <code>field</code> already exists in the hash and the value was updated.
      */
     Boolean hset(K key, K field, V value);
 
@@ -163,8 +164,8 @@ public interface RedisHashesConnection<K, V> {
      * @param value the value
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field` already exists in the hash and no
-     *         operation was performed.
+     *         <code>1</code> if <code>field</code> is a new field in the hash and <code>value</code> was set. <code>0</code> if
+     *         <code>field</code> already exists in the hash and no operation was performed.
      */
     Boolean hsetnx(K key, K field, V value);
 
@@ -172,7 +173,7 @@ public interface RedisHashesConnection<K, V> {
      * Get all the values in a hash.
      * 
      * @param key the key
-     * @return List<V> array-reply list of values in the hash, or an empty list when `key` does not exist.
+     * @return List&lt;V&gt; array-reply list of values in the hash, or an empty list when <code>key</code> does not exist.
      */
     List<V> hvals(K key);
 
@@ -219,10 +220,10 @@ public interface RedisHashesConnection<K, V> {
     /**
      * Incrementally iterate hash fields and associated values.
      * 
-     * @param channel
+     * @param channel the channel
      * @param key the key
      * @param scanCursor the cursor type: long
-     * @param scanArgs
+     * @param scanArgs the scanArgs
      */
     StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 

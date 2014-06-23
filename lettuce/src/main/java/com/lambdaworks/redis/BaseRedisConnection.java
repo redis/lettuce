@@ -27,7 +27,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     /**
      * Lists the currently *active channels*.
      * 
-     * @return List<K> array-reply a list of active channels, optionally matching the specified pattern.
+     * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     List<K> pubsubChannels();
 
@@ -35,7 +35,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * Lists the currently *active channels*.
      * 
      * @param channel the key
-     * @return List<K> array-reply a list of active channels, optionally matching the specified pattern.
+     * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     List<K> pubsubChannels(K channel);
 
@@ -87,23 +87,23 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     /**
      * Discard all commands issued after MULTI.
      * 
-     * @return String simple-string-reply always `OK`.
+     * @return String simple-string-reply always <code>OK</code>.
      */
     String discard();
 
     /**
      * Execute all commands issued after MULTI.
      * 
-     * @return List<Object> array-reply each element being the reply to each of the commands in the atomic transaction.
+     * @return List&lt;Object&gt; array-reply each element being the reply to each of the commands in the atomic transaction.
      * 
-     *         When using `WATCH`, `EXEC` can return a
+     *         When using <code>WATCH</code>, <code>EXEC</code> can return a
      */
     List<Object> exec();
 
     /**
      * Mark the start of a transaction block.
      * 
-     * @return String simple-string-reply always `OK`.
+     * @return String simple-string-reply always <code>OK</code>.
      */
     String multi();
 
@@ -111,14 +111,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * Watch the given keys to determine execution of the MULTI/EXEC block.
      * 
      * @param keys the key
-     * @return String simple-string-reply always `OK`.
+     * @return String simple-string-reply always <code>OK</code>.
      */
     String watch(K... keys);
 
     /**
      * Forget about all watched keys.
      * 
-     * @return String simple-string-reply always `OK`.
+     * @return String simple-string-reply always <code>OK</code>.
      */
     String unwatch();
 

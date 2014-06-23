@@ -44,7 +44,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * Get the number of members in a sorted set.
      * 
      * @param key the key
-     * @return Long integer-reply the cardinality (number of elements) of the sorted set, or `0` if `key` does not exist.
+     * @return Long integer-reply the cardinality (number of elements) of the sorted set, or <code>0</code> if <code>key</code>
+     *         does not exist.
      */
     Long zcard(K key);
 
@@ -74,8 +75,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param amount the increment type: long
      * @param member the member type: key
-     * @return Double bulk-string-reply the new score of `member` (a double precision floating point number), represented as
-     *         string.
+     * @return Double bulk-string-reply the new score of <code>member</code> (a double precision floating point number),
+     *         represented as string.
      */
     Double zincrby(K key, double amount, K member);
 
@@ -84,7 +85,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * 
      * @param destination the destination
      * @param keys the keys
-     * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
+     * @return Long integer-reply the number of elements in the resulting sorted set at <code>destination</code>.
      */
     Long zinterstore(K destination, K... keys);
 
@@ -94,7 +95,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param destination the destination
      * @param storeArgs the storeArgs
      * @param keys the keys
-     * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
+     * @return Long integer-reply the number of elements in the resulting sorted set at <code>destination</code>.
      */
     Long zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
 
@@ -104,7 +105,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List<V> array-reply list of elements in the specified range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      */
     List<V> zrange(K key, long start, long stop);
 
@@ -114,7 +115,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List<V> array-reply list of elements in the specified range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      */
     List<ScoredValue<V>> zrangeWithScores(K key, long start, long stop);
 
@@ -124,7 +125,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param min the min
      * @param max the max
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, double min, double max);
 
@@ -134,7 +135,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param min the min
      * @param max the max
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, String min, String max);
 
@@ -146,7 +147,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param max the max
      * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, double min, double max, long offset, long count);
 
@@ -158,7 +159,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param max the max
      * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, String min, String max, long offset, long count);
 
@@ -168,7 +169,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param min the min
      * @param max the max
-     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max);
 
@@ -178,7 +179,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param min the min
      * @param max the max
-     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max);
 
@@ -190,7 +191,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param max the max
      * @param offset the offset
      * @param count the count
-     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
 
@@ -202,7 +203,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param max the max
      * @param offset the offset
      * @param count the count
-     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
 
@@ -330,7 +331,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * 
      * @param key the key
      * @param member the member type: value
-     * @return Long integer-reply the rank of `member`. If `member` does not exist in the sorted set or `key` does not exist,
+     * @return Long integer-reply the rank of <code>member</code>. If <code>member</code> does not exist in the sorted set or
+     *         <code>key</code> does not exist,
      */
     Long zrank(K key, V member);
 
@@ -381,7 +383,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List<V> array-reply list of elements in the specified range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      */
     List<V> zrevrange(K key, long start, long stop);
 
@@ -391,7 +393,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List<V> array-reply list of elements in the specified range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      */
     List<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
 
@@ -401,7 +403,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param min the min
      * @param max the max
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, double max, double min);
 
@@ -411,7 +413,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param min the min
      * @param max the max
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, String max, String min);
 
@@ -423,7 +425,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param min the min
      * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, double max, double min, long offset, long count);
 
@@ -435,7 +437,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param min the min
      * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, String max, String min, long offset, long count);
 
@@ -445,7 +447,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param max the max
      * @param min the min
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min);
 
@@ -455,7 +457,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param key the key
      * @param max the max
      * @param min the min
-     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min);
 
@@ -467,7 +469,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param min the min
      * @param offset the withscores
      * @param count the null
-     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
 
@@ -479,7 +481,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param min the min
      * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<ScoredValue<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
 
@@ -608,7 +610,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * 
      * @param key the key
      * @param member the member type: value
-     * @return Long integer-reply the rank of `member`. If `member` does not exist in the sorted set or `key` does not exist,
+     * @return Long integer-reply the rank of <code>member</code>. If <code>member</code> does not exist in the sorted set or
+     *         <code>key</code> does not exist,
      */
     Long zrevrank(K key, V member);
 
@@ -617,14 +620,15 @@ public interface RedisSortedSetsConnection<K, V> {
      * 
      * @param key the key
      * @param member the member type: value
-     * @return Double bulk-string-reply the score of `member` (a double precision floating point number), represented as string.
+     * @return Double bulk-string-reply the score of <code>member</code> (a double precision floating point number), represented
+     *         as string.
      */
     Double zscore(K key, V member);
 
     /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      * 
-     * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
+     * @return Long integer-reply the number of elements in the resulting sorted set at <code>destination</code>.
      */
     Long zunionstore(K destination, K... keys);
 
@@ -634,7 +638,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param destination the destination
      * @param storeArgs the storeArgs
      * @param keys the keys
-     * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
+     * @return Long integer-reply the number of elements in the resulting sorted set at <code>destination</code>.
      */
     Long zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
 
@@ -706,14 +710,14 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Return a range of members in a sorted set, by lexicographical range.
      * 
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrangebylex(K key, String min, String max);
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
      * 
-     * @return List<V> array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
     List<V> zrangebylex(K key, String min, String max, long offset, long count);
 }

@@ -19,7 +19,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Return the ip and port number of the master with that name.
      * 
      * @param key
-     * @return Future<SocketAddress>
+     * @return Future&lt;SocketAddress&gt;
      */
     Future<SocketAddress> getMasterAddrByName(K key);
 
@@ -27,7 +27,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Show the state and info of the specified master.
      * 
      * @param key
-     * @return RedisFuture<Map<K, V>>
+     * @return RedisFuture&lt;Map&lt;K, V&gt;&gt;
      */
     RedisFuture<Map<K, V>> master(K key);
 
@@ -35,7 +35,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Provides a list of slaves for the master with the specified name.
      * 
      * @param key
-     * @return RedisFuture<Map<K, V>>
+     * @return RedisFuture&lt;Map&lt;K, V&gt;&gt;
      */
     RedisFuture<Map<K, V>> slaves(K key);
 
@@ -43,7 +43,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * This command will reset all the masters with matching name.
      * 
      * @param key
-     * @return RedisFuture<Long>
+     * @return RedisFuture&lt;Long&gt;
      */
     RedisFuture<Long> reset(K key);
 
@@ -51,7 +51,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Perform a failover.
      * 
      * @param key the master id
-     * @return RedisFuture<String>
+     * @return RedisFuture&lt;String&gt;
      */
     RedisFuture<String> failover(K key);
 
@@ -62,7 +62,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * @param ip
      * @param port
      * @param quorum
-     * @return RedisFuture<String>
+     * @return RedisFuture&lt;String&gt;
      */
     RedisFuture<String> monitor(K key, String ip, int port, int quorum);
 
@@ -73,7 +73,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * @param option the option
      * @param value the value
      * 
-     * @return RedisFuture<String> simple-string-reply `OK` if `SET` was executed correctly.
+     * @return RedisFuture&lt;String&gt; simple-string-reply <code>OK</code> if <code>SET</code> was executed correctly.
      */
     RedisFuture<String> set(K key, String option, V value);
 
@@ -81,14 +81,14 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * remove the specified master.
      * 
      * @param key
-     * @return RedisFuture<String>
+     * @return RedisFuture&lt;String&gt;
      */
     RedisFuture<String> remove(K key);
 
     /**
      * Ping the server.
      * 
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> ping();
 

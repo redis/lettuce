@@ -15,7 +15,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Asynchronously rewrite the append-only file.
      * 
-     * @return String simple-string-reply always `OK`.
+     * @return String simple-string-reply always <code>OK</code>.
      */
     String bgrewriteaof();
 
@@ -37,7 +37,7 @@ public interface RedisServerConnection<K, V> {
      * Set the current connection name.
      * 
      * @param name
-     * @return simple-string-reply `OK` if the connection name was successfully set.
+     * @return simple-string-reply <code>OK</code> if the connection name was successfully set.
      */
     String clientSetname(K name);
 
@@ -45,7 +45,7 @@ public interface RedisServerConnection<K, V> {
      * Kill the connection of a client identified by ip:port.
      * 
      * @param addr ip:port
-     * @return String simple-string-reply `OK` if the connection exists and has been closed
+     * @return String simple-string-reply <code>OK</code> if the connection exists and has been closed
      */
     String clientKill(String addr);
 
@@ -69,21 +69,22 @@ public interface RedisServerConnection<K, V> {
      * Get the value of a configuration parameter.
      * 
      * @param parameter
-     * @return List<String> bulk-string-reply
+     * @return List&lt;String&gt; bulk-string-reply
      */
     List<String> configGet(String parameter);
 
     /**
      * Reset the stats returned by INFO.
      * 
-     * @return String simple-string-reply always `OK`.
+     * @return String simple-string-reply always <code>OK</code>.
      */
     String configResetstat();
 
     /**
      * Rewrite the configuration file with the in memory configuration.
      * 
-     * @return String simple-string-reply `OK` when the configuration was rewritten properly. Otherwise an error is returned.
+     * @return String simple-string-reply <code>OK</code> when the configuration was rewritten properly. Otherwise an error is
+     *         returned.
      */
     String configRewrite();
 
@@ -92,7 +93,8 @@ public interface RedisServerConnection<K, V> {
      * 
      * @param parameter
      * @param value
-     * @return String simple-string-reply: `OK` when the configuration was set properly. Otherwise an error is returned.
+     * @return String simple-string-reply: <code>OK</code> when the configuration was set properly. Otherwise an error is
+     *         returned.
      */
     String configSet(String parameter, String value);
 
@@ -185,7 +187,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Read the slow log.
      * 
-     * @return List<Object> deeply nested multi bulk replies
+     * @return List&lt;Object&gt; deeply nested multi bulk replies
      */
     List<Object> slowlogGet();
 
@@ -193,7 +195,7 @@ public interface RedisServerConnection<K, V> {
      * Read the slow log.
      * 
      * @param count the count
-     * @return List<Object> deeply nested multi bulk replies
+     * @return List&lt;Object&gt; deeply nested multi bulk replies
      */
     List<Object> slowlogGet(int count);
 
@@ -221,7 +223,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Return the current server time.
      * 
-     * @return List<V> array-reply specifically:
+     * @return List&lt;V&gt; array-reply specifically:
      * 
      *         A multi bulk reply containing two elements:
      * 

@@ -22,8 +22,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param fields the field type: key
-     * @return RedisFuture<Long> integer-reply the number of fields that were removed from the hash, not including specified but
-     *         non existing fields.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of fields that were removed from the hash, not including
+     *         specified but non existing fields.
      */
     RedisFuture<Long> hdel(K key, K... fields);
 
@@ -32,9 +32,10 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param field the field type: key
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the hash contains `field`. `0` if the hash does not contain `field`, or `key` does not exist.
+     *         <code>1</code> if the hash contains <code>field</code>. <code>0</code> if the hash does not contain
+     *         <code>field</code>, or <code>key</code> does not exist.
      */
     RedisFuture<Boolean> hexists(K key, K field);
 
@@ -43,8 +44,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param field the field type: key
-     * @return RedisFuture<V> bulk-string-reply the value associated with `field`, or `nil` when `field` is not present in the
-     *         hash or `key` does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the value associated with <code>field</code>, or <code>nil</code> when
+     *         <code>field</code> is not present in the hash or <code>key</code> does not exist.
      */
     RedisFuture<V> hget(K key, K field);
 
@@ -54,7 +55,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param amount the increment type: long
-     * @return RedisFuture<Long> integer-reply the value at `field` after the increment operation.
+     * @return RedisFuture&lt;Long&gt; integer-reply the value at <code>field</code> after the increment operation.
      */
     RedisFuture<Long> hincrby(K key, K field, long amount);
 
@@ -64,7 +65,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param amount the increment type: double
-     * @return RedisFuture<Double> bulk-string-reply the value of `field` after the increment.
+     * @return RedisFuture&lt;Double;&gt; bulk-string-reply the value of <code>field</code> after the increment.
      */
     RedisFuture<Double> hincrbyfloat(K key, K field, double amount);
 
@@ -72,8 +73,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get all the fields and values in a hash.
      * 
      * @param key the key
-     * @return RedisFuture<Map<K,V>> array-reply list of fields and their values stored in the hash, or an empty list when `key`
-     *         does not exist.
+     * @return RedisFuture&lt;Map&lt;K,V&gt;&gt; array-reply list of fields and their values stored in the hash, or an empty
+     *         list when <code>key</code> does not exist.
      */
     RedisFuture<Map<K, V>> hgetall(K key);
 
@@ -83,7 +84,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param channel the channel
      * @param key the key
      * 
-     * @return RedisFuture<Long> count of the keys.
+     * @return RedisFuture&lt;Long&gt; count of the keys.
      */
     RedisFuture<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key);
 
@@ -91,7 +92,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get all the fields in a hash.
      * 
      * @param key the key
-     * @return RedisFuture<List<K>> array-reply list of fields in the hash, or an empty list when `key` does not exist.
+     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of fields in the hash, or an empty list when <code>key</code>
+     *         does not exist.
      */
     RedisFuture<List<K>> hkeys(K key);
 
@@ -101,7 +103,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param channel the channel
      * @param key the key
      * 
-     * @return RedisFuture<Long> count of the keys.
+     * @return RedisFuture&lt;Long&gt; count of the keys.
      */
     RedisFuture<Long> hkeys(KeyStreamingChannel<K> channel, K key);
 
@@ -109,7 +111,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get the number of fields in a hash.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply number of fields in the hash, or `0` when `key` does not exist.
+     * @return RedisFuture&lt;Long&gt; integer-reply number of fields in the hash, or <code>0</code> when <code>key</code> does
+     *         not exist.
      */
     RedisFuture<Long> hlen(K key);
 
@@ -118,7 +121,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param fields the field type: key
-     * @return RedisFuture<List<V>> array-reply list of values associated with the given fields, in the same
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values associated with the given fields, in the same
      */
     RedisFuture<List<V>> hmget(K key, K... fields);
 
@@ -129,7 +132,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param fields the fields
      * 
-     * @return RedisFuture<Long> count of the keys
+     * @return RedisFuture&lt;Long&gt; count of the keys
      */
     RedisFuture<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields);
 
@@ -138,7 +141,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param map the null
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> hmset(K key, Map<K, V> map);
 
@@ -148,10 +151,10 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param value the value
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field` already exists in the hash and the
-     *         value was updated.
+     *         <code>1</code> if <code>field</code> is a new field in the hash and <code>value</code> was set. <code>0</code> if
+     *         <code>field</code> already exists in the hash and the value was updated.
      */
     RedisFuture<Boolean> hset(K key, K field, V value);
 
@@ -161,10 +164,10 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param value the value
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field` already exists in the hash and no
-     *         operation was performed.
+     *         <code>1</code> if <code>field</code> is a new field in the hash and <code>value</code> was set. <code>0</code> if
+     *         <code>field</code> already exists in the hash and no operation was performed.
      */
     RedisFuture<Boolean> hsetnx(K key, K field, V value);
 
@@ -172,7 +175,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get all the values in a hash.
      * 
      * @param key the key
-     * @return RedisFuture<List<V>> array-reply list of values in the hash, or an empty list when `key` does not exist.
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values in the hash, or an empty list when <code>key</code>
+     *         does not exist.
      */
     RedisFuture<List<V>> hvals(K key);
 
@@ -182,7 +186,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param channel the channel
      * @param key the key
      * 
-     * @return RedisFuture<Long> acount of the keys.
+     * @return RedisFuture&lt;Long&gt; acount of the keys.
      */
     RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
 

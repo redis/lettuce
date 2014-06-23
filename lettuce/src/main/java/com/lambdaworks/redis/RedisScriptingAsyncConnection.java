@@ -57,23 +57,23 @@ public interface RedisScriptingAsyncConnection<K, V> {
      * Check existence of scripts in the script cache.
      * 
      * @param digests
-     * @return RedisFuture<List<Boolean>> array-reply The command returns an array of integers that correspond to the specified
-     *         SHA1 digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache,
-     *         an 1 is returned, otherwise 0 is returned.
+     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; array-reply The command returns an array of integers that correspond to
+     *         the specified SHA1 digest arguments. For every corresponding SHA1 digest of a script that actually exists in the
+     *         script cache, an 1 is returned, otherwise 0 is returned.
      */
     RedisFuture<List<Boolean>> scriptExists(String... digests);
 
     /**
      * Remove all the scripts from the script cache.
      * 
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> scriptFlush();
 
     /**
      * Kill the script currently in execution.
      * 
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> scriptKill();
 
@@ -81,8 +81,8 @@ public interface RedisScriptingAsyncConnection<K, V> {
      * Load the specified Lua script into the script cache.
      * 
      * @param script
-     * @return RedisFuture<String> bulk-string-reply This command returns the SHA1 digest of the script added into the script
-     *         cache.
+     * @return RedisFuture&lt;String&gt; bulk-string-reply This command returns the SHA1 digest of the script added into the
+     *         script cache.
      */
     RedisFuture<String> scriptLoad(V script);
 }

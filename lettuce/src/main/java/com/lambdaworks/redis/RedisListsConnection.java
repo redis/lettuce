@@ -21,9 +21,9 @@ public interface RedisListsConnection<K, V> {
      * @param keys the timeout type: long
      * @return KeyValue<K,V> array-reply specifically:
      * 
-     *         A `nil` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with the
-     *         first element being the name of the key where an element was popped and the second element being the value of the
-     *         popped element.
+     *         A <code>nil</code> multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         with the first element being the name of the key where an element was popped and the second element being the
+     *         value of the popped element.
      */
     KeyValue<K, V> blpop(long timeout, K... keys);
 
@@ -34,9 +34,9 @@ public interface RedisListsConnection<K, V> {
      * @param keys the timeout type: long
      * @return KeyValue<K,V> array-reply specifically:
      * 
-     *         A `nil` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with the
-     *         first element being the name of the key where an element was popped and the second element being the value of the
-     *         popped element.
+     *         A <code>nil</code> multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         with the first element being the name of the key where an element was popped and the second element being the
+     *         value of the popped element.
      */
     KeyValue<K, V> brpop(long timeout, K... keys);
 
@@ -46,8 +46,8 @@ public interface RedisListsConnection<K, V> {
      * @param timeout the source type: key
      * @param source the destination type: key
      * @param destination the timeout type: long
-     * @return V bulk-string-reply the element being popped from `source` and pushed to `destination`. If `timeout` is reached,
-     *         a
+     * @return V bulk-string-reply the element being popped from <code>source</code> and pushed to <code>destination</code>. If
+     *         <code>timeout</code> is reached, a
      */
     V brpoplpush(long timeout, K source, K destination);
 
@@ -56,7 +56,7 @@ public interface RedisListsConnection<K, V> {
      * 
      * @param key the key
      * @param index the index type: long
-     * @return V bulk-string-reply the requested element, or `nil` when `index` is out of range.
+     * @return V bulk-string-reply the requested element, or <code>nil</code> when <code>index</code> is out of range.
      */
     V lindex(K key, long index);
 
@@ -67,8 +67,8 @@ public interface RedisListsConnection<K, V> {
      * @param before the before
      * @param pivot the pivot
      * @param value the value
-     * @return Long integer-reply the length of the list after the insert operation, or `-1` when the value `pivot` was not
-     *         found.
+     * @return Long integer-reply the length of the list after the insert operation, or <code>-1</code> when the value
+     *         <code>pivot</code> was not found.
      */
     Long linsert(K key, boolean before, V pivot, V value);
 
@@ -76,7 +76,7 @@ public interface RedisListsConnection<K, V> {
      * Get the length of a list.
      * 
      * @param key the key
-     * @return Long integer-reply the length of the list at `key`.
+     * @return Long integer-reply the length of the list at <code>key</code>.
      */
     Long llen(K key);
 
@@ -84,7 +84,7 @@ public interface RedisListsConnection<K, V> {
      * Remove and get the first element in a list.
      * 
      * @param key the key
-     * @return V bulk-string-reply the value of the first element, or `nil` when `key` does not exist.
+     * @return V bulk-string-reply the value of the first element, or <code>nil</code> when <code>key</code> does not exist.
      */
     V lpop(K key);
 
@@ -112,7 +112,7 @@ public interface RedisListsConnection<K, V> {
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
-     * @return List<V> array-reply list of elements in the specified range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      */
     List<V> lrange(K key, long start, long stop);
 
@@ -161,7 +161,7 @@ public interface RedisListsConnection<K, V> {
      * Remove and get the last element in a list.
      * 
      * @param key the key
-     * @return V bulk-string-reply the value of the last element, or `nil` when `key` does not exist.
+     * @return V bulk-string-reply the value of the last element, or <code>nil</code> when <code>key</code> does not exist.
      */
     V rpop(K key);
 

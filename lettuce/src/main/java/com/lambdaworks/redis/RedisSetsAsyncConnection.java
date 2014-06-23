@@ -18,8 +18,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param members the member type: value
-     * @return RedisFuture<Long> integer-reply the number of elements that were added to the set, not including all the elements
-     *         already present into the set.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of elements that were added to the set, not including all the
+     *         elements already present into the set.
      */
     RedisFuture<Long> sadd(K key, V... members);
 
@@ -27,7 +27,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Get the number of members in a set.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply the cardinality (number of elements) of the set, or `0` if `key` does not exist.
+     * @return RedisFuture&lt;Long&gt; integer-reply the cardinality (number of elements) of the set, or <code>0</code> if
+     *         <code>key</code> does not exist.
      */
     RedisFuture<Long> scard(K key);
 
@@ -35,7 +36,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Subtract multiple sets.
      * 
      * @param keys the key
-     * @return RedisFuture<Set<V>> array-reply list with members of the resulting set.
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply list with members of the resulting set.
      */
     RedisFuture<Set<V>> sdiff(K... keys);
 
@@ -44,7 +45,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param channel the channel
      * @param keys the keys
-     * @return RedisFuture<Long> count of members of the resulting set.
+     * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
     RedisFuture<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
 
@@ -53,7 +54,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param destination the destination type: key
      * @param keys the key
-     * @return RedisFuture<Long> integer-reply the number of elements in the resulting set.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of elements in the resulting set.
      */
     RedisFuture<Long> sdiffstore(K destination, K... keys);
 
@@ -61,7 +62,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Intersect multiple sets.
      * 
      * @param keys the key
-     * @return RedisFuture<Set<V>> array-reply list with members of the resulting set.
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply list with members of the resulting set.
      */
     RedisFuture<Set<V>> sinter(K... keys);
 
@@ -70,7 +71,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param channel the channel
      * @param keys the keys
-     * @return RedisFuture<Long> count of members of the resulting set.
+     * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
     RedisFuture<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
 
@@ -79,7 +80,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param destination the destination type: key
      * @param keys the key
-     * @return RedisFuture<Long> integer-reply the number of elements in the resulting set.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of elements in the resulting set.
      */
     RedisFuture<Long> sinterstore(K destination, K... keys);
 
@@ -88,10 +89,10 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param member the member type: value
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the element is a member of the set. `0` if the element is not a member of the set, or if `key` does not
-     *         exist.
+     *         <code>1</code> if the element is a member of the set. <code>0</code> if the element is not a member of the set,
+     *         or if <code>key</code> does not exist.
      */
     RedisFuture<Boolean> sismember(K key, V member);
 
@@ -101,9 +102,10 @@ public interface RedisSetsAsyncConnection<K, V> {
      * @param source the source type: key
      * @param destination the destination type: key
      * @param member the member type: value
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the element is moved. `0` if the element is not a member of `source` and no operation was performed.
+     *         <code>1</code> if the element is moved. <code>0</code> if the element is not a member of <code>source</code> and
+     *         no operation was performed.
      */
     RedisFuture<Boolean> smove(K source, K destination, V member);
 
@@ -111,7 +113,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Get all the members in a set.
      * 
      * @param key the key
-     * @return RedisFuture<Set<V>> array-reply all elements of the set.
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply all elements of the set.
      */
     RedisFuture<Set<V>> smembers(K key);
 
@@ -120,7 +122,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param channel the channel
      * @param key the key
-     * @return RedisFuture<Long> count of members of the resulting set.
+     * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
     RedisFuture<Long> smembers(ValueStreamingChannel<V> channel, K key);
 
@@ -128,7 +130,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Remove and return a random member from a set.
      * 
      * @param key the key
-     * @return RedisFuture<V> bulk-string-reply the removed element, or `nil` when `key` does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the removed element, or <code>nil</code> when <code>key</code> does not
+     *         exist.
      */
     RedisFuture<V> spop(K key);
 
@@ -137,8 +140,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param key the key
      * 
-     * @return RedisFuture<V> bulk-string-reply without the additional `count` argument the command returns a Bulk Reply with
-     *         the randomly selected element, or `nil` when `key` does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply without the additional <code>count</code> argument the command returns a
+     *         Bulk Reply with the randomly selected element, or <code>nil</code> when <code>key</code> does not exist.
      */
     RedisFuture<V> srandmember(K key);
 
@@ -147,8 +150,9 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param count the count type: long
-     * @return RedisFuture<Set<V>> bulk-string-reply without the additional `count` argument the command returns a Bulk Reply
-     *         with the randomly selected element, or `nil` when `key` does not exist.
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; bulk-string-reply without the additional <code>count</code> argument the command
+     *         returns a Bulk Reply with the randomly selected element, or <code>nil</code> when <code>key</code> does not
+     *         exist.
      */
     RedisFuture<Set<V>> srandmember(K key, long count);
 
@@ -158,7 +162,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * @param channel the channel
      * @param key the key
      * @param count the count
-     * @return RedisFuture<Long> count of members of the resulting set.
+     * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
     RedisFuture<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count);
 
@@ -167,8 +171,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param members the member type: value
-     * @return RedisFuture<Long> integer-reply the number of members that were removed from the set, not including non existing
-     *         members.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of members that were removed from the set, not including non
+     *         existing members.
      */
     RedisFuture<Long> srem(K key, V... members);
 
@@ -176,7 +180,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Add multiple sets.
      * 
      * @param keys the key
-     * @return RedisFuture<Set<V>> array-reply list with members of the resulting set.
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply list with members of the resulting set.
      */
     RedisFuture<Set<V>> sunion(K... keys);
 
@@ -185,7 +189,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param channel the channel
      * @param keys the key
-     * @return RedisFuture<Long> count of members of the resulting set.
+     * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
     RedisFuture<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
 
@@ -194,7 +198,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param destination the destination type: key
      * @param keys the key
-     * @return RedisFuture<Long> integer-reply the number of elements in the resulting set.
+     * @return RedisFuture&lt;Long&gt; integer-reply the number of elements in the resulting set.
      */
     RedisFuture<Long> sunionstore(K destination, K... keys);
 

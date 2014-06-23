@@ -27,7 +27,8 @@ public interface RedisSetsConnection<K, V> {
      * Get the number of members in a set.
      * 
      * @param key the key
-     * @return Long integer-reply the cardinality (number of elements) of the set, or `0` if `key` does not exist.
+     * @return Long integer-reply the cardinality (number of elements) of the set, or <code>0</code> if <code>key</code> does
+     *         not exist.
      */
     Long scard(K key);
 
@@ -35,7 +36,7 @@ public interface RedisSetsConnection<K, V> {
      * Subtract multiple sets.
      * 
      * @param keys the key
-     * @return Set<V> array-reply list with members of the resulting set.
+     * @return Set&lt;V&gt; array-reply list with members of the resulting set.
      */
     Set<V> sdiff(K... keys);
 
@@ -61,7 +62,7 @@ public interface RedisSetsConnection<K, V> {
      * Intersect multiple sets.
      * 
      * @param keys the key
-     * @return Set<V> array-reply list with members of the resulting set.
+     * @return Set&lt;V&gt; array-reply list with members of the resulting set.
      */
     Set<V> sinter(K... keys);
 
@@ -90,8 +91,8 @@ public interface RedisSetsConnection<K, V> {
      * @param member the member type: value
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the element is a member of the set. `0` if the element is not a member of the set, or if `key` does not
-     *         exist.
+     *         <code>1</code> if the element is a member of the set. <code>0</code> if the element is not a member of the set,
+     *         or if <code>key</code> does not exist.
      */
     Boolean sismember(K key, V member);
 
@@ -103,7 +104,8 @@ public interface RedisSetsConnection<K, V> {
      * @param member the member type: value
      * @return Boolean integer-reply specifically:
      * 
-     *         `1` if the element is moved. `0` if the element is not a member of `source` and no operation was performed.
+     *         <code>1</code> if the element is moved. <code>0</code> if the element is not a member of <code>source</code> and
+     *         no operation was performed.
      */
     Boolean smove(K source, K destination, V member);
 
@@ -111,7 +113,7 @@ public interface RedisSetsConnection<K, V> {
      * Get all the members in a set.
      * 
      * @param key the key
-     * @return Set<V> array-reply all elements of the set.
+     * @return Set&lt;V&gt; array-reply all elements of the set.
      */
     Set<V> smembers(K key);
 
@@ -128,7 +130,7 @@ public interface RedisSetsConnection<K, V> {
      * Remove and return a random member from a set.
      * 
      * @param key the key
-     * @return V bulk-string-reply the removed element, or `nil` when `key` does not exist.
+     * @return V bulk-string-reply the removed element, or <code>nil</code> when <code>key</code> does not exist.
      */
     V spop(K key);
 
@@ -137,8 +139,8 @@ public interface RedisSetsConnection<K, V> {
      * 
      * @param key the key
      * 
-     * @return V bulk-string-reply without the additional `count` argument the command returns a Bulk Reply with the randomly
-     *         selected element, or `nil` when `key` does not exist.
+     * @return V bulk-string-reply without the additional <code>count</code> argument the command returns a Bulk Reply with the
+     *         randomly selected element, or <code>nil</code> when <code>key</code> does not exist.
      */
     V srandmember(K key);
 
@@ -147,8 +149,8 @@ public interface RedisSetsConnection<K, V> {
      * 
      * @param key the key
      * @param count the count type: long
-     * @return Set<V> bulk-string-reply without the additional `count` argument the command returns a Bulk Reply with the
-     *         randomly selected element, or `nil` when `key` does not exist.
+     * @return Set&lt;V&gt; bulk-string-reply without the additional <code>count</code> argument the command returns a Bulk
+     *         Reply with the randomly selected element, or <code>nil</code> when <code>key</code> does not exist.
      */
     Set<V> srandmember(K key, long count);
 
@@ -175,7 +177,7 @@ public interface RedisSetsConnection<K, V> {
      * Add multiple sets.
      * 
      * @param keys the key
-     * @return Set<V> array-reply list with members of the resulting set.
+     * @return Set&lt;V&gt; array-reply list with members of the resulting set.
      */
     Set<V> sunion(K... keys);
 

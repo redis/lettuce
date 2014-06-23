@@ -57,9 +57,9 @@ public interface RedisScriptingConnection<K, V> {
      * Check existence of scripts in the script cache.
      * 
      * @param digests
-     * @return List<Boolean> array-reply The command returns an array of integers that correspond to the specified SHA1 digest
-     *         arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1 is
-     *         returned, otherwise 0 is returned.
+     * @return List&lt;Boolean&gt; array-reply The command returns an array of integers that correspond to the specified SHA1
+     *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
+     *         is returned, otherwise 0 is returned.
      */
     List<Boolean> scriptExists(String... digests);
 

@@ -16,7 +16,7 @@ public interface RedisHLLAsyncConnection<K, V> {
      * @param value the value
      * @param moreValues more values
      * 
-     * @return RedisFuture<Long> integer-reply specifically:
+     * @return RedisFuture&lt;Long&gt; integer-reply specifically:
      * 
      *         1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
      */
@@ -29,7 +29,7 @@ public interface RedisHLLAsyncConnection<K, V> {
      * @param sourcekey the source key
      * @param moreSourceKeys more source keys
      * 
-     * @return RedisFuture<Long> simple-string-reply The command just returns `OK`.
+     * @return RedisFuture&lt;Long&gt; simple-string-reply The command just returns <code>OK</code>.
      */
     RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
 
@@ -39,9 +39,9 @@ public interface RedisHLLAsyncConnection<K, V> {
      * @param key the key
      * @param moreKeys more keys
      * 
-     * @return RedisFuture<Long> integer-reply specifically:
+     * @return RedisFuture&lt;Long&gt; integer-reply specifically:
      * 
-     *         The approximated number of unique elements observed via `PFADD`.
+     *         The approximated number of unique elements observed via <code>PFADD</code>.
      */
     RedisFuture<Long> pfcount(K key, K... moreKeys);
 

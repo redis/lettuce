@@ -19,7 +19,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Delete a key.
      * 
      * @param keys the key
-     * @return RedisFuture<Long> integer-reply The number of keys that were removed.
+     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
      */
     RedisFuture<Long> del(K... keys);
 
@@ -27,7 +27,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Return a serialized version of the value stored at the specified key.
      * 
      * @param key the key
-     * @return RedisFuture<byte[]> bulk-string-reply the serialized value.
+     * @return RedisFuture&lt;byte[]&gt;bulk-string-reply the serialized value.
      */
     RedisFuture<byte[]> dump(K key);
 
@@ -35,9 +35,9 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Determine if a key exists.
      * 
      * @param key the key
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the key exists. `0` if the key does not exist.
+     *         <code>1</code> if the key exists. <code>0</code> if the key does not exist.
      */
     RedisFuture<Boolean> exists(K key);
 
@@ -46,9 +46,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param seconds the seconds type: long
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set.
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set.
      */
     RedisFuture<Boolean> expire(K key, long seconds);
 
@@ -57,9 +58,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param timestamp the timestamp type: posix time
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     RedisFuture<Boolean> expireat(K key, Date timestamp);
 
@@ -68,9 +70,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param timestamp the timestamp type: posix time
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     RedisFuture<Boolean> expireat(K key, long timestamp);
 
@@ -78,7 +81,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Find all keys matching the given pattern.
      * 
      * @param pattern the pattern type: patternkey (pattern)
-     * @return RedisFuture<List<K>> array-reply list of keys matching `pattern`.
+     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of keys matching <code>pattern</code>.
      */
     RedisFuture<List<K>> keys(K pattern);
 
@@ -88,7 +91,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param channel the channel
      * @param pattern the pattern
      * 
-     * @return RedisFuture<Long> array-reply list of keys matching `pattern`.
+     * @return RedisFuture&lt;Long&gt; array-reply list of keys matching <code>pattern</code>.
      */
     RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
@@ -101,7 +104,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param db the database
      * @param timeout the timeout in milliseconds
      * 
-     * @return RedisFuture<String> simple-string-reply The command returns OK on success.
+     * @return RedisFuture&lt;String&gt; simple-string-reply The command returns OK on success.
      */
     RedisFuture<String> migrate(String host, int port, K key, int db, long timeout);
 
@@ -110,7 +113,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param db the db type: long
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      */
     RedisFuture<Boolean> move(K key, int db);
 
@@ -118,7 +121,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * returns the kind of internal representation used in order to store the value associated with a key.
      * 
      * @param key the key
-     * @return RedisFuture<String>
+     * @return RedisFuture&lt;String&gt;
      */
     RedisFuture<String> objectEncoding(K key);
 
@@ -127,7 +130,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * operations).
      * 
      * @param key
-     * @return RedisFuture<Long> number of seconds since the object stored at the specified key is idle.
+     * @return RedisFuture&lt;Long&gt; number of seconds since the object stored at the specified key is idle.
      */
     RedisFuture<Long> objectIdletime(K key);
 
@@ -135,7 +138,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * returns the number of references of the value associated with the specified key.
      * 
      * @param key
-     * @return RedisFuture<Long>
+     * @return RedisFuture&lt;Long&gt;
      */
     RedisFuture<Long> objectRefcount(K key);
 
@@ -143,9 +146,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Remove the expiration from a key.
      * 
      * @param key the key
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the timeout was removed. `0` if `key` does not exist or does not have an associated timeout.
+     *         <code>1</code> if the timeout was removed. <code>0</code> if <code>key</code> does not exist or does not have an
+     *         associated timeout.
      */
     RedisFuture<Boolean> persist(K key);
 
@@ -156,7 +160,8 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param milliseconds the milliseconds type: long
      * @return integer-reply, specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set.
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set.
      */
     RedisFuture<Boolean> pexpire(K key, long milliseconds);
 
@@ -165,9 +170,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param timestamp the milliseconds-timestamp type: posix time
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     RedisFuture<Boolean> pexpireat(K key, Date timestamp);
 
@@ -176,9 +182,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param timestamp the milliseconds-timestamp type: posix time
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set (see: `EXPIRE`).
+     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         be set (see: <code>EXPIRE</code>).
      */
     RedisFuture<Boolean> pexpireat(K key, long timestamp);
 
@@ -186,15 +193,15 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Get the time to live for a key in milliseconds.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the
-     *         description above).
+     * @return RedisFuture&lt;Long&gt; integer-reply TTL in milliseconds, or a negative value in order to signal an error (see
+     *         the description above).
      */
     RedisFuture<Long> pttl(K key);
 
     /**
      * Return a random key from the keyspace.
      * 
-     * @return RedisFuture<V> bulk-string-reply the random key, or `nil` when the database is empty.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the random key, or <code>nil</code> when the database is empty.
      */
     RedisFuture<V> randomkey();
 
@@ -203,7 +210,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param newKey the newkey type: key
-     * @return RedisFuture<String> simple-string-reply
+     * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> rename(K key, K newKey);
 
@@ -212,9 +219,10 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param newKey the newkey type: key
-     * @return RedisFuture<Boolean> integer-reply specifically:
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         `1` if `key` was renamed to `newkey`. `0` if `newkey` already exists.
+     *         <code>1</code> if <code>key</code> was renamed to <code>newkey</code>. <code>0</code> if <code>newkey</code>
+     *         already exists.
      */
     RedisFuture<Boolean> renamenx(K key, K newKey);
 
@@ -224,35 +232,35 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param key the key
      * @param ttl the ttl type: long
      * @param value the serialized-value type: string
-     * @return RedisFuture<String> simple-string-reply The command returns OK on success.
+     * @return RedisFuture&lt;String&gt; simple-string-reply The command returns OK on success.
      */
     RedisFuture<String> restore(K key, long ttl, byte[] value);
 
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return RedisFuture<List<V>> array-reply list of sorted elements.
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of sorted elements.
      */
     RedisFuture<List<V>> sort(K key);
 
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return RedisFuture<Long> array-reply list of sorted elements.
+     * @return RedisFuture&lt;Long&gt; array-reply list of sorted elements.
      */
     RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return RedisFuture<List<V>> array-reply list of sorted elements.
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of sorted elements.
      */
     RedisFuture<List<V>> sort(K key, SortArgs sortArgs);
 
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return RedisFuture<Long> array-reply list of sorted elements.
+     * @return RedisFuture&lt;Long&gt; array-reply list of sorted elements.
      */
     RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
@@ -262,7 +270,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Get the time to live for a key.
      * 
      * @param key the key
-     * @return RedisFuture<Long> integer-reply TTL in seconds, or a negative value in order to signal an error (see the
+     * @return RedisFuture&lt;Long&gt; integer-reply TTL in seconds, or a negative value in order to signal an error (see the
      *         description above).
      */
     RedisFuture<Long> ttl(K key);
@@ -271,7 +279,8 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Determine the type stored at key.
      * 
      * @param key the key
-     * @return RedisFuture<String> simple-string-reply type of `key`, or `none` when `key` does not exist.
+     * @return RedisFuture&lt;String&gt; simple-string-reply type of <code>key</code>, or <code>none</code> when
+     *         <code>key</code> does not exist.
      */
     RedisFuture<String> type(K key);
 
