@@ -18,6 +18,11 @@ public class ScanCursor {
         return cursor;
     }
 
+    /**
+     * Set the cursor
+     * 
+     * @param cursor
+     */
     public void setCursor(String cursor) {
         this.cursor = cursor;
     }

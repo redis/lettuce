@@ -2,6 +2,11 @@
 
 package com.lambdaworks.redis.pubsub;
 
+import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
+
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,14 +16,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
-
-import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
 
 /**
  * An asynchronous thread-safe pub/sub connection to a redis server. After one or more channels are subscribed to only pub/sub
@@ -95,12 +95,12 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
     @Override
     public void activated() {
 
-        if (channels.size() > 0) {
+        if (!channels.isEmpty()) {
             subscribe(toArray(channels));
             channels.clear();
         }
 
-        if (patterns.size() > 0) {
+        if (!patterns.isEmpty()) {
             psubscribe(toArray(patterns));
             patterns.clear();
         }
@@ -134,6 +134,8 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
                     channels.remove(output.channel());
                     listener.unsubscribed(output.channel(), output.count());
                     break;
+                default:
+                    throw new UnsupportedOperationException("Operation " + output.type() + " not supported");
             }
         }
     }

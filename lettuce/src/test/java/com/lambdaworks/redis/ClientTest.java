@@ -90,22 +90,22 @@ public class ClientTest extends AbstractCommandTest {
 
     private class TestConnectionListener implements RedisConnectionStateListener {
 
-        public RedisChannelHandler onConnected;
-        public RedisChannelHandler onDisconnected;
-        public RedisChannelHandler onException;
+        public RedisChannelHandler<?, ?> onConnected;
+        public RedisChannelHandler<?, ?> onDisconnected;
+        public RedisChannelHandler<?, ?> onException;
 
         @Override
-        public void onRedisConnected(RedisChannelHandler connection) {
+        public void onRedisConnected(RedisChannelHandler<?, ?> connection) {
             onConnected = connection;
         }
 
         @Override
-        public void onRedisDisconnected(RedisChannelHandler connection) {
+        public void onRedisDisconnected(RedisChannelHandler<?, ?> connection) {
             onDisconnected = connection;
         }
 
         @Override
-        public void onRedisExceptionCaught(RedisChannelHandler connection, Throwable cause) {
+        public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
             onException = connection;
 
         }

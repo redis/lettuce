@@ -7,6 +7,17 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
@@ -22,15 +33,6 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
-
-import java.util.List;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -89,10 +91,10 @@ public class RedisClusterClientTest {
 
     @Before
     public void before() throws Exception {
-        redis1 = (RedisClusterAsyncConnection) client1.connectAsync();
-        redis2 = (RedisClusterAsyncConnection) client2.connectAsync();
-        redis3 = (RedisClusterAsyncConnection) client3.connectAsync();
-        redis4 = (RedisClusterAsyncConnection) client4.connectAsync();
+        redis1 = (RedisClusterAsyncConnection<String, String>) client1.connectAsync();
+        redis2 = (RedisClusterAsyncConnection<String, String>) client2.connectAsync();
+        redis3 = (RedisClusterAsyncConnection<String, String>) client3.connectAsync();
+        redis4 = (RedisClusterAsyncConnection<String, String>) client4.connectAsync();
 
         redis1.flushall();
         redis2.flushall();
@@ -196,8 +198,8 @@ public class RedisClusterClientTest {
     @Test
     public void testClusteredOperations() throws Exception {
 
-        int slot1 = SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
-        int slot2 = SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
+        SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
+        SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
 
         RedisFuture<String> result = redis1.set("b", "value");
         assertEquals(null, result.getError());
@@ -227,10 +229,8 @@ public class RedisClusterClientTest {
     }
 
     @Test
+    @SuppressWarnings({ "rawtypes" })
     public void testClusterRedirection() throws Exception {
-
-        int slot1 = SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
-        int slot2 = SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
         Partitions partitions = clusterClient.getPartitions();
@@ -279,7 +279,8 @@ public class RedisClusterClientTest {
 
         connection.set("a", "b");
 
-        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) connection.getChannelWriter();
+        ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) connection
+                .getChannelWriter();
 
         RedisAsyncConnectionImpl<Object, Object> backendConnection = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);
@@ -287,6 +288,7 @@ public class RedisClusterClientTest {
         backendConnection.set("a", "b");
         backendConnection.close();
 
+        Thread.sleep(100);
         assertTrue(backendConnection.isClosed());
         assertFalse(backendConnection.isOpen());
 
@@ -308,12 +310,12 @@ public class RedisClusterClientTest {
     }
 
     @Test(timeout = 20000)
-    public void massiveClusteredAccess() throws Exception {
+    public void distributedClusteredAccess() throws Exception {
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
         List<RedisFuture<?>> futures = Lists.newArrayList();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             futures.add(connection.set("a" + i, "myValue1" + i));
             futures.add(connection.set("b" + i, "myValue2" + i));
             futures.add(connection.set("d" + i, "myValue3" + i));
@@ -323,7 +325,7 @@ public class RedisClusterClientTest {
             future.get();
         }
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             RedisFuture<String> setA = connection.get("a" + i);
             RedisFuture<String> setB = connection.get("b" + i);
             RedisFuture<String> setD = connection.get("d" + i);

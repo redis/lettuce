@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
-import com.lambdaworks.redis.support.LettuceStrings;
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:46
  */
-public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V> {
+class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
     private RedisChannelWriter<K, V> defaultWriter;
     private ClusterConnectionProvider clusterConnectionProvider;
@@ -36,7 +36,6 @@ public class ClusterDistributionChannelWriter<K, V> implements RedisChannelWrite
         this.clusterConnectionProvider = clusterConnectionProvider;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 

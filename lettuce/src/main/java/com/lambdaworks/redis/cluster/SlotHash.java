@@ -11,8 +11,15 @@ import com.lambdaworks.codec.CRC16;
  */
 public class SlotHash {
 
-    public final static byte SUBKEY_START = Chars.toByteArray('{')[1];
-    public final static byte SUBKEY_END = Chars.toByteArray('}')[1];
+    /**
+     * Constant for a subkey start.
+     */
+    public static final byte SUBKEY_START = Chars.toByteArray('{')[1];
+
+    /**
+     * Constant for a subkey end.
+     */
+    public static final byte SUBKEY_END = Chars.toByteArray('}')[1];
 
     private SlotHash() {
 
@@ -24,7 +31,7 @@ public class SlotHash {
      * @param key
      * @return slot
      */
-    public final static int getSlot(String key) {
+    public static final int getSlot(String key) {
         return getSlot(key.getBytes());
     }
 
@@ -34,8 +41,8 @@ public class SlotHash {
      * @param key
      * @return slot
      */
-    public final static int getSlot(byte[] key) {
-        byte finalKey[] = key;
+    public static final int getSlot(byte[] key) {
+        byte[] finalKey = key;
         int start = indexOf(key, SUBKEY_START);
         if (start != -1) {
             int end = indexOf(key, start + 1, SUBKEY_END);

@@ -1,14 +1,14 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide as well the database, password and
@@ -21,7 +21,14 @@ public class RedisURI implements Serializable {
 
     private static final long serialVersionUID = 42L;
 
+    /**
+     * The default sentinel port.
+     */
     public static final int DEFAULT_SENTINEL_PORT = 26379;
+
+    /**
+     * The default redis port.
+     */
     public static final int DEFAULT_REDIS_PORT = 6379;
 
     private String host;
@@ -124,7 +131,7 @@ public class RedisURI implements Serializable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [host='").append(host).append('\'');
         sb.append(", port=").append(port);

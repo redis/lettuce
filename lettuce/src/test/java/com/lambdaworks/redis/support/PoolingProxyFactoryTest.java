@@ -10,14 +10,13 @@ import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
 import com.lambdaworks.redis.RedisException;
 
-@SuppressWarnings("unchecked")
 public class PoolingProxyFactoryTest extends AbstractCommandTest {
 
     @Test
     public void testCreateDefault() throws Exception {
 
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        RedisConnection<String, String> connection = (RedisConnection) PoolingProxyFactory.create(pool);
+        RedisConnection<String, String> connection = (RedisConnection<String, String>) PoolingProxyFactory.create(pool);
 
         connection.set("a", "b");
         connection.set("x", "y");
@@ -39,7 +38,8 @@ public class PoolingProxyFactoryTest extends AbstractCommandTest {
     @Test
     public void testCreate() throws Exception {
 
-        RedisConnection<String, String> connection = (RedisConnection) PoolingProxyFactory.create(client.pool());
+        RedisConnection<String, String> connection = (RedisConnection<String, String>) PoolingProxyFactory
+                .create(client.pool());
 
         connection.set("a", "b");
         connection.close();

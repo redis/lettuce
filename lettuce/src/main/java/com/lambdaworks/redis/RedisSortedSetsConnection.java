@@ -17,6 +17,10 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 
+     * @param key the key
+     * @param score the score
+     * @param member the member
+     * 
      * @return Long integer-reply specifically:
      * 
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
@@ -28,7 +32,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 
      * @param key the key
-     * @param scoresAndValues the null
+     * @param scoresAndValues the scoresAndValue tuples (score,value,score,value,...)
      * @return Long integer-reply specifically:
      * 
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
@@ -48,8 +52,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * Count the members in a sorted set with scores within the given values.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return Long integer-reply the number of elements in the specified score range.
      */
     Long zcount(K key, double min, double max);
@@ -58,8 +62,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * Count the members in a sorted set with scores within the given values.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return Long integer-reply the number of elements in the specified score range.
      */
     Long zcount(K key, String min, String max);
@@ -78,6 +82,8 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      * 
+     * @param destination the destination
+     * @param keys the keys
      * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
      */
     Long zinterstore(K destination, K... keys);
@@ -85,6 +91,9 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      * 
+     * @param destination the destination
+     * @param storeArgs the storeArgs
+     * @param keys the keys
      * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
      */
     Long zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
@@ -92,23 +101,40 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Return a range of members in a sorted set, by index.
      * 
-     * @return List<V> array-reply list of elements in the specified range (optionally with their scores).
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return List<V> array-reply list of elements in the specified range.
      */
     List<V> zrange(K key, long start, long stop);
 
+    /**
+     * Return a range of members with scores in a sorted set, by index.
+     * 
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return List<V> array-reply list of elements in the specified range.
+     */
     List<ScoredValue<V>> zrangeWithScores(K key, long start, long stop);
 
     /**
      * Return a range of members in a sorted set, by score.
      * 
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, double min, double max);
 
     /**
      * Return a range of members in a sorted set, by score.
      * 
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, String min, String max);
 
@@ -116,11 +142,11 @@ public interface RedisSortedSetsConnection<K, V> {
      * Return a range of members in a sorted set, by score.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
-     * @param offset the withscores type: enum
+     * @param min the min
+     * @param max the max
+     * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, double min, double max, long offset, long count);
 
@@ -128,69 +154,175 @@ public interface RedisSortedSetsConnection<K, V> {
      * Return a range of members in a sorted set, by score.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
-     * @param offset the withscores type: enum
+     * @param min the min
+     * @param max the max
+     * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrangebyscore(K key, String min, String max, long offset, long count);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
 
     /**
      * Return a range of members in a sorted set, by index.
      * 
-     * @param channel the key
-     * @param key the start type: long
-     * @param start the stop type: long
-     * @param stop the withscores type: enum
-     * @return Long array-reply list of elements in the specified range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
      */
     Long zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by index.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
+     */
     Long zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over a range of members in a sorted set, by score.
      * 
-     * @return Long array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified score range.
      */
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over a range of members in a sorted set, by score.
      * 
-     * @return Long array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified score range.
      */
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over range of members in a sorted set, by score.
      * 
-     * @return Long array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified score range.
      */
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
     /**
-	 * Return a range of members in a sorted set, by score.
-	 * @return Long array-reply list of elements in the specified score range (optionally
-	with their scores).
-	 */
+     * Stream over a range of members in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified score range.
+     */
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified score range.
+     */
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified score range.
+     */
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified score range.
+     */
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified score range.
+     */
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
     /**
@@ -227,8 +359,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * Remove all members in a sorted set within the given scores.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return Long integer-reply the number of elements removed.
      */
     Long zremrangebyscore(K key, double min, double max);
@@ -237,8 +369,8 @@ public interface RedisSortedSetsConnection<K, V> {
      * Remove all members in a sorted set within the given scores.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return Long integer-reply the number of elements removed.
      */
     Long zremrangebyscore(K key, String min, String max);
@@ -246,23 +378,40 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Return a range of members in a sorted set, by index, with scores ordered from high to low.
      * 
-     * @return List<V> array-reply list of elements in the specified range (optionally with their scores).
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return List<V> array-reply list of elements in the specified range.
      */
     List<V> zrevrange(K key, long start, long stop);
 
+    /**
+     * Return a range of members with scores in a sorted set, by index, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return List<V> array-reply list of elements in the specified range.
+     */
     List<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, double max, double min);
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, String max, String min);
 
@@ -270,11 +419,11 @@ public interface RedisSortedSetsConnection<K, V> {
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
      * @param key the key
-     * @param max the max type: double
-     * @param min the min type: double
-     * @param offset the withscores type: enum
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, double max, double min, long offset, long count);
 
@@ -282,70 +431,175 @@ public interface RedisSortedSetsConnection<K, V> {
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
      * @param key the key
-     * @param max the max type: double
-     * @param min the min type: double
-     * @param offset the withscores type: enum
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
      * @param count the null
-     * @return List<V> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return List<V> array-reply list of elements in the specified score range.
      */
     List<V> zrevrangebyscore(K key, String max, String min, long offset, long count);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @return List<V> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
+     * @param count the null
+     * @return List<ScoredValue<V>> array-reply list of elements in the specified score range.
+     */
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
 
-    List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
+     * @param count the null
+     * @return List<V> array-reply list of elements in the specified score range.
+     */
+    List<ScoredValue<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
 
     /**
-     * Return a range of members in a sorted set, by index, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by index, with scores ordered from high to low.
      * 
-     * @param channel the key
-     * @param key the start type: long
-     * @param start the stop type: long
-     * @param stop the withscores type: enum
-     * @return Long array-reply list of elements in the specified range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
      */
     Long zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by index, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
+     */
     Long zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return Long array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @return Long count of elements in the specified range.
      */
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return Long array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified range.
      */
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
 
     /**
-	 * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-	 * @return Long array-reply list of elements in the specified score range (optionally
-	with their scores).
-	 */
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified range.
+     */
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return Long array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified range.
      */
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified range.
+     */
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return Long count of elements in the specified range.
+     */
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified range.
+     */
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return Long count of elements in the specified range.
+     */
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count);
 
@@ -377,6 +631,9 @@ public interface RedisSortedSetsConnection<K, V> {
     /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      * 
+     * @param destination the destination
+     * @param storeArgs the storeArgs
+     * @param keys the keys
      * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
      */
     Long zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
@@ -437,23 +694,26 @@ public interface RedisSortedSetsConnection<K, V> {
     Long zlexcount(K key, String min, String max);
 
     /**
-	 * Remove all members in a sorted set between the given lexicographical range.
-	 * @param key the key
-	 * @param min the min type: string
-	 * @param max the max type: string
-	 * @return Long integer-reply the number of elements removed.
-	 */
+     * Remove all members in a sorted set between the given lexicographical range.
+     * 
+     * @param key the key
+     * @param min the min type: string
+     * @param max the max type: string
+     * @return Long integer-reply the number of elements removed.
+     */
     Long zremrangebylex(K key, String min, String max);
 
     /**
-	 * Return a range of members in a sorted set, by lexicographical range.
-	 * @return List<V> array-reply list of elements in the specified score range.
-	 */
+     * Return a range of members in a sorted set, by lexicographical range.
+     * 
+     * @return List<V> array-reply list of elements in the specified score range.
+     */
     List<V> zrangebylex(K key, String min, String max);
 
     /**
-	 * Return a range of members in a sorted set, by lexicographical range.
-	 * @return List<V> array-reply list of elements in the specified score range.
-	 */
+     * Return a range of members in a sorted set, by lexicographical range.
+     * 
+     * @return List<V> array-reply list of elements in the specified score range.
+     */
     List<V> zrangebylex(K key, String min, String max, long offset, long count);
 }

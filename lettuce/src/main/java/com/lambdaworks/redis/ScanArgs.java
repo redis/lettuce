@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
 import static com.lambdaworks.redis.protocol.CommandKeyword.MATCH;
+
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
@@ -17,6 +18,14 @@ public class ScanArgs {
      * Static builder methods.
      */
     public static class Builder {
+
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+
+        }
+
         public static ScanArgs count(long count) {
             return new ScanArgs().count(count);
         }

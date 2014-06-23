@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
@@ -58,7 +57,7 @@ public abstract class AbstractRedisClient {
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = new ConcurrentSet<Closeable>();
 
-    public AbstractRedisClient() {
+    protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
         eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -106,10 +105,11 @@ public abstract class AbstractRedisClient {
 
             redisBootstrap.connect(redisAddress).get();
 
-            connection.registerCloseables(closeableResources, connection);
+            connection.registerCloseables(closeableResources, connection, handler);
 
             return connection;
         } catch (Exception e) {
+            connection.close();
             throw new RedisException("Unable to connect", e);
         }
     }
@@ -119,14 +119,14 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown() {
 
-        ImmutableList<Closeable> autoCloseables = ImmutableList.copyOf(closeableResources);
-        for (Closeable closeableResource : autoCloseables) {
+        while (!closeableResources.isEmpty()) {
+            Closeable closeableResource = closeableResources.iterator().next();
             try {
                 closeableResource.close();
             } catch (Exception e) {
                 logger.debug("Exception on Close: " + e.getMessage(), e);
-
             }
+            closeableResources.remove(closeableResource);
         }
 
         for (Channel c : channels) {

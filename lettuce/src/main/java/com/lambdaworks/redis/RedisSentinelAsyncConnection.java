@@ -27,7 +27,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Show the state and info of the specified master.
      * 
      * @param key
-     * @return
+     * @return RedisFuture<Map<K, V>>
      */
     RedisFuture<Map<K, V>> master(K key);
 
@@ -35,7 +35,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Provides a list of slaves for the master with the specified name.
      * 
      * @param key
-     * @return
+     * @return RedisFuture<Map<K, V>>
      */
     RedisFuture<Map<K, V>> slaves(K key);
 
@@ -43,19 +43,35 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * This command will reset all the masters with matching name.
      * 
      * @param key
-     * @return
+     * @return RedisFuture<Long>
      */
     RedisFuture<Long> reset(K key);
 
+    /**
+     * Perform a failover.
+     * 
+     * @param key the master id
+     * @return RedisFuture<String>
+     */
     RedisFuture<String> failover(K key);
 
     /**
      * This command tells the Sentinel to start monitoring a new master with the specified name, ip, port, and quorum.
+     * 
+     * @param key
+     * @param ip
+     * @param port
+     * @param quorum
+     * @return RedisFuture<String>
      */
     RedisFuture<String> monitor(K key, String ip, int port, int quorum);
 
     /**
      * Multiple option / value pairs can be specified (or none at all).
+     * 
+     * @param key the key
+     * @param option the option
+     * @param value the value
      * 
      * @return RedisFuture<String> simple-string-reply `OK` if `SET` was executed correctly.
      */
@@ -65,7 +81,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * remove the specified master.
      * 
      * @param key
-     * @return
+     * @return RedisFuture<String>
      */
     RedisFuture<String> remove(K key);
 

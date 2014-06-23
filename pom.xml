@@ -83,7 +83,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
-                    <useFile>false</useFile>
+                    <systemProperties>
+                        <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
+                    </systemProperties>
                 </configuration>
             </plugin>
 
@@ -184,6 +186,18 @@
         <skipTests>true</skipTests>
         <github.site.upload.skip>true</github.site.upload.skip>
         <lettuce-release-version>3.0.Beta1</lettuce-release-version>
+
+        <!-- Example for MySQL-->
+        <sonar.jdbc.url>
+            jdbc:h2:tcp://localhost:9092/sonar
+        </sonar.jdbc.url>
+        <sonar.jdbc.username>sonar</sonar.jdbc.username>
+        <sonar.jdbc.password>sonar</sonar.jdbc.password>
+
+        <!-- Optional URL to server. Default value is http://localhost:9000 -->
+        <sonar.host.url>
+            http://localhost:9000
+        </sonar.host.url>
     </properties>
 
     <scm>

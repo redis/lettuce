@@ -10,7 +10,7 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
-import com.lambdaworks.redis.support.LettuceStrings;
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisException;
@@ -28,7 +28,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:54
  */
-public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
+class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
     private KeyedObjectPool<PoolKey, RedisAsyncConnection<K, V>> partitionPool;
     private final Partitions partitions;

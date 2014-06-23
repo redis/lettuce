@@ -1,6 +1,7 @@
 package com.lambdaworks.redis;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +21,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 16:09
  */
-public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter {
+public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter implements Closeable {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
@@ -32,6 +33,11 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     private final RedisChannelWriter<K, V> channelWriter;
     private boolean active = true;
 
+    /**
+     * @param writer
+     * @param timeout
+     * @param unit
+     */
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
         this.unit = unit;
         this.timeout = timeout;
@@ -65,7 +71,6 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         if (!closed) {
             active = false;
             closed = true;
-            channelWriter.close();
             closeEvents.fireEventClosed(this);
             closeEvents = null;
         }
@@ -77,52 +82,91 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         channelRead(msg);
     }
 
+    /**
+     * Invoked on a channel read.
+     * 
+     * @param msg
+     */
     public void channelRead(Object msg) {
 
     }
 
-    public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-
+    protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
         return channelWriter.write(cmd);
     }
 
+    /**
+     * Register Closeable resources. Internal access only.
+     * 
+     * @param registry
+     * @param closeables
+     */
     public void registerCloseables(final Collection<Closeable> registry, final Closeable... closeables) {
         registry.addAll(Arrays.asList(closeables));
 
         addListener(new CloseEvents.CloseListener() {
             @Override
             public void resourceClosed(Object resource) {
-                registry.removeAll(Arrays.asList(closeables));
+                for (Closeable closeable : closeables) {
+                    if (closeable == RedisChannelHandler.this) {
+                        continue;
+                    }
 
+                    try {
+                        closeable.close();
+                    } catch (IOException e) {
+                        logger.debug(e.toString(), e);
+                    }
+                }
+
+                registry.removeAll(Arrays.asList(closeables));
             }
         });
     }
 
-    public void addListener(CloseEvents.CloseListener listener) {
+    protected void addListener(CloseEvents.CloseListener listener) {
         closeEvents.addListener(listener);
     }
 
-    public void removeListener(CloseEvents.CloseListener listener) {
+    protected void removeListener(CloseEvents.CloseListener listener) {
         closeEvents.removeListener(listener);
     }
 
+    /**
+     * 
+     * @return true if the connection is closed (final state in the connection lifecyle).
+     */
     public boolean isClosed() {
         return closed;
     }
 
+    /**
+     * Notification when the connection becomes active (connected).
+     */
     public void activated() {
         active = true;
 
     }
 
+    /**
+     * Notification when the connection becomes inactive (disconnected).
+     */
     public void deactivated() {
         active = false;
     }
 
+    /**
+     * 
+     * @return RedisChannelWriter<K, V>
+     */
     public RedisChannelWriter<K, V> getChannelWriter() {
         return channelWriter;
     }
 
+    /**
+     * 
+     * @return true if the connection is active and not closed.
+     */
     public boolean isOpen() {
         return active;
     }

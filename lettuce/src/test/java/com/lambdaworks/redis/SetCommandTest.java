@@ -15,7 +15,6 @@ import java.util.TreeSet;
 
 import org.junit.Test;
 
-@SuppressWarnings("unchecked")
 public class SetCommandTest extends AbstractCommandTest {
     @Test
     public void sadd() throws Exception {
@@ -140,7 +139,7 @@ public class SetCommandTest extends AbstractCommandTest {
 
         assertEquals(5, count.longValue());
 
-        assertEquals(new TreeSet(list("c", "a", "b", "e", "d")), new TreeSet(adapter.getList()));
+        assertEquals(new TreeSet<String>(list("c", "a", "b", "e", "d")), new TreeSet<String>(adapter.getList()));
     }
 
     @Test
@@ -197,7 +196,7 @@ public class SetCommandTest extends AbstractCommandTest {
             check.addAll(cursor.getValues());
         }
 
-        assertEquals(new TreeSet(expect), new TreeSet(check));
+        assertEquals(new TreeSet<String>(expect), new TreeSet<String>(check));
     }
 
     @Test

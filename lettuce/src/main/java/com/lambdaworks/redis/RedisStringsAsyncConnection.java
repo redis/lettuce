@@ -27,6 +27,8 @@ public interface RedisStringsAsyncConnection<K, V> {
     /**
      * Count set bits in a string.
      * 
+     * @param key the key
+     * 
      * @return RedisFuture<Long> integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key);
@@ -34,12 +36,19 @@ public interface RedisStringsAsyncConnection<K, V> {
     /**
      * Count set bits in a string.
      * 
+     * @param key the key
+     * @param start the start
+     * @param end the end
+     * 
      * @return RedisFuture<Long> integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key, long start, long end);
 
     /**
      * Find first bit set or clear in a string.
+     * 
+     * @param key the key
+     * @param state the state
      * 
      * @return RedisFuture<Long> integer-reply The command returns the position of the first bit set to 1 or 0 according to the
      *         request.
@@ -86,12 +95,44 @@ public interface RedisStringsAsyncConnection<K, V> {
      */
     RedisFuture<Long> bitpos(K key, boolean state, long start, long end);
 
+    /**
+     * Perform bitwise AND between strings.
+     * 
+     * @param destination result key of the operation
+     * @param keys operation input key names
+     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
+     *         of the longest input string.
+     */
     RedisFuture<Long> bitopAnd(K destination, K... keys);
 
+    /**
+     * Perform bitwise NOT between strings.
+     * 
+     * @param destination result key of the operation
+     * @param source operation input key names
+     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
+     *         of the longest input string.
+     */
     RedisFuture<Long> bitopNot(K destination, K source);
 
+    /**
+     * Perform bitwise OR between strings.
+     * 
+     * @param destination result key of the operation
+     * @param keys operation input key names
+     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
+     *         of the longest input string.
+     */
     RedisFuture<Long> bitopOr(K destination, K... keys);
 
+    /**
+     * Perform bitwise XOR between strings.
+     * 
+     * @param destination result key of the operation
+     * @param keys operation input key names
+     * @return RedisFuture<Long> integer-reply The size of the string stored in the destination key, that is equal to the size
+     *         of the longest input string.
+     */
     RedisFuture<Long> bitopXor(K destination, K... keys);
 
     /**
@@ -182,7 +223,10 @@ public interface RedisStringsAsyncConnection<K, V> {
     RedisFuture<List<V>> mget(K... keys);
 
     /**
-     * Get the values of all the given keys.
+     * Stream the values of all the given keys.
+     * 
+     * @param channel the channel
+     * @param keys the keys
      * 
      * @return RedisFuture<Long> array-reply list of values at the specified keys.
      */
@@ -209,12 +253,19 @@ public interface RedisStringsAsyncConnection<K, V> {
     /**
      * Set the string value of a key.
      * 
+     * @param key the key
+     * @param value the value
+     * 
      * @return RedisFuture<String> simple-string-reply `OK` if `SET` was executed correctly.
      */
     RedisFuture<String> set(K key, V value);
 
     /**
      * Set the string value of a key.
+     * 
+     * @param key the key
+     * @param value the value
+     * @param setArgs the setArgs
      * 
      * @return RedisFuture<V> simple-string-reply `OK` if `SET` was executed correctly.
      */
@@ -246,6 +297,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @param key the key
      * @param milliseconds the milliseconds type: long
      * @param value the value
+     * @return RedisFuture<String> simple-string-reply
      */
     RedisFuture<String> psetex(K key, long milliseconds, V value);
 
@@ -271,10 +323,10 @@ public interface RedisStringsAsyncConnection<K, V> {
     RedisFuture<Long> setrange(K key, long offset, V value);
 
     /**
-	 * Get the length of the value stored in a key.
-	 * @param key the key
-	 * @return RedisFuture<Long> integer-reply the length of the string at `key`, or `0` when `key` does not
-	exist.
-	 */
+     * Get the length of the value stored in a key.
+     * 
+     * @param key the key
+     * @return RedisFuture<Long> integer-reply the length of the string at `key`, or `0` when `key` does not exist.
+     */
     RedisFuture<Long> strlen(K key);
 }

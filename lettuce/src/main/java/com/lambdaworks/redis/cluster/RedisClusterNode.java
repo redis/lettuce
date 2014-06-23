@@ -8,6 +8,8 @@ import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisURI;
 
 /**
+ * Representation of a redis cluster node.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:09
  */
@@ -127,7 +129,7 @@ public class RedisClusterNode {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [uri=").append(uri);
         sb.append(", nodeId='").append(nodeId).append('\'');

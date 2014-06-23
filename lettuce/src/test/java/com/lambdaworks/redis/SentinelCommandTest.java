@@ -17,8 +17,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.protocol.RedisCommand;
-
 public class SentinelCommandTest extends AbstractCommandTest {
 
     private static RedisClient sentinelClient;
@@ -88,7 +86,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     public void getSlaves() throws Exception {
 
         Future<Map<String, String>> result = sentinel.slaves("mymaster");
-        Map<String, String> map = result.get();
+        result.get();
 
     }
 
@@ -104,8 +102,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void failover() throws Exception {
 
-        RedisCommand result = (RedisCommand) sentinel.failover("mymaster");
-        result.get();
+        RedisFuture<String> mymaster = sentinel.failover("mymaster");
+        mymaster.get();
 
     }
 

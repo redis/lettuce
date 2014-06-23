@@ -178,11 +178,11 @@ public class CommandArgs<K, V> {
     }
 
     private void realloc(int size) {
-        ByteBuffer buffer = ByteBuffer.allocate(size);
+        ByteBuffer newBuffer = ByteBuffer.allocate(size);
         this.buffer.flip();
-        buffer.put(this.buffer);
-        buffer.mark();
-        this.buffer = buffer;
+        newBuffer.put(this.buffer);
+        newBuffer.mark();
+        this.buffer = newBuffer;
     }
 
     public List<K> getKeys() {

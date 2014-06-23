@@ -16,6 +16,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @param <V> Value type.
  */
 public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> {
+
     public BooleanListOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<Boolean>());
     }

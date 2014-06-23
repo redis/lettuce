@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.URI;
 
+import com.lambdaworks.redis.LettuceStrings;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
 import com.google.common.net.HostAndPort;
@@ -46,7 +47,7 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
                 }
 
                 if (builder == null && LettuceStrings.isNotEmpty(uri.getAuthority())) {
-                    String hosts[] = uri.getAuthority().split("\\,");
+                    String[] hosts = uri.getAuthority().split("\\,");
                     for (String host : hosts) {
                         HostAndPort hostAndPort = HostAndPort.fromString(host);
                         if (builder == null) {

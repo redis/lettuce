@@ -27,6 +27,8 @@ public interface RedisStringsConnection<K, V> {
     /**
      * Count set bits in a string.
      * 
+     * @param key the key
+     * 
      * @return Long integer-reply The number of bits set to 1.
      */
     Long bitcount(K key);
@@ -34,12 +36,19 @@ public interface RedisStringsConnection<K, V> {
     /**
      * Count set bits in a string.
      * 
+     * @param key the key
+     * @param start the start
+     * @param end the end
+     * 
      * @return Long integer-reply The number of bits set to 1.
      */
     Long bitcount(K key, long start, long end);
 
     /**
      * Find first bit set or clear in a string.
+     * 
+     * @param key the key
+     * @param state the state
      * 
      * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
      * 
@@ -84,12 +93,44 @@ public interface RedisStringsConnection<K, V> {
      */
     Long bitpos(K key, boolean state, long start, long end);
 
+    /**
+     * Perform bitwise AND between strings.
+     * 
+     * @param destination result key of the operation
+     * @param keys operation input key names
+     * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
+     *         input string.
+     */
     Long bitopAnd(K destination, K... keys);
 
+    /**
+     * Perform bitwise NOT between strings.
+     * 
+     * @param destination result key of the operation
+     * @param source operation input key names
+     * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
+     *         input string.
+     */
     Long bitopNot(K destination, K source);
 
+    /**
+     * Perform bitwise OR between strings.
+     * 
+     * @param destination result key of the operation
+     * @param keys operation input key names
+     * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
+     *         input string.
+     */
     Long bitopOr(K destination, K... keys);
 
+    /**
+     * Perform bitwise XOR between strings.
+     * 
+     * @param destination result key of the operation
+     * @param keys operation input key names
+     * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
+     *         input string.
+     */
     Long bitopXor(K destination, K... keys);
 
     /**
@@ -180,7 +221,10 @@ public interface RedisStringsConnection<K, V> {
     List<V> mget(K... keys);
 
     /**
-     * Get the values of all the given keys.
+     * Stream over the values of all the given keys.
+     * 
+     * @param channel the channel
+     * @param keys the keys
      * 
      * @return Long array-reply list of values at the specified keys.
      */
@@ -207,12 +251,19 @@ public interface RedisStringsConnection<K, V> {
     /**
      * Set the string value of a key.
      * 
+     * @param key the key
+     * @param value the value
+     * 
      * @return String simple-string-reply `OK` if `SET` was executed correctly.
      */
     String set(K key, V value);
 
     /**
      * Set the string value of a key.
+     * 
+     * @param key the key
+     * @param value the value
+     * @param setArgs the setArgs
      * 
      * @return V simple-string-reply `OK` if `SET` was executed correctly.
      */
@@ -244,6 +295,7 @@ public interface RedisStringsConnection<K, V> {
      * @param key the key
      * @param milliseconds the milliseconds type: long
      * @param value the value
+     * @return String simple-string-reply
      */
     String psetex(K key, long milliseconds, V value);
 

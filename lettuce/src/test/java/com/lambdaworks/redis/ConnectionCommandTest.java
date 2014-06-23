@@ -81,7 +81,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
     @Test
     public void authInvalidPassword() throws Exception {
-        RedisAsyncConnection async = client.connectAsync();
+        RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
             async.auth("invalid");
             fail("Authenticated with invalid password");

@@ -11,7 +11,6 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * @since 15.05.14 21:08
  */
 public abstract class WithConnection<T> {
-    private final RedisConnectionPool<T> pool;
 
     /**
      * Performs connection handling and invokes the run-method with a valid Redis connection.
@@ -19,7 +18,6 @@ public abstract class WithConnection<T> {
      * @param pool the connection pool.
      */
     public WithConnection(RedisConnectionPool<T> pool) {
-        this.pool = pool;
         T connection = pool.allocateConnection();
         try {
             run(connection);

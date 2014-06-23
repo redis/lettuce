@@ -78,9 +78,12 @@ public interface RedisHashesConnection<K, V> {
     Map<K, V> hgetall(K key);
 
     /**
-     * Get all the fields and values in a hash.
+     * Stream over all the fields and values in a hash.
      * 
-     * @return Long array-reply list of fields and their values stored in the hash, or an empty list when `key` does not exist.
+     * @param channel the channel
+     * @param key the key
+     * 
+     * @return Long count of the keys.
      */
     Long hgetall(KeyValueStreamingChannel<K, V> channel, K key);
 
@@ -93,9 +96,12 @@ public interface RedisHashesConnection<K, V> {
     List<K> hkeys(K key);
 
     /**
-     * Get all the fields in a hash.
+     * Stream over all the fields in a hash.
      * 
-     * @return Long array-reply list of fields in the hash, or an empty list when `key` does not exist.
+     * @param channel the channel
+     * @param key the key
+     * 
+     * @return Long count of the keys.
      */
     Long hkeys(KeyStreamingChannel<K> channel, K key);
 
@@ -117,9 +123,13 @@ public interface RedisHashesConnection<K, V> {
     List<V> hmget(K key, K... fields);
 
     /**
-     * Get the values of all the given hash fields.
+     * Stream over the values of all the given hash fields.
      * 
-     * @return Long array-reply list of values associated with the given fields, in the same
+     * @param channel the channel
+     * @param key the key
+     * @param fields the fields
+     * 
+     * @return Long count of the keys
      */
     Long hmget(ValueStreamingChannel<V> channel, K key, K... fields);
 
@@ -167,9 +177,12 @@ public interface RedisHashesConnection<K, V> {
     List<V> hvals(K key);
 
     /**
-     * Get all the values in a hash.
+     * Stream over all the values in a hash.
      * 
-     * @return Long array-reply list of values in the hash, or an empty list when `key` does not exist.
+     * @param channel the channel
+     * @param key the key
+     * 
+     * @return Long count of the keys.
      */
     Long hvals(ValueStreamingChannel<V> channel, K key);
 

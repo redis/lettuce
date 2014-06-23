@@ -18,7 +18,6 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
-import com.lambdaworks.redis.support.LettuceStrings;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -77,7 +76,7 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public RedisConnection<String, String> connect() {
         return (RedisConnection<String, String>) connect((RedisCodec) codec);
     }
@@ -128,8 +127,9 @@ public class RedisClient extends AbstractRedisClient {
                     }
 
                     @Override
-                    public Class<?> getComponentType() {
-                        return RedisConnection.class;
+                    @SuppressWarnings("rawtypes")
+                    public Class<? extends RedisConnection<K, V>> getComponentType() {
+                        return (Class) RedisConnection.class;
                     }
                 }, maxActive, maxIdle, maxWait);
 
@@ -191,8 +191,9 @@ public class RedisClient extends AbstractRedisClient {
                     }
 
                     @Override
-                    public Class<?> getComponentType() {
-                        return RedisAsyncConnection.class;
+                    @SuppressWarnings({ "rawtypes", "unchecked" })
+                    public Class<? extends RedisAsyncConnection<K, V>> getComponentType() {
+                        return (Class) RedisAsyncConnection.class;
                     }
                 }, maxActive, maxIdle, maxWait);
 
@@ -239,7 +240,7 @@ public class RedisClient extends AbstractRedisClient {
         return connect(codec, true);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes" })
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect) {
         return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect), RedisConnection.class);
     }

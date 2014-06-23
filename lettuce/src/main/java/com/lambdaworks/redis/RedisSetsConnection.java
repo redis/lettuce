@@ -42,7 +42,9 @@ public interface RedisSetsConnection<K, V> {
     /**
      * Subtract multiple sets.
      * 
-     * @return Long array-reply list with members of the resulting set.
+     * @param channel the channel
+     * @param keys the keys
+     * @return Long count of members of the resulting set.
      */
     Long sdiff(ValueStreamingChannel<V> channel, K... keys);
 
@@ -66,7 +68,9 @@ public interface RedisSetsConnection<K, V> {
     /**
      * Intersect multiple sets.
      * 
-     * @return Long array-reply list with members of the resulting set.
+     * @param channel the channel
+     * @param keys the keys
+     * @return Long count of members of the resulting set.
      */
     Long sinter(ValueStreamingChannel<V> channel, K... keys);
 
@@ -114,7 +118,9 @@ public interface RedisSetsConnection<K, V> {
     /**
      * Get all the members in a set.
      * 
-     * @return Long array-reply all elements of the set.
+     * @param channel the channel
+     * @param key the keys
+     * @return Long count of members of the resulting set.
      */
     Long smembers(ValueStreamingChannel<V> channel, K key);
 
@@ -128,6 +134,8 @@ public interface RedisSetsConnection<K, V> {
 
     /**
      * Get one or multiple random members from a set.
+     * 
+     * @param key the key
      * 
      * @return V bulk-string-reply without the additional `count` argument the command returns a Bulk Reply with the randomly
      *         selected element, or `nil` when `key` does not exist.
@@ -147,8 +155,10 @@ public interface RedisSetsConnection<K, V> {
     /**
      * Get one or multiple random members from a set.
      * 
-     * @return Long bulk-string-reply without the additional `count` argument the command returns a Bulk Reply with the randomly
-     *         selected element, or `nil` when `key` does not exist.
+     * @param channel the channel
+     * @param key the key
+     * @param count the count
+     * @return Long count of members of the resulting set.
      */
     Long srandmember(ValueStreamingChannel<V> channel, K key, long count);
 
@@ -172,7 +182,9 @@ public interface RedisSetsConnection<K, V> {
     /**
      * Add multiple sets.
      * 
-     * @return Long array-reply list with members of the resulting set.
+     * @param channel the channel
+     * @param keys the key
+     * @return Long count of members of the resulting set.
      */
     Long sunion(ValueStreamingChannel<V> channel, K... keys);
 

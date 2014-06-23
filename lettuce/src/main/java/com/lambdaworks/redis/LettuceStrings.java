@@ -1,10 +1,18 @@
-package com.lambdaworks.redis.support;
+package com.lambdaworks.redis;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>>
  * @since 18.05.14 13:26
  */
 public class LettuceStrings {
+
+    /**
+     * Utility constructor.
+     */
+    private LettuceStrings() {
+
+    }
+
     /**
      * <p>
      * Checks if a CharSequence is empty ("") or null.

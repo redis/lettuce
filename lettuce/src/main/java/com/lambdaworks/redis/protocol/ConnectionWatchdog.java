@@ -2,7 +2,11 @@
 
 package com.lambdaworks.redis.protocol;
 
+import java.net.SocketAddress;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.base.Supplier;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -16,9 +20,6 @@ import io.netty.util.TimerTask;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import java.net.SocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
@@ -89,8 +90,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     private void scheduleReconnect() {
         if (channel == null || !channel.isActive()) {
-            if (attempts < RETRY_TIMEOUT_MAX)
+            if (attempts < RETRY_TIMEOUT_MAX) {
                 attempts++;
+            }
             int timeout = 2 << attempts;
             timer.newTimeout(this, timeout, TimeUnit.MILLISECONDS);
         }
