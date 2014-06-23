@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
@@ -58,7 +57,7 @@ public abstract class AbstractRedisClient {
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = new ConcurrentSet<Closeable>();
 
-    public AbstractRedisClient() {
+    protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
         eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);

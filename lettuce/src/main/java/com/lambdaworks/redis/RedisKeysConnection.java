@@ -85,6 +85,8 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Find all keys matching the given pattern.
      * 
+     * @param channel the channel
+     * @param pattern the pattern
      * @return Long array-reply list of keys matching `pattern`.
      */
     Long keys(KeyStreamingChannel<K> channel, K pattern);
@@ -92,6 +94,11 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Atomically transfer a key from a Redis instance to another one.
      * 
+     * @param host the host
+     * @param port the port
+     * @param key the key
+     * @param db the database
+     * @param timeout the timeout in milliseconds
      * @return String simple-string-reply The command returns OK on success.
      */
     String migrate(String host, int port, K key, int db, long timeout);
@@ -109,7 +116,7 @@ public interface RedisKeysConnection<K, V> {
      * returns the kind of internal representation used in order to store the value associated with a key.
      * 
      * @param key
-     * @return
+     * @return String
      */
     String objectEncoding(K key);
 
@@ -118,7 +125,7 @@ public interface RedisKeysConnection<K, V> {
      * operations).
      * 
      * @param key
-     * @return
+     * @return number of seconds since the object stored at the specified key is idle.
      */
     Long objectIdletime(K key);
 
@@ -126,7 +133,7 @@ public interface RedisKeysConnection<K, V> {
      * returns the number of references of the value associated with the specified key.
      * 
      * @param key
-     * @return
+     * @return Long
      */
     Long objectRefcount(K key);
 
@@ -145,6 +152,9 @@ public interface RedisKeysConnection<K, V> {
      * 
      * @param key the key
      * @param milliseconds the milliseconds type: long
+     * @return integer-reply, specifically:
+     * 
+     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set.
      */
     Boolean pexpire(K key, long milliseconds);
 

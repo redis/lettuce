@@ -4,8 +4,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.RedisCommandInterruptedException;
-import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -55,6 +53,15 @@ public class LettuceFutures {
         return complete;
     }
 
+    /**
+     * Wait until futures are complete or the supplied timeout is reached.
+     * 
+     * @param cmd Command to wait for.
+     * @param timeout Maximum time to wait for futures to complete.
+     * @param unit Unit of time for the timeout.
+     * 
+     * @return True if all futures complete in time.
+     */
     public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
         if (!cmd.await(timeout, unit)) {
             cmd.cancel(true);

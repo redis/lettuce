@@ -11,7 +11,14 @@ import com.lambdaworks.codec.CRC16;
  */
 public class SlotHash {
 
+    /**
+     * Constant for a subkey start.
+     */
     public static final byte SUBKEY_START = Chars.toByteArray('{')[1];
+
+    /**
+     * Constant for a subkey end.
+     */
     public static final byte SUBKEY_END = Chars.toByteArray('}')[1];
 
     private SlotHash() {

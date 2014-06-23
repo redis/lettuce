@@ -13,7 +13,6 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE
 import java.nio.ByteBuffer;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.List;
 
 import com.lambdaworks.redis.RedisException;
 
@@ -51,6 +50,13 @@ public class RedisStateMachine<K, V> {
         stack = new LinkedList<State>();
     }
 
+    /**
+     * Decode a command using the input buffer.
+     * 
+     * @param buffer
+     * @param output
+     * @return true if a complete response was read.
+     */
     public boolean decode(ByteBuf buffer, CommandOutput<K, V, ?> output) {
         return decode(buffer, null, output);
     }
@@ -59,6 +65,7 @@ public class RedisStateMachine<K, V> {
      * Attempt to decode a redis response and return a flag indicating whether a complete response was read.
      * 
      * @param buffer Buffer containing data from the server.
+     * @param command the command itself
      * @param output Current command output.
      * 
      * @return true if a complete response was read.

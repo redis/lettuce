@@ -2,19 +2,22 @@
 
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.ScriptOutputType.BOOLEAN;
+import static com.lambdaworks.redis.ScriptOutputType.INTEGER;
+import static com.lambdaworks.redis.ScriptOutputType.MULTI;
+import static com.lambdaworks.redis.ScriptOutputType.STATUS;
+import static com.lambdaworks.redis.ScriptOutputType.VALUE;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static com.lambdaworks.redis.ScriptOutputType.*;
-import static org.junit.Assert.assertEquals;
 
 public class ScriptingCommandTest extends AbstractCommandTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
     @Test
-    @SuppressWarnings("unchecked")
     public void eval() throws Exception {
         assertEquals(false, redis.eval("return 1 + 1 == 4", BOOLEAN));
         assertEquals(2L, redis.eval("return 1 + 1", INTEGER));
@@ -37,7 +40,6 @@ public class ScriptingCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void evalsha() throws Exception {
         redis.scriptFlush();
         String script = "return 1 + 1";
@@ -64,7 +66,6 @@ public class ScriptingCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void script() throws Exception {
         assertEquals("OK", redis.scriptFlush());
 

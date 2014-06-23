@@ -26,22 +26,74 @@ public interface RedisServerConnection<K, V> {
      */
     String bgsave();
 
+    /**
+     * Get the current connection name.
+     * 
+     * @return K bulk-string-reply The connection name, or a null bulk reply if no name is set.
+     */
     K clientGetname();
 
+    /**
+     * Set the current connection name.
+     * 
+     * @param name
+     * @return simple-string-reply `OK` if the connection name was successfully set.
+     */
     String clientSetname(K name);
 
+    /**
+     * Kill the connection of a client identified by ip:port.
+     * 
+     * @param addr ip:port
+     * @return String simple-string-reply `OK` if the connection exists and has been closed
+     */
     String clientKill(String addr);
 
+    /**
+     * Stop processing commands from clients for some time.
+     * 
+     * @param timeout
+     * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
+     */
     String clientPause(long timeout);
 
+    /**
+     * Get the list of client connections.
+     * 
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
+     */
     String clientList();
 
+    /**
+     * Get the value of a configuration parameter.
+     * 
+     * @param parameter
+     * @return List<String> bulk-string-reply
+     */
     List<String> configGet(String parameter);
 
+    /**
+     * Reset the stats returned by INFO.
+     * 
+     * @return String simple-string-reply always `OK`.
+     */
     String configResetstat();
 
+    /**
+     * Rewrite the configuration file with the in memory configuration.
+     * 
+     * @return String simple-string-reply `OK` when the configuration was rewritten properly. Otherwise an error is returned.
+     */
     String configRewrite();
 
+    /**
+     * Set a configuration parameter to the given value.
+     * 
+     * @param parameter
+     * @param value
+     * @return String simple-string-reply: `OK` when the configuration was set properly. Otherwise an error is returned.
+     */
     String configSet(String parameter, String value);
 
     /**
@@ -51,8 +103,17 @@ public interface RedisServerConnection<K, V> {
      */
     Long dbsize();
 
+    /**
+     * Get debugging information about a key.
+     * 
+     * @param key the key
+     * @return String simple-string-reply
+     */
     String debugObject(K key);
 
+    /**
+     * Make the server crash.
+     */
     void debugSegfault();
 
     /**
@@ -100,6 +161,8 @@ public interface RedisServerConnection<K, V> {
 
     /**
      * Synchronously save the dataset to disk and then shut down the server.
+     * 
+     * @param save
      */
     void shutdown(boolean save);
 
@@ -112,18 +175,46 @@ public interface RedisServerConnection<K, V> {
      */
     String slaveof(String host, int port);
 
+    /**
+     * Promote server as master.
+     * 
+     * @return String simple-string-reply
+     */
     String slaveofNoOne();
 
+    /**
+     * Read the slow log.
+     * 
+     * @return List<Object> deeply nested multi bulk replies
+     */
     List<Object> slowlogGet();
 
+    /**
+     * Read the slow log.
+     * 
+     * @param count the count
+     * @return List<Object> deeply nested multi bulk replies
+     */
     List<Object> slowlogGet(int count);
 
+    /**
+     * Obtaining the current length of the slow log.
+     * 
+     * @return Long length of the slow log.
+     */
     Long slowlogLen();
 
+    /**
+     * Resetting the slow log.
+     * 
+     * @return String simple-string-reply The commands returns OK on success.
+     */
     String slowlogReset();
 
     /**
      * Internal command used for replication.
+     * 
+     * @return
      */
     String sync();
 

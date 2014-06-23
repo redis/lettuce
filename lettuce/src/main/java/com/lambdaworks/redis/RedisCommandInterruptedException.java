@@ -3,13 +3,16 @@
 package com.lambdaworks.redis;
 
 /**
- * Exception thrown when the thread executing a redis command is
- * interrupted.
- *
+ * Exception thrown when the thread executing a redis command is interrupted.
+ * 
  * @author Will Glozer
  */
 @SuppressWarnings("serial")
 public class RedisCommandInterruptedException extends RedisException {
+    /**
+     * 
+     * @param e
+     */
     public RedisCommandInterruptedException(Throwable e) {
         super("Command interrupted", e);
     }

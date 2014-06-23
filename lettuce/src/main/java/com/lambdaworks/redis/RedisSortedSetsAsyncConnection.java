@@ -17,6 +17,10 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 
+     * @param key the key
+     * @param score the score
+     * @param member the member
+     * 
      * @return RedisFuture<Long> integer-reply specifically:
      * 
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
@@ -28,7 +32,7 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 
      * @param key the key
-     * @param scoresAndValues the null
+     * @param scoresAndValues the scoresAndValue tuples (score,value,score,value,...)
      * @return RedisFuture<Long> integer-reply specifically:
      * 
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
@@ -49,8 +53,8 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Count the members in a sorted set with scores within the given values.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return RedisFuture<Long> integer-reply the number of elements in the specified score range.
      */
     RedisFuture<Long> zcount(K key, double min, double max);
@@ -59,8 +63,8 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Count the members in a sorted set with scores within the given values.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return RedisFuture<Long> integer-reply the number of elements in the specified score range.
      */
     RedisFuture<Long> zcount(K key, String min, String max);
@@ -79,12 +83,19 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      * 
+     * @param destination the destination
+     * @param keys the keys
+     * 
      * @return RedisFuture<Long> integer-reply the number of elements in the resulting sorted set at `destination`.
      */
     RedisFuture<Long> zinterstore(K destination, K... keys);
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
+     * 
+     * @param destination the destination
+     * @param storeArgs the storeArgs
+     * @param keys the keys
      * 
      * @return RedisFuture<Long> integer-reply the number of elements in the resulting sorted set at `destination`.
      */
@@ -93,23 +104,40 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     /**
      * Return a range of members in a sorted set, by index.
      * 
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified range (optionally with their scores).
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified range.
      */
     RedisFuture<List<V>> zrange(K key, long start, long stop);
 
+    /**
+     * Return a range of members in a sorted set, by index.
+     * 
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, long start, long stop);
 
     /**
      * Return a range of members in a sorted set, by score.
      * 
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrangebyscore(K key, double min, double max);
 
     /**
      * Return a range of members in a sorted set, by score.
      * 
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrangebyscore(K key, String min, String max);
 
@@ -117,11 +145,11 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Return a range of members in a sorted set, by score.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
-     * @param offset the withscores type: enum
+     * @param min the min
+     * @param max the max
+     * @param offset the withscores
      * @param count the null
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrangebyscore(K key, double min, double max, long offset, long count);
 
@@ -129,70 +157,175 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Return a range of members in a sorted set, by score.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
-     * @param offset the withscores type: enum
+     * @param min the min
+     * @param max the max
+     * @param offset the withscores
      * @param count the null
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrangebyscore(K key, String min, String max, long offset, long count);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
 
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     * 
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
 
     /**
-     * Return a range of members in a sorted set, by index.
+     * Stream over a range of members in a sorted set, by index.
      * 
-     * @param channel the key
-     * @param key the start type: long
-     * @param start the stop type: long
-     * @param stop the withscores type: enum
-     * @return RedisFuture<Long> array-reply list of elements in the specified range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by index.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<Long> count of elements in the specified range.
+     */
     RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over a range of members in a sorted set, by score.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified score range.
      */
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over a range of members in a sorted set, by score.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified score range.
      */
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over a range of members in a sorted set, by score.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified score range.
      */
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
     /**
-     * Return a range of members in a sorted set, by score.
+     * Stream over a range of members in a sorted set, by score.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified score range.
      */
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified score range.
+     */
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified score range.
+     */
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified score range.
+     */
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified score range.
+     */
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count);
 
@@ -231,8 +364,8 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Remove all members in a sorted set within the given scores.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return RedisFuture<Long> integer-reply the number of elements removed.
      */
     RedisFuture<Long> zremrangebyscore(K key, double min, double max);
@@ -241,8 +374,8 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Remove all members in a sorted set within the given scores.
      * 
      * @param key the key
-     * @param min the min type: double
-     * @param max the max type: double
+     * @param min the min
+     * @param max the max
      * @return RedisFuture<Long> integer-reply the number of elements removed.
      */
     RedisFuture<Long> zremrangebyscore(K key, String min, String max);
@@ -250,23 +383,40 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     /**
      * Return a range of members in a sorted set, by index, with scores ordered from high to low.
      * 
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified range (optionally with their scores).
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified range.
      */
     RedisFuture<List<V>> zrevrange(K key, long start, long stop);
 
+    /**
+     * Return a range of members with scores in a sorted set, by index, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop);
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min);
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min);
 
@@ -274,11 +424,11 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
      * @param key the key
-     * @param max the max type: double
-     * @param min the min type: double
-     * @param offset the withscores type: enum
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
      * @param count the null
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count);
 
@@ -286,70 +436,175 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
      * @param key the key
-     * @param max the max type: double
-     * @param min the min type: double
-     * @param offset the withscores type: enum
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
      * @param count the null
-     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range (optionally with their scores).
+     * @return RedisFuture<List<V>> array-reply list of elements in the specified score range.
      */
     RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
+     * @param count the null
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
 
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @param offset the withscores
+     * @param count the null
+     * @return RedisFuture<List<ScoredValue<V>>> array-reply list of elements in the specified score range.
+     */
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
 
     /**
-     * Return a range of members in a sorted set, by index, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by index, with scores ordered from high to low.
      * 
-     * @param channel the key
-     * @param key the start type: long
-     * @param start the stop type: long
-     * @param stop the withscores type: enum
-     * @return RedisFuture<Long> array-reply list of elements in the specified range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by index, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return RedisFuture<Long> count of elements in the specified range.
+     */
     RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param max the max
+     * @param min the min
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
 
     /**
-     * Return a range of members in a sorted set, by score, with scores ordered from high to low.
+     * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified score range (optionally with their scores).
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified range.
+     */
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @return RedisFuture<Long> count of elements in the specified range.
+     */
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified range.
+     */
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count);
 
+    /**
+     * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     * 
+     * @param channel the channel
+     * @param key the key
+     * @param min the min
+     * @param max the max
+     * @param offset the offset
+     * @param count the count
+     * @return RedisFuture<Long> count of elements in the specified range.
+     */
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count);
 
@@ -383,6 +638,9 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      * 
+     * @param destination the destination
+     * @param storeArgs the storeArgs
+     * @param keys the keys
      * @return RedisFuture<Long> integer-reply the number of elements in the resulting sorted set at `destination`.
      */
     RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);

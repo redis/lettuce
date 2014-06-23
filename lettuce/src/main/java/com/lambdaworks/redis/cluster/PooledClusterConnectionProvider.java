@@ -28,7 +28,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:54
  */
-public class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
+class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
     private KeyedObjectPool<PoolKey, RedisAsyncConnection<K, V>> partitionPool;
     private final Partitions partitions;

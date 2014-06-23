@@ -927,7 +927,6 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public RedisFuture<Long> zadd(K key, Object... scoresAndValues) {
         return dispatch(commandBuilder.zadd(key, scoresAndValues));
     }
@@ -1515,11 +1514,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.zrangebylex(key, min, max, offset, count));
     }
 
-    public <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
+    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
         return dispatch(type, output, null);
     }
 
-    public synchronized <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
+    protected synchronized <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
             CommandArgs<K, V> args) {
         Command<K, V, T> cmd = new Command<K, V, T>(type, output, args, multi != null);
         return dispatch(cmd);
@@ -1542,7 +1541,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return Double.toString(n);
     }
 
-    public boolean isMulti() {
+    protected boolean isMulti() {
         return multi != null;
     }
 

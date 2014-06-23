@@ -23,6 +23,14 @@ public class RedisConnectionPool<T> implements Closeable {
     private GenericObjectPool<T> objectPool;
     private CloseEvents closeEvents = new CloseEvents();
 
+    /**
+     * Create a new connection pool
+     * 
+     * @param redisConnectionProvider
+     * @param maxActive
+     * @param maxIdle
+     * @param maxWait
+     */
     public RedisConnectionPool(RedisConnectionProvider<T> redisConnectionProvider, int maxActive, int maxIdle, long maxWait) {
         this.redisConnectionProvider = redisConnectionProvider;
 
@@ -132,14 +140,28 @@ public class RedisConnectionPool<T> implements Closeable {
         closeEvents = null;
     }
 
+    /**
+     * 
+     * @return the component type (pool resource type).
+     */
     public Class<? extends T> getComponentType() {
         return redisConnectionProvider.getComponentType();
     }
 
+    /**
+     * Adds a CloseListener.
+     * 
+     * @param listener
+     */
     public void addListener(CloseEvents.CloseListener listener) {
         closeEvents.addListener(listener);
     }
 
+    /**
+     * Removes a CloseListener.
+     * 
+     * @param listener
+     */
     public void removeListener(CloseEvents.CloseListener listener) {
         closeEvents.removeListener(listener);
     }

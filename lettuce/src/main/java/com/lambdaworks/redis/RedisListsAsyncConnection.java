@@ -63,8 +63,8 @@ public interface RedisListsAsyncConnection<K, V> {
      * Insert an element before or after another element in a list.
      * 
      * @param key the key
-     * @param before the where type: enum
-     * @param pivot the pivot type: value
+     * @param before the before
+     * @param pivot the pivot
      * @param value the value
      * @return RedisFuture<Long> integer-reply the length of the list after the insert operation, or `-1` when the value `pivot`
      *         was not found.
@@ -85,7 +85,7 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @return RedisFuture<V> bulk-string-reply the value of the first element, or `nil` when `key` does not exist.
      */
-   RedisFuture<V> lpop(K key);
+    RedisFuture<V> lpop(K key);
 
     /**
      * Prepend one or multiple values to a list.
@@ -118,7 +118,11 @@ public interface RedisListsAsyncConnection<K, V> {
     /**
      * Get a range of elements from a list.
      * 
-     * @return RedisFuture<Long> array-reply list of elements in the specified range.
+     * @param channel the channel
+     * @param key the key
+     * @param start the start type: long
+     * @param stop the stop type: long
+     * @return RedisFuture<Long> count of elements in the specified range.
      */
     RedisFuture<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 

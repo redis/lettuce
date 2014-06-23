@@ -76,7 +76,7 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public RedisConnection<String, String> connect() {
         return (RedisConnection<String, String>) connect((RedisCodec) codec);
     }
@@ -191,7 +191,7 @@ public class RedisClient extends AbstractRedisClient {
                     }
 
                     @Override
-                    @SuppressWarnings("rawtypes")
+                    @SuppressWarnings({ "rawtypes", "unchecked" })
                     public Class<? extends RedisAsyncConnection<K, V>> getComponentType() {
                         return (Class) RedisAsyncConnection.class;
                     }
@@ -240,7 +240,7 @@ public class RedisClient extends AbstractRedisClient {
         return connect(codec, true);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes" })
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect) {
         return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect), RedisConnection.class);
     }

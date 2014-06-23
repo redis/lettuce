@@ -76,6 +76,12 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      */
     RedisFuture<String> quit();
 
+    /**
+     * Create a SHA1 digest from a Lua script.
+     * 
+     * @param script
+     * @return the SHA1 value
+     */
     String digest(V script);
 
     /**
@@ -117,6 +123,13 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      */
     RedisFuture<String> unwatch();
 
+    /**
+     * Wait for replication.
+     * 
+     * @param replicas
+     * @param timeout
+     * @return number of replicas
+     */
     RedisFuture<Long> waitForReplication(int replicas, long timeout);
 
     /**

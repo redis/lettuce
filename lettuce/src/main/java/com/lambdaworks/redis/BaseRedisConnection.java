@@ -76,6 +76,12 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      */
     String quit();
 
+    /**
+     * Create a SHA1 digest from a Lua script.
+     * 
+     * @param script
+     * @return the SHA1 value
+     */
     String digest(V script);
 
     /**
@@ -116,6 +122,13 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      */
     String unwatch();
 
+    /**
+     * Wait for replication.
+     * 
+     * @param replicas
+     * @param timeout
+     * @return number of replicas
+     */
     Long waitForReplication(int replicas, long timeout);
 
     /**

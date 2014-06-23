@@ -91,10 +91,10 @@ public class RedisClusterClientTest {
 
     @Before
     public void before() throws Exception {
-        redis1 = (RedisClusterAsyncConnection) client1.connectAsync();
-        redis2 = (RedisClusterAsyncConnection) client2.connectAsync();
-        redis3 = (RedisClusterAsyncConnection) client3.connectAsync();
-        redis4 = (RedisClusterAsyncConnection) client4.connectAsync();
+        redis1 = (RedisClusterAsyncConnection<String, String>) client1.connectAsync();
+        redis2 = (RedisClusterAsyncConnection<String, String>) client2.connectAsync();
+        redis3 = (RedisClusterAsyncConnection<String, String>) client3.connectAsync();
+        redis4 = (RedisClusterAsyncConnection<String, String>) client4.connectAsync();
 
         redis1.flushall();
         redis2.flushall();
@@ -198,8 +198,8 @@ public class RedisClusterClientTest {
     @Test
     public void testClusteredOperations() throws Exception {
 
-        int slot1 = SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
-        int slot2 = SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
+        SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
+        SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
 
         RedisFuture<String> result = redis1.set("b", "value");
         assertEquals(null, result.getError());
@@ -229,11 +229,8 @@ public class RedisClusterClientTest {
     }
 
     @Test
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "rawtypes" })
     public void testClusterRedirection() throws Exception {
-
-        int slot1 = SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
-        int slot2 = SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
         Partitions partitions = clusterClient.getPartitions();
@@ -282,7 +279,8 @@ public class RedisClusterClientTest {
 
         connection.set("a", "b");
 
-        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) connection.getChannelWriter();
+        ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) connection
+                .getChannelWriter();
 
         RedisAsyncConnectionImpl<Object, Object> backendConnection = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);

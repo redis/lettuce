@@ -85,12 +85,21 @@ public interface RedisKeysAsyncConnection<K, V> {
     /**
      * Find all keys matching the given pattern.
      * 
+     * @param channel the channel
+     * @param pattern the pattern
+     * 
      * @return RedisFuture<Long> array-reply list of keys matching `pattern`.
      */
     RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.
+     * 
+     * @param host the host
+     * @param port the port
+     * @param key the key
+     * @param db the database
+     * @param timeout the timeout in milliseconds
      * 
      * @return RedisFuture<String> simple-string-reply The command returns OK on success.
      */
@@ -118,7 +127,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * operations).
      * 
      * @param key
-     * @return
+     * @return RedisFuture<Long> number of seconds since the object stored at the specified key is idle.
      */
     RedisFuture<Long> objectIdletime(K key);
 
@@ -126,7 +135,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * returns the number of references of the value associated with the specified key.
      * 
      * @param key
-     * @return
+     * @return RedisFuture<Long>
      */
     RedisFuture<Long> objectRefcount(K key);
 
@@ -145,6 +154,9 @@ public interface RedisKeysAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param milliseconds the milliseconds type: long
+     * @return integer-reply, specifically:
+     * 
+     *         `1` if the timeout was set. `0` if `key` does not exist or the timeout could not be set.
      */
     RedisFuture<Boolean> pexpire(K key, long milliseconds);
 

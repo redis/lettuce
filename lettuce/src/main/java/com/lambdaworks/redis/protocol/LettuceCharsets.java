@@ -11,7 +11,15 @@ import java.nio.charset.Charset;
  * @author Will Glozer
  */
 public class LettuceCharsets {
+
+    /**
+     * US-ASCII charset.
+     */
     public static final Charset ASCII = Charset.forName("US-ASCII");
+
+    /**
+     * UTF-8 charset.
+     */
     public static final Charset UTF8 = Charset.forName("UTF-8");
 
     /**
@@ -21,6 +29,12 @@ public class LettuceCharsets {
 
     }
 
+    /**
+     * Create a ByteBuffer from a string using ASCII encoding.
+     * 
+     * @param s
+     * @return ByteBuffer
+     */
     public static ByteBuffer buffer(String s) {
         return ByteBuffer.wrap(s.getBytes(ASCII));
     }

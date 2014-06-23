@@ -78,10 +78,12 @@ public interface RedisHashesAsyncConnection<K, V> {
     RedisFuture<Map<K, V>> hgetall(K key);
 
     /**
-     * Get all the fields and values in a hash.
+     * Stream over all the fields and values in a hash.
      * 
-     * @return RedisFuture<Long> array-reply list of fields and their values stored in the hash, or an empty list when `key`
-     *         does not exist.
+     * @param channel the channel
+     * @param key the key
+     * 
+     * @return RedisFuture<Long> count of the keys.
      */
     RedisFuture<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key);
 
@@ -96,7 +98,10 @@ public interface RedisHashesAsyncConnection<K, V> {
     /**
      * Get all the fields in a hash.
      * 
-     * @return RedisFuture<Long> array-reply list of fields in the hash, or an empty list when `key` does not exist.
+     * @param channel the channel
+     * @param key the key
+     * 
+     * @return RedisFuture<Long> count of the keys.
      */
     RedisFuture<Long> hkeys(KeyStreamingChannel<K> channel, K key);
 
@@ -118,9 +123,13 @@ public interface RedisHashesAsyncConnection<K, V> {
     RedisFuture<List<V>> hmget(K key, K... fields);
 
     /**
-     * Get the values of all the given hash fields.
+     * Stream over the values of all the given hash fields.
      * 
-     * @return RedisFuture<Long> array-reply list of values associated with the given fields, in the same
+     * @param channel the channel
+     * @param key the key
+     * @param fields the fields
+     * 
+     * @return RedisFuture<Long> count of the keys
      */
     RedisFuture<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields);
 
@@ -168,9 +177,12 @@ public interface RedisHashesAsyncConnection<K, V> {
     RedisFuture<List<V>> hvals(K key);
 
     /**
-     * Get all the values in a hash.
+     * Stream over all the values in a hash.
      * 
-     * @return RedisFuture<Long> array-reply list of values in the hash, or an empty list when `key` does not exist.
+     * @param channel the channel
+     * @param key the key
+     * 
+     * @return RedisFuture<Long> acount of the keys.
      */
     RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
 

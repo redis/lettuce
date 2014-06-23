@@ -1,5 +1,12 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.google.common.util.concurrent.AbstractFuture;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -8,18 +15,11 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 31.05.14 14:42
  */
-public class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
+class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
 
     private RedisCommand<K, V, T> command;
     private RedisChannelWriter<K, V> retry;
@@ -27,7 +27,7 @@ public class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisC
     private int executionLimit;
     private List<Throwable> exceptions = new ArrayList<Throwable>();
 
-    public ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
+    ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
         this.command = command;
         this.retry = retry;
         this.executionLimit = executionLimit;

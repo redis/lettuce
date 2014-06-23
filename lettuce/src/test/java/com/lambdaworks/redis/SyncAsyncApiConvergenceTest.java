@@ -24,6 +24,8 @@ import org.junit.runners.Parameterized;
 public class SyncAsyncApiConvergenceTest {
 
     private Method method;
+
+    @SuppressWarnings("rawtypes")
     private Class<RedisAsyncConnection> asyncClass = RedisAsyncConnection.class;
 
     @Parameterized.Parameters(name = "Method {0}/{1}")
@@ -66,13 +68,13 @@ public class SyncAsyncApiConvergenceTest {
             if (actualTypeArguments[0] instanceof ParameterizedType) {
 
                 ParameterizedType parameterizedType = (ParameterizedType) actualTypeArguments[0];
-                returnType = (Class) parameterizedType.getRawType();
+                returnType = (Class<?>) parameterizedType.getRawType();
             } else if (actualTypeArguments[0] instanceof GenericArrayType) {
 
                 GenericArrayType arrayType = (GenericArrayType) actualTypeArguments[0];
-                returnType = Array.newInstance((Class) arrayType.getGenericComponentType(), 0).getClass();
+                returnType = Array.newInstance((Class<?>) arrayType.getGenericComponentType(), 0).getClass();
             } else {
-                returnType = (Class) actualTypeArguments[0];
+                returnType = (Class<?>) actualTypeArguments[0];
             }
         }
 

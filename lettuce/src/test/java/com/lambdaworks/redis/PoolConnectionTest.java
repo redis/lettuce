@@ -46,7 +46,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         c1.close();
         assertEquals(0, pool.getNumActive());
 
-        RedisConnection<String, String> c2 = pool.allocateConnection();
+        pool.allocateConnection();
         assertEquals(1, pool.getNumActive());
     }
 

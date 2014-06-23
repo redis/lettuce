@@ -6,6 +6,9 @@ package com.lambdaworks.codec;
  */
 public class CRC16 {
 
+    /**
+     * CRC16 polynominal.
+     */
     public static final int polynomial = 0x1021;
 
     /**
@@ -15,6 +18,12 @@ public class CRC16 {
 
     }
 
+    /**
+     * Create a CRC16 checksum from the bytes.
+     * 
+     * @param bytes
+     * @return CRC16 as interger value
+     */
     public static int crc16(byte[] bytes) {
         int crc = 0;
         for (byte b : bytes) {
