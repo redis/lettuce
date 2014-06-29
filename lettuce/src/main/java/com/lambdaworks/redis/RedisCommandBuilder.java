@@ -167,6 +167,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEBUG, null, args);
     }
 
+    public Command<K, V, Void> debugOom() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("OOM");
+        return createCommand(DEBUG, null, args);
+    }
+
     public Command<K, V, Long> decr(K key) {
         return createCommand(DECR, new IntegerOutput<K, V>(codec), key);
     }

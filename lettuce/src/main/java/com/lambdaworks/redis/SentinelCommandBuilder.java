@@ -1,5 +1,8 @@
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
+import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
 import static com.lambdaworks.redis.protocol.CommandType.MONITOR;
 import static com.lambdaworks.redis.protocol.CommandType.PING;
 import static com.lambdaworks.redis.protocol.CommandType.SENTINEL;
@@ -10,6 +13,7 @@ import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.ListOfMapsOutput;
 import com.lambdaworks.redis.output.MapOutput;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.output.ValueListOutput;
@@ -31,23 +35,28 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SENTINEL, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<Map<K, V>>> masters() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("masters");
+        return createCommand(SENTINEL, new ListOfMapsOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Map<K, V>> master(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("master").addKey(key);
         return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Map<K, V>> slaves(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("slaves").addKey(key);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLAVES).addKey(key);
         return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> reset(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("reset").addKey(key);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESET).addKey(key);
         return createCommand(SENTINEL, new IntegerOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> failover(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("failover").addKey(key);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FAILOVER).addKey(key);
         return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
     }
 

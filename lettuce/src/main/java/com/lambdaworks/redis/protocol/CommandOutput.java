@@ -122,4 +122,8 @@ public abstract class CommandOutput<K, V, T> {
         sb.append(']');
         return sb.toString();
     }
+
+    public void multi(int count) {
+
+    }
 }

@@ -53,6 +53,12 @@ class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> i
     }
 
     @Override
+    public RedisFuture<List<Map<K, V>>> masters() {
+
+        return dispatch(commandBuilder.masters());
+    }
+
+    @Override
     public RedisFuture<Map<K, V>> master(K key) {
 
         return dispatch(commandBuilder.master(key));

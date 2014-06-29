@@ -142,6 +142,7 @@ public class RedisStateMachine<K, V> {
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
                         state.count = length;
                         buffer.markReaderIndex();
+                        output.multi(state.count);
                     }
 
                     if (state.count <= 0) {
@@ -150,6 +151,7 @@ public class RedisStateMachine<K, V> {
 
                     state.count--;
                     stack.addFirst(new State());
+
                     continue loop;
                 case BYTES:
                     if ((bytes = readBytes(buffer, state.count)) == null) {

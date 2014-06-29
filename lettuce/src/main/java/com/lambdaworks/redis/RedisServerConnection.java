@@ -114,9 +114,14 @@ public interface RedisServerConnection<K, V> {
     String debugObject(K key);
 
     /**
-     * Make the server crash.
+     * Make the server crash: Invalid pointer access.
      */
     void debugSegfault();
+
+    /**
+     * Make the server crash: Out of memory.
+     */
+    void debugOom();
 
     /**
      * Remove all keys from all databases.

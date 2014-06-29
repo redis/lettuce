@@ -205,6 +205,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public void debugOom() {
+        dispatch(commandBuilder.debugOom());
+    }
+
+    @Override
     public RedisFuture<Long> decr(K key) {
         return dispatch(commandBuilder.decr(key));
     }

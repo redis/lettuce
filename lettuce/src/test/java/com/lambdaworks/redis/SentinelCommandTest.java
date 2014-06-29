@@ -3,11 +3,14 @@
 package com.lambdaworks.redis;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -60,6 +63,21 @@ public class SentinelCommandTest extends AbstractCommandTest {
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
         assertEquals(16379, socketAddress.getPort());
+
+    }
+
+    @Test
+    public void masters() throws Exception {
+
+        Future<List<Map<String, String>>> result = sentinel.masters();
+        List<Map<String, String>> list = result.get();
+
+        assertThat(list.size(), greaterThan(0));
+
+        Map<String, String> map = list.get(0);
+        assertNotNull(map.get("flags"));
+        assertNotNull(map.get("config-epoch"));
+        assertNotNull(map.get("port"));
 
     }
 

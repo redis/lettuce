@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -22,6 +23,13 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * @return Future&lt;SocketAddress&gt;
      */
     Future<SocketAddress> getMasterAddrByName(K key);
+
+    /**
+     * Enumerates all the monitored masters and their states.
+     * 
+     * @return RedisFuture&lt;Map&lt;K, V&gt;&gt;
+     */
+    RedisFuture<List<Map<K, V>>> masters();
 
     /**
      * Show the state and info of the specified master.
