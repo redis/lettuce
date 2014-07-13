@@ -54,7 +54,7 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
 
-  protected static final Log logger = LogFactory.getLog(MyBatisBatchItemWriter.class);
+  private static final Log logger = LogFactory.getLog(MyBatisBatchItemWriter.class);
 
   private SqlSessionTemplate sqlSessionTemplate;
 
