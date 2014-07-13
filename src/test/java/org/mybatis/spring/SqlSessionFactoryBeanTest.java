@@ -47,7 +47,8 @@ import com.mockrunner.mock.jdbc.MockDataSource;
  */
 public final class SqlSessionFactoryBeanTest {
 
-  private static final class TestObjectFactory extends DefaultObjectFactory {}
+  private static final class TestObjectFactory extends DefaultObjectFactory {
+    private static final long serialVersionUID = 1L;}
   private static final class TestObjectWrapperFactory extends DefaultObjectWrapperFactory {}
 
   private static MockDataSource dataSource = new MockDataSource();

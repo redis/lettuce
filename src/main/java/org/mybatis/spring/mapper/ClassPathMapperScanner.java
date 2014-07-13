@@ -212,14 +212,14 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    */
   @Override
   protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
-    return (beanDefinition.getMetadata().isInterface() && beanDefinition.getMetadata().isIndependent());
+    return beanDefinition.getMetadata().isInterface() && beanDefinition.getMetadata().isIndependent();
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
+  protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) {
     if (super.checkCandidate(beanName, beanDefinition)) {
       return true;
     } else {

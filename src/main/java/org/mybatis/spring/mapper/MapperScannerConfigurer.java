@@ -296,7 +296,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * 
    * @since 1.0.2
    */
-  public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+  public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
     if (this.processPropertyPlaceHolders) {
       processPropertyPlaceHolders();
     }

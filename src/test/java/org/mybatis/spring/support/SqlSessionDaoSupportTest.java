@@ -81,7 +81,7 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     sqlSessionDaoSupport.afterPropertiesSet();
   }
 
-  @Test(expected = org.springframework.beans.factory.BeanCreationException.class)
+  @Test(expected = BeanCreationException.class)
   public void testAutowireWithNoFactoryOrSession() {
     setupContext();
     startContext();
