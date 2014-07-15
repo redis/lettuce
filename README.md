@@ -24,10 +24,10 @@ Currently following commands are __not yet__ supported:
 I'm pursuing the client code as a fork since the latest changes weren't merged back into https://github/wg/lettuce
 I'd love not adding yet another Java redis client, but unfortunately it's the current situation.
     
-Maven Artifacts
+Maven Artifacts/Download
 ----------------
 
-Releases of lettuce are available in the maven central repository.
+Releases of lettuce are available in the maven central repository. Take also a look at the [Download](https://github.com/mp911de/lettuce/wiki/Download) page in the Wiki.
 
 ```xml
 <dependency>
