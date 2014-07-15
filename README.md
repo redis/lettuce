@@ -33,7 +33,7 @@ Releases of lettuce are available in the maven central repository.
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.Beta1</version>
+  <version>3.0.Beta2</version>
 </dependency>
 ```    
 
