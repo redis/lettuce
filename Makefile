@@ -270,7 +270,7 @@ stop:
 test:
 	make start
 	sleep 2
-	mvn -B -DskipTests=false clean compile test
+	mvn -B -DskipTests=false clean compile cobertura:cobertura coveralls:cobertura
 	make stop
 
 travis-install:

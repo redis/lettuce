@@ -3,6 +3,8 @@ lettuce - A scalable Java Redis client
 
 [![Build Status](https://snap-ci.com/mp911de/lettuce/branch/master/build_image)](https://snap-ci.com/mp911de/lettuce/branch/master)
 
+[![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce)
+
 Lettuce is a scalable thread-safe Redis client providing both synchronous and
 asynchronous connections. Multiple threads may share one connection provided
 they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
@@ -37,7 +39,7 @@ Releases of lettuce are available in the maven central repository.
 </dependency>
 ```    
 
-Or snapshots at https://oss.sonatype.org/content/repositories/snapshots/
+or snapshots at https://oss.sonatype.org/content/repositories/snapshots/
 
 Basic Usage
 -----------
