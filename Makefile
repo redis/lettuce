@@ -267,10 +267,16 @@ stop:
 	rm -f *.rdb
 
 
-test:
+test-coveralls:
 	make start
 	sleep 2
 	mvn -B -DskipTests=false clean compile cobertura:cobertura coveralls:cobertura
+	make stop
+
+test:
+	make start
+	sleep 2
+	mvn -B -DskipTests=false clean compile test
 	make stop
 
 travis-install:
