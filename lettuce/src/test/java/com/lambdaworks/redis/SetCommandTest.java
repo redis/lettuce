@@ -8,12 +8,11 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.junit.Test;
 
 public class SetCommandTest extends AbstractCommandTest {
     @Test
@@ -34,34 +33,48 @@ public class SetCommandTest extends AbstractCommandTest {
 
     @Test
     public void sdiff() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
         assertEquals(set("b", "d"), redis.sdiff("key1", "key2", "key3"));
     }
 
     @Test
+    public void sdiffStreaming() throws Exception {
+        setupSet();
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+
+        Long count = redis.sdiff(streamingAdapter, "key1", "key2", "key3");
+        assertEquals(2, count.intValue());
+        assertEquals(set("b", "d"), new HashSet<String>(streamingAdapter.getList()));
+    }
+
+    @Test
     public void sdiffstore() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
         assertEquals(2, (long) redis.sdiffstore("newset", "key1", "key2", "key3"));
         assertEquals(set("b", "d"), redis.smembers("newset"));
     }
 
     @Test
     public void sinter() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
         assertEquals(set("c"), redis.sinter("key1", "key2", "key3"));
     }
 
     @Test
+    public void sinterStreaming() throws Exception {
+        setupSet();
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        Long count = redis.sinter(streamingAdapter, "key1", "key2", "key3");
+
+        assertEquals(1, count.intValue());
+        assertEquals(set("c"), new HashSet<String>(streamingAdapter.getList()));
+    }
+
+    @Test
     public void sinterstore() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
         assertEquals(1, (long) redis.sinterstore("newset", "key1", "key2", "key3"));
         assertEquals(set("c"), redis.smembers("newset"));
     }
@@ -84,9 +97,17 @@ public class SetCommandTest extends AbstractCommandTest {
 
     @Test
     public void smembers() throws Exception {
-        redis.sadd(key, "a");
-        redis.sadd(key, "b");
-        assertTrue(set("a", "b").equals(redis.smembers(key)));
+        setupSet();
+        assertEquals(set("a", "b", "c"), redis.smembers(key));
+    }
+
+    @Test
+    public void smembersStreaming() throws Exception {
+        setupSet();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        Long count = redis.smembers(streamingAdapter, key);
+        assertEquals(3, count.longValue());
+        assertEquals(set("a", "b", "c"), new HashSet<String>(streamingAdapter.getList()));
     }
 
     @Test
@@ -121,17 +142,13 @@ public class SetCommandTest extends AbstractCommandTest {
 
     @Test
     public void sunion() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
         assertEquals(set("a", "b", "c", "d", "e"), redis.sunion("key1", "key2", "key3"));
     }
 
     @Test
     public void sunionStreaming() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
@@ -144,9 +161,7 @@ public class SetCommandTest extends AbstractCommandTest {
 
     @Test
     public void sunionstore() throws Exception {
-        redis.sadd("key1", "a", "b", "c", "d");
-        redis.sadd("key2", "c");
-        redis.sadd("key3", "a", "c", "e");
+        setupSet();
         assertEquals(5, (long) redis.sunionstore("newset", "key1", "key2", "key3"));
         assertEquals(set("a", "b", "c", "d", "e"), redis.smembers("newset"));
     }
@@ -167,13 +182,25 @@ public class SetCommandTest extends AbstractCommandTest {
         redis.sadd(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
+        StreamScanCursor cursor = redis.sscan(adapter, key);
+
+        assertEquals(1, cursor.getCount());
+        assertEquals("0", cursor.getCursor());
+        assertTrue(cursor.isFinished());
+        assertEquals(list(value), adapter.getList());
+    }
+
+    @Test
+    public void sscanStreamingArgs() throws Exception {
+        redis.sadd(key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
         StreamScanCursor cursor = redis.sscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
 
         assertEquals(1, cursor.getCount());
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());
         assertEquals(list(value), adapter.getList());
-
     }
 
     @Test
@@ -219,4 +246,12 @@ public class SetCommandTest extends AbstractCommandTest {
             expect.add(value + i);
         }
     }
+
+    private void setupSet() {
+        redis.sadd(key, "a", "b", "c");
+        redis.sadd("key1", "a", "b", "c", "d");
+        redis.sadd("key2", "c");
+        redis.sadd("key3", "a", "c", "e");
+    }
+
 }

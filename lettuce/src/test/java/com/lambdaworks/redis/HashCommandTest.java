@@ -7,14 +7,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import com.google.common.collect.ImmutableMap;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
 
 public class HashCommandTest extends AbstractCommandTest {
     @Test
@@ -102,10 +100,26 @@ public class HashCommandTest extends AbstractCommandTest {
 
     @Test
     public void hmget() throws Exception {
+        setupHmget();
+        List<String> values = redis.hmget(key, "one", "two");
+        assertEquals(2, values.size());
+        assertTrue(values.containsAll(list("1", "1")));
+    }
+
+    private void setupHmget() {
         assertEquals(list(null, null), redis.hmget(key, "one", "two"));
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
-        List<String> values = redis.hmget(key, "one", "two");
+    }
+
+    @Test
+    public void hmgetStreaming() throws Exception {
+        setupHmget();
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        Long count = redis.hmget(streamingAdapter, key, "one", "two");
+        List<String> values = streamingAdapter.getList();
+        assertEquals(2, count.intValue());
         assertEquals(2, values.size());
         assertTrue(values.containsAll(list("1", "1")));
     }
@@ -140,6 +154,19 @@ public class HashCommandTest extends AbstractCommandTest {
         List<String> values = redis.hvals(key);
         assertEquals(2, values.size());
         assertTrue(values.containsAll(list("1", "1")));
+    }
+
+    @Test
+    public void hvalsStreaming() throws Exception {
+        assertEquals(list(), redis.hvals(key));
+        redis.hset(key, "one", "1");
+        redis.hset(key, "two", "2");
+
+        ListStreamingAdapter<String> channel = new ListStreamingAdapter();
+        Long count = redis.hvals(channel, key);
+        assertEquals(2, count.intValue());
+        assertEquals(2, channel.getList().size());
+        assertTrue(channel.getList().containsAll(list("1", "1")));
     }
 
     @Test

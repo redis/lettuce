@@ -10,14 +10,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class StringCommandTest extends AbstractCommandTest {
     @Rule
@@ -60,10 +59,26 @@ public class StringCommandTest extends AbstractCommandTest {
 
     @Test
     public void mget() throws Exception {
+        setupMget();
+        assertEquals(list("1", "2"), redis.mget("one", "two"));
+    }
+
+    private void setupMget()
+    {
         assertEquals(list((String) null), redis.mget(key));
         redis.set("one", "1");
         redis.set("two", "2");
-        assertEquals(list("1", "2"), redis.mget("one", "two"));
+    }
+
+    @Test
+    public void mgetStreaming() throws Exception {
+        setupMget();
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        Long count = redis.mget(streamingAdapter, "one", "two");
+        assertEquals(2, count.intValue());
+
+        assertEquals(list("1", "2"), streamingAdapter.getList());
     }
 
     @Test
