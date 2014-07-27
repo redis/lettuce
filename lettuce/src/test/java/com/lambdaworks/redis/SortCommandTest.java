@@ -2,10 +2,15 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
-
-import static com.lambdaworks.redis.SortArgs.Builder.*;
+import static com.lambdaworks.redis.SortArgs.Builder.alpha;
+import static com.lambdaworks.redis.SortArgs.Builder.asc;
+import static com.lambdaworks.redis.SortArgs.Builder.by;
+import static com.lambdaworks.redis.SortArgs.Builder.desc;
+import static com.lambdaworks.redis.SortArgs.Builder.get;
+import static com.lambdaworks.redis.SortArgs.Builder.limit;
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 public class SortCommandTest extends AbstractCommandTest {
     @Test
@@ -13,6 +18,22 @@ public class SortCommandTest extends AbstractCommandTest {
         redis.rpush(key, "3", "2", "1");
         assertEquals(list("1", "2", "3"), redis.sort(key));
         assertEquals(list("1", "2", "3"), redis.sort(key, asc()));
+    }
+
+    @Test
+    public void sortStreaming() throws Exception {
+        redis.rpush(key, "3", "2", "1");
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        Long count = redis.sort(streamingAdapter, key);
+
+        assertEquals(3, count.longValue());
+        assertEquals(list("1", "2", "3"), streamingAdapter.getList());
+        streamingAdapter.getList().clear();
+
+        count = redis.sort(streamingAdapter, key, desc());
+        assertEquals(3, count.longValue());
+        assertEquals(list("3", "2", "1"), streamingAdapter.getList());
     }
 
     @Test
