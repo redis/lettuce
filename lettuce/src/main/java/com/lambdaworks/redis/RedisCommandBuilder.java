@@ -540,6 +540,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(RANDOMKEY, new ValueOutput<K, V>(codec));
     }
 
+    public Command<K, V, List<Object>> role() {
+        return createCommand(ROLE, new ArrayOutput<K, V>(codec));
+    }
+
     public Command<K, V, String> rename(K key, K newKey) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(newKey);
         return createCommand(RENAME, new StatusOutput<K, V>(codec), args);

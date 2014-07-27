@@ -165,6 +165,7 @@ public class RedisStateMachine<K, V> {
 
             buffer.markReaderIndex();
             stack.remove();
+
             output.complete(stack.size());
 
         }

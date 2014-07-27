@@ -622,6 +622,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<List<Object>> role() {
+        return dispatch(commandBuilder.role());
+    }
+
+    @Override
     public RedisFuture<V> randomkey() {
         return dispatch(commandBuilder.randomkey());
     }

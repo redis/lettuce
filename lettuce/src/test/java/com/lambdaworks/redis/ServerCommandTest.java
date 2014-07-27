@@ -151,6 +151,24 @@ public class ServerCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void role() throws Exception {
+
+        RedisClient redisClient = new RedisClient("localhost", 6480);
+        RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
+        try {
+
+            RedisFuture<List<Object>> role = connection.role();
+            List<Object> objects = role.get();
+
+            assertEquals("master", objects.get(0));
+            assertEquals(Long.class, objects.get(1).getClass());
+        } finally {
+            connection.close();
+            redisClient.shutdown();
+        }
+    }
+
+    @Test
     public void slaveofNoOne() throws Exception {
         assertEquals("OK", redis.slaveofNoOne());
     }

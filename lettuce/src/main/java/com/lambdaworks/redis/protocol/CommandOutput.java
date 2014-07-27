@@ -100,6 +100,7 @@ public abstract class CommandOutput<K, V, T> {
      * Mark the command output complete.
      * 
      * @param depth Remaining depth of output queue.
+     * 
      */
     public void complete(int depth) {
         // nothing to do by default

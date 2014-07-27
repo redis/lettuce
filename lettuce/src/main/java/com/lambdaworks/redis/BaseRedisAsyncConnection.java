@@ -65,6 +65,14 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
     RedisFuture<V> echo(V msg);
 
     /**
+     * Return the role of the instance in the context of replication.
+     *
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply where the first element is one of master, slave, sentinel and
+     *         the additional elements are role-specific.
+     */
+    RedisFuture<List<Object>> role();
+
+    /**
      * Ping the server.
      * 
      * @return RedisFuture&lt;String&gt; simple-string-reply

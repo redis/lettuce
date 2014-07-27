@@ -63,6 +63,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     V echo(V msg);
 
     /**
+     * Return the role of the instance in the context of replication.
+     *
+     * @return List&lt;Object&gt array-reply where the first element is one of master, slave, sentinel and the additional
+     *         elements are role-specific.
+     */
+    List<Object> role();
+
+    /**
      * Ping the server.
      * 
      * @return String simple-string-reply

@@ -3,6 +3,7 @@
 package com.lambdaworks.redis;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -101,6 +102,27 @@ public class SentinelCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void role() throws Exception {
+
+        RedisClient redisClient = new RedisClient("localhost", 26381);
+        RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
+        try {
+
+            RedisFuture<List<Object>> role = connection.role();
+            List<Object> objects = role.get();
+
+            assertThat(objects.size(), is(2));
+
+            assertEquals("sentinel", objects.get(0));
+            assertEquals("[mymasterfailover]", objects.get(1).toString());
+
+        } finally {
+            connection.close();
+            redisClient.shutdown();
+        }
+    }
+
+    @Test
     public void getSlaves() throws Exception {
 
         Future<Map<String, String>> result = sentinel.slaves("mymaster");
@@ -163,4 +185,5 @@ public class SentinelCommandTest extends AbstractCommandTest {
     protected static RedisClient getRedisSentinelClient() {
         return new RedisClient(RedisURI.Builder.sentinel("localhost", 1234, "mymaster").withSentinel("localhost").build());
     }
+
 }
