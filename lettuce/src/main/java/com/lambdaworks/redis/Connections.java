@@ -87,11 +87,13 @@ class Connections {
             if (connection instanceof RedisAsyncConnection<?, ?>) {
                 RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
                 redisAsyncConnection.close();
+                return;
             }
 
             if (connection instanceof RedisConnection<?, ?>) {
                 RedisConnection<?, ?> redisConnection = (RedisConnection<?, ?>) connection;
                 redisConnection.close();
+                return;
             }
         } catch (RuntimeException e) {
             // silent;
