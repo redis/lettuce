@@ -162,9 +162,9 @@ public abstract class AbstractRedisClient {
         return channels.size();
     }
 
-    protected <K, V> Object syncHandler(RedisAsyncConnectionImpl<K, V> connection, Class<?> interfaceClass) {
+    protected <K, V> Object syncHandler(RedisAsyncConnectionImpl<K, V> connection, Class<?>... interfaceClasses) {
         FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connection);
-        return Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { interfaceClass }, h);
+        return Proxy.newProxyInstance(getClass().getClassLoader(), interfaceClasses, h);
     }
 
     /**

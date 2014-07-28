@@ -25,6 +25,8 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     Map<K, V> clusterInfo();
 
+    String clusterNodes();
+
     List<K> clusterGetKeysInSlot(int slot, int count);
 
     String clusterSetSlotNode(int slot, String nodeId);
@@ -44,5 +46,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
     String clusterFlushslots();
 
     Map<K, V> clusterSlaves();
+
+    void close();
 
 }

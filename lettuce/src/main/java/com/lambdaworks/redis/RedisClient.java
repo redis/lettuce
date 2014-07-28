@@ -242,7 +242,8 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings({ "rawtypes" })
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect) {
-        return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect), RedisConnection.class);
+        return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect), RedisConnection.class,
+                RedisClusterConnection.class);
     }
 
     /**
