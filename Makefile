@@ -270,7 +270,7 @@ stop:
 test-coveralls:
 	make start
 	sleep 2
-	mvn -B -DskipTests=false clean compile cobertura:cobertura coveralls:cobertura
+	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:jacoco
 	make stop
 
 test:
