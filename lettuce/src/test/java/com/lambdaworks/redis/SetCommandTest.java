@@ -131,6 +131,21 @@ public class SetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void srandmemberStreaming() throws Exception {
+        assertNull(redis.spop(key));
+        redis.sadd(key, "a", "b", "c", "d");
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+
+        Long count = redis.srandmember(streamingAdapter, key, 2);
+
+        assertEquals(2, count.longValue());
+
+        assertTrue(set("a", "b", "c", "d").containsAll(streamingAdapter.getList()));
+
+    }
+
+    @Test
     public void srem() throws Exception {
         redis.sadd(key, "a", "b", "c");
         assertEquals(0, (long) redis.srem(key, "d"));

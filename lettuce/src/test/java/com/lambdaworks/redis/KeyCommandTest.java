@@ -266,6 +266,11 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertTrue(cursor.isFinished());
         assertEquals(list(key), cursor.getKeys());
 
+        RedisFuture<KeyScanCursor<String>> future2 = async.scan(future.get(), ScanArgs.Builder.count(10));
+        KeyScanCursor<String> cursor2 = future2.get();
+        assertEquals("0", cursor2.getCursor());
+        assertTrue(cursor2.isFinished());
+
     }
 
     @Test

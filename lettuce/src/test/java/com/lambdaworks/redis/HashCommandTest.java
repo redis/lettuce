@@ -83,12 +83,29 @@ public class HashCommandTest extends AbstractCommandTest {
 
     @Test
     public void hkeys() throws Exception {
-        assertEquals(list(), redis.hkeys(key));
-        redis.hset(key, "one", "1");
-        redis.hset(key, "two", "2");
+        setup();
         List<String> keys = redis.hkeys(key);
         assertEquals(2, keys.size());
         assertTrue(keys.containsAll(list("one", "two")));
+    }
+
+    @Test
+    public void hkeysStreaming() throws Exception {
+        setup();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+
+        Long count = redis.hkeys(streamingAdapter, key);
+        assertEquals(2, count.longValue());
+
+        List<String> keys = streamingAdapter.getList();
+        assertEquals(2, keys.size());
+        assertTrue(keys.containsAll(list("one", "two")));
+    }
+    private void setup()
+    {
+        assertEquals(list(), redis.hkeys(key));
+        redis.hset(key, "one", "1");
+        redis.hset(key, "two", "2");
     }
 
     @Test

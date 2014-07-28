@@ -7,14 +7,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.junit.Ignore;
-import org.junit.Test;
 
 public class ServerCommandTest extends AbstractCommandTest {
     @Test
@@ -84,6 +83,9 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void configRewrite() throws Exception {
+
+        String result = redis.configRewrite();
+        assertEquals("OK", result);
     }
 
     @Test
@@ -208,5 +210,13 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void sync() throws Exception {
         assertTrue(redis.sync().startsWith("REDIS"));
+    }
+
+    @Test
+    public void migrate() throws Exception {
+        redis.set(key, value);
+
+        String result = redis.migrate("localhost", port + 1, key, 0, 10);
+        assertEquals("OK", result);
     }
 }
