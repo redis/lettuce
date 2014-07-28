@@ -3,13 +3,14 @@
 package com.lambdaworks.redis;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.lang.reflect.Field;
 
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -70,6 +71,18 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         redis.set(key, value);
         redis.quit();
         assertEquals(value, redis.get(key));
+    }
+
+    @Test
+    public void isValid() throws Exception {
+
+        assertTrue(Connections.isValid(redis));
+
+        RedisAsyncConnection<String, String> asyncConnection = client.connectAsync();
+        assertTrue(Connections.isValid(asyncConnection));
+        Connections.close(asyncConnection);
+        assertFalse(Connections.isOpen(asyncConnection));
+        assertFalse(Connections.isValid(asyncConnection));
     }
 
     @Test

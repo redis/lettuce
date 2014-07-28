@@ -125,15 +125,7 @@ public class RedisClusterTest {
             redis2.clusterAddSlots(i);
         }
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                Partitions partitionsAfterMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
-                return partitionsAfterMeet.getPartitions().size() == 2
-                        && !partitionsAfterMeet.getPartitions().get(0).getSlots().isEmpty()
-                        && !partitionsAfterMeet.getPartitions().get(1).getSlots().isEmpty();
-            }
-        }, Timeout.timeout(Duration.seconds(5)));
+        waitForSlots();
 
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
         for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
@@ -156,6 +148,65 @@ public class RedisClusterTest {
             }
         }, Timeout.timeout(Duration.seconds(5)));
 
+    }
+
+    private void waitForSlots() throws InterruptedException, TimeoutException {
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                Partitions partitionsAfterMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
+                return partitionsAfterMeet.getPartitions().size() == 2
+                        && !partitionsAfterMeet.getPartitions().get(0).getSlots().isEmpty()
+                        && !partitionsAfterMeet.getPartitions().get(1).getSlots().isEmpty();
+            }
+        }, Timeout.timeout(Duration.seconds(5)));
+    }
+
+    @Test
+    public void clusterSlotMigrationImport() throws Exception {
+
+        redis1.clusterMeet(host, port2);
+        waitForCluster();
+
+        for (int i = 1; i < 7; i++) {
+            redis1.clusterAddSlots(i);
+        }
+        for (int i = 7; i < 13; i++) {
+            redis2.clusterAddSlots(i);
+        }
+
+        waitForSlots();
+
+        String nodeId1 = getNodeId(redis1);
+        String nodeId2 = getNodeId(redis2);
+        assertEquals("OK", redis1.clusterSetSlotMigrating(6, nodeId2));
+        assertEquals("OK", redis1.clusterSetSlotImporting(12, nodeId2));
+
+        RedisClusterNode partition1 = getOwnPartition(redis1);
+        RedisClusterNode partition2 = getOwnPartition(redis2);
+
+        assertEquals(6, partition1.getSlots().size());
+        assertEquals(6, partition2.getSlots().size());
+    }
+
+    private String getNodeId(RedisClusterConnection<String, String> connection) {
+        RedisClusterNode ownPartition = getOwnPartition(connection);
+        if (ownPartition != null) {
+            return ownPartition.getNodeId();
+        }
+
+        return null;
+    }
+
+    private RedisClusterNode getOwnPartition(RedisClusterConnection<String, String> connection) {
+        Partitions partitions = ClusterPartitionParser.parse(connection.clusterNodes());
+
+        for (RedisClusterNode partition : partitions) {
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                return partition;
+            }
+        }
+        return null;
     }
 
 }

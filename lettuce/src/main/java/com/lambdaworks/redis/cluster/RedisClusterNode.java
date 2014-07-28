@@ -46,11 +46,6 @@ public class RedisClusterNode {
         return slots;
     }
 
-    public void addSlot(int slot) {
-        slots.add(slot);
-
-    }
-
     public Set<NodeFlag> getFlags() {
         return flags;
     }

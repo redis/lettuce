@@ -30,6 +30,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     private final CommandType type;
     private boolean multi;
     private Throwable exception;
+    private boolean cancelled = false;
 
     /**
      * Create a new command with the supplied type and args.
@@ -66,22 +67,14 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         return multi;
     }
 
-    /**
-     * Cancel the command and notify any waiting consumers. This does not cause the redis server to stop executing the command.
-     * 
-     * @param ignored Ignored parameter.
-     * 
-     * @return true if the command was cancelled.
-     */
     @Override
-    public boolean cancel(boolean ignored) {
-        boolean cancelled = false;
+    protected void interruptTask() {
+        cancelled = true;
+
         if (latch.getCount() == 1) {
             latch.countDown();
             output = null;
-            cancelled = true;
         }
-        return cancelled;
     }
 
     /**
@@ -91,7 +84,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      */
     @Override
     public boolean isCancelled() {
-        return latch.getCount() == 0 && output == null;
+        return latch.getCount() == 0 && cancelled;
     }
 
     /**
