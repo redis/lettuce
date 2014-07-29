@@ -12,11 +12,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.junit.Test;
 
 public class SortedSetCommandTest extends AbstractCommandTest {
     @Test
@@ -360,6 +361,18 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertTrue(cursor.isFinished());
         assertEquals(new ScoredValue<String>(1, value), cursor.getValues().get(0));
 
+        ScoredValueScanCursor<String> cursor2 = redis.zscan(key, cursor);
+
+        assertEquals("0", cursor2.getCursor());
+        assertTrue(cursor2.isFinished());
+        assertEquals(new ScoredValue<String>(1, value), cursor2.getValues().get(0));
+
+        ScoredValueScanCursor<String> cursor3 = redis.zscan(key, cursor, ScanArgs.Builder.count(5));
+
+        assertEquals("0", cursor3.getCursor());
+        assertTrue(cursor3.isFinished());
+        assertEquals(new ScoredValue<String>(1, value), cursor3.getValues().get(0));
+
     }
 
     @Test
@@ -367,12 +380,24 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         redis.zadd(key, 1, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
-        StreamScanCursor cursor = redis.zscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+        StreamScanCursor cursor = redis.zscan(adapter, key);
 
         assertEquals(1, cursor.getCount());
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());
         assertEquals(value, adapter.getList().get(0));
+
+        StreamScanCursor cursor2 = redis.zscan(adapter, key, cursor);
+
+        assertEquals(1, cursor2.getCount());
+        assertEquals("0", cursor2.getCursor());
+        assertTrue(cursor2.isFinished());
+
+        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.count(100).match("*"));
+
+        assertEquals(1, cursor3.getCount());
+        assertEquals("0", cursor3.getCursor());
+        assertTrue(cursor3.isFinished());
 
     }
 

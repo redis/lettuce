@@ -8,11 +8,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.junit.Test;
 
 public class SetCommandTest extends AbstractCommandTest {
     @Test
@@ -190,6 +191,18 @@ public class SetCommandTest extends AbstractCommandTest {
         assertTrue(cursor.isFinished());
         assertEquals(list(value), cursor.getValues());
 
+        ValueScanCursor<String> cursor2 = redis.sscan(key, cursor);
+
+        assertEquals(1, cursor2.getValues().size());
+        assertEquals("0", cursor2.getCursor());
+        assertTrue(cursor2.isFinished());
+
+        ValueScanCursor<String> cursor3 = redis.sscan(key, cursor, ScanArgs.Builder.count(5));
+
+        assertEquals(1, cursor3.getValues().size());
+        assertEquals("0", cursor3.getCursor());
+        assertTrue(cursor3.isFinished());
+
     }
 
     @Test
@@ -203,7 +216,19 @@ public class SetCommandTest extends AbstractCommandTest {
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());
         assertEquals(list(value), adapter.getList());
-    }
+
+        StreamScanCursor cursor2 = redis.sscan(adapter, key, cursor);
+
+        assertEquals(1, cursor2.getCount());
+        assertEquals("0", cursor2.getCursor());
+        assertTrue(cursor2.isFinished());
+
+        StreamScanCursor cursor3 = redis.sscan(adapter, key, cursor, ScanArgs.Builder.count(5));
+
+        assertEquals(1, cursor3.getCount());
+        assertEquals("0", cursor3.getCursor());
+        assertTrue(cursor3.isFinished());
+  }
 
     @Test
     public void sscanStreamingArgs() throws Exception {

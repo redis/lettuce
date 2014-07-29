@@ -8,9 +8,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +15,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class KeyCommandTest extends AbstractCommandTest {
     @Rule
@@ -284,6 +285,18 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());
         assertEquals(list(key), adapter.getList());
+
+        StreamScanCursor cursor2 = redis.scan(adapter, cursor);
+
+        assertEquals(1, cursor2.getCount());
+        assertEquals("0", cursor2.getCursor());
+        assertTrue(cursor2.isFinished());
+
+        StreamScanCursor cursor3 = redis.scan(adapter, cursor, ScanArgs.Builder.count(5));
+
+        assertEquals(1, cursor3.getCount());
+        assertEquals("0", cursor3.getCursor());
+        assertTrue(cursor2.isFinished());
 
     }
 

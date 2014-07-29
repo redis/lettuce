@@ -123,4 +123,13 @@ public class ConnectionCommandTest extends AbstractCommandTest {
             async.close();
         }
     }
+
+    @Test
+    public void string() throws Exception {
+
+        assertEquals("1.1", RedisAsyncConnectionImpl.string(1.1));
+        assertEquals("+inf", RedisAsyncConnectionImpl.string(Double.POSITIVE_INFINITY));
+        assertEquals("-inf", RedisAsyncConnectionImpl.string(Double.NEGATIVE_INFINITY));
+
+    }
 }

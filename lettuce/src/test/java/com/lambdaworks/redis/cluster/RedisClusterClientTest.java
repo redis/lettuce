@@ -325,7 +325,7 @@ public class RedisClusterClientTest {
     }
 
     @Test(timeout = 20000)
-    public void distributedClusteredAccess() throws Exception {
+    public void distributedClusteredAccessAsync() throws Exception {
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
@@ -356,6 +356,27 @@ public class RedisClusterClientTest {
             assertEquals("myValue1" + i, setA.get());
             assertEquals("myValue2" + i, setB.get());
             assertEquals("myValue3" + i, setD.get());
+        }
+
+        connection.close();
+    }
+
+    @Test(timeout = 20000)
+    public void distributedClusteredAccessSync() throws Exception {
+
+        RedisClusterConnection<String, String> connection = clusterClient.connectCluster();
+
+        for (int i = 0; i < 100; i++) {
+            connection.set("a" + i, "myValue1" + i);
+            connection.set("b" + i, "myValue2" + i);
+            connection.set("d" + i, "myValue3" + i);
+        }
+
+        for (int i = 0; i < 100; i++) {
+
+            assertEquals("myValue1" + i, connection.get("a" + i));
+            assertEquals("myValue2" + i, connection.get("b" + i));
+            assertEquals("myValue3" + i, connection.get("d" + i));
         }
 
         connection.close();

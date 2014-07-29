@@ -22,7 +22,7 @@ import com.lambdaworks.redis.RedisClusterConnection;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 28.07.14 08:24
  */
-public class RedisClusterTest {
+public class RedisClusterSetupTest {
     public static final String host = "127.0.0.1";
     public static final int port1 = 7383;
     public static final int port2 = 7384;
