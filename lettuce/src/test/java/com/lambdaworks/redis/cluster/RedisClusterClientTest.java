@@ -239,6 +239,9 @@ public class RedisClusterClientTest {
         RedisFuture<String> setD = connection.set("d", "myValue2");
         assertEquals("OK", setD.get());
 
+        List<String> keys = connection.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
+        assertEquals(ImmutableList.of("b"), keys);
+
         connection.close();
 
     }
