@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.reflect.AbstractInvocationHandler;
-import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
@@ -50,7 +49,7 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
             Object result = targetMethod.invoke(connection, args);
 
             if (result instanceof RedisCommand) {
-                Command<?, ?, ?> command = (Command<?, ?, ?>) result;
+                RedisCommand<?, ?, ?> command = (RedisCommand<?, ?, ?>) result;
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
                     if (connection.isMulti()) {
                         return null;

@@ -31,6 +31,7 @@ import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 
@@ -163,7 +164,21 @@ public class RedisClusterClientTest {
     }
 
     @Test
+    public void testClusterNodesSync() throws Exception {
+
+        RedisClusterConnection<String, String> connection = clusterClient.connectCluster();
+
+        String string = connection.clusterNodes();
+        connection.close();
+
+        assertThat(string, containsString("connected"));
+        assertThat(string, containsString("master"));
+        assertThat(string, containsString("myself"));
+    }
+
+    @Test
     public void zzzLastClusterSlaves() throws Exception {
+        clusterClient.reloadPartitions();
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
 
         final RedisClusterNode node1 = Iterables.find(partitions, new Predicate<RedisClusterNode>() {
