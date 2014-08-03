@@ -1,16 +1,19 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.LettuceStrings;
 
 /**
  * Parser for node information output (CLUSTER NODES).
@@ -114,15 +117,18 @@ public class ClusterPartitionParser {
 
     private static void readFlags(List<String> flagStrings, RedisClusterNode partition) {
 
+        Set<RedisClusterNode.NodeFlag> flags = Sets.newHashSet();
         for (String flagString : flagStrings) {
             if (FLAG_MAPPING.containsKey(flagString)) {
-                partition.addFlag(FLAG_MAPPING.get(flagString));
+                flags.add(FLAG_MAPPING.get(flagString));
             }
         }
+        partition.setFlags(Collections.unmodifiableSet(flags));
     }
 
     private static void readSlots(List<String> slotStrings, RedisClusterNode partition) {
 
+        List<Integer> slots = Lists.newArrayList();
         for (String slotString : slotStrings) {
 
             if (slotString.startsWith(TOKEN_SLOT_IN_TRANSITION)) {
@@ -139,14 +145,16 @@ public class ClusterPartitionParser {
                 int to = Integer.parseInt(it.next());
 
                 for (int slot = from; slot <= to; slot++) {
-                    partition.getSlots().add(slot);
+                    slots.add(slot);
 
                 }
                 continue;
             }
 
-            partition.getSlots().add(Integer.parseInt(slotString));
+            slots.add(Integer.parseInt(slotString));
         }
+
+        partition.setSlots(Collections.unmodifiableList(slots));
     }
 
 }

@@ -1,10 +1,9 @@
 package com.lambdaworks.redis.cluster;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisURI;
 
 /**
@@ -13,7 +12,7 @@ import com.lambdaworks.redis.RedisURI;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:09
  */
-public class RedisClusterNode {
+public class RedisClusterNode implements Serializable {
     private RedisURI uri;
     private String nodeId;
 
@@ -23,14 +22,14 @@ public class RedisClusterNode {
     private long pongReceivedTimestamp;
     private long configEpoch;
 
-    private List<Integer> slots = Lists.newArrayList();
-    private Set<NodeFlag> flags = Sets.newHashSet();
+    private List<Integer> slots;
+    private Set<NodeFlag> flags;
 
     public RedisURI getUri() {
         return uri;
     }
 
-    public void setUri(RedisURI uri) {
+    void setUri(RedisURI uri) {
         this.uri = uri;
     }
 
@@ -38,7 +37,7 @@ public class RedisClusterNode {
         return nodeId;
     }
 
-    public void setNodeId(String nodeId) {
+    void setNodeId(String nodeId) {
         this.nodeId = nodeId;
     }
 
@@ -50,15 +49,19 @@ public class RedisClusterNode {
         return flags;
     }
 
-    public void addFlag(NodeFlag nodeFlag) {
-        flags.add(nodeFlag);
+    void setSlots(List<Integer> slots) {
+        this.slots = slots;
+    }
+
+    void setFlags(Set<NodeFlag> flags) {
+        this.flags = flags;
     }
 
     public boolean isConnected() {
         return connected;
     }
 
-    public void setConnected(boolean connected) {
+    void setConnected(boolean connected) {
         this.connected = connected;
     }
 
@@ -66,7 +69,7 @@ public class RedisClusterNode {
         return slaveOf;
     }
 
-    public void setSlaveOf(String slaveOf) {
+    void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
     }
 
@@ -74,7 +77,7 @@ public class RedisClusterNode {
         return pingSentTimestamp;
     }
 
-    public void setPingSentTimestamp(long pingSentTimestamp) {
+    void setPingSentTimestamp(long pingSentTimestamp) {
         this.pingSentTimestamp = pingSentTimestamp;
     }
 
@@ -82,7 +85,7 @@ public class RedisClusterNode {
         return pongReceivedTimestamp;
     }
 
-    public void setPongReceivedTimestamp(long pongReceivedTimestamp) {
+    void setPongReceivedTimestamp(long pongReceivedTimestamp) {
         this.pongReceivedTimestamp = pongReceivedTimestamp;
     }
 
@@ -90,7 +93,7 @@ public class RedisClusterNode {
         return configEpoch;
     }
 
-    public void setConfigEpoch(long configEpoch) {
+    void setConfigEpoch(long configEpoch) {
         this.configEpoch = configEpoch;
     }
 
@@ -134,7 +137,9 @@ public class RedisClusterNode {
         sb.append(", pongReceivedTimestamp=").append(pongReceivedTimestamp);
         sb.append(", configEpoch=").append(configEpoch);
         sb.append(", flags=").append(flags);
-        sb.append(", slot count=").append(slots.size());
+        if (slots != null) {
+            sb.append(", slot count=").append(slots.size());
+        }
         sb.append(']');
         return sb.toString();
     }

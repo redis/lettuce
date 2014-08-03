@@ -7,13 +7,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
+import com.lambdaworks.redis.models.role.RedisInstance;
+import com.lambdaworks.redis.models.role.RoleParser;
 
 public class ServerCommandTest extends AbstractCommandTest {
     @Test
@@ -164,6 +168,9 @@ public class ServerCommandTest extends AbstractCommandTest {
 
             assertEquals("master", objects.get(0));
             assertEquals(Long.class, objects.get(1).getClass());
+
+            RedisInstance redisInstance = RoleParser.parse(objects);
+            assertEquals(RedisInstance.Role.MASTER, redisInstance.getRole());
         } finally {
             connection.close();
             redisClient.shutdown();
