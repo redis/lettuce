@@ -2,9 +2,8 @@
 
 package com.lambdaworks.redis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 import java.util.List;
@@ -59,7 +58,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
                 connection.auth(passwd);
 
                 connection.subscribe(channel);
-                assertEquals(channel, channels.take());
+                assertThat(channels.take()).isEqualTo(channel);
             }
         };
     }
@@ -67,34 +66,34 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     @Test(timeout = 200)
     public void message() throws Exception {
         pubsub.subscribe(channel);
-        assertEquals(channel, channels.take());
+        assertThat(channels.take()).isEqualTo(channel);
 
         redis.publish(channel, message);
-        assertEquals(channel, channels.take());
-        assertEquals(message, messages.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
     }
 
     @Test(timeout = 200)
     public void pmessage() throws Exception {
         pubsub.psubscribe(pattern);
-        assertEquals(pattern, patterns.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
 
         redis.publish(channel, message);
-        assertEquals(pattern, patterns.take());
-        assertEquals(channel, channels.take());
-        assertEquals(message, messages.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
 
         redis.publish("channel2", "msg 2!");
-        assertEquals(pattern, patterns.take());
-        assertEquals("channel2", channels.take());
-        assertEquals("msg 2!", messages.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat(channels.take()).isEqualTo("channel2");
+        assertThat(messages.take()).isEqualTo("msg 2!");
     }
 
     @Test(timeout = 200)
     public void psubscribe() throws Exception {
         pubsub.psubscribe(pattern);
-        assertEquals(pattern, patterns.take());
-        assertEquals(1, (long) counts.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat((long) counts.take()).isEqualTo(1);
     }
 
     @Test
@@ -120,8 +119,8 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         Thread.sleep(100);
 
         Map<String, String> result = redis.pubsubNumsub(channel);
-        assertEquals(1, result.size());
-        assertEquals("1", result.get(channel));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(channel)).isEqualTo("1");
     }
 
     @Test
@@ -130,28 +129,28 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         pubsub.psubscribe(pattern);
         Thread.sleep(100);
         Long result = redis.pubsubNumpat();
-        assertEquals(1L, result.longValue());
+        assertThat(result.longValue()).isEqualTo(1L);
     }
 
     @Test(timeout = 200)
     public void punsubscribe() throws Exception {
         pubsub.punsubscribe(pattern);
-        assertEquals(pattern, patterns.take());
-        assertEquals(0, (long) counts.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat((long) counts.take()).isEqualTo(0);
     }
 
     @Test(timeout = 200)
     public void subscribe() throws Exception {
         pubsub.subscribe(channel);
-        assertEquals(channel, channels.take());
-        assertEquals(1, (long) counts.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isEqualTo(1);
     }
 
     @Test(timeout = 200)
     public void unsubscribe() throws Exception {
         pubsub.unsubscribe(channel);
-        assertEquals(channel, channels.take());
-        assertEquals(0, (long) counts.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isEqualTo(0);
     }
 
     @Test(timeout = 200)
@@ -160,43 +159,43 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         String message = "αβγ";
 
         pubsub.subscribe(channel);
-        assertEquals(channel, channels.take());
+        assertThat(channels.take()).isEqualTo(channel);
 
         redis.publish(channel, message);
-        assertEquals(channel, channels.take());
-        assertEquals(message, messages.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
     }
 
     @Test(timeout = 2000)
     public void resubscribeChannelsOnReconnect() throws Exception {
         pubsub.subscribe(channel);
-        assertEquals(channel, channels.take());
-        assertEquals(1, (long) counts.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isEqualTo(1);
 
         pubsub.quit();
 
-        assertEquals(channel, channels.take());
-        assertEquals(1, (long) counts.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isEqualTo(1);
 
         redis.publish(channel, message);
-        assertEquals(channel, channels.take());
-        assertEquals(message, messages.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
     }
 
     @Test(timeout = 2000)
     public void resubscribePatternsOnReconnect() throws Exception {
         pubsub.psubscribe(pattern);
-        assertEquals(pattern, patterns.take());
-        assertEquals(1, (long) counts.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat((long) counts.take()).isEqualTo(1);
 
         pubsub.quit();
 
-        assertEquals(pattern, patterns.take());
-        assertEquals(1, (long) counts.take());
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat((long) counts.take()).isEqualTo(1);
 
         redis.publish(channel, message);
-        assertEquals(channel, channels.take());
-        assertEquals(message, messages.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
     }
 
     @Test(timeout = 200)
@@ -221,29 +220,29 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         pubsub.subscribe(channel);
         pubsub.psubscribe(pattern);
 
-        assertEquals(1L, (long) localCounts.take());
+        assertThat((long) localCounts.take()).isEqualTo(1L);
 
         redis.publish(channel, message);
         pubsub.punsubscribe(pattern);
         pubsub.unsubscribe(channel);
 
-        assertEquals(0L, (long) localCounts.take());
+        assertThat((long) localCounts.take()).isEqualTo(0L);
     }
 
     @Test(timeout = 2000)
     public void removeListener() throws Exception {
         pubsub.subscribe(channel);
-        assertEquals(channel, channels.take());
+        assertThat(channels.take()).isEqualTo(channel);
 
         redis.publish(channel, message);
-        assertEquals(channel, channels.take());
-        assertEquals(message, messages.take());
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
 
         pubsub.removeListener(this);
 
         redis.publish(channel, message);
-        assertNull(channels.poll(10, TimeUnit.MILLISECONDS));
-        assertNull(messages.poll(10, TimeUnit.MILLISECONDS));
+        assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();
+        assertThat(messages.poll(10, TimeUnit.MILLISECONDS)).isNull();
     }
 
     // RedisPubSubListener implementation

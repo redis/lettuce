@@ -1,12 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -190,8 +186,8 @@ public class RedisClusterClientTest {
 
         RedisFuture<String> replicate = redis4.clusterReplicate(node1.getNodeId());
         replicate.get();
-        assertNull(replicate.getError());
-        assertEquals("OK", replicate.get());
+        assertThat(replicate.getError()).isNull();
+        assertThat(replicate.get()).isEqualTo("OK");
 
         WaitFor.waitOrTimeout(new Condition() {
             @Override
@@ -217,30 +213,30 @@ public class RedisClusterClientTest {
         SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
 
         RedisFuture<String> result = redis1.set("b", "value");
-        assertEquals(null, result.getError());
-        assertEquals("OK", redis3.set("a", "value").get());
+        assertThat(result.getError()).isEqualTo(null);
+        assertThat(redis3.set("a", "value").get()).isEqualTo("OK");
 
         RedisFuture<String> resultMoved = redis1.set("a", "value");
         resultMoved.get();
         assertThat(resultMoved.getError(), containsString("MOVED 15495"));
-        assertEquals(null, resultMoved.get());
+        assertThat(resultMoved.get()).isEqualTo(null);
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
         RedisFuture<String> setA = connection.set("a", "myValue1");
         setA.get();
 
-        assertNull(setA.getError());
-        assertEquals("OK", setA.get());
+        assertThat(setA.getError()).isNull();
+        assertThat(setA.get()).isEqualTo("OK");
 
         RedisFuture<String> setB = connection.set("b", "myValue2");
-        assertEquals("OK", setB.get());
+        assertThat(setB.get()).isEqualTo("OK");
 
         RedisFuture<String> setD = connection.set("d", "myValue2");
-        assertEquals("OK", setD.get());
+        assertThat(setD.get()).isEqualTo("OK");
 
         List<String> keys = connection.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
-        assertEquals(ImmutableList.of("b"), keys);
+        assertThat(keys).isEqualTo(ImmutableList.of("b"));
 
         connection.close();
 
@@ -254,7 +250,7 @@ public class RedisClusterClientTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.getSlots().clear();
+            partition.setSlots(Lists.<Integer> newArrayList());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
@@ -263,27 +259,27 @@ public class RedisClusterClientTest {
         // appropriate cluster node
         RedisFuture<String> setB = connection.set("b", "myValue1");
 
-        assertTrue(setB instanceof ClusterCommand);
+        assertThat(setB instanceof ClusterCommand).isTrue();
 
         ClusterCommand clusterCommandB = (ClusterCommand) setB;
         setB.get();
-        assertNull(setB.getError());
-        assertEquals(1, clusterCommandB.getExecutions());
-        assertEquals("OK", setB.get());
-        assertFalse(clusterCommandB.isMoved());
+        assertThat(setB.getError()).isNull();
+        assertThat(clusterCommandB.getExecutions()).isEqualTo(1);
+        assertThat(setB.get()).isEqualTo("OK");
+        assertThat(clusterCommandB.isMoved()).isFalse();
 
         // gets redirection to node 3
         RedisFuture<String> setA = connection.set("a", "myValue1");
 
-        assertTrue(setA instanceof ClusterCommand);
+        assertThat(setA instanceof ClusterCommand).isTrue();
 
         ClusterCommand clusterCommandA = (ClusterCommand) setA;
         setA.get();
-        assertNull(setA.getError());
-        assertEquals(2, clusterCommandA.getExecutions());
-        assertEquals(5, clusterCommandA.getExecutionLimit());
-        assertEquals("OK", setA.get());
-        assertFalse(clusterCommandA.isMoved());
+        assertThat(setA.getError()).isNull();
+        assertThat(clusterCommandA.getExecutions()).isEqualTo(2);
+        assertThat(clusterCommandA.getExecutionLimit()).isEqualTo(5);
+        assertThat(setA.get()).isEqualTo("OK");
+        assertThat(clusterCommandA.isMoved()).isFalse();
 
         connection.close();
 
@@ -307,21 +303,21 @@ public class RedisClusterClientTest {
         backendConnection.close();
 
         Thread.sleep(100);
-        assertTrue(backendConnection.isClosed());
-        assertFalse(backendConnection.isOpen());
+        assertThat(backendConnection.isClosed()).isTrue();
+        assertThat(backendConnection.isOpen()).isFalse();
 
-        assertTrue(connection.isOpen());
-        assertFalse(connection.isClosed());
+        assertThat(connection.isOpen()).isTrue();
+        assertThat(connection.isClosed()).isFalse();
 
         connection.set("a", "b");
 
         RedisAsyncConnectionImpl<Object, Object> backendConnection2 = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);
 
-        assertTrue(backendConnection2.isOpen());
-        assertFalse(backendConnection2.isClosed());
+        assertThat(backendConnection2.isOpen()).isTrue();
+        assertThat(backendConnection2.isClosed()).isFalse();
 
-        assertNotSame(backendConnection, backendConnection2);
+        assertThat(backendConnection2).isNotSameAs(backendConnection);
 
         connection.close();
 
@@ -352,13 +348,13 @@ public class RedisClusterClientTest {
             setB.get();
             setD.get();
 
-            assertNull(setA.getError());
-            assertNull(setB.getError());
-            assertNull(setD.getError());
+            assertThat(setA.getError()).isNull();
+            assertThat(setB.getError()).isNull();
+            assertThat(setD.getError()).isNull();
 
-            assertEquals("myValue1" + i, setA.get());
-            assertEquals("myValue2" + i, setB.get());
-            assertEquals("myValue3" + i, setD.get());
+            assertThat(setA.get()).isEqualTo("myValue1" + i);
+            assertThat(setB.get()).isEqualTo("myValue2" + i);
+            assertThat(setD.get()).isEqualTo("myValue3" + i);
         }
 
         connection.close();
@@ -377,9 +373,9 @@ public class RedisClusterClientTest {
 
         for (int i = 0; i < 100; i++) {
 
-            assertEquals("myValue1" + i, connection.get("a" + i));
-            assertEquals("myValue2" + i, connection.get("b" + i));
-            assertEquals("myValue3" + i, connection.get("d" + i));
+            assertThat(connection.get("a" + i)).isEqualTo("myValue1" + i);
+            assertThat(connection.get("b" + i)).isEqualTo("myValue2" + i);
+            assertThat(connection.get("d" + i)).isEqualTo("myValue3" + i);
         }
 
         connection.close();

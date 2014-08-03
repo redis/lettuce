@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,7 +23,7 @@ public class CustomCodecTest extends AbstractCommandTest {
         RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec());
         List<String> list = list("one", "two");
         connection.set(key, list);
-        assertEquals(list, connection.get(key));
+        assertThat(connection.get(key)).isEqualTo(list);
     }
 
     public class SerializedObjectCodec extends RedisCodec<String, Object> {

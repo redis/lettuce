@@ -2,38 +2,40 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class NumericCommandTest extends AbstractCommandTest {
     @Test
     public void decr() throws Exception {
-        assertEquals(-1, (long) redis.decr(key));
-        assertEquals(-2, (long) redis.decr(key));
+        assertThat((long) redis.decr(key)).isEqualTo(-1);
+        assertThat((long) redis.decr(key)).isEqualTo(-2);
     }
 
     @Test
     public void decrby() throws Exception {
-        assertEquals(-3, (long) redis.decrby(key, 3));
-        assertEquals(-6, (long) redis.decrby(key, 3));
+        assertThat(redis.decrby(key, 3)).isEqualTo(-3);
+        assertThat(redis.decrby(key, 3)).isEqualTo(-6);
     }
 
     @Test
     public void incr() throws Exception {
-        assertEquals(1, (long) redis.incr(key));
-        assertEquals(2, (long) redis.incr(key));
+        assertThat((long) redis.incr(key)).isEqualTo(1);
+        assertThat((long) redis.incr(key)).isEqualTo(2);
     }
 
     @Test
     public void incrby() throws Exception {
-        assertEquals(3, (long) redis.incrby(key, 3));
-        assertEquals(6, (long) redis.incrby(key, 3));
+        assertThat(redis.incrby(key, 3)).isEqualTo(3);
+        assertThat(redis.incrby(key, 3)).isEqualTo(6);
     }
 
     @Test
     public void incrbyfloat() throws Exception {
-        assertEquals(3.0, redis.incrbyfloat(key, 3.0), 0.1);
-        assertEquals(3.2, redis.incrbyfloat(key, 0.2), 0.1);
+
+        assertThat(redis.incrbyfloat(key, 3.0)).isEqualTo(3.0, offset(0.1));
+        assertThat(redis.incrbyfloat(key, 0.2)).isEqualTo(3.2, offset(0.1));
     }
 }

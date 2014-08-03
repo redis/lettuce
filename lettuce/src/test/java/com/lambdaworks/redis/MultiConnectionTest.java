@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -20,7 +20,7 @@ public class MultiConnectionTest extends AbstractCommandTest {
 
         Future<Set<String>> members = connection2.smembers("key");
 
-        assertEquals(2, members.get().size());
+        assertThat(members.get()).hasSize(2);
 
     }
 

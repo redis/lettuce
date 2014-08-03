@@ -7,7 +7,7 @@ import static com.lambdaworks.redis.ScriptOutputType.INTEGER;
 import static com.lambdaworks.redis.ScriptOutputType.MULTI;
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static com.lambdaworks.redis.ScriptOutputType.VALUE;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,24 +19,24 @@ public class ScriptingCommandTest extends AbstractCommandTest {
 
     @Test
     public void eval() throws Exception {
-        assertEquals(false, redis.eval("return 1 + 1 == 4", BOOLEAN));
-        assertEquals(2L, redis.eval("return 1 + 1", INTEGER));
-        assertEquals("status", redis.eval("return {ok='status'}", STATUS));
-        assertEquals("one", redis.eval("return 'one'", VALUE));
-        assertEquals(list(1L, "one", list(2L)), redis.eval("return {1, 'one', {2}}", MULTI));
+        assertThat(redis.eval("return 1 + 1 == 4", BOOLEAN)).isEqualTo(false);
+        assertThat(redis.eval("return 1 + 1", INTEGER)).isEqualTo(2L);
+        assertThat(redis.eval("return {ok='status'}", STATUS)).isEqualTo("status");
+        assertThat(redis.eval("return 'one'", VALUE)).isEqualTo("one");
+        assertThat(redis.eval("return {1, 'one', {2}}", MULTI)).isEqualTo(list(1L, "one", list(2L)));
         exception.expectMessage("Oops!");
         redis.eval("return {err='Oops!'}", STATUS);
     }
 
     @Test
     public void evalWithKeys() throws Exception {
-        assertEquals(list("one", "two"), redis.eval("return {KEYS[1], KEYS[2]}", MULTI, "one", "two"));
+        assertThat(redis.eval("return {KEYS[1], KEYS[2]}", MULTI, "one", "two")).isEqualTo(list("one", "two"));
     }
 
     @Test
     public void evalWithArgs() throws Exception {
         String[] keys = new String[0];
-        assertEquals(list("a", "b"), redis.eval("return {ARGV[1], ARGV[2]}", MULTI, keys, "a", "b"));
+        assertThat(redis.eval("return {ARGV[1], ARGV[2]}", MULTI, keys, "a", "b")).isEqualTo(list("a", "b"));
     }
 
     @Test
@@ -44,8 +44,8 @@ public class ScriptingCommandTest extends AbstractCommandTest {
         redis.scriptFlush();
         String script = "return 1 + 1";
         String digest = redis.digest(script);
-        assertEquals(2L, redis.eval(script, INTEGER));
-        assertEquals(2L, redis.evalsha(digest, INTEGER));
+        assertThat(redis.eval(script, INTEGER)).isEqualTo(2L);
+        assertThat(redis.evalsha(digest, INTEGER)).isEqualTo(2L);
         exception.expectMessage("NOSCRIPT No matching script. Please use EVAL.");
         redis.evalsha(redis.digest("return 1 + 1 == 4"), INTEGER);
     }
@@ -54,7 +54,7 @@ public class ScriptingCommandTest extends AbstractCommandTest {
     public void evalshaWithKeys() throws Exception {
         redis.scriptFlush();
         String digest = redis.scriptLoad("return {KEYS[1], KEYS[2]}");
-        assertEquals(list("one", "two"), redis.evalsha(digest, MULTI, "one", "two"));
+        assertThat(redis.evalsha(digest, MULTI, "one", "two")).isEqualTo(list("one", "two"));
     }
 
     @Test
@@ -62,32 +62,32 @@ public class ScriptingCommandTest extends AbstractCommandTest {
         redis.scriptFlush();
         String digest = redis.scriptLoad("return {ARGV[1], ARGV[2]}");
         String[] keys = new String[0];
-        assertEquals(list("a", "b"), redis.evalsha(digest, MULTI, keys, "a", "b"));
+        assertThat(redis.evalsha(digest, MULTI, keys, "a", "b")).isEqualTo(list("a", "b"));
     }
 
     @Test
     public void script() throws Exception {
-        assertEquals("OK", redis.scriptFlush());
+        assertThat(redis.scriptFlush()).isEqualTo("OK");
 
         String script1 = "return 1 + 1";
         String digest1 = redis.digest(script1);
         String script2 = "return 1 + 1 == 4";
         String digest2 = redis.digest(script2);
 
-        assertEquals(list(false, false), redis.scriptExists(digest1, digest2));
-        assertEquals(digest1, redis.scriptLoad(script1));
-        assertEquals(2L, redis.evalsha(digest1, INTEGER));
-        assertEquals(list(true, false), redis.scriptExists(digest1, digest2));
+        assertThat(redis.scriptExists(digest1, digest2)).isEqualTo(list(false, false));
+        assertThat(redis.scriptLoad(script1)).isEqualTo(digest1);
+        assertThat(redis.evalsha(digest1, INTEGER)).isEqualTo(2L);
+        assertThat(redis.scriptExists(digest1, digest2)).isEqualTo(list(true, false));
 
-        assertEquals("OK", redis.scriptFlush());
-        assertEquals(list(false, false), redis.scriptExists(digest1, digest2));
+        assertThat(redis.scriptFlush()).isEqualTo("OK");
+        assertThat(redis.scriptExists(digest1, digest2)).isEqualTo(list(false, false));
 
         redis.configSet("lua-time-limit", "10");
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
             async.eval("while true do end", STATUS, new String[0]);
             Thread.sleep(100);
-            assertEquals("OK", redis.scriptKill());
+            assertThat(redis.scriptKill()).isEqualTo("OK");
         } finally {
             async.close();
         }

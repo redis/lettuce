@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.support;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.Test;
 
@@ -15,8 +15,8 @@ public class WithConnectionTest extends AbstractCommandTest {
     public void testPooling() throws Exception {
         final RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
 
-        assertEquals(0, pool.getNumActive());
-        assertEquals(0, pool.getNumIdle());
+        assertThat(pool.getNumActive()).isEqualTo(0);
+        assertThat(pool.getNumIdle()).isEqualTo(0);
 
         new WithConnection<RedisConnection<String, String>>(pool) {
 
@@ -24,15 +24,15 @@ public class WithConnectionTest extends AbstractCommandTest {
             protected void run(RedisConnection<String, String> connection) {
                 connection.set("key", "value");
                 String result = connection.get("key");
-                assertEquals("value", result);
+                assertThat(result).isEqualTo("value");
 
-                assertEquals(1, pool.getNumActive());
-                assertEquals(0, pool.getNumIdle());
+                assertThat(pool.getNumActive()).isEqualTo(1);
+                assertThat(pool.getNumIdle()).isEqualTo(0);
             }
         };
 
-        assertEquals(0, pool.getNumActive());
-        assertEquals(1, pool.getNumIdle());
+        assertThat(pool.getNumActive()).isEqualTo(0);
+        assertThat(pool.getNumIdle()).isEqualTo(1);
 
     }
 
@@ -40,8 +40,8 @@ public class WithConnectionTest extends AbstractCommandTest {
     public void testPoolingWithException() throws Exception {
         final RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
 
-        assertEquals(0, pool.getNumActive());
-        assertEquals(0, pool.getNumIdle());
+        assertThat(pool.getNumActive()).isEqualTo(0);
+        assertThat(pool.getNumIdle()).isEqualTo(0);
 
         try {
             new WithConnection<RedisConnection<String, String>>(pool) {
@@ -57,8 +57,8 @@ public class WithConnectionTest extends AbstractCommandTest {
         } catch (Exception e) {
         }
 
-        assertEquals(0, pool.getNumActive());
-        assertEquals(1, pool.getNumIdle());
+        assertThat(pool.getNumActive()).isEqualTo(0);
+        assertThat(pool.getNumIdle()).isEqualTo(1);
 
     }
 }

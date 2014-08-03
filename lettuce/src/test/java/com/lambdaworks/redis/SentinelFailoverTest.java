@@ -2,8 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -44,8 +43,8 @@ public class SentinelFailoverTest extends AbstractCommandTest {
         RedisFuture<String> future = this.sentinel.failover("mymaster");
 
         future.get();
-        assertNull(future.getError());
-        assertEquals("OK", future.get());
+        assertThat(future.getError()).isNull();
+        assertThat(future.get()).isEqualTo("OK");
     }
 
     protected static RedisClient getRedisSentinelClient() {

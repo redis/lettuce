@@ -2,11 +2,10 @@
 
 package com.lambdaworks.redis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 import java.net.InetSocketAddress;
@@ -63,7 +62,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
-        assertEquals(16379, socketAddress.getPort());
+        assertThat(socketAddress.getPort()).isEqualTo(16379);
 
     }
 
@@ -76,9 +75,9 @@ public class SentinelCommandTest extends AbstractCommandTest {
         assertThat(list.size(), greaterThan(0));
 
         Map<String, String> map = list.get(0);
-        assertNotNull(map.get("flags"));
-        assertNotNull(map.get("config-epoch"));
-        assertNotNull(map.get("port"));
+        assertThat(map.get("flags")).isNotNull();
+        assertThat(map.get("config-epoch")).isNotNull();
+        assertThat(map.get("port")).isNotNull();
 
     }
 
@@ -96,8 +95,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<Map<String, String>> result = sentinel.master("mymaster");
         Map<String, String> map = result.get();
-        assertEquals("127.0.0.1", map.get("ip")); // !! IPv4/IPv6
-        assertEquals("master", map.get("role-reported"));
+        assertThat(map.get("ip")).isEqualTo("127.0.0.1"); // !! IPv4/IPv6
+        assertThat(map.get("role-reported")).isEqualTo("master");
 
     }
 
@@ -113,8 +112,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
             assertThat(objects.size(), is(2));
 
-            assertEquals("sentinel", objects.get(0));
-            assertEquals("[mymasterfailover]", objects.get(1).toString());
+            assertThat(objects.get(0)).isEqualTo("sentinel");
+            assertThat(objects.get(1).toString()).isEqualTo("[mymasterfailover]");
 
         } finally {
             connection.close();
@@ -135,7 +134,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<Long> result = sentinel.reset("myslave");
         Long val = result.get();
-        assertEquals(1, val.intValue());
+        assertThat(val.intValue()).isEqualTo(1);
 
     }
 
@@ -155,7 +154,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<String> result = sentinel.monitor("mymaster2", "127.0.0.1", 8989, 2);
         String val = result.get();
-        assertEquals("OK", val);
+        assertThat(val).isEqualTo("OK");
 
     }
 
@@ -164,7 +163,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<String> result = sentinel.ping();
         String val = result.get();
-        assertEquals("PONG", val);
+        assertThat(val).isEqualTo("PONG");
     }
 
     @Test
@@ -172,7 +171,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<String> result = sentinel.set("mymaster", "down-after-milliseconds", "1000");
         String val = result.get();
-        assertEquals("OK", val);
+        assertThat(val).isEqualTo("OK");
     }
 
     @Test

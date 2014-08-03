@@ -2,12 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,24 +14,24 @@ import org.junit.Test;
 public class SetCommandTest extends AbstractCommandTest {
     @Test
     public void sadd() throws Exception {
-        assertEquals(1, (long) redis.sadd(key, "a"));
-        assertEquals(0, (long) redis.sadd(key, "a"));
-        assertEquals(set("a"), redis.smembers(key));
-        assertEquals(2, (long) redis.sadd(key, "b", "c"));
-        assertEquals(set("a", "b", "c"), redis.smembers(key));
+        assertThat(redis.sadd(key, "a")).isEqualTo(1L);
+        assertThat(redis.sadd(key, "a")).isEqualTo(0);
+        assertThat(redis.smembers(key)).isEqualTo(set("a"));
+        assertThat(redis.sadd(key, "b", "c")).isEqualTo(2);
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
     }
 
     @Test
     public void scard() throws Exception {
-        assertEquals(0, (long) redis.scard(key));
+        assertThat((long) redis.scard(key)).isEqualTo(0);
         redis.sadd(key, "a");
-        assertEquals(1, (long) redis.scard(key));
+        assertThat((long) redis.scard(key)).isEqualTo(1);
     }
 
     @Test
     public void sdiff() throws Exception {
         setupSet();
-        assertEquals(set("b", "d"), redis.sdiff("key1", "key2", "key3"));
+        assertThat(redis.sdiff("key1", "key2", "key3")).isEqualTo(set("b", "d"));
     }
 
     @Test
@@ -45,21 +41,21 @@ public class SetCommandTest extends AbstractCommandTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
 
         Long count = redis.sdiff(streamingAdapter, "key1", "key2", "key3");
-        assertEquals(2, count.intValue());
-        assertEquals(set("b", "d"), new HashSet<String>(streamingAdapter.getList()));
+        assertThat(count.intValue()).isEqualTo(2);
+        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(set("b", "d"));
     }
 
     @Test
     public void sdiffstore() throws Exception {
         setupSet();
-        assertEquals(2, (long) redis.sdiffstore("newset", "key1", "key2", "key3"));
-        assertEquals(set("b", "d"), redis.smembers("newset"));
+        assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
+        assertThat(redis.smembers("newset")).isEqualTo(set("b", "d"));
     }
 
     @Test
     public void sinter() throws Exception {
         setupSet();
-        assertEquals(set("c"), redis.sinter("key1", "key2", "key3"));
+        assertThat(redis.sinter("key1", "key2", "key3")).isEqualTo(set("c"));
     }
 
     @Test
@@ -69,37 +65,37 @@ public class SetCommandTest extends AbstractCommandTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.sinter(streamingAdapter, "key1", "key2", "key3");
 
-        assertEquals(1, count.intValue());
-        assertEquals(set("c"), new HashSet<String>(streamingAdapter.getList()));
+        assertThat(count.intValue()).isEqualTo(1);
+        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(set("c"));
     }
 
     @Test
     public void sinterstore() throws Exception {
         setupSet();
-        assertEquals(1, (long) redis.sinterstore("newset", "key1", "key2", "key3"));
-        assertEquals(set("c"), redis.smembers("newset"));
+        assertThat(redis.sinterstore("newset", "key1", "key2", "key3")).isEqualTo(1);
+        assertThat(redis.smembers("newset")).isEqualTo(set("c"));
     }
 
     @Test
     public void sismember() throws Exception {
-        assertFalse(redis.sismember(key, "a"));
+        assertThat(redis.sismember(key, "a")).isFalse();
         redis.sadd(key, "a");
-        assertTrue(redis.sismember(key, "a"));
+        assertThat(redis.sismember(key, "a")).isTrue();
     }
 
     @Test
     public void smove() throws Exception {
         redis.sadd(key, "a", "b", "c");
-        assertFalse(redis.smove(key, "key1", "d"));
-        assertTrue(redis.smove(key, "key1", "a"));
-        assertEquals(set("b", "c"), redis.smembers(key));
-        assertEquals(set("a"), redis.smembers("key1"));
+        assertThat(redis.smove(key, "key1", "d")).isFalse();
+        assertThat(redis.smove(key, "key1", "a")).isTrue();
+        assertThat(redis.smembers(key)).isEqualTo(set("b", "c"));
+        assertThat(redis.smembers("key1")).isEqualTo(set("a"));
     }
 
     @Test
     public void smembers() throws Exception {
         setupSet();
-        assertEquals(set("a", "b", "c"), redis.smembers(key));
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
     }
 
     @Test
@@ -107,59 +103,59 @@ public class SetCommandTest extends AbstractCommandTest {
         setupSet();
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.smembers(streamingAdapter, key);
-        assertEquals(3, count.longValue());
-        assertEquals(set("a", "b", "c"), new HashSet<String>(streamingAdapter.getList()));
+        assertThat(count.longValue()).isEqualTo(3);
+        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(set("a", "b", "c"));
     }
 
     @Test
     public void spop() throws Exception {
-        assertNull(redis.spop(key));
+        assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c");
         String rand = redis.spop(key);
-        assertTrue(set("a", "b", "c").contains(rand));
-        assertFalse(redis.smembers(key).contains(rand));
+        assertThat(set("a", "b", "c").contains(rand)).isTrue();
+        assertThat(redis.smembers(key).contains(rand)).isFalse();
     }
 
     @Test
     public void srandmember() throws Exception {
-        assertNull(redis.spop(key));
+        assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c", "d");
-        assertTrue(set("a", "b", "c", "d").contains(redis.srandmember(key)));
-        assertEquals(set("a", "b", "c", "d"), redis.smembers(key));
+        assertThat(set("a", "b", "c", "d").contains(redis.srandmember(key))).isTrue();
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c", "d"));
         Set<String> rand = redis.srandmember(key, 3);
-        assertEquals(3, rand.size());
-        assertTrue(set("a", "b", "c", "d").containsAll(rand));
+        assertThat(rand).hasSize(3);
+        assertThat(set("a", "b", "c", "d").containsAll(rand)).isTrue();
     }
 
     @Test
     public void srandmemberStreaming() throws Exception {
-        assertNull(redis.spop(key));
+        assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c", "d");
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
 
         Long count = redis.srandmember(streamingAdapter, key, 2);
 
-        assertEquals(2, count.longValue());
+        assertThat(count.longValue()).isEqualTo(2);
 
-        assertTrue(set("a", "b", "c", "d").containsAll(streamingAdapter.getList()));
+        assertThat(set("a", "b", "c", "d").containsAll(streamingAdapter.getList())).isTrue();
 
     }
 
     @Test
     public void srem() throws Exception {
         redis.sadd(key, "a", "b", "c");
-        assertEquals(0, (long) redis.srem(key, "d"));
-        assertEquals(1, (long) redis.srem(key, "b"));
-        assertEquals(set("a", "c"), redis.smembers(key));
-        assertEquals(2, (long) redis.srem(key, "a", "c"));
-        assertEquals(set(), redis.smembers(key));
+        assertThat(redis.srem(key, "d")).isEqualTo(0);
+        assertThat(redis.srem(key, "b")).isEqualTo(1);
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "c"));
+        assertThat(redis.srem(key, "a", "c")).isEqualTo(2);
+        assertThat(redis.smembers(key)).isEqualTo(set());
     }
 
     @Test
     public void sunion() throws Exception {
         setupSet();
-        assertEquals(set("a", "b", "c", "d", "e"), redis.sunion("key1", "key2", "key3"));
+        assertThat(redis.sunion("key1", "key2", "key3")).isEqualTo(set("a", "b", "c", "d", "e"));
     }
 
     @Test
@@ -170,16 +166,16 @@ public class SetCommandTest extends AbstractCommandTest {
 
         Long count = redis.sunion(adapter, "key1", "key2", "key3");
 
-        assertEquals(5, count.longValue());
+        assertThat(count.longValue()).isEqualTo(5);
 
-        assertEquals(new TreeSet<String>(list("c", "a", "b", "e", "d")), new TreeSet<String>(adapter.getList()));
+        assertThat(new TreeSet<String>(adapter.getList())).isEqualTo(new TreeSet<String>(list("c", "a", "b", "e", "d")));
     }
 
     @Test
     public void sunionstore() throws Exception {
         setupSet();
-        assertEquals(5, (long) redis.sunionstore("newset", "key1", "key2", "key3"));
-        assertEquals(set("a", "b", "c", "d", "e"), redis.smembers("newset"));
+        assertThat(redis.sunionstore("newset", "key1", "key2", "key3")).isEqualTo(5);
+        assertThat(redis.smembers("newset")).isEqualTo(set("a", "b", "c", "d", "e"));
     }
 
     @Test
@@ -187,21 +183,21 @@ public class SetCommandTest extends AbstractCommandTest {
         redis.sadd(key, value);
         ValueScanCursor<String> cursor = redis.sscan(key);
 
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(list(value), cursor.getValues());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getValues()).isEqualTo(list(value));
 
         ValueScanCursor<String> cursor2 = redis.sscan(key, cursor);
 
-        assertEquals(1, cursor2.getValues().size());
-        assertEquals("0", cursor2.getCursor());
-        assertTrue(cursor2.isFinished());
+        assertThat(cursor2.getValues()).hasSize(1);
+        assertThat(cursor2.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
 
         ValueScanCursor<String> cursor3 = redis.sscan(key, cursor, ScanArgs.Builder.count(5));
 
-        assertEquals(1, cursor3.getValues().size());
-        assertEquals("0", cursor3.getCursor());
-        assertTrue(cursor3.isFinished());
+        assertThat(cursor3.getValues()).hasSize(1);
+        assertThat(cursor3.getCursor()).isEqualTo("0");
+        assertThat(cursor3.isFinished()).isTrue();
 
     }
 
@@ -212,23 +208,23 @@ public class SetCommandTest extends AbstractCommandTest {
 
         StreamScanCursor cursor = redis.sscan(adapter, key);
 
-        assertEquals(1, cursor.getCount());
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(list(value), adapter.getList());
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).isEqualTo(list(value));
 
         StreamScanCursor cursor2 = redis.sscan(adapter, key, cursor);
 
-        assertEquals(1, cursor2.getCount());
-        assertEquals("0", cursor2.getCursor());
-        assertTrue(cursor2.isFinished());
+        assertThat(cursor2.getCount()).isEqualTo(1);
+        assertThat(cursor2.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
 
         StreamScanCursor cursor3 = redis.sscan(adapter, key, cursor, ScanArgs.Builder.count(5));
 
-        assertEquals(1, cursor3.getCount());
-        assertEquals("0", cursor3.getCursor());
-        assertTrue(cursor3.isFinished());
-  }
+        assertThat(cursor3.getCount()).isEqualTo(1);
+        assertThat(cursor3.getCursor()).isEqualTo("0");
+        assertThat(cursor3.isFinished()).isTrue();
+    }
 
     @Test
     public void sscanStreamingArgs() throws Exception {
@@ -237,10 +233,10 @@ public class SetCommandTest extends AbstractCommandTest {
 
         StreamScanCursor cursor = redis.sscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
 
-        assertEquals(1, cursor.getCount());
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(list(value), adapter.getList());
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).isEqualTo(list(value));
     }
 
     @Test
@@ -252,9 +248,9 @@ public class SetCommandTest extends AbstractCommandTest {
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(5));
 
-        assertNotNull(cursor.getCursor());
+        assertThat(cursor.getCursor()).isNotNull();
         assertNotEquals("0", cursor.getCursor());
-        assertFalse(cursor.isFinished());
+        assertThat(cursor.isFinished()).isFalse();
 
         check.addAll(cursor.getValues());
 
@@ -263,7 +259,7 @@ public class SetCommandTest extends AbstractCommandTest {
             check.addAll(cursor.getValues());
         }
 
-        assertEquals(new TreeSet<String>(expect), new TreeSet<String>(check));
+        assertThat(new TreeSet<String>(check)).isEqualTo(new TreeSet<String>(expect));
     }
 
     @Test
@@ -274,10 +270,10 @@ public class SetCommandTest extends AbstractCommandTest {
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(200).match("value1*"));
 
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
 
-        assertEquals(11, cursor.getValues().size());
+        assertThat(cursor.getValues()).hasSize(11);
     }
 
     protected void setup100KeyValues(Set<String> expect) {

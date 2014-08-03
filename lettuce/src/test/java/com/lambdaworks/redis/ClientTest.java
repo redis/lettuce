@@ -2,8 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,23 +28,23 @@ public class ClientTest extends AbstractCommandTest {
         RedisClient client = new RedisClient(host, port);
         client.addListener(listener);
 
-        assertNull(listener.onConnected);
-        assertNull(listener.onDisconnected);
-        assertNull(listener.onException);
+        assertThat(listener.onConnected).isNull();
+        assertThat(listener.onDisconnected).isNull();
+        assertThat(listener.onException).isNull();
 
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
         Thread.sleep(100);
 
-        assertEquals(connection, listener.onConnected);
-        assertNull(listener.onDisconnected);
+        assertThat(listener.onConnected).isEqualTo(connection);
+        assertThat(listener.onDisconnected).isNull();
 
         connection.set(key, value).get();
         connection.close();
         Thread.sleep(100);
 
-        assertEquals(connection, listener.onConnected);
-        assertEquals(connection, listener.onDisconnected);
+        assertThat(listener.onConnected).isEqualTo(connection);
+        assertThat(listener.onDisconnected).isEqualTo(connection);
 
     }
 
@@ -59,11 +58,11 @@ public class ClientTest extends AbstractCommandTest {
     public void reconnect() throws Exception {
         redis.set(key, value);
         redis.quit();
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isEqualTo(value);
         redis.quit();
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isEqualTo(value);
         redis.quit();
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test(expected = RedisCommandInterruptedException.class, timeout = 10)

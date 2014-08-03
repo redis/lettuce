@@ -2,12 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -27,156 +23,158 @@ public class KeyCommandTest extends AbstractCommandTest {
     @Test
     public void del() throws Exception {
         redis.set(key, value);
-        assertEquals(1, (long) redis.del(key));
+        assertThat((long) redis.del(key)).isEqualTo(1);
         redis.set(key + "1", value);
         redis.set(key + "2", value);
-        assertEquals(2, (long) redis.del(key + "1", key + "2"));
+
+        assertThat(redis.del(key + "1", key + "2")).isEqualTo(2);
     }
 
     @Test
     public void dump() throws Exception {
-        assertNull(redis.dump("invalid"));
+        assertThat(redis.dump("invalid")).isNull();
         redis.set(key, value);
-        assertTrue(redis.dump(key).length > 0);
+        assertThat(redis.dump(key).length > 0).isTrue();
     }
 
     @Test
     public void exists() throws Exception {
-        assertFalse(redis.exists(key));
+        assertThat(redis.exists(key)).isFalse();
         redis.set(key, value);
-        assertTrue(redis.exists(key));
+        assertThat(redis.exists(key)).isTrue();
     }
 
     @Test
     public void expire() throws Exception {
-        assertFalse(redis.expire(key, 10));
+        assertThat(redis.expire(key, 10)).isFalse();
         redis.set(key, value);
-        assertTrue(redis.expire(key, 10));
-        assertEquals(10, (long) redis.ttl(key));
+        assertThat(redis.expire(key, 10)).isTrue();
+        assertThat((long) redis.ttl(key)).isEqualTo(10);
     }
 
     @Test
     public void expireat() throws Exception {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
-        assertFalse(redis.expireat(key, expiration));
+        assertThat(redis.expireat(key, expiration)).isFalse();
         redis.set(key, value);
-        assertTrue(redis.expireat(key, expiration));
-        assertTrue(redis.ttl(key) >= 9);
+        assertThat(redis.expireat(key, expiration)).isTrue();
+        assertThat(redis.ttl(key) >= 9).isTrue();
     }
 
     @Test
     public void keys() throws Exception {
-        assertEquals(list(), redis.keys("*"));
+        assertThat(redis.keys("*")).isEqualTo(list());
         Map<String, String> map = new HashMap<String, String>();
         map.put("one", "1");
         map.put("two", "2");
         map.put("three", "3");
         redis.mset(map);
         List<String> keys = redis.keys("???");
-        assertEquals(2, keys.size());
-        assertTrue(keys.contains("one"));
-        assertTrue(keys.contains("two"));
+        assertThat(keys).hasSize(2);
+        assertThat(keys.contains("one")).isTrue();
+        assertThat(keys.contains("two")).isTrue();
     }
 
     @Test
     public void keysStreaming() throws Exception {
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
-        assertEquals(list(), redis.keys("*"));
+        assertThat(redis.keys("*")).isEqualTo(list());
         Map<String, String> map = new HashMap<String, String>();
         map.put("one", "1");
         map.put("two", "2");
         map.put("three", "3");
         redis.mset(map);
         Long count = redis.keys(adapter, "???");
-        assertEquals(2, count.intValue());
+        assertThat(count.intValue()).isEqualTo(2);
 
         List<String> keys = adapter.getList();
-        assertEquals(2, keys.size());
-        assertTrue(keys.contains("one"));
-        assertTrue(keys.contains("two"));
+        assertThat(keys).hasSize(2);
+        assertThat(keys.contains("one")).isTrue();
+        assertThat(keys.contains("two")).isTrue();
     }
 
     @Test
     public void move() throws Exception {
         redis.set(key, value);
         redis.move(key, 1);
-        assertNull(redis.get(key));
+        assertThat(redis.get(key)).isNull();
         redis.select(1);
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void objectEncoding() throws Exception {
         redis.set(key, value);
-        assertEquals("embstr", redis.objectEncoding(key));
+        assertThat(redis.objectEncoding(key)).isEqualTo("embstr");
         redis.set(key, String.valueOf(1));
-        assertEquals("int", redis.objectEncoding(key));
+        assertThat(redis.objectEncoding(key)).isEqualTo("int");
     }
 
     @Test
     public void objectIdletime() throws Exception {
         redis.set(key, value);
-        assertEquals(0, (long) redis.objectIdletime(key));
+        assertThat((long) redis.objectIdletime(key)).isEqualTo(0);
     }
 
     @Test
     public void objectRefcount() throws Exception {
         redis.set(key, value);
-        assertTrue(redis.objectRefcount(key) > 0);
+        assertThat(redis.objectRefcount(key) > 0).isTrue();
     }
 
     @Test
     public void persist() throws Exception {
-        assertFalse(redis.persist(key));
+        assertThat(redis.persist(key)).isFalse();
         redis.set(key, value);
-        assertFalse(redis.persist(key));
+        assertThat(redis.persist(key)).isFalse();
         redis.expire(key, 10);
-        assertTrue(redis.persist(key));
+        assertThat(redis.persist(key)).isTrue();
     }
 
     @Test
     public void pexpire() throws Exception {
-        assertFalse(redis.pexpire(key, 10));
+        assertThat(redis.pexpire(key, 10)).isFalse();
         redis.set(key, value);
-        assertTrue(redis.pexpire(key, 10));
-        assertTrue(redis.pttl(key) <= 10 && redis.pttl(key) > 0);
+        assertThat(redis.pexpire(key, 10)).isTrue();
+        assertThat(redis.pttl(key) <= 10 && redis.pttl(key) > 0).isTrue();
     }
 
     @Test
     public void pexpireat() throws Exception {
         Date expiration = new Date(System.currentTimeMillis() + 100);
-        assertFalse(redis.pexpireat(key, expiration));
+        assertThat(redis.pexpireat(key, expiration)).isFalse();
         redis.set(key, value);
-        assertTrue(redis.pexpireat(key, expiration));
-        assertTrue(redis.pttl(key) <= 100 && redis.pttl(key) > 0);
+        assertThat(redis.pexpireat(key, expiration)).isTrue();
+        assertThat(redis.pttl(key) <= 100 && redis.pttl(key) > 0).isTrue();
     }
 
     @Test
     public void pttl() throws Exception {
-        assertEquals(-2, (long) redis.pttl(key));
+        assertThat((long) redis.pttl(key)).isEqualTo(-2);
         redis.set(key, value);
-        assertEquals(-1, (long) redis.pttl(key));
+        assertThat((long) redis.pttl(key)).isEqualTo(-1);
         redis.pexpire(key, 10);
-        assertTrue(redis.pttl(key) <= 10 && redis.pttl(key) > 0);
+        assertThat(redis.pttl(key) <= 10 && redis.pttl(key) > 0).isTrue();
     }
 
     @Test
     public void randomkey() throws Exception {
-        assertNull(redis.randomkey());
+        assertThat(redis.randomkey()).isNull();
         redis.set(key, value);
-        assertEquals(key, redis.randomkey());
+        assertThat(redis.randomkey()).isEqualTo(key);
     }
 
     @Test
     public void rename() throws Exception {
         redis.set(key, value);
-        assertEquals("OK", redis.rename(key, key + "X"));
-        assertNull(redis.get(key));
-        assertEquals(value, redis.get(key + "X"));
+
+        assertThat(redis.rename(key, key + "X")).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
+        assertThat(redis.get(key + "X")).isEqualTo(value);
         redis.set(key, value + "X");
-        assertEquals("OK", redis.rename(key + "X", key));
-        assertEquals(value, redis.get(key));
+        assertThat(redis.rename(key + "X", key)).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test(expected = RedisException.class)
@@ -193,10 +191,10 @@ public class KeyCommandTest extends AbstractCommandTest {
     @Test
     public void renamenx() throws Exception {
         redis.set(key, value);
-        assertTrue(redis.renamenx(key, key + "X"));
-        assertEquals(value, redis.get(key + "X"));
+        assertThat(redis.renamenx(key, key + "X")).isTrue();
+        assertThat(redis.get(key + "X")).isEqualTo(value);
         redis.set(key, value);
-        assertFalse(redis.renamenx(key + "X", key));
+        assertThat(redis.renamenx(key + "X", key)).isFalse();
     }
 
     @Test(expected = RedisException.class)
@@ -216,44 +214,44 @@ public class KeyCommandTest extends AbstractCommandTest {
         byte[] bytes = redis.dump(key);
         redis.del(key);
 
-        assertEquals("OK", redis.restore(key, 0, bytes));
-        assertEquals(value, redis.get(key));
-        assertEquals(-1, redis.pttl(key).longValue());
+        assertThat(redis.restore(key, 0, bytes)).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.pttl(key).longValue()).isEqualTo(-1);
 
         redis.del(key);
-        assertEquals("OK", redis.restore(key, 1000, bytes));
-        assertEquals(value, redis.get(key));
+        assertThat(redis.restore(key, 1000, bytes)).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
         long ttl = redis.pttl(key);
-        assertTrue(ttl <= 1000 && ttl >= 0);
+        assertThat(ttl <= 1000 && ttl >= 0).isTrue();
     }
 
     @Test
     public void ttl() throws Exception {
-        assertEquals(-2, (long) redis.ttl(key));
+        assertThat((long) redis.ttl(key)).isEqualTo(-2);
         redis.set(key, value);
-        assertEquals(-1, (long) redis.ttl(key));
+        assertThat((long) redis.ttl(key)).isEqualTo(-1);
         redis.expire(key, 10);
-        assertEquals(10, (long) redis.ttl(key));
+        assertThat((long) redis.ttl(key)).isEqualTo(10);
     }
 
     @Test
     public void type() throws Exception {
-        assertEquals("none", redis.type(key));
+        assertThat(redis.type(key)).isEqualTo("none");
 
         redis.set(key, value);
-        assertEquals("string", redis.type(key));
+        assertThat(redis.type(key)).isEqualTo("string");
 
         redis.hset(key + "H", value, "1");
-        assertEquals("hash", redis.type(key + "H"));
+        assertThat(redis.type(key + "H")).isEqualTo("hash");
 
         redis.lpush(key + "L", "1");
-        assertEquals("list", redis.type(key + "L"));
+        assertThat(redis.type(key + "L")).isEqualTo("list");
 
         redis.sadd(key + "S", "1");
-        assertEquals("set", redis.type(key + "S"));
+        assertThat(redis.type(key + "S")).isEqualTo("set");
 
         redis.zadd(key + "Z", 1, "1");
-        assertEquals("zset", redis.type(key + "Z"));
+        assertThat(redis.type(key + "Z")).isEqualTo("zset");
     }
 
     @Test
@@ -263,14 +261,14 @@ public class KeyCommandTest extends AbstractCommandTest {
         RedisFuture<KeyScanCursor<String>> future = async.scan();
 
         KeyScanCursor<String> cursor = future.get();
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(list(key), cursor.getKeys());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).isEqualTo(list(key));
 
         RedisFuture<KeyScanCursor<String>> future2 = async.scan(future.get(), ScanArgs.Builder.count(10));
         KeyScanCursor<String> cursor2 = future2.get();
-        assertEquals("0", cursor2.getCursor());
-        assertTrue(cursor2.isFinished());
+        assertThat(cursor2.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
 
     }
 
@@ -281,22 +279,22 @@ public class KeyCommandTest extends AbstractCommandTest {
 
         StreamScanCursor cursor = redis.scan(adapter);
 
-        assertEquals(1, cursor.getCount());
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(list(key), adapter.getList());
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).isEqualTo(list(key));
 
         StreamScanCursor cursor2 = redis.scan(adapter, cursor);
 
-        assertEquals(1, cursor2.getCount());
-        assertEquals("0", cursor2.getCursor());
-        assertTrue(cursor2.isFinished());
+        assertThat(cursor2.getCount()).isEqualTo(1);
+        assertThat(cursor2.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
 
         StreamScanCursor cursor3 = redis.scan(adapter, cursor, ScanArgs.Builder.count(5));
 
-        assertEquals(1, cursor3.getCount());
-        assertEquals("0", cursor3.getCursor());
-        assertTrue(cursor2.isFinished());
+        assertThat(cursor3.getCount()).isEqualTo(1);
+        assertThat(cursor3.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
 
     }
 
@@ -307,10 +305,10 @@ public class KeyCommandTest extends AbstractCommandTest {
 
         StreamScanCursor cursor = redis.scan(adapter, ScanArgs.Builder.count(100).match("*"));
 
-        assertEquals(1, cursor.getCount());
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(list(key), adapter.getList());
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).isEqualTo(list(key));
 
     }
 
@@ -323,9 +321,9 @@ public class KeyCommandTest extends AbstractCommandTest {
 
         KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.count(12));
 
-        assertNotNull(cursor.getCursor());
+        assertThat(cursor.getCursor()).isNotNull();
         assertNotEquals("0", cursor.getCursor());
-        assertFalse(cursor.isFinished());
+        assertThat(cursor.isFinished()).isFalse();
 
         check.addAll(cursor.getKeys());
 
@@ -334,8 +332,8 @@ public class KeyCommandTest extends AbstractCommandTest {
             check.addAll(cursor.getKeys());
         }
 
-        assertEquals(expect, check);
-        assertEquals(100, check.size());
+        assertThat(check).isEqualTo(expect);
+        assertThat(check).hasSize(100);
     }
 
     @Test
@@ -346,10 +344,10 @@ public class KeyCommandTest extends AbstractCommandTest {
 
         KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.count(200).match("key1*"));
 
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
 
-        assertEquals(11, cursor.getKeys().size());
+        assertThat(cursor.getKeys()).hasSize(11);
     }
 
     protected void setup100KeyValues(Set<String> expect) {

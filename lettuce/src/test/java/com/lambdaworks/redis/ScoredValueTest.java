@@ -2,30 +2,30 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class ScoredValueTest {
     @Test
     public void equals() throws Exception {
         ScoredValue<String> sv1 = new ScoredValue<String>(1.0, "a");
-        assertTrue(sv1.equals(new ScoredValue<String>(1.0, "a")));
-        assertFalse(sv1.equals(null));
-        assertFalse(sv1.equals(new ScoredValue<String>(1.1, "a")));
-        assertFalse(sv1.equals(new ScoredValue<String>(1.0, "b")));
+        assertThat(sv1.equals(new ScoredValue<String>(1.0, "a"))).isTrue();
+        assertThat(sv1.equals(null)).isFalse();
+        assertThat(sv1.equals(new ScoredValue<String>(1.1, "a"))).isFalse();
+        assertThat(sv1.equals(new ScoredValue<String>(1.0, "b"))).isFalse();
     }
 
     @Test
     public void testToString() throws Exception {
         ScoredValue<String> sv1 = new ScoredValue<String>(1.0, "a");
-        assertEquals(String.format("(%f, %s)", sv1.score, sv1.value), sv1.toString());
+        assertThat(sv1.toString()).isEqualTo(String.format("(%f, %s)", sv1.score, sv1.value));
     }
 
     @Test
     public void testHashCode() throws Exception {
-        assertTrue(new ScoredValue<String>(1.0, "a").hashCode() != 0);
-        assertTrue(new ScoredValue<String>(0.0, "a").hashCode() != 0);
-        assertTrue(new ScoredValue<String>(0.0, null).hashCode() == 0);
+        assertThat(new ScoredValue<String>(1.0, "a").hashCode() != 0).isTrue();
+        assertThat(new ScoredValue<String>(0.0, "a").hashCode() != 0).isTrue();
+        assertThat(new ScoredValue<String>(0.0, null).hashCode() == 0).isTrue();
     }
 }

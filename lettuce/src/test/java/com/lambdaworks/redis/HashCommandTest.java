@@ -2,11 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,40 +15,40 @@ import com.google.common.collect.ImmutableMap;
 public class HashCommandTest extends AbstractCommandTest {
     @Test
     public void hdel() throws Exception {
-        assertEquals(0, (long) redis.hdel(key, "one"));
+        assertThat(redis.hdel(key, "one")).isEqualTo(0);
         redis.hset(key, "two", "2");
-        assertEquals(0, (long) redis.hdel(key, "one"));
+        assertThat(redis.hdel(key, "one")).isEqualTo(0);
         redis.hset(key, "one", "1");
-        assertEquals(1, (long) redis.hdel(key, "one"));
+        assertThat(redis.hdel(key, "one")).isEqualTo(1);
         redis.hset(key, "one", "1");
-        assertEquals(2, (long) redis.hdel(key, "one", "two"));
+        assertThat(redis.hdel(key, "one", "two")).isEqualTo(2);
     }
 
     @Test
     public void hexists() throws Exception {
-        assertFalse(redis.hexists(key, "one"));
+        assertThat(redis.hexists(key, "one")).isFalse();
         redis.hset(key, "two", "2");
-        assertFalse(redis.hexists(key, "one"));
+        assertThat(redis.hexists(key, "one")).isFalse();
         redis.hset(key, "one", "1");
-        assertTrue(redis.hexists(key, "one"));
+        assertThat(redis.hexists(key, "one")).isTrue();
     }
 
     @Test
     public void hget() throws Exception {
-        assertNull(redis.hget(key, "one"));
+        assertThat(redis.hget(key, "one")).isNull();
         redis.hset(key, "one", "1");
-        assertEquals("1", redis.hget(key, "one"));
+        assertThat(redis.hget(key, "one")).isEqualTo("1");
     }
 
     @Test
     public void hgetall() throws Exception {
-        assertTrue(redis.hgetall(key).isEmpty());
+        assertThat(redis.hgetall(key).isEmpty()).isTrue();
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         Map<String, String> map = redis.hgetall(key);
-        assertEquals(2, map.size());
-        assertEquals("1", map.get("one"));
-        assertEquals("2", map.get("two"));
+        assertThat(map).hasSize(2);
+        assertThat(map.get("one")).isEqualTo("1");
+        assertThat(map.get("two")).isEqualTo("2");
     }
 
     @Test
@@ -60,35 +56,35 @@ public class HashCommandTest extends AbstractCommandTest {
 
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
 
-        assertTrue(redis.hgetall(key).isEmpty());
+        assertThat(redis.hgetall(key).isEmpty()).isTrue();
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         Long count = redis.hgetall(adapter, key);
         Map<String, String> map = adapter.getMap();
-        assertEquals(2, count.intValue());
-        assertEquals(2, map.size());
-        assertEquals("1", map.get("one"));
-        assertEquals("2", map.get("two"));
+        assertThat(count.intValue()).isEqualTo(2);
+        assertThat(map).hasSize(2);
+        assertThat(map.get("one")).isEqualTo("1");
+        assertThat(map.get("two")).isEqualTo("2");
     }
 
     @Test
     public void hincrby() throws Exception {
-        assertEquals(1, (long) redis.hincrby(key, "one", 1));
-        assertEquals(-1, (long) redis.hincrby(key, "one", -2));
+        assertThat(redis.hincrby(key, "one", 1)).isEqualTo(1);
+        assertThat(redis.hincrby(key, "one", -2)).isEqualTo(-1);
     }
 
     @Test
     public void hincrbyfloat() throws Exception {
-        assertEquals(1.0, redis.hincrbyfloat(key, "one", 1.0), 0.1);
-        assertEquals(-1.0, redis.hincrbyfloat(key, "one", -2.0), 0.1);
+        assertThat(redis.hincrbyfloat(key, "one", 1.0)).isEqualTo(1.0);
+        assertThat(redis.hincrbyfloat(key, "one", -2.0)).isEqualTo(-1.0);
     }
 
     @Test
     public void hkeys() throws Exception {
         setup();
         List<String> keys = redis.hkeys(key);
-        assertEquals(2, keys.size());
-        assertTrue(keys.containsAll(list("one", "two")));
+        assertThat(keys).hasSize(2);
+        assertThat(keys.containsAll(list("one", "two"))).isTrue();
     }
 
     @Test
@@ -97,36 +93,36 @@ public class HashCommandTest extends AbstractCommandTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
 
         Long count = redis.hkeys(streamingAdapter, key);
-        assertEquals(2, count.longValue());
+        assertThat(count.longValue()).isEqualTo(2);
 
         List<String> keys = streamingAdapter.getList();
-        assertEquals(2, keys.size());
-        assertTrue(keys.containsAll(list("one", "two")));
+        assertThat(keys).hasSize(2);
+        assertThat(keys.containsAll(list("one", "two"))).isTrue();
     }
-    private void setup()
-    {
-        assertEquals(list(), redis.hkeys(key));
+
+    private void setup() {
+        assertThat(redis.hkeys(key)).isEqualTo(list());
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
     }
 
     @Test
     public void hlen() throws Exception {
-        assertEquals(0, (long) redis.hlen(key));
+        assertThat((long) redis.hlen(key)).isEqualTo(0);
         redis.hset(key, "one", "1");
-        assertEquals(1, (long) redis.hlen(key));
+        assertThat((long) redis.hlen(key)).isEqualTo(1);
     }
 
     @Test
     public void hmget() throws Exception {
         setupHmget();
         List<String> values = redis.hmget(key, "one", "two");
-        assertEquals(2, values.size());
-        assertTrue(values.containsAll(list("1", "1")));
+        assertThat(values).hasSize(2);
+        assertThat(values.containsAll(list("1", "1"))).isTrue();
     }
 
     private void setupHmget() {
-        assertEquals(list(null, null), redis.hmget(key, "one", "two"));
+        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(null, null));
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
     }
@@ -138,9 +134,9 @@ public class HashCommandTest extends AbstractCommandTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.hmget(streamingAdapter, key, "one", "two");
         List<String> values = streamingAdapter.getList();
-        assertEquals(2, count.intValue());
-        assertEquals(2, values.size());
-        assertTrue(values.containsAll(list("1", "1")));
+        assertThat(count.intValue()).isEqualTo(2);
+        assertThat(values).hasSize(2);
+        assertThat(values.containsAll(list("1", "1"))).isTrue();
     }
 
     @Test
@@ -148,44 +144,44 @@ public class HashCommandTest extends AbstractCommandTest {
         Map<String, String> hash = new HashMap<String, String>();
         hash.put("one", "1");
         hash.put("two", "2");
-        assertEquals("OK", redis.hmset(key, hash));
-        assertEquals(list("1", "2"), redis.hmget(key, "one", "two"));
+        assertThat(redis.hmset(key, hash)).isEqualTo("OK");
+        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list("1", "2"));
     }
 
     @Test
     public void hset() throws Exception {
-        assertEquals(true, redis.hset(key, "one", "1"));
-        assertEquals(false, redis.hset(key, "one", "1"));
+        assertThat(redis.hset(key, "one", "1")).isTrue();
+        assertThat(redis.hset(key, "one", "1")).isFalse();
     }
 
     @Test
     public void hsetnx() throws Exception {
         redis.hset(key, "one", "1");
-        assertFalse(redis.hsetnx(key, "one", "2"));
-        assertEquals("1", redis.hget(key, "one"));
+        assertThat(redis.hsetnx(key, "one", "2")).isFalse();
+        assertThat(redis.hget(key, "one")).isEqualTo("1");
     }
 
     @Test
     public void hvals() throws Exception {
-        assertEquals(list(), redis.hvals(key));
+        assertThat(redis.hvals(key)).isEqualTo(list());
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         List<String> values = redis.hvals(key);
-        assertEquals(2, values.size());
-        assertTrue(values.containsAll(list("1", "1")));
+        assertThat(values).hasSize(2);
+        assertThat(values.containsAll(list("1", "1"))).isTrue();
     }
 
     @Test
     public void hvalsStreaming() throws Exception {
-        assertEquals(list(), redis.hvals(key));
+        assertThat(redis.hvals(key)).isEqualTo(list());
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
 
         ListStreamingAdapter<String> channel = new ListStreamingAdapter();
         Long count = redis.hvals(channel, key);
-        assertEquals(2, count.intValue());
-        assertEquals(2, channel.getList().size());
-        assertTrue(channel.getList().containsAll(list("1", "1")));
+        assertThat(count.intValue()).isEqualTo(2);
+        assertThat(channel.getList()).hasSize(2);
+        assertThat(channel.getList().containsAll(list("1", "1"))).isTrue();
     }
 
     @Test
@@ -193,22 +189,21 @@ public class HashCommandTest extends AbstractCommandTest {
         redis.hset(key, key, value);
         MapScanCursor<String, String> cursor = redis.hscan(key);
 
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(ImmutableMap.of(key, value), cursor.getMap());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
 
         MapScanCursor<String, String> cursor2 = redis.hscan(key, cursor);
 
-        assertEquals("0", cursor2.getCursor());
-        assertTrue(cursor2.isFinished());
-        assertEquals(ImmutableMap.of(key, value), cursor2.getMap());
+        assertThat(cursor2.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
+        assertThat(cursor2.getMap()).isEqualTo(ImmutableMap.of(key, value));
 
         MapScanCursor<String, String> cursor3 = redis.hscan(key, cursor, ScanArgs.Builder.count(2));
 
-        assertEquals("0", cursor3.getCursor());
-        assertTrue(cursor3.isFinished());
-        assertEquals(ImmutableMap.of(key, value), cursor3.getMap());
-
+        assertThat(cursor3.getCursor()).isEqualTo("0");
+        assertThat(cursor3.isFinished()).isTrue();
+        assertThat(cursor3.getMap()).isEqualTo(ImmutableMap.of(key, value));
     }
 
     @Test
@@ -218,24 +213,24 @@ public class HashCommandTest extends AbstractCommandTest {
 
         StreamScanCursor cursor = redis.hscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
 
-        assertEquals(1, cursor.getCount());
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
-        assertEquals(ImmutableMap.of(key, value), adapter.getMap());
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getMap()).isEqualTo(ImmutableMap.of(key, value));
 
         StreamScanCursor cursor2 = redis.hscan(adapter, key, cursor);
 
-        assertEquals(1, cursor2.getCount());
-        assertEquals("0", cursor2.getCursor());
-        assertTrue(cursor2.isFinished());
+        assertThat(cursor2.getCount()).isEqualTo(1);
+        assertThat(cursor2.getCursor()).isEqualTo("0");
+        assertThat(cursor2.isFinished()).isTrue();
 
         StreamScanCursor cursor3 = redis.hscan(adapter, key, cursor, ScanArgs.Builder.count(100).match("*"));
 
-        assertEquals(1, cursor3.getCount());
-        assertEquals("0", cursor3.getCursor());
-        assertTrue(cursor3.isFinished());
+        assertThat(cursor3.getCount()).isEqualTo(1);
+        assertThat(cursor3.getCursor()).isEqualTo("0");
+        assertThat(cursor3.isFinished()).isTrue();
 
-   }
+    }
 
     @Test
     public void hscanMultiple() throws Exception {
@@ -246,11 +241,11 @@ public class HashCommandTest extends AbstractCommandTest {
 
         MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.count(5));
 
-        assertNotNull(cursor.getCursor());
-        assertEquals(100, cursor.getMap().size());
+        assertThat(cursor.getCursor()).isNotNull();
+        assertThat(cursor.getMap()).hasSize(100);
 
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
 
         check.putAll(cursor.getMap());
 
@@ -259,7 +254,7 @@ public class HashCommandTest extends AbstractCommandTest {
             check.putAll(cursor.getMap());
         }
 
-        assertEquals(expect, check);
+        assertThat(check).isEqualTo(expect);
     }
 
     @Test
@@ -270,10 +265,10 @@ public class HashCommandTest extends AbstractCommandTest {
 
         MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.count(100).match("key1*"));
 
-        assertEquals("0", cursor.getCursor());
-        assertTrue(cursor.isFinished());
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
 
-        assertEquals(11, cursor.getMap().size());
+        assertThat(cursor.getMap()).hasSize(11);
     }
 
     protected void setup100KeyValues(Map<String, String> expect) {

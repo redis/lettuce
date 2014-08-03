@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
@@ -27,28 +27,28 @@ public class BitCommandTest extends AbstractCommandTest {
 
     @Test
     public void bitcount() throws Exception {
-        assertEquals(0, (long) redis.bitcount(key));
+        assertThat((long) redis.bitcount(key)).isEqualTo(0);
         redis.setbit(key, 0, 1);
         redis.setbit(key, 1, 1);
         redis.setbit(key, 2, 1);
-        assertEquals(3, (long) redis.bitcount(key));
-        // assertEquals(2, (long) redis.bitcount(key, 1, 3));
-        assertEquals(0, (long) redis.bitcount(key, 3, -1));
+        assertThat((long) redis.bitcount(key)).isEqualTo(3);
+        // assertThat(1).isEqualTo(2, (long) redis.bitcount(key, offset(3)));
+        assertThat(redis.bitcount(key, 3, -1)).isEqualTo(0);
     }
 
     @Test
     public void bitpos() throws Exception {
-        assertEquals(0, (long) redis.bitcount(key));
+        assertThat((long) redis.bitcount(key)).isEqualTo(0);
         redis.setbit(key, 0, 0);
         redis.setbit(key, 1, 1);
 
-        assertEquals("00000010", bitstring.get(key));
-        assertEquals(1, (long) redis.bitpos(key, true));
+        assertThat(bitstring.get(key)).isEqualTo("00000010");
+        assertThat((long) redis.bitpos(key, true)).isEqualTo(1);
     }
 
     @Test
     public void bitposOffset() throws Exception {
-        assertEquals(0, (long) redis.bitcount(key));
+        assertThat((long) redis.bitcount(key)).isEqualTo(0);
         redis.setbit(key, 0, 1);
         redis.setbit(key, 1, 1);
         redis.setbit(key, 2, 0);
@@ -56,11 +56,11 @@ public class BitCommandTest extends AbstractCommandTest {
         redis.setbit(key, 4, 0);
         redis.setbit(key, 5, 1);
 
-        assertEquals(1, (long) bitstring.getbit(key, 1));
-        assertEquals(0, (long) bitstring.getbit(key, 4));
-        assertEquals(1, (long) bitstring.getbit(key, 5));
-        assertEquals("00100011", bitstring.get(key));
-        assertEquals(2, (long) redis.bitpos(key, false, 0, 0));
+        assertThat((long) bitstring.getbit(key, 1)).isEqualTo(1);
+        assertThat((long) bitstring.getbit(key, 4)).isEqualTo(0);
+        assertThat((long) bitstring.getbit(key, 5)).isEqualTo(1);
+        assertThat(bitstring.get(key)).isEqualTo("00100011");
+        assertThat((long) redis.bitpos(key, false, 0, 0)).isEqualTo(2);
     }
 
     @Test
@@ -68,18 +68,19 @@ public class BitCommandTest extends AbstractCommandTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("bar", 1, 1);
         redis.setbit("baz", 2, 1);
-        assertEquals(1, (long) redis.bitopAnd(key, "foo", "bar", "baz"));
-        assertEquals(0, (long) redis.bitcount(key));
-        assertEquals("00000000", bitstring.get(key));
+        assertThat(redis.bitopAnd(key, "foo", "bar", "baz")).isEqualTo(1);
+        assertThat((long) redis.bitcount(key)).isEqualTo(0);
+        assertThat(bitstring.get(key)).isEqualTo("00000000");
     }
 
     @Test
     public void bitopNot() throws Exception {
         redis.setbit("foo", 0, 1);
         redis.setbit("foo", 2, 1);
-        assertEquals(1, (long) redis.bitopNot(key, "foo"));
-        assertEquals(6, (long) redis.bitcount(key));
-        assertEquals("11111010", bitstring.get(key));
+
+        assertThat(redis.bitopNot(key, "foo")).isEqualTo(1);
+        assertThat((long) redis.bitcount(key)).isEqualTo(6);
+        assertThat(bitstring.get(key)).isEqualTo("11111010");
     }
 
     @Test
@@ -87,8 +88,8 @@ public class BitCommandTest extends AbstractCommandTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("bar", 1, 1);
         redis.setbit("baz", 2, 1);
-        assertEquals(1, (long) redis.bitopOr(key, "foo", "bar", "baz"));
-        assertEquals("00000111", bitstring.get(key));
+        assertThat(redis.bitopOr(key, "foo", "bar", "baz")).isEqualTo(1);
+        assertThat(bitstring.get(key)).isEqualTo("00000111");
     }
 
     @Test
@@ -96,21 +97,22 @@ public class BitCommandTest extends AbstractCommandTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("bar", 0, 1);
         redis.setbit("baz", 2, 1);
-        assertEquals(1, (long) redis.bitopXor(key, "foo", "bar", "baz"));
-        assertEquals("00000100", bitstring.get(key));
+        assertThat(redis.bitopXor(key, "foo", "bar", "baz")).isEqualTo(1);
+        assertThat(bitstring.get(key)).isEqualTo("00000100");
     }
 
     @Test
     public void getbit() throws Exception {
-        assertEquals(0, (long) redis.getbit(key, 0));
+        assertThat(redis.getbit(key, 0)).isEqualTo(0);
         redis.setbit(key, 0, 1);
-        assertEquals(1, (long) redis.getbit(key, 0));
+        assertThat(redis.getbit(key, 0)).isEqualTo(1);
     }
 
     @Test
     public void setbit() throws Exception {
-        assertEquals(0, (long) redis.setbit(key, 0, 1));
-        assertEquals(1, (long) redis.setbit(key, 0, 0));
+
+        assertThat(redis.setbit(key, 0, 1)).isEqualTo(0);
+        assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
     }
 
     static class BitStringCodec extends Utf8StringCodec {

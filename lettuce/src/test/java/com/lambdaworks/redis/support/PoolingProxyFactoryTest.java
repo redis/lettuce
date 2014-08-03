@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.support;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.Test;
 
@@ -28,11 +28,11 @@ public class PoolingProxyFactoryTest extends AbstractCommandTest {
     public void testCloseReturnsConnection() throws Exception {
 
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        assertEquals(0, pool.getNumActive());
+        assertThat(pool.getNumActive()).isEqualTo(0);
         RedisConnection<String, String> connection = pool.allocateConnection();
-        assertEquals(1, pool.getNumActive());
+        assertThat(pool.getNumActive()).isEqualTo(1);
         connection.close();
-        assertEquals(0, pool.getNumActive());
+        assertThat(pool.getNumActive()).isEqualTo(0);
     }
 
     @Test
@@ -48,7 +48,7 @@ public class PoolingProxyFactoryTest extends AbstractCommandTest {
             connection.set("x", "y");
             fail("missing exception");
         } catch (RedisException e) {
-            assertEquals("Connection pool is closed", e.getMessage());
+            assertThat(e.getMessage()).isEqualTo("Connection pool is closed");
 
         }
     }

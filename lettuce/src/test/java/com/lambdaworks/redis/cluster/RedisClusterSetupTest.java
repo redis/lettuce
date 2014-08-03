@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeoutException;
 
@@ -70,15 +70,15 @@ public class RedisClusterSetupTest {
     public void clusterMeet() throws Exception {
 
         Partitions partitionsBeforeMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
-        assertEquals(1, partitionsBeforeMeet.getPartitions().size());
+        assertThat(partitionsBeforeMeet.getPartitions()).hasSize(1);
 
         String result = redis1.clusterMeet(host, port2);
 
-        assertEquals("OK", result);
+        assertThat(result).isEqualTo("OK");
         waitForCluster();
 
         Partitions partitionsAfterMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
-        assertEquals(2, partitionsAfterMeet.getPartitions().size());
+        assertThat(partitionsAfterMeet.getPartitions()).hasSize(2);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class RedisClusterSetupTest {
 
         String result = redis1.clusterMeet(host, port2);
 
-        assertEquals("OK", result);
+        assertThat(result).isEqualTo("OK");
         waitForCluster();
 
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
@@ -98,7 +98,7 @@ public class RedisClusterSetupTest {
         Thread.sleep(300);
 
         Partitions partitionsAfterForget = ClusterPartitionParser.parse(redis1.clusterNodes());
-        assertEquals(1, partitionsAfterForget.getPartitions().size());
+        assertThat(partitionsAfterForget.getPartitions()).hasSize(1);
 
     }
 
@@ -130,9 +130,9 @@ public class RedisClusterSetupTest {
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
         for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
             if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                assertEquals(redisClusterNode.getSlots(), ImmutableList.of(1, 2, 3, 4, 5, 6));
+                assertThat(redisClusterNode.getSlots()).isEqualTo(ImmutableList.of(1, 2, 3, 4, 5, 6));
             } else {
-                assertEquals(redisClusterNode.getSlots(), ImmutableList.of(7, 8, 9, 10, 11, 12));
+                assertThat(redisClusterNode.getSlots()).isEqualTo(ImmutableList.of(7, 8, 9, 10, 11, 12));
             }
         }
 
@@ -171,9 +171,9 @@ public class RedisClusterSetupTest {
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
         for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
             if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                assertEquals(redisClusterNode.getSlots(), ImmutableList.of(1, 2, 3, 4, 5));
+                assertThat(redisClusterNode.getSlots()).isEqualTo(ImmutableList.of(1, 2, 3, 4, 5));
             } else {
-                assertEquals(redisClusterNode.getSlots(), ImmutableList.of(6, 7, 8, 9, 10, 11, 12));
+                assertThat(redisClusterNode.getSlots()).isEqualTo(ImmutableList.of(6, 7, 8, 9, 10, 11, 12));
             }
         }
 
@@ -208,14 +208,14 @@ public class RedisClusterSetupTest {
 
         String nodeId1 = getNodeId(redis1);
         String nodeId2 = getNodeId(redis2);
-        assertEquals("OK", redis1.clusterSetSlotMigrating(6, nodeId2));
-        assertEquals("OK", redis1.clusterSetSlotImporting(12, nodeId2));
+        assertThat(redis1.clusterSetSlotMigrating(6, nodeId2)).isEqualTo("OK");
+        assertThat(redis1.clusterSetSlotImporting(12, nodeId2)).isEqualTo("OK");
 
         RedisClusterNode partition1 = getOwnPartition(redis1);
         RedisClusterNode partition2 = getOwnPartition(redis2);
 
-        assertEquals(6, partition1.getSlots().size());
-        assertEquals(6, partition2.getSlots().size());
+        assertThat(partition1.getSlots()).hasSize(6);
+        assertThat(partition2.getSlots()).hasSize(6);
     }
 
     private String getNodeId(RedisClusterConnection<String, String> connection) {

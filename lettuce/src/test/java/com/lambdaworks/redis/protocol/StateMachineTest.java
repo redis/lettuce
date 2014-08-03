@@ -2,21 +2,26 @@
 
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.output.*;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State;
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.output.ValueListOutput;
+import com.lambdaworks.redis.output.ValueOutput;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 public class StateMachineTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
@@ -32,47 +37,47 @@ public class StateMachineTest {
 
     @Test
     public void single() throws Exception {
-        assertTrue(rsm.decode(buffer("+OK\r\n"), output));
-        assertEquals("OK", output.get());
+        assertThat(rsm.decode(buffer("+OK\r\n"), output)).isTrue();
+        assertThat(output.get()).isEqualTo("OK");
     }
 
     @Test
     public void error() throws Exception {
-        assertTrue(rsm.decode(buffer("-ERR\r\n"), output));
-        assertEquals("ERR", output.getError());
+        assertThat(rsm.decode(buffer("-ERR\r\n"), output)).isTrue();
+        assertThat(output.getError()).isEqualTo("ERR");
     }
 
     @Test
     public void integer() throws Exception {
         CommandOutput<String, String, Long> output = new IntegerOutput<String, String>(codec);
-        assertTrue(rsm.decode(buffer(":1\r\n"), output));
-        assertEquals(1, (long) output.get());
+        assertThat(rsm.decode(buffer(":1\r\n"), output)).isTrue();
+        assertThat((long) output.get()).isEqualTo(1);
     }
 
     @Test
     public void bulk() throws Exception {
         CommandOutput<String, String, String> output = new ValueOutput<String, String>(codec);
-        assertTrue(rsm.decode(buffer("$-1\r\n"), output));
-        assertNull(output.get());
-        assertTrue(rsm.decode(buffer("$3\r\nfoo\r\n"), output));
-        assertEquals("foo", output.get());
+        assertThat(rsm.decode(buffer("$-1\r\n"), output)).isTrue();
+        assertThat(output.get()).isNull();
+        assertThat(rsm.decode(buffer("$3\r\nfoo\r\n"), output)).isTrue();
+        assertThat(output.get()).isEqualTo("foo");
     }
 
     @Test
     public void multi() throws Exception {
         CommandOutput<String, String, List<String>> output = new ValueListOutput<String, String>(codec);
         ByteBuf buffer = buffer("*2\r\n$-1\r\n$2\r\nok\r\n");
-        assertTrue(rsm.decode(buffer, output));
-        assertEquals(Arrays.asList(null, "ok"), output.get());
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(output.get()).isEqualTo(Arrays.asList(null, "ok"));
     }
 
     @Test
     public void partialFirstLine() throws Exception {
-        assertFalse(rsm.decode(buffer("+"), output));
-        assertFalse(rsm.decode(buffer("-"), output));
-        assertFalse(rsm.decode(buffer(":"), output));
-        assertFalse(rsm.decode(buffer("$"), output));
-        assertFalse(rsm.decode(buffer("*"), output));
+        assertThat(rsm.decode(buffer("+"), output)).isFalse();
+        assertThat(rsm.decode(buffer("-"), output)).isFalse();
+        assertThat(rsm.decode(buffer(":"), output)).isFalse();
+        assertThat(rsm.decode(buffer("$"), output)).isFalse();
+        assertThat(rsm.decode(buffer("*"), output)).isFalse();
     }
 
     @Test(expected = RedisException.class)
@@ -82,7 +87,7 @@ public class StateMachineTest {
 
     @Test
     public void sillyTestsForEmmaCoverage() throws Exception {
-        assertEquals(State.Type.SINGLE, State.Type.valueOf("SINGLE"));
+        assertThat(State.Type.valueOf("SINGLE")).isEqualTo(State.Type.SINGLE);
     }
 
     protected ByteBuf buffer(String content) {

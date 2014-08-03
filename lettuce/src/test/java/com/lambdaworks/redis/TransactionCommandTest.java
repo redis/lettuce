@@ -2,14 +2,14 @@
 
 package com.lambdaworks.redis;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class TransactionCommandTest extends AbstractCommandTest {
     @Rule
@@ -17,23 +17,23 @@ public class TransactionCommandTest extends AbstractCommandTest {
 
     @Test
     public void discard() throws Exception {
-        assertEquals("OK", redis.multi());
+        assertThat(redis.multi()).isEqualTo("OK");
         redis.set(key, value);
-        assertEquals("OK", redis.discard());
-        assertNull(redis.get(key));
+        assertThat(redis.discard()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
     }
 
     @Test
     public void exec() throws Exception {
-        assertEquals("OK", redis.multi());
+        assertThat(redis.multi()).isEqualTo("OK");
         redis.set(key, value);
-        assertEquals(list("OK"), redis.exec());
-        assertEquals(value, redis.get(key));
+        assertThat(redis.exec()).isEqualTo(list("OK"));
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void watch() throws Exception {
-        assertEquals("OK", redis.watch(key));
+        assertThat(redis.watch(key)).isEqualTo("OK");
 
         RedisConnection<String, String> redis2 = client.connect();
         redis2.set(key, value + "X");
@@ -41,22 +41,22 @@ public class TransactionCommandTest extends AbstractCommandTest {
 
         redis.multi();
         redis.append(key, "foo");
-        assertEquals(list(), redis.exec());
+        assertThat(redis.exec()).isEqualTo(list());
 
     }
 
     @Test
     public void unwatch() throws Exception {
-        assertEquals("OK", redis.unwatch());
+        assertThat(redis.unwatch()).isEqualTo("OK");
     }
 
     @Test
     public void commandsReturnNullInMulti() throws Exception {
-        assertEquals("OK", redis.multi());
-        assertNull(redis.set(key, value));
-        assertNull(redis.get(key));
-        assertEquals(list("OK", value), redis.exec());
-        assertEquals(value, redis.get(key));
+        assertThat(redis.multi()).isEqualTo("OK");
+        assertThat(redis.set(key, value)).isNull();
+        assertThat(redis.get(key)).isNull();
+        assertThat(redis.exec()).isEqualTo(list("OK", value));
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
@@ -66,7 +66,7 @@ public class TransactionCommandTest extends AbstractCommandTest {
         redis.set("two", "2");
         redis.mget("one", "two");
         redis.llen(key);
-        assertEquals(list("OK", "OK", list("1", "2"), 0L), redis.exec());
+        assertThat(redis.exec()).isEqualTo(list("OK", "OK", list("1", "2"), 0L));
     }
 
     @Test
@@ -76,9 +76,9 @@ public class TransactionCommandTest extends AbstractCommandTest {
         redis.lpop(key);
         redis.get(key);
         List<Object> values = redis.exec();
-        assertEquals("OK", values.get(0));
-        assertTrue(values.get(1) instanceof RedisException);
-        assertEquals(value, values.get(2));
+        assertThat(values.get(0)).isEqualTo("OK");
+        assertThat(values.get(1) instanceof RedisException).isTrue();
+        assertThat(values.get(2)).isEqualTo(value);
     }
 
     @Test

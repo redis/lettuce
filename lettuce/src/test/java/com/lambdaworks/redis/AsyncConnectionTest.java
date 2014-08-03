@@ -2,10 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,31 +36,31 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
     @Test(timeout = 10000)
     public void multi() throws Exception {
-        assertEquals("OK", async.multi().get());
+        assertThat(async.multi().get()).isEqualTo("OK");
         Future<String> set = async.set(key, value);
         Future<Long> rpush = async.rpush("list", "1", "2");
         Future<List<String>> lrange = async.lrange("list", 0, -1);
 
-        assertTrue(!set.isDone() && !rpush.isDone() && !rpush.isDone());
-        assertEquals(list("OK", 2L, list("1", "2")), async.exec().get());
+        assertThat(!set.isDone() && !rpush.isDone() && !rpush.isDone()).isTrue();
+        assertThat(async.exec().get()).isEqualTo(list("OK", 2L, list("1", "2")));
 
-        assertEquals("OK", set.get());
-        assertEquals(2L, (long) rpush.get());
-        assertEquals(list("1", "2"), lrange.get());
+        assertThat(set.get()).isEqualTo("OK");
+        assertThat((long) rpush.get()).isEqualTo(2L);
+        assertThat(lrange.get()).isEqualTo(list("1", "2"));
     }
 
     @Test(timeout = 10000)
     public void watch() throws Exception {
-        assertEquals("OK", async.watch(key).get());
+        assertThat(async.watch(key).get()).isEqualTo("OK");
 
         redis.set(key, value + "X");
 
         async.multi();
         Future<String> set = async.set(key, value);
         Future<Long> append = async.append(key, "foo");
-        assertEquals(list(), async.exec().get());
-        assertNull(set.get());
-        assertNull(append.get());
+        assertThat(async.exec().get()).isEqualTo(list());
+        assertThat(set.get()).isNull();
+        assertThat(append.get()).isNull();
     }
 
     @Test(timeout = 10000)
@@ -86,17 +83,17 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
         Long len = connection.llen(key).get();
-        assertEquals(1000, len.intValue());
+        assertThat(len.intValue()).isEqualTo(1000);
 
         RedisFuture<List<String>> sort = connection.sort(key);
-        assertFalse(sort.isCancelled());
+        assertThat(sort.isCancelled()).isFalse();
 
         sort.addListener(listener, executor);
 
         sort.get();
         Thread.sleep(100);
 
-        assertEquals(1, run.size());
+        assertThat(run).hasSize(1);
 
     }
 
@@ -121,7 +118,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
         set.addListener(listener, executor);
 
-        assertEquals(1, run.size());
+        assertThat(run).hasSize(1);
 
     }
 
@@ -130,7 +127,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         async.multi();
         Future<String> set = async.set(key, value);
         async.discard();
-        assertNull(set.get());
+        assertThat(set.get()).isNull();
     }
 
     @Test(timeout = 10000)
@@ -140,18 +137,18 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         Future<String> get2 = async.get(key);
         Future<Long> append = async.append(key, value);
 
-        assertTrue(LettuceFutures.awaitAll(1, TimeUnit.SECONDS, get1, set, get2, append));
+        assertThat(LettuceFutures.awaitAll(1, TimeUnit.SECONDS, get1, set, get2, append)).isTrue();
 
-        assertNull(get1.get());
-        assertEquals("OK", set.get());
-        assertEquals(value, get2.get());
-        assertEquals(value.length() * 2, (long) append.get());
+        assertThat(get1.get()).isNull();
+        assertThat(set.get()).isEqualTo("OK");
+        assertThat(get2.get()).isEqualTo(value);
+        assertThat((long) append.get()).isEqualTo(value.length() * 2);
     }
 
     @Test(timeout = 100)
     public void awaitAllTimeout() throws Exception {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
-        assertFalse(LettuceFutures.awaitAll(1, TimeUnit.NANOSECONDS, blpop));
+        assertThat(LettuceFutures.awaitAll(1, TimeUnit.NANOSECONDS, blpop)).isFalse();
     }
 
 }

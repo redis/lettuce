@@ -3,10 +3,7 @@
 package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -35,24 +32,24 @@ public class CommandInternalsTest {
 
     @Test
     public void isCancelled() throws Exception {
-        assertFalse(command.isCancelled());
-        assertTrue(command.cancel(true));
-        assertTrue(command.isCancelled());
-        assertFalse(command.cancel(true));
+        assertThat(command.isCancelled()).isFalse();
+        assertThat(command.cancel(true)).isTrue();
+        assertThat(command.isCancelled()).isTrue();
+        assertThat(command.cancel(true)).isFalse();
     }
 
     @Test
     public void isDone() throws Exception {
-        assertFalse(command.isDone());
+        assertThat(command.isDone()).isFalse();
         command.complete();
-        assertTrue(command.isDone());
+        assertThat(command.isDone()).isTrue();
     }
 
     @Test
     public void get() throws Exception {
         command.getOutput().set(buffer("one"));
         command.complete();
-        assertEquals("one", command.get());
+        assertThat(command.get()).isEqualTo("one");
         command.toString();
         command.getOutput().toString();
     }
@@ -61,17 +58,18 @@ public class CommandInternalsTest {
     public void getWithTimeout() throws Exception {
         command.getOutput().set(buffer("one"));
         command.complete();
-        assertEquals("one", command.get(0, TimeUnit.MILLISECONDS));
+
+        assertThat(command.get(0, TimeUnit.MILLISECONDS)).isEqualTo("one");
     }
 
     @Test(expected = TimeoutException.class, timeout = 10)
     public void getTimeout() throws Exception {
-        assertNull(command.get(2, TimeUnit.MICROSECONDS));
+        assertThat(command.get(2, TimeUnit.MICROSECONDS)).isNull();
     }
 
     @Test(timeout = 10)
     public void awaitTimeout() throws Exception {
-        assertFalse(command.await(2, TimeUnit.MICROSECONDS));
+        assertThat(command.await(2, TimeUnit.MICROSECONDS)).isFalse();
     }
 
     @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
@@ -118,12 +116,12 @@ public class CommandInternalsTest {
     public void nestedMultiError() throws Exception {
         NestedMultiOutput<String, String> output = new NestedMultiOutput<String, String>(codec);
         output.setError(buffer("Oops!"));
-        assertTrue(output.get().get(0) instanceof RedisException);
+        assertThat(output.get().get(0) instanceof RedisException).isTrue();
     }
 
     @Test
     public void sillyTestsForEmmaCoverage() throws Exception {
-        assertEquals(CommandType.APPEND, CommandType.valueOf("APPEND"));
-        assertEquals(CommandKeyword.AFTER, CommandKeyword.valueOf("AFTER"));
+        assertThat(CommandType.valueOf("APPEND")).isEqualTo(CommandType.APPEND);
+        assertThat(CommandKeyword.valueOf("AFTER")).isEqualTo(CommandKeyword.AFTER);
     }
 }

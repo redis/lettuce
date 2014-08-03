@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Test;
 
 /**
@@ -11,14 +12,14 @@ public class SlotHashTest {
     @Test
     public void testHash() throws Exception {
         int result = SlotHash.getSlot("123456789".getBytes());
-        assertEquals(0x31C3, result);
+        assertThat(result).isEqualTo(0x31C3);
 
     }
 
     @Test
     public void testHashWithHash() throws Exception {
         int result = SlotHash.getSlot("key{123456789}a".getBytes());
-        assertEquals(0x31C3, result);
+        assertThat(result).isEqualTo(0x31C3);
 
     }
 }

@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -47,7 +46,7 @@ public class SyncAsyncApiConvergenceTest {
     @Test
     public void testMethodPresentOnAsyncApi() throws Exception {
         Method method = asyncClass.getMethod(this.method.getName(), this.method.getParameterTypes());
-        assertNotNull(method);
+        assertThat(method).isNotNull();
     }
 
     @Test
@@ -61,7 +60,7 @@ public class SyncAsyncApiConvergenceTest {
 
             if (actualTypeArguments[0] instanceof TypeVariable) {
 
-                assertEquals(this.method.getReturnType(), Object.class);
+                assertThat(Object.class).isEqualTo(this.method.getReturnType());
                 return;
             }
 
@@ -78,7 +77,7 @@ public class SyncAsyncApiConvergenceTest {
             }
         }
 
-        assertEquals(this.method.getReturnType(), returnType);
+        assertThat(returnType).isEqualTo(this.method.getReturnType());
 
     }
 }

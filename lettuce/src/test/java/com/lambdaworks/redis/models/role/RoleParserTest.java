@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.models.role;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
@@ -43,21 +42,21 @@ public class RoleParserTest {
 
         RedisInstance result = RoleParser.parse(input);
 
-        assertEquals(RedisInstance.Role.MASTER, result.getRole());
-        assertTrue(result instanceof RedisMasterInstance);
+        assertThat(result.getRole()).isEqualTo(RedisInstance.Role.MASTER);
+        assertThat(result instanceof RedisMasterInstance).isTrue();
 
         RedisMasterInstance instance = (RedisMasterInstance) result;
 
-        assertEquals(REPLICATION_OFFSET_1, instance.getReplicationOffset());
-        assertEquals(2, instance.getSlaves().size());
+        assertThat(instance.getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_1);
+        assertThat(instance.getSlaves()).hasSize(2);
 
         ReplicationPartner slave1 = instance.getSlaves().get(0);
-        assertEquals(LOCALHOST, slave1.getHost().getHostText());
-        assertEquals(9001, slave1.getHost().getPort());
-        assertEquals(REPLICATION_OFFSET_2, slave1.getReplicationOffset());
+        assertThat(slave1.getHost().getHostText()).isEqualTo(LOCALHOST);
+        assertThat(slave1.getHost().getPort()).isEqualTo(9001);
+        assertThat(slave1.getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_2);
 
-        assertEquals(instance, instance);
-        assertEquals(instance.hashCode(), instance.hashCode());
+        assertThat(instance).isEqualTo(instance);
+        assertThat(instance.hashCode()).isEqualTo(instance.hashCode());
 
     }
 
@@ -68,16 +67,16 @@ public class RoleParserTest {
 
         RedisInstance result = RoleParser.parse(input);
 
-        assertEquals(RedisInstance.Role.SLAVE, result.getRole());
-        assertTrue(result instanceof RedisSlaveInstance);
+        assertThat(result.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
+        assertThat(result instanceof RedisSlaveInstance).isTrue();
 
         RedisSlaveInstance instance = (RedisSlaveInstance) result;
 
-        assertEquals(REPLICATION_OFFSET_1, instance.getMaster().getReplicationOffset());
-        assertEquals(RedisSlaveInstance.State.CONNECTED, instance.getState());
+        assertThat(instance.getMaster().getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_1);
+        assertThat(instance.getState()).isEqualTo(RedisSlaveInstance.State.CONNECTED);
 
-        assertEquals(instance, instance);
-        assertEquals(instance.hashCode(), instance.hashCode());
+        assertThat(instance).isEqualTo(instance);
+        assertThat(instance.hashCode()).isEqualTo(instance.hashCode());
 
     }
 
@@ -89,15 +88,15 @@ public class RoleParserTest {
 
         RedisInstance result = RoleParser.parse(input);
 
-        assertEquals(RedisInstance.Role.SENTINEL, result.getRole());
-        assertTrue(result instanceof RedisSentinelInstance);
+        assertThat(result.getRole()).isEqualTo(RedisInstance.Role.SENTINEL);
+        assertThat(result instanceof RedisSentinelInstance).isTrue();
 
         RedisSentinelInstance instance = (RedisSentinelInstance) result;
 
-        assertEquals(3, instance.getMonitoredMasters().size());
+        assertThat(instance.getMonitoredMasters()).hasSize(3);
 
-        assertEquals(instance, instance);
-        assertEquals(instance.hashCode(), instance.hashCode());
+        assertThat(instance).isEqualTo(instance);
+        assertThat(instance.hashCode()).isEqualTo(instance.hashCode());
 
     }
 }

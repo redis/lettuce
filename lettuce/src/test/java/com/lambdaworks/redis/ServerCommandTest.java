@@ -2,11 +2,9 @@
 
 package com.lambdaworks.redis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 import java.util.List;
@@ -32,21 +30,21 @@ public class ServerCommandTest extends AbstractCommandTest {
             Thread.sleep(100);
         }
         String msg = "Background saving started";
-        assertEquals(msg, redis.bgsave());
+        assertThat(redis.bgsave()).isEqualTo(msg);
     }
 
     @Test
     public void clientGetSetname() throws Exception {
-        assertNull(redis.clientGetname());
-        assertEquals("OK", redis.clientSetname("test"));
-        assertEquals("test", redis.clientGetname());
-        assertEquals("OK", redis.clientSetname(""));
-        assertNull(redis.clientGetname());
+        assertThat(redis.clientGetname()).isNull();
+        assertThat(redis.clientSetname("test")).isEqualTo("OK");
+        assertThat(redis.clientGetname()).isEqualTo("test");
+        assertThat(redis.clientSetname("")).isEqualTo("OK");
+        assertThat(redis.clientGetname()).isNull();
     }
 
     @Test
     public void clientPause() throws Exception {
-        assertEquals("OK", redis.clientPause(1000));
+        assertThat(redis.clientPause(1000)).isEqualTo("OK");
     }
 
     @Test
@@ -55,33 +53,33 @@ public class ServerCommandTest extends AbstractCommandTest {
         String clients = redis.clientList();
         Matcher m = p.matcher(clients);
 
-        assertTrue(m.lookingAt());
-        assertEquals("OK", redis.clientKill(m.group(1)));
+        assertThat(m.lookingAt()).isTrue();
+        assertThat(redis.clientKill(m.group(1))).isEqualTo("OK");
     }
 
     @Test
     public void clientList() throws Exception {
-        assertTrue(redis.clientList().contains("addr="));
+        assertThat(redis.clientList().contains("addr=")).isTrue();
     }
 
     @Test
     public void configGet() throws Exception {
-        assertEquals(list("maxmemory", "0"), redis.configGet("maxmemory"));
+        assertThat(redis.configGet("maxmemory")).isEqualTo(list("maxmemory", "0"));
     }
 
     @Test
     public void configResetstat() throws Exception {
         redis.get(key);
         redis.get(key);
-        assertEquals("OK", redis.configResetstat());
-        assertTrue(redis.info().contains("keyspace_misses:0"));
+        assertThat(redis.configResetstat()).isEqualTo("OK");
+        assertThat(redis.info().contains("keyspace_misses:0")).isTrue();
     }
 
     @Test
     public void configSet() throws Exception {
         String maxmemory = redis.configGet("maxmemory").get(1);
-        assertEquals("OK", redis.configSet("maxmemory", "1024"));
-        assertEquals("1024", redis.configGet("maxmemory").get(1));
+        assertThat(redis.configSet("maxmemory", "1024")).isEqualTo("OK");
+        assertThat(redis.configGet("maxmemory").get(1)).isEqualTo("1024");
         redis.configSet("maxmemory", maxmemory);
     }
 
@@ -89,14 +87,14 @@ public class ServerCommandTest extends AbstractCommandTest {
     public void configRewrite() throws Exception {
 
         String result = redis.configRewrite();
-        assertEquals("OK", result);
+        assertThat(result).isEqualTo("OK");
     }
 
     @Test
     public void dbsize() throws Exception {
-        assertEquals(0, (long) redis.dbsize());
+        assertThat(redis.dbsize()).isEqualTo(0);
         redis.set(key, value);
-        assertEquals(1, (long) redis.dbsize());
+        assertThat(redis.dbsize()).isEqualTo(1);
     }
 
     @Test
@@ -114,8 +112,8 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void flushall() throws Exception {
         redis.set(key, value);
-        assertEquals("OK", redis.flushall());
-        assertNull(redis.get(key));
+        assertThat(redis.flushall()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
     }
 
     @Test
@@ -123,22 +121,22 @@ public class ServerCommandTest extends AbstractCommandTest {
         redis.set(key, value);
         redis.select(1);
         redis.set(key, value + "X");
-        assertEquals("OK", redis.flushdb());
-        assertNull(redis.get(key));
+        assertThat(redis.flushdb()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
         redis.select(0);
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void info() throws Exception {
-        assertTrue(redis.info().contains("redis_version"));
-        assertTrue(redis.info("server").contains("redis_version"));
+        assertThat(redis.info().contains("redis_version")).isTrue();
+        assertThat(redis.info("server").contains("redis_version")).isTrue();
     }
 
     @Test
     public void lastsave() throws Exception {
         Date start = new Date(System.currentTimeMillis() / 1000);
-        assertTrue(start.compareTo(redis.lastsave()) <= 0);
+        assertThat(start.compareTo(redis.lastsave()) <= 0).isTrue();
     }
 
     @Test
@@ -147,12 +145,13 @@ public class ServerCommandTest extends AbstractCommandTest {
         while (redis.info().contains("aof_rewrite_in_progress:1")) {
             Thread.sleep(100);
         }
-        assertEquals("OK", redis.save());
+        assertThat(redis.save()).isEqualTo("OK");
     }
 
     @Test
     public void slaveof() throws Exception {
-        assertEquals("OK", redis.slaveof("localhost", 0));
+
+        assertThat(redis.slaveof("localhost", 0)).isEqualTo("OK");
         redis.slaveofNoOne();
     }
 
@@ -166,11 +165,11 @@ public class ServerCommandTest extends AbstractCommandTest {
             RedisFuture<List<Object>> role = connection.role();
             List<Object> objects = role.get();
 
-            assertEquals("master", objects.get(0));
-            assertEquals(Long.class, objects.get(1).getClass());
+            assertThat(objects.get(0)).isEqualTo("master");
+            assertThat(objects.get(1).getClass()).isEqualTo(Long.class);
 
             RedisInstance redisInstance = RoleParser.parse(objects);
-            assertEquals(RedisInstance.Role.MASTER, redisInstance.getRole());
+            assertThat(redisInstance.getRole()).isEqualTo(RedisInstance.Role.MASTER);
         } finally {
             connection.close();
             redisClient.shutdown();
@@ -179,7 +178,7 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void slaveofNoOne() throws Exception {
-        assertEquals("OK", redis.slaveofNoOne());
+        assertThat(redis.slaveofNoOne()).isEqualTo("OK");
     }
 
     @Test
@@ -187,36 +186,36 @@ public class ServerCommandTest extends AbstractCommandTest {
     public void slowlog() throws Exception {
         long start = System.currentTimeMillis() / 1000;
 
-        assertEquals("OK", redis.configSet("slowlog-log-slower-than", "1"));
-        assertEquals("OK", redis.slowlogReset());
+        assertThat(redis.configSet("slowlog-log-slower-than", "1")).isEqualTo("OK");
+        assertThat(redis.slowlogReset()).isEqualTo("OK");
         redis.set(key, value);
 
         List<Object> log = redis.slowlogGet();
-        assertEquals(2, log.size());
+        assertThat(log).hasSize(2);
 
         List<Object> entry = (List<Object>) log.get(0);
-        assertEquals(4, entry.size());
-        assertTrue(entry.get(0) instanceof Long);
-        assertTrue((Long) entry.get(1) >= start);
-        assertTrue(entry.get(2) instanceof Long);
-        assertEquals(list("SET", key, value), entry.get(3));
+        assertThat(entry).hasSize(4);
+        assertThat(entry.get(0) instanceof Long).isTrue();
+        assertThat((Long) entry.get(1) >= start).isTrue();
+        assertThat(entry.get(2) instanceof Long).isTrue();
+        assertThat(entry.get(3)).isEqualTo(list("SET", key, value));
 
         entry = (List<Object>) log.get(1);
-        assertEquals(4, entry.size());
-        assertTrue(entry.get(0) instanceof Long);
-        assertTrue((Long) entry.get(1) >= start);
-        assertTrue(entry.get(2) instanceof Long);
-        assertEquals(list("SLOWLOG", "RESET"), entry.get(3));
+        assertThat(entry).hasSize(4);
+        assertThat(entry.get(0) instanceof Long).isTrue();
+        assertThat((Long) entry.get(1) >= start).isTrue();
+        assertThat(entry.get(2) instanceof Long).isTrue();
+        assertThat(entry.get(3)).isEqualTo(list("SLOWLOG", "RESET"));
 
-        assertEquals(1, redis.slowlogGet(1).size());
-        assertEquals(4, (long) redis.slowlogLen());
+        assertThat(redis.slowlogGet(1)).hasSize(1);
+        assertThat((long) redis.slowlogLen()).isEqualTo(4);
 
         redis.configSet("slowlog-log-slower-than", "0");
     }
 
     @Test
     public void sync() throws Exception {
-        assertTrue(redis.sync().startsWith("REDIS"));
+        assertThat(redis.sync().startsWith("REDIS")).isTrue();
     }
 
     @Test
@@ -224,6 +223,6 @@ public class ServerCommandTest extends AbstractCommandTest {
         redis.set(key, value);
 
         String result = redis.migrate("localhost", port + 1, key, 0, 10);
-        assertEquals("OK", result);
+        assertThat(result).isEqualTo("OK");
     }
 }

@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,8 +14,9 @@ public class HLLCommandTest extends AbstractCommandTest {
 
     @Test
     public void pfadd() throws Exception {
-        assertEquals(1, (long) redis.pfadd(key, value, value));
-        assertEquals(0, (long) redis.pfadd(key, value));
+
+        assertThat(redis.pfadd(key, value, value)).isEqualTo(1);
+        assertThat(redis.pfadd(key, value, value)).isEqualTo(0);
     }
 
     @Test
@@ -24,15 +25,15 @@ public class HLLCommandTest extends AbstractCommandTest {
         redis.pfadd("key2", "value2");
         redis.pfadd("key3", "value3");
 
-        assertEquals(1, (long) redis.pfmerge(key, "key2", "key3"));
+        assertThat(redis.pfmerge(key, "key2", "key3")).isEqualTo(1);
     }
 
     @Test
     public void pfcount() throws Exception {
         redis.pfadd(key, value);
         redis.pfadd("key2", "value2");
-        assertEquals(1, (long) redis.pfcount(key));
-        assertEquals(2, (long) redis.pfcount(key, "key2"));
+        assertThat(redis.pfcount(key)).isEqualTo(1);
+        assertThat(redis.pfcount(key, "key2")).isEqualTo(2);
 
     }
 

@@ -1,8 +1,7 @@
 package com.lambdaworks.redis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,8 +20,8 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         String result1 = c1.ping();
         String result2 = c2.ping();
-        assertEquals("PONG", result1);
-        assertEquals("PONG", result2);
+        assertThat(result1).isEqualTo("PONG");
+        assertThat(result2).isEqualTo("PONG");
 
     }
 
@@ -34,7 +33,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         pool.freeConnection(c1);
 
         RedisConnection<String, String> c2 = pool.allocateConnection();
-        assertSame(c1, c2);
+        assertThat(c2).isSameAs(c1);
     }
 
     @Test
@@ -42,12 +41,12 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
-        assertEquals(1, pool.getNumActive());
+        assertThat(pool.getNumActive()).isEqualTo(1);
         c1.close();
-        assertEquals(0, pool.getNumActive());
+        assertThat(pool.getNumActive()).isEqualTo(0);
 
         pool.allocateConnection();
-        assertEquals(1, pool.getNumActive());
+        assertThat(pool.getNumActive()).isEqualTo(1);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -113,34 +112,34 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         RedisClient redisClient = getRedisClient();
 
-        assertEquals(0, redisClient.getChannelCount());
-        assertEquals(0, redisClient.getResourceCount());
+        assertThat(redisClient.getChannelCount()).isEqualTo(0);
+        assertThat(redisClient.getResourceCount()).isEqualTo(0);
 
         RedisConnectionPool<RedisAsyncConnection<String, String>> pool1 = redisClient.asyncPool();
 
-        assertEquals(0, redisClient.getChannelCount());
-        assertEquals(1, redisClient.getResourceCount());
+        assertThat(redisClient.getChannelCount()).isEqualTo(0);
+        assertThat(redisClient.getResourceCount()).isEqualTo(1);
 
         pool1.allocateConnection();
 
-        assertEquals(1, redisClient.getChannelCount());
-        assertEquals(3, redisClient.getResourceCount());
+        assertThat(redisClient.getChannelCount()).isEqualTo(1);
+        assertThat(redisClient.getResourceCount()).isEqualTo(3);
 
         RedisConnectionPool<RedisConnection<String, String>> pool2 = redisClient.pool();
 
-        assertEquals(4, redisClient.getResourceCount());
+        assertThat(redisClient.getResourceCount()).isEqualTo(4);
 
         pool2.allocateConnection();
 
-        assertEquals(6, redisClient.getResourceCount());
+        assertThat(redisClient.getResourceCount()).isEqualTo(6);
 
         redisClient.pool().close();
-        assertEquals(6, redisClient.getResourceCount());
+        assertThat(redisClient.getResourceCount()).isEqualTo(6);
 
         redisClient.shutdown();
 
-        assertEquals(0, redisClient.getChannelCount());
-        assertEquals(0, redisClient.getResourceCount());
+        assertThat(redisClient.getChannelCount()).isEqualTo(0);
+        assertThat(redisClient.getResourceCount()).isEqualTo(0);
 
     }
 

@@ -1,10 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -22,19 +20,19 @@ public class ClusterPartitionParserTest {
 
         Partitions result = ClusterPartitionParser.parse(nodes);
 
-        assertEquals(4, result.getPartitions().size());
+        assertThat(result.getPartitions()).hasSize(4);
 
         RedisClusterNode p1 = result.getPartitions().get(0);
 
-        assertEquals("c37ab8396be428403d4e55c0d317348be27ed973", p1.getNodeId());
-        assertEquals("127.0.0.1", p1.getUri().getHost());
-        assertEquals(7381, p1.getUri().getPort());
-        assertNull(p1.getSlaveOf());
-        assertEquals(ImmutableSet.of(RedisClusterNode.NodeFlag.MASTER), p1.getFlags());
-        assertEquals(111, p1.getPingSentTimestamp());
-        assertEquals(1401258245007L, p1.getPongReceivedTimestamp());
-        assertEquals(222, p1.getConfigEpoch());
-        assertTrue(p1.isConnected());
+        assertThat(p1.getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
+        assertThat(p1.getUri().getHost()).isEqualTo("127.0.0.1");
+        assertThat(p1.getUri().getPort()).isEqualTo(7381);
+        assertThat(p1.getSlaveOf()).isNull();
+        assertThat(p1.getFlags()).isEqualTo(ImmutableSet.of(RedisClusterNode.NodeFlag.MASTER));
+        assertThat(p1.getPingSentTimestamp()).isEqualTo(111);
+        assertThat(p1.getPongReceivedTimestamp()).isEqualTo(1401258245007L);
+        assertThat(p1.getConfigEpoch()).isEqualTo(222);
+        assertThat(p1.isConnected()).isTrue();
 
         assertThat(p1.getSlots(), hasItem(7000));
         assertThat(p1.getSlots(), hasItem(12000));
@@ -44,7 +42,7 @@ public class ClusterPartitionParserTest {
 
         RedisClusterNode p3 = result.getPartitions().get(2);
 
-        assertEquals("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c", p3.getSlaveOf());
+        assertThat(p3.getSlaveOf()).isEqualTo("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c");
 
     }
 
@@ -52,8 +50,8 @@ public class ClusterPartitionParserTest {
     public void getNodeByHash() throws Exception {
 
         Partitions partitions = ClusterPartitionParser.parse(nodes);
-        assertEquals("c37ab8396be428403d4e55c0d317348be27ed973", partitions.getPartitionBySlot(7000).getNodeId());
-        assertEquals("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c", partitions.getPartitionBySlot(5460).getNodeId());
+        assertThat(partitions.getPartitionBySlot(7000).getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
+        assertThat(partitions.getPartitionBySlot(5460).getNodeId()).isEqualTo("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c");
 
     }
 }
