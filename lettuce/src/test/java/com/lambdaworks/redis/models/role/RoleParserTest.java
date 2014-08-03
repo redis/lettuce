@@ -55,8 +55,8 @@ public class RoleParserTest {
         assertThat(slave1.getHost().getPort()).isEqualTo(9001);
         assertThat(slave1.getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_2);
 
-        assertThat(instance).isEqualTo(instance);
-        assertThat(instance.hashCode()).isEqualTo(instance.hashCode());
+        assertThat(instance.toString()).startsWith(RedisMasterInstance.class.getSimpleName());
+        assertThat(slave1.toString()).startsWith(ReplicationPartner.class.getSimpleName());
 
     }
 
@@ -75,8 +75,7 @@ public class RoleParserTest {
         assertThat(instance.getMaster().getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_1);
         assertThat(instance.getState()).isEqualTo(RedisSlaveInstance.State.CONNECTED);
 
-        assertThat(instance).isEqualTo(instance);
-        assertThat(instance.hashCode()).isEqualTo(instance.hashCode());
+        assertThat(instance.toString()).startsWith(RedisSlaveInstance.class.getSimpleName());
 
     }
 
@@ -95,8 +94,7 @@ public class RoleParserTest {
 
         assertThat(instance.getMonitoredMasters()).hasSize(3);
 
-        assertThat(instance).isEqualTo(instance);
-        assertThat(instance.hashCode()).isEqualTo(instance.hashCode());
+        assertThat(instance.toString()).startsWith(RedisSentinelInstance.class.getSimpleName());
 
     }
 }

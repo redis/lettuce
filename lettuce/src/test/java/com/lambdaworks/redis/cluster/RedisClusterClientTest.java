@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
@@ -17,7 +19,6 @@ import org.junit.runners.MethodSorters;
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
-import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -124,7 +125,7 @@ public class RedisClusterClientTest {
 
                 return false;
             }
-        }, Timeout.timeout(Duration.seconds(5)), new ThreadSleep(Duration.millis(500)));
+        }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
     }
 
     @After
@@ -202,7 +203,7 @@ public class RedisClusterClientTest {
                     return false;
                 }
             }
-        }, Timeout.timeout(Duration.seconds(5)));
+        }, timeout(seconds(5)));
 
     }
 
@@ -296,13 +297,18 @@ public class RedisClusterClientTest {
         ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) connection
                 .getChannelWriter();
 
-        RedisAsyncConnectionImpl<Object, Object> backendConnection = writer.getClusterConnectionProvider().getConnection(
+        final RedisAsyncConnectionImpl<Object, Object> backendConnection = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);
 
         backendConnection.set("a", "b");
         backendConnection.close();
 
-        Thread.sleep(100);
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return backendConnection.isClosed() && !backendConnection.isOpen();
+            }
+        }, timeout(seconds(1)));
         assertThat(backendConnection.isClosed()).isTrue();
         assertThat(backendConnection.isOpen()).isFalse();
 

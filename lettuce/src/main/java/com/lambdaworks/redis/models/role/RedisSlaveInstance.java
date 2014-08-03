@@ -50,34 +50,6 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RedisSlaveInstance)) {
-            return false;
-        }
-
-        RedisSlaveInstance that = (RedisSlaveInstance) o;
-
-        if (master != null ? !master.equals(that.master) : that.master != null) {
-            return false;
-        }
-        if (state != that.state) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = master != null ? master.hashCode() : 0;
-        result = 31 * result + (state != null ? state.hashCode() : 0);
-        return result;
-    }
-
-    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(getClass().getSimpleName());

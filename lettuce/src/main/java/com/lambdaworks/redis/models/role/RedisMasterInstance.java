@@ -37,34 +37,6 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RedisMasterInstance)) {
-            return false;
-        }
-
-        RedisMasterInstance that = (RedisMasterInstance) o;
-
-        if (replicationOffset != that.replicationOffset) {
-            return false;
-        }
-        if (slaves != null ? !slaves.equals(that.slaves) : that.slaves != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (int) (replicationOffset ^ (replicationOffset >>> 32));
-        result = 31 * result + (slaves != null ? slaves.hashCode() : 0);
-        return result;
-    }
-
-    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(getClass().getSimpleName());

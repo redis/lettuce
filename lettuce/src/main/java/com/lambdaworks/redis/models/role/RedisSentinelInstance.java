@@ -34,29 +34,6 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RedisSentinelInstance)) {
-            return false;
-        }
-
-        RedisSentinelInstance that = (RedisSentinelInstance) o;
-
-        if (monitoredMasters != null ? !monitoredMasters.equals(that.monitoredMasters) : that.monitoredMasters != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return monitoredMasters != null ? monitoredMasters.hashCode() : 0;
-    }
-
-    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(getClass().getSimpleName());
