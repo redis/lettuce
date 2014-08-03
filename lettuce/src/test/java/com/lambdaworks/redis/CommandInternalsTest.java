@@ -2,23 +2,26 @@
 
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.*;
-import org.junit.Before;
-import org.junit.Test;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.NestedMultiOutput;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandKeyword;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandType;
 
 public class CommandInternalsTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
@@ -50,6 +53,8 @@ public class CommandInternalsTest {
         command.getOutput().set(buffer("one"));
         command.complete();
         assertEquals("one", command.get());
+        command.toString();
+        command.getOutput().toString();
     }
 
     @Test

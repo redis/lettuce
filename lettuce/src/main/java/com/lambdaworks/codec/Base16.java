@@ -47,23 +47,4 @@ public class Base16 {
 
         return dst;
     }
-
-    /**
-     * Decode base16 chars to bytes.
-     * 
-     * @param src Chars to decode.
-     * 
-     * @return Decoded bytes.
-     */
-    public static byte[] decode(char[] src) {
-        byte[] dst = new byte[src.length / 2];
-
-        for (int si = 0, di = 0; di < dst.length; di++) {
-            byte high = decode[src[si++] & 0x7f];
-            byte low = decode[src[si++] & 0x7f];
-            dst[di] = (byte) ((high << 4) + low);
-        }
-
-        return dst;
-    }
 }
