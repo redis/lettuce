@@ -4,8 +4,12 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -80,6 +84,53 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         Connections.close(asyncConnection);
         assertThat(Connections.isOpen(asyncConnection)).isFalse();
         assertThat(Connections.isValid(asyncConnection)).isFalse();
+    }
+
+    @Test
+    public void isValidAsyncExceptions() throws Exception {
+
+        RedisAsyncConnection<?, ?> connection = mock(RedisAsyncConnection.class);
+        RedisFuture<String> future = mock(RedisFuture.class);
+        when(connection.ping()).thenReturn(future);
+
+        when(future.get()).thenThrow(new InterruptedException());
+        assertThat(Connections.isValid(connection)).isFalse();
+
+        when(future.get()).thenThrow(new ExecutionException(new RuntimeException()));
+        assertThat(Connections.isValid(connection)).isFalse();
+
+    }
+
+    @Test
+    public void isValidSyncExceptions() throws Exception {
+
+        RedisConnection<?, ?> connection = mock(RedisConnection.class);
+
+        when(connection.ping()).thenThrow(new RuntimeException());
+        assertThat(Connections.isValid(connection)).isFalse();
+    }
+
+    @Test
+    public void closeExceptions() throws Exception {
+
+        RedisConnection<?, ?> connection = mock(RedisConnection.class);
+        doThrow(new RuntimeException()).when(connection).close();
+        Connections.close(connection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void isValidWrongObject() throws Exception {
+        Connections.isValid(new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void isOpenWrongObject() throws Exception {
+        Connections.isOpen(new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void closeWrongObject() throws Exception {
+        Connections.close(new Object());
     }
 
     @Test

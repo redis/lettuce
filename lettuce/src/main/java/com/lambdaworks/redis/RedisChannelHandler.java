@@ -39,11 +39,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * @param unit
      */
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
-        this.unit = unit;
-        this.timeout = timeout;
         this.channelWriter = writer;
         writer.setRedisChannelHandler(this);
-
+        setTimeout(timeout, unit);
     }
 
     /**

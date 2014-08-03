@@ -23,6 +23,8 @@ class Connections {
      * 
      * @param connection
      * @return true if the connection is valid (ping works).
+     * @throws java.lang.NullPointerException if connection is null
+     * @throws java.lang.IllegalArgumentException if connection is not a supported type
      */
     public static final boolean isValid(Object connection) {
 
@@ -58,6 +60,8 @@ class Connections {
      * 
      * @param connection
      * @return true if the connection is open.
+     * @throws java.lang.NullPointerException if connection is null
+     * @throws java.lang.IllegalArgumentException if connection is not a supported type
      */
     public static final boolean isOpen(Object connection) {
 
@@ -76,9 +80,12 @@ class Connections {
     }
 
     /**
-     * Closes a connection.
+     * Closes silently a connection.
      * 
-     * @param connection
+     * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
+     *        {@link com.lambdaworks.redis.RedisConnection}
+     * @throws java.lang.NullPointerException if connection is null
+     * @throws java.lang.IllegalArgumentException if connection is not a supported type
      */
     public static void close(Object connection) {
 
@@ -96,7 +103,7 @@ class Connections {
                 return;
             }
         } catch (RuntimeException e) {
-            // silent;
+            return;
         }
         throw new IllegalArgumentException("Connection class " + connection.getClass() + " not supported");
 

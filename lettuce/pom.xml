@@ -82,7 +82,14 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.code.tempus-fugit</groupId>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+        <groupId>com.google.code.tempus-fugit</groupId>
             <artifactId>tempus-fugit</artifactId>
             <version>1.1</version>
             <scope>test</scope>
