@@ -93,9 +93,6 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         RedisFuture<String> future = mock(RedisFuture.class);
         when(connection.ping()).thenReturn(future);
 
-        when(future.get()).thenThrow(new InterruptedException());
-        assertThat(Connections.isValid(connection)).isFalse();
-
         when(future.get()).thenThrow(new ExecutionException(new RuntimeException()));
         assertThat(Connections.isValid(connection)).isFalse();
 

@@ -91,14 +91,7 @@ public abstract class AbstractCommandTest {
                 }
             } finally {
 
-                RedisClient client = getRedisClient();
-                try {
-                    RedisConnection<String, String> connect = client.connect();
-                    connect.auth(passwd);
-                    connect.configSet("requirepass", "");
-                } finally {
-                    client.shutdown();
-                }
+                redis.configSet("requirepass", "");
             }
         }
     }
