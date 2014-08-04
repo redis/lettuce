@@ -115,9 +115,22 @@ public abstract class AbstractRedisClient {
     }
 
     /**
-     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown. The shutdown
+     * has 2 secs quiet time and a timeout of 15 secs.
      */
     public void shutdown() {
+        shutdown(2, 15, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     * 
+     * @param quietPeriod the quiet period as described in the documentation
+     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
+     *        during the quiet period
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     */
+    public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         while (!closeableResources.isEmpty()) {
             Closeable closeableResource = closeableResources.iterator().next();
@@ -144,13 +157,14 @@ public abstract class AbstractRedisClient {
         }
 
         ChannelGroupFuture closeFuture = channels.close();
-        Future<?> groupCloseFuture = eventLoopGroup.shutdownGracefully();
+        Future<?> groupCloseFuture = eventLoopGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
         try {
             closeFuture.get();
             groupCloseFuture.get();
         } catch (Exception e) {
             throw new RedisException(e);
         }
+
         timer.stop();
     }
 

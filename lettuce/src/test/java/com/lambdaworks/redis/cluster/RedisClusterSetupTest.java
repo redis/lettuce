@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
@@ -41,8 +42,8 @@ public class RedisClusterSetupTest {
 
     @AfterClass
     public static void shutdownClient() {
-        client1.shutdown();
-        client2.shutdown();
+        client1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        client2.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before

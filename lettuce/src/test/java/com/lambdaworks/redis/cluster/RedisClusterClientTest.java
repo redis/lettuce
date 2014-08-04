@@ -7,6 +7,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -81,10 +82,10 @@ public class RedisClusterClientTest {
     @AfterClass
     public static void shutdownClient() {
 
-        client1.shutdown();
-        client2.shutdown();
-        client3.shutdown();
-        client4.shutdown();
+        client1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        client2.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        client3.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        client4.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before

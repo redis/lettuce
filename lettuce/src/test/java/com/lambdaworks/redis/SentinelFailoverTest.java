@@ -4,6 +4,8 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,7 +24,7 @@ public class SentinelFailoverTest extends AbstractCommandTest {
 
     @AfterClass
     public static void shutdownClient() {
-        sentinelClient.shutdown();
+        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before

@@ -8,6 +8,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -172,7 +173,7 @@ public class ServerCommandTest extends AbstractCommandTest {
             assertThat(redisInstance.getRole()).isEqualTo(RedisInstance.Role.MASTER);
         } finally {
             connection.close();
-            redisClient.shutdown();
+            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
         }
     }
 

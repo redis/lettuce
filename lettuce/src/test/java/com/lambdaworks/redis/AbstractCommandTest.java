@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -36,7 +37,7 @@ public abstract class AbstractCommandTest {
 
     @AfterClass
     public static void shutdownClient() {
-        client.shutdown();
+        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before
@@ -87,7 +88,7 @@ public abstract class AbstractCommandTest {
                 try {
                     run(client);
                 } finally {
-                    client.shutdown();
+                    client.shutdown(0, 0, TimeUnit.MILLISECONDS);
                 }
             } finally {
 

@@ -13,6 +13,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -32,7 +33,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
     @AfterClass
     public static void shutdownClient() {
-        sentinelClient.shutdown();
+        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before
@@ -117,7 +118,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         } finally {
             connection.close();
-            redisClient.shutdown();
+            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
         }
     }
 
