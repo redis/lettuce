@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.google.code.tempusfugit.temporal.Duration.*;
 import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -47,6 +48,11 @@ public class RedisClusterClientTest {
     protected RedisClusterAsyncConnection<String, String> redis3;
     protected RedisClusterAsyncConnection<String, String> redis4;
 
+    protected RedisClusterConnection<String, String> redissync1;
+    protected RedisClusterConnection<String, String> redissync2;
+    protected RedisClusterConnection<String, String> redissync3;
+    protected RedisClusterConnection<String, String> redissync4;
+
     protected String key = "key";
     protected String value = "value";
 
@@ -86,6 +92,11 @@ public class RedisClusterClientTest {
         redis2 = (RedisClusterAsyncConnection<String, String>) client2.connectAsync();
         redis3 = (RedisClusterAsyncConnection<String, String>) client3.connectAsync();
         redis4 = (RedisClusterAsyncConnection<String, String>) client4.connectAsync();
+
+        redissync1 = (RedisClusterConnection<String, String>) client1.connect();
+        redissync2 = (RedisClusterConnection<String, String>) client2.connect();
+        redissync3 = (RedisClusterConnection<String, String>) client3.connect();
+        redissync4 = (RedisClusterConnection<String, String>) client4.connect();
 
         redis1.flushall();
         redis2.flushall();
@@ -127,6 +138,11 @@ public class RedisClusterClientTest {
         redis2.close();
         redis3.close();
         redis4.close();
+
+        redissync1.close();
+        redissync2.close();
+        redissync3.close();
+        redissync4.close();
     }
 
     @Test
@@ -139,6 +155,61 @@ public class RedisClusterClientTest {
         assertThat(status, containsString("cluster_known_nodes:"));
         assertThat(status, containsString("cluster_slots_fail:0"));
         assertThat(status, containsString("cluster_state:"));
+    }
+
+    @Test
+    public void testClusterFailover() throws Exception {
+
+        RedisClusterNode redis1Node = getOwnPartition(redissync1);
+        RedisClusterNode redis4Node = getOwnPartition(redissync4);
+
+        if (redis1Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+
+            RedisFuture<String> future = redis1.clusterFailover(false);
+            future.get();
+            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
+
+            String result = redis4.clusterFailover(true).get();
+            assertThat(result).isEqualTo("OK");
+
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return getOwnPartition(redissync1).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
+                }
+            }, timeout(seconds(10)));
+
+            redis1Node = getOwnPartition(redissync1);
+            redis4Node = getOwnPartition(redissync4);
+
+            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+
+        }
+
+        if (redis4Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+
+            RedisFuture<String> future = redis3.clusterFailover(false);
+            future.get();
+            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
+
+            String result = redis1.clusterFailover(true).get();
+            assertThat(result).isEqualTo("OK");
+
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return getOwnPartition(redissync4).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
+                }
+            }, timeout(seconds(10)));
+
+            redis1Node = getOwnPartition(redissync1);
+            redis4Node = getOwnPartition(redissync4);
+
+            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+        }
+
     }
 
     @Test
@@ -239,24 +310,24 @@ public class RedisClusterClientTest {
     @Test
     public void testClusterSlots() throws Exception {
 
-		List<Object> reply = redis1.clusterSlots().get();
-		assertThat(reply.size()).isGreaterThan(1);
+        List<Object> reply = redis1.clusterSlots().get();
+        assertThat(reply.size()).isGreaterThan(1);
 
-		List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
-		assertThat(parse).hasSize(7);
+        List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
+        assertThat(parse).hasSize(7);
 
-		ClusterSlotRange clusterSlotRange = parse.get(0);
-		assertThat(clusterSlotRange.getFrom()).isEqualTo(0);
-		assertThat(clusterSlotRange.getTo()).isEqualTo(6999);
-		
-		assertThat(clusterSlotRange.getMaster()).isNotNull();
-		assertThat(clusterSlotRange.getSlaves()).isNotNull();
-		assertThat(clusterSlotRange.toString()).contains(ClusterSlotRange.class.getSimpleName());
+        ClusterSlotRange clusterSlotRange = parse.get(0);
+        assertThat(clusterSlotRange.getFrom()).isEqualTo(0);
+        assertThat(clusterSlotRange.getTo()).isEqualTo(6999);
 
-		ClusterSlotRange clusterSlotRange2 = parse.get(1);
-		assertThat(clusterSlotRange2.getFrom()).isEqualTo(7000);
-		assertThat(clusterSlotRange2.getTo()).isEqualTo(7000);
-	}
+        assertThat(clusterSlotRange.getMaster()).isNotNull();
+        assertThat(clusterSlotRange.getSlaves()).isNotNull();
+        assertThat(clusterSlotRange.toString()).contains(ClusterSlotRange.class.getSimpleName());
+
+        ClusterSlotRange clusterSlotRange2 = parse.get(1);
+        assertThat(clusterSlotRange2.getFrom()).isEqualTo(7000);
+        assertThat(clusterSlotRange2.getTo()).isEqualTo(7000);
+    }
 
     @Test
     @SuppressWarnings({ "rawtypes" })

@@ -1,15 +1,12 @@
 package com.lambdaworks.redis.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
@@ -217,26 +214,6 @@ public class RedisClusterSetupTest {
 
         assertThat(partition1.getSlots()).hasSize(6);
         assertThat(partition2.getSlots()).hasSize(6);
-    }
-
-    private String getNodeId(RedisClusterConnection<String, String> connection) {
-        RedisClusterNode ownPartition = getOwnPartition(connection);
-        if (ownPartition != null) {
-            return ownPartition.getNodeId();
-        }
-
-        return null;
-    }
-
-    private RedisClusterNode getOwnPartition(RedisClusterConnection<String, String> connection) {
-        Partitions partitions = ClusterPartitionParser.parse(connection.clusterNodes());
-
-        for (RedisClusterNode partition : partitions) {
-            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                return partition;
-            }
-        }
-        return null;
     }
 
 }
