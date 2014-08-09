@@ -29,6 +29,12 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count);
 
+	/**
+	 * Get array of Cluster slot to node mappings.
+	 * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
+	 */
+	RedisFuture<List<Object>> clusterSlots();
+
     RedisFuture<String> clusterSetSlotNode(int slot, String nodeId);
 
     RedisFuture<String> clusterSetSlotMigrating(int slot, String nodeId);

@@ -29,6 +29,12 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     List<K> clusterGetKeysInSlot(int slot, int count);
 
+	/**
+	 * Get array of Cluster slot to node mappings.
+	 * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
+	 */
+	List<Object> clusterSlots();
+
     String clusterSetSlotNode(int slot, String nodeId);
 
     String clusterSetSlotMigrating(int slot, String nodeId);

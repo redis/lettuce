@@ -1459,7 +1459,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.clusterGetKeysInSlot(slot, count));
     }
 
-    @Override
+	@Override
+	public RedisFuture<List<Object>> clusterSlots() {
+		return dispatch(commandBuilder.clusterSlots());
+	}
+
+	@Override
     public RedisFuture<String> clusterSetSlotNode(int slot, String nodeId) {
         return dispatch(commandBuilder.clusterSetSlotNode(slot, nodeId));
     }

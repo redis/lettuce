@@ -14,7 +14,10 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
     private long replicationOffset;
     private List<ReplicationPartner> slaves;
 
-    public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> slaves) {
+	protected RedisMasterInstance() {
+	}
+
+	public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> slaves) {
         this.replicationOffset = replicationOffset;
         this.slaves = slaves;
     }

@@ -1401,6 +1401,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GETKEYSINSLOT).add(slot).add(count);
         return createCommand(CLUSTER, new KeyListOutput<K, V>(codec), args);
     }
+	public Command<K, V, List<Object>> clusterSlots() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLOTS);
+        return createCommand(CLUSTER, new ArrayOutput<K, V>(codec), args);
+    }
 
     public Command<K, V, String> clusterSetSlotNode(int slot, String nodeId) {
 

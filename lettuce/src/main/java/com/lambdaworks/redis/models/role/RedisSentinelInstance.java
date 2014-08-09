@@ -12,6 +12,9 @@ import java.util.List;
 public class RedisSentinelInstance implements RedisInstance, Serializable {
     private List<String> monitoredMasters;
 
+	protected RedisSentinelInstance() {
+	}
+
     public RedisSentinelInstance(List<String> monitoredMasters) {
         this.monitoredMasters = monitoredMasters;
     }

@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.models.role;
 
+import java.io.Serializable;
+
 import com.google.common.net.HostAndPort;
 
 /**
@@ -8,9 +10,13 @@ import com.google.common.net.HostAndPort;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:45
  */
-public class ReplicationPartner {
+public class ReplicationPartner implements Serializable {
     private HostAndPort host;
     private long replicationOffset;
+
+    protected ReplicationPartner() {
+
+    }
 
     public ReplicationPartner(HostAndPort host, long replicationOffset) {
         this.host = host;

@@ -12,7 +12,10 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     private ReplicationPartner master;
     private State state;
 
-    public RedisSlaveInstance(ReplicationPartner master, State state) {
+	protected RedisSlaveInstance() {
+	}
+
+	public RedisSlaveInstance(ReplicationPartner master, State state) {
         this.master = master;
         this.state = state;
     }

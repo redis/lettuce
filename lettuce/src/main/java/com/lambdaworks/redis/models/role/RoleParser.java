@@ -14,6 +14,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Ints;
 
 /**
+ * Parser for redis ROLE command output.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:52
  */
@@ -42,6 +43,11 @@ public class RoleParser {
 
     }
 
+	/**
+	 * Parse the output of the redis ROLE command and convert to a RedisInstance.
+	 * @param roleOutput
+	 * @return RedisInstance
+	 */
     public static RedisInstance parse(List<?> roleOutput) {
         checkArgument(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
         checkArgument(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),

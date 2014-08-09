@@ -1,20 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -26,12 +21,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
+import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -243,6 +235,28 @@ public class RedisClusterClientTest {
         connection.close();
 
     }
+
+    @Test
+    public void testClusterSlots() throws Exception {
+
+		List<Object> reply = redis1.clusterSlots().get();
+		assertThat(reply.size()).isGreaterThan(1);
+
+		List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
+		assertThat(parse).hasSize(7);
+
+		ClusterSlotRange clusterSlotRange = parse.get(0);
+		assertThat(clusterSlotRange.getFrom()).isEqualTo(0);
+		assertThat(clusterSlotRange.getTo()).isEqualTo(6999);
+		
+		assertThat(clusterSlotRange.getMaster()).isNotNull();
+		assertThat(clusterSlotRange.getSlaves()).isNotNull();
+		assertThat(clusterSlotRange.toString()).contains(ClusterSlotRange.class.getSimpleName());
+
+		ClusterSlotRange clusterSlotRange2 = parse.get(1);
+		assertThat(clusterSlotRange2.getFrom()).isEqualTo(7000);
+		assertThat(clusterSlotRange2.getTo()).isEqualTo(7000);
+	}
 
     @Test
     @SuppressWarnings({ "rawtypes" })
