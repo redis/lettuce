@@ -2,8 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
