@@ -1,13 +1,8 @@
 package com.lambdaworks.redis.models.role;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
@@ -18,6 +13,7 @@ import com.google.common.primitives.Ints;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:52
  */
+@SuppressWarnings("serial")
 public class RoleParser {
     private static final Map<String, RedisInstance.Role> ROLE_MAPPING = new HashMap<String, RedisInstance.Role>() {
         {
@@ -141,20 +137,19 @@ public class RoleParser {
             Collection<?> slavesOutput = (Collection<?>) roleOutput.get(2);
 
             for (Object slaveOutput : slavesOutput) {
-                if (!(slaveOutput instanceof Collection)) {
+                if (!(slaveOutput instanceof Collection<?>)) {
                     continue;
                 }
 
-                ReplicationPartner replicationPartner = getMasterSlaveReplicationPartner((Collection) slaveOutput);
+                ReplicationPartner replicationPartner = getMasterSlaveReplicationPartner((Collection<?>) slaveOutput);
                 slaves.add(replicationPartner);
             }
         }
         return slaves;
     }
 
-    private static ReplicationPartner getMasterSlaveReplicationPartner(Collection slaveOutput) {
-        Collection<?> collection = (Collection) slaveOutput;
-        Iterator<?> iterator = collection.iterator();
+    private static ReplicationPartner getMasterSlaveReplicationPartner(Collection<?> slaveOutput) {
+        Iterator<?> iterator = slaveOutput.iterator();
 
         String ip = getStringFromIterator(iterator, "");
         long port = getLongFromIterator(iterator, 0);

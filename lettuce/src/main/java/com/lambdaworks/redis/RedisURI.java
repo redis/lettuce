@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -17,9 +16,8 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 14.05.14 21:30
  */
+@SuppressWarnings("serial")
 public class RedisURI implements Serializable {
-
-    private static final long serialVersionUID = 42L;
 
     /**
      * The default sentinel port.

@@ -10,6 +10,7 @@ import com.google.common.net.HostAndPort;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:45
  */
+@SuppressWarnings("serial")
 public class ReplicationPartner implements Serializable {
     private HostAndPort host;
     private long replicationOffset;

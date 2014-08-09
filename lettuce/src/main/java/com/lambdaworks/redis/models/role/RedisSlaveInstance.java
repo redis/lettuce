@@ -8,14 +8,15 @@ import java.io.Serializable;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:49
  */
+@SuppressWarnings("serial")
 public class RedisSlaveInstance implements RedisInstance, Serializable {
     private ReplicationPartner master;
     private State state;
 
-	protected RedisSlaveInstance() {
-	}
+    protected RedisSlaveInstance() {
+    }
 
-	public RedisSlaveInstance(ReplicationPartner master, State state) {
+    public RedisSlaveInstance(ReplicationPartner master, State state) {
         this.master = master;
         this.state = state;
     }

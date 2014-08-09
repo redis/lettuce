@@ -9,6 +9,7 @@ import java.util.List;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:44
  */
+@SuppressWarnings("serial")
 public class RedisMasterInstance implements RedisInstance, Serializable {
 
     private long replicationOffset;

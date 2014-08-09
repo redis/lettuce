@@ -12,6 +12,7 @@ import com.lambdaworks.redis.RedisURI;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:09
  */
+@SuppressWarnings("serial")
 public class RedisClusterNode implements Serializable {
     private RedisURI uri;
     private String nodeId;
