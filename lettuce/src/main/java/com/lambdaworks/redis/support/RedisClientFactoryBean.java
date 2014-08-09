@@ -1,19 +1,17 @@
 package com.lambdaworks.redis.support;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.URI;
 
-import com.lambdaworks.redis.LettuceStrings;
-import org.springframework.beans.factory.config.AbstractFactoryBean;
-
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 
 /**
  * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Formats: <code>
- *     redis-withSentinel://host[:port][/databaseNumber]#sentinelMasterId
+ *     redis-sentinel://host[:port][/databaseNumber]#sentinelMasterId
  * </code> <br/>
  * <code>
  *     redis://host[:port][/databaseNumber]
@@ -22,65 +20,27 @@ import com.lambdaworks.redis.RedisURI;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 15.05.14 21:30
  */
-public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
-    private URI uri;
-    private String password;
-    private RedisURI redisURI;
+public class RedisClientFactoryBean extends LettuceFactoryBeanSupport<RedisClient> {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        URI uri = getUri();
-        if (uri != null) {
+
+        if (getRedisURI() == null) {
+            URI uri = getUri();
 
             RedisURI.Builder builder = null;
-            if (uri.getScheme().equals("redis-sentinel")) {
-
-                checkArgument(LettuceStrings.isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
-                String masterId = uri.getFragment();
-
-                if (LettuceStrings.isNotEmpty(uri.getHost())) {
-                    if (uri.getPort() != -1) {
-                        builder = RedisURI.Builder.sentinel(uri.getHost(), uri.getPort(), masterId);
-                    } else {
-                        builder = RedisURI.Builder.sentinel(uri.getHost(), masterId);
-                    }
-                }
-
-                if (builder == null && LettuceStrings.isNotEmpty(uri.getAuthority())) {
-                    String[] hosts = uri.getAuthority().split("\\,");
-                    for (String host : hosts) {
-                        HostAndPort hostAndPort = HostAndPort.fromString(host);
-                        if (builder == null) {
-                            if (hostAndPort.hasPort()) {
-                                builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), hostAndPort.getPort(), masterId);
-                            } else {
-                                builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId);
-                            }
-                        } else {
-                            if (hostAndPort.hasPort()) {
-                                builder.withSentinel(hostAndPort.getHostText(), hostAndPort.getPort());
-                            } else {
-                                builder.withSentinel(hostAndPort.getHostText());
-                            }
-                        }
-                    }
-
-                }
-
-                checkArgument(builder != null, "Invalid URI, cannot get host part");
-
+            if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
+                builder = configureSentinel(uri, builder);
             } else {
-
                 if (uri.getPort() != -1) {
                     builder = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
                 } else {
                     builder = RedisURI.Builder.redis(uri.getHost());
                 }
-
             }
 
-            if (LettuceStrings.isNotEmpty(password)) {
-                builder.withPassword(password);
+            if (LettuceStrings.isNotEmpty(getPassword())) {
+                builder.withPassword(getPassword());
             }
 
             if (LettuceStrings.isNotEmpty(uri.getPath())) {
@@ -100,6 +60,43 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
 
     }
 
+    private RedisURI.Builder configureSentinel(URI uri, RedisURI.Builder builder) {
+        checkArgument(LettuceStrings.isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
+        String masterId = uri.getFragment();
+
+        if (LettuceStrings.isNotEmpty(uri.getHost())) {
+            if (uri.getPort() != -1) {
+                builder = RedisURI.Builder.sentinel(uri.getHost(), uri.getPort(), masterId);
+            } else {
+                builder = RedisURI.Builder.sentinel(uri.getHost(), masterId);
+            }
+        }
+
+        if (builder == null && LettuceStrings.isNotEmpty(uri.getAuthority())) {
+            String[] hosts = uri.getAuthority().split("\\,");
+            for (String host : hosts) {
+                HostAndPort hostAndPort = HostAndPort.fromString(host);
+                if (builder == null) {
+                    if (hostAndPort.hasPort()) {
+                        builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), hostAndPort.getPort(), masterId);
+                    } else {
+                        builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId);
+                    }
+                } else {
+                    if (hostAndPort.hasPort()) {
+                        builder.withSentinel(hostAndPort.getHostText(), hostAndPort.getPort());
+                    } else {
+                        builder.withSentinel(hostAndPort.getHostText());
+                    }
+                }
+            }
+
+        }
+
+        checkArgument(builder != null, "Invalid URI, cannot get host part");
+        return builder;
+    }
+
     @Override
     protected void destroyInstance(RedisClient instance) throws Exception {
         instance.shutdown();
@@ -113,29 +110,5 @@ public class RedisClientFactoryBean extends AbstractFactoryBean<RedisClient> {
     @Override
     protected RedisClient createInstance() throws Exception {
         return new RedisClient(getRedisURI());
-    }
-
-    public URI getUri() {
-        return uri;
-    }
-
-    public void setUri(URI uri) {
-        this.uri = uri;
-    }
-
-    public RedisURI getRedisURI() {
-        return redisURI;
-    }
-
-    public void setRedisURI(RedisURI redisURI) {
-        this.redisURI = redisURI;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }

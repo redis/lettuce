@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean id="MasterUri" class="com.lambdaworks.redis.RedisURI">
+        <property name="host" value="localhost"/>
+        <property name="port" value="6479"/>
+    </bean>
+
+    <bean id="RedisClient1" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
+        <property name="redisURI" ref="MasterUri"/>
+    </bean>
+
+    <bean id="RedisClient2" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
+        <property name="uri" value="redis://localhost:6479/0"/>
+    </bean>
+
+    <bean id="RedisClient3" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
+        <property name="uri" value="redis-sentinel://localhost:6479/0#master"/>
+    </bean>
+
+    <bean id="RedisClusterClient1" class="com.lambdaworks.redis.support.RedisClusterClientFactoryBean">
+        <property name="redisURI" ref="MasterUri"/>
+    </bean>
+
+    <bean id="RedisClusterClient2" class="com.lambdaworks.redis.support.RedisClusterClientFactoryBean">
+        <property name="uri" value="redis://localhost:6479/0"/>
+    </bean>
+</beans>

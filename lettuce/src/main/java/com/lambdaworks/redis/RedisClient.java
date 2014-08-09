@@ -4,11 +4,7 @@ package com.lambdaworks.redis;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -36,6 +32,10 @@ public class RedisClient extends AbstractRedisClient {
 
     private final RedisCodec<String, String> codec = new Utf8StringCodec();
     private final RedisURI redisURI;
+
+    private RedisClient() {
+        redisURI = null;
+    }
 
     /**
      * Create a new client that connects to the supplied host on the default port.
