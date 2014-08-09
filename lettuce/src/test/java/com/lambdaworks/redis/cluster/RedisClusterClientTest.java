@@ -130,6 +130,7 @@ public class RedisClusterClientTest {
                 return false;
             }
         }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
+
     }
 
     @After
@@ -158,61 +159,6 @@ public class RedisClusterClientTest {
     }
 
     @Test
-    public void testClusterFailover() throws Exception {
-
-        RedisClusterNode redis1Node = getOwnPartition(redissync1);
-        RedisClusterNode redis4Node = getOwnPartition(redissync4);
-
-        if (redis1Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
-
-            RedisFuture<String> future = redis1.clusterFailover(false);
-            future.get();
-            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
-
-            String result = redis4.clusterFailover(true).get();
-            assertThat(result).isEqualTo("OK");
-
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return getOwnPartition(redissync1).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
-                }
-            }, timeout(seconds(10)));
-
-            redis1Node = getOwnPartition(redissync1);
-            redis4Node = getOwnPartition(redissync4);
-
-            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-
-        }
-
-        if (redis4Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
-
-            RedisFuture<String> future = redis3.clusterFailover(false);
-            future.get();
-            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
-
-            String result = redis1.clusterFailover(true).get();
-            assertThat(result).isEqualTo("OK");
-
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return getOwnPartition(redissync4).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
-                }
-            }, timeout(seconds(10)));
-
-            redis1Node = getOwnPartition(redissync1);
-            redis4Node = getOwnPartition(redissync4);
-
-            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-        }
-
-    }
-
-    @Test
     public void testClusterNodes() throws Exception {
 
         RedisFuture<String> future = redis1.clusterNodes();
@@ -238,7 +184,7 @@ public class RedisClusterClientTest {
     }
 
     @Test
-    public void zzzLastClusterSlaves() throws Exception {
+    public void testClusterSlaves() throws Exception {
         clusterClient.reloadPartitions();
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
 
@@ -272,6 +218,81 @@ public class RedisClusterClientTest {
     }
 
     @Test
+    public void testClusterFailover() throws Exception {
+
+        redis4.clusterReplicate(getNodeId(redissync1)).get();
+
+        RedisClusterNode redis1Node = getOwnPartition(redissync1);
+        RedisClusterNode redis4Node = getOwnPartition(redissync4);
+
+        if (redis1Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return getOwnPartition(redissync4).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
+                }
+            }, timeout(seconds(10)));
+
+            RedisFuture<String> future = redis1.clusterFailover(false);
+            future.get();
+            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
+
+            RedisFuture<String> failover = redis4.clusterFailover(true);
+            String result = failover.get();
+            assertThat(failover.getError()).isNull();
+            assertThat(result).isEqualTo("OK");
+
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return getOwnPartition(redissync1).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
+                }
+            }, timeout(seconds(10)));
+
+            redis1Node = getOwnPartition(redissync1);
+            redis4Node = getOwnPartition(redissync4);
+
+            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+        }
+
+        if (redis4Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return getOwnPartition(redissync1).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
+                }
+            }, timeout(seconds(10)));
+
+            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+            RedisFuture<String> future = redis4.clusterFailover(false);
+            future.get();
+            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
+
+            RedisFuture<String> failover = redis1.clusterFailover(true);
+            String result = failover.get();
+            assertThat(failover.getError()).isNull();
+            assertThat(result).isEqualTo("OK");
+
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return getOwnPartition(redissync4).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
+                }
+            }, timeout(seconds(10)));
+
+            redis1Node = getOwnPartition(redissync1);
+            redis4Node = getOwnPartition(redissync4);
+
+            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+        }
+
+    }
+
+    @Test
     public void testClusteredOperations() throws Exception {
 
         SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
@@ -286,6 +307,7 @@ public class RedisClusterClientTest {
         assertThat(resultMoved.getError(), containsString("MOVED 15495"));
         assertThat(resultMoved.get()).isEqualTo(null);
 
+        clusterClient.reloadPartitions();
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
         RedisFuture<String> setA = connection.set("a", "myValue1");
