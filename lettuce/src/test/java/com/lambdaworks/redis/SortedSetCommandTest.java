@@ -2,16 +2,9 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.ZStoreArgs.Builder.max;
-import static com.lambdaworks.redis.ZStoreArgs.Builder.min;
-import static com.lambdaworks.redis.ZStoreArgs.Builder.sum;
-import static com.lambdaworks.redis.ZStoreArgs.Builder.weights;
-import static java.lang.Double.NEGATIVE_INFINITY;
-import static java.lang.Double.POSITIVE_INFINITY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.*;
+import static java.lang.Double.*;
+import static org.junit.Assert.*;
 
 import java.util.HashSet;
 import java.util.List;
@@ -399,6 +392,12 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertEquals("0", cursor3.getCursor());
         assertTrue(cursor3.isFinished());
 
+        StreamScanCursor cursor4 = redis.zscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+
+        assertEquals(1, cursor4.getCount());
+        assertEquals("0", cursor4.getCursor());
+        assertTrue(cursor4.isFinished());
+
     }
 
     @Test
@@ -470,5 +469,5 @@ public class SortedSetCommandTest extends AbstractCommandTest {
             expect.add(value + i);
         }
 
-  }
+    }
 }

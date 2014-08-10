@@ -16,11 +16,7 @@ import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -254,10 +250,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 }
                 cmd.complete();
             }
+        }
 
-            if (redisChannelHandler != null) {
-                redisChannelHandler.deactivated();
-            }
+        if (redisChannelHandler != null) {
+            redisChannelHandler.deactivated();
         }
 
         logger.debug("[" + this + "] channelInactive() done");

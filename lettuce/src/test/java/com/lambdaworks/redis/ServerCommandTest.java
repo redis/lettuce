@@ -2,8 +2,10 @@
 
 package com.lambdaworks.redis;
 
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 import java.util.Date;
@@ -15,6 +17,8 @@ import java.util.regex.Pattern;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 
@@ -175,6 +179,36 @@ public class ServerCommandTest extends AbstractCommandTest {
             connection.close();
             redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
         }
+    }
+
+    /**
+     * this test causes a stop of the redis. This means, you cannot repeat the test without restarting your redis.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void shutdown() throws Exception {
+
+        RedisClient redisClient = new RedisClient("localhost", 6485);
+        final RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
+        try {
+
+            connection.shutdown(true);
+            connection.shutdown(false);
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return !connection.isOpen();
+                }
+            }, timeout(seconds(5)));
+
+            assertThat(connection.isOpen()).isFalse();
+
+        } finally {
+            connection.close();
+            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        }
+
     }
 
     @Test

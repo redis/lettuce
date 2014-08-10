@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -229,6 +229,12 @@ public class HashCommandTest extends AbstractCommandTest {
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
         assertThat(cursor3.isFinished()).isTrue();
+
+        StreamScanCursor cursor4 = redis.hscan(adapter, key);
+
+        assertThat(cursor4.getCount()).isEqualTo(1);
+        assertThat(cursor4.getCursor()).isEqualTo("0");
+        assertThat(cursor4.isFinished()).isTrue();
 
     }
 
