@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
@@ -43,6 +43,10 @@ public class ClusterPartitionParserTest {
         RedisClusterNode p3 = result.getPartitions().get(2);
 
         assertThat(p3.getSlaveOf()).isEqualTo("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c");
+        assertThat(p3.toString()).contains(RedisClusterNode.class.getSimpleName());
+        assertThat(result.toString()).contains(Partitions.class.getSimpleName());
+
+        assertThat(result.getPartitionBySlot(Integer.MAX_VALUE)).isNull();
 
     }
 

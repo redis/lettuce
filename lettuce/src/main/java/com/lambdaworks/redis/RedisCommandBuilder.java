@@ -10,11 +10,7 @@ import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.SetArgs;
+import com.lambdaworks.redis.protocol.*;
 
 /**
  * 
@@ -131,6 +127,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> clientList() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LIST);
         return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> commandCount() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(COUNT);
+        return createCommand(COMMAND, new IntegerOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> configRewrite() {
@@ -1401,7 +1402,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GETKEYSINSLOT).add(slot).add(count);
         return createCommand(CLUSTER, new KeyListOutput<K, V>(codec), args);
     }
-	public Command<K, V, List<Object>> clusterSlots() {
+
+    public Command<K, V, List<Object>> clusterSlots() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLOTS);
         return createCommand(CLUSTER, new ArrayOutput<K, V>(codec), args);
     }

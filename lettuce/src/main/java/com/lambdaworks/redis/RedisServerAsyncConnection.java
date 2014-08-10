@@ -66,6 +66,13 @@ public interface RedisServerAsyncConnection<K, V> {
     RedisFuture<String> clientList();
 
     /**
+     * Get total number of Redis commands.
+     * 
+     * @return RedisFuture&lt;Long&gt; integer-reply of number of total commands in this Redis server.
+     */
+    RedisFuture<Long> commandCount();
+
+    /**
      * Get the value of a configuration parameter.
      * 
      * @param parameter the parameter

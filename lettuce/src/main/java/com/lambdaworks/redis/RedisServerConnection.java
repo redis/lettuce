@@ -66,6 +66,13 @@ public interface RedisServerConnection<K, V> {
     String clientList();
 
     /**
+     * Get total number of Redis commands.
+     * 
+     * @return Long integer-reply of number of total commands in this Redis server.
+     */
+    Long commandCount();
+
+    /**
      * Get the value of a configuration parameter.
      * 
      * @param parameter
@@ -235,4 +242,5 @@ public interface RedisServerConnection<K, V> {
      *         unix time in seconds. microseconds.
      */
     List<V> time();
+
 }

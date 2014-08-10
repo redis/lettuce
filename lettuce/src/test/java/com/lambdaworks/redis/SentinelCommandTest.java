@@ -5,7 +5,7 @@ package com.lambdaworks.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 import java.net.InetSocketAddress;
@@ -15,11 +15,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 public class SentinelCommandTest extends AbstractCommandTest {
 
@@ -80,6 +76,17 @@ public class SentinelCommandTest extends AbstractCommandTest {
         assertThat(map.get("config-epoch")).isNotNull();
         assertThat(map.get("port")).isNotNull();
 
+    }
+
+    @Test
+    public void sentinelConnect() throws Exception {
+
+        RedisClient client = new RedisClient(RedisURI.Builder.redis(host, port).build());
+        RedisSentinelAsyncConnection<String, String> connection = client.connectSentinelAsync();
+        assertThat(connection.ping().get()).isEqualTo("PONG");
+
+        connection.close();
+        client.shutdown();
     }
 
     @Test

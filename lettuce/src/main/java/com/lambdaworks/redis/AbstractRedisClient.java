@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
@@ -12,11 +14,7 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -187,18 +185,22 @@ public abstract class AbstractRedisClient {
      * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
      * event.
      * 
-     * @param listener
+     * @param listener must not be {@literal null}
      */
     public void addListener(RedisConnectionStateListener listener) {
+        checkArgument(listener != null, "RedisConnectionStateListener must not be null");
         connectionEvents.addListener(listener);
     }
 
     /**
      * Removes a listener.
      * 
-     * @param listener
+     * @param listener must not be {@literal null
+
      */
     public void removeListener(RedisConnectionStateListener listener) {
+
+        checkArgument(listener != null, "RedisConnectionStateListener must not be null");
         connectionEvents.removeListener(listener);
     }
 }

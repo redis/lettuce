@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,18 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.KeyStreamingChannel;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.SetArgs;
+import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.*;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -167,6 +157,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<String> clientList() {
         return dispatch(commandBuilder.clientList());
+    }
+
+    @Override
+    public RedisFuture<Long> commandCount() {
+        return dispatch(commandBuilder.commandCount());
     }
 
     @Override
@@ -1459,12 +1454,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.clusterGetKeysInSlot(slot, count));
     }
 
-	@Override
-	public RedisFuture<List<Object>> clusterSlots() {
-		return dispatch(commandBuilder.clusterSlots());
-	}
+    @Override
+    public RedisFuture<List<Object>> clusterSlots() {
+        return dispatch(commandBuilder.clusterSlots());
+    }
 
-	@Override
+    @Override
     public RedisFuture<String> clusterSetSlotNode(int slot, String nodeId) {
         return dispatch(commandBuilder.clusterSetSlotNode(slot, nodeId));
     }

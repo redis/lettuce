@@ -68,6 +68,11 @@ public class ServerCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void commandCount() throws Exception {
+        assertThat(redis.commandCount()).isGreaterThan(100);
+    }
+
+    @Test
     public void configGet() throws Exception {
         assertThat(redis.configGet("maxmemory")).isEqualTo(list("maxmemory", "0"));
     }

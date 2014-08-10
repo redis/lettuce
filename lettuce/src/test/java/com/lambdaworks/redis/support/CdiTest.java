@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.support;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import javax.enterprise.inject.Produces;
 
@@ -11,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractCommandTest;
+import com.lambdaworks.redis.RedisConnectionStateListener;
 import com.lambdaworks.redis.RedisURI;
 
 /**
@@ -40,6 +42,12 @@ public class CdiTest {
         InjectedClient injectedClient = container.getInstance(InjectedClient.class);
         assertThat(injectedClient.redisClient).isNotNull();
         assertThat(injectedClient.redisClusterClient).isNotNull();
+
+        RedisConnectionStateListener mock = mock(RedisConnectionStateListener.class);
+
+        // do some interaction to force the container a creation of the repositories.
+        injectedClient.redisClient.addListener(mock);
+        injectedClient.redisClusterClient.addListener(mock);
     }
 
     @AfterClass
