@@ -2,17 +2,40 @@
 
 package com.lambdaworks.redis;
 
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.WaitFor.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.Timeout;
+import com.lambdaworks.redis.protocol.CommandHandler;
+
 public class ClientTest extends AbstractCommandTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
+
+    @Override
+    public void openConnection() throws Exception {
+        Logger logger = LogManager.getLogger(CommandHandler.class);
+        logger.setLevel(Level.ALL);
+        super.openConnection();
+    }
+
+    @Override
+    public void closeConnection() throws Exception {
+        super.closeConnection();
+        Logger logger = LogManager.getLogger(CommandHandler.class);
+        logger.setLevel(Level.INFO);
+    }
 
     @Test(expected = RedisException.class)
     public void close() throws Exception {
@@ -23,7 +46,7 @@ public class ClientTest extends AbstractCommandTest {
     @Test
     public void listenerTest() throws Exception {
 
-        TestConnectionListener listener = new TestConnectionListener();
+        final TestConnectionListener listener = new TestConnectionListener();
 
         RedisClient client = new RedisClient(host, port);
         client.addListener(listener);
@@ -33,18 +56,58 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(listener.onException).isNull();
 
         RedisAsyncConnection<String, String> connection = client.connectAsync();
+        waitOrTimeout(new Condition() {
 
-        Thread.sleep(100);
+            @Override
+            public boolean isSatisfied() {
+                return listener.onConnected != null;
+            }
+        }, Timeout.timeout(seconds(2)));
 
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isNull();
 
         connection.set(key, value).get();
         connection.close();
-        Thread.sleep(100);
+
+        waitOrTimeout(new Condition() {
+
+            @Override
+            public boolean isSatisfied() {
+                return listener.onDisconnected != null;
+            }
+        }, Timeout.timeout(seconds(2)));
 
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isEqualTo(connection);
+
+    }
+
+    @Test
+    public void listenerTestWithRemoval() throws Exception {
+
+        final TestConnectionListener removedListener = new TestConnectionListener();
+        final TestConnectionListener retainedListener = new TestConnectionListener();
+
+        RedisClient client = new RedisClient(host, port);
+        client.addListener(removedListener);
+        client.addListener(retainedListener);
+        client.removeListener(removedListener);
+
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        waitOrTimeout(new Condition() {
+
+            @Override
+            public boolean isSatisfied() {
+                return retainedListener.onConnected != null;
+            }
+        }, Timeout.timeout(seconds(2)));
+
+        assertThat(retainedListener.onConnected).isNotNull();
+
+        assertThat(removedListener.onConnected).isNull();
+        assertThat(removedListener.onDisconnected).isNull();
+       assertThat(removedListener.onException).isNull();
 
     }
 

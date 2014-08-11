@@ -4,9 +4,9 @@ import static com.google.code.tempusfugit.temporal.Duration.*;
 import static com.google.code.tempusfugit.temporal.Timeout.*;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
+import java.net.ConnectException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -144,9 +144,9 @@ public class RedisClusterClientTest {
 
         String status = future.get();
 
-        assertThat(status, containsString("cluster_known_nodes:"));
-        assertThat(status, containsString("cluster_slots_fail:0"));
-        assertThat(status, containsString("cluster_state:"));
+        assertThat(status).contains("cluster_known_nodes:");
+        assertThat(status).contains("cluster_slots_fail:0");
+        assertThat(status).contains("cluster_state:");
     }
 
     @Test
@@ -156,9 +156,9 @@ public class RedisClusterClientTest {
 
         String string = future.get();
 
-        assertThat(string, containsString("connected"));
-        assertThat(string, containsString("master"));
-        assertThat(string, containsString("myself"));
+        assertThat(string).contains("connected");
+        assertThat(string).contains("master");
+        assertThat(string).contains("myself");
     }
 
     @Test
@@ -169,9 +169,9 @@ public class RedisClusterClientTest {
         String string = connection.clusterNodes();
         connection.close();
 
-        assertThat(string, containsString("connected"));
-        assertThat(string, containsString("master"));
-        assertThat(string, containsString("myself"));
+        assertThat(string).contains("connected");
+        assertThat(string).contains("master");
+        assertThat(string).contains("myself");
     }
 
     @Test
@@ -295,7 +295,7 @@ public class RedisClusterClientTest {
 
         RedisFuture<String> resultMoved = redis1.set("a", "value");
         resultMoved.get();
-        assertThat(resultMoved.getError(), containsString("MOVED 15495"));
+        assertThat(resultMoved.getError()).contains("MOVED 15495");
         assertThat(resultMoved.get()).isEqualTo(null);
 
         clusterClient.reloadPartitions();
@@ -484,5 +484,17 @@ public class RedisClusterClientTest {
         }
 
         connection.close();
+    }
+
+    @Test
+    public void testNoClusterNodeAvailable() throws Exception {
+
+        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, 40400).build());
+        try {
+            clusterClient.connectCluster();
+            fail("Missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).hasCauseInstanceOf(RedisException.class).hasRootCauseInstanceOf(ConnectException.class);
+        }
     }
 }

@@ -79,17 +79,31 @@ public class SentinelCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    public void sentinelConnect() throws Exception {
+    public void sentinelConnectWithFailover() throws Exception {
 
         RedisClient client = new RedisClient(RedisURI.Builder.sentinel("localhost", 1234, "mymaster").withSentinel("localhost")
                 .build());
+
+        RedisSentinelAsyncConnection<String, String> sentinelConnection = client.connectSentinelAsync();
+        assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
+
+        sentinelConnection.close();
+
+        RedisConnection<String, String> connection2 = client.connect();
+        assertThat(connection2.ping()).isEqualTo("PONG");
+        connection2.close();
+        client.shutdown();
+    }
+
+    @Test
+    public void sentinelConnect() throws Exception {
+
+        RedisClient client = new RedisClient(RedisURI.Builder.redis("localhost", port).build());
+
         RedisSentinelAsyncConnection<String, String> connection = client.connectSentinelAsync();
         assertThat(connection.ping().get()).isEqualTo("PONG");
 
         connection.close();
-
-        RedisConnection<String, String> connect = client.connect();
-        assertThat(connect.ping()).isEqualTo("PONG");
         client.shutdown();
     }
 

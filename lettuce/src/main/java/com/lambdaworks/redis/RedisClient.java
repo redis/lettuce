@@ -309,7 +309,7 @@ public class RedisClient extends AbstractRedisClient {
             boolean withReconnect, RedisURI redisURI) {
 
         connectAsyncImpl(handler, connection, getSocketAddressSupplier(redisURI), withReconnect);
-        if (redisURI.getPassword() != null) {
+        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
             connection.auth(new String(redisURI.getPassword()));
         }
 

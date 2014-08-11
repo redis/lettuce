@@ -2,11 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
@@ -31,6 +28,13 @@ public class ConnectionCommandTest extends AbstractCommandTest {
                     assertThat(connection.auth(passwd)).isEqualTo("OK");
                     assertThat(connection.set(key, value)).isEqualTo("OK");
                 }
+
+                RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
+                RedisClient redisClient = new RedisClient(redisURI);
+                RedisConnection<String, String> authConnection = redisClient.connect();
+                authConnection.ping();
+                authConnection.close();
+                redisClient.shutdown();
             }
         };
     }
