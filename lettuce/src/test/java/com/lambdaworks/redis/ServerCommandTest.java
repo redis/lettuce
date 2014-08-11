@@ -63,6 +63,23 @@ public class ServerCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void clientKillExtended() throws Exception {
+        Pattern p = Pattern.compile(".*addr=([^ ]+).*");
+        String clients = redis.clientList();
+        Matcher m = p.matcher(clients);
+
+        assertThat(m.lookingAt()).isTrue();
+        String addr = m.group(1);
+        assertThat(redis.clientKill(KillArgs.Builder.addr(addr).skipme())).isGreaterThan(0);
+        assertThat(redis.clientKill(KillArgs.Builder.skipme())).isGreaterThan(0);
+
+        assertThat(redis.clientKill(KillArgs.Builder.id(2))).isEqualTo(0);
+        assertThat(redis.clientKill(KillArgs.Builder.typeSlave().id(4234))).isEqualTo(0);
+        assertThat(redis.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
+        assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
+    }
+
+    @Test
     public void clientList() throws Exception {
         assertThat(redis.clientList().contains("addr=")).isTrue();
     }

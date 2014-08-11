@@ -150,6 +150,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> clientKill(KillArgs killArgs) {
+        return dispatch(commandBuilder.clientKill(killArgs));
+    }
+
+    @Override
     public RedisFuture<String> clientPause(long timeout) {
         return dispatch(commandBuilder.clientPause(timeout));
     }

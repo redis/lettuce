@@ -50,6 +50,14 @@ public interface RedisServerConnection<K, V> {
     String clientKill(String addr);
 
     /**
+     * Kill connections of clients which are filtered by {@code killArgs}
+     *
+     * @param killArgs args for the kill operation
+     * @return RedisFuture&lt;Long&gt; integer-reply number of killed connections
+     */
+    Long clientKill(KillArgs killArgs);
+
+    /**
      * Stop processing commands from clients for some time.
      * 
      * @param timeout
