@@ -54,6 +54,8 @@ public class CdiTest {
         // do some interaction to force the container a creation of the repositories.
         injectedClient.redisClient.addListener(mock);
         injectedClient.redisClusterClient.addListener(mock);
+
+        injectedClient.pingRedis();
     }
 
     @AfterClass
