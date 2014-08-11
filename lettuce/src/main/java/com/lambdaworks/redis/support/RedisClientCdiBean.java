@@ -16,13 +16,8 @@ import com.lambdaworks.redis.RedisURI;
  */
 class RedisClientCdiBean extends AbstractCdiBean<RedisClient> {
 
-    public RedisClientCdiBean(BeanManager beanManager, Set<Annotation> qualifiers, Bean<RedisURI> redisURIBean) {
-        super(redisURIBean, beanManager, qualifiers);
-    }
-
-    @Override
-    public String getName() {
-        return "RedisClient";
+    RedisClientCdiBean(BeanManager beanManager, Set<Annotation> qualifiers, Bean<RedisURI> redisURIBean, String name) {
+        super(redisURIBean, beanManager, qualifiers, name);
     }
 
     @Override

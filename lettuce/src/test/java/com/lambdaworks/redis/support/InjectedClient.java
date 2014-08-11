@@ -16,4 +16,8 @@ public class InjectedClient {
 
     @Inject
     public RedisClusterClient redisClusterClient;
+
+    @Inject
+    @PersonDB
+    public RedisClient qualifiedRedisClient;
 }

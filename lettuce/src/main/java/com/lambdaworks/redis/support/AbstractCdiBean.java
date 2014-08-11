@@ -23,11 +23,13 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
     protected final BeanManager beanManager;
     protected final Set<Annotation> qualifiers;
     protected final Bean<RedisURI> redisURIBean;
+    protected final String name;
 
-    public AbstractCdiBean(Bean<RedisURI> redisURIBean, BeanManager beanManager, Set<Annotation> qualifiers) {
+    public AbstractCdiBean(Bean<RedisURI> redisURIBean, BeanManager beanManager, Set<Annotation> qualifiers, String name) {
         this.redisURIBean = redisURIBean;
         this.beanManager = beanManager;
         this.qualifiers = qualifiers;
+        this.name = name;
     }
 
     @Override
@@ -38,6 +40,11 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
     @Override
     public Set<Annotation> getQualifiers() {
         return qualifiers;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override

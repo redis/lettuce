@@ -16,13 +16,9 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
  */
 class RedisClusterClientCdiBean extends AbstractCdiBean<RedisClusterClient> {
 
-    public RedisClusterClientCdiBean(BeanManager beanManager, Set<Annotation> qualifiers, Bean<RedisURI> redisURIBean) {
-        super(redisURIBean, beanManager, qualifiers);
-    }
-
-    @Override
-    public String getName() {
-        return "RedisClusterClient";
+    public RedisClusterClientCdiBean(BeanManager beanManager, Set<Annotation> qualifiers, Bean<RedisURI> redisURIBean,
+            String name) {
+        super(redisURIBean, beanManager, qualifiers, name);
     }
 
     @Override

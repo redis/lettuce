@@ -9,9 +9,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.spi.*;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -63,18 +69,38 @@ public class LettuceCdiExtension implements Extension {
      */
     void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {
 
+        int counter = 0;
         for (Entry<Set<Annotation>, Bean<RedisURI>> entry : redisUris.entrySet()) {
 
             Bean<RedisURI> redisUri = entry.getValue();
             Set<Annotation> qualifiers = entry.getKey();
 
-            RedisClientCdiBean clientBean = new RedisClientCdiBean(beanManager, qualifiers, redisUri);
+            String clientBeanName = RedisClient.class.getSimpleName();
+            String clusterClientBeanName = RedisClusterClient.class.getSimpleName();
+            if (!contains(qualifiers, Default.class)) {
+                clientBeanName += counter;
+                clusterClientBeanName += counter;
+                counter++;
+            }
+
+            RedisClientCdiBean clientBean = new RedisClientCdiBean(beanManager, qualifiers, redisUri, clientBeanName);
             register(afterBeanDiscovery, qualifiers, clientBean);
 
-            RedisClusterClientCdiBean clusterClientBean = new RedisClusterClientCdiBean(beanManager, qualifiers, redisUri);
+            RedisClusterClientCdiBean clusterClientBean = new RedisClusterClientCdiBean(beanManager, qualifiers, redisUri,
+                    clusterClientBeanName);
             register(afterBeanDiscovery, qualifiers, clusterClientBean);
 
         }
+    }
+
+    private boolean contains(Set<Annotation> qualifiers, Class<Default> defaultClass) {
+        Optional<Annotation> result = Iterables.tryFind(qualifiers, new Predicate<Annotation>() {
+            @Override
+            public boolean apply(Annotation input) {
+                return input instanceof Default;
+            }
+        });
+        return result.isPresent();
     }
 
     private void register(AfterBeanDiscovery afterBeanDiscovery, Set<Annotation> qualifiers, Bean<?> bean) {

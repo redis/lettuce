@@ -36,6 +36,12 @@ public class CdiTest {
         return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
     }
 
+    @PersonDB
+    @Produces
+    public RedisURI redisURIQualified() {
+        return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port + 1).build();
+    }
+
     @Test
     public void testInjection() {
 
