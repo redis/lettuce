@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 
 import java.util.concurrent.ExecutionException;
 
@@ -21,14 +21,15 @@ class Connections {
 
     /**
      * 
-     * @param connection
-     * @return true if the connection is valid (ping works).
+     * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
+     *        {@link com.lambdaworks.redis.RedisConnection} and must not be {@literal null}
+     * @return true if the connection is valid (ping works)
      * @throws java.lang.NullPointerException if connection is null
      * @throws java.lang.IllegalArgumentException if connection is not a supported type
      */
     public static final boolean isValid(Object connection) {
 
-        checkNotNull(connection, "connection must not be null");
+        checkNotNull(connection, "Connection must not be null");
         if (connection instanceof RedisAsyncConnection<?, ?>) {
             RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
             try {
@@ -58,14 +59,15 @@ class Connections {
 
     /**
      * 
-     * @param connection
+     * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
+     *        {@link com.lambdaworks.redis.RedisConnection} and must not be {@literal null}
      * @return true if the connection is open.
      * @throws java.lang.NullPointerException if connection is null
      * @throws java.lang.IllegalArgumentException if connection is not a supported type
      */
     public static final boolean isOpen(Object connection) {
 
-        checkNotNull(connection, "connection must not be null");
+        checkNotNull(connection, "Connection must not be null");
         if (connection instanceof RedisAsyncConnection<?, ?>) {
             RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
             return redisAsyncConnection.isOpen();
@@ -83,13 +85,13 @@ class Connections {
      * Closes silently a connection.
      * 
      * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
-     *        {@link com.lambdaworks.redis.RedisConnection}
+     *        {@link com.lambdaworks.redis.RedisConnection} and must not be {@literal null}
      * @throws java.lang.NullPointerException if connection is null
      * @throws java.lang.IllegalArgumentException if connection is not a supported type
      */
     public static void close(Object connection) {
 
-        checkNotNull(connection, "connection must not be null");
+        checkNotNull(connection, "Connection must not be null");
         try {
             if (connection instanceof RedisAsyncConnection<?, ?>) {
                 RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;

@@ -1,14 +1,19 @@
 package com.lambdaworks.redis.cluster.models.slots;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.io.Serializable;
 import java.util.List;
 
 import com.google.common.net.HostAndPort;
 
 /**
+ * Represents a range of slots together with its master and slaves.
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 09.08.14 15:20
  */
+@SuppressWarnings("serial")
 public class ClusterSlotRange implements Serializable {
     private int from;
     private int to;
@@ -19,12 +24,24 @@ public class ClusterSlotRange implements Serializable {
 
     }
 
+    /**
+     * Constructs a {@link ClusterSlotRange}
+     * 
+     * @param from from slot
+     * @param to to slot
+     * @param master master for the slots, may be {@literal null}
+     * @param slaves list of slaves must not be {@literal null} but may be empty
+     */
     public ClusterSlotRange(int from, int to, HostAndPort master, List<HostAndPort> slaves) {
+
+        checkArgument(master != null, "master must not be null");
+        checkArgument(slaves != null, "slaves must not be null");
+
         this.from = from;
         this.to = to;
         this.master = master;
-        this.slaves = slaves;
-    }
+		this.slaves = slaves;
+	}
 
     public int getFrom() {
         return from;

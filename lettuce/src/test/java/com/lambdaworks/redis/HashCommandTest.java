@@ -199,7 +199,7 @@ public class HashCommandTest extends AbstractCommandTest {
         assertThat(cursor2.isFinished()).isTrue();
         assertThat(cursor2.getMap()).isEqualTo(ImmutableMap.of(key, value));
 
-        MapScanCursor<String, String> cursor3 = redis.hscan(key, cursor, ScanArgs.Builder.count(2));
+        MapScanCursor<String, String> cursor3 = redis.hscan(key, cursor, ScanArgs.Builder.limit(2));
 
         assertThat(cursor3.getCursor()).isEqualTo("0");
         assertThat(cursor3.isFinished()).isTrue();
@@ -211,7 +211,7 @@ public class HashCommandTest extends AbstractCommandTest {
         redis.hset(key, key, value);
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
 
-        StreamScanCursor cursor = redis.hscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+        StreamScanCursor cursor = redis.hscan(adapter, key, ScanArgs.Builder.limit(100).match("*"));
 
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
@@ -224,7 +224,7 @@ public class HashCommandTest extends AbstractCommandTest {
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        StreamScanCursor cursor3 = redis.hscan(adapter, key, cursor, ScanArgs.Builder.count(100).match("*"));
+        StreamScanCursor cursor3 = redis.hscan(adapter, key, cursor, ScanArgs.Builder.limit(100).match("*"));
 
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
@@ -245,7 +245,7 @@ public class HashCommandTest extends AbstractCommandTest {
         Map<String, String> check = new HashMap<String, String>();
         setup100KeyValues(expect);
 
-        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.count(5));
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(5));
 
         assertThat(cursor.getCursor()).isNotNull();
         assertThat(cursor.getMap()).hasSize(100);
@@ -269,7 +269,7 @@ public class HashCommandTest extends AbstractCommandTest {
         Map<String, String> expect = new HashMap<String, String>();
         setup100KeyValues(expect);
 
-        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.count(100).match("key1*"));
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(100).match("key1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();

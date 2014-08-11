@@ -162,7 +162,7 @@ public class RedisURI implements Serializable {
          * @return New builder with Redis host/port.
          */
         public static Builder redis(String host, int port) {
-            checkNotNull(host, "host must not be null");
+            checkNotNull(host, "Host must not be null");
             Builder builder = new Builder();
             builder.redisURI.setHost(host);
             builder.redisURI.setPort(port);
@@ -210,7 +210,7 @@ public class RedisURI implements Serializable {
          * @return New builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, int port, String masterId) {
-            checkNotNull(host, "host must not be null");
+            checkNotNull(host, "Host must not be null");
             Builder builder = new Builder();
             builder.redisURI.setSentinelMasterId(masterId);
 
@@ -238,7 +238,7 @@ public class RedisURI implements Serializable {
          */
         public Builder withSentinel(String host, int port) {
             checkState(redisURI.host == null, "Cannot use with Redis mode.");
-            checkNotNull(host, "host must not be null");
+            checkNotNull(host, "Host must not be null");
             redisURI.sentinels.add(new RedisURI(host, port, 1, TimeUnit.SECONDS));
             return this;
         }
@@ -273,7 +273,7 @@ public class RedisURI implements Serializable {
          * @return the builder
          */
         public Builder withPassword(String password) {
-            checkNotNull(password, "password must not be null");
+            checkNotNull(password, "Password must not be null");
             redisURI.setPassword(password);
             return this;
         }
@@ -281,12 +281,13 @@ public class RedisURI implements Serializable {
         /**
          * Adds timeout.
          * 
-         * @param timeout
-         * @param unit
+         * @param timeout must be greater or equal 0"
+         * @param unit the timeout time unit.
          * @return the builder
          */
         public Builder withTimeout(long timeout, TimeUnit unit) {
-            checkNotNull(unit, "unit must not be null");
+            checkNotNull(unit, "TimeUnit must not be null");
+            checkArgument(timeout >= 0, "Timeout must be greater or equal 0");
             redisURI.setTimeout(timeout);
             redisURI.setUnit(unit);
             return this;

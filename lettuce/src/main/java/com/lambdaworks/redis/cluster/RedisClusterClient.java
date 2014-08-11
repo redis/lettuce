@@ -43,7 +43,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param initialUri
      */
     public RedisClusterClient(RedisURI initialUri) {
-        this(Collections.singletonList(checkNotNull(initialUri, "initialUri must not be null")));
+        this(Collections.singletonList(checkNotNull(initialUri, "RedisURI (initial uri) must not be null")));
     }
 
     /**
@@ -103,7 +103,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
     }
 
-    RedisAsyncConnectionImpl<String, String> connectAsyncImpl(SocketAddress socketAddress) {
+    protected RedisAsyncConnectionImpl<String, String> connectAsyncImpl(SocketAddress socketAddress) {
         return connectAsyncImpl(codec, socketAddress);
     }
 

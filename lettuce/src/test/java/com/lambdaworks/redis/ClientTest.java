@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -108,5 +108,35 @@ public class ClientTest extends AbstractCommandTest {
             onException = connection;
 
         }
+    }
+
+    @Test
+    public void emptyClient() throws Exception {
+
+        RedisClient client = new RedisClient();
+        try {
+            client.connect();
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("RedisURI");
+        }
+
+        try {
+            client.connectAsync();
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("RedisURI");
+        }
+
+        try {
+            client.connect((RedisURI) null);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageContaining("RedisURI");
+        }
+
+        try {
+            client.connectAsync((RedisURI) null);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageContaining("RedisURI");
+        }
+        client.shutdown();
     }
 }

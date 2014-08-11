@@ -360,7 +360,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertTrue(cursor2.isFinished());
         assertEquals(new ScoredValue<String>(1, value), cursor2.getValues().get(0));
 
-        ScoredValueScanCursor<String> cursor3 = redis.zscan(key, cursor, ScanArgs.Builder.count(5));
+        ScoredValueScanCursor<String> cursor3 = redis.zscan(key, cursor, ScanArgs.Builder.limit(5));
 
         assertEquals("0", cursor3.getCursor());
         assertTrue(cursor3.isFinished());
@@ -386,13 +386,13 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertEquals("0", cursor2.getCursor());
         assertTrue(cursor2.isFinished());
 
-        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.count(100).match("*"));
+        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.limit(100).match("*"));
 
         assertEquals(1, cursor3.getCount());
         assertEquals("0", cursor3.getCursor());
         assertTrue(cursor3.isFinished());
 
-        StreamScanCursor cursor4 = redis.zscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+        StreamScanCursor cursor4 = redis.zscan(adapter, key, ScanArgs.Builder.limit(100).match("*"));
 
         assertEquals(1, cursor4.getCount());
         assertEquals("0", cursor4.getCursor());
@@ -406,7 +406,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         Set<String> expect = new HashSet<String>();
         setup100KeyValues(expect);
 
-        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.count(5));
+        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.limit(5));
 
         assertNotNull(cursor.getCursor());
         assertEquals("0", cursor.getCursor());
@@ -422,7 +422,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         Set<String> expect = new HashSet<String>();
         setup100KeyValues(expect);
 
-        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.count(10).match("val*"));
+        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.limit(10).match("val*"));
 
         assertEquals("0", cursor.getCursor());
         assertTrue(cursor.isFinished());

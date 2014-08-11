@@ -3,7 +3,7 @@
 package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -193,7 +193,7 @@ public class SetCommandTest extends AbstractCommandTest {
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        ValueScanCursor<String> cursor3 = redis.sscan(key, cursor, ScanArgs.Builder.count(5));
+        ValueScanCursor<String> cursor3 = redis.sscan(key, cursor, ScanArgs.Builder.limit(5));
 
         assertThat(cursor3.getValues()).hasSize(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
@@ -219,7 +219,7 @@ public class SetCommandTest extends AbstractCommandTest {
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        StreamScanCursor cursor3 = redis.sscan(adapter, key, cursor, ScanArgs.Builder.count(5));
+        StreamScanCursor cursor3 = redis.sscan(adapter, key, cursor, ScanArgs.Builder.limit(5));
 
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
@@ -231,7 +231,7 @@ public class SetCommandTest extends AbstractCommandTest {
         redis.sadd(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
-        StreamScanCursor cursor = redis.sscan(adapter, key, ScanArgs.Builder.count(100).match("*"));
+        StreamScanCursor cursor = redis.sscan(adapter, key, ScanArgs.Builder.limit(100).match("*"));
 
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
@@ -246,7 +246,7 @@ public class SetCommandTest extends AbstractCommandTest {
         Set<String> check = new HashSet<String>();
         setup100KeyValues(expect);
 
-        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(5));
+        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(5));
 
         assertThat(cursor.getCursor()).isNotNull();
         assertNotEquals("0", cursor.getCursor());
@@ -268,7 +268,7 @@ public class SetCommandTest extends AbstractCommandTest {
         Set<String> expect = new HashSet<String>();
         setup100KeyValues(expect);
 
-        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.count(200).match("value1*"));
+        ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(200).match("value1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();

@@ -1,11 +1,13 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.MATCH;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
+ * Argument list builder for the redis scan commans (scan, hscan, sscan, zscan) . Static import the methods from {@link Builder}
+ * and chain the method calls: <code>matches("weight_*").limit(0, 2)</code>.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 20.05.14 20:45
  */
@@ -26,8 +28,8 @@ public class ScanArgs {
 
         }
 
-        public static ScanArgs count(long count) {
-            return new ScanArgs().count(count);
+        public static ScanArgs limit(long count) {
+            return new ScanArgs().limit(count);
         }
 
         public static ScanArgs matches(String matches) {
@@ -40,7 +42,7 @@ public class ScanArgs {
         return this;
     }
 
-    public ScanArgs count(long count) {
+    public ScanArgs limit(long count) {
         this.count = count;
         return this;
     }

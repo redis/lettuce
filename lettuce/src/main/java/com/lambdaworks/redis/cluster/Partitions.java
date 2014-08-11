@@ -12,7 +12,7 @@ import com.google.common.collect.Lists;
 class Partitions implements Iterable<RedisClusterNode> {
     private List<RedisClusterNode> partitions = Lists.newArrayList();
 
-    public RedisClusterNode getPartitionBySlot(int slot) {
+    RedisClusterNode getPartitionBySlot(int slot) {
 
         for (RedisClusterNode partition : partitions) {
             if (partition.getSlots().contains(slot)) {

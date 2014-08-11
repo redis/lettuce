@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.models.role;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.io.Serializable;
 
 /**
@@ -16,7 +18,15 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     protected RedisSlaveInstance() {
     }
 
+    /**
+     * Constructs a {@link RedisSlaveInstance}
+     * 
+     * @param master master for the replication, must not be {@literal null}
+     * @param state slave state, must not be {@literal null}
+     */
     public RedisSlaveInstance(ReplicationPartner master, State state) {
+        checkArgument(master != null, "master must not be null");
+        checkArgument(state != null, "state must not be null");
         this.master = master;
         this.state = state;
     }

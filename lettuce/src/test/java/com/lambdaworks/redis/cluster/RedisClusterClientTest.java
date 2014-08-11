@@ -36,11 +36,7 @@ public class RedisClusterClientTest {
     public static final int port3 = 7381;
     public static final int port4 = 7382;
 
-    protected static RedisClient client1;
-    protected static RedisClient client2;
-    protected static RedisClient client3;
-    protected static RedisClient client4;
-
+    protected static RedisClient client;
     protected static RedisClusterClient clusterClient;
 
     protected RedisClusterAsyncConnection<String, String> redis1;
@@ -58,10 +54,7 @@ public class RedisClusterClientTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client1 = new RedisClient(host, port1);
-        client2 = new RedisClient(host, port2);
-        client3 = new RedisClient(host, port3);
-        client4 = new RedisClient(host, port4);
+        client = new RedisClient(host, port1);
 
         clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
 
@@ -80,23 +73,21 @@ public class RedisClusterClientTest {
     @AfterClass
     public static void shutdownClient() {
 
-        client1.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        client2.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        client3.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        client4.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before
     public void before() throws Exception {
-        redis1 = (RedisClusterAsyncConnection<String, String>) client1.connectAsync();
-        redis2 = (RedisClusterAsyncConnection<String, String>) client2.connectAsync();
-        redis3 = (RedisClusterAsyncConnection<String, String>) client3.connectAsync();
-        redis4 = (RedisClusterAsyncConnection<String, String>) client4.connectAsync();
 
-        redissync1 = (RedisClusterConnection<String, String>) client1.connect();
-        redissync2 = (RedisClusterConnection<String, String>) client2.connect();
-        redissync3 = (RedisClusterConnection<String, String>) client3.connect();
-        redissync4 = (RedisClusterConnection<String, String>) client4.connect();
+        redis1 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port1).build());
+        redis2 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port2).build());
+        redis3 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port3).build());
+        redis4 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port4).build());
+
+        redissync1 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port1).build());
+        redissync2 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port2).build());
+        redissync3 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port3).build());
+        redissync4 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port4).build());
 
         redis1.flushall();
         redis2.flushall();

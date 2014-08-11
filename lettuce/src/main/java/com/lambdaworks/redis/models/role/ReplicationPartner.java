@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.models.role;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.io.Serializable;
 
 import com.google.common.net.HostAndPort;
@@ -19,10 +21,17 @@ public class ReplicationPartner implements Serializable {
 
     }
 
+    /**
+     * Constructs a replication partner.
+     * 
+     * @param host host information, must not be {@literal null}
+     * @param replicationOffset the replication offset
+     */
     public ReplicationPartner(HostAndPort host, long replicationOffset) {
+        checkArgument(host != null, "host must not be null");
         this.host = host;
         this.replicationOffset = replicationOffset;
-    }
+	}
 
     /**
      *

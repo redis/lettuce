@@ -48,20 +48,16 @@ public class ClusterSlotsParserTest {
         assertThat(result.get(0).getSlaves()).hasSize(1);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testParseInvalidMaster() throws Exception {
         List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", Lists.newArrayList("1")));
-        List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getMaster()).isNull();
+        ClusterSlotsParser.parse(list);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testParseInvalidMaster2() throws Exception {
         List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", ""));
-        List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getMaster()).isNull();
+        ClusterSlotsParser.parse(list);
     }
 
 }

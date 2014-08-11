@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.models.role;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -15,10 +17,17 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
     private long replicationOffset;
     private List<ReplicationPartner> slaves;
 
-	protected RedisMasterInstance() {
-	}
+    protected RedisMasterInstance() {
+    }
 
-	public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> slaves) {
+    /**
+     * Constructs a {@link RedisMasterInstance}
+     * 
+     * @param replicationOffset the replication offset
+     * @param slaves list of slaves, must not be {@literal null} but may be empty
+     */
+    public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> slaves) {
+        checkArgument(slaves != null, "slaves must not be null");
         this.replicationOffset = replicationOffset;
         this.slaves = slaves;
     }
