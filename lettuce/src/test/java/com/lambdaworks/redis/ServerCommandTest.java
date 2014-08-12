@@ -19,6 +19,8 @@ import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.redis.models.command.CommandDetail;
+import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 
@@ -87,6 +89,17 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void commandCount() throws Exception {
         assertThat(redis.commandCount()).isGreaterThan(100);
+    }
+
+    @Test
+    public void command() throws Exception {
+
+        List<Object> result = redis.command();
+
+        assertThat(result.size()).isGreaterThan(100);
+
+        List<CommandDetail> commands = CommandDetailParser.parse(result);
+        assertThat(commands).hasSameSizeAs(result);
     }
 
     @Test

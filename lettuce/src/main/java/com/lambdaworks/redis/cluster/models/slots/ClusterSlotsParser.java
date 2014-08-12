@@ -10,7 +10,8 @@ import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Ints;
 
 /**
- * Parser for redis CLUSTER SLOTS command output.
+ * Parser for redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 09.08.14 15:23
  */
@@ -48,12 +49,12 @@ public class ClusterSlotsParser {
             result.add(clusterSlotRange);
         }
 
-		Collections.sort(result, new Comparator<ClusterSlotRange>() {
-			@Override
-			public int compare(ClusterSlotRange o1, ClusterSlotRange o2) {
-				return o1.getFrom() - o2.getFrom();
-			}
-		});
+        Collections.sort(result, new Comparator<ClusterSlotRange>() {
+            @Override
+            public int compare(ClusterSlotRange o1, ClusterSlotRange o2) {
+                return o1.getFrom() - o2.getFrom();
+            }
+        });
 
         return Collections.unmodifiableList(result);
     }

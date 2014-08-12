@@ -74,6 +74,13 @@ public interface RedisServerAsyncConnection<K, V> {
     RedisFuture<String> clientList();
 
     /**
+     * Returns Array reply of details about all Redis commands.
+     * 
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
+     */
+    RedisFuture<List<Object>> command();
+
+    /**
      * Get total number of Redis commands.
      * 
      * @return RedisFuture&lt;Long&gt; integer-reply of number of total commands in this Redis server.

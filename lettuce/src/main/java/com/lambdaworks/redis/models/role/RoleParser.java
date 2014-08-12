@@ -9,13 +9,14 @@ import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Ints;
 
 /**
- * Parser for redis ROLE command output.
+ * Parser for redis <a href="http://redis.io/commands/role">ROLE</a> command output.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.08.14 10:52
  */
 @SuppressWarnings("serial")
 public class RoleParser {
-    private static final Map<String, RedisInstance.Role> ROLE_MAPPING = new HashMap<String, RedisInstance.Role>() {
+    protected static final Map<String, RedisInstance.Role> ROLE_MAPPING = new HashMap<String, RedisInstance.Role>() {
         {
             put("master", RedisInstance.Role.MASTER);
             put("slave", RedisInstance.Role.SLAVE);
@@ -23,7 +24,7 @@ public class RoleParser {
         }
     };
 
-    private static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING = new HashMap<String, RedisSlaveInstance.State>() {
+    protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING = new HashMap<String, RedisSlaveInstance.State>() {
         {
             put("connect", RedisSlaveInstance.State.CONNECT);
             put("connected", RedisSlaveInstance.State.CONNECTED);
@@ -39,11 +40,12 @@ public class RoleParser {
 
     }
 
-	/**
-	 * Parse the output of the redis ROLE command and convert to a RedisInstance.
-	 * @param roleOutput
-	 * @return RedisInstance
-	 */
+    /**
+     * Parse the output of the redis ROLE command and convert to a RedisInstance.
+     * 
+     * @param roleOutput
+     * @return RedisInstance
+     */
     public static RedisInstance parse(List<?> roleOutput) {
         checkArgument(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
         checkArgument(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),

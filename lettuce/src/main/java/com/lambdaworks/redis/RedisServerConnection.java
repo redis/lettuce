@@ -53,7 +53,7 @@ public interface RedisServerConnection<K, V> {
      * Kill connections of clients which are filtered by {@code killArgs}
      *
      * @param killArgs args for the kill operation
-     * @return RedisFuture&lt;Long&gt; integer-reply number of killed connections
+     * @return Long integer-reply number of killed connections
      */
     Long clientKill(KillArgs killArgs);
 
@@ -72,6 +72,13 @@ public interface RedisServerConnection<K, V> {
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
     String clientList();
+
+    /**
+     * Returns Array reply of details about all Redis commands.
+     * 
+     * @return List&lt;Object&gt; array-reply
+     */
+    List<Object> command();
 
     /**
      * Get total number of Redis commands.

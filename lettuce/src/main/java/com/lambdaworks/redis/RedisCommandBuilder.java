@@ -135,6 +135,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<Object>> command() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        return createCommand(COMMAND, new ArrayOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> commandCount() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(COUNT);
         return createCommand(COMMAND, new IntegerOutput<K, V>(codec), args);

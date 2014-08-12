@@ -165,6 +165,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<List<Object>> command() {
+        return dispatch(commandBuilder.command());
+    }
+
+    @Override
     public RedisFuture<Long> commandCount() {
         return dispatch(commandBuilder.commandCount());
     }

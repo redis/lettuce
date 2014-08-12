@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.models.role;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 
@@ -13,6 +13,12 @@ public class RoleParserTest {
     public static final long REPLICATION_OFFSET_1 = 3167038L;
     public static final long REPLICATION_OFFSET_2 = 3167039L;
     public static final String LOCALHOST = "127.0.0.1";
+
+    @Test
+    public void testMappings() throws Exception {
+        assertThat(RoleParser.ROLE_MAPPING).hasSameSizeAs(RedisInstance.Role.values());
+        assertThat(RoleParser.SLAVE_STATE_MAPPING).hasSameSizeAs(RedisSlaveInstance.State.values());
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void emptyList() throws Exception {
