@@ -1,11 +1,6 @@
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -40,6 +35,7 @@ public class ClusterPartitionParser {
             put("noaddr", RedisClusterNode.NodeFlag.NOADDR);
         }
     };
+    public static final String CONNECTED = "connected";
 
     /**
      * Utility constructor.
@@ -77,45 +73,45 @@ public class ClusterPartitionParser {
         Iterable<String> split = Splitter.on(' ').split(nodeInformation);
         Iterator<String> iterator = split.iterator();
 
-        RedisClusterNode partition = new RedisClusterNode();
-        partition.setNodeId(iterator.next());
+        String nodeId = iterator.next();
+        boolean connected = false;
+        RedisURI uri = null;
 
         HostAndPort hostAndPort = HostAndPort.fromString(iterator.next());
 
         if (LettuceStrings.isNotEmpty(hostAndPort.getHostText())) {
-            partition.setUri(RedisURI.Builder.redis(hostAndPort.getHostText(), hostAndPort.getPort()).build());
+            uri = RedisURI.Builder.redis(hostAndPort.getHostText(), hostAndPort.getPort()).build();
         }
 
         String flags = iterator.next();
         List<String> flagStrings = Lists.newArrayList(Splitter.on(',').trimResults().split(flags).iterator());
 
-        readFlags(flagStrings, partition);
+        Set<RedisClusterNode.NodeFlag> nodeFlags = readFlags(flagStrings);
 
-        String slaveOf = iterator.next(); // (nodeId or -)
-        long pingSentTs = Long.parseLong(iterator.next());
-        long pongReceivedTs = Long.parseLong(iterator.next());
-        long configEpoch = Long.parseLong(iterator.next());
+        String slaveOfString = iterator.next(); // (nodeId or -)
+        String slaveOf = "-".equals(slaveOfString) ? null : slaveOfString;
 
-        partition.setSlaveOf("-".equals(slaveOf) ? null : slaveOf);
-        partition.setPingSentTimestamp(pingSentTs);
-        partition.setPongReceivedTimestamp(pongReceivedTs);
-        partition.setConfigEpoch(configEpoch);
+        long pingSentTs = getLongFromIterator(iterator, 0);
+        long pongReceivedTs = getLongFromIterator(iterator, 0);
+        long configEpoch = getLongFromIterator(iterator, 0);
 
         String connectedFlags = iterator.next(); // "connected" : "disconnected"
 
-        if ("connected".equals(connectedFlags)) {
-            partition.setConnected(true);
+        if (CONNECTED.equals(connectedFlags)) {
+            connected = true;
         }
 
         List<String> slotStrings = Lists.newArrayList(iterator); // slot, from-to [slot->-nodeID] [slot-<-nodeID]
+        List<Integer> slots = readSlots(slotStrings);
 
-        readSlots(slotStrings, partition);
+        RedisClusterNode partition = new RedisClusterNode(uri, nodeId, connected, slaveOf, pingSentTs, pongReceivedTs,
+                configEpoch, slots, nodeFlags);
 
         return partition;
 
     }
 
-    private static void readFlags(List<String> flagStrings, RedisClusterNode partition) {
+    private static Set<RedisClusterNode.NodeFlag> readFlags(List<String> flagStrings) {
 
         Set<RedisClusterNode.NodeFlag> flags = Sets.newHashSet();
         for (String flagString : flagStrings) {
@@ -123,10 +119,10 @@ public class ClusterPartitionParser {
                 flags.add(FLAG_MAPPING.get(flagString));
             }
         }
-        partition.setFlags(Collections.unmodifiableSet(flags));
+        return Collections.unmodifiableSet(flags);
     }
 
-    private static void readSlots(List<String> slotStrings, RedisClusterNode partition) {
+    private static List<Integer> readSlots(List<String> slotStrings) {
 
         List<Integer> slots = Lists.newArrayList();
         for (String slotString : slotStrings) {
@@ -154,7 +150,17 @@ public class ClusterPartitionParser {
             slots.add(Integer.parseInt(slotString));
         }
 
-        partition.setSlots(Collections.unmodifiableList(slots));
+        return Collections.unmodifiableList(slots);
+    }
+
+    private static long getLongFromIterator(Iterator<?> iterator, long defaultValue) {
+        if (iterator.hasNext()) {
+            Object object = iterator.next();
+            if (object instanceof String) {
+                return Long.parseLong((String) object);
+            }
+        }
+        return defaultValue;
     }
 
 }

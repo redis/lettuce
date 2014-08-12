@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.net.HostAndPort;
 
 public class RoleParserTest {
     public static final long REPLICATION_OFFSET_1 = 3167038L;
@@ -102,5 +103,29 @@ public class RoleParserTest {
 
         assertThat(instance.toString()).startsWith(RedisSentinelInstance.class.getSimpleName());
 
+    }
+
+    @Test
+    public void testModelTest() throws Exception {
+
+        RedisMasterInstance master = new RedisMasterInstance();
+        master.setReplicationOffset(1);
+        master.setSlaves(Lists.<ReplicationPartner> newArrayList());
+        assertThat(master.toString()).contains(RedisMasterInstance.class.getSimpleName());
+
+        RedisSlaveInstance slave = new RedisSlaveInstance();
+        slave.setMaster(new ReplicationPartner());
+        slave.setState(RedisSlaveInstance.State.CONNECT);
+        assertThat(slave.toString()).contains(RedisSlaveInstance.class.getSimpleName());
+
+        RedisSentinelInstance sentinel = new RedisSentinelInstance();
+        sentinel.setMonitoredMasters(Lists.<String> newArrayList());
+        assertThat(sentinel.toString()).contains(RedisSentinelInstance.class.getSimpleName());
+
+        ReplicationPartner partner = new ReplicationPartner();
+        partner.setHost(HostAndPort.fromHost("localhost"));
+        partner.setReplicationOffset(12);
+
+        assertThat(partner.toString()).contains(ReplicationPartner.class.getSimpleName());
     }
 }

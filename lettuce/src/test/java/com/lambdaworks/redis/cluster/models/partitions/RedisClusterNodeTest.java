@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis.cluster.models.partitions;
 
 import static org.assertj.core.api.Assertions.*;
 

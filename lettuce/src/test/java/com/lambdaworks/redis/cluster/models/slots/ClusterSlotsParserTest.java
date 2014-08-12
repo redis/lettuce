@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.net.HostAndPort;
 
 public class ClusterSlotsParserTest {
 
@@ -60,4 +61,16 @@ public class ClusterSlotsParserTest {
         ClusterSlotsParser.parse(list);
     }
 
+    @Test
+    public void testModel() throws Exception {
+
+        ClusterSlotRange range = new ClusterSlotRange();
+        range.setFrom(1);
+        range.setTo(2);
+        range.setSlaves(Lists.<HostAndPort> newArrayList());
+        range.setMaster(HostAndPort.fromHost("localhost"));
+
+        assertThat(range.toString()).contains(ClusterSlotRange.class.getSimpleName());
+
+    }
 }

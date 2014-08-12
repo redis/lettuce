@@ -23,6 +23,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 

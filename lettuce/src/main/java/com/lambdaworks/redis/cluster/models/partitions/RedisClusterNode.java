@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis.cluster.models.partitions;
 
 import java.io.Serializable;
 import java.util.List;
@@ -26,11 +26,28 @@ public class RedisClusterNode implements Serializable {
     private List<Integer> slots;
     private Set<NodeFlag> flags;
 
+    public RedisClusterNode() {
+
+    }
+
+    public RedisClusterNode(RedisURI uri, String nodeId, boolean connected, String slaveOf, long pingSentTimestamp,
+            long pongReceivedTimestamp, long configEpoch, List<Integer> slots, Set<NodeFlag> flags) {
+        this.uri = uri;
+        this.nodeId = nodeId;
+        this.connected = connected;
+        this.slaveOf = slaveOf;
+        this.pingSentTimestamp = pingSentTimestamp;
+        this.pongReceivedTimestamp = pongReceivedTimestamp;
+        this.configEpoch = configEpoch;
+        this.slots = slots;
+        this.flags = flags;
+    }
+
     public RedisURI getUri() {
         return uri;
     }
 
-    void setUri(RedisURI uri) {
+    public void setUri(RedisURI uri) {
         this.uri = uri;
     }
 
@@ -38,31 +55,15 @@ public class RedisClusterNode implements Serializable {
         return nodeId;
     }
 
-    void setNodeId(String nodeId) {
+    public void setNodeId(String nodeId) {
         this.nodeId = nodeId;
-    }
-
-    public List<Integer> getSlots() {
-        return slots;
-    }
-
-    public Set<NodeFlag> getFlags() {
-        return flags;
-    }
-
-    void setSlots(List<Integer> slots) {
-        this.slots = slots;
-    }
-
-    void setFlags(Set<NodeFlag> flags) {
-        this.flags = flags;
     }
 
     public boolean isConnected() {
         return connected;
     }
 
-    void setConnected(boolean connected) {
+    public void setConnected(boolean connected) {
         this.connected = connected;
     }
 
@@ -70,7 +71,7 @@ public class RedisClusterNode implements Serializable {
         return slaveOf;
     }
 
-    void setSlaveOf(String slaveOf) {
+    public void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
     }
 
@@ -78,7 +79,7 @@ public class RedisClusterNode implements Serializable {
         return pingSentTimestamp;
     }
 
-    void setPingSentTimestamp(long pingSentTimestamp) {
+    public void setPingSentTimestamp(long pingSentTimestamp) {
         this.pingSentTimestamp = pingSentTimestamp;
     }
 
@@ -86,7 +87,7 @@ public class RedisClusterNode implements Serializable {
         return pongReceivedTimestamp;
     }
 
-    void setPongReceivedTimestamp(long pongReceivedTimestamp) {
+    public void setPongReceivedTimestamp(long pongReceivedTimestamp) {
         this.pongReceivedTimestamp = pongReceivedTimestamp;
     }
 
@@ -94,8 +95,24 @@ public class RedisClusterNode implements Serializable {
         return configEpoch;
     }
 
-    void setConfigEpoch(long configEpoch) {
+    public void setConfigEpoch(long configEpoch) {
         this.configEpoch = configEpoch;
+    }
+
+    public List<Integer> getSlots() {
+        return slots;
+    }
+
+    public void setSlots(List<Integer> slots) {
+        this.slots = slots;
+    }
+
+    public Set<NodeFlag> getFlags() {
+        return flags;
+    }
+
+    public void setFlags(Set<NodeFlag> flags) {
+        this.flags = flags;
     }
 
     @Override

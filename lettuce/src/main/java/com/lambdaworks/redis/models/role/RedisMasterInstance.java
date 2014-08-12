@@ -3,6 +3,7 @@ package com.lambdaworks.redis.models.role;
 import static com.google.common.base.Preconditions.*;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,9 +16,9 @@ import java.util.List;
 public class RedisMasterInstance implements RedisInstance, Serializable {
 
     private long replicationOffset;
-    private List<ReplicationPartner> slaves;
+    private List<ReplicationPartner> slaves = Collections.emptyList();
 
-    protected RedisMasterInstance() {
+    public RedisMasterInstance() {
     }
 
     /**
@@ -47,6 +48,16 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
 
     public List<ReplicationPartner> getSlaves() {
         return slaves;
+    }
+
+    public void setReplicationOffset(long replicationOffset) {
+        this.replicationOffset = replicationOffset;
+    }
+
+    public void setSlaves(List<ReplicationPartner> slaves) {
+
+        checkArgument(slaves != null, "slaves must not be null");
+        this.slaves = slaves;
     }
 
     @Override

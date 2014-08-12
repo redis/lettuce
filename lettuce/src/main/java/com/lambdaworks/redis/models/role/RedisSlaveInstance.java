@@ -15,7 +15,7 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     private ReplicationPartner master;
     private State state;
 
-    protected RedisSlaveInstance() {
+    public RedisSlaveInstance() {
     }
 
     /**
@@ -24,7 +24,7 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
      * @param master master for the replication, must not be {@literal null}
      * @param state slave state, must not be {@literal null}
      */
-    public RedisSlaveInstance(ReplicationPartner master, State state) {
+    RedisSlaveInstance(ReplicationPartner master, State state) {
         checkArgument(master != null, "master must not be null");
         checkArgument(state != null, "state must not be null");
         this.master = master;
@@ -56,11 +56,39 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
         return state;
     }
 
+    public void setMaster(ReplicationPartner master) {
+        checkArgument(master != null, "master must not be null");
+        this.master = master;
+    }
+
+    public void setState(State state) {
+        checkArgument(state != null, "state must not be null");
+        this.state = state;
+    }
+
     /**
      * State of the slave.
      */
     public enum State {
-        CONNECT, CONNECTING, SYNC, CONNECTED;
+        /**
+         * the instance needs to connect to its master.
+         */
+        CONNECT,
+
+        /**
+         * the slave-master connection is in progress.
+         */
+        CONNECTING,
+
+        /**
+         * the master and slave are trying to perform the synchronization.
+         */
+        SYNC,
+
+        /**
+         * the slave is online.
+         */
+        CONNECTED;
     }
 
     @Override

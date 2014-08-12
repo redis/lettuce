@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class CommandDetailParserTest {
 
@@ -43,5 +44,18 @@ public class CommandDetailParserTest {
         assertThat(commandDetail.getFirstKeyPosition()).isEqualTo(1);
         assertThat(commandDetail.getLastKeyPosition()).isEqualTo(2);
         assertThat(commandDetail.getKeyStepCount()).isEqualTo(3);
+    }
+
+    @Test
+    public void testModel() throws Exception {
+        CommandDetail commandDetail = new CommandDetail();
+        commandDetail.setArity(1);
+        commandDetail.setFirstKeyPosition(2);
+        commandDetail.setLastKeyPosition(3);
+        commandDetail.setKeyStepCount(4);
+        commandDetail.setName("theName");
+        commandDetail.setFlags(Sets.<CommandDetail.Flag> newHashSet());
+
+        assertThat(commandDetail.toString()).contains(CommandDetail.class.getSimpleName());
     }
 }

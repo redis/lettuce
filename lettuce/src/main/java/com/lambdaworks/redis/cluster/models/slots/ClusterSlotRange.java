@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster.models.slots;
 import static com.google.common.base.Preconditions.*;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.common.net.HostAndPort;
@@ -18,9 +19,9 @@ public class ClusterSlotRange implements Serializable {
     private int from;
     private int to;
     private HostAndPort master;
-    private List<HostAndPort> slaves;
+    private List<HostAndPort> slaves = Collections.emptyList();
 
-    protected ClusterSlotRange() {
+    public ClusterSlotRange() {
 
     }
 
@@ -40,8 +41,8 @@ public class ClusterSlotRange implements Serializable {
         this.from = from;
         this.to = to;
         this.master = master;
-		this.slaves = slaves;
-	}
+        this.slaves = slaves;
+    }
 
     public int getFrom() {
         return from;
@@ -59,15 +60,34 @@ public class ClusterSlotRange implements Serializable {
         return slaves;
     }
 
-	@Override
-	public String toString() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append(getClass().getSimpleName());
-		sb.append(" [from=").append(from);
-		sb.append(", to=").append(to);
-		sb.append(", master=").append(master);
-		sb.append(", slaves=").append(slaves);
-		sb.append(']');
-		return sb.toString();
-	}
+    public void setFrom(int from) {
+        this.from = from;
+    }
+
+    public void setTo(int to) {
+        this.to = to;
+    }
+
+    public void setMaster(HostAndPort master) {
+        checkArgument(master != null, "master must not be null");
+        this.master = master;
+    }
+
+    public void setSlaves(List<HostAndPort> slaves) {
+
+        checkArgument(slaves != null, "slaves must not be null");
+        this.slaves = slaves;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [from=").append(from);
+        sb.append(", to=").append(to);
+        sb.append(", master=").append(master);
+        sb.append(", slaves=").append(slaves);
+        sb.append(']');
+        return sb.toString();
+    }
 }

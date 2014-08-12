@@ -17,7 +17,7 @@ public class ReplicationPartner implements Serializable {
     private HostAndPort host;
     private long replicationOffset;
 
-    protected ReplicationPartner() {
+    public ReplicationPartner() {
 
     }
 
@@ -31,7 +31,7 @@ public class ReplicationPartner implements Serializable {
         checkArgument(host != null, "host must not be null");
         this.host = host;
         this.replicationOffset = replicationOffset;
-	}
+    }
 
     /**
      *
@@ -47,6 +47,15 @@ public class ReplicationPartner implements Serializable {
      */
     public long getReplicationOffset() {
         return replicationOffset;
+    }
+
+    public void setHost(HostAndPort host) {
+        checkArgument(host != null, "host must not be null");
+        this.host = host;
+    }
+
+    public void setReplicationOffset(long replicationOffset) {
+        this.replicationOffset = replicationOffset;
     }
 
     @Override

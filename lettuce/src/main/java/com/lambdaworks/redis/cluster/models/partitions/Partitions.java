@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis.cluster.models.partitions;
 
 import java.util.Iterator;
 import java.util.List;
@@ -9,10 +9,16 @@ import com.google.common.collect.Lists;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 26.05.14 17:11
  */
-class Partitions implements Iterable<RedisClusterNode> {
+public class Partitions implements Iterable<RedisClusterNode> {
     private List<RedisClusterNode> partitions = Lists.newArrayList();
 
-    RedisClusterNode getPartitionBySlot(int slot) {
+    /**
+     * Retrieve a {@link RedisClusterNode} by it's slot number. This method does not distinguish between masters and slaves.
+     * 
+     * @param slot
+     * @return RedisClusterNode or {@literal null}
+     */
+    public RedisClusterNode getPartitionBySlot(int slot) {
 
         for (RedisClusterNode partition : partitions) {
             if (partition.getSlots().contains(slot)) {

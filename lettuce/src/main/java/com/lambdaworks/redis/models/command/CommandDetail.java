@@ -16,7 +16,7 @@ public class CommandDetail implements Serializable {
     private int lastKeyPosition;
     private int keyStepCount;
 
-    protected CommandDetail() {
+    public CommandDetail() {
     }
 
     /**
@@ -60,6 +60,30 @@ public class CommandDetail implements Serializable {
 
     public int getKeyStepCount() {
         return keyStepCount;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setArity(int arity) {
+        this.arity = arity;
+    }
+
+    public void setFlags(Set<Flag> flags) {
+        this.flags = flags;
+    }
+
+    public void setFirstKeyPosition(int firstKeyPosition) {
+        this.firstKeyPosition = firstKeyPosition;
+    }
+
+    public void setLastKeyPosition(int lastKeyPosition) {
+        this.lastKeyPosition = lastKeyPosition;
+    }
+
+    public void setKeyStepCount(int keyStepCount) {
+        this.keyStepCount = keyStepCount;
     }
 
     @Override

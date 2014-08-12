@@ -3,6 +3,7 @@ package com.lambdaworks.redis.models.role;
 import static com.google.common.base.Preconditions.*;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,9 +14,9 @@ import java.util.List;
  */
 @SuppressWarnings("serial")
 public class RedisSentinelInstance implements RedisInstance, Serializable {
-    private List<String> monitoredMasters;
+    private List<String> monitoredMasters = Collections.emptyList();
 
-    protected RedisSentinelInstance() {
+    public RedisSentinelInstance() {
     }
 
     /**
@@ -43,6 +44,11 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
      */
     public List<String> getMonitoredMasters() {
         return monitoredMasters;
+    }
+
+    public void setMonitoredMasters(List<String> monitoredMasters) {
+        checkArgument(monitoredMasters != null, "list of monitoredMasters must not be null");
+        this.monitoredMasters = monitoredMasters;
     }
 
     @Override

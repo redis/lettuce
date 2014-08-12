@@ -15,6 +15,9 @@ import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>

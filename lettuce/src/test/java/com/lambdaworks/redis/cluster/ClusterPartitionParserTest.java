@@ -4,9 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 public class ClusterPartitionParserTest {
 
@@ -56,6 +64,23 @@ public class ClusterPartitionParserTest {
         Partitions partitions = ClusterPartitionParser.parse(nodes);
         assertThat(partitions.getPartitionBySlot(7000).getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
         assertThat(partitions.getPartitionBySlot(5460).getNodeId()).isEqualTo("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c");
+
+    }
+
+    @Test
+    public void testModel() throws Exception {
+        RedisClusterNode node = new RedisClusterNode();
+        node.setConfigEpoch(1);
+        node.setConnected(true);
+        node.setFlags(Sets.<RedisClusterNode.NodeFlag> newHashSet());
+        node.setNodeId("abcd");
+        node.setPingSentTimestamp(2);
+        node.setPongReceivedTimestamp(3);
+        node.setSlaveOf("me");
+        node.setSlots(Lists.<Integer> newArrayList());
+        node.setUri(new RedisURI("localhost", 1, 1, TimeUnit.DAYS));
+
+        assertThat(node.toString()).contains(RedisClusterNode.class.getSimpleName());
 
     }
 }
