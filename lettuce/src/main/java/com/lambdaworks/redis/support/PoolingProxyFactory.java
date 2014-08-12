@@ -9,7 +9,7 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * always valid connections. You don't need to allocate/free the connections anymore.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 15.05.14 21:12
+ * @since 3.0
  */
 public class PoolingProxyFactory {
 

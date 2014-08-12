@@ -7,7 +7,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 19:50
+ * @since 3.0
  */
 public class ClusterTestUtil {
 

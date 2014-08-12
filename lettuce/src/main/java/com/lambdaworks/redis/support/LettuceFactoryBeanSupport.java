@@ -11,7 +11,7 @@ import com.lambdaworks.redis.RedisURI;
  * factories via Spring configuration.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 21:39
+ * @since 3.0
  */
 public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T> {
 

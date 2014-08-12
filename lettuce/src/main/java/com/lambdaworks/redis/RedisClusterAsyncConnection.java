@@ -8,7 +8,7 @@ import java.util.List;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.05.14 21:14
+ * @since 3.0
  */
 public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
@@ -29,11 +29,12 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count);
 
-	/**
-	 * Get array of Cluster slot to node mappings.
-	 * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
-	 */
-	RedisFuture<List<Object>> clusterSlots();
+    /**
+     * Get array of Cluster slot to node mappings.
+     * 
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
+     */
+    RedisFuture<List<Object>> clusterSlots();
 
     RedisFuture<String> clusterSetSlotNode(int slot, String nodeId);
 

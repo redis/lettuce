@@ -2,7 +2,7 @@ package com.lambdaworks.codec;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 27.05.14 08:36
+ * @since 3.0
  */
 public class CRC16 {
 

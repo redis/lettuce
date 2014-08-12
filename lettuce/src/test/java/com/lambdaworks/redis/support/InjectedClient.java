@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 20:09
+ * @since 3.0
  */
 public class InjectedClient {
 

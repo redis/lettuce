@@ -1,29 +1,20 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
-import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
-import static com.lambdaworks.redis.protocol.CommandType.MONITOR;
-import static com.lambdaworks.redis.protocol.CommandType.PING;
-import static com.lambdaworks.redis.protocol.CommandType.SENTINEL;
-import static com.lambdaworks.redis.protocol.CommandType.SET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.ListOfMapsOutput;
-import com.lambdaworks.redis.output.MapOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
+import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 15.05.14 16:35
+ * @since 3.0
  */
 class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public SentinelCommandBuilder(RedisCodec<K, V> codec) {

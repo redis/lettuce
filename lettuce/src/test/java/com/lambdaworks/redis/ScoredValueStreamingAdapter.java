@@ -1,13 +1,13 @@
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 28.07.14 08:12
+ * @since 3.0
  */
 public class ScoredValueStreamingAdapter implements ScoredValueStreamingChannel {
     private List<ScoredValue> list = new ArrayList<ScoredValue>();

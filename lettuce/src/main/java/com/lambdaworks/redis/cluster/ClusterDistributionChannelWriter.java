@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 17:46
+ * @since 3.0
  */
 class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 

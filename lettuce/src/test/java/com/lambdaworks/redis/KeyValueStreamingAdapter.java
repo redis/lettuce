@@ -12,7 +12,7 @@ import com.lambdaworks.redis.output.KeyValueStreamingChannel;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.05.14 17:22
+ * @since 3.0
  */
 public class KeyValueStreamingAdapter<K, V> implements KeyValueStreamingChannel<K, V> {
 

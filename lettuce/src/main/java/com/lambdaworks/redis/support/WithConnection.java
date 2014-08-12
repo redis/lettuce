@@ -8,7 +8,7 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * 
  * @param <T> Connection type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 15.05.14 21:08
+ * @since 3.0
  */
 public abstract class WithConnection<T> {
 

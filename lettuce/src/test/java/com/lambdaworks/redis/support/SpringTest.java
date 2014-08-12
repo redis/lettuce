@@ -14,7 +14,7 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 21:36
+ * @since 3.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration

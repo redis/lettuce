@@ -1,12 +1,12 @@
 package com.lambdaworks.redis.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 27.05.14 08:43
+ * @since 3.0
  */
 public class SlotHashTest {
     @Test

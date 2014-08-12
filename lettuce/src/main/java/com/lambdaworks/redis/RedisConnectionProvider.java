@@ -5,7 +5,7 @@ package com.lambdaworks.redis;
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <T> Connection type.
- * @since 14.05.14 21:58
+ * @since 3.0
  */
 interface RedisConnectionProvider<T> {
     T createConnection();

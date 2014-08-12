@@ -6,7 +6,7 @@ package com.lambdaworks.redis.output;
  * 
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.05.14 16:19
+ * @since 3.0
  */
 public interface ValueStreamingChannel<V> {
     /**

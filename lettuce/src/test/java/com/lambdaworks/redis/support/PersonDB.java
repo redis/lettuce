@@ -7,7 +7,7 @@ import javax.inject.Qualifier;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 11.08.14 16:43
+ * @since 3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Qualifier

@@ -1,13 +1,8 @@
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +12,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.05.14 17:49
+ * @since 3.0
  */
 @RunWith(Parameterized.class)
 public class SyncAsyncApiConvergenceTest {

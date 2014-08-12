@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
  * Utility for checking a connection's state.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 14.05.14 22:05
+ * @since 3.0
  */
 class Connections {
 

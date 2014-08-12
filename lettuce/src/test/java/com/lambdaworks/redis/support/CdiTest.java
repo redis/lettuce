@@ -17,7 +17,7 @@ import com.lambdaworks.redis.RedisURI;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 20:04
+ * @since 3.0
  */
 public class CdiTest {
 

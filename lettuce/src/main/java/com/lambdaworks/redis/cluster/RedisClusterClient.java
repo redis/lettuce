@@ -27,7 +27,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * provided they avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 17:08
+ * @since 3.0
  */
 public class RedisClusterClient extends AbstractRedisClient {
 

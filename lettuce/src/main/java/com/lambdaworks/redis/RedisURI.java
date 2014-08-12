@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * timeouts within the RedisURI. Either build your self the object
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 14.05.14 21:30
+ * @since 3.0
  */
 @SuppressWarnings("serial")
 public class RedisURI implements Serializable {

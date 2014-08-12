@@ -5,7 +5,7 @@ import java.util.Set;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 12.08.14 07:29
+ * @since 3.0
  */
 public class CommandDetail implements Serializable {
 

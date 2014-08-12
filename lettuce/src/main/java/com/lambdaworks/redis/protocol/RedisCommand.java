@@ -9,7 +9,7 @@ import io.netty.buffer.ByteBuf;
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Output type.
- * @since 31.05.14 14:44
+ * @since 3.0
  */
 public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<T> {
 

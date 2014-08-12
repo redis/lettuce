@@ -14,7 +14,7 @@ import com.lambdaworks.redis.RedisURI;
  * Parser for node information output (CLUSTER NODES).
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 17:20
+ * @since 3.0
  */
 public class ClusterPartitionParser {
 

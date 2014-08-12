@@ -30,7 +30,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 17:28
+ * @since 3.0
  */
 public abstract class AbstractRedisClient {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);

@@ -9,7 +9,7 @@ import java.util.Map;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.05.14 21:14
+ * @since 3.0
  */
 public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
@@ -29,11 +29,12 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     List<K> clusterGetKeysInSlot(int slot, int count);
 
-	/**
-	 * Get array of Cluster slot to node mappings.
-	 * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
-	 */
-	List<Object> clusterSlots();
+    /**
+     * Get array of Cluster slot to node mappings.
+     * 
+     * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
+     */
+    List<Object> clusterSlots();
 
     String clusterSetSlotNode(int slot, String nodeId);
 

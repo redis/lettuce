@@ -17,7 +17,7 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 31.05.14 14:42
+ * @since 3.0
  */
 class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
 

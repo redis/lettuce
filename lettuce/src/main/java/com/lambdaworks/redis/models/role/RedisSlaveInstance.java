@@ -8,7 +8,7 @@ import java.io.Serializable;
  * Redis slave instance.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 03.08.14 10:49
+ * @since 3.0
  */
 @SuppressWarnings("serial")
 public class RedisSlaveInstance implements RedisInstance, Serializable {

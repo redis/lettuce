@@ -14,7 +14,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 14.05.14 12:28
+ * @since 3.0
  */
 class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 

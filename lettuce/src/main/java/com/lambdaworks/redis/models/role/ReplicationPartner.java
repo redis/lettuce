@@ -10,7 +10,7 @@ import com.google.common.net.HostAndPort;
  * Replication partner providing the host and the replication offset.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 03.08.14 10:45
+ * @since 3.0
  */
 @SuppressWarnings("serial")
 public class ReplicationPartner implements Serializable {

@@ -8,7 +8,7 @@ import com.lambdaworks.redis.RedisAsyncConnectionImpl;
  * Connection provider for cluster operations.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 17:41
+ * @since 3.0
  */
 interface ClusterConnectionProvider extends Closeable {
     /**

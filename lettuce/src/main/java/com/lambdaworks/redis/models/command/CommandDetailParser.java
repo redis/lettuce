@@ -12,7 +12,7 @@ import com.google.common.primitives.Ints;
  * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a> command output.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 12.08.14 09:12
+ * @since 3.0
  */
 public class CommandDetailParser {
 

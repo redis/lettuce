@@ -12,7 +12,7 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 20:14
+ * @since 3.0
  */
 class RedisClusterClientCdiBean extends AbstractCdiBean<RedisClusterClient> {
 

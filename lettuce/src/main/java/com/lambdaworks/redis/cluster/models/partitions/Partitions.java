@@ -7,7 +7,7 @@ import com.google.common.collect.Lists;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 17:11
+ * @since 3.0
  */
 public class Partitions implements Iterable<RedisClusterNode> {
     private List<RedisClusterNode> partitions = Lists.newArrayList();

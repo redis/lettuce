@@ -21,7 +21,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 28.07.14 08:24
+ * @since 3.0
  */
 public class RedisClusterSetupTest {
     public static final String host = "127.0.0.1";

@@ -10,7 +10,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * 
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 16.05.14 21:38
+ * @since 3.0
  */
 public interface RedisFuture<V> extends ListenableFuture<V> {
 

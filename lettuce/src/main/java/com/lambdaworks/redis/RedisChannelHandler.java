@@ -19,7 +19,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 15.05.14 16:09
+ * @since 3.0
  */
 public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter implements Closeable {
 

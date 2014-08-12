@@ -9,7 +9,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * and chain the method calls: <code>matches("weight_*").limit(0, 2)</code>.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 20.05.14 20:45
+ * @since 3.0
  */
 public class ScanArgs {
 

@@ -11,7 +11,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * methods from {@link Builder} and chain the method calls: <code>id(1).skipme()</code>.
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 11.08.14 07:19
+ * @since 3.0
  */
 public class KillArgs {
 

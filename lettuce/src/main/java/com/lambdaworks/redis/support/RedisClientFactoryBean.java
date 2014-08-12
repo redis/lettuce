@@ -18,7 +18,7 @@ import com.lambdaworks.redis.RedisURI;
  * </code>
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 15.05.14 21:30
+ * @since 3.0
  */
 public class RedisClientFactoryBean extends LettuceFactoryBeanSupport<RedisClient> {
 

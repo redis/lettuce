@@ -13,7 +13,7 @@ import com.google.common.primitives.Ints;
  * Parser for redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 15:23
+ * @since 3.0
  */
 public class ClusterSlotsParser {
 

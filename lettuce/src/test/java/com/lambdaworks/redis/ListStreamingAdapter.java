@@ -13,7 +13,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <T> Valu-Type.
- * @since 17.05.14 17:21
+ * @since 3.0
  */
 public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T>,
         ScoredValueStreamingChannel<T> {

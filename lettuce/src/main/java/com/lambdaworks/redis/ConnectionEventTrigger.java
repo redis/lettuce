@@ -6,7 +6,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 16.05.14 21:18
+ * @since 3.0
  */
 @ChannelHandler.Sharable
 class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {

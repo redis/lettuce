@@ -12,7 +12,7 @@ import com.google.common.net.HostAndPort;
  * Represents a range of slots together with its master and slaves.
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 09.08.14 15:20
+ * @since 3.0
  */
 @SuppressWarnings("serial")
 public class ClusterSlotRange implements Serializable {

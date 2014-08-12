@@ -12,7 +12,7 @@ import com.google.common.reflect.AbstractInvocationHandler;
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <T> Connection type.
- * @since 23.05.14 22:14
+ * @since 3.0
  */
 class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
     public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit");

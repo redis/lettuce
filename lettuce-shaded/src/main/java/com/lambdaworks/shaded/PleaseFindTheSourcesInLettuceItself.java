@@ -3,9 +3,8 @@ package com.lambdaworks.shaded;
 /**
  * This is a dummy class. Please find the sources and javadoc in the lettuce client itself.
  *
- * @author <a href="mailto:mark.paluch@1und1.de">Mark Paluch</a>
- * @since 04.06.14 08:58
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 3.0
  */
-public class PleaseFindTheSourcesInLettuceItself
-{
+public class PleaseFindTheSourcesInLettuceItself {
 }

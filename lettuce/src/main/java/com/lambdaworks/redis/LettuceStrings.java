@@ -2,7 +2,7 @@ package com.lambdaworks.redis;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>>
- * @since 18.05.14 13:26
+ * @since 3.0
  */
 public class LettuceStrings {
 

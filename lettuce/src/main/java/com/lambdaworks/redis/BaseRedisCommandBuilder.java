@@ -1,11 +1,7 @@
 package com.lambdaworks.redis;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.BooleanOutput;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.ValueOutput;
+import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandOutput;
@@ -13,7 +9,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 15.05.14 16:35
+ * @since 3.0
  */
 class BaseRedisCommandBuilder<K, V> {
     protected RedisCodec<K, V> codec;

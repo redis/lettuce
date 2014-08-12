@@ -10,7 +10,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 26.05.14 08:18
+ * @since 3.0
  */
 public interface RedisChannelWriter<K, V> extends Closeable {
 

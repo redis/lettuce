@@ -9,7 +9,7 @@ import java.util.Map;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 20.05.14 14:40
+ * @since 3.0
  */
 public class MapScanCursor<K, V> extends ScanCursor {
 

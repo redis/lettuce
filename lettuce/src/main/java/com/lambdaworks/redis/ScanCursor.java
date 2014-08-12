@@ -4,7 +4,7 @@ package com.lambdaworks.redis;
  * Generic Cursor data structure.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 20.05.14 14:35
+ * @since 3.0
  */
 public class ScanCursor {
     private String cursor;
