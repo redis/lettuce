@@ -10,14 +10,26 @@ Multiple connections are efficiently managed by the excellent netty NIO
 framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
 is included.
 
-This version of lettuce has been tested against redis 2.8.9 and 3.0-beta8 and Java 6/7/8.
+This version of lettuce has been tested against redis 2.8.13 and 3.0-beta8.
+
+* Works with Java 6, 7 and 8
+* synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
+* [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
+* [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
+* [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
+* [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
+* [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
+* multiple [Connection Interfaces](https://github.com/mp911de/lettuce/wiki/Connection-Interfaces)
+
+
+See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
 I'm developing and maintaining actively the fork of https://github/wg/lettuce
-    
+
 Maven Artifacts/Download
 ----------------
 
-Releases of lettuce are available in the maven central repository. Take also a look at the [Download](https://github.com/mp911de/lettuce/wiki/Download) page in the Wiki.
+Releases of lettuce are available in the maven central repository. Take also a look at the [Download](https://github.com/mp911de/lettuce/wiki/Download) page in the [Wiki](https://github.com/mp911de/lettuce/wiki).
 
 ```xml
 <dependency>
@@ -216,78 +228,18 @@ These interfaces are implemented by the merged connection classes of RedisConnec
 RedisAsyncConnection for async execution which are also available using connect() or connectAsync(). The grouping is
 derived from the redis command grouping.
 
-Connection Pooling
-------------------
-
-The built-in connection pooling provides managed connections. Every pool can allocate sync and async connections.
-  
-```java  
-RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-
-RedisConnection<String, String> connection = pool.allocateConnection();
-
-try {
-    connection.set("key", "value");
-} finally {    
-    pool.freeConnection(connection);
-}
-```
-    
-  Every pool keeps its connections until you explicitly close the pool.
-    
-  This client also provides transparent pooling, so yo don't have to bother yourself with allocating/freeing connections. 
-  
-```java  
-RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-RedisConnection<String, String> connection = PoolingProxyFactory.create(pool);
-
-connection.set("a", "b");
-connection.set("x", "y");
-
-pool.close();
-```  
-
-Codecs
-------
-
-Lettuce supports pluggable codecs responsible for encoding and decoding keys
-and values. The default codec supports UTF-8 encoded String keys and values.
-
-Each connection may have its own codec passed to the extended
-RedisClient.connect methods:
-
-```java
-RedisConnection<K, V> connect(RedisCodec<K, V> codec)
-RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec)
-RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec)
-```
-
-For pub/sub connections channel names and patterns are treated as keys,
-messages are treated as values.
-
-  
-Spring Support
---------------
-  
-Lettuce provides a factory for the RedisClient. You need to specify a redisUri or a URI string in order to
-create the client.
-
-```xml  
-<bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
-    <property name="password" value="mypassword"/>
-    <!-- Redis Uri Format: redis://host[:port]/database -->
-    <!-- Redis Uri: Specify Database as Path -->
-    <property name="uri" value="redis://localhost/12"/>
-    
-    <!-- Redis Sentinel Uri Format: redis-sentinel://host[:port][,host[:port][,host[:port]]/database#masterId -->
-    <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Master Id as Fragment. -->
-    <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster"/>
-</bean>
-```
-
 Performance
 -----------
 
 Lettuce is made for performance. Issuing (and returning) 1000 PING's over the sync API takes on a MacBook with Intel i7 an average of 190ms to complete all.
 The async API can issue 1000 commands within 20ms.
     
+License
+-------
+* [Apache License 2.0] (http://www.apache.org/licenses/LICENSE-2.0)
+* Fork of https://github.com/wg/lettuce
+
+Contributing
+-------
+Github is for social coding: if you want to write code, I encourage contributions through pull requests from forks of this repository. 
+Create Github tickets for bugs and new features and comment on the ones that you are interested in.
