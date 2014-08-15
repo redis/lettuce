@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import java.util.Date;
 import java.util.List;
 
+import com.lambdaworks.redis.protocol.CommandType;
+
 /**
  * Asynchronous executed commands for Server Control.
  * 
@@ -74,11 +76,25 @@ public interface RedisServerAsyncConnection<K, V> {
     RedisFuture<String> clientList();
 
     /**
-     * Returns Array reply of details about all Redis commands.
+     * Returns an array reply of details about all Redis commands.
      * 
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
      */
     RedisFuture<List<Object>> command();
+
+    /**
+     * Returns an array reply of details about the requested commands.
+     *
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
+     */
+    RedisFuture<List<Object>> commandInfo(String... commands);
+
+    /**
+     * Returns an array reply of details about the requested commands.
+     *
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
+     */
+    RedisFuture<List<Object>> commandInfo(CommandType... commands);
 
     /**
      * Get total number of Redis commands.

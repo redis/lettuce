@@ -9,7 +9,8 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 
 /**
- * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a> command output.
+ * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
+ * href="http://redis.io/commands/command-info">COMMAND INFO</a>command output.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
@@ -44,7 +45,7 @@ public class CommandDetailParser {
     }
 
     /**
-     * Parse the output of the redis COMMAND command and convert to a list of {@link CommandDetail}.
+     * Parse the output of the redis COMMAND/COMMAND INFO command and convert to a list of {@link CommandDetail}.
      * 
      * @param commandOutput the command output, must not be {@literal null}
      * @return RedisInstance

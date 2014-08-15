@@ -28,8 +28,10 @@ public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void set(ByteBuffer bytes) {
-
-        stack.peek().add(codec.decodeValue(bytes));
+        if (bytes != null) {
+            V value = codec.decodeValue(bytes);
+            stack.peek().add(value);
+        }
     }
 
     @Override

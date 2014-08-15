@@ -23,6 +23,7 @@ import com.lambdaworks.redis.models.command.CommandDetail;
 import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
+import com.lambdaworks.redis.protocol.CommandType;
 
 public class ServerCommandTest extends AbstractCommandTest {
     @Test
@@ -100,6 +101,22 @@ public class ServerCommandTest extends AbstractCommandTest {
 
         List<CommandDetail> commands = CommandDetailParser.parse(result);
         assertThat(commands).hasSameSizeAs(result);
+    }
+
+    @Test
+    public void commandInfo() throws Exception {
+
+        List<Object> result = redis.commandInfo(CommandType.GETRANGE, CommandType.SET);
+
+        assertThat(result.size()).isEqualTo(2);
+
+        List<CommandDetail> commands = CommandDetailParser.parse(result);
+        assertThat(commands).hasSameSizeAs(result);
+
+        result = redis.commandInfo("a missing command");
+
+        assertThat(result.size()).isEqualTo(0);
+
     }
 
     @Test

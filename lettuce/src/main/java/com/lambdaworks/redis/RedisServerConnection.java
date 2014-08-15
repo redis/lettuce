@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import java.util.Date;
 import java.util.List;
 
+import com.lambdaworks.redis.protocol.CommandType;
+
 /**
  * Synchronous executed commands for Server Control.
  * 
@@ -74,11 +76,25 @@ public interface RedisServerConnection<K, V> {
     String clientList();
 
     /**
-     * Returns Array reply of details about all Redis commands.
+     * Returns an array reply of details about all Redis commands.
      * 
      * @return List&lt;Object&gt; array-reply
      */
     List<Object> command();
+
+    /**
+     * Returns an array reply of details about the requested commands.
+     *
+     * @return List&lt;Object&gt; array-reply
+     */
+    List<Object> commandInfo(String... commands);
+
+    /**
+     * Returns an array reply of details about the requested commands.
+     *
+     * @return List&lt;Object&gt; array-reply
+     */
+    List<Object> commandInfo(CommandType... commands);
 
     /**
      * Get total number of Redis commands.

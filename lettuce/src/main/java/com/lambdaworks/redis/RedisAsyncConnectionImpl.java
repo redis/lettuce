@@ -170,6 +170,21 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<List<Object>> commandInfo(String... commands) {
+        return dispatch(commandBuilder.commandInfo(commands));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> commandInfo(CommandType... commands) {
+        String[] stringCommands = new String[commands.length];
+        for (int i = 0; i < commands.length; i++) {
+            stringCommands[i] = commands[i].name();
+        }
+
+        return commandInfo(stringCommands);
+    }
+
+    @Override
     public RedisFuture<Long> commandCount() {
         return dispatch(commandBuilder.commandCount());
     }
