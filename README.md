@@ -7,22 +7,12 @@ Lettuce is a scalable thread-safe Redis client providing both synchronous and
 asynchronous connections. Multiple threads may share one connection provided
 they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
 Multiple connections are efficiently managed by the excellent netty NIO
-framework.
+framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
+is included.
 
-This version of lettuce has been tested against redis 2.8.9. 
+This version of lettuce has been tested against redis 2.8.9 and 3.0-beta8 and Java 6/7/8.
 
-Lettuce works with:
-
-* Java 6
-* Java 7
-* Java 8
-
-Currently following commands are __not yet__ supported:
-
-* Server Commands: MONITOR
-
-I'm pursuing the client code as a fork since the latest changes weren't merged back into https://github/wg/lettuce
-I'd love not adding yet another Java redis client, but unfortunately it's the current situation.
+I'm developing and maintaining actively the fork of https://github/wg/lettuce
     
 Maven Artifacts/Download
 ----------------
@@ -33,7 +23,7 @@ Releases of lettuce are available in the maven central repository. Take also a l
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.Beta2</version>
+  <version>3.0.Beta3</version>
 </dependency>
 ```    
 
@@ -191,7 +181,11 @@ run into MOVED errors (because of slot imports/migrations), you can reload the p
   
     RedisClusterClient.reloadPartitions
     
+Redis data structures
+--------
 
+Redis uses data structures for same commands (CLUSTER NODES, COMMAND INFO, ROLE). lettuce has support for these data models
+by providing parsers and structures. 
 
 Connection Interfaces
 ---------------------
