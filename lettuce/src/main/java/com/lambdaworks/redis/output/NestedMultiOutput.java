@@ -26,7 +26,7 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     public NestedMultiOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<Object>());
         stack = new LinkedList<List<Object>>();
-        depth = 1;
+        depth = 0;
     }
 
     @Override
@@ -46,15 +46,18 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void complete(int depth) {
-        if (depth > this.depth) {
-            Object o = output.remove(output.size() - 1);
-            stack.push(output);
-            output = new ArrayList<Object>();
-            output.add(o);
-        } else if (depth > 0 && depth < this.depth) {
-            stack.peek().add(output);
+        if (depth > 0 && depth < this.depth) {
             output = stack.pop();
+            this.depth--;
         }
-        this.depth = depth;
+    }
+
+    @Override
+    public void multi(int count) {
+        ArrayList<Object> a = new ArrayList<Object>(count);
+        output.add(a);
+        stack.push(output);
+        output = a;
+        this.depth++;
     }
 }

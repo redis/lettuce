@@ -16,6 +16,7 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.output.ValueListOutput;
 import com.lambdaworks.redis.output.ValueOutput;
@@ -69,6 +70,36 @@ public class StateMachineTest {
         ByteBuf buffer = buffer("*2\r\n$-1\r\n$2\r\nok\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get()).isEqualTo(Arrays.asList(null, "ok"));
+    }
+
+    @Test
+    public void multiEmptyArray1() throws Exception {
+        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<String, String>(codec);
+        ByteBuf buffer = buffer("*2\r\n$3\r\nABC\r\n*0\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(output.get().get(0)).isEqualTo("ABC");
+        assertThat(output.get().get(1)).isEqualTo(Arrays.asList());
+        assertThat(output.get().size()).isEqualTo(2);
+    }
+
+    @Test
+    public void multiEmptyArray2() throws Exception {
+        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<String, String>(codec);
+        ByteBuf buffer = buffer("*2\r\n*0\r\n$3\r\nABC\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(output.get().get(0)).isEqualTo(Arrays.asList());
+        assertThat(output.get().get(1)).isEqualTo("ABC");
+        assertThat(output.get().size()).isEqualTo(2);
+    }
+
+    @Test
+    public void multiEmptyArray3() throws Exception {
+        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<String, String>(codec);
+        ByteBuf buffer = buffer("*2\r\n*2\r\n$2\r\nAB\r\n$2\r\nXY\r\n*0\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(output.get().get(0)).isEqualTo(Arrays.asList("AB", "XY"));
+        assertThat(output.get().get(1)).isEqualTo(Arrays.asList());
+        assertThat(output.get().size()).isEqualTo(2);
     }
 
     @Test
