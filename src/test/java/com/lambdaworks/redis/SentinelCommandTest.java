@@ -207,6 +207,15 @@ public class SentinelCommandTest extends AbstractCommandTest {
         connect.close();
     }
 
+    @Test
+    public void connectToRedisUsingSentinelWithReconnect() throws Exception {
+        RedisConnection<String, String> connect = sentinelClient.connect();
+        connect.ping();
+        connect.quit();
+        connect.ping();
+        connect.close();
+    }
+
     protected static RedisClient getRedisSentinelClient() {
         return new RedisClient(RedisURI.Builder.sentinel("localhost", "mymaster").build());
     }

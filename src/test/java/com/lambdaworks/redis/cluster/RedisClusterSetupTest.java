@@ -56,8 +56,14 @@ public class RedisClusterSetupTest {
         redis2.flushall();
         redis2.flushdb();
 
+        redis1.clusterReset(false);
+        redis2.clusterReset(false);
+
         redis1.clusterReset(true);
         redis2.clusterReset(true);
+
+        redis1.clusterFlushslots();
+        redis2.clusterFlushslots();
         Thread.sleep(100);
     }
 

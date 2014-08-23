@@ -8,11 +8,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Supplier;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -64,6 +60,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public ConnectionWatchdog(Bootstrap bootstrap, Timer timer, Supplier<SocketAddress> socketAddressSupplier) {
         this.bootstrap = bootstrap;
         this.timer = timer;
+        this.socketAddressSupplier = socketAddressSupplier;
     }
 
     public void setReconnect(boolean reconnect) {

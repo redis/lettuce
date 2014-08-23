@@ -106,6 +106,30 @@ public class RoleParserTest {
     }
 
     @Test
+    public void sentinelWithoutMasters() throws Exception {
+
+        List<?> input = ImmutableList.of("sentinel");
+
+        RedisInstance result = RoleParser.parse(input);
+        RedisSentinelInstance instance = (RedisSentinelInstance) result;
+
+        assertThat(instance.getMonitoredMasters()).hasSize(0);
+
+    }
+
+    @Test
+    public void sentinelMastersIsNotAList() throws Exception {
+
+        List<?> input = ImmutableList.of("sentinel", "");
+
+        RedisInstance result = RoleParser.parse(input);
+        RedisSentinelInstance instance = (RedisSentinelInstance) result;
+
+        assertThat(instance.getMonitoredMasters()).hasSize(0);
+
+    }
+
+    @Test
     public void testModelTest() throws Exception {
 
         RedisMasterInstance master = new RedisMasterInstance();

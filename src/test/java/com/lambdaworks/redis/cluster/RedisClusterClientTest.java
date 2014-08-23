@@ -209,6 +209,14 @@ public class RedisClusterClientTest {
             }
         }, timeout(seconds(5)));
 
+        RedisFuture<Long> replication = redis1.waitForReplication(1, 5);
+        assertThat(replication.get()).isEqualTo(0L);
+    }
+
+    @Test
+    public void testAsking() throws Exception {
+        clusterClient.reloadPartitions();
+        assertThat(redis1.asking().get()).isEqualTo("OK");
     }
 
     @Test
