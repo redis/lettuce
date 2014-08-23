@@ -202,4 +202,10 @@ public class ClientTest extends AbstractCommandTest {
         }
         client.shutdown();
     }
+
+    @Test
+    public void testExceptionWithCause() throws Exception {
+        RedisException e = new RedisException(new RuntimeException());
+        assertThat(e).hasCauseExactlyInstanceOf(RuntimeException.class);
+    }
 }
