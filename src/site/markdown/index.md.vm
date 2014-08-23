@@ -1,0 +1,76 @@
+lettuce - A scalable Java Redis client
+=============
+
+[![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
+
+Lettuce is a scalable thread-safe Redis client providing both synchronous and
+asynchronous connections. Multiple threads may share one connection provided
+they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
+Multiple connections are efficiently managed by the excellent netty NIO
+framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
+is included.
+
+This version of lettuce has been tested against redis 2.8.13 and 3.0-beta8.
+
+* Works with Java 6, 7 and 8
+* synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
+* [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
+* [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
+* [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
+* [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
+* [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
+* multiple [Connection Interfaces](https://github.com/mp911de/lettuce/wiki/Connection-Interfaces)
+
+
+See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
+
+I'm developing and maintaining actively the fork of https://github/wg/lettuce
+
+
+How to get
+-------------
+
+Maven:
+
+```
+<dependency>
+  <groupId>biz.paluch.redis</groupId>
+  <artifactId>lettuce</artifactId>
+  <version>3.0.Beta3</version>
+</dependency>
+```
+   
+Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` package to prevent version conflicts)
+   
+```
+<dependency>
+  <groupId>biz.paluch.redis</groupId>
+  <artifactId>lettuce</artifactId>
+  <version>3.0.Beta3</version>
+  <classifier>shaded</classifier>
+  
+  <exclusions>
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-common</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
+All versions: [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22biz.paluch.redis%22%20AND%20a%3A%22lettuce%22)
+
+Snapshots: [Sonatype OSS Repository](https://oss.sonatype.org/#nexus-search;gav~biz.paluch.redis~lettuce~~~) 
+

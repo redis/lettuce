@@ -13,6 +13,7 @@ Download lettuce
 |                   | Download      | Checksum      | Signature     |
 | ----------------- |:-------------:|:-------------:|:-------------:|
 | lettuce (jar) |[lettuce-${lettuce-release-version}.jar] (http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar)|[lettuce-${lettuce-release-version}.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar.md5)|[lettuce-${lettuce-release-version}.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar.asc)|
+| lettuce shaded (jar) |[lettuce-${lettuce-release-version}-shaded.jar] (http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar)|[lettuce-${lettuce-release-version}-shaded.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar.md5)|[lettuce-${lettuce-release-version}-shaded.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar.asc)|
 
 It is essential that you verify the integrity of the downloaded files using the PGP or MD5 signatures.
 

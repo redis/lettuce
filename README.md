@@ -37,6 +37,38 @@ Releases of lettuce are available in the maven central repository. Take also a l
   <artifactId>lettuce</artifactId>
   <version>3.0.Beta3</version>
 </dependency>
+```
+
+Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` package to prevent version conflicts)
+
+```xml
+<dependency>
+  <groupId>biz.paluch.redis</groupId>
+  <artifactId>lettuce</artifactId>
+  <version>3.0.Beta3</version>
+  <classifier>shaded</classifier>
+  <exclusions>
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-common</artifactId>
+    </exclusion>
+
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport</artifactId>
+    </exclusion>
+
+    <exclusion>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </exclusion>
+
+    <exclusion>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
 ```    
 
 or snapshots at https://oss.sonatype.org/content/repositories/snapshots/
