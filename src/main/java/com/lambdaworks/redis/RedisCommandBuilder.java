@@ -3,6 +3,7 @@ package com.lambdaworks.redis;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -545,7 +546,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, Map<K, String>> pubsubNumsub(K... pattern) {
+    public Command<K, V, Map<K, Long>> pubsubNumsub(K... pattern) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NUMSUB).addKeys(pattern);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
     }

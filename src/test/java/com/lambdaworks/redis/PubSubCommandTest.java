@@ -118,9 +118,9 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         pubsub.subscribe(channel);
         Thread.sleep(100);
 
-        Map<String, String> result = redis.pubsubNumsub(channel);
+        Map<String, Long> result = redis.pubsubNumsub(channel);
         assertThat(result).hasSize(1);
-        assertThat(result.get(channel)).isEqualTo("1");
+        assertThat(result.get(channel)).isEqualTo(1L);
     }
 
     @Test

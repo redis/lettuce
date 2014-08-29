@@ -287,5 +287,9 @@ travis-install:
 	make -C work/redis-git clean
 	make -C work/redis-git -j4
 
+clean:
+	rm -Rf work/
+	rm -Rf target/
+
 .PHONY: test
 

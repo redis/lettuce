@@ -2,12 +2,12 @@
 
 package com.lambdaworks.redis.output;
 
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
-
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * {@link Map} of keys and values output.
@@ -32,6 +32,18 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
         }
 
         V value = (bytes == null) ? null : codec.decodeValue(bytes);
+        output.put(key, value);
+        key = null;
+    }
+
+    @Override
+    public void set(long integer) {
+        if (key == null) {
+            key = (K) Long.valueOf(integer);
+            return;
+        }
+
+        V value = (V) Long.valueOf(integer);
         output.put(key, value);
         key = null;
     }
