@@ -9,6 +9,7 @@ import org.junit.Test;
  * @since 3.0
  */
 public class SlotHashTest {
+
     @Test
     public void testHash() throws Exception {
         int result = SlotHash.getSlot("123456789".getBytes());
