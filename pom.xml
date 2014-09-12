@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+<modelVersion>4.0.0</modelVersion>
 
     <groupId>biz.paluch.redis</groupId>
     <artifactId>lettuce</artifactId>
@@ -41,7 +42,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <github.site.upload.skip>true</github.site.upload.skip>
-        <lettuce-release-version>3.0.Beta3</lettuce-release-version>
+        <lettuce-release-version>3.0.Final3</lettuce-release-version>
     </properties>
 
     <scm>
@@ -50,20 +51,6 @@
         <url>http://github.com/mp911de/lettuce</url>
         <tag>HEAD</tag>
     </scm>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>Nexus Release Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <prerequisites>
         <maven>3.0</maven>
@@ -255,7 +242,6 @@
                 </configuration>
             </plugin>
 
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -395,6 +381,85 @@
                             </relocations>
                             <minimizeJar>false</minimizeJar>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>src</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/assembly/src.xml</descriptor>
+                            </descriptors>
+                            <tarLongFileMode>gnu</tarLongFileMode>
+                            <attach>false</attach>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>bin</id>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/assembly/bin.xml</descriptor>
+                            </descriptors>
+                            <tarLongFileMode>gnu</tarLongFileMode>
+                            <attach>false</attach>
+                        </configuration>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>net.ju-n.maven.plugins</groupId>
+                <artifactId>checksum-maven-plugin</artifactId>
+                <version>1.2</version>
+                <configuration>
+                    <algorithms>
+                        <algorithm>MD5</algorithm>
+                        <algorithm>SHA-1</algorithm>
+                    </algorithms>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>artifacts</id>
+                        <goals>
+                            <goal>artifacts</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+
+                    <execution>
+                        <id>files</id>
+                        <goals>
+                            <goal>files</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>*.gz</include>
+                                        <include>*.zip</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
                         </configuration>
                     </execution>
                 </executions>

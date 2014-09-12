@@ -1,0 +1,72 @@
+              lettuce 3.0.Final RELEASE NOTES
+
+I'm pleased to announce the lettuce 3.0.Final release. Lettuce is a scalable
+thread-safe Redis client providing both synchronous and asynchronous
+connections. Multiple threads may share one connection provided they avoid
+blocking and transactional operations such as BLPOP, and MULTI/EXEC. Multiple
+connections are efficiently managed by the excellent netty NIO framework.
+Support for advanced Redis features such as Sentinel, Cluster and Redis data
+models are included.
+
+Enhancements
+------------
+* Redis Cluster support (Redis 3.0)
+* Redis Sentinel support (Redis 2.x)
+* Upgrade to netty 4.0.19 (from netty 3.x)
+* CDI and Spring support (Bean Factory for the Redis Client)
+* Database and Authentication on initial connect
+* Streaming API: Instead of receiving huge lists and maps you can now provide your own StreamingChannel which is notified on every incoming key/value
+* Connection-Pooling and transparent Connection-Pooling
+* Listenable Futures (using Guava) for true async operations
+* Extended documentation
+* Standalone and shaded Jar
+* Relaxed data models for external use, moved ClusterPartitionParser and models to own package
+* Added shutdown with timeout, used minimal timeout for shutdown
+* Minor API improvements (connect with URI), tons of docs and argument checks
+* Use AssertJ for assertions #13
+* Additional cluster tests (new suite) #5
+* Updated documentation
+* Add tests for untested code #4
+* Integration on Travis CI
+* Included redis test setup
+* Switched coverage provider to Jacoco
+* Switched from gihub site plugin to maven-scm-publish plugin
+* Changed redis ports from 63xx to 64xx for testing
+
+Fixes
+-----
+* Bugfixes in reconnection and stability
+* Prevent refCnt exceptions in case of parallel close & read
+* Fixed PubSub API
+* Fixed command leaking when client is not yet online/disconnected and commands are issued while the client is in the re-connect phase
+* Changed channel handling to aviod NPE
+* Fixed clientKill because of changed clientList output
+* Adjusted resource cleanup to prevent memory leaks
+* Fixed NPE on sync cluster connections
+* Fixed CDI/Spring support and added tests for CDI/Spring
+* Fixed Connections.close, Exception was thrown even if right connection object was supplied
+* Support for qualified clients in case there are unqualified instances
+* Code cleanup, fixing sonar violations
+* Minor fixes like typos, Maven site on http://redis.paluch.biz
+* Improved test stability for a stable and reproducible build
+
+Commands
+--------
+* SENTINEL MASTERS command
+* DEBUG SEGFAULT command
+* PUBSUB command
+* Sorted Set commands ZLEXCOUNT, ZRANGEBYLEX, ZREMRANGEBYLEX
+* Add support and parser for ROLE command #6
+* CLUSTER SLOTS command #7
+* COMMAND command #8
+* COMMAND COUNT #9
+* COMMAND INFO #11
+* Extended CLIENT KILL #12
+* Support for the latest redis commands (HyperLogLog, SCAN, TIME and many more)
+
+lettuce 3.0.Final requires a minimum of Java 6 to build and run. It is tested against Redis 2.8 and Redis 3.0.
+
+For complete information on lettuce see the websites:
+
+* http://github.com/mp911de/lettuce
+* http://redis.paluch.biz.
