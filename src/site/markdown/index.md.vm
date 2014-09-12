@@ -36,7 +36,7 @@ Maven:
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.Beta3</version>
+  <version>${lettuce-release-version}</version>
 </dependency>
 ```
    
@@ -46,7 +46,7 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.Beta3</version>
+  <version>${lettuce-release-version}</version>
   <classifier>shaded</classifier>
   
   <exclusions>
