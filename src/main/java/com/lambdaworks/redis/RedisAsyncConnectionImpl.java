@@ -1258,7 +1258,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
-        return dispatch(commandBuilder.scan(scanArgs));
+        return dispatch(commandBuilder.scan(scanCursor, scanArgs));
     }
 
     @Override
