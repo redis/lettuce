@@ -2,18 +2,20 @@ Download lettuce
 ======================
 
  lettuce is distributed under the
- [Apache License, Version 2.0] (http://www.apache.org/licenses/LICENSE-2.0.txt).
+ [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
   The link in the Mirrors column should display a list of available mirrors with a
   default selection based on your inferred location. If you do not see that page,
   try a different browser.  The checksum and signature are links to
   the originals on the main distribution server.
 
+|                   | Download     | Checksum     | Signature    |
+| ----------------- |:-------------|:-------------|:-------------|
+| lettuce (jar) | [lettuce-${lettuce-release-version}.jar](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar)|[lettuce-${lettuce-release-version}.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar.md5)|[lettuce-${lettuce-release-version}.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar.asc)|
+| lettuce shaded (jar) | [lettuce-${lettuce-release-version}-shaded.jar](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar)|[lettuce-${lettuce-release-version}-shaded.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar.md5)|[lettuce-${lettuce-release-version}-shaded.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar.asc)|
+| lettuce binary (zip) | [lettuce-${lettuce-release-version}-bin.zip](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.zip)|[lettuce-${lettuce-release-version}-bin.zip.md5](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.zip.md5)|[lettuce-${lettuce-release-version}-bin.zip.asc](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.zip.asc)|
+| lettuce binary (tar.gz) | [lettuce-${lettuce-release-version}-bin.tar.gz](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.tar.gz)|[lettuce-${lettuce-release-version}-bin.tar.gz.md5](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.tar.gz.md5)|[lettuce-${lettuce-release-version}-bin.tar.gz.asc](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.tar.gz.asc)|
 
-|                   | Download      | Checksum      | Signature     |
-| ----------------- |:-------------:|:-------------:|:-------------:|
-| lettuce (jar) |[lettuce-${lettuce-release-version}.jar] (http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar)|[lettuce-${lettuce-release-version}.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar.md5)|[lettuce-${lettuce-release-version}.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}.jar.asc)|
-| lettuce shaded (jar) |[lettuce-${lettuce-release-version}-shaded.jar] (http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar)|[lettuce-${lettuce-release-version}-shaded.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar.md5)|[lettuce-${lettuce-release-version}-shaded.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce-release-version}/lettuce-${lettuce-release-version}-shaded.jar.asc)|
 
 It is essential that you verify the integrity of the downloaded files using the PGP or MD5 signatures.
 
@@ -29,7 +31,6 @@ than from a mirror. Then verify the signatures using
 
 Alternatively, you can verify the MD5 signature on the files. A unix program called md5 or md5sum is included
 in many unix distributions.
-
 
 
 Previous Releases

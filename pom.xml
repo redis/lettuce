@@ -331,15 +331,6 @@
                     <skipCheckin>${github.site.upload.skip}</skipCheckin>
                     <pubScmUrl>scm:git:https://github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>publish-scm</id>
-                        <goals>
-                            <goal>publish-scm</goal>
-                        </goals>
-                        <phase>post-site</phase>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
