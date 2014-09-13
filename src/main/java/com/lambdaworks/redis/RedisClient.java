@@ -29,6 +29,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
  * 
  * @author Will Glozer
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class RedisClient extends AbstractRedisClient {
 
@@ -371,6 +372,18 @@ public class RedisClient extends AbstractRedisClient {
         checkForRedisURI();
         checkArgument(codec != null, "RedisCodec must not be null");
         return connectSentinelAsyncImpl(codec, redisURI);
+    }
+
+    /**
+     * Creates an asynchronous connection to Sentinel. You must supply a valid RedisURI containing a redis host or one or more
+     * sentinels.
+     *
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @return A new connection.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public RedisSentinelAsyncConnection<String, String> connectSentinelAsync(RedisURI redisURI) {
+        return (RedisSentinelAsyncConnection<String, String>) connectSentinelAsyncImpl((RedisCodec) codec, redisURI);
     }
 
     private <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsyncImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
