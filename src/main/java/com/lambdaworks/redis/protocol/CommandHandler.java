@@ -233,16 +233,28 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (closed) {
 
-            List<RedisCommand<K, V, ?>> toCancel = new ArrayList<RedisCommand<K, V, ?>>(queue.size() + commandBuffer.size());
+            int size = 0;
+            if (queue != null) {
+                size += queue.size();
+            }
 
-            toCancel.addAll(queue);
-            toCancel.addAll(commandBuffer);
+            if (commandBuffer != null) {
+                size += commandBuffer.size();
+            }
 
-            queue.clear();
-            queue = null;
+            List<RedisCommand<K, V, ?>> toCancel = new ArrayList<RedisCommand<K, V, ?>>(size);
 
-            commandBuffer.clear();
-            commandBuffer = null;
+            if (queue != null) {
+                toCancel.addAll(queue);
+                queue.clear();
+                queue = null;
+            }
+
+            if (commandBuffer != null) {
+                toCancel.addAll(commandBuffer);
+                commandBuffer.clear();
+                commandBuffer = null;
+            }
 
             for (RedisCommand<K, V, ?> cmd : toCancel) {
                 if (cmd.getOutput() != null) {
