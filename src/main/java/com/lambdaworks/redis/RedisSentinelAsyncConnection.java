@@ -43,9 +43,9 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * Provides a list of slaves for the master with the specified name.
      * 
      * @param key
-     * @return RedisFuture&lt;Map&lt;K, V&gt;&gt;
+     * @return RedisFuture&lt;List&lt;Map&lt;K, V&gt;&gt;&gt;
      */
-    RedisFuture<Map<K, V>> slaves(K key);
+    RedisFuture<List<Map<K, V>>> slaves(K key);
 
     /**
      * This command will reset all the masters with matching name.

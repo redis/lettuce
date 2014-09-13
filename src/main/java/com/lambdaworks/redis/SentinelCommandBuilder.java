@@ -36,9 +36,9 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Map<K, V>> slaves(K key) {
+    public Command<K, V, List<Map<K, V>>> slaves(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLAVES).addKey(key);
-        return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
+        return createCommand(SENTINEL, new ListOfMapsOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> reset(K key) {

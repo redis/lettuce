@@ -19,6 +19,9 @@ import org.junit.*;
 
 public class SentinelCommandTest extends AbstractCommandTest {
 
+    public static final String MASTER_ID = "mymaster";
+    public static final String MASTER_ID_2 = "mymaster2";
+    public static final String SLAVE_ID = "myslave";
     private static RedisClient sentinelClient;
     private RedisSentinelAsyncConnection<String, String> sentinel;
 
@@ -45,7 +48,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getMasterAddr() throws Exception {
 
-        Future<SocketAddress> result = sentinel.getMasterAddrByName("mymaster");
+        Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
 
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
@@ -55,7 +58,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaveAddr() throws Exception {
 
-        Future<SocketAddress> result = sentinel.getMasterAddrByName("myslave");
+        Future<SocketAddress> result = sentinel.getMasterAddrByName(SLAVE_ID);
 
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
@@ -81,7 +84,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void sentinelConnectWithFailover() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel("localhost", 1234, "mymaster").withSentinel("localhost")
+        RedisClient client = new RedisClient(RedisURI.Builder.sentinel("localhost", 1234, MASTER_ID).withSentinel("localhost")
                 .build());
 
         RedisSentinelAsyncConnection<String, String> sentinelConnection = client.connectSentinelAsync();
@@ -110,7 +113,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaveDownstate() throws Exception {
 
-        Future<Map<String, String>> result = sentinel.master("myslave");
+        Future<Map<String, String>> result = sentinel.master(SLAVE_ID);
         Map<String, String> map = result.get();
         assertThat(map.get("flags"), containsString("disconnected"));
 
@@ -119,7 +122,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getMaster() throws Exception {
 
-        Future<Map<String, String>> result = sentinel.master("mymaster");
+        Future<Map<String, String>> result = sentinel.master(MASTER_ID);
         Map<String, String> map = result.get();
         assertThat(map.get("ip")).isEqualTo("127.0.0.1"); // !! IPv4/IPv6
         assertThat(map.get("role-reported")).isEqualTo("master");
@@ -150,15 +153,15 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void getSlaves() throws Exception {
 
-        Future<Map<String, String>> result = sentinel.slaves("mymaster");
-        result.get();
+        Future<List<Map<String, String>>> result = sentinel.slaves(MASTER_ID);
+        assertThat(result.get()).hasSize(0);
 
     }
 
     @Test
     public void reset() throws Exception {
 
-        Future<Long> result = sentinel.reset("myslave");
+        Future<Long> result = sentinel.reset(SLAVE_ID);
         Long val = result.get();
         assertThat(val.intValue()).isEqualTo(1);
 
@@ -167,7 +170,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void failover() throws Exception {
 
-        RedisFuture<String> mymaster = sentinel.failover("mymaster");
+        RedisFuture<String> mymaster = sentinel.failover(MASTER_ID);
         mymaster.get();
 
     }
@@ -175,10 +178,10 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void monitor() throws Exception {
 
-        Future<String> removeResult = sentinel.remove("mymaster2");
+        Future<String> removeResult = sentinel.remove(MASTER_ID_2);
         removeResult.get();
 
-        Future<String> result = sentinel.monitor("mymaster2", "127.0.0.1", 8989, 2);
+        Future<String> result = sentinel.monitor(MASTER_ID_2, "127.0.0.1", 8989, 2);
         String val = result.get();
         assertThat(val).isEqualTo("OK");
 
@@ -195,7 +198,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void set() throws Exception {
 
-        Future<String> result = sentinel.set("mymaster", "down-after-milliseconds", "1000");
+        Future<String> result = sentinel.set(MASTER_ID, "down-after-milliseconds", "1000");
         String val = result.get();
         assertThat(val).isEqualTo("OK");
     }
@@ -217,7 +220,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     }
 
     protected static RedisClient getRedisSentinelClient() {
-        return new RedisClient(RedisURI.Builder.sentinel("localhost", "mymaster").build());
+        return new RedisClient(RedisURI.Builder.sentinel("localhost", MASTER_ID).build());
     }
 
 }
