@@ -102,4 +102,10 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
 
     @Override
     void close();
+
+    /**
+     *
+     * @return true if the connection is open (connected and not closed).
+     */
+    boolean isOpen();
 }
