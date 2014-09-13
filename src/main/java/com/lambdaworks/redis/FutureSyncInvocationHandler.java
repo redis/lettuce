@@ -18,11 +18,11 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
-    private final RedisAsyncConnectionImpl<K, V> connection;
+    private final RedisChannelHandler connection;
     protected long timeout;
     protected TimeUnit unit;
 
-    public FutureSyncInvocationHandler(RedisAsyncConnectionImpl<K, V> connection) {
+    public FutureSyncInvocationHandler(RedisChannelHandler<K, V> connection) {
         this.connection = connection;
         this.timeout = connection.timeout;
         this.unit = connection.unit;
@@ -51,7 +51,7 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
             if (result instanceof RedisCommand) {
                 RedisCommand<?, ?, ?> command = (RedisCommand<?, ?, ?>) result;
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                    if (connection.isMulti()) {
+                    if (connection instanceof RedisAsyncConnectionImpl && ((RedisAsyncConnectionImpl) connection).isMulti()) {
                         return null;
                     }
                 }

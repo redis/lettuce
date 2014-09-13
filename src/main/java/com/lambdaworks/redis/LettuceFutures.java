@@ -65,11 +65,11 @@ public class LettuceFutures {
     public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
         if (!cmd.await(timeout, unit)) {
             cmd.cancel(true);
-            throw new RedisException("Command timed out");
+            throw new RedisCommandTimeoutException();
         }
         CommandOutput<K, V, T> output = cmd.getOutput();
         if (output.hasError()) {
-            throw new RedisException(output.getError());
+            throw new RedisCommandExecutionException(output.getError());
         }
         return output.get();
     }

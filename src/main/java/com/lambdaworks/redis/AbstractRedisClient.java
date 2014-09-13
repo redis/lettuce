@@ -101,14 +101,23 @@ public abstract class AbstractRedisClient {
                 }
             });
 
-            redisBootstrap.connect(redisAddress).get();
+            ChannelFuture future = redisBootstrap.connect(redisAddress);
+
+            future.await();
+
+            if (!future.isSuccess()) {
+                if (future.cause() instanceof Exception) {
+                    throw (Exception) future.cause();
+                }
+                future.get();
+            }
 
             connection.registerCloseables(closeableResources, connection, handler);
 
             return connection;
         } catch (Exception e) {
             connection.close();
-            throw new RedisException("Unable to connect", e);
+            throw new RedisConnectionException("Unable to connect", e);
         }
     }
 
@@ -174,7 +183,7 @@ public abstract class AbstractRedisClient {
         return channels.size();
     }
 
-    protected static <K, V> Object syncHandler(RedisAsyncConnectionImpl<K, V> connection, Class<?>... interfaceClasses) {
+    protected static <K, V> Object syncHandler(RedisChannelHandler<K, V> connection, Class<?>... interfaceClasses) {
         FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connection);
         return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaceClasses, h);
     }

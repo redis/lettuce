@@ -464,7 +464,7 @@ public class RedisClient extends AbstractRedisClient {
             redisAddress = lookupRedis(redisURI.getSentinelMasterId());
 
             if (redisAddress == null) {
-                throw new RedisException("Cannot provide redisAddress using sentinel for masterId "
+                throw new RedisConnectionException("Cannot provide redisAddress using sentinel for masterId "
                         + redisURI.getSentinelMasterId());
             }
 

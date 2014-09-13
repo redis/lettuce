@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -59,7 +59,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         if (depth == 1) {
             RedisCommand<K, V, ?> cmd = queue.remove();
             CommandOutput<K, V, ?> o = cmd.getOutput();
-            output.add(!o.hasError() ? o.get() : new RedisException(o.getError()));
+            output.add(!o.hasError() ? o.get() : new RedisCommandExecutionException(o.getError()));
             cmd.complete();
         } else if (depth == 0 && !queue.isEmpty()) {
             for (RedisCommand<K, V, ?> cmd : queue) {
