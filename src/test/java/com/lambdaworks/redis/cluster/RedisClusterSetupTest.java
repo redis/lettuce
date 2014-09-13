@@ -146,15 +146,23 @@ public class RedisClusterSetupTest {
         redis1.clusterDelSlots(1, 2, 3, 4, 5, 6);
         redis2.clusterDelSlots(7, 8, 9, 10, 11, 12);
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                Partitions partitionsAfterMeet = ClusterPartitionParser.parse(redis2.clusterNodes());
-                return partitionsAfterMeet.getPartitions().size() == 2
-                        && partitionsAfterMeet.getPartitions().get(0).getSlots().isEmpty();
-            }
-        }, Timeout.timeout(Duration.seconds(5)));
+        try {
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    Partitions partitions = ClusterPartitionParser.parse(redis2.clusterNodes());
+                    return partitions.getPartitions().size() == 2 && partitions.getPartitions().get(0).getSlots().isEmpty();
+                }
+            }, Timeout.timeout(Duration.seconds(5)));
+        } catch (Exception e) {
 
+            Partitions detail = ClusterPartitionParser.parse(redis2.clusterNodes());
+            String slotsOn1 = "";
+            if (detail.getPartitions().size() > 0) {
+                slotsOn1 = detail.getPartitions().get(0).getSlots().toString();
+            }
+            fail("Slots/Partitions not deleted. Partitions: " + detail.getPartitions().size() + ", Slots on (0):" + slotsOn1, e);
+        }
     }
 
     @Test
