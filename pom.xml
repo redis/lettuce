@@ -98,8 +98,8 @@
 
   <properties>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
-    <spring.version>3.2.9.RELEASE</spring.version>
-    <clirr.comparisonVersion>1.2.1</clirr.comparisonVersion>
+    <spring.version>3.2.11.RELEASE</spring.version>
+    <clirr.comparisonVersion>1.2.2</clirr.comparisonVersion>
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
@@ -130,7 +130,7 @@
     <dependency>
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
-      <version>2.2.7.RELEASE</version>
+      <version>3.0.1.RELEASE</version>
       <scope>provided</scope>
     </dependency>
 
@@ -146,7 +146,7 @@
     <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
-      <version>10.10.2.0</version>
+      <version>10.11.1.1</version>
       <scope>test</scope>
     </dependency>		
 
@@ -199,65 +199,56 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Using version 1.0.1, versions higher require only jdk7 -->
     <dependency>
       <groupId>com.mockrunner</groupId>
-      <artifactId>mockrunner-jdk1.5-j2ee1.3</artifactId>
-      <version>0.4</version>
+      <artifactId>mockrunner-core</artifactId>
+      <version>1.0.1</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
-          <groupId>xml-apis</groupId>
-          <artifactId>xml-apis</artifactId>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>cglib-nodep</groupId>
-          <artifactId>cglib-nodep</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>jboss</groupId>
-          <artifactId>jboss-jee</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>struts</groupId>
-          <artifactId>struts</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.mockejb</groupId>
-          <artifactId>mockejb</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>nekohtml</groupId>
-          <artifactId>nekohtml</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-validator</groupId>
-          <artifactId>commons-validator</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-digester</groupId>
-          <artifactId>commons-digester</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-beanutils</groupId>
-          <artifactId>commons-beanutils</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId>
+            <groupId>com.kirkk</groupId>
+            <artifactId>jaranalyzer</artifactId>
         </exclusion>
         <exclusion>
           <groupId>jdom</groupId>
           <artifactId>jdom</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>javax.servlet</groupId>
-          <artifactId>servlet-api</artifactId>
+          <groupId>nekohtml</groupId>
+          <artifactId>nekohtml</artifactId>
         </exclusion>
         <exclusion>
-            <artifactId>commons-logging</artifactId>
-            <groupId>commons-logging</groupId>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.mockrunner</groupId>
+      <artifactId>mockrunner-ejb</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-beanutils</groupId>
+          <artifactId>commons-beanutils</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.mockejb</groupId>
+          <artifactId>mockejb</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.mockrunner</groupId>
+      <artifactId>mockrunner-jdbc</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
