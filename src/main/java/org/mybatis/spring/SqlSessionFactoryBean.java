@@ -444,8 +444,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       this.transactionFactory = new SpringManagedTransactionFactory();
     }
 
-    Environment environment = new Environment(this.environment, this.transactionFactory, this.dataSource);
-    configuration.setEnvironment(environment);
+    configuration.setEnvironment(new Environment(this.environment, this.transactionFactory, this.dataSource));
 
     if (this.databaseIdProvider != null) {
       try {

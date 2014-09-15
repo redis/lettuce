@@ -112,6 +112,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   @Override
   protected void doJumpToPage(int itemIndex) {
+      // Not Implemented
   }
 
 }

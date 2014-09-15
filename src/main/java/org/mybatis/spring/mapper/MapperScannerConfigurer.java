@@ -175,7 +175,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
-   * Use {@link #setSqlSessionTemplateBeanName(String)} instead
+   * @deprecated Use {@link #setSqlSessionTemplateBeanName(String)} instead
    *
    * @param sqlSessionTemplate
    */
@@ -206,7 +206,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
-   * Use {@link #setSqlSessionFactoryBeanName(String)} instead.
+   * @deprecated Use {@link #setSqlSessionFactoryBeanName(String)} instead.
    *
    * @param sqlSessionFactory
    */
