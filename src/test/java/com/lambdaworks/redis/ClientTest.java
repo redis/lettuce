@@ -107,7 +107,7 @@ public class ClientTest extends AbstractCommandTest {
 
         assertThat(removedListener.onConnected).isNull();
         assertThat(removedListener.onDisconnected).isNull();
-       assertThat(removedListener.onException).isNull();
+        assertThat(removedListener.onException).isNull();
 
     }
 
@@ -121,10 +121,13 @@ public class ClientTest extends AbstractCommandTest {
     public void reconnect() throws Exception {
         redis.set(key, value);
         redis.quit();
+        Thread.sleep(100);
         assertThat(redis.get(key)).isEqualTo(value);
         redis.quit();
+        Thread.sleep(100);
         assertThat(redis.get(key)).isEqualTo(value);
         redis.quit();
+        Thread.sleep(100);
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
