@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Copyright 2010-2014 the original author or authors.
 
@@ -148,7 +148,7 @@
       <artifactId>derby</artifactId>
       <version>10.11.1.1</version>
       <scope>test</scope>
-    </dependency>		
+    </dependency>       
 
     <dependency>
       <groupId>ognl</groupId>
