@@ -52,7 +52,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     String clusterFlushslots();
 
-    Map<K, V> clusterSlaves();
+    List<String> clusterSlaves(String nodeId);
 
     void close();
 
