@@ -49,25 +49,9 @@ public class ClusterRule implements TestRule {
                     futures.add(connection.flushall());
                 }
 
-                try {
-                    for (Future future : futures) {
-                        future.get();
-                    }
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
+                for (Future future : futures) {
+                    future.get();
                 }
-            }
-        };
-
-        final Statement afterCluster = new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                for (RedisAsyncConnectionImpl redisAsyncConnection : connectionCache.values()) {
-                    redisAsyncConnection.close();
-
-                }
-
-                connectionCache.clear();
             }
         };
 
@@ -78,10 +62,8 @@ public class ClusterRule implements TestRule {
 
                 base.evaluate();
 
-                afterCluster.evaluate();
             }
         };
-
     }
 
     public boolean isStable() {

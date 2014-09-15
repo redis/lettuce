@@ -1,7 +1,7 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
-
 package com.lambdaworks.redis;
 
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -17,13 +17,21 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.WaitFor;
+
 public class SentinelCommandTest extends AbstractCommandTest {
 
     public static final String MASTER_ID = "mymaster";
-    public static final String MASTER_ID_2 = "mymaster2";
     public static final String SLAVE_ID = "myslave";
+
+    public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
+
     private static RedisClient sentinelClient;
     private RedisSentinelAsyncConnection<String, String> sentinel;
+
+    @Rule
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
 
     @BeforeClass
     public static void setupClient() {
@@ -38,6 +46,9 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Before
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
+
+        sentinelRule.monitor(MASTER_ID, "127.0.0.1", 6479, 1);
+        sentinelRule.monitor(SLAVE_ID, "127.0.0.1", 16379, 1);
     }
 
     @After
@@ -49,10 +60,18 @@ public class SentinelCommandTest extends AbstractCommandTest {
     public void getMasterAddr() throws Exception {
 
         Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
-
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
-
         assertThat(socketAddress.getHostName(), containsString("localhost"));
+    }
+
+    @Test
+    public void getMasterAddrButNoMasterPresent() throws Exception {
+
+        sentinelRule.flush();
+
+        Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
+        InetSocketAddress socketAddress = (InetSocketAddress) result.get();
+        assertThat(socketAddress).isNull();
     }
 
     @Test
@@ -156,6 +175,19 @@ public class SentinelCommandTest extends AbstractCommandTest {
         Future<List<Map<String, String>>> result = sentinel.slaves(MASTER_ID);
         assertThat(result.get()).hasSize(0);
 
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, "127.0.0.1", 6484, 1);
+
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return sentinelRule.hasSlaves(MASTER_WITH_SLAVE_ID);
+            }
+        }, timeout(seconds(5)));
+
+        Future<List<Map<String, String>>> slaves = sentinel.slaves(MASTER_WITH_SLAVE_ID);
+
+        assertThat(slaves.get()).hasSize(1);
+        assertThat(slaves.get().get(0)).containsEntry("port", "6485");
     }
 
     @Test
@@ -171,17 +203,16 @@ public class SentinelCommandTest extends AbstractCommandTest {
     public void failover() throws Exception {
 
         RedisFuture<String> mymaster = sentinel.failover(MASTER_ID);
-        mymaster.get();
-
+        String s = mymaster.get();
+        assertThat(s).isNull();
     }
 
     @Test
     public void monitor() throws Exception {
 
-        Future<String> removeResult = sentinel.remove(MASTER_ID_2);
-        removeResult.get();
+        sentinelRule.flush();
 
-        Future<String> result = sentinel.monitor(MASTER_ID_2, "127.0.0.1", 8989, 2);
+        Future<String> result = sentinel.monitor("mymaster2", "127.0.0.1", 8989, 2);
         String val = result.get();
         assertThat(val).isEqualTo("OK");
 
