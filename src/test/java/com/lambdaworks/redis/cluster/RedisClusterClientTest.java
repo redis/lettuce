@@ -43,9 +43,6 @@ public class RedisClusterClientTest {
     protected static RedisClusterClient clusterClient;
 
     protected RedisClusterAsyncConnection<String, String> redis1;
-    protected RedisClusterAsyncConnection<String, String> redis2;
-    protected RedisClusterAsyncConnection<String, String> redis3;
-    protected RedisClusterAsyncConnection<String, String> redis4;
 
     protected RedisClusterConnection<String, String> redissync1;
     protected RedisClusterConnection<String, String> redissync2;
@@ -54,6 +51,9 @@ public class RedisClusterClientTest {
 
     protected String key = "key";
     protected String value = "value";
+
+    @Rule
+    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
 
     @BeforeClass
     public static void setupClient() throws Exception {
@@ -83,45 +83,16 @@ public class RedisClusterClientTest {
     public void before() throws Exception {
 
         redis1 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port1).build());
-        redis2 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port2).build());
-        redis3 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port3).build());
-        redis4 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port4).build());
 
         redissync1 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port1).build());
         redissync2 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port2).build());
         redissync3 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port3).build());
         redissync4 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port4).build());
 
-        redis1.flushall();
-        redis2.flushall();
-        redis3.flushall();
-        redis4.flushall();
-
         WaitFor.waitOrTimeout(new Condition() {
             @Override
             public boolean isSatisfied() {
-                try {
-                    String info = redis1.clusterInfo().get();
-                    if (info != null && info.contains("cluster_state:ok")) {
-
-                        String s = redis1.clusterNodes().get();
-                        Partitions parse = ClusterPartitionParser.parse(s);
-
-                        for (RedisClusterNode redisClusterNode : parse) {
-                            if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.FAIL)
-                                    || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL)) {
-                                return false;
-                            }
-                        }
-
-                        return true;
-
-                    }
-                } catch (Exception e) {
-
-                }
-
-                return false;
+                return clusterRule.isStable();
             }
         }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
 
@@ -130,9 +101,6 @@ public class RedisClusterClientTest {
     @After
     public void after() throws Exception {
         redis1.close();
-        redis2.close();
-        redis3.close();
-        redis4.close();
 
         redissync1.close();
         redissync2.close();
@@ -155,9 +123,7 @@ public class RedisClusterClientTest {
     @Test
     public void testClusterNodes() throws Exception {
 
-        RedisFuture<String> future = redis1.clusterNodes();
-
-        String string = future.get();
+        String string = redissync1.clusterNodes();
 
         assertThat(string).contains("connected");
         assertThat(string).contains("master");
@@ -180,7 +146,7 @@ public class RedisClusterClientTest {
     @Test
     public void testClusterSlaves() throws Exception {
         clusterClient.reloadPartitions();
-        Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes().get());
+        Partitions partitions = ClusterPartitionParser.parse(redissync1.clusterNodes());
 
         final RedisClusterNode node1 = Iterables.find(partitions, new Predicate<RedisClusterNode>() {
             @Override
@@ -189,23 +155,13 @@ public class RedisClusterClientTest {
             }
         });
 
-        RedisFuture<String> replicate = redis4.clusterReplicate(node1.getNodeId());
-        replicate.get();
-        assertThat(replicate.getError()).isNull();
-        assertThat(replicate.get()).isEqualTo("OK");
+        String replicate = redissync4.clusterReplicate(node1.getNodeId());
+        assertThat(replicate).isEqualTo("OK");
 
         WaitFor.waitOrTimeout(new Condition() {
             @Override
             public boolean isSatisfied() {
-                RedisFuture<List<String>> future = redis1.clusterSlaves(node1.getNodeId());
-                try {
-                    List<String> result = future.get();
-
-                    return result.size() == 1;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return false;
-                }
+                return redissync1.clusterSlaves(node1.getNodeId()).size() == 1;
             }
         }, timeout(seconds(5)));
 
@@ -216,13 +172,13 @@ public class RedisClusterClientTest {
     @Test
     public void testAsking() throws Exception {
         clusterClient.reloadPartitions();
-        assertThat(redis1.asking().get()).isEqualTo("OK");
+        assertThat(redissync1.asking()).isEqualTo("OK");
     }
 
     @Test
     public void testClusterFailover() throws Exception {
 
-        redis4.clusterReplicate(getNodeId(redissync1)).get();
+        redissync4.clusterReplicate(getNodeId(redissync1));
 
         RedisClusterNode redis1Node = getOwnPartition(redissync1);
         RedisClusterNode redis4Node = getOwnPartition(redissync4);
@@ -240,10 +196,8 @@ public class RedisClusterClientTest {
             future.get();
             assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
 
-            RedisFuture<String> failover = redis4.clusterFailover(true);
-            String result = failover.get();
-            assertThat(failover.getError()).isNull();
-            assertThat(result).isEqualTo("OK");
+            String failover = redissync4.clusterFailover(true);
+            assertThat(failover).isEqualTo("OK");
 
             WaitFor.waitOrTimeout(new Condition() {
                 @Override
@@ -269,9 +223,12 @@ public class RedisClusterClientTest {
             }, timeout(seconds(10)));
 
             assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-            RedisFuture<String> future = redis4.clusterFailover(false);
-            future.get();
-            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
+
+            try {
+                redissync4.clusterFailover(false);
+            } catch (Exception e) {
+                assertThat(e).hasMessage("ERR You should send CLUSTER FAILOVER to a slave");
+            }
 
             RedisFuture<String> failover = redis1.clusterFailover(true);
             String result = failover.get();
@@ -302,7 +259,7 @@ public class RedisClusterClientTest {
 
         RedisFuture<String> result = redis1.set("b", "value");
         assertThat(result.getError()).isEqualTo(null);
-        assertThat(redis3.set("a", "value").get()).isEqualTo("OK");
+        assertThat(redissync3.set("a", "value")).isEqualTo("OK");
 
         RedisFuture<String> resultMoved = redis1.set("a", "value");
         resultMoved.get();
@@ -334,7 +291,7 @@ public class RedisClusterClientTest {
     @Test
     public void testClusterSlots() throws Exception {
 
-        List<Object> reply = redis1.clusterSlots().get();
+        List<Object> reply = redissync1.clusterSlots();
         assertThat(reply.size()).isGreaterThan(1);
 
         List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);

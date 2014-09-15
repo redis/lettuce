@@ -15,6 +15,7 @@ import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -28,20 +29,26 @@ public class RedisClusterSetupTest {
     public static final int port1 = 7383;
     public static final int port2 = 7384;
 
+    private static RedisClusterClient clusterClient;
     private static RedisClient client1;
     private static RedisClient client2;
 
     private RedisClusterConnection<String, String> redis1;
     private RedisClusterConnection<String, String> redis2;
 
+    @Rule
+    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2);
+
     @BeforeClass
     public static void setupClient() {
+        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, port1).build());
         client1 = new RedisClient(host, port1);
         client2 = new RedisClient(host, port2);
     }
 
     @AfterClass
     public static void shutdownClient() {
+        clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
         client1.shutdown(0, 0, TimeUnit.MILLISECONDS);
         client2.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
@@ -49,22 +56,8 @@ public class RedisClusterSetupTest {
     @Before
     public void openConnection() throws Exception {
         redis1 = (RedisClusterConnection) client1.connect();
-        redis1.flushall();
-        redis1.flushdb();
-
         redis2 = (RedisClusterConnection) client2.connect();
-        redis2.flushall();
-        redis2.flushdb();
-
-        redis1.clusterReset(false);
-        redis2.clusterReset(false);
-
-        redis1.clusterReset(true);
-        redis2.clusterReset(true);
-
-        redis1.clusterFlushslots();
-        redis2.clusterFlushslots();
-        Thread.sleep(100);
+        clusterRule.clusterReset();
     }
 
     @After
