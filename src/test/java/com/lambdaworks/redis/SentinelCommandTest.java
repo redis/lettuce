@@ -172,6 +172,12 @@ public class SentinelCommandTest extends AbstractCommandTest {
         Future<List<Map<String, String>>> result = sentinel.slaves(MASTER_ID);
         assertThat(result.get()).hasSize(0);
 
+        RedisConnection<String, String> beMaster = sentinelClient.connect(RedisURI.Builder.redis("127.0.0.1", 6484).build());
+        RedisConnection<String, String> beSlave = sentinelClient.connect(RedisURI.Builder.redis("127.0.0.1", 6485).build());
+
+        beMaster.slaveofNoOne();
+        beSlave.slaveof("127.0.0.1", 6484);
+
         sentinelRule.monitor(MASTER_WITH_SLAVE_ID, "127.0.0.1", sentinelRule.findMaster(6484, 6485), 1);
 
         try {
