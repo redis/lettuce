@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -74,7 +73,6 @@ public class ServerCommandTest extends AbstractCommandTest {
         assertThat(m.lookingAt()).isTrue();
         String addr = m.group(1);
         assertThat(redis.clientKill(KillArgs.Builder.addr(addr).skipme())).isGreaterThan(0);
-        assertThat(redis.clientKill(KillArgs.Builder.skipme())).isGreaterThan(0);
 
         assertThat(redis.clientKill(KillArgs.Builder.id(2))).isEqualTo(0);
         assertThat(redis.clientKill(KillArgs.Builder.typeSlave().id(4234))).isEqualTo(0);
@@ -160,10 +158,18 @@ public class ServerCommandTest extends AbstractCommandTest {
         redis.debugObject(key);
     }
 
+    /**
+     * this test causes a stop of the redis. This means, you cannot repeat the test without restarting your redis.
+     *
+     * @throws Exception
+     */
     @Test
-    @Ignore("This test will kill your redis server, therefore it's disabled by default")
     public void debugSegfault() throws Exception {
-        redis.debugSegfault();
+        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis("localhost", 6482)
+                .build());
+        connection.debugSegfault();
+        Thread.sleep(100);
+        assertThat(connection.isOpen()).isFalse();
     }
 
     @Test
@@ -241,8 +247,8 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void shutdown() throws Exception {
 
-        RedisClient redisClient = new RedisClient("localhost", 6485);
-        final RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
+        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis("localhost", 6483)
+                .build());
         try {
 
             connection.shutdown(true);
@@ -258,7 +264,6 @@ public class ServerCommandTest extends AbstractCommandTest {
 
         } finally {
             connection.close();
-            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
         }
 
     }

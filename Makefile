@@ -28,6 +28,7 @@ save ""
 appendonly no
 endef
 
+# For debugSegfault test
 define REDIS4_CONF
 daemonize yes
 port 6482
@@ -38,6 +39,7 @@ appendonly no
 slaveof localhost 6481
 endef
 
+# For Shutdown test
 define REDIS5_CONF
 daemonize yes
 port 6483
@@ -47,6 +49,7 @@ save ""
 appendonly no
 endef
 
+# Sentinel-monitored master
 define REDIS6_CONF
 daemonize yes
 port 6484
@@ -56,6 +59,8 @@ save ""
 appendonly no
 endef
 
+
+# Sentinel-monitored slave
 define REDIS7_CONF
 daemonize yes
 port 6485
