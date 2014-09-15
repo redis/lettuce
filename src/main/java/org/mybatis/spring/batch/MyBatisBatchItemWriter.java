@@ -54,7 +54,7 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
 
-  private static final Log logger = LogFactory.getLog(MyBatisBatchItemWriter.class);
+  private static final Log LOGGER = LogFactory.getLog(MyBatisBatchItemWriter.class);
 
   private SqlSessionTemplate sqlSessionTemplate;
 
@@ -105,6 +105,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   /**
    * Check mandatory properties - there must be an SqlSession and a statementId.
    */
+  @Override
   public void afterPropertiesSet() {
     notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
     isTrue(ExecutorType.BATCH == sqlSessionTemplate.getExecutorType(), "SqlSessionTemplate's executor type must be BATCH");
@@ -114,12 +115,13 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   /**
    * {@inheritDoc}
    */
+  @Override
   public void write(final List<? extends T> items) {
 
     if (!items.isEmpty()) {
 
-      if (logger.isDebugEnabled()) {
-        logger.debug("Executing batch with " + items.size() + " items.");
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Executing batch with " + items.size() + " items.");
       }
 
       for (T item : items) {

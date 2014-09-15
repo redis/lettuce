@@ -53,6 +53,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   /**
    * {@inheritDoc}
    */
+  @Override
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
     AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
@@ -101,6 +102,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   /**
    * {@inheritDoc}
    */
+  @Override
   public void setResourceLoader(ResourceLoader resourceLoader) {
     this.resourceLoader = resourceLoader;
   }

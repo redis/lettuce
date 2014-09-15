@@ -71,7 +71,7 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean, ApplicationListener<ApplicationEvent> {
 
-  private static final Log logger = LogFactory.getLog(SqlSessionFactoryBean.class);
+  private static final Log LOGGER = LogFactory.getLog(SqlSessionFactoryBean.class);
 
   private Resource configLocation;
 
@@ -333,6 +333,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * {@inheritDoc}
    */
+  @Override
   public void afterPropertiesSet() throws Exception {
     notNull(dataSource, "Property 'dataSource' is required");
     notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
@@ -358,8 +359,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
       configuration = xmlConfigBuilder.getConfiguration();
     } else {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
       }
       configuration = new Configuration();
       configuration.setVariables(this.configurationProperties);
@@ -379,8 +380,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       for (String packageToScan : typeAliasPackageArray) {
         configuration.getTypeAliasRegistry().registerAliases(packageToScan,
                 typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Scanned package: '" + packageToScan + "' for aliases");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Scanned package: '" + packageToScan + "' for aliases");
         }
       }
     }
@@ -388,8 +389,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     if (!isEmpty(this.typeAliases)) {
       for (Class<?> typeAlias : this.typeAliases) {
         configuration.getTypeAliasRegistry().registerAlias(typeAlias);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Registered type alias: '" + typeAlias + "'");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Registered type alias: '" + typeAlias + "'");
         }
       }
     }
@@ -397,8 +398,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     if (!isEmpty(this.plugins)) {
       for (Interceptor plugin : this.plugins) {
         configuration.addInterceptor(plugin);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Registered plugin: '" + plugin + "'");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Registered plugin: '" + plugin + "'");
         }
       }
     }
@@ -408,8 +409,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeHandlersPackageArray) {
         configuration.getTypeHandlerRegistry().register(packageToScan);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Scanned package: '" + packageToScan + "' for type handlers");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Scanned package: '" + packageToScan + "' for type handlers");
         }
       }
     }
@@ -417,8 +418,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     if (!isEmpty(this.typeHandlers)) {
       for (TypeHandler<?> typeHandler : this.typeHandlers) {
         configuration.getTypeHandlerRegistry().register(typeHandler);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Registered type handler: '" + typeHandler + "'");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Registered type handler: '" + typeHandler + "'");
         }
       }
     }
@@ -427,8 +428,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       try {
         xmlConfigBuilder.parse();
 
-        if (logger.isDebugEnabled()) {
-          logger.debug("Parsed configuration file: '" + this.configLocation + "'");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Parsed configuration file: '" + this.configLocation + "'");
         }
       } catch (Exception ex) {
         throw new NestedIOException("Failed to parse config resource: " + this.configLocation, ex);
@@ -468,13 +469,13 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
           ErrorContext.instance().reset();
         }
 
-        if (logger.isDebugEnabled()) {
-          logger.debug("Parsed mapper file: '" + mapperLocation + "'");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Parsed mapper file: '" + mapperLocation + "'");
         }
       }
     } else {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Property 'mapperLocations' was not specified or no matching resources found");
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Property 'mapperLocations' was not specified or no matching resources found");
       }
     }
 
@@ -484,6 +485,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * {@inheritDoc}
    */
+  @Override
   public SqlSessionFactory getObject() throws Exception {
     if (this.sqlSessionFactory == null) {
       afterPropertiesSet();
@@ -495,6 +497,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<? extends SqlSessionFactory> getObjectType() {
     return this.sqlSessionFactory == null ? SqlSessionFactory.class : this.sqlSessionFactory.getClass();
   }
@@ -502,6 +505,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isSingleton() {
     return true;
   }
@@ -509,6 +513,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * {@inheritDoc}
    */
+  @Override
   public void onApplicationEvent(ApplicationEvent event) {
     if (failFast && event instanceof ContextRefreshedEvent) {
       // fail-fast -> check all statements are completed

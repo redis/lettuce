@@ -85,6 +85,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
    * Check mandatory properties.
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
    */
+  @Override
   public void afterPropertiesSet() throws Exception {
     super.afterPropertiesSet();
     notNull(sqlSessionFactory);
