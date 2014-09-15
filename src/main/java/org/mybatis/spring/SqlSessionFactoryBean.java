@@ -87,7 +87,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private SqlSessionFactory sqlSessionFactory;
 
-  private String environment = SqlSessionFactoryBean.class.getSimpleName(); // EnvironmentAware requires spring 3.1
+  //EnvironmentAware requires spring 3.1
+  private String environment = SqlSessionFactoryBean.class.getSimpleName();
 
   private boolean failFast;
 
@@ -103,7 +104,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private Class<?> typeAliasesSuperType;
 
-  private DatabaseIdProvider databaseIdProvider; // issue #19. No default provider.
+  //issue #19. No default provider.
+  private DatabaseIdProvider databaseIdProvider;
 
   private ObjectFactory objectFactory;
 
