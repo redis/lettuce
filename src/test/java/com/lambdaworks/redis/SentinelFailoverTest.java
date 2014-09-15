@@ -1,21 +1,26 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.WaitFor;
 
 public class SentinelFailoverTest extends AbstractCommandTest {
 
+    public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
+
     private static RedisClient sentinelClient;
     private RedisSentinelAsyncConnection<String, String> sentinel;
+
+    @Rule
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
 
     @BeforeClass
     public static void setupClient() {
@@ -30,6 +35,10 @@ public class SentinelFailoverTest extends AbstractCommandTest {
     @Before
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
+
+        int masterPort = sentinelRule.findMaster(6484, 6485);
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, "127.0.0.1", masterPort, 1);
+
     }
 
     @After
@@ -39,10 +48,18 @@ public class SentinelFailoverTest extends AbstractCommandTest {
 
     @Test
     public void connectToRedisUsingSentinel() throws Exception {
+
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
+            }
+        }, timeout(seconds(15)));
+
         RedisConnection<String, String> connect = sentinelClient.connect();
         connect.ping();
 
-        RedisFuture<String> future = this.sentinel.failover("mymaster");
+        RedisFuture<String> future = this.sentinel.failover(MASTER_WITH_SLAVE_ID);
 
         future.get();
         assertThat(future.getError()).isNull();
@@ -50,6 +67,6 @@ public class SentinelFailoverTest extends AbstractCommandTest {
     }
 
     protected static RedisClient getRedisSentinelClient() {
-        return new RedisClient(RedisURI.Builder.sentinel("localhost", 26380, "mymaster").build());
+        return new RedisClient(RedisURI.Builder.sentinel(host, 26380, MASTER_WITH_SLAVE_ID).build());
     }
 }

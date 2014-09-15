@@ -8,6 +8,8 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.google.common.collect.Maps;
+import com.lambdaworks.redis.models.role.RedisInstance;
+import com.lambdaworks.redis.models.role.RoleParser;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -85,5 +87,49 @@ public class SentinelRule implements TestRule {
         }
 
         return false;
+    }
+
+    public boolean hasConnectedSlaves(String masterId) {
+        try {
+            for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
+                List<Map<String, String>> slaves = connection.slaves(masterId).get();
+                for (Map<String, String> slave : slaves) {
+                    if (!slave.containsKey("master-link-status") || !slave.get("master-link-status").contains("ok")) {
+                        continue;
+                    }
+
+                    if (!slave.containsKey("flags") || slave.get("flags").contains("disconnected")) {
+                        continue;
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+
+        return false;
+    }
+
+    public int findMaster(int... redisPorts) {
+
+        for (int redisPort : redisPorts) {
+
+            RedisConnection<String, String> connection = redisClient.connect(RedisURI.Builder.redis("127.0.0.1", redisPort)
+                    .build());
+            List<Object> role = connection.role();
+            connection.close();
+
+            RedisInstance redisInstance = RoleParser.parse(role);
+            if (redisInstance.getRole() == RedisInstance.Role.MASTER) {
+                return redisPort;
+            }
+        }
+
+        return -1;
+
     }
 }

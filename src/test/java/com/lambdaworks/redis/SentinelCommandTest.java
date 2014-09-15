@@ -3,10 +3,7 @@ package com.lambdaworks.redis;
 import static com.google.code.tempusfugit.temporal.Duration.*;
 import static com.google.code.tempusfugit.temporal.Timeout.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -61,7 +58,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
-        assertThat(socketAddress.getHostName(), containsString("localhost"));
+        assertThat(socketAddress.getHostName()).contains("localhost");
     }
 
     @Test
@@ -91,7 +88,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
         Future<List<Map<String, String>>> result = sentinel.masters();
         List<Map<String, String>> list = result.get();
 
-        assertThat(list.size(), greaterThan(0));
+        assertThat(list.size()).isGreaterThan(0);
 
         Map<String, String> map = list.get(0);
         assertThat(map.get("flags")).isNotNull();
@@ -134,7 +131,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         Future<Map<String, String>> result = sentinel.master(SLAVE_ID);
         Map<String, String> map = result.get();
-        assertThat(map.get("flags"), containsString("disconnected"));
+        assertThat(map.get("flags")).contains("disconnected");
 
     }
 
@@ -158,7 +155,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
             RedisFuture<List<Object>> role = connection.role();
             List<Object> objects = role.get();
 
-            assertThat(objects.size(), is(2));
+            assertThat(objects).hasSize(2);
 
             assertThat(objects.get(0)).isEqualTo("sentinel");
             assertThat(objects.get(1).toString()).isEqualTo("[mymasterfailover]");
@@ -175,19 +172,27 @@ public class SentinelCommandTest extends AbstractCommandTest {
         Future<List<Map<String, String>>> result = sentinel.slaves(MASTER_ID);
         assertThat(result.get()).hasSize(0);
 
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, "127.0.0.1", 6484, 1);
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, "127.0.0.1", sentinelRule.findMaster(6484, 6485), 1);
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return sentinelRule.hasSlaves(MASTER_WITH_SLAVE_ID);
-            }
-        }, timeout(seconds(5)));
+        try {
+            WaitFor.waitOrTimeout(new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return sentinelRule.hasSlaves(MASTER_WITH_SLAVE_ID);
+                }
+            }, timeout(seconds(15)));
+        } catch (Exception e) {
+            RedisConnection<String, String> master = sentinelClient.connect(RedisURI.Builder.redis("127.0.0.1", 6484).build());
+            RedisConnection<String, String> slave = sentinelClient.connect(RedisURI.Builder.redis("127.0.0.1", 6485).build());
+
+            fail("Timeout when waiting for slaves: Master role " + master.role() + ", Slave role " + slave.role() + ", "
+                    + e.getMessage());
+        }
 
         Future<List<Map<String, String>>> slaves = sentinel.slaves(MASTER_WITH_SLAVE_ID);
 
         assertThat(slaves.get()).hasSize(1);
-        assertThat(slaves.get().get(0)).containsEntry("port", "6485");
+        assertThat(slaves.get().get(0)).containsKey("port");
     }
 
     @Test
