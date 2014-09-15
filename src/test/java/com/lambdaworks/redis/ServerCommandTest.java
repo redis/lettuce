@@ -168,7 +168,12 @@ public class ServerCommandTest extends AbstractCommandTest {
         final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis("localhost", 6482)
                 .build());
         connection.debugSegfault();
-        Thread.sleep(100);
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return !connection.isOpen();
+            }
+        }, timeout(seconds(5)));
         assertThat(connection.isOpen()).isFalse();
     }
 

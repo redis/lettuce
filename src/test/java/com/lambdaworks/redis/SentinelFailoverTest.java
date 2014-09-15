@@ -54,7 +54,7 @@ public class SentinelFailoverTest extends AbstractCommandTest {
             public boolean isSatisfied() {
                 return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
             }
-        }, timeout(seconds(15)));
+        }, timeout(seconds(20)));
 
         RedisConnection<String, String> connect = sentinelClient.connect();
         connect.ping();

@@ -94,11 +94,14 @@ public class SentinelRule implements TestRule {
             for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
                 List<Map<String, String>> slaves = connection.slaves(masterId).get();
                 for (Map<String, String> slave : slaves) {
-                    if (!slave.containsKey("master-link-status") || !slave.get("master-link-status").contains("ok")) {
+
+                    String masterLinkStatus = slave.get("master-link-status");
+                    if (masterLinkStatus == null || !masterLinkStatus.contains("ok")) {
                         continue;
                     }
 
-                    if (!slave.containsKey("flags") || slave.get("flags").contains("disconnected")) {
+                    String flags = slave.get("flags");
+                    if (flags == null || flags.contains("disconnected") || flags.contains("down")) {
                         continue;
                     }
 

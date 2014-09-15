@@ -98,7 +98,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    public void sentinelConnectWithFailover() throws Exception {
+    public void sentinelConnectWith() throws Exception {
 
         RedisClient client = new RedisClient(RedisURI.Builder.sentinel("localhost", 1234, MASTER_ID).withSentinel("localhost")
                 .build());
