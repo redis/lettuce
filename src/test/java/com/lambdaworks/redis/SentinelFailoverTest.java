@@ -1,4 +1,3 @@
-
 package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.*;
@@ -57,13 +56,14 @@ public class SentinelFailoverTest extends AbstractCommandTest {
         }, timeout(seconds(20)));
 
         RedisConnection<String, String> connect = sentinelClient.connect();
-        connect.ping();
+        assertThat(connect.ping()).isEqualToIgnoringCase("PONG");
 
-        RedisFuture<String> future = this.sentinel.failover(MASTER_WITH_SLAVE_ID);
+        connect.close();
+        this.sentinel.failover(MASTER_WITH_SLAVE_ID).get();
 
-        future.get();
-        assertThat(future.getError()).isNull();
-        assertThat(future.get()).isEqualTo("OK");
+        RedisConnection<String, String> connect2 = sentinelClient.connect();
+        assertThat(connect2.ping()).isEqualToIgnoringCase("PONG");
+        connect2.close();
     }
 
     protected static RedisClient getRedisSentinelClient() {
