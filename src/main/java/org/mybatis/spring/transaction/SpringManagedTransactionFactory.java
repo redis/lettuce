@@ -36,6 +36,7 @@ public class SpringManagedTransactionFactory implements TransactionFactory {
   /**
    * {@inheritDoc}
    */
+  @Override
   public Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit) {
     return new SpringManagedTransaction(dataSource);
   }
@@ -43,6 +44,7 @@ public class SpringManagedTransactionFactory implements TransactionFactory {
   /**
    * {@inheritDoc}
    */
+  @Override
   public Transaction newTransaction(Connection conn) {
     throw new UnsupportedOperationException("New Spring transactions require a DataSource");
   }
@@ -50,6 +52,7 @@ public class SpringManagedTransactionFactory implements TransactionFactory {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void setProperties(Properties props) {
     // not needed in this version
   }

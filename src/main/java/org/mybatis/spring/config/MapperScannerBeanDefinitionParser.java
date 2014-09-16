@@ -54,6 +54,7 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
   /**
    * {@inheritDoc}
    */
+  @Override
   public synchronized BeanDefinition parse(Element element, ParserContext parserContext) {
     ClassPathMapperScanner scanner = new ClassPathMapperScanner(parserContext.getRegistry());
     ClassLoader classLoader = scanner.getResourceLoader().getClassLoader();
@@ -74,7 +75,7 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
       String nameGeneratorClassName = element.getAttribute(ATTRIBUTE_NAME_GENERATOR);
       if (StringUtils.hasText(nameGeneratorClassName)) {
         Class<?> nameGeneratorClass = classLoader.loadClass(nameGeneratorClassName);
-        BeanNameGenerator nameGenerator = BeanUtils.instantiateClass((Class<?>) nameGeneratorClass, BeanNameGenerator.class);
+        BeanNameGenerator nameGenerator = BeanUtils.instantiateClass(nameGeneratorClass, BeanNameGenerator.class);
         scanner.setBeanNameGenerator(nameGenerator);
       }
     } catch (Exception ex) {

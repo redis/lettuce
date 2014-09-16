@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.BeanNameAware;
@@ -176,7 +175,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
-   * Use {@link #setSqlSessionTemplateBeanName(String)} instead
+   * @deprecated Use {@link #setSqlSessionTemplateBeanName(String)} instead
    *
    * @param sqlSessionTemplate
    */
@@ -207,7 +206,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * more than one in the spring context. Usually this is only needed when you
    * have more than one datasource.
    * <p>
-   * Use {@link #setSqlSessionFactoryBeanName(String)} instead.
+   * @deprecated Use {@link #setSqlSessionFactoryBeanName(String)} instead.
    *
    * @param sqlSessionFactory
    */
@@ -246,6 +245,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   /**
    * {@inheritDoc}
    */
+  @Override
   public void setApplicationContext(ApplicationContext applicationContext) {
     this.applicationContext = applicationContext;
   }
@@ -253,6 +253,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   /**
    * {@inheritDoc}
    */
+  @Override
   public void setBeanName(String name) {
     this.beanName = name;
   }
@@ -280,6 +281,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   /**
    * {@inheritDoc}
    */
+  @Override
   public void afterPropertiesSet() throws Exception {
     notNull(this.basePackage, "Property 'basePackage' is required");
   }
@@ -287,6 +289,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   /**
    * {@inheritDoc}
    */
+  @Override
   public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
     // left intentionally blank
   }
@@ -296,6 +299,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * 
    * @since 1.0.2
    */
+  @Override
   public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
     if (this.processPropertyPlaceHolders) {
       processPropertyPlaceHolders();

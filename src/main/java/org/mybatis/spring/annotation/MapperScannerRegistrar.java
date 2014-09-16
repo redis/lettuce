@@ -53,12 +53,14 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   /**
    * {@inheritDoc}
    */
+  @Override
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
     AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
     ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
 
-    if (resourceLoader != null) { // this check is needed in Spring 3.1
+    // this check is needed in Spring 3.1
+    if (resourceLoader != null) {
       scanner.setResourceLoader(resourceLoader);
     }
 
@@ -101,6 +103,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   /**
    * {@inheritDoc}
    */
+  @Override
   public void setResourceLoader(ResourceLoader resourceLoader) {
     this.resourceLoader = resourceLoader;
   }

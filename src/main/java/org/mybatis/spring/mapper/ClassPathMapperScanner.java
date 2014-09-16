@@ -130,6 +130,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     if (acceptAllInterfaces) {
       // default include filter that accepts all classes
       addIncludeFilter(new TypeFilter() {
+        @Override
         public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
           return true;
         }
@@ -138,6 +139,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
     // exclude package-info.java
     addExcludeFilter(new TypeFilter() {
+      @Override
       public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
         String className = metadataReader.getClassMetadata().getClassName();
         return className.endsWith("package-info");

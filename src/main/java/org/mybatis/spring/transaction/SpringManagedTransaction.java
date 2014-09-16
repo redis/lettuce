@@ -44,7 +44,7 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
  */
 public class SpringManagedTransaction implements Transaction {
 
-  private static final Log logger = LogFactory.getLog(SpringManagedTransaction.class);
+  private static final Log LOGGER = LogFactory.getLog(SpringManagedTransaction.class);
 
   private final DataSource dataSource;
 
@@ -62,6 +62,7 @@ public class SpringManagedTransaction implements Transaction {
   /**
    * {@inheritDoc}
    */
+  @Override
   public Connection getConnection() throws SQLException {
     if (this.connection == null) {
       openConnection();
@@ -82,8 +83,8 @@ public class SpringManagedTransaction implements Transaction {
     this.autoCommit = this.connection.getAutoCommit();
     this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
 
-    if (logger.isDebugEnabled()) {
-      logger.debug(
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug(
           "JDBC Connection ["
               + this.connection
               + "] will"
@@ -95,10 +96,11 @@ public class SpringManagedTransaction implements Transaction {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void commit() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Committing JDBC Connection [" + this.connection + "]");
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Committing JDBC Connection [" + this.connection + "]");
       }
       this.connection.commit();
     }
@@ -107,10 +109,11 @@ public class SpringManagedTransaction implements Transaction {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void rollback() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Rolling back JDBC Connection [" + this.connection + "]");
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Rolling back JDBC Connection [" + this.connection + "]");
       }
       this.connection.rollback();
     }
@@ -119,6 +122,7 @@ public class SpringManagedTransaction implements Transaction {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void close() throws SQLException {
     DataSourceUtils.releaseConnection(this.connection, this.dataSource);
   }
