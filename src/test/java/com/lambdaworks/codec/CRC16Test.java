@@ -2,6 +2,7 @@ package com.lambdaworks.codec;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Calendar;
 import java.util.List;
 
 import org.junit.Test;

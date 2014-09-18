@@ -52,7 +52,7 @@ public class CRC16 {
         int crc = 0x0000;
 
         for (byte b : bytes) {
-            crc = ((crc << 8) ^ LOOKUP_TABLE[((crc >> 8) ^ (b & 0xFF)) & 0xFF]) & 0xFFFF;
+            crc = ((crc << 8) ^ LOOKUP_TABLE[((crc >>> 8) ^ (b & 0xFF)) & 0xFF]);
         }
         return crc & 0xFFFF;
     }
