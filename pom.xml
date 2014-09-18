@@ -47,7 +47,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <github.site.upload.skip>true</github.site.upload.skip>
-        <lettuce-release-version>3.0.Final</lettuce-release-version>
+        <lettuce-release-version>3.0.1.Final</lettuce-release-version>
     </properties>
 
     <scm>
