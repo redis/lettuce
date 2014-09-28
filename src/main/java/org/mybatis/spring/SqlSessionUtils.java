@@ -45,6 +45,10 @@ public final class SqlSessionUtils {
 
   private static final Log LOGGER = LogFactory.getLog(SqlSessionUtils.class);
 
+  private static final String NO_EXECUTOR_TYPE_SPECIFIED = "No ExecutorType specified";
+  private static final String NO_SQL_SESSION_FACTORY_SPECIFIED = "No SqlSessionFactory specified";
+  private static final String NO_SQL_SESSION_SPECIFIED = "No SqlSession specified";
+
   /**
    * This class can't be instantiated, exposes static utility methods only.
    */
@@ -81,8 +85,8 @@ public final class SqlSessionUtils {
    */
   public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType, PersistenceExceptionTranslator exceptionTranslator) {
 
-    notNull(sessionFactory, "No SqlSessionFactory specified");
-    notNull(executorType, "No ExecutorType specified");
+    notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
+    notNull(executorType, NO_EXECUTOR_TYPE_SPECIFIED);
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
@@ -175,9 +179,8 @@ public final class SqlSessionUtils {
    * @param sessionFactory
    */
   public static void closeSqlSession(SqlSession session, SqlSessionFactory sessionFactory) {
-
-    notNull(session, "No SqlSession specified");
-    notNull(sessionFactory, "No SqlSessionFactory specified");
+    notNull(session, NO_SQL_SESSION_SPECIFIED);
+    notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
     if ((holder != null) && (holder.getSqlSession() == session)) {
@@ -201,8 +204,8 @@ public final class SqlSessionUtils {
    * @return true if session is transactional, otherwise false
    */
   public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
-    notNull(session, "No SqlSession specified");
-    notNull(sessionFactory, "No SqlSessionFactory specified");
+    notNull(session, NO_SQL_SESSION_SPECIFIED);
+    notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
@@ -316,7 +319,7 @@ public final class SqlSessionUtils {
         this.holder.getSqlSession().close();
       }
     }
-   
+
     /**
      * {@inheritDoc}
      */
