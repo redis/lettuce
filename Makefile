@@ -296,5 +296,18 @@ clean:
 	rm -Rf work/
 	rm -Rf target/
 
+release:
+	mvn release:clean
+	mvn release:prepare -Psonatype-oss-release
+	mvn release:perform -Psonatype-oss-release
+
+	cd target/checkout
+	cd target
+	gpg -b -a *-bin.zip
+	gpg -b -a *-bin.tar.gz
+    cd ..
+    mvn site:site
+    mvn -o scm-publish:publish-scm -Dgithub.site.upload.skip=false
+
 .PHONY: test
 
