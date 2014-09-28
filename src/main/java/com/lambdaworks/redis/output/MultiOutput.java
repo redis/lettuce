@@ -40,12 +40,18 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void set(long integer) {
-        queue.peek().getOutput().set(integer);
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().set(integer);
+        }
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        queue.peek().getOutput().set(bytes);
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().set(bytes);
+        }
     }
 
     @Override
@@ -56,6 +62,10 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void complete(int depth) {
+        if (queue.isEmpty()) {
+            return;
+        }
+
         if (depth == 1) {
             RedisCommand<K, V, ?> cmd = queue.remove();
             CommandOutput<K, V, ?> o = cmd.getOutput();
