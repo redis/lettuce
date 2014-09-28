@@ -86,32 +86,38 @@ public final class SqlSessionUtils {
 
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
-    if (holder != null && holder.isSynchronizedWithTransaction()) {
-      if (holder.getExecutorType() != executorType) {
-        throw new TransientDataAccessResourceException("Cannot change the ExecutorType when there is an existing transaction");
-      }
-
-      holder.requested();
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Fetched SqlSession [" + holder.getSqlSession() + "] from current transaction");
-      }
-
-      return holder.getSqlSession();
+    SqlSession session = sessionHolder(executorType, holder);
+    if (session != null) {
+      return session;
     }
 
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Creating a new SqlSession");
     }
 
-    SqlSession session = sessionFactory.openSession(executorType);
+    session = sessionFactory.openSession(executorType);
 
-    // Register session holder if synchronization is active (i.e. a Spring TX is active)
-    //
-    // Note: The DataSource used by the Environment should be synchronized with the
-    // transaction either through DataSourceTxMgr or another tx synchronization.
-    // Further assume that if an exception is thrown, whatever started the transaction will
-    // handle closing / rolling back the Connection associated with the SqlSession.
+    registerSessionHolder(sessionFactory, executorType, exceptionTranslator, session);
+
+    return session;
+  }
+
+  /**
+   * Register session holder if synchronization is active (i.e. a Spring TX is active).
+   *
+   * Note: The DataSource used by the Environment should be synchronized with the
+   * transaction either through DataSourceTxMgr or another tx synchronization.
+   * Further assume that if an exception is thrown, whatever started the transaction will
+   * handle closing / rolling back the Connection associated with the SqlSession.
+   * 
+   * @param sessionFactory sqlSessionFactory used for registration.
+   * @param executorType executorType used for registration.
+   * @param exceptionTranslator persistenceExceptionTranslater used for registration.
+   * @param session sqlSession used for registration.
+   */
+  private static void registerSessionHolder(SqlSessionFactory sessionFactory, ExecutorType executorType,
+      PersistenceExceptionTranslator exceptionTranslator, SqlSession session) {
+    SqlSessionHolder holder;
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
       Environment environment = sessionFactory.getConfiguration().getEnvironment();
 
@@ -140,7 +146,23 @@ public final class SqlSessionUtils {
         LOGGER.debug("SqlSession [" + session + "] was not registered for synchronization because synchronization is not active");
       }
     }
+}
 
+  private static SqlSession sessionHolder(ExecutorType executorType, SqlSessionHolder holder) {
+    SqlSession session = null;
+    if (holder != null && holder.isSynchronizedWithTransaction()) {
+      if (holder.getExecutorType() != executorType) {
+        throw new TransientDataAccessResourceException("Cannot change the ExecutorType when there is an existing transaction");
+      }
+
+      holder.requested();
+
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Fetched SqlSession [" + holder.getSqlSession() + "] from current transaction");
+      }
+
+      session = holder.getSqlSession();
+    }
     return session;
   }
 
