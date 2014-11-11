@@ -34,9 +34,8 @@
       세션을 한번 생성하면 매핑구문을 실행하거나 커밋 또는 롤백을 하기 위해 세션을 사용할수 있다. 
       마지막으로 더 이상 필요하지 않은 상태가 되면 세션을 닫는다. 
       마이바티스 스프링 연동모듈을 사용하면 <code>SqlSessionFactory</code>를 직접 사용할 필요가 없다.
-      왜냐하면 사용할 빈이 <code>SqlSession</code>에 주입될수 있기 때문이다.
-      이때 <code>SqlSession</code>은 스프링 트랜잭션 설정에 따라 세션을 자동으로 커밋, 롤백하고 닫는 쓰레드에 안전하다. </p>  
-    
+      왜냐하면, 스프링 트랜잭션 설정에 따라 자동으로 커밋 혹은 롤백을 수행하고 닫혀지는, 쓰레드에 안전한 <code>SqlSession</code> 개체가 스프링 빈에 주입될 수 있기 때문이다.</p>
+
     <subsection name="SqlSessionTemplate">
       <p><code>SqlSessionTemplate</code>은 마이바티스 스프링 연동모듈의 핵심이다. 
       <code>SqlSessionTemplate</code>은 <code>SqlSession</code>을 구현하고 코드에서 <code>SqlSession</code>를 대체하는 역할을 한다. 
