@@ -55,6 +55,8 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
             ctx.fireChannelRead(output);
             output = new PubSubOutput<K, V>(codec);
         }
+        
+        buffer.discardReadBytes();
     }
 
 }
