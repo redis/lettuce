@@ -302,8 +302,8 @@ release:
 	mvn release:perform -Psonatype-oss-release
 	cd target/checkout
 	cd target
-	gpg -b -a *-bin.zip
-	gpg -b -a *-bin.tar.gz
+	ls *-bin.zip | xargs gpg -b -a
+	ls *-bin.tar.gz | xargs gpg -b -a
 	cd ..
 	mvn site:site
 	mvn -o scm-publish:publish-scm -Dgithub.site.upload.skip=false

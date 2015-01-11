@@ -6,6 +6,10 @@ Fixes
 -----
 * Memory leak #21, #22
 
+Other
+-----
+* Streamline build and release
+
 lettuce requires a minimum of Java 6 to build and run. It is tested against Redis 2.8 and Redis 3.0.
 
 For complete information on lettuce see the websites:
