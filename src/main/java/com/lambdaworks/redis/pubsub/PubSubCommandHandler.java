@@ -54,6 +54,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
         while (rsm.decode(buffer, output)) {
             ctx.fireChannelRead(output);
             output = new PubSubOutput<K, V>(codec);
+            buffer.discardReadBytes();
         }
     }
 
