@@ -13,3 +13,4 @@ work/
 .classpath
 .settings
 dependency-reduced-pom.xml
+.idea
