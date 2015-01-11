@@ -1,17 +1,16 @@
 package com.lambdaworks.redis.support;
 
-import static com.google.common.base.Preconditions.*;
-
-import java.net.URI;
-
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 
+import java.net.URI;
+
 /**
  * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Formats: <code>
- *     redis-sentinel://host[:port][/databaseNumber]#sentinelMasterId
+ *     redis-sentinel://host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId
  * </code> <br/>
  * <code>
  *     redis://host[:port][/databaseNumber]
