@@ -35,7 +35,7 @@ Releases of lettuce are available in the maven central repository. Take also a l
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.1.Final</version>
+  <version>3.0.2.Final</version>
 </dependency>
 ```
 
@@ -45,7 +45,7 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.1.Final</version>
+  <version>3.0.2.Final</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
