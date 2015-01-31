@@ -16,7 +16,11 @@ import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -58,6 +62,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         buffer = ctx.alloc().heapBuffer();
         rsm = new RedisStateMachine<K, V>();
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        releaseBuffer();
     }
 
     /**
@@ -283,16 +292,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return;
         }
 
-        if (buffer != null) {
-            try {
-                readLock.lock();
-                buffer.release();
-            } finally {
-                readLock.unlock();
-
-            }
-            buffer = null;
-        }
+        releaseBuffer();
 
         closed = true;
 
@@ -309,6 +309,18 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             channel.set(null);
+        }
+    }
+
+    private void releaseBuffer() {
+        if (buffer != null) {
+            try {
+                readLock.lock();
+                buffer.release();
+            } finally {
+                readLock.unlock();
+            }
+            buffer = null;
         }
     }
 
