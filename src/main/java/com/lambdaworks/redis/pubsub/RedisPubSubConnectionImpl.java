@@ -97,12 +97,10 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
 
         if (!channels.isEmpty()) {
             subscribe(toArray(channels));
-            channels.clear();
         }
 
         if (!patterns.isEmpty()) {
             psubscribe(toArray(patterns));
-            patterns.clear();
         }
     }
 
