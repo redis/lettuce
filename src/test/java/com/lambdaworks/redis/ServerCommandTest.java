@@ -2,10 +2,10 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 import java.util.Date;
@@ -66,18 +66,24 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void clientKillExtended() throws Exception {
-        Pattern p = Pattern.compile(".*addr=([^ ]+).*");
+
+        RedisConnection<String, String> connection2 = client.connect();
+        connection2.clientSetname("killme");
+
+        Pattern p = Pattern.compile("^.*addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
         String clients = redis.clientList();
         Matcher m = p.matcher(clients);
 
-        assertThat(m.lookingAt()).isTrue();
+        assertThat(m.matches()).isTrue();
         String addr = m.group(1);
         assertThat(redis.clientKill(KillArgs.Builder.addr(addr).skipme())).isGreaterThan(0);
 
-        assertThat(redis.clientKill(KillArgs.Builder.id(2))).isEqualTo(0);
+        assertThat(redis.clientKill(KillArgs.Builder.id(4234))).isEqualTo(0);
         assertThat(redis.clientKill(KillArgs.Builder.typeSlave().id(4234))).isEqualTo(0);
         assertThat(redis.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
         assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
+
+        connection2.close();
     }
 
     @Test
