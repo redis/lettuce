@@ -1,14 +1,16 @@
-              lettuce 3.0.2.Final RELEASE NOTES
+              lettuce 3.0.3.Final RELEASE NOTES
 
 This release fixes a memory leak when using PubSub.
 
 Fixes
 -----
-* Memory leak #21, #22
+* Memory leak on connection loss #26
+* Fix channel loss on reconnect #27 (Thanks to @kichik)
+* Resubscribe even when there are no listeners #30 (Thanks to @kichik)
 
 Other
 -----
-* Streamline build and release
+* Allow passing server, port and password on command line for tests #29
 
 lettuce requires a minimum of Java 6 to build and run. It is tested against Redis 2.8 and Redis 3.0.
 

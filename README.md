@@ -10,7 +10,7 @@ Multiple connections are efficiently managed by the excellent netty NIO
 framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
 is included.
 
-This version of lettuce has been tested against redis 2.8.13 and 3.0 RC2.
+This version of lettuce has been tested against redis 2.8.13 and 3.0 RC3.
 
 * Works with Java 6, 7 and 8
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
@@ -35,7 +35,7 @@ Releases of lettuce are available in the maven central repository. Take also a l
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.2.Final</version>
+  <version>3.0.3.Final</version>
 </dependency>
 ```
 
@@ -45,7 +45,7 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.2.Final</version>
+  <version>3.0.3.Final</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
