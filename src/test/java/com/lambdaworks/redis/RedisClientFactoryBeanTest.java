@@ -5,12 +5,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.support.RedisClientFactoryBean;
 
 public class RedisClientFactoryBeanTest {
     private RedisClientFactoryBean sut = new RedisClientFactoryBean();
+
+    /*
+     * This Test should not trigger a connection.
+     */
+    @Before
+    public void before() throws Exception {
+        sut.setSingleton(false);
+    }
 
     @After
     public void tearDown() throws Exception {

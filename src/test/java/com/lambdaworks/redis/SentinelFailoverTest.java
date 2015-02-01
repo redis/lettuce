@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.*;
 import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
@@ -35,8 +36,8 @@ public class SentinelFailoverTest extends AbstractCommandTest {
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
 
-        int masterPort = sentinelRule.findMaster(6484, 6485);
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, "127.0.0.1", masterPort, 1);
+        int masterPort = sentinelRule.findMaster(port(5), port(6));
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, TestSettings.hostAddr(), masterPort, 1);
 
     }
 

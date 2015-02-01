@@ -10,7 +10,7 @@ Multiple connections are efficiently managed by the excellent netty NIO
 framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
 is included.
 
-This version of lettuce has been tested against redis 2.8.13 and 3.0-beta8.
+This version of lettuce has been tested against redis 2.8.13 and 3.0 RC2.
 
 * Works with Java 6, 7 and 8
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
@@ -265,13 +265,26 @@ Performance
 
 Lettuce is made for performance. Issuing (and returning) 1000 PING's over the sync API takes on a MacBook with Intel i7 an average of 190ms to complete all.
 The async API can issue 1000 commands within 20ms.
-    
+
+Building
+-----------
+
+Lettuce is built with Apache Maven. The tests require multiple running redis instances for different test cases which
+are configured using a ```Makefile```. All tests run against redis branch 3.0
+
+* Initial environment setup (clone and build `redis`): ```make prepare```
+* Run the build: ```make test```
+* Start redis (manually): ```make start```
+* Stop redis (manually): ```make stop```
+
 License
 -------
+
 * [Apache License 2.0] (http://www.apache.org/licenses/LICENSE-2.0)
 * Fork of https://github.com/wg/lettuce
 
 Contributing
 -------
+
 Github is for social coding: if you want to write code, I encourage contributions through pull requests from forks of this repository. 
 Create Github tickets for bugs and new features and comment on the ones that you are interested in.

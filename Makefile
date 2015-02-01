@@ -261,32 +261,24 @@ start: cleanup
 cleanup: stop
 	- mkdir -p work
 	rm -f work/redis-cluster-node*.conf 2>/dev/null
-	rm -f work/dump.rdb work/appendonly.aof work/*.conf work/*.log 2>/dev/null
-
-stop:
-	pkill redis-server || true
-	pkill redis-sentinel || true
-	sleep 2
-	rm -f work/dump.rdb work/appendonly.aof work/*.conf work/*.log || true
+	rm -f work/*.rdb work/*.aof work/*.conf work/*.log 2>/dev/null
 	rm -f *.aof
 	rm -f *.rdb
 
+stop:
+	pkill redis-server && sleep 3 || true
+	pkill redis-sentinel && sleep 3 || true
 
 test-coveralls:
 	make start
-	sleep 2
 	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:jacoco
 	make stop
 
-test:
-	make start
-	sleep 2
+test: start
 	mvn -B -DskipTests=false clean compile test
 	make stop
 
-travis-install:
-	pkill redis-server || true
-	pkill redis-sentinel || true
+prepare: stop
 	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch 3.0 --single-branch work/redis-git && cd work/redis-git|| true
 	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull && git checkout 3.0 || true
 	make -C work/redis-git clean
@@ -307,6 +299,4 @@ release:
 	cd ..
 	mvn site:site
 	mvn -o scm-publish:publish-scm -Dgithub.site.upload.skip=false
-
-.PHONY: test
 

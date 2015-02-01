@@ -2,6 +2,6 @@ language: java
 jdk:
   - oraclejdk7
   - oraclejdk8
-install: make travis-install
+install: make prepare
 script: make test-coveralls
 

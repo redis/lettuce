@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.TestSettings;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -25,7 +26,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @since 3.0
  */
 public class RedisClusterSetupTest {
-    public static final String host = "127.0.0.1";
+    public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7383;
     public static final int port2 = 7384;
 

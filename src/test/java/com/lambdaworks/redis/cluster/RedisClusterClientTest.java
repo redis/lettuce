@@ -33,7 +33,7 @@ import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 @SuppressWarnings("unchecked")
 public class RedisClusterClientTest {
 
-    public static final String host = "127.0.0.1";
+    public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7379;
     public static final int port2 = 7380;
     public static final int port3 = 7381;

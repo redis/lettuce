@@ -2,9 +2,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="TestSettings" class="com.lambdaworks.redis.TestSettings"></bean>
+
     <bean id="MasterUri" class="com.lambdaworks.redis.RedisURI">
-        <property name="host" value="localhost"/>
-        <property name="port" value="6479"/>
+        <property name="host" value="#{TestSettings.host()}"/>
+        <property name="port" value="#{TestSettings.port()}"/>
     </bean>
 
     <bean id="RedisClient1" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
@@ -12,11 +15,11 @@
     </bean>
 
     <bean id="RedisClient2" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
-        <property name="uri" value="redis://localhost:6479/0"/>
+        <property name="uri" value="redis://#{TestSettings.host()}:#{TestSettings.port()}/0"/>
     </bean>
 
     <bean id="RedisClient3" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
-        <property name="uri" value="redis-sentinel://localhost:6479/0#master"/>
+        <property name="uri" value="redis-sentinel://#{TestSettings.host()}:#{TestSettings.port()}/0#master"/>
     </bean>
 
     <bean id="RedisClusterClient1" class="com.lambdaworks.redis.support.RedisClusterClientFactoryBean">
@@ -24,6 +27,6 @@
     </bean>
 
     <bean id="RedisClusterClient2" class="com.lambdaworks.redis.support.RedisClusterClientFactoryBean">
-        <property name="uri" value="redis://localhost:6479/0"/>
+        <property name="uri" value="redis://#{TestSettings.host()}:#{TestSettings.port()}/0"/>
     </bean>
 </beans>

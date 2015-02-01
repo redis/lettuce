@@ -26,7 +26,7 @@ public class SentinelRule implements TestRule {
 
         for (int port : ports) {
             RedisSentinelAsyncConnection<String, String> connection = redisClient.connectSentinelAsync(RedisURI.Builder.redis(
-                    "localhost", port).build());
+                    TestSettings.host(), port).build());
             connectionCache.put(port, connection);
         }
     }
@@ -121,7 +121,7 @@ public class SentinelRule implements TestRule {
 
         for (int redisPort : redisPorts) {
 
-            RedisConnection<String, String> connection = redisClient.connect(RedisURI.Builder.redis("127.0.0.1", redisPort)
+            RedisConnection<String, String> connection = redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort)
                     .build());
             List<Object> role = connection.role();
             connection.close();

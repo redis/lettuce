@@ -4,6 +4,8 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.TestSettings.host;
+import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
@@ -171,8 +173,8 @@ public class ServerCommandTest extends AbstractCommandTest {
      */
     @Test
     public void debugSegfault() throws Exception {
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis("localhost", 6482)
-                .build());
+        final RedisAsyncConnection<String, String> connection = client.connectAsync(
+                RedisURI.Builder.redis(host(), port(3)).build());
         connection.debugSegfault();
         WaitFor.waitOrTimeout(new Condition() {
             @Override
@@ -225,14 +227,14 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void slaveof() throws Exception {
 
-        assertThat(redis.slaveof("localhost", 0)).isEqualTo("OK");
+        assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
         redis.slaveofNoOne();
     }
 
     @Test
     public void role() throws Exception {
 
-        RedisClient redisClient = new RedisClient("localhost", 6480);
+        RedisClient redisClient = new RedisClient(host(), port(1));
         RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
         try {
 
@@ -258,7 +260,7 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void shutdown() throws Exception {
 
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis("localhost", 6483)
+        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(4))
                 .build());
         try {
 
