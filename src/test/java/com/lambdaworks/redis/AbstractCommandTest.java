@@ -15,10 +15,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 public abstract class AbstractCommandTest {
-    public static final String host = "localhost";
-    public static final int port = 6479;
+    public static final String host = System.getProperty("host", "localhost");
+    public static final int port = Integer.valueOf(System.getProperty("port", "6479"));
 
-    public static final String passwd = "passwd";
+    public static final String passwd = System.getProperty("password", "passwd");
 
     protected static RedisClient client;
     protected Logger log = Logger.getLogger(getClass());
