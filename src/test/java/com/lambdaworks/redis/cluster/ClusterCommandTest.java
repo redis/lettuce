@@ -2,8 +2,12 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,9 +30,7 @@ public class ClusterCommandTest {
     public void testException() throws Exception {
 
         assertThat(command.getException()).isNull();
-
         sut.setException(new Exception());
-
         assertThat(command.getException()).isNotNull();
     }
 
@@ -36,9 +38,7 @@ public class ClusterCommandTest {
     public void testCancel() throws Exception {
 
         assertThat(command.isCancelled()).isFalse();
-
         sut.cancel(true);
-
         assertThat(command.isCancelled()).isTrue();
     }
 
@@ -47,5 +47,27 @@ public class ClusterCommandTest {
 
         command.complete();
         sut.await(1, TimeUnit.MINUTES);
+        assertThat(sut.isDone()).isTrue();
+        assertThat(sut.isCancelled()).isFalse();
+    }
+
+    @Test
+    public void testCompleteListener() throws Exception
+    {
+
+        final List someList = Lists.newArrayList();
+        sut.addListener(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                someList.add("");
+            }
+        }, MoreExecutors.sameThreadExecutor());
+        command.complete();
+        sut.await(1, TimeUnit.MINUTES);
+
+        assertThat(sut.isDone()).isTrue();
+        assertThat(someList.size()).describedAs("Inner listener has to add one element").isEqualTo(1);
     }
 }

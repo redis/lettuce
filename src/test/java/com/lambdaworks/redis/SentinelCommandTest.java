@@ -1,7 +1,7 @@
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +14,12 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
@@ -101,8 +106,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void sentinelConnectWith() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID).withSentinel(TestSettings.host())
-                .build());
+        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID)
+                .withSentinel(TestSettings.host()).build());
 
         RedisSentinelAsyncConnection<String, String> sentinelConnection = client.connectSentinelAsync();
         assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
@@ -112,6 +117,23 @@ public class SentinelCommandTest extends AbstractCommandTest {
         RedisConnection<String, String> connection2 = client.connect();
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.close();
+        client.shutdown();
+    }
+
+    @Test
+    public void sentinelConnectWrongMaster() throws Exception {
+
+        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host())
+                .build());
+        try
+        {
+            client.connect();
+            fail("missing RedisConnectionException");
+        }
+        catch (RedisConnectionException e)
+        {
+        }
+
         client.shutdown();
     }
 
@@ -189,7 +211,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
                 }
             }, timeout(seconds(15)));
         } catch (Exception e) {
-            RedisConnection<String, String> master = sentinelClient.connect(RedisURI.Builder.redis(hostAddr(), port(5)).build());
+            RedisConnection<String, String> master = sentinelClient
+                    .connect(RedisURI.Builder.redis(hostAddr(), port(5)).build());
             RedisConnection<String, String> slave = sentinelClient.connect(RedisURI.Builder.redis(hostAddr(), port(6)).build());
 
             fail("Timeout when waiting for slaves: Master role " + master.role() + ", Slave role " + slave.role() + ", "
