@@ -1,8 +1,9 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -10,7 +11,15 @@ import java.net.ConnectException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.*;
+import org.apache.log4j.Layout;
+import org.apache.log4j.Logger;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -22,7 +31,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -41,6 +57,8 @@ public class RedisClusterClientTest {
 
     protected static RedisClient client;
     protected static RedisClusterClient clusterClient;
+
+    protected Logger log = Logger.getLogger(getClass());
 
     protected RedisClusterAsyncConnection<String, String> redis1;
 
@@ -185,6 +203,7 @@ public class RedisClusterClientTest {
 
         if (redis1Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
 
+            log.info("Cluster node 1 is master");
             WaitFor.waitOrTimeout(new Condition() {
                 @Override
                 public boolean isSatisfied() {
@@ -192,12 +211,17 @@ public class RedisClusterClientTest {
                 }
             }, timeout(seconds(10)));
 
+            log.info("Cluster nodes seen from node 1:" + Layout.LINE_SEP + redissync1.clusterNodes());
+
             RedisFuture<String> future = redis1.clusterFailover(false);
             future.get();
             assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
 
             String failover = redissync4.clusterFailover(true);
             assertThat(failover).isEqualTo("OK");
+            new ThreadSleep(seconds(2));
+            log.info("Cluster nodes seen from node 1 after clusterFailover:" + Layout.LINE_SEP + redissync1.clusterNodes());
+            log.info("Cluster nodes seen from node 4 after clusterFailover:" + Layout.LINE_SEP + redissync4.clusterNodes());
 
             WaitFor.waitOrTimeout(new Condition() {
                 @Override
@@ -215,6 +239,7 @@ public class RedisClusterClientTest {
 
         if (redis4Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
 
+            log.info("Cluster node 4 is master");
             WaitFor.waitOrTimeout(new Condition() {
                 @Override
                 public boolean isSatisfied() {
@@ -222,8 +247,7 @@ public class RedisClusterClientTest {
                 }
             }, timeout(seconds(10)));
 
-            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-
+            log.info("Cluster nodes seen from node 1:" + Layout.LINE_SEP + redissync1.clusterNodes());
             try {
                 redissync4.clusterFailover(false);
             } catch (Exception e) {
@@ -234,6 +258,10 @@ public class RedisClusterClientTest {
             String result = failover.get();
             assertThat(failover.getError()).isNull();
             assertThat(result).isEqualTo("OK");
+
+            new ThreadSleep(seconds(2));
+            log.info("Cluster nodes seen from node 1 after clusterFailover:" + Layout.LINE_SEP + redissync1.clusterNodes());
+            log.info("Cluster nodes seen from node 4 after clusterFailover:" + Layout.LINE_SEP + redissync4.clusterNodes());
 
             WaitFor.waitOrTimeout(new Condition() {
                 @Override
