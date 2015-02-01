@@ -108,6 +108,24 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
     @SuppressWarnings("unchecked")
     public void channelRead(Object msg) {
         PubSubOutput<K, V> output = (PubSubOutput<K, V>) msg;
+        // update internal state
+        switch (output.type()) {
+	        case psubscribe:
+	            patterns.add(output.pattern());
+	            break;
+	        case punsubscribe:
+	            patterns.remove(output.pattern());
+	            break;
+	        case subscribe:
+	            channels.add(output.channel());
+	            break;
+	        case unsubscribe:
+	            channels.remove(output.channel());
+	            break;
+	        default:
+	        	break;
+        }
+        // update listeners
         for (RedisPubSubListener<K, V> listener : listeners) {
             switch (output.type()) {
                 case message:
@@ -117,19 +135,15 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
                     listener.message(output.pattern(), output.channel(), output.get());
                     break;
                 case psubscribe:
-                    patterns.add(output.pattern());
                     listener.psubscribed(output.pattern(), output.count());
                     break;
                 case punsubscribe:
-                    patterns.remove(output.pattern());
                     listener.punsubscribed(output.pattern(), output.count());
                     break;
                 case subscribe:
-                    channels.add(output.channel());
                     listener.subscribed(output.channel(), output.count());
                     break;
                 case unsubscribe:
-                    channels.remove(output.channel());
                     listener.unsubscribed(output.channel(), output.count());
                     break;
                 default:
