@@ -68,6 +68,7 @@ class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel>
                 if (!initializedFuture.isDone()
                         && (cause instanceof SSLHandshakeException || cause.getCause() instanceof SSLException)) {
                     initializedFuture.setException(cause);
+                    return;
                 }
                 super.exceptionCaught(ctx, cause);
             }
