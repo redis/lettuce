@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
@@ -9,17 +9,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.Sets;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -28,7 +23,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -58,7 +52,7 @@ public abstract class AbstractRedisClient {
     protected long timeout;
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
-    protected Set<Closeable> closeableResources = new ConcurrentSet<Closeable>();
+    protected Set<Closeable> closeableResources = Sets.newConcurrentHashSet();
 
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
@@ -81,31 +75,42 @@ public abstract class AbstractRedisClient {
 
     protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
             final T connection, final Supplier<SocketAddress> socketAddressSupplier, final boolean withReconnect) {
+
+        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
+        connectionBuilder(handler, connection, socketAddressSupplier, withReconnect, connectionBuilder);
+        return (T) connectAsyncImpl(connectionBuilder);
+    }
+
+    /**
+     * Populate connection builder with necessary resources.
+     * 
+     * @param handler
+     * @param connection
+     * @param socketAddressSupplier
+     * @param withReconnect
+     * @param connectionBuilder
+     */
+    protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
+            Supplier<SocketAddress> socketAddressSupplier, boolean withReconnect, ConnectionBuilder connectionBuilder) {
+
+        Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
+        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
+        connectionBuilder.bootstrap(redisBootstrap).withReconnect(withReconnect);
+        connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
+        connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
+    }
+
+    protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(ConnectionBuilder connectionBuilder) {
+
+        RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         try {
 
-            SocketAddress redisAddress = socketAddressSupplier.get();
+            SocketAddress redisAddress = connectionBuilder.socketAddress();
 
             logger.debug("Connecting to Redis, address: " + redisAddress);
 
-            final Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
-            redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
-
-            final ConnectionWatchdog watchdog = new ConnectionWatchdog(redisBootstrap, timer, socketAddressSupplier);
-
-            redisBootstrap.handler(new ChannelInitializer<Channel>() {
-                @Override
-                protected void initChannel(Channel ch) throws Exception {
-
-                    if (withReconnect) {
-                        watchdog.setReconnect(true);
-                        ch.pipeline().addLast(watchdog);
-                    }
-
-                    ch.pipeline().addLast(new ChannelGroupListener(channels),
-                            new ConnectionEventTrigger(connectionEvents, connection), handler, connection);
-                }
-            });
-
+            Bootstrap redisBootstrap = connectionBuilder.bootstrap();
+            redisBootstrap.handler(connectionBuilder.build());
             ChannelFuture future = redisBootstrap.connect(redisAddress);
 
             future.await();
@@ -117,9 +122,9 @@ public abstract class AbstractRedisClient {
                 future.get();
             }
 
-            connection.registerCloseables(closeableResources, connection, handler);
+            connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
-            return connection;
+            return (T) connection;
         } catch (RedisException e) {
             connection.close();
             throw e;
