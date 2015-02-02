@@ -1,4 +1,9 @@
 PATH := ./work/redis-git/src:${PATH}
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+STUNNEL_BIN := $(shell which stunnel)
+BREW_BIN := $(shell which brew)
+YUM_BIN := $(shell which yum)
+APT_BIN := $(shell which apt-get)
 
 define REDIS1_CONF
 daemonize yes
@@ -211,6 +216,19 @@ cluster-enabled yes
 cluster-config-file work/redis-cluster-config6-7384.conf
 endef
 
+define STUNNEL_CONF
+cert = cert.pem
+key = key.pem
+capath = cert.pem
+delay = yes
+pid = $(ROOT_DIR)/stunnel.pid
+foreground = no
+
+[redis]
+accept = 127.0.0.1:6443
+connect = 127.0.0.1:6479
+endef
+
 export REDIS1_CONF
 export REDIS2_CONF
 export REDIS3_CONF
@@ -231,6 +249,8 @@ export REDIS_CLUSTER_NODE4_CONF
 export REDIS_CLUSTER_CONFIG4
 export REDIS_CLUSTER_NODE5_CONF
 export REDIS_CLUSTER_NODE6_CONF
+
+export STUNNEL_CONF
 
 start: cleanup
 	echo "$$REDIS1_CONF" > work/redis1-6479.conf && redis-server work/redis1-6479.conf
@@ -257,6 +277,7 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_NODE4_CONF" > work/redis-clusternode4-7382.conf && redis-server work/redis-clusternode4-7382.conf
 	echo "$$REDIS_CLUSTER_NODE5_CONF" > work/redis-clusternode5-7383.conf && redis-server work/redis-clusternode5-7383.conf
 	echo "$$REDIS_CLUSTER_NODE6_CONF" > work/redis-clusternode6-7384.conf && redis-server work/redis-clusternode6-7384.conf
+	echo "$$STUNNEL_CONF" > work/stunnel.conf && cd work && stunnel stunnel.conf
 
 cleanup: stop
 	- mkdir -p work
@@ -265,9 +286,17 @@ cleanup: stop
 	rm -f *.aof
 	rm -f *.rdb
 
+ssl-keys:
+	- mkdir -p work
+	- rm -f work/keystore.jks
+	openssl genrsa -out work/key.pem 4096
+	openssl req -new -x509 -key work/key.pem -out work/cert.pem -days 365 -subj "/O=lettuce/ST=Some-State/C=DE/CN=lettuce-test"
+	keytool -importcert -keystore work/keystore.jks -file work/cert.pem -noprompt -storepass changeit
+
 stop:
-	pkill redis-server && sleep 3 || true
-	pkill redis-sentinel && sleep 3 || true
+	pkill stunnel || true
+	pkill redis-server && sleep 1 || true
+	pkill redis-sentinel && sleep 1 || true
 
 test-coveralls:
 	make start
@@ -279,6 +308,36 @@ test: start
 	make stop
 
 prepare: stop
+
+ifndef STUNNEL_BIN
+ifeq ($(shell uname -s),Linux)
+ifdef APT_BIN
+	sudo apt-get -y stunnel
+else
+
+ifdef YUM_BIN
+	sudo yum install stunnel
+else
+	@echo "Cannot install stunnel using yum/apt-get"
+	@exit 1
+endif
+
+endif
+
+endif
+
+ifeq ($(shell uname -s),Darwin)
+
+ifndef BREW_BIN
+	@echo "Cannot install stunnel because missing brew.sh"
+	@exit 1
+endif
+
+	brew install stunnel
+
+endif
+
+endif
 	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch 3.0 --single-branch work/redis-git && cd work/redis-git|| true
 	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull && git checkout 3.0 || true
 	make -C work/redis-git clean
@@ -292,11 +351,7 @@ release:
 	mvn release:clean
 	mvn release:prepare -Psonatype-oss-release
 	mvn release:perform -Psonatype-oss-release
-	cd target/checkout
-	cd target
-	ls *-bin.zip | xargs gpg -b -a
-	ls *-bin.tar.gz | xargs gpg -b -a
-	cd ..
-	mvn site:site
-	mvn -o scm-publish:publish-scm -Dgithub.site.upload.skip=false
+	ls target/checkout/target/*-bin.zip | xargs gpg -b -a
+	ls target/checkout/target/*-bin.tar.gz | xargs gpg -b -a
+	cd target/checkout && mvn site:site && mvn -o scm-publish:publish-scm -Dgithub.site.upload.skip=false
 
