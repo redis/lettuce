@@ -169,21 +169,25 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
-        final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
-        ByteBuf buf = ctx.alloc().heapBuffer();
-        cmd.encode(buf);
+        if (msg instanceof RedisCommand) {
+            final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
+            ByteBuf buf = ctx.alloc().heapBuffer();
+            cmd.encode(buf);
 
-        if (logger.isTraceEnabled()) {
-            logger.trace("[" + ctx.channel().remoteAddress() + "] Sent: " + buf.toString(Charset.defaultCharset()).trim());
-        }
+            if (logger.isTraceEnabled()) {
+                logger.trace("[" + ctx.channel().remoteAddress() + "] Sent: " + buf.toString(Charset.defaultCharset()).trim());
+            }
 
-        if (cmd.getOutput() == null) {
-            ctx.write(buf, promise);
-            cmd.complete();
-        } else {
-            queue.put(cmd);
-            ctx.write(buf, promise);
+            if (cmd.getOutput() == null) {
+                ctx.write(buf, promise);
+                cmd.complete();
+            } else {
+                queue.put(cmd);
+                ctx.write(buf, promise);
+            }
+            return;
         }
+        super.write(ctx, msg, promise);
 
     }
 

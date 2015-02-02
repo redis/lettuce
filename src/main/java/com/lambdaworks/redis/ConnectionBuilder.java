@@ -10,9 +10,7 @@ import com.google.common.collect.Lists;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timer;
 
@@ -106,9 +104,9 @@ class ConnectionBuilder {
 
     }
 
-    public ChannelInitializer<Channel> build() {
+    public RedisChannelInitializer build() {
 
-        return new RedisChannelInitializer(buildHandlers());
+        return new PlainChannelInitializer(buildHandlers());
     }
 
     public RedisChannelHandler<?, ?> connection() {

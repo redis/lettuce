@@ -8,6 +8,8 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 
+import com.lambdaworks.redis.RedisConnectionException;
+import io.netty.handler.codec.DecoderException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -45,11 +47,20 @@ public class SslTest {
         assertThat(connection.get("key")).isEqualTo("value");
 
         connection.close();
-
     }
 
-    @Test()
-    @Ignore("Need strategy how to deal with broken SSL connections.")
+    @Test
+    public void regularSslWithReconnect() throws Exception {
+        RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
+
+        RedisConnection<String, String> connection = redisClient.connect(redisUri);
+        connection.set("key", "value");
+        connection.quit();
+        assertThat(connection.get("key")).isEqualTo("value");
+        connection.close();
+    }
+
+    @Test(expected = RedisConnectionException.class)
     public void sslWithVerificationWillFail() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(true).build();
 

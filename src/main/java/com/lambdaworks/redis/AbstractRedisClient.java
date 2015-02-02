@@ -122,7 +122,8 @@ public abstract class AbstractRedisClient {
             logger.debug("Connecting to Redis, address: " + redisAddress);
 
             Bootstrap redisBootstrap = connectionBuilder.bootstrap();
-            redisBootstrap.handler(connectionBuilder.build());
+            RedisChannelInitializer initializer = connectionBuilder.build();
+            redisBootstrap.handler(initializer);
             ChannelFuture future = redisBootstrap.connect(redisAddress);
 
             future.await();
@@ -134,6 +135,7 @@ public abstract class AbstractRedisClient {
                 future.get();
             }
 
+            initializer.channelInitialized().get(timeout, unit);
             connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
             return (T) connection;
