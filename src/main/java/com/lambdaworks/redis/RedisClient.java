@@ -2,11 +2,16 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -309,9 +314,16 @@ public class RedisClient extends AbstractRedisClient {
     private <K, V> void connectAsyncImpl(CommandHandler<K, V> handler, RedisAsyncConnectionImpl<K, V> connection,
             boolean withReconnect, RedisURI redisURI) {
 
-        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
+        ConnectionBuilder connectionBuilder;
+        if (redisURI.isSsl()) {
+            SslConnectionBuilder sslConnectionBuilder = SslConnectionBuilder.sslConnectionBuilder();
+            sslConnectionBuilder.ssl(redisURI);
+            connectionBuilder = sslConnectionBuilder;
+        } else {
+            connectionBuilder = ConnectionBuilder.connectionBuilder();
+        }
 
-        connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), withReconnect, connectionBuilder);
+        connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), withReconnect, connectionBuilder, redisURI);
         connectAsyncImpl(connectionBuilder);
 
         if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {

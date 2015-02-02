@@ -48,6 +48,7 @@
         <skipTests>true</skipTests>
         <github.site.upload.skip>true</github.site.upload.skip>
         <lettuce-release-version>3.0.3.Final</lettuce-release-version>
+        <netty.version>4.0.25.Final</netty.version>
     </properties>
 
     <scm>
@@ -67,13 +68,19 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-common</artifactId>
-            <version>4.0.19.Final</version>
+            <version>${netty.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport</artifactId>
-            <version>4.0.19.Final</version>
+            <version>${netty.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${netty.version}</version>
         </dependency>
 
         <dependency>

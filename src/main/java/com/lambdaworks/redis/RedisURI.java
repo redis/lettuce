@@ -34,6 +34,9 @@ public class RedisURI implements Serializable {
     private int port;
     private int database;
     private char[] password;
+    private boolean ssl = false;
+    private boolean verifyPeer = true;
+    private boolean startTls = false;
     private long timeout = 60;
     private TimeUnit unit = TimeUnit.SECONDS;
     private final List<RedisURI> sentinels = new ArrayList<RedisURI>();
@@ -114,6 +117,30 @@ public class RedisURI implements Serializable {
 
     public void setDatabase(int database) {
         this.database = database;
+    }
+
+    public boolean isSsl() {
+        return ssl;
+    }
+
+    public void setSsl(boolean ssl) {
+        this.ssl = ssl;
+    }
+
+    public boolean isVerifyPeer() {
+        return verifyPeer;
+    }
+
+    public void setVerifyPeer(boolean verifyPeer) {
+        this.verifyPeer = verifyPeer;
+    }
+
+    public boolean isStartTls() {
+        return startTls;
+    }
+
+    public void setStartTls(boolean startTls) {
+        this.startTls = startTls;
     }
 
     public List<RedisURI> getSentinels() {
@@ -252,6 +279,42 @@ public class RedisURI implements Serializable {
         public Builder withPort(int port) {
             checkState(redisURI.host != null, "Host is null. Cannot use in Sentinel mode.");
             redisURI.setPort(port);
+            return this;
+        }
+
+        /**
+         * Adds ssl information to the builder. Does only affect Redis URI, cannot be used with Sentinel connections.
+         *
+         * @param ssl
+         * @return the builder
+         */
+        public Builder withSsl(boolean ssl) {
+            checkState(redisURI.host != null, "Host is null. Cannot use in Sentinel mode.");
+            redisURI.setSsl(ssl);
+            return this;
+        }
+
+        /**
+         * Enables/disables StartTLS when using SSL. Does only affect Redis URI, cannot be used with Sentinel connections.
+         *
+         * @param startTls
+         * @return the builder
+         */
+        public Builder withStartTls(boolean startTls) {
+            checkState(redisURI.host != null, "Host is null. Cannot use in Sentinel mode.");
+            redisURI.setStartTls(startTls);
+            return this;
+        }
+
+        /**
+         * Enables/disables peer verification. Does only affect Redis URI, cannot be used with Sentinel connections.
+         *
+         * @param verifyPeer
+         * @return the builder
+         */
+        public Builder withVerifyPeer(boolean verifyPeer) {
+            checkState(redisURI.host != null, "Host is null. Cannot use in Sentinel mode.");
+            redisURI.setVerifyPeer(verifyPeer);
             return this;
         }
 

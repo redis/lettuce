@@ -54,6 +54,14 @@ public class TestSettings {
 
     /**
      *
+     * @return sslport of your redis instance. Defaults to {@literal 6443}. Can be overriden with {@code -Dsslport=1234}
+     */
+    public static int sslPort() {
+        return Integer.valueOf(System.getProperty("sslport", "6443"));
+    }
+
+    /**
+     *
      * @param offset
      * @return {@link #port()} with added {@literal offset}
      */

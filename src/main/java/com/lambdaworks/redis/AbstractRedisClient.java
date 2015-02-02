@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
@@ -14,7 +14,11 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -49,7 +53,7 @@ public abstract class AbstractRedisClient {
 
     protected HashedWheelTimer timer;
     protected ChannelGroup channels;
-    protected long timeout;
+    protected long timeout = 60;
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = Sets.newConcurrentHashSet();
@@ -59,6 +63,7 @@ public abstract class AbstractRedisClient {
         eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
+        unit = TimeUnit.SECONDS;
     }
 
     /**
@@ -77,7 +82,7 @@ public abstract class AbstractRedisClient {
             final T connection, final Supplier<SocketAddress> socketAddressSupplier, final boolean withReconnect) {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
-        connectionBuilder(handler, connection, socketAddressSupplier, withReconnect, connectionBuilder);
+        connectionBuilder(handler, connection, socketAddressSupplier, withReconnect, connectionBuilder, null);
         return (T) connectAsyncImpl(connectionBuilder);
     }
 
@@ -91,10 +96,17 @@ public abstract class AbstractRedisClient {
      * @param connectionBuilder
      */
     protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
-            Supplier<SocketAddress> socketAddressSupplier, boolean withReconnect, ConnectionBuilder connectionBuilder) {
+            Supplier<SocketAddress> socketAddressSupplier, boolean withReconnect, ConnectionBuilder connectionBuilder,
+            RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
-        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
+
+        if (redisURI == null) {
+            redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
+        } else {
+            redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) redisURI.getUnit()
+                    .toMillis(redisURI.getTimeout()));
+        }
         connectionBuilder.bootstrap(redisBootstrap).withReconnect(withReconnect);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
