@@ -4,7 +4,6 @@
         <href>http://redis.paluch.biz/</href>
     </bannerLeft>
 
-
     <body>
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
@@ -17,7 +16,6 @@
 
         <menu ref="reports"/>
     </body>
-
 
     <custom>
         <fluidoSkin>

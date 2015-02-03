@@ -47,6 +47,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisClient() {
         redisURI = null;
+        setDefaultTimeout(60, TimeUnit.MINUTES);
     }
 
     /**
@@ -55,7 +56,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param host Server hostname.
      */
     public RedisClient(String host) {
-        this(host, 6379);
+        this(host, RedisURI.DEFAULT_REDIS_PORT);
     }
 
     /**

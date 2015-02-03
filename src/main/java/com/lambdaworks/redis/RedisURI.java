@@ -1,13 +1,20 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.net.HostAndPort;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide as well the database, password and
@@ -18,6 +25,10 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("serial")
 public class RedisURI implements Serializable {
+
+    public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
+    public static final String URI_SCHEME_REDIS = "redis";
+    public static final String URI_SCHEME_REDIS_SECURE = "rediss";
 
     /**
      * The default sentinel port.
@@ -61,6 +72,126 @@ public class RedisURI implements Serializable {
         this.port = port;
         this.timeout = timeout;
         this.unit = unit;
+    }
+
+    /**
+     * Create a Redis URI from an URI string. Supported formats are:
+     * <ul>
+     * <li>redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId</li>
+     * <li>redis://[password@]host[:port][/databaseNumber]</li>
+     * </ul>
+     *
+     * The uri must follow conventions of {@link java.net.URI}
+     * 
+     * @param uri The URI string.
+     * @return An instance of {@link RedisURI} containing details from the URI.
+     * @throws Exception
+     */
+    public static RedisURI create(String uri) {
+        return create(URI.create(uri));
+    }
+
+    /**
+     * Create a Redis URI from an URI string. Supported formats are:
+     * <ul>
+     * <li>redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId</li>
+     * <li>redis://[password@]host[:port][/databaseNumber]</li>
+     * </ul>
+     *
+     * The uri must follow conventions of {@link java.net.URI}
+     *
+     * @param uri The URI.
+     * @return An instance of {@link RedisURI} containing details from the URI.
+     * @throws Exception
+     */
+    public static RedisURI create(URI uri) {
+
+        RedisURI.Builder builder = null;
+        if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
+            builder = configureSentinel(uri, builder);
+        } else {
+            if (!URI_SCHEME_REDIS.equals(uri.getScheme()) && !URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
+                throw new IllegalArgumentException("Scheme " + uri.getScheme() + " not supported");
+            }
+
+            if (uri.getPort() > 0) {
+                builder = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
+            } else {
+                builder = RedisURI.Builder.redis(uri.getHost());
+            }
+
+            if (URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
+                builder.withSsl(true);
+            }
+        }
+
+        String userInfo = uri.getUserInfo();
+
+        if (isEmpty(userInfo) && isNotEmpty(uri.getAuthority()) && uri.getAuthority().indexOf('@') > 0) {
+            userInfo = uri.getAuthority().substring(0, uri.getAuthority().indexOf('@'));
+        }
+
+        if (isNotEmpty(userInfo)) {
+            String password = userInfo;
+            if (password.startsWith(":")) {
+                password = password.substring(1);
+            }
+            builder.withPassword(password);
+        }
+
+        if (isNotEmpty(uri.getPath())) {
+            String pathSuffix = uri.getPath().substring(1);
+
+            if (isNotEmpty(pathSuffix)) {
+
+                builder.withDatabase(Integer.parseInt(pathSuffix));
+            }
+        }
+
+        return builder.build();
+
+    }
+
+    private static RedisURI.Builder configureSentinel(URI uri, RedisURI.Builder builder) {
+        checkArgument(isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
+        String masterId = uri.getFragment();
+
+        if (isNotEmpty(uri.getHost())) {
+            if (uri.getPort() != -1) {
+                builder = RedisURI.Builder.sentinel(uri.getHost(), uri.getPort(), masterId);
+            } else {
+                builder = RedisURI.Builder.sentinel(uri.getHost(), masterId);
+            }
+        }
+
+        if (builder == null && isNotEmpty(uri.getAuthority())) {
+            String authority = uri.getAuthority();
+            if (authority.indexOf('@') > -1) {
+                authority = authority.substring(authority.indexOf('@') + 1);
+            }
+
+            String[] hosts = authority.split("\\,");
+            for (String host : hosts) {
+                HostAndPort hostAndPort = HostAndPort.fromString(host);
+                if (builder == null) {
+                    if (hostAndPort.hasPort()) {
+                        builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), hostAndPort.getPort(), masterId);
+                    } else {
+                        builder = RedisURI.Builder.sentinel(hostAndPort.getHostText(), masterId);
+                    }
+                } else {
+                    if (hostAndPort.hasPort()) {
+                        builder.withSentinel(hostAndPort.getHostText(), hostAndPort.getPort());
+                    } else {
+                        builder.withSentinel(hostAndPort.getHostText());
+                    }
+                }
+            }
+
+        }
+
+        checkArgument(builder != null, "Invalid URI, cannot get host part");
+        return builder;
     }
 
     public String getHost() {

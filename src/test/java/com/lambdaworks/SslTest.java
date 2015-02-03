@@ -62,7 +62,7 @@ public class SslTest {
 
     @Test(expected = RedisConnectionException.class)
     public void sslWithVerificationWillFail() throws Exception {
-        RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(true).build();
+        RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
 
         RedisConnection<String, String> connection = redisClient.connect(redisUri);
         connection.set("key", "value");

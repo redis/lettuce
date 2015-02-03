@@ -1,8 +1,9 @@
 package com.lambdaworks.redis.support;
 
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+
 import java.net.URI;
 
-import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
@@ -22,32 +23,19 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
         if (getRedisURI() == null) {
             URI uri = getUri();
 
-            RedisURI.Builder builder = null;
-            if (uri.getScheme().equals("redis-sentinel")) {
+            if (uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL)) {
                 throw new IllegalArgumentException("Sentinel mode not supported when using RedisClusterClient");
-            } else {
-                if (uri.getPort() != -1) {
-                    builder = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
-                } else {
-                    builder = RedisURI.Builder.redis(uri.getHost());
-                }
             }
 
-            if (LettuceStrings.isNotEmpty(getPassword())) {
-                builder.withPassword(getPassword());
+            if (!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS)) {
+                throw new IllegalArgumentException("Only plain connections allowed when using RedisClusterClient");
             }
 
-            if (LettuceStrings.isNotEmpty(uri.getPath())) {
-                String pathSuffix = uri.getPath().substring(1);
-
-                if (LettuceStrings.isNotEmpty(pathSuffix)) {
-
-                    builder.withDatabase(Integer.parseInt(pathSuffix));
-                }
+            RedisURI redisURI = RedisURI.create(uri);
+            if (isNotEmpty(getPassword())) {
+                redisURI.setPassword(getPassword());
             }
-
-            setRedisURI(builder.build());
-
+            setRedisURI(redisURI);
         }
 
         super.afterPropertiesSet();
