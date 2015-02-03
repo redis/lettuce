@@ -15,7 +15,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @author Will Glozer
  */
 public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
-    enum Type {
+    public enum Type {
         message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe
     }
 

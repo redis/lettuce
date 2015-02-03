@@ -9,12 +9,12 @@ import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -35,9 +35,10 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * @author Will Glozer
  */
 public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K, V> implements RedisPubSubConnection<K, V> {
-    private final List<RedisPubSubListener<K, V>> listeners;
-    private final Set<K> channels;
-    private final Set<K> patterns;
+
+    protected final List<RedisPubSubListener<K, V>> listeners;
+    protected final Set<K> channels;
+    protected final Set<K> patterns;
 
     /**
      * Initialize a new connection.
@@ -49,9 +50,9 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
      */
     public RedisPubSubConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(writer, codec, timeout, unit);
-        listeners = new CopyOnWriteArrayList<RedisPubSubListener<K, V>>();
-        channels = new HashSet<K>();
-        patterns = new HashSet<K>();
+        listeners = Lists.newCopyOnWriteArrayList();
+        channels = Sets.newConcurrentHashSet();
+        patterns = Sets.newConcurrentHashSet();
     }
 
     /**
@@ -110,20 +111,20 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
         PubSubOutput<K, V> output = (PubSubOutput<K, V>) msg;
         // update internal state
         switch (output.type()) {
-	        case psubscribe:
-	            patterns.add(output.pattern());
-	            break;
-	        case punsubscribe:
-	            patterns.remove(output.pattern());
-	            break;
-	        case subscribe:
-	            channels.add(output.channel());
-	            break;
-	        case unsubscribe:
-	            channels.remove(output.channel());
-	            break;
-	        default:
-	        	break;
+            case psubscribe:
+                patterns.add(output.pattern());
+                break;
+            case punsubscribe:
+                patterns.remove(output.pattern());
+                break;
+            case subscribe:
+                channels.add(output.channel());
+                break;
+            case unsubscribe:
+                channels.remove(output.channel());
+                break;
+            default:
+                break;
         }
         // update listeners
         for (RedisPubSubListener<K, V> listener : listeners) {

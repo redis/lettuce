@@ -1,16 +1,25 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.AbstractRedisClient;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -122,7 +131,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
-        RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(handler, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = constructRedisAsyncConnection(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, new Supplier<SocketAddress>() {
             @Override
@@ -166,7 +175,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
                 pooledClusterConnectionProvider);
-        RedisAsyncConnectionImpl<K, V> connection = new RedisAsyncConnectionImpl<K, V>(clusterWriter, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = constructRedisAsyncConnection(clusterWriter, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, socketAddressSupplier, true);
 
@@ -223,7 +232,6 @@ public class RedisClusterClient extends AbstractRedisClient {
             } catch (Exception e) {
                 lastException = e;
             }
-
         }
 
         if (clusterNodes == null) {
@@ -247,6 +255,21 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         }
         return partitions;
+    }
+
+    /**
+     * Construct a new {@link RedisAsyncConnectionImpl}. Can be overridden in order to construct a subclass of
+     * {@link RedisAsyncConnectionImpl}
+     *
+     * @param channelWriter
+     * @param codec
+     * @param timeout Timeout value
+     * @param unit Timeout unit
+     * @return RedisAsyncConnectionImpl&lt;K, V&gt; instance
+     */
+    protected <K, V> RedisAsyncConnectionImpl<K, V> constructRedisAsyncConnection(RedisChannelWriter<K, V> channelWriter,
+            RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        return new RedisAsyncConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
     }
 
     protected RedisURI getFirstUri() {
