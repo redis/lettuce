@@ -253,13 +253,13 @@ public class RedisClient extends AbstractRedisClient {
 
     private void checkValidRedisURI(RedisURI redisURI) {
         checkArgument(redisURI != null && LettuceStrings.isNotEmpty(redisURI.getHost()),
-                "A valid RedisURI with a host is needed");
+                      "A valid RedisURI with a host is needed");
     }
 
     @SuppressWarnings({ "rawtypes" })
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect, RedisURI redisURI) {
         return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect, redisURI), RedisConnection.class,
-                RedisClusterConnection.class);
+                                             RedisClusterConnection.class);
     }
 
     /**
@@ -337,7 +337,7 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @return A new connection.
      */
-    public RedisPubSubConnectionImpl<String, String> connectPubSub() {
+    public RedisPubSubConnection<String, String> connectPubSub() {
         return connectPubSub(codec);
     }
 
@@ -360,12 +360,12 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @return A new pub/sub connection.
      */
-    public <K, V> RedisPubSubConnectionImpl<K, V> connectPubSub(RedisCodec<K, V> codec) {
+    public <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
         checkForRedisURI();
         return connectPubSub(codec, redisURI);
     }
 
-    protected <K, V> RedisPubSubConnectionImpl<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
+    protected <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         checkArgument(codec != null, "RedisCodec must not be null");
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();

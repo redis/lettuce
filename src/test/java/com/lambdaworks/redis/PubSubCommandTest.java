@@ -53,7 +53,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubConnectionImpl<String, String> connection = client.connectPubSub();
+                RedisPubSubConnection<String, String> connection = client.connectPubSub();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
 
