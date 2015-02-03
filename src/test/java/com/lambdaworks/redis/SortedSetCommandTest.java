@@ -2,9 +2,16 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.ZStoreArgs.Builder.*;
-import static java.lang.Double.*;
-import static org.junit.Assert.*;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.max;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.min;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.sum;
+import static com.lambdaworks.redis.ZStoreArgs.Builder.weights;
+import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.POSITIVE_INFINITY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
@@ -93,7 +100,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     @SuppressWarnings({ "unchecked" })
     public void zrangeWithScoresStreaming() throws Exception {
         setup();
-        ScoredValueStreamingAdapter streamingAdapter = new ScoredValueStreamingAdapter();
+        ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<String>();
         Long count = redis.zrangeWithScores(streamingAdapter, key, 0, -1);
         assertEquals(3, count.longValue());
         assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")), streamingAdapter.getList());
@@ -220,7 +227,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     @SuppressWarnings({ "unchecked" })
     public void zrevrangeWithScoresStreaming() throws Exception {
         setup();
-        ScoredValueStreamingAdapter streamingAdapter = new ScoredValueStreamingAdapter();
+        ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<String>();
         Long count = redis.zrevrangeWithScores(streamingAdapter, key, 0, -1);
         assertEquals(3, count.longValue());
         assertEquals(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")), streamingAdapter.getList());
@@ -269,7 +276,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     public void zrevrangebyscoreWithScoresStreaming() throws Exception {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
 
-        ScoredValueStreamingAdapter streamingAdapter = new ScoredValueStreamingAdapter();
+        ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<String>();
 
         assertEquals(2, redis.zrevrangebyscoreWithScores(streamingAdapter, key, 3.0, 2.0).longValue());
         assertEquals(2, redis.zrevrangebyscoreWithScores(streamingAdapter, key, "(4.0", "(1.0").longValue());

@@ -24,7 +24,7 @@ public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
     private int[] ports;
-    private Map<Integer, RedisAsyncConnectionImpl> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisAsyncConnectionImpl<?, ?>> connectionCache = Maps.newHashMap();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
@@ -45,7 +45,7 @@ public class ClusterRule implements TestRule {
             public void evaluate() throws Throwable {
                 List<Future> futures = Lists.newArrayList();
 
-                for (RedisAsyncConnection connection : connectionCache.values()) {
+                for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
                     futures.add(connection.flushall());
                 }
 
@@ -88,7 +88,7 @@ public class ClusterRule implements TestRule {
 
             }
         } catch (Exception e) {
-
+            // nothing to do
         } finally {
             connection.close();
         }
@@ -98,7 +98,7 @@ public class ClusterRule implements TestRule {
 
     public void flushdb() {
         try {
-            for (RedisAsyncConnection connection : connectionCache.values()) {
+            for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
                 connection.flushdb().get();
             }
         } catch (Exception e) {
@@ -109,7 +109,7 @@ public class ClusterRule implements TestRule {
     public void clusterReset() {
         try {
 
-            for (RedisAsyncConnectionImpl connection : connectionCache.values()) {
+            for (RedisAsyncConnectionImpl<?, ?> connection : connectionCache.values()) {
                 connection.clusterReset(false).get();
                 connection.clusterReset(true).get();
                 connection.clusterFlushslots().get();

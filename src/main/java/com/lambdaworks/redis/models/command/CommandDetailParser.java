@@ -15,6 +15,7 @@ import com.google.common.primitives.Ints;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@SuppressWarnings("serial")
 public class CommandDetailParser {
 
     /**
@@ -22,6 +23,7 @@ public class CommandDetailParser {
      */
     public static final int COMMAND_INFO_SIZE = 6;
 
+    @SuppressWarnings("serial")
     protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING = new HashMap<String, CommandDetail.Flag>() {
         {
             put("admin", CommandDetail.Flag.ADMIN);

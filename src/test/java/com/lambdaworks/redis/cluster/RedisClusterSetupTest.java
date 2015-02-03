@@ -25,6 +25,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@SuppressWarnings("unchecked")
 public class RedisClusterSetupTest {
     public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7383;
@@ -56,8 +57,8 @@ public class RedisClusterSetupTest {
 
     @Before
     public void openConnection() throws Exception {
-        redis1 = (RedisClusterConnection) client1.connect();
-        redis2 = (RedisClusterConnection) client2.connect();
+        redis1 = (RedisClusterConnection<String, String>) client1.connect();
+        redis2 = (RedisClusterConnection<String, String>) client2.connect();
         clusterRule.clusterReset();
     }
 

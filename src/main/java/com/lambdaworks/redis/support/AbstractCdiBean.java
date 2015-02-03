@@ -12,6 +12,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionPoint;
 
+import com.google.common.collect.ImmutableSet;
 import com.lambdaworks.redis.RedisURI;
 
 /**
@@ -33,8 +34,9 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Set<Type> getTypes() {
-        return (Set) Collections.singleton(getBeanClass());
+        return (Set<Type>) ImmutableSet.of((Type) getBeanClass());
     }
 
     @Override

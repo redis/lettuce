@@ -177,7 +177,7 @@ public class HashCommandTest extends AbstractCommandTest {
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
 
-        ListStreamingAdapter<String> channel = new ListStreamingAdapter();
+        ListStreamingAdapter<String> channel = new ListStreamingAdapter<String>();
         Long count = redis.hvals(channel, key);
         assertThat(count.intValue()).isEqualTo(2);
         assertThat(channel.getList()).hasSize(2);

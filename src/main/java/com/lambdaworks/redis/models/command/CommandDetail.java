@@ -7,6 +7,7 @@ import java.util.Set;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@SuppressWarnings("serial")
 public class CommandDetail implements Serializable {
 
     private String name;

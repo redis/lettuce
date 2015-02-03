@@ -1,16 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.Command;
@@ -18,12 +17,13 @@ import com.lambdaworks.redis.protocol.CommandType;
 
 public class ClusterCommandTest {
 
-    private ClusterCommand sut;
-    private Command command = new Command(CommandType.TYPE, new StatusOutput(new Utf8StringCodec()), null);
+    private ClusterCommand<String, String, String> sut;
+    private Command<String, String, String> command = new Command<String, String, String>(CommandType.TYPE,
+            new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
     @Before
     public void before() throws Exception {
-        sut = new ClusterCommand(command, null, 1);
+        sut = new ClusterCommand<String, String, String>(command, null, 1);
     }
 
     @Test
@@ -52,15 +52,12 @@ public class ClusterCommandTest {
     }
 
     @Test
-    public void testCompleteListener() throws Exception
-    {
+    public void testCompleteListener() throws Exception {
 
-        final List someList = Lists.newArrayList();
-        sut.addListener(new Runnable()
-        {
+        final List<String> someList = Lists.newArrayList();
+        sut.addListener(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                 someList.add("");
             }
         }, MoreExecutors.sameThreadExecutor());

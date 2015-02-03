@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 
+@SuppressWarnings("unchecked")
 public class ClusterSlotsParserTest {
 
     @Test

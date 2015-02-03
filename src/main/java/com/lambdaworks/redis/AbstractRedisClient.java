@@ -78,6 +78,7 @@ public abstract class AbstractRedisClient {
         this.unit = unit;
     }
 
+    @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
             final T connection, final Supplier<SocketAddress> socketAddressSupplier, final boolean withReconnect) {
 
@@ -112,6 +113,7 @@ public abstract class AbstractRedisClient {
         connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
     }
 
+    @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(ConnectionBuilder connectionBuilder) {
 
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();

@@ -91,6 +91,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void isValidAsyncExceptions() throws Exception {
 
         RedisAsyncConnection<?, ?> connection = mock(RedisAsyncConnection.class);

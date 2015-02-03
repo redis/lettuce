@@ -9,15 +9,15 @@ import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public class ScoredValueStreamingAdapter implements ScoredValueStreamingChannel {
-    private List<ScoredValue> list = new ArrayList<ScoredValue>();
+public class ScoredValueStreamingAdapter<T> implements ScoredValueStreamingChannel<T> {
+    private List<ScoredValue<T>> list = new ArrayList<ScoredValue<T>>();
 
     @Override
-    public void onValue(ScoredValue value) {
+    public void onValue(ScoredValue<T> value) {
         list.add(value);
     }
 
-    public List<ScoredValue> getList() {
+    public List<ScoredValue<T>> getList() {
         return list;
     }
 }

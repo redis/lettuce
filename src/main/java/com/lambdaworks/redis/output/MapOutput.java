@@ -37,6 +37,7 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void set(long integer) {
         if (key == null) {
             key = (K) Long.valueOf(integer);

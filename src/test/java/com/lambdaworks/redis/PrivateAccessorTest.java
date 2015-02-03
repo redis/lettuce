@@ -25,6 +25,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @RunWith(Parameterized.class)
+@SuppressWarnings("unchecked")
 public class PrivateAccessorTest {
 
     private Class<?> theClass;
@@ -33,9 +34,10 @@ public class PrivateAccessorTest {
     public static List<Object[]> parameters() {
 
         List<Class<?>> classes = ImmutableList.of(LettuceStrings.class, LettuceFutures.class, LettuceCharsets.class,
-                CRC16.class, SlotHash.class, Base16.class, KillArgs.Builder.class, SortArgs.Builder.class,
-                ZStoreArgs.Builder.class, ClusterSlotsParser.class, CommandDetailParser.class, RoleParser.class,
-                ClusterPartitionParser.class);
+                                                  CRC16.class, SlotHash.class, Base16.class, KillArgs.Builder.class,
+                                                  SortArgs.Builder.class, ZStoreArgs.Builder.class,
+                                                  ClusterSlotsParser.class, CommandDetailParser.class, RoleParser.class,
+                                                  ClusterPartitionParser.class);
 
         List<Object[]> result = Lists.newArrayList();
         for (Class<?> aClass : classes) {

@@ -18,7 +18,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
-    private final RedisChannelHandler connection;
+    private final RedisChannelHandler<K, V> connection;
     protected long timeout;
     protected TimeUnit unit;
 

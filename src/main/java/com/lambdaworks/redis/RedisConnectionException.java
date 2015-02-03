@@ -5,6 +5,7 @@ package com.lambdaworks.redis;
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
+@SuppressWarnings("serial")
 public class RedisConnectionException extends RedisException {
 
     public RedisConnectionException(String msg) {
