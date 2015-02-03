@@ -1,15 +1,13 @@
 package com.lambdaworks.redis;
 
-import java.util.List;
-import java.util.concurrent.Future;
-
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLParameters;
+import java.util.List;
+import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.SettableFuture;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -50,23 +48,28 @@ class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel>
         channel.pipeline().addLast(new ChannelDuplexHandler() {
 
             @Override
+            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                initializedFuture = SettableFuture.create();
+                super.channelInactive(ctx);
+            }
+
+            @Override
             public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
                 if (!initializedFuture.isDone() && evt instanceof SslHandshakeCompletionEvent) {
                     SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
-
                     if (event.isSuccess()) {
                         initializedFuture.set(true);
                     } else {
                         initializedFuture.setException(event.cause());
                     }
+
                 }
                 super.userEventTriggered(ctx, evt);
             }
 
             @Override
             public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                if (!initializedFuture.isDone()
-                        && (cause instanceof SSLHandshakeException || cause.getCause() instanceof SSLException)) {
+                if (cause instanceof SSLHandshakeException || cause.getCause() instanceof SSLException) {
                     initializedFuture.setException(cause);
                     return;
                 }

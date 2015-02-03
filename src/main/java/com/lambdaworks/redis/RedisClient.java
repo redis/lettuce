@@ -2,16 +2,11 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -20,6 +15,7 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 
 import io.netty.bootstrap.Bootstrap;
@@ -346,6 +342,17 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
+     * Open a new pub/sub connection to the supplied {@link RedisURI} that treats keys and values as UTF-8 strings.
+     *
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @return A new connection.
+     */
+    public RedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
+        checkValidRedisURI(redisURI);
+        return connectPubSub(codec, redisURI);
+    }
+
+    /**
      * Open a new pub/sub connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and
      * values.
      *
@@ -354,8 +361,12 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new pub/sub connection.
      */
     public <K, V> RedisPubSubConnectionImpl<K, V> connectPubSub(RedisCodec<K, V> codec) {
-
         checkForRedisURI();
+        return connectPubSub(codec, redisURI);
+    }
+
+    protected <K, V> RedisPubSubConnectionImpl<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
+
         checkArgument(codec != null, "RedisCodec must not be null");
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 

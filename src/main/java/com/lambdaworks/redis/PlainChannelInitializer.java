@@ -29,6 +29,12 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         channel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
             @Override
+            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                initializedFuture = SettableFuture.create();
+                super.channelInactive(ctx);
+            }
+
+            @Override
             public void channelActive(ChannelHandlerContext ctx) throws Exception {
                 if (!initializedFuture.isDone()) {
                     initializedFuture.set(true);

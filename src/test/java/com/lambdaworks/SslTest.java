@@ -1,23 +1,20 @@
 package com.lambdaworks;
 
-import static com.lambdaworks.redis.TestSettings.host;
-import static com.lambdaworks.redis.TestSettings.port;
-import static com.lambdaworks.redis.TestSettings.sslPort;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static com.lambdaworks.redis.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 
-import com.lambdaworks.redis.RedisConnectionException;
-import io.netty.handler.codec.DecoderException;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -70,5 +67,50 @@ public class SslTest {
 
         connection.close();
 
+    }
+
+    @Test
+    public void pubSubSsl() throws Exception {
+        RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
+
+        RedisPubSubConnection<String, String> connection = redisClient.connectPubSub(redisUri);
+        connection.subscribe("c1");
+        connection.subscribe("c2");
+        Thread.sleep(100);
+
+        RedisPubSubConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
+
+        assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
+        connection.quit();
+        Thread.sleep(200);
+
+        assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
+
+        connection.close();
+        connection2.close();
+    }
+
+    @Test
+    public void pubSubSslAndBreakConnection() throws Exception {
+        RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
+
+        RedisPubSubConnection<String, String> connection = redisClient.connectPubSub(redisUri);
+        connection.subscribe("c1");
+        connection.subscribe("c2");
+        Thread.sleep(100);
+
+        RedisPubSubConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
+        assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
+
+        redisUri.setStartTls(true);
+        redisUri.setVerifyPeer(true);
+
+        connection.quit();
+        Thread.sleep(200);
+
+        assertThat(connection2.pubsubChannels().get()).doesNotContain("c1", "c2");
+
+        connection.close();
+        connection2.close();
     }
 }

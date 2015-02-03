@@ -6,6 +6,7 @@ import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
+import com.lambdaworks.redis.RedisChannelInitializer;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -128,7 +129,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 }
             }
 
-            bootstrap.connect(remoteAddress).sync().await();
+            ChannelFuture connect = bootstrap.connect(remoteAddress);
+            RedisChannelInitializer redisChannelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
+            connect.sync().await();
+
+            try {
+                reconnect = false;
+                redisChannelInitializer.channelInitialized().get();
+                reconnect = true;
+            } catch (Exception e) {
+                logger.error("Cannot initialize channel. Disabling autoReconnect", e);
+                return;
+            }
             logger.log(infoLevel, "Reconnected to " + remoteAddress);
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot connect: " + e.toString());
