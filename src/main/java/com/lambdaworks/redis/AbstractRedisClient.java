@@ -114,7 +114,7 @@ public abstract class AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(ConnectionBuilder connectionBuilder) {
+    protected <K, V, T extends RedisChannelHandler<K, V>> T connectAsyncImpl(ConnectionBuilder connectionBuilder) {
 
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         try {
@@ -126,15 +126,15 @@ public abstract class AbstractRedisClient {
             Bootstrap redisBootstrap = connectionBuilder.bootstrap();
             RedisChannelInitializer initializer = connectionBuilder.build();
             redisBootstrap.handler(initializer);
-            ChannelFuture future = redisBootstrap.connect(redisAddress);
+            ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
-            future.await();
+            connectFuture.await();
 
-            if (!future.isSuccess()) {
-                if (future.cause() instanceof Exception) {
-                    throw (Exception) future.cause();
+            if (!connectFuture.isSuccess()) {
+                if (connectFuture.cause() instanceof Exception) {
+                    throw (Exception) connectFuture.cause();
                 }
-                future.get();
+                connectFuture.get();
             }
 
             initializer.channelInitialized().get(timeout, unit);

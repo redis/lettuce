@@ -44,6 +44,11 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         setTimeout(timeout, unit);
     }
 
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        closed = false;
+    }
+
     /**
      * Set the command timeout for this connection.
      * 
@@ -69,8 +74,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         if (!closed) {
             active = false;
             closed = true;
+            channelWriter.close();
             closeEvents.fireEventClosed(this);
-            closeEvents = null;
+            closeEvents = new CloseEvents();
         }
 
     }
@@ -143,6 +149,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      */
     public void activated() {
         active = true;
+        closed = false;
 
     }
 

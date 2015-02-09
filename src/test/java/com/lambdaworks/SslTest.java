@@ -1,10 +1,15 @@
 package com.lambdaworks;
 
-import static com.lambdaworks.redis.TestSettings.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static com.lambdaworks.redis.TestSettings.host;
+import static com.lambdaworks.redis.TestSettings.sslPort;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
+import java.security.cert.CertificateException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -13,8 +18,10 @@ import org.junit.Test;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionException;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
+import io.netty.handler.codec.DecoderException;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -59,13 +66,10 @@ public class SslTest {
 
     @Test(expected = RedisConnectionException.class)
     public void sslWithVerificationWillFail() throws Exception {
+
         RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
 
         RedisConnection<String, String> connection = redisClient.connect(redisUri);
-        connection.set("key", "value");
-        assertThat(connection.get("key")).isEqualTo("value");
-
-        connection.close();
 
     }
 
@@ -102,15 +106,30 @@ public class SslTest {
         RedisPubSubConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
         assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
 
-        redisUri.setStartTls(true);
         redisUri.setVerifyPeer(true);
 
         connection.quit();
-        Thread.sleep(200);
+        Thread.sleep(500);
 
-        assertThat(connection2.pubsubChannels().get()).doesNotContain("c1", "c2");
+        RedisFuture<List<String>> future = connection2.pubsubChannels();
+        assertThat(future.get()).doesNotContain("c1", "c2");
+        assertThat(future.isDone()).isEqualTo(true);
+
+        RedisFuture<List<String>> defectFuture = connection.pubsubChannels();
+
+        try {
+            assertThat(defectFuture.get()).doesNotContain("c1", "c2");
+            fail("Missing ExecutionException with nested SSLHandshakeException");
+        } catch (InterruptedException e) {
+            fail("Missing ExecutionException with nested SSLHandshakeException");
+        } catch (ExecutionException e) {
+            assertThat(e).hasCauseInstanceOf(DecoderException.class);
+            assertThat(e).hasRootCauseInstanceOf(CertificateException.class);
+        }
+        assertThat(defectFuture.isDone()).isEqualTo(true);
 
         connection.close();
         connection2.close();
     }
+
 }

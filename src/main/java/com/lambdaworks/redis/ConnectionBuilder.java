@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.net.SocketAddress;
 import java.util.List;
@@ -9,6 +9,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -96,9 +97,9 @@ class ConnectionBuilder {
         }
 
         handlers.add(new ChannelGroupListener(channelGroup));
-        handlers.add(new ConnectionEventTrigger(connectionEvents, connection));
         handlers.add(commandHandler);
         handlers.add(connection);
+        handlers.add(new ConnectionEventTrigger(connectionEvents, connection));
 
         return handlers;
 

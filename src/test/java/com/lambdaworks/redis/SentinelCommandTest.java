@@ -56,7 +56,9 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
     @After
     public void closeConnection() throws Exception {
-        sentinel.close();
+        if (sentinel != null) {
+            sentinel.close();
+        }
     }
 
     @Test
@@ -116,6 +118,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
         RedisConnection<String, String> connection2 = client.connect();
         assertThat(connection2.ping()).isEqualTo("PONG");
+        connection2.quit();
+        assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.close();
         client.shutdown();
     }
@@ -123,15 +127,12 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void sentinelConnectWrongMaster() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host())
-                .build());
-        try
-        {
+        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent")
+                .withSentinel(TestSettings.host()).build());
+        try {
             client.connect();
             fail("missing RedisConnectionException");
-        }
-        catch (RedisConnectionException e)
-        {
+        } catch (RedisConnectionException e) {
         }
 
         client.shutdown();

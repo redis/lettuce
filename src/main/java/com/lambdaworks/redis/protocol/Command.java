@@ -3,6 +3,7 @@
 package com.lambdaworks.redis.protocol;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -103,9 +104,13 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * @return The command output.
      */
     @Override
-    public T get() {
+    public T get() throws ExecutionException {
         try {
             latch.await();
+            if (exception != null) {
+                throw new ExecutionException(exception);
+            }
+
             return output.get();
         } catch (InterruptedException e) {
             throw new RedisCommandInterruptedException(e);
@@ -123,13 +128,16 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * @throws TimeoutException if the wait timed out.
      */
     @Override
-    public T get(long timeout, TimeUnit unit) throws TimeoutException {
+    public T get(long timeout, TimeUnit unit) throws TimeoutException, ExecutionException {
         try {
             if (!latch.await(timeout, unit)) {
                 throw new TimeoutException("Command timed out");
             }
         } catch (InterruptedException e) {
             throw new RedisCommandInterruptedException(e);
+        }
+        if (exception != null) {
+            throw new ExecutionException(exception);
         }
         return output.get();
     }

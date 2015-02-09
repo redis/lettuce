@@ -6,10 +6,16 @@ import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
+import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelInitializer;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -34,6 +40,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private Channel channel;
     private Timer timer;
     private boolean reconnect;
+    private boolean doNotReconnect;
     private int attempts;
     private SocketAddress remoteAddress;
     private Supplier<SocketAddress> socketAddressSupplier;
@@ -69,7 +76,20 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        logger.debug("userEventTriggered(" + ctx + ", " + evt + ")");
+        if (evt instanceof ConnectionEvents.PrepareClose) {
+            ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
+            setReconnect(false);
+            prepareClose.getPrepareCloseFuture().set(true);
+        }
+        super.userEventTriggered(ctx, evt);
+    }
+
+    @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        logger.debug("channelActive(" + ctx + ")");
         channel = ctx.channel();
         attempts = 0;
         remoteAddress = channel.remoteAddress();
@@ -79,15 +99,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
+        logger.debug("channelInactive(" + ctx + ")");
         channel = null;
-        if (reconnect) {
+        if (reconnect && !doNotReconnect) {
             scheduleReconnect();
         }
         super.channelInactive(ctx);
     }
 
     private void scheduleReconnect() {
+
         if (channel == null || !channel.isActive()) {
+            logger.debug("scheduleReconnect()");
             if (attempts < RETRY_TIMEOUT_MAX) {
                 attempts++;
             }
@@ -128,16 +151,16 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                     logger.log(warnLevel, "Cannot retrieve the current address from socketAddressSupplier: " + e.toString());
                 }
             }
-
             ChannelFuture connect = bootstrap.connect(remoteAddress);
-            RedisChannelInitializer redisChannelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
             connect.sync().await();
 
             try {
-                reconnect = false;
-                redisChannelInitializer.channelInitialized().get();
-                reconnect = true;
+                doNotReconnect = true;
+                RedisChannelInitializer channelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
+                channelInitializer.channelInitialized().get();
+                doNotReconnect = false;
             } catch (Exception e) {
+                doNotReconnect = true;
                 logger.error("Cannot initialize channel. Disabling autoReconnect", e);
                 return;
             }

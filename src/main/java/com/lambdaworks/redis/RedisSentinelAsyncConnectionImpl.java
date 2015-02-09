@@ -13,6 +13,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.Command;
+import io.netty.channel.ChannelHandler;
 
 /**
  * @param <K> Key type.
@@ -20,6 +21,7 @@ import com.lambdaworks.redis.protocol.Command;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@ChannelHandler.Sharable
 class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisSentinelAsyncConnection<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;

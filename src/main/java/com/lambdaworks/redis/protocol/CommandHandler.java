@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
@@ -39,11 +39,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected BlockingQueue<RedisCommand<K, V, ?>> commandBuffer = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
-    private AtomicReference<Channel> channel = new AtomicReference<Channel>();
+    private Channel channel;
     private boolean closed;
+    private boolean connected;
     private RedisChannelHandler<K, V> redisChannelHandler;
     private final ReentrantLock writeLock = new ReentrantLock();
     private final ReentrantLock readLock = new ReentrantLock();
+    private Throwable connectionError;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -60,13 +62,19 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        closed = false;
         buffer = ctx.alloc().heapBuffer();
         rsm = new RedisStateMachine<K, V>();
+        channel = ctx.channel();
     }
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         releaseBuffer();
+        if (closed) {
+            cancelCommands();
+        }
+        channel = null;
     }
 
     /**
@@ -123,6 +131,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             command.setException(cause);
             command.complete();
         }
+
+        if (channel == null || !connected) {
+            connectionError = cause;
+            return;
+        }
         super.exceptionCaught(ctx, cause);
     }
 
@@ -136,7 +149,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             try {
                 writeLock.lock();
-                Channel channel = this.channel.get();
                 if (channel != null) {
                     if (logger.isDebugEnabled()) {
 
@@ -144,6 +156,16 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     }
                     channel.writeAndFlush(command);
                 } else {
+
+                    if (connectionError != null) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("[" + this + "] write() completing Command " + command + " due to connection error");
+                        }
+                        command.setException(connectionError);
+                        command.complete();
+                        return command;
+                    }
+
                     if (logger.isDebugEnabled()) {
                         logger.debug("[" + this + "] write() buffering Command " + command);
                     }
@@ -158,6 +180,49 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         return command;
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        connected = true;
+        closed = false;
+        logger.debug("[" + this + "] channelActive()");
+        List<RedisCommand<K, V, ?>> tmp = new ArrayList<RedisCommand<K, V, ?>>(queue.size() + commandBuffer.size());
+
+        try {
+            writeLock.lock();
+
+            tmp.addAll(commandBuffer);
+            tmp.addAll(queue);
+
+            queue.clear();
+            commandBuffer.clear();
+
+            channel = ctx.channel();
+
+            if (redisChannelHandler != null) {
+                redisChannelHandler.activated();
+            }
+
+        } finally {
+            writeLock.unlock();
+        }
+
+        for (RedisCommand<K, V, ?> cmd : tmp) {
+            if (!cmd.isCancelled()) {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[" + this + "] channelActive() triggering command " + cmd);
+                }
+                ctx.channel().writeAndFlush(cmd);
+            }
+        }
+
+        tmp.clear();
+
+        logger.debug("[" + this + "] channelActive() done");
+        super.channelActive(ctx);
     }
 
     /**
@@ -192,96 +257,50 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     /**
-     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelActive(io.netty.channel.ChannelHandlerContext)
-     */
-    @Override
-    public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-
-        logger.debug("[" + this + "] channelActive()");
-        List<RedisCommand<K, V, ?>> tmp = new ArrayList<RedisCommand<K, V, ?>>(queue.size() + commandBuffer.size());
-
-        try {
-            writeLock.lock();
-
-            tmp.addAll(commandBuffer);
-            tmp.addAll(queue);
-
-            queue.clear();
-            commandBuffer.clear();
-
-            this.channel.set(ctx.channel());
-
-            if (redisChannelHandler != null) {
-                redisChannelHandler.activated();
-            }
-
-        } finally {
-            writeLock.unlock();
-        }
-
-        for (RedisCommand<K, V, ?> cmd : tmp) {
-            if (!cmd.isCancelled()) {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("[" + this + "] channelActive() triggering command " + cmd);
-                }
-                ctx.channel().writeAndFlush(cmd);
-            }
-        }
-
-        tmp.clear();
-
-        logger.debug("[" + this + "] channelActive() done");
-
-    }
-
-    /**
      * 
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelInactive(io.netty.channel.ChannelHandlerContext)
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.debug("[" + this + "] channelInactive()");
-        this.channel.set(null);
-
-        if (closed) {
-
-            int size = 0;
-            if (queue != null) {
-                size += queue.size();
-            }
-
-            if (commandBuffer != null) {
-                size += commandBuffer.size();
-            }
-
-            List<RedisCommand<K, V, ?>> toCancel = new ArrayList<RedisCommand<K, V, ?>>(size);
-
-            if (queue != null) {
-                toCancel.addAll(queue);
-                queue.clear();
-                queue = null;
-            }
-
-            if (commandBuffer != null) {
-                toCancel.addAll(commandBuffer);
-                commandBuffer.clear();
-                commandBuffer = null;
-            }
-
-            for (RedisCommand<K, V, ?> cmd : toCancel) {
-                if (cmd.getOutput() != null) {
-                    cmd.getOutput().setError("Connection closed");
-                }
-                cmd.complete();
-            }
-        }
+        connected = false;
 
         if (redisChannelHandler != null) {
             redisChannelHandler.deactivated();
         }
 
         logger.debug("[" + this + "] channelInactive() done");
+        super.channelInactive(ctx);
+    }
+
+    private void cancelCommands() {
+        int size = 0;
+        if (queue != null) {
+            size += queue.size();
+        }
+
+        if (commandBuffer != null) {
+            size += commandBuffer.size();
+        }
+
+        List<RedisCommand<K, V, ?>> toCancel = new ArrayList<RedisCommand<K, V, ?>>(size);
+
+        if (queue != null) {
+            toCancel.addAll(queue);
+            queue.clear();
+        }
+
+        if (commandBuffer != null) {
+            toCancel.addAll(commandBuffer);
+            commandBuffer.clear();
+        }
+
+        for (RedisCommand<K, V, ?> cmd : toCancel) {
+            if (cmd.getOutput() != null) {
+                cmd.getOutput().setError("Connection closed");
+            }
+            cmd.complete();
+        }
     }
 
     /**
@@ -296,23 +315,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return;
         }
 
-        releaseBuffer();
-
         closed = true;
-
-        if (channel.get() != null) {
-            ConnectionWatchdog watchdog = channel.get().pipeline().get(ConnectionWatchdog.class);
-            if (watchdog != null) {
-                watchdog.setReconnect(false);
-            }
+        Channel channel = this.channel;
+        if (channel != null) {
+            channel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
+            channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
 
             try {
-                channel.get().close().sync();
+                channel.closeFuture().await();
             } catch (InterruptedException e) {
                 throw new RedisException(e);
             }
-
-            channel.set(null);
         }
     }
 

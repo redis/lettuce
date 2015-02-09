@@ -17,18 +17,10 @@ import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection provided they
@@ -426,57 +418,35 @@ public class RedisClient extends AbstractRedisClient {
                 codec, timeout, unit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
-        final Bootstrap sentinelBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
-        final ConnectionWatchdog watchdog = new ConnectionWatchdog(sentinelBootstrap, timer);
-        watchdog.setReconnect(true);
 
-        sentinelBootstrap.handler(new ChannelInitializer<Channel>() {
-            @Override
-            protected void initChannel(Channel ch) throws Exception {
-
-                ch.pipeline().addLast(watchdog, new ChannelGroupListener(channels), watchdog, commandHandler,
-                        new ConnectionEventTrigger(connectionEvents, connection));
-
-            }
-        });
+        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
+        connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), true, connectionBuilder, redisURI);
 
         if (redisURI.getSentinels().isEmpty() && LettuceStrings.isNotEmpty(redisURI.getHost())) {
-            sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-                    (int) redisURI.getUnit().toMillis(redisURI.getTimeout()));
-            ChannelFuture connect = sentinelBootstrap.connect(redisURI.getResolvedAddress());
-            logger.debug("Connecting to Sentinel, address: " + redisURI.getResolvedAddress());
-            try {
-                connect.sync();
-            } catch (InterruptedException e) {
-                throw new RedisException(e.getMessage(), e);
-            }
+            connectAsyncImpl(connectionBuilder);
+
         } else {
             boolean connected = false;
             Exception causingException = null;
             for (RedisURI uri : redisURI.getSentinels()) {
-
-                sentinelBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) uri.getUnit().toMillis(uri.getTimeout()));
-                ChannelFuture connect = sentinelBootstrap.connect(uri.getResolvedAddress());
+                connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
                 logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
                 try {
-                    connect.sync();
+                    connectAsyncImpl(connectionBuilder);
                     connected = true;
+                    break;
                 } catch (Exception e) {
                     logger.warn("Cannot connect sentinel at " + uri.getHost() + ":" + uri.getPort() + ": " + e.toString());
-                    if (causingException == null) {
-                        causingException = e;
-                    }
+                    causingException = e;
                     if (e instanceof ConnectException) {
                         continue;
                     }
                 }
             }
             if (!connected) {
-                throw new RedisException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
+                throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
             }
         }
-
-        connection.registerCloseables(closeableResources, connection);
 
         return connection;
     }

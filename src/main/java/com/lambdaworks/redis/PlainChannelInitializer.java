@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -26,34 +26,68 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
     @Override
     protected void initChannel(Channel channel) throws Exception {
 
-        channel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+        if (channel.pipeline().get("channelActivator") == null) {
 
-            @Override
-            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                initializedFuture = SettableFuture.create();
-                super.channelInactive(ctx);
-            }
+            channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-            @Override
-            public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                if (!initializedFuture.isDone()) {
-                    initializedFuture.set(true);
+                @Override
+                public Future<Boolean> channelInitialized() {
+                    return initializedFuture;
                 }
-                super.channelActive(ctx);
-            }
 
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                if (!initializedFuture.isDone()) {
-                    initializedFuture.setException(cause);
+                @Override
+                public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                    initializedFuture = SettableFuture.create();
+                    super.channelInactive(ctx);
                 }
-                super.exceptionCaught(ctx, cause);
-            }
-        });
-        for (ChannelHandler handler : handlers) {
-            channel.pipeline().addLast(handler);
+
+                @Override
+                public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                    if (evt instanceof ConnectionEvents.Close) {
+                        if (ctx.channel().isOpen()) {
+                            ctx.channel().close();
+                        }
+                    }
+                    super.userEventTriggered(ctx, evt);
+                }
+
+                @Override
+                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+                    super.channelActive(ctx);
+                    if (!initializedFuture.isDone()) {
+                        initializedFuture.set(true);
+                    }
+                }
+
+                @Override
+                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                    if (!initializedFuture.isDone()) {
+                        initializedFuture.setException(cause);
+                    }
+                    super.exceptionCaught(ctx, cause);
+                }
+            });
         }
 
+        for (ChannelHandler handler : handlers) {
+            removeIfExists(channel.pipeline(), handler.getClass());
+            channel.pipeline().addLast(handler);
+        }
+    }
+
+    static void removeIfExists(ChannelPipeline pipeline, String name) {
+        ChannelHandler channelHandler = pipeline.get(name);
+        if (channelHandler != null) {
+            pipeline.remove(channelHandler);
+        }
+    }
+
+    static void removeIfExists(ChannelPipeline pipeline, Class<? extends ChannelHandler> handlerClass) {
+        ChannelHandler channelHandler = pipeline.get(handlerClass);
+        if (channelHandler != null) {
+            pipeline.remove(channelHandler);
+        }
     }
 
     public Future<Boolean> channelInitialized() {

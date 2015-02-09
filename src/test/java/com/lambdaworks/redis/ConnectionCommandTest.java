@@ -2,8 +2,11 @@
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
@@ -11,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+
+import com.lambdaworks.redis.protocol.CommandHandler;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConnectionCommandTest extends AbstractCommandTest {
@@ -83,11 +88,25 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
         assertThat(Connections.isValid(redis)).isTrue();
 
-        RedisAsyncConnection<String, String> asyncConnection = client.connectAsync();
+        RedisAsyncConnectionImpl<String, String> asyncConnection = (RedisAsyncConnectionImpl<String, String>) client
+                .connectAsync();
         assertThat(Connections.isValid(asyncConnection)).isTrue();
+        assertThat(Connections.isOpen(asyncConnection)).isTrue();
+        assertThat(asyncConnection.isOpen()).isTrue();
+        assertThat(asyncConnection.isClosed()).isFalse();
+
+        CommandHandler<String, String> channelWriter = (CommandHandler<String, String>) asyncConnection.getChannelWriter();
+        assertThat(channelWriter.isClosed()).isFalse();
+        assertThat(channelWriter.isSharable()).isTrue();
+
         Connections.close(asyncConnection);
         assertThat(Connections.isOpen(asyncConnection)).isFalse();
         assertThat(Connections.isValid(asyncConnection)).isFalse();
+
+        assertThat(asyncConnection.isOpen()).isFalse();
+        assertThat(asyncConnection.isClosed()).isTrue();
+
+        assertThat(channelWriter.isClosed()).isTrue();
     }
 
     @Test
