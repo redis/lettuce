@@ -84,7 +84,7 @@ public abstract class AbstractRedisClient {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder(handler, connection, socketAddressSupplier, withReconnect, connectionBuilder, null);
-        return (T) connectAsyncImpl(connectionBuilder);
+        return (T) initializeChannel(connectionBuilder);
     }
 
     /**
@@ -114,7 +114,7 @@ public abstract class AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisChannelHandler<K, V>> T connectAsyncImpl(ConnectionBuilder connectionBuilder) {
+    protected <K, V, T extends RedisChannelHandler<K, V>> T initializeChannel(ConnectionBuilder connectionBuilder) {
 
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         try {

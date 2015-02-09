@@ -54,10 +54,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 @Override
                 public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-                    super.channelActive(ctx);
                     if (!initializedFuture.isDone()) {
                         initializedFuture.set(true);
                     }
+
+                    super.channelActive(ctx);
                 }
 
                 @Override

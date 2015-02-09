@@ -34,7 +34,7 @@ public class MyExtendedRedisClient extends RedisClient {
     }
 
     @Override
-    protected <K, V> RedisPubSubConnectionImpl<K, V> constructRedisPubSubConnection(RedisChannelWriter<K, V> handler,
+    protected <K, V> RedisPubSubConnectionImpl<K, V> newRedisPubSubConnectionImpl(RedisChannelWriter<K, V> handler,
             RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new MyPubSubConnection<K, V>(handler, codec, timeout, unit);
 

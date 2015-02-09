@@ -131,7 +131,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
-        RedisAsyncConnectionImpl<K, V> connection = constructRedisAsyncConnection(handler, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, new Supplier<SocketAddress>() {
             @Override
@@ -175,7 +175,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
                 pooledClusterConnectionProvider);
-        RedisAsyncConnectionImpl<K, V> connection = constructRedisAsyncConnection(clusterWriter, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(clusterWriter, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, socketAddressSupplier, true);
 
@@ -267,7 +267,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param unit Timeout unit
      * @return RedisAsyncConnectionImpl&lt;K, V&gt; instance
      */
-    protected <K, V> RedisAsyncConnectionImpl<K, V> constructRedisAsyncConnection(RedisChannelWriter<K, V> channelWriter,
+    protected <K, V> RedisAsyncConnectionImpl<K, V> newRedisAsyncConnectionImpl(RedisChannelWriter<K, V> channelWriter,
             RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new RedisAsyncConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
     }

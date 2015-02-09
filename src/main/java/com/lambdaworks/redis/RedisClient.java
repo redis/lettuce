@@ -189,7 +189,7 @@ public class RedisClient extends AbstractRedisClient {
                 new RedisConnectionProvider<RedisAsyncConnection<K, V>>() {
                     @Override
                     public RedisAsyncConnection<K, V> createConnection() {
-                        return connectAsyncImpl(codec, false, redisURI);
+                        return connectAsync(codec, false, redisURI);
                     }
 
                     @Override
@@ -255,7 +255,7 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings({ "rawtypes" })
     private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect, RedisURI redisURI) {
-        return (RedisConnection) syncHandler(connectAsyncImpl(codec, withReconnect, redisURI), RedisConnection.class,
+        return (RedisConnection) syncHandler(connectAsync(codec, withReconnect, redisURI), RedisConnection.class,
                 RedisClusterConnection.class);
     }
 
@@ -279,7 +279,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
         checkForRedisURI();
         checkArgument(codec != null, "RedisCodec must not be null");
-        return connectAsyncImpl(codec, true, redisURI);
+        return connectAsync(codec, true, redisURI);
     }
 
     /**
@@ -290,22 +290,21 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisAsyncConnection<String, String> connectAsync(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
-        return connectAsyncImpl(codec, true, redisURI);
+        return connectAsync(codec, true, redisURI);
     }
 
-    private <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, boolean withReconnect,
-            RedisURI redisURI) {
+    private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, boolean withReconnect, RedisURI redisURI) {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
-        RedisAsyncConnectionImpl<K, V> connection = constructRedisAsyncConnection(handler, codec, timeout, unit);
+        RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
-        connectAsyncImpl(handler, connection, withReconnect, redisURI);
+        connectAsync(handler, connection, withReconnect, redisURI);
 
         return connection;
     }
 
-    private <K, V> void connectAsyncImpl(CommandHandler<K, V> handler, RedisAsyncConnectionImpl<K, V> connection,
+    private <K, V> void connectAsync(CommandHandler<K, V> handler, RedisAsyncConnectionImpl<K, V> connection,
             boolean withReconnect, RedisURI redisURI) {
 
         ConnectionBuilder connectionBuilder;
@@ -318,7 +317,7 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), withReconnect, connectionBuilder, redisURI);
-        connectAsyncImpl(connectionBuilder);
+        initializeChannel(connectionBuilder);
 
         if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
             connection.auth(new String(redisURI.getPassword()));
@@ -368,9 +367,9 @@ public class RedisClient extends AbstractRedisClient {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
-        RedisPubSubConnectionImpl<K, V> connection = constructRedisPubSubConnection(handler, codec, timeout, unit);
+        RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
 
-        connectAsyncImpl(handler, connection, true, redisURI);
+        connectAsync(handler, connection, true, redisURI);
 
         return connection;
     }
@@ -414,8 +413,8 @@ public class RedisClient extends AbstractRedisClient {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(queue);
-        final RedisSentinelAsyncConnectionImpl<K, V> connection = constructRedisSentinelAsyncConnectionImpl(commandHandler,
-                codec, timeout, unit);
+        final RedisSentinelAsyncConnectionImpl<K, V> connection = newRedisSentinelAsyncConnectionImpl(commandHandler, codec,
+                timeout, unit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
@@ -423,7 +422,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), true, connectionBuilder, redisURI);
 
         if (redisURI.getSentinels().isEmpty() && LettuceStrings.isNotEmpty(redisURI.getHost())) {
-            connectAsyncImpl(connectionBuilder);
+            initializeChannel(connectionBuilder);
 
         } else {
             boolean connected = false;
@@ -432,7 +431,7 @@ public class RedisClient extends AbstractRedisClient {
                 connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
                 logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
                 try {
-                    connectAsyncImpl(connectionBuilder);
+                    initializeChannel(connectionBuilder);
                     connected = true;
                     break;
                 } catch (Exception e) {
@@ -463,7 +462,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param codec
      * @return RedisAsyncConnectionImpl&lt;K, V&gt; instance
      */
-    protected <K, V> RedisAsyncConnectionImpl<K, V> constructRedisAsyncConnection(RedisChannelWriter<K, V> channelWriter,
+    protected <K, V> RedisAsyncConnectionImpl<K, V> newRedisAsyncConnectionImpl(RedisChannelWriter<K, V> channelWriter,
             RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new RedisAsyncConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
     }
@@ -479,7 +478,7 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @return RedisSentinelAsyncConnectionImpl&lt;K, V&gt; instance
      */
-    protected <K, V> RedisSentinelAsyncConnectionImpl<K, V> constructRedisSentinelAsyncConnectionImpl(
+    protected <K, V> RedisSentinelAsyncConnectionImpl<K, V> newRedisSentinelAsyncConnectionImpl(
             RedisChannelWriter<K, V> channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new RedisSentinelAsyncConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
     }
@@ -494,7 +493,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param unit Timeout unit
      * @return RedisPubSubConnectionImpl&lt;K, V&gt; instance
      */
-    protected <K, V> RedisPubSubConnectionImpl<K, V> constructRedisPubSubConnection(RedisChannelWriter<K, V> channelWriter,
+    protected <K, V> RedisPubSubConnectionImpl<K, V> newRedisPubSubConnectionImpl(RedisChannelWriter<K, V> channelWriter,
             RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new RedisPubSubConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
     }
