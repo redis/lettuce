@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisFuture;
 
 /**
  * @param <K> Key type.
@@ -28,27 +29,31 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
      * Listen for messages published to channels matching the given patterns.
      * 
      * @param patterns the patterns
+     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>psubscribe</code> completion
      */
-    void psubscribe(K... patterns);
+    RedisFuture<Void> psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
      * 
      * @param patterns the patterns
+     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>punsubscribe</code> completion
      */
-    void punsubscribe(K... patterns);
+    RedisFuture<Void> punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
      * 
      * @param channels the channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>subscribe</code> completion
      */
-    void subscribe(K... channels);
+    RedisFuture<Void> subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
      * 
      * @param channels the channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>unsubscribe</code> completion.
      */
-    void unsubscribe(K... channels);
+    RedisFuture<Void> unsubscribe(K... channels);
 }

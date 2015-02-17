@@ -18,7 +18,6 @@ import org.junit.Test;
 
 import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
 public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
@@ -97,17 +96,35 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     }
 
     @Test
+    public void pubsubEmptyChannels() throws Exception {
+        RedisFuture<Void> future = pubsub.subscribe();
+        future.get();
+        assertThat(future.getError()).isEqualTo("ERR wrong number of arguments for 'subscribe' command");
+
+    }
+
+    @Test
     public void pubsubChannels() throws Exception {
-        pubsub.subscribe(channel);
-        Thread.sleep(100);
+        RedisFuture<Void> future = pubsub.subscribe(channel);
+        future.get();
         List<String> result = redis.pubsubChannels();
-        assertThat(result, hasItem(channel));
+        assertThat(result).contains(channel);
+
+    }
+
+    @Test
+    public void pubsubMultipleChannels() throws Exception {
+        RedisFuture<Void> future = pubsub.subscribe(channel, "channel1", "channel3");
+        future.get();
+
+        List<String> result = redis.pubsubChannels();
+        assertThat(result).contains(channel, "channel1", "channel3");
+
     }
 
     @Test
     public void pubsubChannelsWithArg() throws Exception {
-        pubsub.subscribe(channel);
-        Thread.sleep(100);
+        pubsub.subscribe(channel).get();
         List<String> result = redis.pubsubChannels(pattern);
         assertThat(result, hasItem(channel));
     }
@@ -126,17 +143,17 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     @Test
     public void pubsubNumpat() throws Exception {
 
-        pubsub.psubscribe(pattern);
-        Thread.sleep(100);
+        pubsub.psubscribe(pattern).get();
         Long result = redis.pubsubNumpat();
         assertThat(result.longValue()).isEqualTo(1L);
     }
 
-    @Test(timeout = 200)
+    @Test
     public void punsubscribe() throws Exception {
-        pubsub.punsubscribe(pattern);
+        pubsub.punsubscribe(pattern).get();
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(0);
+
     }
 
     @Test(timeout = 200)
@@ -148,9 +165,18 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     @Test(timeout = 200)
     public void unsubscribe() throws Exception {
-        pubsub.unsubscribe(channel);
+        pubsub.unsubscribe(channel).get();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(0);
+
+        RedisFuture<Void> future = pubsub.unsubscribe();
+
+        assertThat(future.get()).isNull();
+        assertThat(future.getError()).isNull();
+
+        assertThat(channels).isEmpty();
+        assertThat(patterns).isEmpty();
+
     }
 
     @Test(timeout = 200)

@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.Alternative;
 
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.pubsub.PubSubOutput;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
@@ -29,13 +30,14 @@ public class MyPubSubConnection<K, V> extends RedisPubSubConnectionImpl<K, V> {
     }
 
     @Override
-    public void psubscribe(K... patterns) {
-        super.psubscribe(patterns);
+    public RedisFuture<Void> psubscribe(K... patterns) {
+        RedisFuture<Void> result = super.psubscribe(patterns);
         channels.size();
+        return result;
     }
 
     public void channelRead(Object msg) {
-        PubSubOutput<K, V> output = (PubSubOutput<K, V>) msg;
+        PubSubOutput<K, V, V> output = (PubSubOutput<K, V, V>) msg;
         // update internal state
         switch (output.type()) {
             case psubscribe:

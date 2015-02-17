@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
@@ -74,23 +75,23 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
     }
 
     @Override
-    public void psubscribe(K... patterns) {
-        dispatch(PSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
+    public RedisFuture<Void> psubscribe(K... patterns) {
+        return new VoidFuture(dispatch(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
     }
 
     @Override
-    public void punsubscribe(K... patterns) {
-        dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(patterns));
+    public RedisFuture<Void> punsubscribe(K... patterns) {
+        return new VoidFuture(dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
     }
 
     @Override
-    public void subscribe(K... channels) {
-        dispatch(SUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
+    public RedisFuture<Void> subscribe(K... channels) {
+        return new VoidFuture(dispatch(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
     }
 
     @Override
-    public void unsubscribe(K... channels) {
-        dispatch(UNSUBSCRIBE, new PubSubOutput<K, V>(codec), args(channels));
+    public RedisFuture<Void> unsubscribe(K... channels) {
+        return new VoidFuture(dispatch(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
     }
 
     @Override
@@ -108,7 +109,13 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
     @Override
     @SuppressWarnings("unchecked")
     public void channelRead(Object msg) {
-        PubSubOutput<K, V> output = (PubSubOutput<K, V>) msg;
+        PubSubOutput<K, V, V> output = (PubSubOutput<K, V, V>) msg;
+
+        // drop empty messages
+        if (output.type() == null || (output.pattern() == null && output.channel() == null && output.get() == null)) {
+            return;
+        }
+
         // update internal state
         switch (output.type()) {
             case psubscribe:
@@ -165,4 +172,5 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
         T[] array = (T[]) Array.newInstance(cls, c.size());
         return c.toArray(array);
     }
+
 }

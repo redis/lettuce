@@ -24,7 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
     private RedisCodec<K, V> codec;
-    private PubSubOutput<K, V> output;
+    private PubSubOutput<K, V, V> output;
 
     /**
      * Initialize a new instance.
@@ -35,7 +35,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
     public PubSubCommandHandler(BlockingQueue<RedisCommand<K, V, ?>> queue, RedisCodec<K, V> codec) {
         super(queue);
         this.codec = codec;
-        this.output = new PubSubOutput<K, V>(codec);
+        this.output = new PubSubOutput<K, V, V>(codec);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
 
         while (rsm.decode(buffer, output)) {
             ctx.fireChannelRead(output);
-            output = new PubSubOutput<K, V>(codec);
+            output = new PubSubOutput<K, V, V>(codec);
             buffer.discardReadBytes();
         }
     }

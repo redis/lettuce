@@ -14,7 +14,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @param <V> Value type. *
  * @author Will Glozer
  */
-public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
+public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
     public enum Type {
         message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe
     }
@@ -45,8 +45,13 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
     }
 
     @Override
-    @SuppressWarnings("fallthrough")
+    @SuppressWarnings({ "fallthrough", "unchecked" })
     public void set(ByteBuffer bytes) {
+
+        if (bytes == null) {
+            return;
+        }
+
         if (type == null) {
             type = Type.valueOf(decodeAscii(bytes));
             return;
@@ -63,7 +68,7 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> {
                     channel = codec.decodeKey(bytes);
                     break;
                 }
-                output = codec.decodeValue(bytes);
+                output = (T) codec.decodeValue(bytes);
                 break;
             case psubscribe:
             case punsubscribe:
