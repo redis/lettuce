@@ -72,7 +72,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         releaseBuffer();
         if (closed) {
-            cancelCommands();
+            cancelCommands("Connection closed");
         }
         channel = null;
     }
@@ -273,7 +273,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         super.channelInactive(ctx);
     }
 
-    private void cancelCommands() {
+    private void cancelCommands(String message) {
         int size = 0;
         if (queue != null) {
             size += queue.size();
@@ -297,9 +297,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         for (RedisCommand<K, V, ?> cmd : toCancel) {
             if (cmd.getOutput() != null) {
-                cmd.getOutput().setError("Connection closed");
+                cmd.getOutput().setError(message);
             }
-            cmd.complete();
+            cmd.cancel(true);
         }
     }
 
@@ -348,5 +348,29 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
         this.redisChannelHandler = redisChannelHandler;
+    }
+
+    /**
+     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
+     * internal state machine gets out of sync with the connection.
+     */
+    @Override
+    public void reset() {
+        try {
+            writeLock.lock();
+            cancelCommands("Reset");
+        } finally {
+            writeLock.unlock();
+        }
+
+        if (buffer != null) {
+            try {
+                readLock.lock();
+                rsm.reset();
+                buffer.clear();
+            } finally {
+                readLock.unlock();
+            }
+        }
     }
 }

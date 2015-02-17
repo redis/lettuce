@@ -36,6 +36,12 @@ interface ClusterConnectionProvider extends Closeable {
     @Override
     void close();
 
+    /**
+     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
+     * internal state machine gets out of sync with the connection.
+     */
+    void reset();
+
     public static enum Intent {
         READ, WRITE;
     }

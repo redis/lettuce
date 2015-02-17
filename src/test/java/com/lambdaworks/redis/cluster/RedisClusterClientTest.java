@@ -32,6 +32,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
@@ -311,6 +312,43 @@ public class RedisClusterClientTest {
 
         List<String> keys = connection.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
         assertThat(keys).isEqualTo(ImmutableList.of("b"));
+
+        connection.close();
+
+    }
+
+    @Test
+    public void testReset() throws Exception {
+
+        clusterClient.reloadPartitions();
+        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+
+        RedisFuture<String> setA = connection.set("a", "myValue1");
+        setA.get();
+
+        assertThat(setA.getError()).isNull();
+        assertThat(setA.get()).isEqualTo("OK");
+
+        RedisFuture<String> setB = connection.set("b", "myValue2");
+        assertThat(setB.get()).isEqualTo("OK");
+
+        RedisFuture<String> setD = connection.set("d", "myValue2");
+        assertThat(setD.get()).isEqualTo("OK");
+
+        RedisChannelHandler<String, String> rch = (RedisChannelHandler<String, String>) connection;
+        rch.reset();
+
+        setA = connection.set("a", "myValue1");
+        setA.get();
+
+        assertThat(setA.getError()).isNull();
+        assertThat(setA.get()).isEqualTo("OK");
+
+        setB = connection.set("b", "myValue2");
+        assertThat(setB.get()).isEqualTo("OK");
+
+        setD = connection.set("d", "myValue2");
+        assertThat(setD.get()).isEqualTo("OK");
 
         connection.close();
 

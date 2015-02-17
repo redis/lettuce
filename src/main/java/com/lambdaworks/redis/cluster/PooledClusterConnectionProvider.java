@@ -10,7 +10,11 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -116,6 +120,15 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             partitionPool.close();
         }
         partitionPool = null;
+    }
+
+    @Override
+    public void reset() {
+        try {
+            partitionPool.clear();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static class PoolKey {

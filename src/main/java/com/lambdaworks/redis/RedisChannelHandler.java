@@ -175,4 +175,8 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     public boolean isOpen() {
         return active;
     }
+
+    public void reset() {
+        channelWriter.reset();
+    }
 }

@@ -26,6 +26,12 @@ public interface RedisChannelWriter<K, V> extends Closeable {
     void close();
 
     /**
+     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
+     * internal state machine gets out of sync with the connection.
+     */
+    void reset();
+
+    /**
      * Set the corresponding connection instance in order to notify it about channel active/inactive state.
      * 
      * @param redisChannelHandler

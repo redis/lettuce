@@ -238,4 +238,8 @@ public class RedisStateMachine<K, V> {
         }
         return bytes;
     }
+
+    public void reset() {
+        stack.clear();
+    }
 }

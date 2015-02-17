@@ -131,4 +131,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     public ClusterConnectionProvider getClusterConnectionProvider() {
         return clusterConnectionProvider;
     }
+
+    @Override
+    public void reset() {
+        defaultWriter.reset();
+        clusterConnectionProvider.reset();
+    }
 }

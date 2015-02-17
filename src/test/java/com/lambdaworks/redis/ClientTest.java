@@ -4,6 +4,7 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
+import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
@@ -210,5 +211,29 @@ public class ClientTest extends AbstractCommandTest {
     public void testExceptionWithCause() throws Exception {
         RedisException e = new RedisException(new RuntimeException());
         assertThat(e).hasCauseExactlyInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    public void reset() throws Exception {
+
+        RedisAsyncConnectionImpl<String, String> async = (RedisAsyncConnectionImpl<String, String>) client.connectAsync();
+
+        async.set(key, value).get();
+        async.reset();
+        async.set(key, value).get();
+
+        RedisFuture<Object> eval = async.eval("while true do end", STATUS, new String[0]);
+        Thread.sleep(200);
+        assertThat(eval.isDone()).isFalse();
+        assertThat(eval.isCancelled()).isFalse();
+
+        async.reset();
+
+        assertThat(eval.isCancelled()).isTrue();
+        assertThat(eval.isDone()).isTrue();
+
+        assertThat(redis.scriptKill()).isEqualTo("OK");
+
+        async.close();
     }
 }
