@@ -39,7 +39,6 @@ class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
 
         if (method.getName().equals("close")) {
             pool.freeConnection((T) proxy);
-            connection = null;
             return null;
         }
 
