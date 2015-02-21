@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
 import java.io.Closeable;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +76,21 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * @return String simple-string-reply
      */
     String ping();
+
+    String clusterNodes();
+
+    Map<K, V> clusterInfo();
+
+    List<K> clusterGetKeysInSlot(int slot, int count);
+
+    /**
+     * Get array of Cluster slot to node mappings.
+     *
+     * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
+     */
+    List<Object> clusterSlots();
+
+    String readOnly();
 
     /**
      * Close the connection.

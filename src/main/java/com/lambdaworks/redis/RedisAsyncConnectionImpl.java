@@ -605,6 +605,10 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     public RedisFuture<String> ping() {
         return dispatch(commandBuilder.ping());
     }
+    @Override
+    public RedisFuture<String> readOnly() {
+        return dispatch(commandBuilder.readOnly());
+    }
 
     @Override
     public RedisFuture<Long> pttl(K key) {

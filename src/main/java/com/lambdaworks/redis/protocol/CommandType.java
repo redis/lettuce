@@ -10,7 +10,7 @@ package com.lambdaworks.redis.protocol;
 public enum CommandType {
     // Connection
 
-    AUTH, ECHO, PING, QUIT, SELECT,
+    AUTH, ECHO, PING, QUIT, READONLY, SELECT,
 
     // Server
 
