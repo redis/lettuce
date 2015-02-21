@@ -3,6 +3,7 @@ package com.lambdaworks.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -31,9 +32,36 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         pool.freeConnection(c1);
+        assertConnectionStillThere(c1);
 
         RedisConnection<String, String> c2 = pool.allocateConnection();
         assertThat(c2).isSameAs(c1);
+    }
+    @Test
+    public void connectionCloseDoesNotClose() throws Exception {
+        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnection<String, String> c1 = pool.allocateConnection();
+        c1.close();
+        RedisConnection actualConnection1 = assertConnectionStillThere(c1);
+
+        RedisConnection<String, String> c2 = pool.allocateConnection();
+        assertThat(c2).isSameAs(c1);
+
+        RedisConnection actualConnection2 = assertConnectionStillThere(c2);
+        assertThat(actualConnection1).isSameAs(actualConnection2);
+    }
+
+    private RedisConnection assertConnectionStillThere(RedisConnection<String, String> c1) {
+        //unwrap code from RedisConnectionPool destroyObject
+        if (Proxy.isProxyClass(c1.getClass())) {
+            PooledConnectionInvocationHandler<RedisConnection> invocationHandler = (PooledConnectionInvocationHandler<RedisConnection>) Proxy
+                    .getInvocationHandler(c1);
+
+            RedisConnection connection = invocationHandler.getConnection();
+            assertThat(connection).isNotNull();
+            return connection;
+        }
+        return null;
     }
 
     @Test

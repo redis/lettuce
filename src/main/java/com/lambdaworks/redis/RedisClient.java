@@ -114,7 +114,7 @@ public class RedisClient extends AbstractRedisClient {
 
         checkForRedisURI();
 
-        long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
+        long maxWait = makeTimeout();
         RedisConnectionPool<RedisConnection<K, V>> pool = new RedisConnectionPool<RedisConnection<K, V>>(
                 new RedisConnectionProvider<RedisConnection<K, V>>() {
                     @Override
@@ -139,6 +139,10 @@ public class RedisClient extends AbstractRedisClient {
         closeableResources.add(pool);
 
         return pool;
+    }
+
+    protected long makeTimeout() {
+        return TimeUnit.MILLISECONDS.convert(timeout, unit);
     }
 
     private void checkForRedisURI() {
@@ -184,7 +188,7 @@ public class RedisClient extends AbstractRedisClient {
             int maxActive) {
 
         checkForRedisURI();
-        long maxWait = unit.convert(timeout, TimeUnit.MILLISECONDS);
+        long maxWait = makeTimeout();
         RedisConnectionPool<RedisAsyncConnection<K, V>> pool = new RedisConnectionPool<RedisAsyncConnection<K, V>>(
                 new RedisConnectionProvider<RedisAsyncConnection<K, V>>() {
                     @Override
