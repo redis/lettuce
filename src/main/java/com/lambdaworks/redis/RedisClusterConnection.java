@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Complete synchronous cluster Redis API with 400+ Methods..
@@ -23,7 +22,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     String clusterDelSlots(int... slots);
 
-    Map<K, V> clusterInfo();
+    String clusterInfo();
 
     String clusterNodes();
 
