@@ -79,6 +79,8 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     String readOnly();
 
+    String readWrite();
+
     /**
      * Close the connection.
      * 

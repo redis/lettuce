@@ -613,6 +613,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public String readWrite() {
+        RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readWrite());
+        return LettuceFutures.await(cmd, timeout, unit);
+    }
+
+    @Override
     public RedisFuture<Long> pttl(K key) {
         return dispatch(commandBuilder.pttl(key));
     }

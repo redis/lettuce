@@ -81,6 +81,8 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
 
     String readOnly();
 
+    String readWrite();
+
     /**
      * Close the connection.
      * 
