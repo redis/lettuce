@@ -383,7 +383,6 @@
                                         <exclude>com/google/common/hash/**</exclude>
                                         <exclude>com/google/common/html/**</exclude>
                                         <exclude>com/google/common/math/**</exclude>
-                                        <exclude>com/google/common/primitives/**</exclude>
                                         <exclude>com/google/common/xml/**</exclude>
                                     </excludes>
                                 </filter>
