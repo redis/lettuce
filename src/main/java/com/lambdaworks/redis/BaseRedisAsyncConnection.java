@@ -79,20 +79,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      */
     RedisFuture<String> ping();
 
-    RedisFuture<String> clusterNodes();
-
-    RedisFuture<String> clusterInfo();
-
-    RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count);
-
-    /**
-     * Get array of Cluster slot to node mappings.
-     *
-     * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
-     */
-    RedisFuture<List<Object>> clusterSlots();
-
-    RedisFuture<String> readOnly();
+    String readOnly();
 
     /**
      * Close the connection.
