@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
 import java.io.Closeable;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +76,10 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * @return String simple-string-reply
      */
     String ping();
+
+    String readOnly();
+
+    String readWrite();
 
     /**
      * Close the connection.

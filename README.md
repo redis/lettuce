@@ -1,6 +1,8 @@
 lettuce - A scalable Java Redis client
 ======================================
 
+[![Join the chat at https://gitter.im/mp911de/lettuce](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mp911de/lettuce?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
 Lettuce is a scalable thread-safe Redis client providing both synchronous and

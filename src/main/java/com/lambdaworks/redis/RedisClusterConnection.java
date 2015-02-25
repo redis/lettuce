@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Complete synchronous cluster Redis API with 400+ Methods..
@@ -23,7 +22,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     String clusterDelSlots(int... slots);
 
-    Map<K, V> clusterInfo();
+    String clusterInfo();
 
     String clusterNodes();
 
@@ -55,5 +54,20 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
     List<String> clusterSlaves(String nodeId);
 
     void close();
+
+    /**
+     * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
+     * queries.
+     * 
+     * @return String simple-string-reply
+     */
+    String readOnly();
+
+    /**
+     * Resets readOnly flag.
+     * 
+     * @return String simple-string-reply
+     */
+    String readWrite();
 
 }

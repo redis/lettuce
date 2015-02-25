@@ -36,6 +36,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     protected MultiOutput<K, V> multi;
     private char[] password;
     private int db;
+    private boolean readOnly;
     protected RedisCommandBuilder<K, V> commandBuilder;
     protected RedisCodec<K, V> codec;
 
@@ -604,6 +605,26 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<String> ping() {
         return dispatch(commandBuilder.ping());
+    }
+
+    @Override
+    public String readOnly() {
+        RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readOnly());
+        String status = LettuceFutures.await(cmd, timeout, unit);
+        if ("OK".equals(status)) {
+            readOnly = true;
+        }
+        return status;
+    }
+
+    @Override
+    public String readWrite() {
+        RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readWrite());
+        String status = LettuceFutures.await(cmd, timeout, unit);
+        if ("OK".equals(status)) {
+            readOnly = false;
+        }
+        return status;
     }
 
     @Override
@@ -1591,6 +1612,10 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
         if (db != 0) {
             dispatch(commandBuilder.select(db));
+        }
+
+        if (readOnly) {
+            dispatch(commandBuilder.readOnly());
         }
     }
 
