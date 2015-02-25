@@ -524,6 +524,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> ping() {
         return createCommand(PING, new StatusOutput<K, V>(codec));
     }
+    public Command<K, V, String> readOnly() {
+        return createCommand(READONLY, new StatusOutput<K, V>(codec));
+    }
+
+    public Command<K, V, String> readWrite() {
+        return createCommand(READWRITE, new StatusOutput<K, V>(codec));
+    }
+
 
     public Command<K, V, Long> pttl(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);

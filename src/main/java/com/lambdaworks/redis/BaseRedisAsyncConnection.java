@@ -79,6 +79,10 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      */
     RedisFuture<String> ping();
 
+    String readOnly();
+
+    String readWrite();
+
     /**
      * Close the connection.
      * 

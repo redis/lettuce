@@ -72,7 +72,8 @@ public class SyncAsyncApiConvergenceTest {
             }
         }
 
-        assertThat(returnType).isEqualTo(this.method.getReturnType());
+        assertThat(returnType).describedAs(this.method.toString())
+            .isEqualTo(this.method.getReturnType());
 
     }
 }
