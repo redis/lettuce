@@ -198,6 +198,29 @@
         </dependency>
 
     </dependencies>
+    <profiles>
+        <profile>
+            <id>doclint-java8-disable</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+
+            <build>
+                <plugins>
+                    <!-- java 8 doclint html verification is excluded to suppress strict HTML 4.0 compliance errors 
+                         like "error: self-closing element not allowed <p/>"   -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <!--<additionalparam>-Xdoclint:all -Xdoclint:-html</additionalparam>-->
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile> 
+    </profiles>
 
     <build>
         <plugins>
@@ -367,7 +390,6 @@
                                         <exclude>com/google/common/hash/**</exclude>
                                         <exclude>com/google/common/html/**</exclude>
                                         <exclude>com/google/common/math/**</exclude>
-                                        <exclude>com/google/common/primitives/**</exclude>
                                         <exclude>com/google/common/xml/**</exclude>
                                     </excludes>
                                 </filter>
