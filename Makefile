@@ -296,7 +296,7 @@ ssl-keys:
 	openssl req -new -x509 -key work/key.pem -out work/cert.pem -days 365 -subj "/O=lettuce/ST=Some-State/C=DE/CN=lettuce-test"
 	chmod go-rwx work/key.pem
 	chmod go-rwx work/cert.pem
-	$JAVA_HOME/bin/keytool -importcert -keystore work/keystore.jks -file work/cert.pem -noprompt -storepass changeit
+	$$JAVA_HOME/bin/keytool -importcert -keystore work/keystore.jks -file work/cert.pem -noprompt -storepass changeit
 
 stop:
 	pkill stunnel || true
