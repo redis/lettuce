@@ -54,4 +54,19 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     RedisFuture<List<String>> clusterSlaves(String nodeId);
 
+    /**
+     * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
+     * queries.
+     * 
+     * @return String simple-string-reply
+     */
+    String readOnly();
+
+    /**
+     * Resets readOnly flag.
+     * 
+     * @return String simple-string-reply
+     */
+    String readWrite();
+
 }

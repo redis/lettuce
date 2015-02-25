@@ -612,7 +612,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readOnly());
         String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status)) {
-            this.readOnly=true;
+            readOnly = true;
         }
         return status;
     }
@@ -622,7 +622,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readWrite());
         String status = LettuceFutures.await(cmd, timeout, unit);
         if ("OK".equals(status)) {
-            this.readOnly=false;
+            readOnly = false;
         }
         return status;
     }
@@ -1614,7 +1614,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
             dispatch(commandBuilder.select(db));
         }
 
-        if (this.readOnly) {
+        if (readOnly) {
             dispatch(commandBuilder.readOnly());
         }
     }
