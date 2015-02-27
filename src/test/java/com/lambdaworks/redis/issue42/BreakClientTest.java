@@ -24,15 +24,16 @@ public class BreakClientTest extends BreakClientBase {
         client = new RedisClient(host, port);
     }
 
-
-    @Before public void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         client.setDefaultTimeout(TIMEOUT, TimeUnit.SECONDS);
         redis = client.connect(this.slowCodec);
         redis.flushall();
         redis.flushdb();
     }
 
-    @After public void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         redis.close();
     }
 
@@ -45,6 +46,5 @@ public class BreakClientTest extends BreakClientBase {
     public void testLooping() throws Exception {
         testLoop(redis);
     }
-
 
 }

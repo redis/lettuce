@@ -1,13 +1,11 @@
 package com.lambdaworks.redis.issue42;
 
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
+
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
@@ -18,9 +16,6 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.ClusterRule;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
-
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 
 public class BreakClusterClientTest extends BreakClientBase {
     public static final String host = TestSettings.hostAddr();
@@ -33,11 +28,12 @@ public class BreakClusterClientTest extends BreakClientBase {
     private RedisClusterConnection<String, String> clusterConnection;
 
     @Rule
-    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2,port3, port4);
+    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, port1).withTimeout(TIMEOUT,TimeUnit.SECONDS).build());
+        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, port1).withTimeout(TIMEOUT, TimeUnit.SECONDS)
+                .build());
     }
 
     @AfterClass
@@ -45,9 +41,8 @@ public class BreakClusterClientTest extends BreakClientBase {
         clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
-
-
-    @Before public void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         WaitFor.waitOrTimeout(new Condition() {
             @Override
             public boolean isSatisfied() {
@@ -59,10 +54,10 @@ public class BreakClusterClientTest extends BreakClientBase {
 
     }
 
-    @After public void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         clusterConnection.close();
     }
-
 
     @Test
     public void testStandAlone() throws Exception {
@@ -73,7 +68,5 @@ public class BreakClusterClientTest extends BreakClientBase {
     public void testLooping() throws Exception {
         testLoop(clusterConnection);
     }
-
-
 
 }
