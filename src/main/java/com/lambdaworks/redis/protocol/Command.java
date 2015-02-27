@@ -74,7 +74,6 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
         if (latch.getCount() == 1) {
             latch.countDown();
-            output = null;
         }
     }
 
