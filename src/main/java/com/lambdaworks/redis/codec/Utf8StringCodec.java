@@ -50,8 +50,7 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
         return encode(value);
     }
 
-    private String decode(ByteBuffer bytes) {
-        synchronized (chars) {
+    private synchronized String decode(ByteBuffer bytes) {
             chars.clear();
             bytes.mark();
 
@@ -62,7 +61,6 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
             }
 
             return chars.flip().toString();
-        }
     }
 
     private byte[] encode(String string) {
