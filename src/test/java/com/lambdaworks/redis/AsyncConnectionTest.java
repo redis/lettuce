@@ -2,21 +2,22 @@
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 public class AsyncConnectionTest extends AbstractCommandTest {
     private RedisAsyncConnection<String, String> async;
@@ -41,12 +42,37 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         Future<Long> rpush = async.rpush("list", "1", "2");
         Future<List<String>> lrange = async.lrange("list", 0, -1);
 
-        assertThat(!set.isDone() && !rpush.isDone() && !rpush.isDone()).isTrue();
+        assertThat(!set.isDone() && !rpush.isDone()).isTrue();
         assertThat(async.exec().get()).isEqualTo(list("OK", 2L, list("1", "2")));
 
         assertThat(set.get()).isEqualTo("OK");
         assertThat((long) rpush.get()).isEqualTo(2L);
         assertThat(lrange.get()).isEqualTo(list("1", "2"));
+    }
+
+    @Test(timeout = 1000000)
+    public void multiError() throws Exception {
+        assertThat(async.multi().get()).isEqualTo("OK");
+        String k = "brokenkey";
+        Future<String> set = async.set(k, value);
+        RedisFuture<String> rpush = async.lpop(k);
+        Future<String> set2 = async.set(k, "2");
+
+        assertThat(!set.isDone() && !rpush.isDone() && !set2.isDone()).isTrue();
+        List<Object> actual = async.exec().get();
+
+        assertThat(actual.get(0)).isEqualTo("OK");
+        assertThat(actual.get(1)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThat(actual.get(2)).isEqualTo("OK");
+
+
+        assertThat(set.get()).isEqualTo("OK");
+        assertThat(set2.get()).isEqualTo("OK");
+        try{
+            rpush.get();
+            fail();
+        }catch(ExecutionException expected){}
+        assertThat(rpush.getError()).isEqualTo("WRONGTYPE Operation against a key holding the wrong kind of value");
     }
 
     @Test(timeout = 10000)
