@@ -2,13 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +11,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class AsyncConnectionTest extends AbstractCommandTest {
     private RedisAsyncConnection<String, String> async;
@@ -68,11 +69,16 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
         assertThat(set.get()).isEqualTo("OK");
         assertThat(set2.get()).isEqualTo("OK");
+        String error = "WRONGTYPE Operation against a key holding the wrong kind of value";
         try{
             rpush.get();
             fail();
-        }catch(ExecutionException expected){}
-        assertThat(rpush.getError()).isEqualTo("WRONGTYPE Operation against a key holding the wrong kind of value");
+        }catch(ExecutionException expected){
+            Throwable cause = expected.getCause();
+            assertThat(cause).isInstanceOf(RedisCommandExecutionException.class);
+            assertThat(cause.getMessage().equals(error));
+        }
+        assertThat(rpush.getError()).isEqualTo(error);
     }
 
     @Test(timeout = 10000)
