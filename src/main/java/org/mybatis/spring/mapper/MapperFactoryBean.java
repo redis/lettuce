@@ -58,7 +58,15 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
 
   private boolean addToConfig = true;
 
-  /**
+
+  public MapperFactoryBean(Class<T> mapperInterface) {
+    this.mapperInterface = mapperInterface;
+  }
+
+  public MapperFactoryBean() {
+  }
+
+    /**
    * Sets the mapper interface of the MyBatis mapper
    *
    * @param mapperInterface class of the interface

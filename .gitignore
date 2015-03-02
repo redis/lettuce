@@ -4,3 +4,5 @@
 /.project
 *.epoch
 *.log
+*.iml
+/.idea

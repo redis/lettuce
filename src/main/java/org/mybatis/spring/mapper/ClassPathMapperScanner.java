@@ -177,7 +177,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
       // the mapper interface is the original class of the bean
       // but, the actual class of the bean is MapperFactoryBean
-      definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
+      definition.getConstructorArgumentValues().addGenericArgumentValue(definition.getBeanClassName());
       definition.setBeanClass(MapperFactoryBean.class);
 
       definition.getPropertyValues().add("addToConfig", this.addToConfig);
