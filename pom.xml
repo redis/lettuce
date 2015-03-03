@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -183,7 +184,7 @@
             <scope>test</scope>
         </dependency>
 
-         <dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-expression</artifactId>
             <version>3.1.4.RELEASE</version>
@@ -198,6 +199,7 @@
         </dependency>
 
     </dependencies>
+
     <profiles>
         <profile>
             <id>doclint-java8-disable</id>
@@ -219,7 +221,92 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile> 
+        </profile>
+        <profile>
+            <id>sonatype-oss-release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.4</version>
+                        <executions>
+                            <execution>
+                                <id>src</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <descriptors>
+                                        <descriptor>src/assembly/src.xml</descriptor>
+                                    </descriptors>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                    <attach>false</attach>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bin</id>
+                                <configuration>
+                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <descriptors>
+                                        <descriptor>src/assembly/bin.xml</descriptor>
+                                    </descriptors>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                    <attach>false</attach>
+                                </configuration>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>net.ju-n.maven.plugins</groupId>
+                        <artifactId>checksum-maven-plugin</artifactId>
+                        <version>1.2</version>
+                        <configuration>
+                            <algorithms>
+                                <algorithm>MD5</algorithm>
+                                <algorithm>SHA-1</algorithm>
+                            </algorithms>
+                        </configuration>
+
+                        <executions>
+                            <execution>
+                                <id>artifacts</id>
+                                <goals>
+                                    <goal>artifacts</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+
+                            <execution>
+                                <id>files</id>
+                                <goals>
+                                    <goal>files</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <fileSets>
+                                        <fileSet>
+                                            <directory>${project.build.directory}</directory>
+                                            <includes>
+                                                <include>*.gz</include>
+                                                <include>*.zip</include>
+                                            </includes>
+                                        </fileSet>
+                                    </fileSets>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -413,85 +500,6 @@
                             </relocations>
                             <minimizeJar>false</minimizeJar>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
-                <executions>
-                    <execution>
-                        <id>src</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <descriptors>
-                                <descriptor>src/assembly/src.xml</descriptor>
-                            </descriptors>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                            <attach>false</attach>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>bin</id>
-                        <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <descriptors>
-                                <descriptor>src/assembly/bin.xml</descriptor>
-                            </descriptors>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                            <attach>false</attach>
-                        </configuration>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>net.ju-n.maven.plugins</groupId>
-                <artifactId>checksum-maven-plugin</artifactId>
-                <version>1.2</version>
-                <configuration>
-                    <algorithms>
-                        <algorithm>MD5</algorithm>
-                        <algorithm>SHA-1</algorithm>
-                    </algorithms>
-                </configuration>
-
-                <executions>
-                    <execution>
-                        <id>artifacts</id>
-                        <goals>
-                            <goal>artifacts</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-
-                    <execution>
-                        <id>files</id>
-                        <goals>
-                            <goal>files</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <fileSets>
-                                <fileSet>
-                                    <directory>${project.build.directory}</directory>
-                                    <includes>
-                                        <include>*.gz</include>
-                                        <include>*.zip</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
                         </configuration>
                     </execution>
                 </executions>

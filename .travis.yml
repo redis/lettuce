@@ -8,5 +8,5 @@ install: make prepare ssl-keys
 script: make test-coveralls
 cache:
   directories:
-  - $HOME/.m2/repository
+    - $HOME/.m2/repository
 
