@@ -43,7 +43,7 @@ public class RoleParser {
     /**
      * Parse the output of the redis ROLE command and convert to a RedisInstance.
      * 
-     * @param roleOutput
+     * @param roleOutput output of the redis ROLE command
      * @return RedisInstance
      */
     public static RedisInstance parse(List<?> roleOutput) {

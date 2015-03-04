@@ -59,6 +59,10 @@ public class LettuceFutures {
      * @param cmd Command to wait for.
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
+     * @param unit Unit of time for the timeout.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @param <T> Result type.
      * 
      * @return True if all futures complete in time.
      */

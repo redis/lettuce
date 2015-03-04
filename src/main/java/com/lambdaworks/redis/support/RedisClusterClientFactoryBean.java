@@ -8,9 +8,10 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
- * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Format: <code>
+ * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Format:
+ * {@code
  *     redis://host[:port][/databaseNumber]
- * </code>
+ * }
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0

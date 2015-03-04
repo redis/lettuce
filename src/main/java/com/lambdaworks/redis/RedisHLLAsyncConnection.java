@@ -29,7 +29,7 @@ public interface RedisHLLAsyncConnection<K, V> {
      * @param sourcekey the source key
      * @param moreSourceKeys more source keys
      * 
-     * @return RedisFuture&lt;Long&gt; simple-string-reply The command just returns <code>OK</code>.
+     * @return RedisFuture&lt;Long&gt; simple-string-reply The command just returns {@code OK}.
      */
     RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
 
@@ -41,7 +41,7 @@ public interface RedisHLLAsyncConnection<K, V> {
      * 
      * @return RedisFuture&lt;Long&gt; integer-reply specifically:
      * 
-     *         The approximated number of unique elements observed via <code>PFADD</code>.
+     *         The approximated number of unique elements observed via {@code PFADD}.
      */
     RedisFuture<Long> pfcount(K key, K... moreKeys);
 

@@ -42,7 +42,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified channels.
      *
-     * @param channels
+     * @param channels channel keys
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     Map<K, Long> pubsubNumsub(K... channels);
@@ -65,7 +65,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return List&lt;Object&gt array-reply where the first element is one of master, slave, sentinel and the additional
+     * @return List&lt;Object&gt; array-reply where the first element is one of master, slave, sentinel and the additional
      *         elements are role-specific.
      */
     List<Object> role();
@@ -77,8 +77,18 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      */
     String ping();
 
+    /**
+     * Switch connection to Read-Only mode when connecting to a cluster.
+     *
+     * @return String simple-string-reply.
+     */
     String readOnly();
 
+    /**
+     * Switch connection to Read-Write mode (default) when connecting to a cluster.
+     *
+     * @return String simple-string-reply.
+     */
     String readWrite();
 
     /**
@@ -91,7 +101,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     /**
      * Create a SHA1 digest from a Lua script.
      * 
-     * @param script
+     * @param script script content
      * @return the SHA1 value
      */
     String digest(V script);
@@ -99,7 +109,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     /**
      * Discard all commands issued after MULTI.
      * 
-     * @return String simple-string-reply always <code>OK</code>.
+     * @return String simple-string-reply always {@code OK}.
      */
     String discard();
 
@@ -108,14 +118,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * 
      * @return List&lt;Object&gt; array-reply each element being the reply to each of the commands in the atomic transaction.
      * 
-     *         When using <code>WATCH</code>, <code>EXEC</code> can return a
+     *         When using {@code WATCH}, {@code EXEC} can return a
      */
     List<Object> exec();
 
     /**
      * Mark the start of a transaction block.
      * 
-     * @return String simple-string-reply always <code>OK</code>.
+     * @return String simple-string-reply always {@code OK}.
      */
     String multi();
 
@@ -123,22 +133,22 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * Watch the given keys to determine execution of the MULTI/EXEC block.
      * 
      * @param keys the key
-     * @return String simple-string-reply always <code>OK</code>.
+     * @return String simple-string-reply always {@code OK}.
      */
     String watch(K... keys);
 
     /**
      * Forget about all watched keys.
      * 
-     * @return String simple-string-reply always <code>OK</code>.
+     * @return String simple-string-reply always {@code OK}.
      */
     String unwatch();
 
     /**
      * Wait for replication.
      * 
-     * @param replicas
-     * @param timeout
+     * @param replicas minimum number of replicas
+     * @param timeout timeout in milliseconds
      * @return number of replicas
      */
     Long waitForReplication(int replicas, long timeout);

@@ -17,7 +17,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Asynchronously rewrite the append-only file.
      * 
-     * @return String simple-string-reply always <code>OK</code>.
+     * @return String simple-string-reply always {@code OK}.
      */
     String bgrewriteaof();
 
@@ -38,8 +38,8 @@ public interface RedisServerConnection<K, V> {
     /**
      * Set the current connection name.
      * 
-     * @param name
-     * @return simple-string-reply <code>OK</code> if the connection name was successfully set.
+     * @param name the client name
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
     String clientSetname(K name);
 
@@ -47,7 +47,7 @@ public interface RedisServerConnection<K, V> {
      * Kill the connection of a client identified by ip:port.
      * 
      * @param addr ip:port
-     * @return String simple-string-reply <code>OK</code> if the connection exists and has been closed
+     * @return String simple-string-reply {@code OK} if the connection exists and has been closed
      */
     String clientKill(String addr);
 
@@ -62,7 +62,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Stop processing commands from clients for some time.
      * 
-     * @param timeout
+     * @param timeout the timeout value in milliseconds
      * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
     String clientPause(long timeout);
@@ -84,14 +84,16 @@ public interface RedisServerConnection<K, V> {
 
     /**
      * Returns an array reply of details about the requested commands.
-     *
+     * 
+     * @param commands the commands to query for
      * @return List&lt;Object&gt; array-reply
      */
     List<Object> commandInfo(String... commands);
 
     /**
      * Returns an array reply of details about the requested commands.
-     *
+     * 
+     * @param commands the commands to query for
      * @return List&lt;Object&gt; array-reply
      */
     List<Object> commandInfo(CommandType... commands);
@@ -106,7 +108,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Get the value of a configuration parameter.
      * 
-     * @param parameter
+     * @param parameter name of the parameter
      * @return List&lt;String&gt; bulk-string-reply
      */
     List<String> configGet(String parameter);
@@ -114,14 +116,14 @@ public interface RedisServerConnection<K, V> {
     /**
      * Reset the stats returned by INFO.
      * 
-     * @return String simple-string-reply always <code>OK</code>.
+     * @return String simple-string-reply always {@code OK}.
      */
     String configResetstat();
 
     /**
      * Rewrite the configuration file with the in memory configuration.
      * 
-     * @return String simple-string-reply <code>OK</code> when the configuration was rewritten properly. Otherwise an error is
+     * @return String simple-string-reply {@code OK} when the configuration was rewritten properly. Otherwise an error is
      *         returned.
      */
     String configRewrite();
@@ -129,10 +131,9 @@ public interface RedisServerConnection<K, V> {
     /**
      * Set a configuration parameter to the given value.
      * 
-     * @param parameter
-     * @param value
-     * @return String simple-string-reply: <code>OK</code> when the configuration was set properly. Otherwise an error is
-     *         returned.
+     * @param parameter the parameter name
+     * @param value the parameter value
+     * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
      */
     String configSet(String parameter, String value);
 
@@ -207,7 +208,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      * 
-     * @param save
+     * @param save {@literal true} force save operation
      */
     void shutdown(boolean save);
 
@@ -259,7 +260,7 @@ public interface RedisServerConnection<K, V> {
     /**
      * Internal command used for replication.
      * 
-     * @return
+     * @return String simple-string-reply The commands returns OK on success.
      */
     String sync();
 

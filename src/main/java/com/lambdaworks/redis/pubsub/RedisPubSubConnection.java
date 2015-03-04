@@ -29,7 +29,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
      * Listen for messages published to channels matching the given patterns.
      * 
      * @param patterns the patterns
-     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>psubscribe</code> completion
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion
      */
     RedisFuture<Void> psubscribe(K... patterns);
 
@@ -37,7 +37,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
      * Stop listening for messages posted to channels matching the given patterns.
      * 
      * @param patterns the patterns
-     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>punsubscribe</code> completion
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion
      */
     RedisFuture<Void> punsubscribe(K... patterns);
 
@@ -45,7 +45,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
      * Listen for messages published to the given channels.
      * 
      * @param channels the channels
-     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>subscribe</code> completion
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
      */
     RedisFuture<Void> subscribe(K... channels);
 
@@ -53,7 +53,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
      * Stop listening for messages posted to the given channels.
      * 
      * @param channels the channels
-     * @return RedisFuture&lt;Void&gt; Future to synchronize <code>unsubscribe</code> completion.
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */
     RedisFuture<Void> unsubscribe(K... channels);
 }

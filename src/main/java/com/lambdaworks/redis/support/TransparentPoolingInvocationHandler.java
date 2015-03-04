@@ -19,10 +19,6 @@ public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHa
     private RedisConnectionPool<T> pool;
     private final Map<Method, Method> methodCache = new ConcurrentHashMap<Method, Method>();
 
-    /**
-     * 
-     * @param pool
-     */
     public TransparentPoolingInvocationHandler(RedisConnectionPool<T> pool) {
         this.pool = pool;
     }

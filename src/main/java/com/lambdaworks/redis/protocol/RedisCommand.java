@@ -16,7 +16,7 @@ public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<
     /**
      * The command output. Can be null.
      * 
-     * @return CommandOutput<K, V, T>
+     * @return the command output.
      */
     CommandOutput<K, V, T> getOutput();
 
@@ -27,14 +27,14 @@ public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<
 
     /**
      * 
-     * @return CommandArgs<K, V>
+     * @return the current command args
      */
     CommandArgs<K, V> getArgs();
 
     /**
      * Encode the command.
      * 
-     * @param buf
+     * @param buf byte buffer to operate on.
      */
     void encode(ByteBuf buf);
 

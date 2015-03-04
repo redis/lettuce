@@ -1,8 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -13,13 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -52,7 +44,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Initialize the client with an initial cluster URI.
      * 
-     * @param initialUri
+     * @param initialUri initial cluster URI
      */
     public RedisClusterClient(RedisURI initialUri) {
         this(Collections.singletonList(checkNotNull(initialUri, "RedisURI (initial uri) must not be null")));
@@ -63,7 +55,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * cluster. If any uri is sucessful for connection, the others are not tried anymore. The initial uri is needed to discover
      * the cluster structure for distributing the requests.
      * 
-     * @param initialUris
+     * @param initialUris list of initial cluster URIs
      */
     public RedisClusterClient(List<RedisURI> initialUris) {
         this.initialUris = initialUris;
@@ -88,6 +80,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * and values.
      * 
      * @param codec Use this codec to encode/decode keys and values.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return A new connection.
      */
     @SuppressWarnings("unchecked")
@@ -109,6 +103,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Creates a connection to the redis cluster.
      * 
      * @param codec Use this codec to encode/decode keys and values.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return A new connection.
      */
     public <K, V> RedisClusterAsyncConnection<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
@@ -122,8 +118,10 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a connection to a redis socket address.
      * 
-     * @param socketAddress
-     * @return RedisAsyncConnectionImpl<String, String>
+     * @param socketAddress initial connect
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection
      */
     <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
 
@@ -152,11 +150,11 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a clustered connection with command distributor.
      * 
-     * @param codec
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
-     * @return
+     * @param codec the codec to use
+     * @param socketAddressSupplier address supplier for initial connect and re-connect
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection
      */
     <K, V> RedisAsyncConnectionImpl<K, V> connectClusterAsyncImpl(RedisCodec<K, V> codec,
             final Supplier<SocketAddress> socketAddressSupplier) {
@@ -261,10 +259,12 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Construct a new {@link RedisAsyncConnectionImpl}. Can be overridden in order to construct a subclass of
      * {@link RedisAsyncConnectionImpl}
      *
-     * @param channelWriter
-     * @param codec
+     * @param channelWriter the channel writer
+     * @param codec the codec to use
      * @param timeout Timeout value
      * @param unit Timeout unit
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return RedisAsyncConnectionImpl&lt;K, V&gt; instance
      */
     protected <K, V> RedisAsyncConnectionImpl<K, V> newRedisAsyncConnectionImpl(RedisChannelWriter<K, V> channelWriter,

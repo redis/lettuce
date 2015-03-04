@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 /**
  *
  * Argument list builder for the redis <a href="http://redis.io/commands/client-kill">CLIENT KILL</a> command. Static import the
- * methods from {@link Builder} and chain the method calls: <code>id(1).skipme()</code>.
+ * methods from {@link Builder} and chain the method calls: {@code id(1).skipme()}.
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0

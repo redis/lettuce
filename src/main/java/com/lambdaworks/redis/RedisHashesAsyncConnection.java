@@ -34,8 +34,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param field the field type: key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the hash contains <code>field</code>. <code>0</code> if the hash does not contain
-     *         <code>field</code>, or <code>key</code> does not exist.
+     *         {@literal true} if the hash contains {@code field}. {@literal false} if the hash does not contain {@code field},
+     *         or {@code key} does not exist.
      */
     RedisFuture<Boolean> hexists(K key, K field);
 
@@ -44,8 +44,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @param field the field type: key
-     * @return RedisFuture&lt;V&gt; bulk-string-reply the value associated with <code>field</code>, or <code>nil</code> when
-     *         <code>field</code> is not present in the hash or <code>key</code> does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the value associated with {@code field}, or {@code null} when
+     *         {@code field} is not present in the hash or {@code key} does not exist.
      */
     RedisFuture<V> hget(K key, K field);
 
@@ -55,7 +55,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param amount the increment type: long
-     * @return RedisFuture&lt;Long&gt; integer-reply the value at <code>field</code> after the increment operation.
+     * @return RedisFuture&lt;Long&gt; integer-reply the value at {@code field} after the increment operation.
      */
     RedisFuture<Long> hincrby(K key, K field, long amount);
 
@@ -65,7 +65,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param key the key
      * @param field the field type: key
      * @param amount the increment type: double
-     * @return RedisFuture&lt;Double;&gt; bulk-string-reply the value of <code>field</code> after the increment.
+     * @return RedisFuture&lt;Double;&gt; bulk-string-reply the value of {@code field} after the increment.
      */
     RedisFuture<Double> hincrbyfloat(K key, K field, double amount);
 
@@ -74,7 +74,7 @@ public interface RedisHashesAsyncConnection<K, V> {
      * 
      * @param key the key
      * @return RedisFuture&lt;Map&lt;K,V&gt;&gt; array-reply list of fields and their values stored in the hash, or an empty
-     *         list when <code>key</code> does not exist.
+     *         list when {@code key} does not exist.
      */
     RedisFuture<Map<K, V>> hgetall(K key);
 
@@ -92,8 +92,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get all the fields in a hash.
      * 
      * @param key the key
-     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of fields in the hash, or an empty list when <code>key</code>
-     *         does not exist.
+     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of fields in the hash, or an empty list when {@code key} does
+     *         not exist.
      */
     RedisFuture<List<K>> hkeys(K key);
 
@@ -111,8 +111,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get the number of fields in a hash.
      * 
      * @param key the key
-     * @return RedisFuture&lt;Long&gt; integer-reply number of fields in the hash, or <code>0</code> when <code>key</code> does
-     *         not exist.
+     * @return RedisFuture&lt;Long&gt; integer-reply number of fields in the hash, or {@literal false} when {@code key} does not
+     *         exist.
      */
     RedisFuture<Long> hlen(K key);
 
@@ -153,8 +153,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param value the value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if <code>field</code> is a new field in the hash and <code>value</code> was set. <code>0</code> if
-     *         <code>field</code> already exists in the hash and the value was updated.
+     *         {@literal true} if {@code field} is a new field in the hash and {@code value} was set. {@literal false} if
+     *         {@code field} already exists in the hash and the value was updated.
      */
     RedisFuture<Boolean> hset(K key, K field, V value);
 
@@ -166,8 +166,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param value the value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if <code>field</code> is a new field in the hash and <code>value</code> was set. <code>0</code> if
-     *         <code>field</code> already exists in the hash and no operation was performed.
+     *         {@literal true} if {@code field} is a new field in the hash and {@code value} was set. {@literal false} if
+     *         {@code field} already exists in the hash and no operation was performed.
      */
     RedisFuture<Boolean> hsetnx(K key, K field, V value);
 
@@ -175,8 +175,8 @@ public interface RedisHashesAsyncConnection<K, V> {
      * Get all the values in a hash.
      * 
      * @param key the key
-     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values in the hash, or an empty list when <code>key</code>
-     *         does not exist.
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values in the hash, or an empty list when {@code key} does
+     *         not exist.
      */
     RedisFuture<List<V>> hvals(K key);
 
@@ -186,52 +186,83 @@ public interface RedisHashesAsyncConnection<K, V> {
      * @param channel the channel
      * @param key the key
      * 
-     * @return RedisFuture&lt;Long&gt; acount of the keys.
+     * @return RedisFuture&lt;Long&gt; count of the keys.
      */
     RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param key the key
+     * @return RedisFuture&lt;MapScanCursor&lt;K, V&gt;&gt; scan cursor.
      */
     RedisFuture<MapScanCursor<K, V>> hscan(K key);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param key the key
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;MapScanCursor&lt;K, V&gt;&gt; scan cursor.
      */
     RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;MapScanCursor&lt;K, V&gt;&gt; scan cursor.
      */
     RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return RedisFuture&lt;MapScanCursor&lt;K, V&gt;&gt; scan cursor.
      */
     RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param channel streaming channel that receives a call for every key-value pair
+     * @param key the key
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param channel streaming channel that receives a call for every key-value pair
+     * @param key the key
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
      * 
-     * @param channel the key
-     * @param key the cursor type: long
-     * @param scanCursor the pattern type: pattern
-     * @param scanArgs the count type: long
+     * @param channel streaming channel that receives a call for every key-value pair
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
+     * 
+     * @param channel streaming channel that receives a call for every key-value pair
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
 }

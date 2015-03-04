@@ -2,16 +2,11 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -79,7 +74,7 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore.
      * 
-     * @return The connection pool.
+     * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisConnection<String, String>> pool() {
         return pool(5, 20);
@@ -89,9 +84,9 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
      * 
-     * @param maxIdle max idle connections (or min pool size)
-     * @param maxActive max active connections.
-     * @return The connection pool.
+     * @param maxIdle max idle connections in pool
+     * @param maxActive max active connections in pool
+     * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisConnection<String, String>> pool(int maxIdle, int maxActive) {
 
@@ -102,12 +97,12 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
      * 
-     * @param codec
-     * @param maxIdle
-     * @param maxActive
+     * @param codec the codec to use
+     * @param maxIdle max idle connections in pool
+     * @param maxActive max active connections in pool
      * @param <K> Key type.
      * @param <V> Value type.
-     * @return RedisConnectionPool<RedisConnection<K, V>>
+     * @return a new {@link RedisConnectionPool} instance
      */
     @SuppressWarnings("unchecked")
     public <K, V> RedisConnectionPool<RedisConnection<K, V>> pool(final RedisCodec<K, V> codec, int maxIdle, int maxActive) {
@@ -154,7 +149,7 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for asynchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore.
      * 
-     * @return The connection pool.
+     * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool() {
         return asyncPool(5, 20);
@@ -164,9 +159,9 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
      * 
-     * @param maxIdle max idle connections (or min pool size)
-     * @param maxActive max active connections.
-     * @return The connection pool.
+     * @param maxIdle max idle connections in pool
+     * @param maxActive max active connections in pool
+     * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool(int maxIdle, int maxActive) {
 
@@ -177,12 +172,12 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
      * 
-     * @param codec
-     * @param maxIdle
-     * @param maxActive
+     * @param codec the codec to use
+     * @param maxIdle max idle connections in pool
+     * @param maxActive max active connections in pool
      * @param <K> Key type.
      * @param <V> Value type.
-     * @return a new connection pool.
+     * @return a new {@link RedisConnectionPool} instance
      */
     public <K, V> RedisConnectionPool<RedisAsyncConnection<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
             int maxActive) {
@@ -230,7 +225,8 @@ public class RedisClient extends AbstractRedisClient {
      * and values.
      * 
      * @param codec Use this codec to encode/decode keys and values, must note be {@literal null}
-     * 
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return A new connection.
      */
     @SuppressWarnings("unchecked")
@@ -277,7 +273,8 @@ public class RedisClient extends AbstractRedisClient {
      * and values.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * 
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return A new connection.
      */
     public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
@@ -357,7 +354,8 @@ public class RedisClient extends AbstractRedisClient {
      * values.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     *
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return A new pub/sub connection.
      */
     public <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
@@ -458,12 +456,13 @@ public class RedisClient extends AbstractRedisClient {
      * Construct a new {@link RedisAsyncConnectionImpl}. Can be overridden in order to construct a subclass of
      * {@link RedisAsyncConnectionImpl}
      * 
+     * 
+     * @param channelWriter the channel writer
+     * @param codec the codec to use
      * @param timeout Timeout value
      * @param unit Timeout unit
-     * @param <K>
-     * @param <V>
-     * @param channelWriter
-     * @param codec
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return RedisAsyncConnectionImpl&lt;K, V&gt; instance
      */
     protected <K, V> RedisAsyncConnectionImpl<K, V> newRedisAsyncConnectionImpl(RedisChannelWriter<K, V> channelWriter,
@@ -475,11 +474,12 @@ public class RedisClient extends AbstractRedisClient {
      * Construct a new {@link RedisSentinelAsyncConnectionImpl}. Can be overridden in order to construct a subclass of
      * {@link RedisSentinelAsyncConnectionImpl}
      * 
-     * @param channelWriter
-     * @param codec
+     * @param channelWriter the channel writer
+     * @param codec the codec to use
      * @param timeout Timeout value
      * @param unit Timeout unit
-     * 
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return RedisSentinelAsyncConnectionImpl&lt;K, V&gt; instance
      */
     protected <K, V> RedisSentinelAsyncConnectionImpl<K, V> newRedisSentinelAsyncConnectionImpl(
@@ -491,10 +491,12 @@ public class RedisClient extends AbstractRedisClient {
      * Construct a new {@link RedisPubSubConnectionImpl}. Can be overridden in order to construct a subclass of
      * {@link RedisPubSubConnectionImpl}
      * 
-     * @param channelWriter
-     * @param codec
+     * @param channelWriter the channel writer
+     * @param codec the codec to use
      * @param timeout Timeout value
      * @param unit Timeout unit
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return RedisPubSubConnectionImpl&lt;K, V&gt; instance
      */
     protected <K, V> RedisPubSubConnectionImpl<K, V> newRedisPubSubConnectionImpl(RedisChannelWriter<K, V> channelWriter,

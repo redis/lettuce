@@ -16,7 +16,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 /**
  * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and <a
  * href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
- * chain the method calls: <code>weights(1, 2).max()</code>.
+ * chain the method calls: {@code weights(1, 2).max()}.
  * 
  * @author Will Glozer
  */

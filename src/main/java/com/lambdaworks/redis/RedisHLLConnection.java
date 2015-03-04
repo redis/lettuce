@@ -29,7 +29,7 @@ public interface RedisHLLConnection<K, V> {
      * @param sourcekey the source key
      * @param moreSourceKeys more source keys
      * 
-     * @return Long simple-string-reply The command just returns <code>OK</code>.
+     * @return Long simple-string-reply The command just returns {@code OK}.
      */
     Long pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
 
@@ -41,7 +41,7 @@ public interface RedisHLLConnection<K, V> {
      * 
      * @return Long integer-reply specifically:
      * 
-     *         The approximated number of unique elements observed via <code>PFADD</code>.
+     *         The approximated number of unique elements observed via {@code PFADD}.
      */
     Long pfcount(K key, K... moreKeys);
 

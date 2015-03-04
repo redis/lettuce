@@ -63,7 +63,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * 
      * @param bootstrap Configuration for new channels.
      * @param timer Timer used for delayed reconnect.
-     * @param socketAddressSupplier
+     * @param socketAddressSupplier the socket address suplier for gaining an address to reconnect to
      */
     public ConnectionWatchdog(Bootstrap bootstrap, Timer timer, Supplier<SocketAddress> socketAddressSupplier) {
         this.bootstrap = bootstrap;

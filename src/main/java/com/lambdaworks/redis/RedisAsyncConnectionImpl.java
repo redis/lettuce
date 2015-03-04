@@ -43,7 +43,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     /**
      * Initialize a new connection.
      * 
-     * @param writer
+     * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.

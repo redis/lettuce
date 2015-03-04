@@ -28,7 +28,7 @@ public class SlotHash {
     /**
      * Calculate the slot from the given key.
      * 
-     * @param key
+     * @param key the key
      * @return slot
      */
     public static final int getSlot(String key) {
@@ -38,7 +38,7 @@ public class SlotHash {
     /**
      * Calculate the slot from the given key.
      * 
-     * @param key
+     * @param key the key
      * @return slot
      */
     public static final int getSlot(byte[] key) {

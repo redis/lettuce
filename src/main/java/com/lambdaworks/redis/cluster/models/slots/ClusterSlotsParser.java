@@ -28,7 +28,7 @@ public class ClusterSlotsParser {
      * Parse the output of the redis CLUSTER SLOTS command and convert it to a list of
      * {@link com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange}
      * 
-     * @param clusterSlotsOutput
+     * @param clusterSlotsOutput output of CLUSTER SLOTS command
      * @return List&gt;ClusterSlotRange&gt;
      */
     public static List<ClusterSlotRange> parse(List<?> clusterSlotsOutput) {

@@ -10,13 +10,14 @@ package com.lambdaworks.redis;
  * @author Will Glozer
  */
 public class KeyValue<K, V> {
+
     public final K key;
     public final V value;
 
     /**
      * 
-     * @param key
-     * @param value
+     * @param key the key
+     * @param value the value
      */
     public KeyValue(K key, V value) {
         this.key = key;

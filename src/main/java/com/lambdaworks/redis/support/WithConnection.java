@@ -29,7 +29,7 @@ public abstract class WithConnection<T> {
     /**
      * Execution method. Will be called with a valid redis connection.
      * 
-     * @param connection
+     * @param connection the connection
      */
     protected abstract void run(T connection);
 }

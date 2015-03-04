@@ -15,7 +15,7 @@ public class Partitions implements Iterable<RedisClusterNode> {
     /**
      * Retrieve a {@link RedisClusterNode} by it's slot number. This method does not distinguish between masters and slaves.
      * 
-     * @param slot
+     * @param slot the slot
      * @return RedisClusterNode or {@literal null}
      */
     public RedisClusterNode getPartitionBySlot(int slot) {

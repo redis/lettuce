@@ -90,11 +90,12 @@ public abstract class AbstractRedisClient {
     /**
      * Populate connection builder with necessary resources.
      * 
-     * @param handler
-     * @param connection
-     * @param socketAddressSupplier
-     * @param withReconnect
-     * @param connectionBuilder
+     * @param handler instance of a CommandHandler for writing redis commands
+     * @param connection implementation of a RedisConnection
+     * @param socketAddressSupplier address supplier for initial connect and re-connect
+     * @param withReconnect {@literal true} if the connection should auto-reconnect
+     * @param connectionBuilder connection builder to configure the connection
+     * @param redisURI URI of the redis instance
      */
     protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
             Supplier<SocketAddress> socketAddressSupplier, boolean withReconnect, ConnectionBuilder connectionBuilder,
@@ -234,8 +235,7 @@ public abstract class AbstractRedisClient {
     /**
      * Removes a listener.
      * 
-     * @param listener must not be {@literal null
-
+     * @param listener must not be {@literal null}
      */
     public void removeListener(RedisConnectionStateListener listener) {
 

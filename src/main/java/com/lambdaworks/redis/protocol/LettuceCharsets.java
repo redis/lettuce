@@ -32,7 +32,7 @@ public class LettuceCharsets {
     /**
      * Create a ByteBuffer from a string using ASCII encoding.
      * 
-     * @param s
+     * @param s the string
      * @return ByteBuffer
      */
     public static ByteBuffer buffer(String s) {

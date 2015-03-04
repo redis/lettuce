@@ -19,15 +19,15 @@ public interface RedisConnection<K, V> extends RedisHashesConnection<K, V>, Redi
     /**
      * Set the default timeout for operations.
      * 
-     * @param timeout
-     * @param unit
+     * @param timeout the timeout value
+     * @param unit the unit of the timeout value
      */
     void setTimeout(long timeout, TimeUnit unit);
 
     /**
      * Authenticate to the server.
      * 
-     * @param password
+     * @param password the password
      * @return String simple-string-reply
      */
     String auth(String password);
@@ -35,7 +35,7 @@ public interface RedisConnection<K, V> extends RedisHashesConnection<K, V>, Redi
     /**
      * Change the selected database for the current connection.
      * 
-     * @param db
+     * @param db the database number
      * @return String simple-string-reply
      */
     String select(int db);
