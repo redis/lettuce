@@ -1,7 +1,7 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
+import static com.google.common.base.Preconditions.*;
+import static com.lambdaworks.redis.PlainChannelInitializer.*;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -76,7 +76,9 @@ class SslConnectionBuilder extends ConnectionBuilder {
 
             if (redisURI.isVerifyPeer()) {
                 sslContext = SslContext.newClientContext(SslProvider.JDK);
-                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+                if (JavaRuntime.IS_JDK_7) {
+                    sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+                }
             } else {
                 sslContext = SslContext.newClientContext(SslProvider.JDK, InsecureTrustManagerFactory.INSTANCE);
             }
