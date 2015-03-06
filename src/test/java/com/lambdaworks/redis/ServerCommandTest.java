@@ -313,7 +313,7 @@ public class ServerCommandTest extends AbstractCommandTest {
         assertThat(entry.get(3)).isEqualTo(list("SLOWLOG", "RESET"));
 
         assertThat(redis.slowlogGet(1)).hasSize(1);
-        assertThat((long) redis.slowlogLen()).isEqualTo(4);
+        assertThat((long) redis.slowlogLen()).isGreaterThanOrEqualTo(4);
 
         redis.configSet("slowlog-log-slower-than", "0");
     }
