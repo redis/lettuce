@@ -28,9 +28,11 @@ public class ScoredValue<V> {
 
     @Override
     public int hashCode() {
-        long temp = score != +0.0d ? Double.doubleToLongBits(score) : 0L;
+
+        long temp = Double.doubleToLongBits(score);
         int result = (int) (temp ^ (temp >>> 32));
-        return 31 * result + (value != null ? value.hashCode() : 0);
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        return result;
     }
 
     @Override

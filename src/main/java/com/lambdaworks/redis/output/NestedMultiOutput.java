@@ -54,7 +54,7 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void multi(int count) {
-        ArrayList<Object> a = new ArrayList<Object>(count);
+        List<Object> a = new ArrayList<Object>(count);
         output.add(a);
         stack.push(output);
         output = a;

@@ -311,12 +311,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public RedisFuture<List<Object>> exec() {
-        MultiOutput<K, V> multi = this.multi;
+        MultiOutput<K, V> multiOutput = this.multi;
         this.multi = null;
-        if (multi == null) {
-            multi = new MultiOutput<K, V>(codec);
+        if (multiOutput == null) {
+            multiOutput = new MultiOutput<K, V>(codec);
         }
-        return dispatch(EXEC, multi);
+        return dispatch(EXEC, multiOutput);
     }
 
     @Override

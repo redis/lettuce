@@ -150,6 +150,7 @@ class SslConnectionBuilder extends ConnectionBuilder {
 
         }
 
+        @Override
         public Future<Boolean> channelInitialized() {
             return initializedFuture;
         }

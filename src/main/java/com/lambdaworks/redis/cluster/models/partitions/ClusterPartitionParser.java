@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster.models.partitions;
 import java.util.*;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
@@ -17,25 +18,25 @@ import com.lambdaworks.redis.RedisURI;
  * @since 3.0
  */
 public class ClusterPartitionParser {
+    public static final String CONNECTED = "connected";
 
     private static final String TOKEN_SLOT_IN_TRANSITION = "[";
     private static final char TOKEN_NODE_SEPARATOR = '\n';
-    private static final Map<String, RedisClusterNode.NodeFlag> FLAG_MAPPING = new HashMap<String, RedisClusterNode.NodeFlag>() {
+    private static final Map<String, RedisClusterNode.NodeFlag> FLAG_MAPPING;
 
-        private static final long serialVersionUID = 1L;
+    static {
+        ImmutableMap.Builder<String, RedisClusterNode.NodeFlag> builder = ImmutableMap.builder();
 
-        {
-            put("noflags", RedisClusterNode.NodeFlag.NOFLAGS);
-            put("myself", RedisClusterNode.NodeFlag.MYSELF);
-            put("master", RedisClusterNode.NodeFlag.MASTER);
-            put("slave", RedisClusterNode.NodeFlag.SLAVE);
-            put("fail?", RedisClusterNode.NodeFlag.EVENTUAL_FAIL);
-            put("fail", RedisClusterNode.NodeFlag.FAIL);
-            put("handshake", RedisClusterNode.NodeFlag.HANDSHAKE);
-            put("noaddr", RedisClusterNode.NodeFlag.NOADDR);
-        }
-    };
-    public static final String CONNECTED = "connected";
+        builder.put("noflags", RedisClusterNode.NodeFlag.NOFLAGS);
+        builder.put("myself", RedisClusterNode.NodeFlag.MYSELF);
+        builder.put("master", RedisClusterNode.NodeFlag.MASTER);
+        builder.put("slave", RedisClusterNode.NodeFlag.SLAVE);
+        builder.put("fail?", RedisClusterNode.NodeFlag.EVENTUAL_FAIL);
+        builder.put("fail", RedisClusterNode.NodeFlag.FAIL);
+        builder.put("handshake", RedisClusterNode.NodeFlag.HANDSHAKE);
+        builder.put("noaddr", RedisClusterNode.NodeFlag.NOADDR);
+        FLAG_MAPPING = builder.build();
+    }
 
     /**
      * Utility constructor.

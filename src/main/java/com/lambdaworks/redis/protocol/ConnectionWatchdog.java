@@ -10,12 +10,7 @@ import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelInitializer;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -143,31 +138,37 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
 
         try {
-            logger.log(infoLevel, "Reconnecting, last destination was " + remoteAddress);
-            if (socketAddressSupplier != null) {
-                try {
-                    remoteAddress = socketAddressSupplier.get();
-                } catch (RuntimeException e) {
-                    logger.log(warnLevel, "Cannot retrieve the current address from socketAddressSupplier: " + e.toString());
-                }
-            }
-            ChannelFuture connect = bootstrap.connect(remoteAddress);
-            connect.sync().await();
-
-            try {
-                doNotReconnect = true;
-                RedisChannelInitializer channelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
-                channelInitializer.channelInitialized().get();
-                doNotReconnect = false;
-            } catch (Exception e) {
-                doNotReconnect = true;
-                logger.error("Cannot initialize channel. Disabling autoReconnect", e);
-                return;
-            }
-            logger.log(infoLevel, "Reconnected to " + remoteAddress);
+            reconnect(infoLevel, warnLevel);
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot connect: " + e.toString());
             scheduleReconnect();
+        }
+
+    }
+
+    private void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws InterruptedException {
+        logger.log(infoLevel, "Reconnecting, last destination was " + remoteAddress);
+
+        if (socketAddressSupplier != null) {
+            try {
+                remoteAddress = socketAddressSupplier.get();
+            } catch (RuntimeException e) {
+                logger.log(warnLevel, "Cannot retrieve the current address from socketAddressSupplier: " + e.toString());
+            }
+        }
+
+        ChannelFuture connect = bootstrap.connect(remoteAddress);
+        connect.sync().await();
+
+        try {
+            doNotReconnect = true;
+            RedisChannelInitializer channelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
+            channelInitializer.channelInitialized().get();
+            doNotReconnect = false;
+            logger.log(infoLevel, "Reconnected to " + remoteAddress);
+        } catch (Exception e) {
+            doNotReconnect = true;
+            logger.error("Cannot initialize channel. Disabling autoReconnect", e);
         }
 
     }

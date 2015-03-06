@@ -149,6 +149,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * 
      * @return true if the output became available.
      */
+    @Override
     public boolean await(long timeout, TimeUnit unit) {
         try {
             return latch.await(timeout, unit);
@@ -188,6 +189,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * 
      * @param buf Buffer to write to.
      */
+    @Override
     public void encode(ByteBuf buf) {
         buf.writeByte('*');
         writeInt(buf, 1 + (args != null ? args.count() : 0));
@@ -204,7 +206,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     /**
      * Write the textual value of a positive integer to the supplied buffer.
-     * 
+     *
      * @param buf Buffer to write to.
      * @param value Value to write.
      */
@@ -231,6 +233,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         return output.getError();
     }
 
+    @Override
     public CommandArgs<K, V> getArgs() {
         return args;
     }
@@ -253,6 +256,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         return exception;
     }
 
+    @Override
     public boolean setException(Throwable exception) {
         this.exception = exception;
         return true;

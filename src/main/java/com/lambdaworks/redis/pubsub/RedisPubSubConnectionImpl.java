@@ -61,6 +61,7 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
      * 
      * @param listener Listener.
      */
+    @Override
     public void addListener(RedisPubSubListener<K, V> listener) {
         listeners.add(listener);
     }
@@ -70,6 +71,7 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
      * 
      * @param listener Listener.
      */
+    @Override
     public void removeListener(RedisPubSubListener<K, V> listener) {
         listeners.remove(listener);
     }
@@ -116,6 +118,11 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
             return;
         }
 
+        updateInternalState(output);
+        notifyListeners(output);
+    }
+
+    private void updateInternalState(PubSubOutput<K, V, V> output) {
         // update internal state
         switch (output.type()) {
             case psubscribe:
@@ -133,6 +140,9 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
             default:
                 break;
         }
+    }
+
+    private void notifyListeners(PubSubOutput<K, V, V> output) {
         // update listeners
         for (RedisPubSubListener<K, V> listener : listeners) {
             switch (output.type()) {

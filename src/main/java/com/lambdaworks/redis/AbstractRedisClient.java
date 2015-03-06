@@ -147,7 +147,6 @@ public abstract class AbstractRedisClient {
         } catch (Exception e) {
             connection.close();
             throw new RedisConnectionException("Unable to connect", e);
-        } finally {
         }
     }
 

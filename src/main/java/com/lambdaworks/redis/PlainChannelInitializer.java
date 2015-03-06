@@ -77,13 +77,6 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         }
     }
 
-    static void removeIfExists(ChannelPipeline pipeline, String name) {
-        ChannelHandler channelHandler = pipeline.get(name);
-        if (channelHandler != null) {
-            pipeline.remove(channelHandler);
-        }
-    }
-
     static void removeIfExists(ChannelPipeline pipeline, Class<? extends ChannelHandler> handlerClass) {
         ChannelHandler channelHandler = pipeline.get(handlerClass);
         if (channelHandler != null) {
@@ -91,6 +84,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         }
     }
 
+    @Override
     public Future<Boolean> channelInitialized() {
         return initializedFuture;
     }

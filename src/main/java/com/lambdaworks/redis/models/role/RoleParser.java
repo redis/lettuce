@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.*;
 
 import java.util.*;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Ints;
@@ -16,22 +17,12 @@ import com.google.common.primitives.Ints;
  */
 @SuppressWarnings("serial")
 public class RoleParser {
-    protected static final Map<String, RedisInstance.Role> ROLE_MAPPING = new HashMap<String, RedisInstance.Role>() {
-        {
-            put("master", RedisInstance.Role.MASTER);
-            put("slave", RedisInstance.Role.SLAVE);
-            put("sentinel", RedisInstance.Role.SENTINEL);
-        }
-    };
+    protected static final Map<String, RedisInstance.Role> ROLE_MAPPING = ImmutableMap.of("master", RedisInstance.Role.MASTER,
+            "slave", RedisInstance.Role.SLAVE, "sentinel", RedisInstance.Role.SENTINEL);
 
-    protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING = new HashMap<String, RedisSlaveInstance.State>() {
-        {
-            put("connect", RedisSlaveInstance.State.CONNECT);
-            put("connected", RedisSlaveInstance.State.CONNECTED);
-            put("connecting", RedisSlaveInstance.State.CONNECTING);
-            put("sync", RedisSlaveInstance.State.SYNC);
-        }
-    };
+    protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING = ImmutableMap.of("connect",
+            RedisSlaveInstance.State.CONNECT, "connected", RedisSlaveInstance.State.CONNECTED, "connecting",
+            RedisSlaveInstance.State.CONNECTING, "sync", RedisSlaveInstance.State.SYNC);
 
     /**
      * Utility constructor.
@@ -54,17 +45,14 @@ public class RoleParser {
         RedisInstance.Role role = ROLE_MAPPING.get(roleOutput.get(0));
 
         switch (role) {
-            case MASTER: {
+            case MASTER:
                 return parseMaster(roleOutput);
-            }
 
-            case SLAVE: {
+            case SLAVE:
                 return parseSlave(roleOutput);
-            }
 
-            case SENTINEL: {
+            case SENTINEL:
                 return parseSentinel(roleOutput);
-            }
         }
 
         return null;

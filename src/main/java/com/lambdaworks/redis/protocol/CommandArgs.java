@@ -199,7 +199,7 @@ public class CommandArgs<K, V> {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [keys=").append(keys);
         sb.append(", keywords=").append(keywords);

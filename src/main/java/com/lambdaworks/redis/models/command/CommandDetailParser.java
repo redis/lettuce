@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.*;
 
 import java.util.*;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
@@ -24,24 +25,26 @@ public class CommandDetailParser {
     public static final int COMMAND_INFO_SIZE = 6;
 
     @SuppressWarnings("serial")
-    protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING = new HashMap<String, CommandDetail.Flag>() {
-        {
-            put("admin", CommandDetail.Flag.ADMIN);
-            put("asking", CommandDetail.Flag.ASKING);
-            put("denyoom", CommandDetail.Flag.DENYOOM);
-            put("fast", CommandDetail.Flag.FAST);
-            put("loading", CommandDetail.Flag.LOADING);
-            put("noscript", CommandDetail.Flag.NOSCRIPT);
-            put("movablekeys", CommandDetail.Flag.MOVABLEKEYS);
-            put("pubsub", CommandDetail.Flag.PUBSUB);
-            put("random", CommandDetail.Flag.RANDOM);
-            put("readonly", CommandDetail.Flag.READONLY);
-            put("skip_monitor", CommandDetail.Flag.SKIP_MONITOR);
-            put("sort_for_script", CommandDetail.Flag.SORT_FOR_SCRIPT);
-            put("stale", CommandDetail.Flag.STALE);
-            put("write", CommandDetail.Flag.WRITE);
-        }
-    };
+    protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING;
+
+    static {
+        ImmutableMap.Builder<String, CommandDetail.Flag> builder = ImmutableMap.builder();
+        builder.put("admin", CommandDetail.Flag.ADMIN);
+        builder.put("asking", CommandDetail.Flag.ASKING);
+        builder.put("denyoom", CommandDetail.Flag.DENYOOM);
+        builder.put("fast", CommandDetail.Flag.FAST);
+        builder.put("loading", CommandDetail.Flag.LOADING);
+        builder.put("noscript", CommandDetail.Flag.NOSCRIPT);
+        builder.put("movablekeys", CommandDetail.Flag.MOVABLEKEYS);
+        builder.put("pubsub", CommandDetail.Flag.PUBSUB);
+        builder.put("random", CommandDetail.Flag.RANDOM);
+        builder.put("readonly", CommandDetail.Flag.READONLY);
+        builder.put("skip_monitor", CommandDetail.Flag.SKIP_MONITOR);
+        builder.put("sort_for_script", CommandDetail.Flag.SORT_FOR_SCRIPT);
+        builder.put("stale", CommandDetail.Flag.STALE);
+        builder.put("write", CommandDetail.Flag.WRITE);
+        FLAG_MAPPING = builder.build();
+    }
 
     private CommandDetailParser() {
     }

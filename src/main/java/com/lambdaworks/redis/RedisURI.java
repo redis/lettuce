@@ -106,23 +106,11 @@ public class RedisURI implements Serializable {
      */
     public static RedisURI create(URI uri) {
 
-        RedisURI.Builder builder = null;
+        RedisURI.Builder builder;
         if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
-            builder = configureSentinel(uri, builder);
+            builder = configureSentinel(uri);
         } else {
-            if (!URI_SCHEME_REDIS.equals(uri.getScheme()) && !URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
-                throw new IllegalArgumentException("Scheme " + uri.getScheme() + " not supported");
-            }
-
-            if (uri.getPort() > 0) {
-                builder = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
-            } else {
-                builder = RedisURI.Builder.redis(uri.getHost());
-            }
-
-            if (URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
-                builder.withSsl(true);
-            }
+            builder = configureStandalone(uri);
         }
 
         String userInfo = uri.getUserInfo();
@@ -152,9 +140,29 @@ public class RedisURI implements Serializable {
 
     }
 
-    private static RedisURI.Builder configureSentinel(URI uri, RedisURI.Builder builder) {
+    private static Builder configureStandalone(URI uri) {
+        Builder builder;
+        if (!URI_SCHEME_REDIS.equals(uri.getScheme()) && !URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
+            throw new IllegalArgumentException("Scheme " + uri.getScheme() + " not supported");
+        }
+
+        if (uri.getPort() > 0) {
+            builder = Builder.redis(uri.getHost(), uri.getPort());
+        } else {
+            builder = Builder.redis(uri.getHost());
+        }
+
+        if (URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
+            builder.withSsl(true);
+        }
+        return builder;
+    }
+
+    private static RedisURI.Builder configureSentinel(URI uri) {
         checkArgument(isNotEmpty(uri.getFragment()), "URI Fragment must contain the sentinelMasterId");
         String masterId = uri.getFragment();
+
+        RedisURI.Builder builder = null;
 
         if (isNotEmpty(uri.getHost())) {
             if (uri.getPort() != -1) {

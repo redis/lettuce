@@ -204,8 +204,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     protected void initializePartitions() {
 
-        Partitions partitions = loadPartitions();
-        this.partitions = partitions;
+        Partitions loadedPartitions = loadPartitions();
+        this.partitions = loadedPartitions;
     }
 
     protected Partitions getPartitions() {
@@ -243,9 +243,9 @@ public class RedisClusterClient extends AbstractRedisClient {
                     lastException);
         }
 
-        Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
+        Partitions loadedPartitions = ClusterPartitionParser.parse(clusterNodes);
 
-        for (RedisClusterNode partition : partitions) {
+        for (RedisClusterNode partition : loadedPartitions) {
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                 partition.setUri(nodeUri);
             }
@@ -254,7 +254,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                 partition.getUri().setPassword(new String(nodeUri.getPassword()));
             }
         }
-        return partitions;
+
+        return loadedPartitions;
     }
 
     /**

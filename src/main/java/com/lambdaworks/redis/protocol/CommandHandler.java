@@ -316,13 +316,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         closed = true;
-        Channel channel = this.channel;
-        if (channel != null) {
-            channel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
-            channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
+        Channel currentChannel = this.channel;
+        if (currentChannel != null) {
+            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
+            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
 
             try {
-                channel.closeFuture().await();
+                currentChannel.closeFuture().await();
             } catch (InterruptedException e) {
                 throw new RedisException(e);
             }

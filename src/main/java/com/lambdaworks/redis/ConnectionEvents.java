@@ -40,10 +40,6 @@ public class ConnectionEvents {
         listeners.remove(listener);
     }
 
-    public static class Initialized {
-
-    }
-
     public static class PrepareClose {
         private SettableFuture<Boolean> prepareCloseFuture = SettableFuture.create();
 

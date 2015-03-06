@@ -1,9 +1,7 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
@@ -18,9 +16,8 @@ import com.lambdaworks.redis.protocol.CommandOutput;
  * @author Mark Paluch
  */
 public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private List<Object> nested;
-    private Stack<Integer> counts = new Stack<Integer>();
-    private Stack<List<Object>> stack = new Stack<List<Object>>();
+    private Deque<Integer> counts = new ArrayDeque<Integer>();
+    private Deque<List<Object>> stack = new ArrayDeque<List<Object>>();
 
     public ArrayOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<Object>());

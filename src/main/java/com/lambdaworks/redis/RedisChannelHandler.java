@@ -63,6 +63,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     /**
      * Close the connection.
      */
+    @Override
     public synchronized void close() {
         logger.debug("close()");
 

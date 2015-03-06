@@ -57,6 +57,10 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
             return;
         }
 
+        handleOutput(bytes);
+    }
+
+    private void handleOutput(ByteBuffer bytes) {
         switch (type) {
             case pmessage:
                 if (pattern == null) {

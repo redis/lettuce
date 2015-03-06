@@ -89,7 +89,7 @@ public class CommandDetail implements Serializable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [name='").append(name).append('\'');
         sb.append(", arity=").append(arity);

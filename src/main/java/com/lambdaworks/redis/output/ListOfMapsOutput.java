@@ -37,7 +37,7 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
     @Override
     public void complete(int depth) {
 
-        if (counts.size() > 0) {
+        if (!counts.isEmpty()) {
             int expectedSize = counts.get(0);
 
             if (nested.get().size() == expectedSize) {
