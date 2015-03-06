@@ -6,7 +6,6 @@ before_install:
   - sudo apt-get install -y -qq stunnel
 install: make prepare ssl-keys
 script: make test-coveralls
-sudo: false
 cache:
   directories:
     - '$HOME/.m2/repository'
