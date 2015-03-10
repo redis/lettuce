@@ -3,9 +3,11 @@
 package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -41,12 +43,42 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         Future<Long> rpush = async.rpush("list", "1", "2");
         Future<List<String>> lrange = async.lrange("list", 0, -1);
 
-        assertThat(!set.isDone() && !rpush.isDone() && !rpush.isDone()).isTrue();
+        assertThat(!set.isDone() && !rpush.isDone()).isTrue();
         assertThat(async.exec().get()).isEqualTo(list("OK", 2L, list("1", "2")));
 
         assertThat(set.get()).isEqualTo("OK");
         assertThat((long) rpush.get()).isEqualTo(2L);
         assertThat(lrange.get()).isEqualTo(list("1", "2"));
+    }
+
+    @Test(timeout = 1000000)
+    public void multiError() throws Exception {
+        assertThat(async.multi().get()).isEqualTo("OK");
+        String k = "brokenkey";
+        Future<String> set = async.set(k, value);
+        RedisFuture<String> rpush = async.lpop(k);
+        Future<String> set2 = async.set(k, "2");
+
+        assertThat(!set.isDone() && !rpush.isDone() && !set2.isDone()).isTrue();
+        List<Object> actual = async.exec().get();
+
+        assertThat(actual.get(0)).isEqualTo("OK");
+        assertThat(actual.get(1)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThat(actual.get(2)).isEqualTo("OK");
+
+
+        assertThat(set.get()).isEqualTo("OK");
+        assertThat(set2.get()).isEqualTo("OK");
+        String error = "WRONGTYPE Operation against a key holding the wrong kind of value";
+        try{
+            rpush.get();
+            fail();
+        }catch(ExecutionException expected){
+            Throwable cause = expected.getCause();
+            assertThat(cause).isInstanceOf(RedisCommandExecutionException.class);
+            assertThat(cause.getMessage().equals(error));
+        }
+        assertThat(rpush.getError()).isEqualTo(error);
     }
 
     @Test(timeout = 10000)

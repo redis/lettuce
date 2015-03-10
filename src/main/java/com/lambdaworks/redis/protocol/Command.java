@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.common.util.concurrent.AbstractFuture;
+import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import io.netty.buffer.ByteBuf;
 
@@ -108,6 +109,9 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
             latch.await();
             if (exception != null) {
                 throw new ExecutionException(exception);
+            }
+            if (getError() != null) {
+                throw new ExecutionException(new RedisCommandExecutionException(getError()));
             }
 
             return output.get();
