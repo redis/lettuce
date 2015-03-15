@@ -17,7 +17,7 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Asynchronously rewrite the append-only file.
      * 
-     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> bgrewriteaof();
 
@@ -38,8 +38,8 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Set the current connection name.
      * 
-     * @param name the name
-     * @return RedisFuture&lt;String&gt; simple-string-reply <code>OK</code> if the connection name was successfully set.
+     * @param name the client name
+     * @return RedisFuture&lt;String&gt; simple-string-reply {@code OK} if the connection name was successfully set.
      */
     RedisFuture<String> clientSetname(K name);
 
@@ -47,7 +47,7 @@ public interface RedisServerAsyncConnection<K, V> {
      * Kill the connection of a client identified by ip:port.
      * 
      * @param addr the addr in format ip:port
-     * @return RedisFuture&lt;String&gt; simple-string-reply <code>OK</code> if the connection exists and has been closed
+     * @return RedisFuture&lt;String&gt; simple-string-reply {@code OK} if the connection exists and has been closed
      */
     RedisFuture<String> clientKill(String addr);
 
@@ -62,7 +62,7 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Stop processing commands from clients for some time.
      * 
-     * @param timeout the timeout
+     * @param timeout the timeout value in milliseconds
      * @return RedisFuture&lt;String&gt; simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
     RedisFuture<String> clientPause(long timeout);
@@ -85,6 +85,7 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Returns an array reply of details about the requested commands.
      *
+     * @param commands the commands to query for
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
      */
     RedisFuture<List<Object>> commandInfo(String... commands);
@@ -92,6 +93,7 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Returns an array reply of details about the requested commands.
      *
+     * @param commands the commands to query for
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
      */
     RedisFuture<List<Object>> commandInfo(CommandType... commands);
@@ -114,25 +116,25 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Reset the stats returned by INFO.
      * 
-     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> configResetstat();
 
     /**
      * Rewrite the configuration file with the in memory configuration.
      * 
-     * @return RedisFuture&lt;String&gt; simple-string-reply <code>OK</code> when the configuration was rewritten properly.
-     *         Otherwise an error is returned.
+     * @return RedisFuture&lt;String&gt; simple-string-reply {@code OK} when the configuration was rewritten properly. Otherwise
+     *         an error is returned.
      */
     RedisFuture<String> configRewrite();
 
     /**
      * Set a configuration parameter to the given value.
      * 
-     * @param parameter the parameter
-     * @param value the value
-     * @return RedisFuture&lt;String&gt; simple-string-reply: <code>OK</code> when the configuration was set properly. Otherwise
-     *         an error is returned.
+     * @param parameter the parameter name
+     * @param value the parameter value
+     * @return RedisFuture&lt;String&gt; simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an
+     *         error is returned.
      */
     RedisFuture<String> configSet(String parameter, String value);
 
@@ -207,7 +209,7 @@ public interface RedisServerAsyncConnection<K, V> {
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      * 
-     * @param save
+     * @param save {@literal true} force save operation
      */
     void shutdown(boolean save);
 

@@ -19,9 +19,9 @@ public interface RedisListsConnection<K, V> {
      * 
      * @param timeout the key
      * @param keys the timeout type: long
-     * @return KeyValue<K,V> array-reply specifically:
+     * @return KeyValue&lt;K,V&gt; array-reply specifically:
      * 
-     *         A <code>nil</code> multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
      */
@@ -32,9 +32,9 @@ public interface RedisListsConnection<K, V> {
      * 
      * @param timeout the key
      * @param keys the timeout type: long
-     * @return KeyValue<K,V> array-reply specifically:
+     * @return KeyValue&lt;K,V&gt; array-reply specifically:
      * 
-     *         A <code>nil</code> multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
      */
@@ -46,8 +46,8 @@ public interface RedisListsConnection<K, V> {
      * @param timeout the source type: key
      * @param source the destination type: key
      * @param destination the timeout type: long
-     * @return V bulk-string-reply the element being popped from <code>source</code> and pushed to <code>destination</code>. If
-     *         <code>timeout</code> is reached, a
+     * @return V bulk-string-reply the element being popped from {@code source} and pushed to {@code destination}. If
+     *         {@code timeout} is reached, a
      */
     V brpoplpush(long timeout, K source, K destination);
 
@@ -56,7 +56,7 @@ public interface RedisListsConnection<K, V> {
      * 
      * @param key the key
      * @param index the index type: long
-     * @return V bulk-string-reply the requested element, or <code>nil</code> when <code>index</code> is out of range.
+     * @return V bulk-string-reply the requested element, or {@literal null} when {@code index} is out of range.
      */
     V lindex(K key, long index);
 
@@ -67,8 +67,8 @@ public interface RedisListsConnection<K, V> {
      * @param before the before
      * @param pivot the pivot
      * @param value the value
-     * @return Long integer-reply the length of the list after the insert operation, or <code>-1</code> when the value
-     *         <code>pivot</code> was not found.
+     * @return Long integer-reply the length of the list after the insert operation, or {@code -1} when the value {@code pivot}
+     *         was not found.
      */
     Long linsert(K key, boolean before, V pivot, V value);
 
@@ -76,7 +76,7 @@ public interface RedisListsConnection<K, V> {
      * Get the length of a list.
      * 
      * @param key the key
-     * @return Long integer-reply the length of the list at <code>key</code>.
+     * @return Long integer-reply the length of the list at {@code key}.
      */
     Long llen(K key);
 
@@ -84,7 +84,7 @@ public interface RedisListsConnection<K, V> {
      * Remove and get the first element in a list.
      * 
      * @param key the key
-     * @return V bulk-string-reply the value of the first element, or <code>nil</code> when <code>key</code> does not exist.
+     * @return V bulk-string-reply the value of the first element, or {@literal null} when {@code key} does not exist.
      */
     V lpop(K key);
 
@@ -161,7 +161,7 @@ public interface RedisListsConnection<K, V> {
      * Remove and get the last element in a list.
      * 
      * @param key the key
-     * @return V bulk-string-reply the value of the last element, or <code>nil</code> when <code>key</code> does not exist.
+     * @return V bulk-string-reply the value of the last element, or {@literal null} when {@code key} does not exist.
      */
     V rpop(K key);
 

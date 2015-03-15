@@ -27,8 +27,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Get the number of members in a set.
      * 
      * @param key the key
-     * @return RedisFuture&lt;Long&gt; integer-reply the cardinality (number of elements) of the set, or <code>0</code> if
-     *         <code>key</code> does not exist.
+     * @return RedisFuture&lt;Long&gt; integer-reply the cardinality (number of elements) of the set, or {@literal false} if
+     *         {@code key} does not exist.
      */
     RedisFuture<Long> scard(K key);
 
@@ -43,7 +43,7 @@ public interface RedisSetsAsyncConnection<K, V> {
     /**
      * Subtract multiple sets.
      * 
-     * @param channel the channel
+     * @param channel streaming channel that receives a call for every value
      * @param keys the keys
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
@@ -69,7 +69,7 @@ public interface RedisSetsAsyncConnection<K, V> {
     /**
      * Intersect multiple sets.
      * 
-     * @param channel the channel
+     * @param channel streaming channel that receives a call for every value
      * @param keys the keys
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
@@ -91,8 +91,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * @param member the member type: value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the element is a member of the set. <code>0</code> if the element is not a member of the set,
-     *         or if <code>key</code> does not exist.
+     *         {@literal true} if the element is a member of the set. {@literal false} if the element is not a member of the
+     *         set, or if {@code key} does not exist.
      */
     RedisFuture<Boolean> sismember(K key, V member);
 
@@ -104,8 +104,8 @@ public interface RedisSetsAsyncConnection<K, V> {
      * @param member the member type: value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the element is moved. <code>0</code> if the element is not a member of <code>source</code> and
-     *         no operation was performed.
+     *         {@literal true} if the element is moved. {@literal false} if the element is not a member of {@code source} and no
+     *         operation was performed.
      */
     RedisFuture<Boolean> smove(K source, K destination, V member);
 
@@ -120,7 +120,7 @@ public interface RedisSetsAsyncConnection<K, V> {
     /**
      * Get all the members in a set.
      * 
-     * @param channel the channel
+     * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
@@ -130,8 +130,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Remove and return a random member from a set.
      * 
      * @param key the key
-     * @return RedisFuture&lt;V&gt; bulk-string-reply the removed element, or <code>nil</code> when <code>key</code> does not
-     *         exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
      */
     RedisFuture<V> spop(K key);
 
@@ -140,26 +139,25 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param key the key
      * 
-     * @return RedisFuture&lt;V&gt; bulk-string-reply without the additional <code>count</code> argument the command returns a
-     *         Bulk Reply with the randomly selected element, or <code>nil</code> when <code>key</code> does not exist.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply without the additional {@code count} argument the command returns a Bulk
+     *         Reply with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
     RedisFuture<V> srandmember(K key);
 
     /**
      * Get one or multiple random members from a set.
-     * 
+     *
      * @param key the key
      * @param count the count type: long
-     * @return RedisFuture&lt;Set&lt;V&gt;&gt; bulk-string-reply without the additional <code>count</code> argument the command
-     *         returns a Bulk Reply with the randomly selected element, or <code>nil</code> when <code>key</code> does not
-     *         exist.
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; bulk-string-reply without the additional {@code count} argument the command
+     *         returns a Bulk Reply with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
     RedisFuture<Set<V>> srandmember(K key, long count);
 
     /**
      * Get one or multiple random members from a set.
      * 
-     * @param channel the channel
+     * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param count the count
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
@@ -187,7 +185,7 @@ public interface RedisSetsAsyncConnection<K, V> {
     /**
      * Add multiple sets.
      * 
-     * @param channel the channel
+     * @param channel streaming channel that receives a call for every value
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
      */
@@ -204,46 +202,77 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
     RedisFuture<ValueScanCursor<V>> sscan(K key);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
     RedisFuture<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
     RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
     RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
      * 
-     * @param channel
+     * @param channel streaming channel that receives a call for every value
      * @param key the key
-     * @param scanCursor the cursor type: long
-     * @param scanArgs
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }

@@ -26,10 +26,10 @@ public class RedisConnectionPool<T> implements Closeable {
     /**
      * Create a new connection pool
      * 
-     * @param redisConnectionProvider
-     * @param maxActive
-     * @param maxIdle
-     * @param maxWait
+     * @param redisConnectionProvider the connection provider
+     * @param maxActive max active connections
+     * @param maxIdle max idle connections
+     * @param maxWait max wait time (ms) for a connection
      */
     public RedisConnectionPool(RedisConnectionProvider<T> redisConnectionProvider, int maxActive, int maxIdle, long maxWait) {
         this.redisConnectionProvider = redisConnectionProvider;
@@ -88,9 +88,9 @@ public class RedisConnectionPool<T> implements Closeable {
     }
 
     /**
-     * Allocate a connection from the pool. It must be returned using freeConnection (or alternatively call <code>close()</code>
-     * on the connection).
-     * 
+     * Allocate a connection from the pool. It must be returned using freeConnection (or alternatively call {@code close()} on
+     * the connection).
+     *
      * @return a pooled connection.
      */
     public T allocateConnection() {
@@ -151,7 +151,7 @@ public class RedisConnectionPool<T> implements Closeable {
     /**
      * Adds a CloseListener.
      * 
-     * @param listener
+     * @param listener the listener
      */
     public void addListener(CloseEvents.CloseListener listener) {
         closeEvents.addListener(listener);
@@ -160,7 +160,7 @@ public class RedisConnectionPool<T> implements Closeable {
     /**
      * Removes a CloseListener.
      * 
-     * @param listener
+     * @param listener the listener
      */
     public void removeListener(CloseEvents.CloseListener listener) {
         closeEvents.removeListener(listener);

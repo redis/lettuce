@@ -6,12 +6,13 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 
 /**
- * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Formats: <code>
+ * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Formats:
+ * {@code
  *     redis-sentinel://host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId
- * </code> <br/>
- * <code>
+ * } <br/>
+ * {@code
  *     redis://host[:port][/databaseNumber]
- * </code>
+ * }
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0

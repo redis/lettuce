@@ -27,8 +27,8 @@ public interface RedisSetsConnection<K, V> {
      * Get the number of members in a set.
      * 
      * @param key the key
-     * @return Long integer-reply the cardinality (number of elements) of the set, or <code>0</code> if <code>key</code> does
-     *         not exist.
+     * @return Long integer-reply the cardinality (number of elements) of the set, or {@literal false} if {@code key} does not
+     *         exist.
      */
     Long scard(K key);
 
@@ -91,8 +91,8 @@ public interface RedisSetsConnection<K, V> {
      * @param member the member type: value
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the element is a member of the set. <code>0</code> if the element is not a member of the set,
-     *         or if <code>key</code> does not exist.
+     *         {@literal true} if the element is a member of the set. {@literal false} if the element is not a member of the
+     *         set, or if {@code key} does not exist.
      */
     Boolean sismember(K key, V member);
 
@@ -104,8 +104,8 @@ public interface RedisSetsConnection<K, V> {
      * @param member the member type: value
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the element is moved. <code>0</code> if the element is not a member of <code>source</code> and
-     *         no operation was performed.
+     *         {@literal true} if the element is moved. {@literal false} if the element is not a member of {@code source} and no
+     *         operation was performed.
      */
     Boolean smove(K source, K destination, V member);
 
@@ -130,7 +130,7 @@ public interface RedisSetsConnection<K, V> {
      * Remove and return a random member from a set.
      * 
      * @param key the key
-     * @return V bulk-string-reply the removed element, or <code>nil</code> when <code>key</code> does not exist.
+     * @return V bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
      */
     V spop(K key);
 
@@ -139,8 +139,8 @@ public interface RedisSetsConnection<K, V> {
      * 
      * @param key the key
      * 
-     * @return V bulk-string-reply without the additional <code>count</code> argument the command returns a Bulk Reply with the
-     *         randomly selected element, or <code>nil</code> when <code>key</code> does not exist.
+     * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply with the
+     *         randomly selected element, or {@literal null} when {@code key} does not exist.
      */
     V srandmember(K key);
 
@@ -149,15 +149,15 @@ public interface RedisSetsConnection<K, V> {
      * 
      * @param key the key
      * @param count the count type: long
-     * @return Set&lt;V&gt; bulk-string-reply without the additional <code>count</code> argument the command returns a Bulk
-     *         Reply with the randomly selected element, or <code>nil</code> when <code>key</code> does not exist.
+     * @return Set&lt;V&gt; bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
+     *         with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
     Set<V> srandmember(K key, long count);
 
     /**
      * Get one or multiple random members from a set.
      * 
-     * @param channel the channel
+     * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param count the count
      * @return Long count of members of the resulting set.
@@ -184,8 +184,8 @@ public interface RedisSetsConnection<K, V> {
     /**
      * Add multiple sets.
      * 
-     * @param channel the channel
-     * @param keys the key
+     * @param channel streaming channel that receives a call for every value
+     * @param keys the keys
      * @return Long count of members of the resulting set.
      */
     Long sunion(ValueStreamingChannel<V> channel, K... keys);
@@ -201,46 +201,77 @@ public interface RedisSetsConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     ValueScanCursor<V> sscan(K key);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @param scanArgs scan arguments
+     * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     ValueScanCursor<V> sscan(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     ValueScanCursor<V> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     ValueScanCursor<V> sscan(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param scanArgs scan arguments
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
      * 
-     * @param channel
+     * @param channel streaming channel that receives a call for every value
      * @param key the key
-     * @param scanCursor the cursor type: long
-     * @param scanArgs
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
+     * 
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }

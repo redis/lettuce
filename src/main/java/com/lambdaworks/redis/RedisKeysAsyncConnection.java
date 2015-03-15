@@ -37,7 +37,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param key the key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the key exists. <code>0</code> if the key does not exist.
+     *         {@literal true} if the key exists. {@literal false} if the key does not exist.
      */
     RedisFuture<Boolean> exists(K key);
 
@@ -48,7 +48,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param seconds the seconds type: long
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
     RedisFuture<Boolean> expire(K key, long seconds);
@@ -60,8 +60,8 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> expireat(K key, Date timestamp);
 
@@ -72,8 +72,8 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> expireat(K key, long timestamp);
 
@@ -81,7 +81,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Find all keys matching the given pattern.
      * 
      * @param pattern the pattern type: patternkey (pattern)
-     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of keys matching <code>pattern</code>.
+     * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of keys matching {@code pattern}.
      */
     RedisFuture<List<K>> keys(K pattern);
 
@@ -91,7 +91,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param channel the channel
      * @param pattern the pattern
      * 
-     * @return RedisFuture&lt;Long&gt; array-reply list of keys matching <code>pattern</code>.
+     * @return RedisFuture&lt;Long&gt; array-reply list of keys matching {@code pattern}.
      */
     RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
@@ -129,7 +129,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      * 
-     * @param key
+     * @param key the key
      * @return RedisFuture&lt;Long&gt; number of seconds since the object stored at the specified key is idle.
      */
     RedisFuture<Long> objectIdletime(K key);
@@ -137,7 +137,7 @@ public interface RedisKeysAsyncConnection<K, V> {
     /**
      * returns the number of references of the value associated with the specified key.
      * 
-     * @param key
+     * @param key the key
      * @return RedisFuture&lt;Long&gt;
      */
     RedisFuture<Long> objectRefcount(K key);
@@ -148,7 +148,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param key the key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was removed. <code>0</code> if <code>key</code> does not exist or does not have an
+     *         {@literal true} if the timeout was removed. {@literal false} if {@code key} does not exist or does not have an
      *         associated timeout.
      */
     RedisFuture<Boolean> persist(K key);
@@ -160,7 +160,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param milliseconds the milliseconds type: long
      * @return integer-reply, specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
     RedisFuture<Boolean> pexpire(K key, long milliseconds);
@@ -172,8 +172,8 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> pexpireat(K key, Date timestamp);
 
@@ -184,8 +184,8 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> pexpireat(K key, long timestamp);
 
@@ -201,7 +201,7 @@ public interface RedisKeysAsyncConnection<K, V> {
     /**
      * Return a random key from the keyspace.
      * 
-     * @return RedisFuture&lt;V&gt; bulk-string-reply the random key, or <code>nil</code> when the database is empty.
+     * @return RedisFuture&lt;V&gt; bulk-string-reply the random key, or {@literal null} when the database is empty.
      */
     RedisFuture<V> randomkey();
 
@@ -221,8 +221,7 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @param newKey the newkey type: key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
-     *         <code>1</code> if <code>key</code> was renamed to <code>newkey</code>. <code>0</code> if <code>newkey</code>
-     *         already exists.
+     *         {@literal true} if {@code key} was renamed to {@code newkey}. {@literal false} if {@code newkey} already exists.
      */
     RedisFuture<Boolean> renamenx(K key, K newKey);
 
@@ -238,32 +237,48 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Sort the elements in a list, set or sorted set.
-     * 
+     *
+     * @param key the key
      * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of sorted elements.
      */
     RedisFuture<List<V>> sort(K key);
 
     /**
      * Sort the elements in a list, set or sorted set.
-     * 
-     * @return RedisFuture&lt;Long&gt; array-reply list of sorted elements.
+     *
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @return RedisFuture&lt;Long&gt; number of values.
      */
     RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Sort the elements in a list, set or sorted set.
-     * 
+     *
+     * @param key the key
+     * @param sortArgs sort arguments
      * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of sorted elements.
      */
     RedisFuture<List<V>> sort(K key, SortArgs sortArgs);
 
     /**
      * Sort the elements in a list, set or sorted set.
-     * 
-     * @return RedisFuture&lt;Long&gt; array-reply list of sorted elements.
+     *
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param sortArgs sort arguments
+     * @return RedisFuture&lt;Long&gt; number of values.
      */
     RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key
+     * @param sortArgs sort arguments
+     * @param destination the destination key to store sort results
+     * @return RedisFuture&lt;Long&gt; number of values.
+     */
     RedisFuture<Long> sortStore(K key, SortArgs sortArgs, K destination);
 
     /**
@@ -279,52 +294,76 @@ public interface RedisKeysAsyncConnection<K, V> {
      * Determine the type stored at key.
      * 
      * @param key the key
-     * @return RedisFuture&lt;String&gt; simple-string-reply type of <code>key</code>, or <code>none</code> when
-     *         <code>key</code> does not exist.
+     * @return RedisFuture&lt;String&gt; simple-string-reply type of {@code key}, or {@code none} when {@code key} does not
+     *         exist.
      */
     RedisFuture<String> type(K key);
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @return RedisFuture&lt;KeyScanCursor&lt;K&gt;&gt; scan cursor.
      */
     RedisFuture<KeyScanCursor<K>> scan();
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;KeyScanCursor&lt;K&gt;&gt; scan cursor.
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;KeyScanCursor&lt;K&gt;&gt; scan cursor.
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @param scanCursor cursor to resume from a previous scan
+     * @return RedisFuture&lt;KeyScanCursor&lt;K&gt;&gt; scan cursor.
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
      * 
-     * @param channel
-     * @param scanCursor the cursor type: long
-     * @param scanArgs
+     * @param channel streaming channel that receives a call for every key
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 

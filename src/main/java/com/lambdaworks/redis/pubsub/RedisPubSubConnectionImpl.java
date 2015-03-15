@@ -44,7 +44,7 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
     /**
      * Initialize a new connection.
      * 
-     * @param writer
+     * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a responses.
      * @param unit Unit of time for the timeout.

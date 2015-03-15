@@ -9,10 +9,6 @@ package com.lambdaworks.redis;
  */
 @SuppressWarnings("serial")
 public class RedisCommandInterruptedException extends RedisException {
-    /**
-     * 
-     * @param e
-     */
     public RedisCommandInterruptedException(Throwable e) {
         super("Command interrupted", e);
     }

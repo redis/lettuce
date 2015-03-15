@@ -7,12 +7,13 @@ package com.lambdaworks.redis;
  * @since 3.0
  */
 public class ScanCursor {
+
     private String cursor;
     private boolean finished;
 
     /**
      * 
-     * @return cursor
+     * @return cursor id
      */
     public String getCursor() {
         return cursor;
@@ -21,7 +22,7 @@ public class ScanCursor {
     /**
      * Set the cursor
      * 
-     * @param cursor
+     * @param cursor the cursor id
      */
     public void setCursor(String cursor) {
         this.cursor = cursor;
@@ -42,7 +43,7 @@ public class ScanCursor {
     /**
      * Creates a Scan-Cursor reference.
      * 
-     * @param cursor
+     * @param cursor the cursor id
      * @return ScanCursor
      */
     public static ScanCursor of(String cursor) {

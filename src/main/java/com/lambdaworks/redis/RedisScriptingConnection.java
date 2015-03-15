@@ -17,6 +17,7 @@ public interface RedisScriptingConnection<K, V> {
      * @param script Lua 5.1 script.
      * @param type output type
      * @param keys key names
+     * @param <T> expected return type
      * @return script result
      */
     <T> T eval(String script, ScriptOutputType type, K... keys);
@@ -28,6 +29,7 @@ public interface RedisScriptingConnection<K, V> {
      * @param type the type
      * @param keys the keys
      * @param values the values
+     * @param <T> expected return type
      * @return script result
      */
     <T> T eval(String script, ScriptOutputType type, K[] keys, V... values);
@@ -38,6 +40,7 @@ public interface RedisScriptingConnection<K, V> {
      * @param digest SHA1 of the script
      * @param type the type
      * @param keys the keys
+     * @param <T> expected return type
      * @return script result
      */
     <T> T evalsha(String digest, ScriptOutputType type, K... keys);
@@ -49,6 +52,7 @@ public interface RedisScriptingConnection<K, V> {
      * @param type the type
      * @param keys the keys
      * @param values the values
+     * @param <T> expected return type
      * @return script result
      */
     <T> T evalsha(String digest, ScriptOutputType type, K[] keys, V... values);
@@ -56,7 +60,7 @@ public interface RedisScriptingConnection<K, V> {
     /**
      * Check existence of scripts in the script cache.
      * 
-     * @param digests
+     * @param digests script digests
      * @return List&lt;Boolean&gt; array-reply The command returns an array of integers that correspond to the specified SHA1
      *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
      *         is returned, otherwise 0 is returned.
@@ -80,7 +84,7 @@ public interface RedisScriptingConnection<K, V> {
     /**
      * Load the specified Lua script into the script cache.
      * 
-     * @param script
+     * @param script script content
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
      */
     String scriptLoad(V script);

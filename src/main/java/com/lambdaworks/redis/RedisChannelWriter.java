@@ -15,10 +15,12 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 public interface RedisChannelWriter<K, V> extends Closeable {
 
     /**
-     * Write a command on the channel.
+     * Write a command on the channel. The command may be changed/wrapped during write and the written instance is returned
+     * after the call.
      * 
-     * @param command
-     * @return RedisCommand<K, V, T>
+     * @param command the redis command
+     * @param <T> result type
+     * @return the written redis command
      */
     <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
 
@@ -34,7 +36,7 @@ public interface RedisChannelWriter<K, V> extends Closeable {
     /**
      * Set the corresponding connection instance in order to notify it about channel active/inactive state.
      * 
-     * @param redisChannelHandler
+     * @param redisChannelHandler the channel handler (external connection object)
      */
     void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler);
 }

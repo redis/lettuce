@@ -5,7 +5,7 @@ package com.lambdaworks.redis.protocol;
 
 /**
  * Argument list builder for the new redis <a href="http://redis.io/commands/set">SET</a> command starting from Redis 2.6.12.
- * Static import the methods from {@link Builder} and chain the method calls: <code>ex(10).nx()</code>.
+ * Static import the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
  * 
  * @author Vincent Rischmann
  */

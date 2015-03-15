@@ -62,10 +62,10 @@ public class RedisURI implements Serializable {
     /**
      * Constructor with host/port and timeout.
      * 
-     * @param host
-     * @param port
-     * @param timeout
-     * @param unit
+     * @param host the host
+     * @param port the port
+     * @param timeout timeout value
+     * @param unit unit of the timeout value
      */
     public RedisURI(String host, int port, long timeout, TimeUnit unit) {
         this.host = host;
@@ -85,7 +85,6 @@ public class RedisURI implements Serializable {
      * 
      * @param uri The URI string.
      * @return An instance of {@link RedisURI} containing details from the URI.
-     * @throws Exception
      */
     public static RedisURI create(String uri) {
         return create(URI.create(uri));
@@ -102,7 +101,6 @@ public class RedisURI implements Serializable {
      *
      * @param uri The URI.
      * @return An instance of {@link RedisURI} containing details from the URI.
-     * @throws Exception
      */
     public static RedisURI create(URI uri) {
 
@@ -313,7 +311,7 @@ public class RedisURI implements Serializable {
         /**
          * Set Redis host. Creates a new builder.
          * 
-         * @param host
+         * @param host the host name
          * @return New builder with Redis host/port.
          */
         public static Builder redis(String host) {
@@ -323,8 +321,8 @@ public class RedisURI implements Serializable {
         /**
          * Set Redis host and port. Creates a new builder
          * 
-         * @param host
-         * @param port
+         * @param host the host name
+         * @param port the port
          * @return New builder with Redis host/port.
          */
         public static Builder redis(String host, int port) {
@@ -338,7 +336,7 @@ public class RedisURI implements Serializable {
         /**
          * Set Sentinel host. Creates a new builder.
          * 
-         * @param host
+         * @param host the host name
          * @return New builder with Sentinel host/port.
          */
         public static Builder sentinel(String host) {
@@ -348,8 +346,8 @@ public class RedisURI implements Serializable {
         /**
          * Set Sentinel host and port. Creates a new builder.
          * 
-         * @param host
-         * @param port
+         * @param host the host name
+         * @param port the port
          * @return New builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, int port) {
@@ -359,8 +357,8 @@ public class RedisURI implements Serializable {
         /**
          * Set Sentinel host and master id. Creates a new builder.
          * 
-         * @param host
-         * @param masterId
+         * @param host the host name
+         * @param masterId sentinel master id
          * @return New builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, String masterId) {
@@ -370,9 +368,9 @@ public class RedisURI implements Serializable {
         /**
          * Set Sentinel host, port and master id. Creates a new builder.
          * 
-         * @param host
-         * @param port
-         * @param masterId
+         * @param host the host name
+         * @param port the port
+         * @param masterId sentinel master id
          * @return New builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, int port, String masterId) {
@@ -388,7 +386,7 @@ public class RedisURI implements Serializable {
         /**
          * Add a withSentinel host to the existing builder.
          * 
-         * @param host
+         * @param host the host name
          * @return the builder
          */
         public Builder withSentinel(String host) {
@@ -398,8 +396,8 @@ public class RedisURI implements Serializable {
         /**
          * Add a withSentinel host/port to the existing builder.
          * 
-         * @param host
-         * @param port
+         * @param host the host name
+         * @param port the port
          * @return the builder
          */
         public Builder withSentinel(String host, int port) {
@@ -412,7 +410,7 @@ public class RedisURI implements Serializable {
         /**
          * Adds port information to the builder. Does only affect Redis URI, cannot be used with Sentinel connections.
          * 
-         * @param port
+         * @param port the port
          * @return the builder
          */
         public Builder withPort(int port) {
@@ -424,7 +422,7 @@ public class RedisURI implements Serializable {
         /**
          * Adds ssl information to the builder. Does only affect Redis URI, cannot be used with Sentinel connections.
          *
-         * @param ssl
+         * @param ssl {@literal true} if use SSL
          * @return the builder
          */
         public Builder withSsl(boolean ssl) {
@@ -436,7 +434,7 @@ public class RedisURI implements Serializable {
         /**
          * Enables/disables StartTLS when using SSL. Does only affect Redis URI, cannot be used with Sentinel connections.
          *
-         * @param startTls
+         * @param startTls {@literal true} if use StartTLS
          * @return the builder
          */
         public Builder withStartTls(boolean startTls) {
@@ -448,7 +446,7 @@ public class RedisURI implements Serializable {
         /**
          * Enables/disables peer verification. Does only affect Redis URI, cannot be used with Sentinel connections.
          *
-         * @param verifyPeer
+         * @param verifyPeer {@literal true} to verify hosts when using SSL
          * @return the builder
          */
         public Builder withVerifyPeer(boolean verifyPeer) {
@@ -460,7 +458,7 @@ public class RedisURI implements Serializable {
         /**
          * Adds database selection.
          * 
-         * @param database
+         * @param database the database number
          * @return the builder
          */
         public Builder withDatabase(int database) {
@@ -471,7 +469,7 @@ public class RedisURI implements Serializable {
         /**
          * Adds authentication.
          * 
-         * @param password
+         * @param password the password
          * @return the builder
          */
         public Builder withPassword(String password) {

@@ -44,7 +44,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified channels.
      *
-     * @param channels
+     * @param channels channel keys
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     RedisFuture<Map<K, Long>> pubsubNumsub(K... channels);
@@ -89,7 +89,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
     /**
      * Create a SHA1 digest from a Lua script.
      * 
-     * @param script
+     * @param script script content
      * @return the SHA1 value
      */
     String digest(V script);
@@ -97,7 +97,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
     /**
      * Discard all commands issued after MULTI.
      * 
-     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> discard();
 
@@ -107,14 +107,14 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply each element being the reply to each of the commands in the
      *         atomic transaction.
      * 
-     *         When using <code>WATCH</code>, <code>EXEC</code> can return a
+     *         When using {@code WATCH}, {@code EXEC} can return a
      */
     RedisFuture<List<Object>> exec();
 
     /**
      * Mark the start of a transaction block.
      * 
-     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> multi();
 
@@ -122,22 +122,22 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      * Watch the given keys to determine execution of the MULTI/EXEC block.
      * 
      * @param keys the key
-     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> watch(K... keys);
 
     /**
      * Forget about all watched keys.
      * 
-     * @return RedisFuture&lt;String&gt; simple-string-reply always <code>OK</code>.
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> unwatch();
 
     /**
      * Wait for replication.
      * 
-     * @param replicas
-     * @param timeout
+     * @param replicas minimum number of replicas
+     * @param timeout timeout in milliseconds
      * @return number of replicas
      */
     RedisFuture<Long> waitForReplication(int replicas, long timeout);

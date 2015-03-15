@@ -2,13 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BULK;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BYTES;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.ERROR;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.INTEGER;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.MULTI;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 import java.nio.ByteBuffer;
 import java.util.Deque;
@@ -53,8 +48,8 @@ public class RedisStateMachine<K, V> {
     /**
      * Decode a command using the input buffer.
      * 
-     * @param buffer
-     * @param output
+     * @param buffer Buffer containing data from the server.
+     * @param output Current command output.
      * @return true if a complete response was read.
      */
     public boolean decode(ByteBuf buffer, CommandOutput<K, V, ?> output) {

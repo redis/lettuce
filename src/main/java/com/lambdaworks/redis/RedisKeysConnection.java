@@ -37,7 +37,7 @@ public interface RedisKeysConnection<K, V> {
      * @param key the key
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the key exists. <code>0</code> if the key does not exist.
+     *         {@literal true} if the key exists. {@literal false} if the key does not exist.
      */
     Boolean exists(K key);
 
@@ -48,7 +48,7 @@ public interface RedisKeysConnection<K, V> {
      * @param seconds the seconds type: long
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
     Boolean expire(K key, long seconds);
@@ -60,8 +60,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     Boolean expireat(K key, Date timestamp);
 
@@ -72,8 +72,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     Boolean expireat(K key, long timestamp);
 
@@ -81,7 +81,7 @@ public interface RedisKeysConnection<K, V> {
      * Find all keys matching the given pattern.
      * 
      * @param pattern the pattern type: patternkey (pattern)
-     * @return List&lt;K&gt; array-reply list of keys matching <code>pattern</code>.
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      */
     List<K> keys(K pattern);
 
@@ -90,7 +90,7 @@ public interface RedisKeysConnection<K, V> {
      * 
      * @param channel the channel
      * @param pattern the pattern
-     * @return Long array-reply list of keys matching <code>pattern</code>.
+     * @return Long array-reply list of keys matching {@code pattern}.
      */
     Long keys(KeyStreamingChannel<K> channel, K pattern);
 
@@ -118,7 +118,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * returns the kind of internal representation used in order to store the value associated with a key.
      * 
-     * @param key
+     * @param key the key
      * @return String
      */
     String objectEncoding(K key);
@@ -127,7 +127,7 @@ public interface RedisKeysConnection<K, V> {
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      * 
-     * @param key
+     * @param key the key
      * @return number of seconds since the object stored at the specified key is idle.
      */
     Long objectIdletime(K key);
@@ -135,7 +135,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * returns the number of references of the value associated with the specified key.
      * 
-     * @param key
+     * @param key the key
      * @return Long
      */
     Long objectRefcount(K key);
@@ -146,7 +146,7 @@ public interface RedisKeysConnection<K, V> {
      * @param key the key
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was removed. <code>0</code> if <code>key</code> does not exist or does not have an
+     *         {@literal true} if the timeout was removed. {@literal false} if {@code key} does not exist or does not have an
      *         associated timeout.
      */
     Boolean persist(K key);
@@ -158,7 +158,7 @@ public interface RedisKeysConnection<K, V> {
      * @param milliseconds the milliseconds type: long
      * @return integer-reply, specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
     Boolean pexpire(K key, long milliseconds);
@@ -170,8 +170,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     Boolean pexpireat(K key, Date timestamp);
 
@@ -182,8 +182,8 @@ public interface RedisKeysConnection<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the timeout was set. <code>0</code> if <code>key</code> does not exist or the timeout could not
-     *         be set (see: <code>EXPIRE</code>).
+     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         be set (see: {@code EXPIRE}).
      */
     Boolean pexpireat(K key, long timestamp);
 
@@ -199,7 +199,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Return a random key from the keyspace.
      * 
-     * @return V bulk-string-reply the random key, or <code>nil</code> when the database is empty.
+     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
      */
     V randomkey();
 
@@ -219,8 +219,7 @@ public interface RedisKeysConnection<K, V> {
      * @param newKey the newkey type: key
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if <code>key</code> was renamed to <code>newkey</code>. <code>0</code> if <code>newkey</code>
-     *         already exists.
+     *         {@literal true} if {@code key} was renamed to {@code newkey}. {@literal false} if {@code newkey} already exists.
      */
     Boolean renamenx(K key, K newKey);
 
@@ -237,6 +236,7 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      * 
+     * @param key the key
      * @return List&lt;V&gt; array-reply list of sorted elements.
      */
     List<V> sort(K key);
@@ -244,13 +244,17 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return Long array-reply list of sorted elements.
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @return Long number of values.
      */
     Long sort(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Sort the elements in a list, set or sorted set.
      * 
+     * @param key the key
+     * @param sortArgs sort arguments
      * @return List&lt;V&gt; array-reply list of sorted elements.
      */
     List<V> sort(K key, SortArgs sortArgs);
@@ -258,10 +262,21 @@ public interface RedisKeysConnection<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      * 
-     * @return Long array-reply list of sorted elements.
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param sortArgs sort arguments
+     * @return Long number of values.
      */
     Long sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
+    /**
+     * Sort the elements in a list, set or sorted set.
+     * 
+     * @param key the key
+     * @param sortArgs sort arguments
+     * @param destination the destination key to store sort results
+     * @return Long number of values.
+     */
     Long sortStore(K key, SortArgs sortArgs, K destination);
 
     /**
@@ -276,51 +291,75 @@ public interface RedisKeysConnection<K, V> {
      * Determine the type stored at key.
      * 
      * @param key the key
-     * @return String simple-string-reply type of <code>key</code>, or <code>none</code> when <code>key</code> does not exist.
+     * @return String simple-string-reply type of {@code key}, or {@code none} when {@code key} does not exist.
      */
     String type(K key);
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     KeyScanCursor<K> scan();
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @param scanArgs scan arguments
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     KeyScanCursor<K> scan(ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @param scanCursor cursor to resume from a previous scan
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor);
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @param channel streaming channel that receives a call for every key
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel);
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @param channel streaming channel that receives a call for every key
+     * @param scanArgs scan arguments
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
      * 
-     * @param channel
-     * @param scanCursor the cursor type: long
-     * @param scanArgs
+     * @param channel streaming channel that receives a call for every key
+     * @param scanCursor cursor to resume from a previous scan
+     * @param scanArgs scan arguments
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     * 
+     * @param channel streaming channel that receives a call for every key
+     * @param scanCursor cursor to resume from a previous scan
+     * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }

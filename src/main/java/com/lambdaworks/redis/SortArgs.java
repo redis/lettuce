@@ -18,7 +18,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
  * Argument list builder for the redis <a href="http://redis.io/commands/sort">SORT</a> command. Static import the methods from
- * {@link Builder} and chain the method calls: <code>by("weight_*").desc().limit(0, 2)</code>.
+ * {@link Builder} and chain the method calls: {@code by("weight_*").desc().limit(0, 2)}.
  * 
  * @author Will Glozer
  */

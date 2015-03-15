@@ -6,8 +6,8 @@ import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * Streaming API for multiple Values. You can implement this interface in order to receive a call to <code>onValue</code> on
- * every key.
+ * Streaming API for multiple Values. You can implement this interface in order to receive a call to {@code onValue} on every
+ * key.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

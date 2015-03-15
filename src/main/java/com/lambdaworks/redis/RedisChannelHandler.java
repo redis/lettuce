@@ -34,9 +34,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     private boolean active = true;
 
     /**
-     * @param writer
-     * @param timeout
-     * @param unit
+     * @param writer the channel writer
+     * @param timeout timeout value
+     * @param unit unit of the timeout
      */
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
         this.channelWriter = writer;
@@ -90,7 +90,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     /**
      * Invoked on a channel read.
      * 
-     * @param msg
+     * @param msg channel message
      */
     public void channelRead(Object msg) {
 
@@ -103,8 +103,8 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     /**
      * Register Closeable resources. Internal access only.
      * 
-     * @param registry
-     * @param closeables
+     * @param registry registry of closeables
+     * @param closeables closeables to register
      */
     public void registerCloseables(final Collection<Closeable> registry, final Closeable... closeables) {
         registry.addAll(Arrays.asList(closeables));
@@ -163,7 +163,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     /**
      * 
-     * @return RedisChannelWriter<K, V>
+     * @return the channel writer
      */
     public RedisChannelWriter<K, V> getChannelWriter() {
         return channelWriter;

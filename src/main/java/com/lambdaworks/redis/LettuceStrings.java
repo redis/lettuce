@@ -1,7 +1,7 @@
 package com.lambdaworks.redis;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
 public class LettuceStrings {
@@ -14,9 +14,7 @@ public class LettuceStrings {
     }
 
     /**
-     * <p>
      * Checks if a CharSequence is empty ("") or null.
-     * </p>
      * 
      * @param cs the char sequence
      * @return true if empty
@@ -26,9 +24,7 @@ public class LettuceStrings {
     }
 
     /**
-     * <p>
      * Checks if a CharSequence is not empty ("") and not null.
-     * </p>
      * 
      * @param cs the char sequence
      * @return true if not empty

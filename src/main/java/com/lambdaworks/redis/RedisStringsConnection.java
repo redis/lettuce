@@ -57,7 +57,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
      *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *         command <code>BITPOS key 0</code> will return 24, since up to bit 23 all the bits are 1.
+     *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
      * 
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
      *         specify no range or the <em>start</em> argument <strong>only</strong>.
@@ -82,7 +82,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
      *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *         command <code>BITPOS key 0</code> will return 24, since up to bit 23 all the bits are 1.
+     *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
      * 
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
      *         specify no range or the <em>start</em> argument <strong>only</strong>.
@@ -137,7 +137,7 @@ public interface RedisStringsConnection<K, V> {
      * Decrement the integer value of a key by one.
      * 
      * @param key the key
-     * @return Long integer-reply the value of <code>key</code> after the decrement
+     * @return Long integer-reply the value of {@code key} after the decrement
      */
     Long decr(K key);
 
@@ -146,7 +146,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param amount the decrement type: long
-     * @return Long integer-reply the value of <code>key</code> after the decrement
+     * @return Long integer-reply the value of {@code key} after the decrement
      */
     Long decrby(K key, long amount);
 
@@ -154,7 +154,7 @@ public interface RedisStringsConnection<K, V> {
      * Get the value of a key.
      * 
      * @param key the key
-     * @return V bulk-string-reply the value of <code>key</code>, or <code>nil</code> when <code>key</code> does not exist.
+     * @return V bulk-string-reply the value of {@code key}, or {@literal null} when {@code key} does not exist.
      */
     V get(K key);
 
@@ -182,8 +182,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param value the value
-     * @return V bulk-string-reply the old value stored at <code>key</code>, or <code>nil</code> when <code>key</code> did not
-     *         exist.
+     * @return V bulk-string-reply the old value stored at {@code key}, or {@literal null} when {@code key} did not exist.
      */
     V getset(K key, V value);
 
@@ -191,7 +190,7 @@ public interface RedisStringsConnection<K, V> {
      * Increment the integer value of a key by one.
      * 
      * @param key the key
-     * @return Long integer-reply the value of <code>key</code> after the increment
+     * @return Long integer-reply the value of {@code key} after the increment
      */
     Long incr(K key);
 
@@ -200,7 +199,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param amount the increment type: long
-     * @return Long integer-reply the value of <code>key</code> after the increment
+     * @return Long integer-reply the value of {@code key} after the increment
      */
     Long incrby(K key, long amount);
 
@@ -209,7 +208,7 @@ public interface RedisStringsConnection<K, V> {
      * 
      * @param key the key
      * @param amount the increment type: double
-     * @return Double bulk-string-reply the value of <code>key</code> after the increment.
+     * @return Double bulk-string-reply the value of {@code key} after the increment.
      */
     Double incrbyfloat(K key, double amount);
 
@@ -235,7 +234,7 @@ public interface RedisStringsConnection<K, V> {
      * Set multiple keys to multiple values.
      * 
      * @param map the null
-     * @return String simple-string-reply always <code>OK</code> since <code>MSET</code> can't fail.
+     * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
     String mset(Map<K, V> map);
 
@@ -245,7 +244,7 @@ public interface RedisStringsConnection<K, V> {
      * @param map the null
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the all the keys were set. <code>0</code> if no key was set (at least one key already existed).
+     *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     Boolean msetnx(Map<K, V> map);
 
@@ -255,7 +254,7 @@ public interface RedisStringsConnection<K, V> {
      * @param key the key
      * @param value the value
      * 
-     * @return String simple-string-reply <code>OK</code> if <code>SET</code> was executed correctly.
+     * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     String set(K key, V value);
 
@@ -266,7 +265,7 @@ public interface RedisStringsConnection<K, V> {
      * @param value the value
      * @param setArgs the setArgs
      * 
-     * @return V simple-string-reply <code>OK</code> if <code>SET</code> was executed correctly.
+     * @return V simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     V set(K key, V value, SetArgs setArgs);
 
@@ -307,7 +306,7 @@ public interface RedisStringsConnection<K, V> {
      * @param value the value
      * @return Boolean integer-reply specifically:
      * 
-     *         <code>1</code> if the key was set <code>0</code> if the key was not set
+     *         {@code 1} if the key was set {@code 0} if the key was not set
      */
     Boolean setnx(K key, V value);
 
@@ -325,8 +324,7 @@ public interface RedisStringsConnection<K, V> {
      * Get the length of the value stored in a key.
      * 
      * @param key the key
-     * @return Long integer-reply the length of the string at <code>key</code>, or <code>0</code> when <code>key</code> does not
-     *         exist.
+     * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     Long strlen(K key);
 }

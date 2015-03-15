@@ -45,7 +45,7 @@ public class CRC16 {
     /**
      * Create a CRC16 checksum from the bytes.
      * 
-     * @param bytes
+     * @param bytes input bytes
      * @return CRC16 as interger value
      */
     public static int crc16(byte[] bytes) {
