@@ -1,6 +1,5 @@
 language: java
 jdk:
-  - oraclejdk7
   - oraclejdk8
 before_install:
   - sudo apt-get install -y -qq stunnel
