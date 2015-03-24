@@ -1,21 +1,19 @@
 package com.lambdaworks;
 
-import static com.lambdaworks.redis.TestSettings.host;
-import static com.lambdaworks.redis.TestSettings.sslPort;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.Assume.assumeTrue;
+import static com.lambdaworks.redis.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.lambdaworks.redis.*;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import io.netty.handler.codec.DecoderException;
 
@@ -93,6 +91,8 @@ public class SslTest {
 
     @Test
     public void pubSubSslAndBreakConnection() throws Exception {
+        assumeTrue(JavaRuntime.AT_LEAST_JDK_7);
+
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
         RedisPubSubConnection<String, String> connection = redisClient.connectPubSub(redisUri);
