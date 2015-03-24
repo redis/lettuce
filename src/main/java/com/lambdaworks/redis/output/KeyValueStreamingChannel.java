@@ -9,6 +9,7 @@ package com.lambdaworks.redis.output;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@FunctionalInterface
 public interface KeyValueStreamingChannel<K, V> {
     /**
      * 

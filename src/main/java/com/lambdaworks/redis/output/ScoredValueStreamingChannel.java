@@ -10,6 +10,7 @@ import com.lambdaworks.redis.ScoredValue;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@FunctionalInterface
 public interface ScoredValueStreamingChannel<V> {
     /**
      * Called on every incoming ScoredValue.

@@ -8,6 +8,7 @@ package com.lambdaworks.redis.output;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@FunctionalInterface
 public interface ValueStreamingChannel<V> {
     /**
      * Called on every incoming value.
