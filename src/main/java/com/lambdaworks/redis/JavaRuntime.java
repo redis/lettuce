@@ -10,17 +10,17 @@ public class JavaRuntime {
     /**
      * Constant whether the current JDK is Java 6 or higher.
      */
-    public final static boolean IS_JDK_6 = isPresent("java.io.Console");
+    public final static boolean AT_LEAST_JDK_6 = isPresent("java.io.Console");
 
     /**
      * Constant whether the current JDK is Java 7 or higher.
      */
-    public final static boolean IS_JDK_7 = isPresent("java.nio.file.Path");
+    public final static boolean AT_LEAST_JDK_7 = isPresent("java.nio.file.Path");
 
     /**
      * Constant whether the current JDK is Java 8 or higher.
      */
-    public final static boolean IS_JDK_8 = isPresent("java.lang.FunctionalInterface");
+    public final static boolean AT_LEAST_JDK_8 = isPresent("java.lang.FunctionalInterface");
 
     private static boolean isPresent(String className) {
         try {

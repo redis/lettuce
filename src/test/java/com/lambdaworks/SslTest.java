@@ -11,15 +11,11 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.lambdaworks.redis.*;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisConnectionException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import io.netty.handler.codec.DecoderException;
 
@@ -67,6 +63,7 @@ public class SslTest {
     @Test(expected = RedisConnectionException.class)
     public void sslWithVerificationWillFail() throws Exception {
 
+        assumeTrue(JavaRuntime.AT_LEAST_JDK_7);
         RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
 
         RedisConnection<String, String> connection = redisClient.connect(redisUri);

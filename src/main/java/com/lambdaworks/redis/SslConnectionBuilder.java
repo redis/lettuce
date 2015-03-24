@@ -76,7 +76,7 @@ class SslConnectionBuilder extends ConnectionBuilder {
 
             if (redisURI.isVerifyPeer()) {
                 sslContext = SslContext.newClientContext(SslProvider.JDK);
-                if (JavaRuntime.IS_JDK_7) {
+                if (JavaRuntime.AT_LEAST_JDK_7) {
                     sslParams.setEndpointIdentificationAlgorithm("HTTPS");
                 }
             } else {
