@@ -9,10 +9,10 @@ Lettuce is a scalable thread-safe Redis client providing both synchronous and
 asynchronous connections. Multiple threads may share one connection provided
 they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
 Multiple connections are efficiently managed by the excellent netty NIO
-framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
+framework. Support for advanced Redis features such as Sentinel, Cluster and Redis data models
 is included.
 
-This version of lettuce has been tested against redis 2.8.13 and 3.0 RC3.
+This version of lettuce has been tested against Redis and 3.0.
 
 * Works with Java 6, 7 and 8
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
@@ -37,7 +37,7 @@ Releases of lettuce are available in the maven central repository. Take also a l
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.3.Final</version>
+  <version>3.1.Final</version>
 </dependency>
 ```
 
@@ -47,7 +47,7 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.0.3.Final</version>
+  <version>3.1.Final</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
@@ -84,8 +84,8 @@ Basic Usage
   String value = connection.get("key")
 ```
 
-Each redis command is implemented by one or more methods with names identical
-to the lowercase redis command name. Complex commands with multiple modifiers
+Each Redis command is implemented by one or more methods with names identical
+to the lowercase Redis command name. Complex commands with multiple modifiers
 that change the result type include the CamelCased modifier as part of the
 command name, e.g. zrangebyscore and zrangebyscoreWithScores.
 
@@ -161,7 +161,7 @@ Long count = redis.hgetall(new KeyValueStreamingChannel<String, String>()
     }, key);
 ```
 
-Streaming happens real-time to the redis responses. The method call (future) completes after the last call to the StreamingChannel.
+Streaming happens real-time to the Redis responses. The method call (future) completes after the last call to the StreamingChannel.
     
     
 Sentinel
@@ -198,14 +198,14 @@ RedisClient client = new RedisClient(redisUri);
 RedisConnection<String, String> connection = client.connect();
 ```
     
-Please note: Every time you connect to redis using sentinel, the redis master is discovered using a new connection to a sentinel. This
+Please note: Every time you connect to Redis using sentinel, the Redis master is discovered using a new connection to a sentinel. This
 can be time consuming, especially when multiple sentinels are tried and run perhaps into timeouts.
   
   
 Clustering
 --------
 
-lettuce supports redis cluster (v3.0) operations. 
+lettuce supports Redis cluster (v3.0) operations.
 
 ```java
 RedisURI redisUri = RedisURI.Builder.redis("localhost").withPassword("authentication").build();
@@ -260,7 +260,7 @@ Every of these interfaces is available though the connect() method. Same applies
 
 These interfaces are implemented by the merged connection classes of RedisConnection for the sync execution and 
 RedisAsyncConnection for async execution which are also available using connect() or connectAsync(). The grouping is
-derived from the redis command grouping.
+derived from the Redis command grouping.
 
 Performance
 -----------
@@ -271,13 +271,13 @@ The async API can issue 1000 commands within 20ms.
 Building
 -----------
 
-Lettuce is built with Apache Maven. The tests require multiple running redis instances for different test cases which
-are configured using a ```Makefile```. All tests run against redis branch 3.0
+Lettuce is built with Apache Maven. The tests require multiple running Redis instances for different test cases which
+are configured using a ```Makefile```. All tests run against Redis branch 3.0
 
 * Initial environment setup (clone and build `redis`): ```make prepare```
 * Run the build: ```make test```
-* Start redis (manually): ```make start```
-* Stop redis (manually): ```make stop```
+* Start Redis (manually): ```make start```
+* Stop Redis (manually): ```make stop```
 
 License
 -------
