@@ -1491,6 +1491,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<String> clusterMyId() {
+        return dispatch(commandBuilder.clusterMyId());
+    }
+
+    @Override
     public RedisFuture<String> clusterNodes() {
         return dispatch(commandBuilder.clusterNodes());
     }

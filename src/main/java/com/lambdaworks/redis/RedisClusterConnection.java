@@ -24,6 +24,8 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
 
     String clusterInfo();
 
+    String clusterMyId();
+
     String clusterNodes();
 
     List<K> clusterGetKeysInSlot(int slot, int count);
