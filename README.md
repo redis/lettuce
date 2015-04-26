@@ -265,8 +265,8 @@ derived from the Redis command grouping.
 Performance
 -----------
 
-Lettuce is made for performance. Issuing (and returning) 1000 PING's over the sync API takes on a MacBook with Intel i7 an average of 190ms to complete all.
-The async API can issue 1000 commands within 20ms.
+Lettuce is made for performance. The async API can issue about 300Kops/sec whereas the sync API performs about 13Kops/sec (GET's, PING's).
+Sync performance depends on the Redis performance (tested on a Mac, 2,7 GHz Intel Core i7).
 
 Building
 -----------
