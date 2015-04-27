@@ -2,11 +2,14 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.redis.ScriptOutputType.STATUS;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.WaitFor.*;
+import static com.lambdaworks.redis.ScriptOutputType.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.*;
 
+import java.io.File;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -19,6 +22,7 @@ import org.junit.rules.ExpectedException;
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import io.netty.util.internal.SystemPropertyUtil;
 
 public class ClientTest extends AbstractCommandTest {
     @Rule
@@ -236,4 +240,5 @@ public class ClientTest extends AbstractCommandTest {
 
         async.close();
     }
+
 }

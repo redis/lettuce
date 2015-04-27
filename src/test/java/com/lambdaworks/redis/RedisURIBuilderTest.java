@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -85,5 +86,31 @@ public class RedisURIBuilderTest {
         assertThat(sentinel3.getPort()).isEqualTo(RedisURI.DEFAULT_SENTINEL_PORT);
         assertThat(sentinel3.getHost()).isEqualTo("host3");
 
+    }
+
+    @Test
+    public void redisSocket() throws Exception {
+        File file = new File("work/socket-6479").getCanonicalFile();
+        RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
+
+        assertThat(result.getSocket()).isEqualTo(file.getCanonicalPath());
+        assertThat(result.getSentinels()).isEmpty();
+        assertThat(result.getPassword()).isNull();
+        assertThat(result.getHost()).isNull();
+        assertThat(result.getPort()).isEqualTo(0);
+        assertThat(result.isSsl()).isFalse();
+    }
+
+    @Test
+    public void redisSocketWithPassword() throws Exception {
+        File file = new File("work/socket-6479").getCanonicalFile();
+        RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://password@" + file.getCanonicalPath());
+
+        assertThat(result.getSocket()).isEqualTo(file.getCanonicalPath());
+        assertThat(result.getSentinels()).isEmpty();
+        assertThat(result.getPassword()).isEqualTo("password".toCharArray());
+        assertThat(result.getHost()).isNull();
+        assertThat(result.getPort()).isEqualTo(0);
+        assertThat(result.isSsl()).isFalse();
     }
 }

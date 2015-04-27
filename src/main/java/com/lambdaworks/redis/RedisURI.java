@@ -1,10 +1,7 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.lambdaworks.redis.LettuceStrings.isEmpty;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.google.common.base.Preconditions.*;
+import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -12,9 +9,12 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HostAndPort;
+import io.netty.channel.unix.DomainSocketAddress;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide as well the database, password and
@@ -29,6 +29,7 @@ public class RedisURI implements Serializable {
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
     public static final String URI_SCHEME_REDIS = "redis";
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
+    public static final String URI_SCHEME_REDIS_SOCKET = "redis-socket";
 
     /**
      * The default sentinel port.
@@ -41,6 +42,7 @@ public class RedisURI implements Serializable {
     public static final int DEFAULT_REDIS_PORT = 6379;
 
     private String host;
+    private String socket;
     private String sentinelMasterId;
     private int port;
     private int database;
@@ -125,11 +127,10 @@ public class RedisURI implements Serializable {
             builder.withPassword(password);
         }
 
-        if (isNotEmpty(uri.getPath())) {
+        if (isNotEmpty(uri.getPath()) && builder.redisURI.getSocket() == null) {
             String pathSuffix = uri.getPath().substring(1);
 
             if (isNotEmpty(pathSuffix)) {
-
                 builder.withDatabase(Integer.parseInt(pathSuffix));
             }
         }
@@ -140,14 +141,20 @@ public class RedisURI implements Serializable {
 
     private static Builder configureStandalone(URI uri) {
         Builder builder;
-        if (!URI_SCHEME_REDIS.equals(uri.getScheme()) && !URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
+        Set<String> allowedSchemes = ImmutableSet.of(URI_SCHEME_REDIS, URI_SCHEME_REDIS_SECURE, URI_SCHEME_REDIS_SOCKET);
+
+        if (!allowedSchemes.contains(uri.getScheme())) {
             throw new IllegalArgumentException("Scheme " + uri.getScheme() + " not supported");
         }
 
-        if (uri.getPort() > 0) {
-            builder = Builder.redis(uri.getHost(), uri.getPort());
+        if (URI_SCHEME_REDIS_SOCKET.equals(uri.getScheme())) {
+            builder = Builder.socket(uri.getPath());
         } else {
-            builder = Builder.redis(uri.getHost());
+            if (uri.getPort() > 0) {
+                builder = Builder.redis(uri.getHost(), uri.getPort());
+            } else {
+                builder = Builder.redis(uri.getHost());
+            }
         }
 
         if (URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())) {
@@ -224,6 +231,14 @@ public class RedisURI implements Serializable {
         this.port = port;
     }
 
+    public String getSocket() {
+        return socket;
+    }
+
+    public void setSocket(String socket) {
+        this.socket = socket;
+    }
+
     public char[] getPassword() {
         return password;
     }
@@ -286,8 +301,13 @@ public class RedisURI implements Serializable {
 
     public SocketAddress getResolvedAddress() {
         if (resolvedAddress == null) {
-            resolvedAddress = new InetSocketAddress(host, port);
+            if (getSocket() != null) {
+                resolvedAddress = new DomainSocketAddress(getSocket());
+            } else {
+                resolvedAddress = new InetSocketAddress(host, port);
+            }
         }
+
         return resolvedAddress;
     }
 
@@ -295,8 +315,22 @@ public class RedisURI implements Serializable {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
-        sb.append(" [host='").append(host).append('\'');
-        sb.append(", port=").append(port);
+
+        sb.append(" [");
+
+        if (host != null) {
+            sb.append("host='").append(host).append('\'');
+            sb.append(", port=").append(port);
+        }
+
+        if (socket != null) {
+            sb.append("socket='").append(socket).append('\'');
+        }
+
+        if (sentinelMasterId != null) {
+            sb.append(", sentinelMasterId=").append(sentinelMasterId);
+        }
+
         sb.append(']');
         return sb.toString();
     }
@@ -309,8 +343,21 @@ public class RedisURI implements Serializable {
         private final RedisURI redisURI = new RedisURI();
 
         /**
-         * Set Redis host. Creates a new builder.
+         * Set Redis socket. Creates a new builder.
          * 
+         * @param socket the host name
+         * @return New builder with Redis socket.
+         */
+        public static Builder socket(String socket) {
+            checkNotNull(socket, "Socket must not be null");
+            Builder builder = new Builder();
+            builder.redisURI.setSocket(socket);
+            return builder;
+        }
+
+        /**
+         * Set Redis host. Creates a new builder.
+         *
          * @param host the host name
          * @return New builder with Redis host/port.
          */

@@ -13,6 +13,8 @@ logfile work/redis1-6479.log
 save ""
 appendonly no
 client-output-buffer-limit pubsub 256k 128k 5
+unixsocket $(ROOT_DIR)/work/socket-6479
+unixsocketperm 777
 endef
 
 define REDIS2_CONF
@@ -22,6 +24,9 @@ pidfile work/redis2-6480.pid
 logfile work/redis2-6480.log
 save ""
 appendonly no
+unixsocket $(ROOT_DIR)/work/socket-6480
+unixsocketperm 777
+
 endef
 
 define REDIS3_CONF
@@ -31,6 +36,8 @@ pidfile work/redis3-6481.pid
 logfile work/redis3-6481.log
 save ""
 appendonly no
+unixsocket $(ROOT_DIR)/work/socket-6481
+unixsocketperm 777
 endef
 
 # For debugSegfault test
@@ -42,6 +49,8 @@ logfile work/redis4-6482.log
 save ""
 appendonly no
 slaveof localhost 6481
+unixsocket $(ROOT_DIR)/work/socket-6482
+unixsocketperm 777
 endef
 
 # For Shutdown test
@@ -52,6 +61,8 @@ pidfile work/redis5-6483.pid
 logfile work/redis5-6483.log
 save ""
 appendonly no
+unixsocket $(ROOT_DIR)/work/socket-6483
+unixsocketperm 777
 endef
 
 # Sentinel-monitored master
@@ -62,6 +73,8 @@ pidfile work/redis6-6484.pid
 logfile work/redis6-6484.log
 save ""
 appendonly no
+unixsocket $(ROOT_DIR)/work/socket-6484
+unixsocketperm 777
 endef
 
 
@@ -74,6 +87,8 @@ logfile work/redis7-6485.log
 save ""
 appendonly no
 slaveof localhost 6484
+unixsocket $(ROOT_DIR)/work/socket-6485
+unixsocketperm 777
 endef
 
 # SENTINELS
@@ -87,6 +102,8 @@ sentinel failover-timeout mymaster 120000
 sentinel parallel-syncs mymaster 1
 pidfile work/sentinel1-26379.pid
 logfile work/sentinel1-26379.log
+unixsocket $(ROOT_DIR)/work/socket-26379
+unixsocketperm 777
 endef
 
 define REDIS_SENTINEL2
@@ -98,6 +115,8 @@ sentinel parallel-syncs mymaster 1
 sentinel failover-timeout mymaster 120000
 pidfile work/sentinel2-26380.pid
 logfile work/sentinel2-26380.log
+unixsocket $(ROOT_DIR)/work/socket-26380
+unixsocketperm 777
 endef
 
 define REDIS_SENTINEL3
@@ -109,6 +128,8 @@ sentinel failover-timeout mymasterfailover 120000
 sentinel parallel-syncs mymasterfailover 1
 pidfile work/sentinel3-26381.pid
 logfile work/sentinel3-26381.log
+unixsocket $(ROOT_DIR)/work/socket-26381
+unixsocketperm 777
 endef
 
 # CLUSTER REDIS NODES
@@ -122,6 +143,8 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file work/redis-cluster-config1-7379.conf
+unixsocket $(ROOT_DIR)/work/socket-7379
+unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG1
@@ -142,6 +165,8 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file work/redis-cluster-config2-7380.conf
+unixsocket $(ROOT_DIR)/work/socket-7380
+unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG2
@@ -162,6 +187,8 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file work/redis-cluster-config3-7381.conf
+unixsocket $(ROOT_DIR)/work/socket-7381
+unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG3
@@ -182,6 +209,8 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file work/redis-cluster-config4-7382.conf
+unixsocket $(ROOT_DIR)/work/socket-7382
+unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG4
@@ -202,6 +231,8 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file work/redis-cluster-config5-7383.conf
+unixsocket $(ROOT_DIR)/work/socket-7383
+unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_NODE6_CONF
@@ -214,6 +245,8 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file work/redis-cluster-config6-7384.conf
+unixsocket $(ROOT_DIR)/work/socket-7384
+unixsocketperm 777
 endef
 
 define STUNNEL_CONF
@@ -227,6 +260,10 @@ foreground = no
 
 [stunnel]
 accept = 127.0.0.1:6443
+connect = 127.0.0.1:6479
+
+[stunnel2]
+accept = $(ROOT_DIR)/work/stunnel
 connect = 127.0.0.1:6479
 endef
 
@@ -317,7 +354,7 @@ prepare: stop
 ifndef STUNNEL_BIN
 ifeq ($(shell uname -s),Linux)
 ifdef APT_BIN
-	sudo apt-get -y stunnel
+	sudo apt-get install -y stunnel
 else
 
 ifdef YUM_BIN

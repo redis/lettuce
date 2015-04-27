@@ -12,7 +12,9 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.Timer;
 
 /**
@@ -121,4 +123,5 @@ class ConnectionBuilder {
     public Bootstrap bootstrap() {
         return bootstrap;
     }
+
 }

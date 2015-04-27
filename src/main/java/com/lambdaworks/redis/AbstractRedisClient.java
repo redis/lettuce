@@ -1,24 +1,26 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -49,10 +51,15 @@ public abstract class AbstractRedisClient {
         }
     }
 
+    /**
+     * @deprecated use map eventLoopGroups instead.
+     */
+    @Deprecated
     protected EventLoopGroup eventLoopGroup;
 
-    protected HashedWheelTimer timer;
-    protected ChannelGroup channels;
+    protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups;
+    protected final HashedWheelTimer timer;
+    protected final ChannelGroup channels;
     protected long timeout = 60;
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
@@ -60,7 +67,7 @@ public abstract class AbstractRedisClient {
 
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
+        eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
         unit = TimeUnit.SECONDS;
@@ -84,6 +91,7 @@ public abstract class AbstractRedisClient {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder(handler, connection, socketAddressSupplier, withReconnect, connectionBuilder, null);
+        channelType(connectionBuilder, null);
         return (T) initializeChannel(connectionBuilder);
     }
 
@@ -101,7 +109,7 @@ public abstract class AbstractRedisClient {
             Supplier<SocketAddress> socketAddressSupplier, boolean withReconnect, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
 
-        Bootstrap redisBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
+        Bootstrap redisBootstrap = new Bootstrap();
 
         if (redisURI == null) {
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
@@ -112,15 +120,53 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap(redisBootstrap).withReconnect(withReconnect);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
+
+    }
+
+    protected void channelType(ConnectionBuilder connectionBuilder, RedisURI redisURI) {
+
+        connectionBuilder.bootstrap().group(getEventLoopGroup(redisURI));
+
+        if (redisURI != null && redisURI.getSocket() != null) {
+            connectionBuilder.bootstrap().channel(EpollDomainSocketChannel.class);
+        } else {
+            connectionBuilder.bootstrap().channel(NioSocketChannel.class);
+        }
+    }
+
+    private synchronized EventLoopGroup getEventLoopGroup(RedisURI redisURI) {
+
+        if ((redisURI == null || redisURI.getSocket() == null) && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
+
+            if (eventLoopGroup == null) {
+                eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
+            }
+
+            eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
+        }
+
+        if (redisURI != null && redisURI.getSocket() != null && !eventLoopGroups.containsKey(EpollEventLoopGroup.class)) {
+            EpollEventLoopGroup epl = new EpollEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
+            eventLoopGroups.put(EpollEventLoopGroup.class, epl);
+        }
+
+        if (redisURI == null || redisURI.getSocket() == null) {
+            return eventLoopGroups.get(NioEventLoopGroup.class);
+        }
+
+        if (redisURI != null && redisURI.getSocket() != null) {
+            return eventLoopGroups.get(EpollEventLoopGroup.class);
+        }
+
+        throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
     }
 
     @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisChannelHandler<K, V>> T initializeChannel(ConnectionBuilder connectionBuilder) {
 
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
+        SocketAddress redisAddress = connectionBuilder.socketAddress();
         try {
-
-            SocketAddress redisAddress = connectionBuilder.socketAddress();
 
             logger.debug("Connecting to Redis, address: " + redisAddress);
 
@@ -147,7 +193,7 @@ public abstract class AbstractRedisClient {
             throw e;
         } catch (Exception e) {
             connection.close();
-            throw new RedisConnectionException("Unable to connect", e);
+            throw new RedisConnectionException("Unable to connect to " + redisAddress, e);
         }
     }
 
@@ -193,13 +239,28 @@ public abstract class AbstractRedisClient {
             }
         }
 
+        List<Future<?>> closeFutures = Lists.newArrayList();
         ChannelGroupFuture closeFuture = channels.close();
-        Future<?> groupCloseFuture = eventLoopGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
+
+        closeFutures.add(closeFuture);
+
+        for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
+            Future<?> groupCloseFuture = eventExecutors.shutdownGracefully(quietPeriod, timeout, timeUnit);
+            closeFutures.add(groupCloseFuture);
+        }
+
         try {
             closeFuture.get();
-            groupCloseFuture.get();
         } catch (Exception e) {
             throw new RedisException(e);
+        }
+
+        for (Future<?> future : closeFutures) {
+            try {
+                future.get();
+            } catch (Exception e) {
+                throw new RedisException(e);
+            }
         }
 
         timer.stop();

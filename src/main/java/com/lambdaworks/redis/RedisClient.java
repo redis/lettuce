@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.*;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.concurrent.*;
 
 import com.google.common.base.Supplier;
@@ -318,6 +319,7 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), withReconnect, connectionBuilder, redisURI);
+        channelType(connectionBuilder, redisURI);
         initializeChannel(connectionBuilder);
 
         if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
@@ -424,12 +426,18 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), true, connectionBuilder, redisURI);
 
         if (redisURI.getSentinels().isEmpty() && LettuceStrings.isNotEmpty(redisURI.getHost())) {
+            channelType(connectionBuilder, redisURI);
             initializeChannel(connectionBuilder);
-
         } else {
             boolean connected = false;
+            boolean first = true;
             Exception causingException = null;
+            validateUrisAreOfSameConnectionType(redisURI.getSentinels());
             for (RedisURI uri : redisURI.getSentinels()) {
+                if (first) {
+                    channelType(connectionBuilder, uri);
+                    first = false;
+                }
                 connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
                 logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
                 try {
@@ -437,7 +445,7 @@ public class RedisClient extends AbstractRedisClient {
                     connected = true;
                     break;
                 } catch (Exception e) {
-                    logger.warn("Cannot connect sentinel at " + uri.getHost() + ":" + uri.getPort() + ": " + e.toString());
+                    logger.warn("Cannot connect sentinel at " + uri + ": " + e.toString());
                     causingException = e;
                     if (e instanceof ConnectException) {
                         continue;
@@ -450,6 +458,24 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         return connection;
+    }
+
+    private void validateUrisAreOfSameConnectionType(List<RedisURI> redisUris) {
+        boolean unixDomainSocket = false;
+        boolean inetSocket = false;
+        for (RedisURI sentinel : redisUris) {
+            if (sentinel.getSocket() != null) {
+                unixDomainSocket = true;
+            }
+            if (sentinel.getHost() != null) {
+                inetSocket = true;
+            }
+        }
+
+        if (unixDomainSocket && inetSocket) {
+            throw new RedisConnectionException("You cannot mix unix domain socket and IP socket URI's");
+        }
+
     }
 
     /**
