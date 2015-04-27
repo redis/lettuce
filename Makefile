@@ -262,9 +262,6 @@ foreground = no
 accept = 127.0.0.1:6443
 connect = 127.0.0.1:6479
 
-[stunnel2]
-accept = $(ROOT_DIR)/work/stunnel
-connect = 127.0.0.1:6479
 endef
 
 export REDIS1_CONF
