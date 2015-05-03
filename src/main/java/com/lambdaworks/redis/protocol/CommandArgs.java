@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static java.lang.Math.max;
+import static java.lang.Math.*;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -26,7 +26,7 @@ public class CommandArgs<K, V> {
     private ByteBuffer buffer;
     private int count;
     private final List<K> keys = new ArrayList<K>();
-    private final List<CommandKeyword> keywords = new ArrayList<CommandKeyword>();
+    private final List<ProtocolKeyword> keywords = new ArrayList<ProtocolKeyword>();
 
     public CommandArgs(RedisCodec<K, V> codec) {
         this.codec = codec;
@@ -101,6 +101,11 @@ public class CommandArgs<K, V> {
 
     public CommandArgs<K, V> add(CommandType type) {
         return write(type.bytes);
+    }
+
+    public CommandArgs<K, V> add(ProtocolKeyword keyword) {
+        keywords.add(keyword);
+        return write(keyword.getBytes());
     }
 
     private CommandArgs<K, V> write(byte[] arg) {
@@ -193,7 +198,7 @@ public class CommandArgs<K, V> {
         return codec.encodeKey(keys.get(index));
     }
 
-    public List<CommandKeyword> getKeywords() {
+    public List<ProtocolKeyword> getKeywords() {
         return keywords;
     }
 

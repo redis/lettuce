@@ -123,20 +123,21 @@ public abstract class AbstractRedisClient {
 
     }
 
-    protected void channelType(ConnectionBuilder connectionBuilder, RedisURI redisURI) {
+    protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
 
-        connectionBuilder.bootstrap().group(getEventLoopGroup(redisURI));
+        connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
 
-        if (redisURI != null && redisURI.getSocket() != null) {
+        if (connectionPoint != null && connectionPoint.getSocket() != null) {
             connectionBuilder.bootstrap().channel(EpollDomainSocketChannel.class);
         } else {
             connectionBuilder.bootstrap().channel(NioSocketChannel.class);
         }
     }
 
-    private synchronized EventLoopGroup getEventLoopGroup(RedisURI redisURI) {
+    private synchronized EventLoopGroup getEventLoopGroup(ConnectionPoint connectionPoint) {
 
-        if ((redisURI == null || redisURI.getSocket() == null) && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
+        if ((connectionPoint == null || connectionPoint.getSocket() == null)
+                && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
 
             if (eventLoopGroup == null) {
                 eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
@@ -145,16 +146,17 @@ public abstract class AbstractRedisClient {
             eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
         }
 
-        if (redisURI != null && redisURI.getSocket() != null && !eventLoopGroups.containsKey(EpollEventLoopGroup.class)) {
+        if (connectionPoint != null && connectionPoint.getSocket() != null
+                && !eventLoopGroups.containsKey(EpollEventLoopGroup.class)) {
             EpollEventLoopGroup epl = new EpollEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
             eventLoopGroups.put(EpollEventLoopGroup.class, epl);
         }
 
-        if (redisURI == null || redisURI.getSocket() == null) {
+        if (connectionPoint == null || connectionPoint.getSocket() == null) {
             return eventLoopGroups.get(NioEventLoopGroup.class);
         }
 
-        if (redisURI != null && redisURI.getSocket() != null) {
+        if (connectionPoint != null && connectionPoint.getSocket() != null) {
             return eventLoopGroups.get(EpollEventLoopGroup.class);
         }
 

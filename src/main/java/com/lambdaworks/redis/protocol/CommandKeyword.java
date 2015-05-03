@@ -7,7 +7,7 @@ package com.lambdaworks.redis.protocol;
  * 
  * @author Will Glozer
  */
-public enum CommandKeyword {
+public enum CommandKeyword implements ProtocolKeyword {
     ADDR, ADDSLOTS, AFTER, AGGREGATE, ALPHA, AND, ASC, BEFORE, BY, CHANNELS, COUNT, DELSLOTS, DESC, SOFT, HARD, ENCODING,
 
     FAILOVER, FORGET, FLUSH, FORCE, FLUSHSLOTS, GETNAME, GETKEYSINSLOT, ID, IDLETIME, KILL, LEN, LIMIT, LIST, LOAD, MATCH,
@@ -22,5 +22,10 @@ public enum CommandKeyword {
 
     private CommandKeyword() {
         bytes = name().getBytes(LettuceCharsets.ASCII);
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return bytes;
     }
 }

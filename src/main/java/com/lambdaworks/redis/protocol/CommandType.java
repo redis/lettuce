@@ -2,12 +2,14 @@
 
 package com.lambdaworks.redis.protocol;
 
+import jdk.nashorn.internal.ir.PropertyKey;
+
 /**
  * Redis commands.
  * 
  * @author Will Glozer
  */
-public enum CommandType {
+public enum CommandType implements ProtocolKeyword {
     // Connection
 
     AUTH, ECHO, PING, QUIT, READONLY, READWRITE, SELECT,
@@ -77,5 +79,10 @@ public enum CommandType {
 
     private CommandType() {
         bytes = name().getBytes(LettuceCharsets.ASCII);
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return bytes;
     }
 }

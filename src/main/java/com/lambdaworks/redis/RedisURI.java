@@ -24,7 +24,7 @@ import io.netty.channel.unix.DomainSocketAddress;
  * @since 3.0
  */
 @SuppressWarnings("serial")
-public class RedisURI implements Serializable {
+public class RedisURI implements Serializable, ConnectionPoint {
 
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
     public static final String URI_SCHEME_REDIS = "redis";

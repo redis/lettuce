@@ -28,7 +28,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     protected CommandOutput<K, V, T> output;
     protected CountDownLatch latch;
 
-    private final CommandType type;
+    private final ProtocolKeyword type;
     private boolean multi;
     private Throwable exception;
     private boolean cancelled = false;
@@ -39,7 +39,9 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * @param type Command type.
      * @param output Command output.
      * @param args Command args, if any.
+     * @deprecated Use {@link Command#Command(ProtocolKeyword, CommandOutput, CommandArgs)}
      */
+    @Deprecated
     public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         this(type, output, args, false);
     }
@@ -51,8 +53,36 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * @param output Command output.
      * @param args Command args, if any.
      * @param multi Flag indicating if MULTI active.
+     * @deprecated Use {@link Command#Command(ProtocolKeyword, CommandOutput, CommandArgs, boolean)}
      */
+    @Deprecated
     public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
+        this.type = type;
+        this.output = output;
+        this.args = args;
+        setMulti(multi);
+    }
+
+    /**
+     * Create a new command with the supplied type and args.
+     *
+     * @param type Command type.
+     * @param output Command output.
+     * @param args Command args, if any.
+     */
+    public Command(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+        this(type, output, args, false);
+    }
+
+    /**
+     * Create a new command with the supplied type and args.
+     *
+     * @param type Command type.
+     * @param output Command output.
+     * @param args Command args, if any.
+     * @param multi Flag indicating if MULTI active.
+     */
+    public Command(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
         this.type = type;
         this.output = output;
         this.args = args;
@@ -195,9 +225,9 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         writeInt(buf, 1 + (args != null ? args.count() : 0));
         buf.writeBytes(CRLF);
         buf.writeByte('$');
-        writeInt(buf, type.bytes.length);
+        writeInt(buf, type.getBytes().length);
         buf.writeBytes(CRLF);
-        buf.writeBytes(type.bytes);
+        buf.writeBytes(type.getBytes());
         buf.writeBytes(CRLF);
         if (args != null) {
             buf.writeBytes(args.buffer());
