@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -29,6 +30,12 @@ public class TestSettings {
      */
     public static String hostAddr() {
         try {
+            InetAddress[] allByName = InetAddress.getAllByName(host());
+            for (InetAddress inetAddress : allByName) {
+                if (inetAddress instanceof Inet4Address) {
+                    return inetAddress.getHostAddress();
+                }
+            }
             return InetAddress.getByName(host()).getHostAddress();
         } catch (UnknownHostException e) {
             throw new IllegalStateException(e);

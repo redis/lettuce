@@ -48,7 +48,7 @@ pidfile work/redis4-6482.pid
 logfile work/redis4-6482.log
 save ""
 appendonly no
-slaveof localhost 6481
+slaveof 127.0.0.1 6481
 unixsocket $(ROOT_DIR)/work/socket-6482
 unixsocketperm 777
 endef
@@ -86,7 +86,7 @@ pidfile work/redis7-6485.pid
 logfile work/redis7-6485.log
 save ""
 appendonly no
-slaveof localhost 6484
+slaveof 127.0.0.1 6484
 unixsocket $(ROOT_DIR)/work/socket-6485
 unixsocketperm 777
 endef
