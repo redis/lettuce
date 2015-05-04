@@ -1,50 +1,38 @@
-              lettuce 3.1.Final RELEASE NOTES
+              lettuce 3.2.Final RELEASE NOTES
 
-This release introduces support for SSL, enables lambda expressions on streaming channels and a lot of bugfixes
-and resilience changes.
-lettuce extensibility is improved. You can override certain parts of the client to supply classes (connection classes)
-that behave the way you need by extending RedisClient or RedisClusterClient.
-You can reset the internal connection state in case you run into broken connections (invalid connection state due to SSL tunneling or others)
-by calling the reset() method on your connection.
+This release features unix domain sockets on linux-x86_64 systems. Local connections to a redis instance are now possible
+without the use of network.
 
-lettuce is now built with Java 8 but can be used with Java 6, 7 and 8. Java 6 and 7 support will be dropped with lettuce 4.0. 
+We tested lettuce using YourKit for performance. Subtracting all IO the most time is spent on constructing the return futures and command objects.
+The async API can issue about 300Kops/sec whereas the sync API performs about 13Kops/sec (GET's, PING's) on a single thread.
+Sync performance depends on the Redis performance (tested on a Mac, 2,7 GHz Intel Core i7).
+
+lettuce is built with Java 8 but can be used with Java 6, 7 and 8. Java 6 and 7 support will be dropped with lettuce 4.0.
 The new lettuce-testcontainer project ensures until then. You can find the build results at https://travis-ci.org/mp911de/lettuce-testcontainer
 
-lettuce is also now on Gitter. If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
+If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
 
-SSL Support
+Unix Domain Sockets
 -----
-SSL support for Redis means that you need a Redis that is behind some SSL tunnel (mostly stunnel). You can use
-this feature with Java 6, 7 and 8. The only issue using Java 6 is that you won't be able to verify the Redis host name
-against the SSL certificate. Redis with SSL works only in a sane way when you use standalone Redis. Sentinel and Redis Cluster
-provide host and port details, and since Redis has no out-of-the-box SSL support you would always connect to the
-unencrypted ports even your first connection to Sentinel or Cluster was encrypted.
+Unix Domain Sockets are useful only if connecting locally and maintaining the connection point on your own. Using RedisClusterClient with Unix Domain Sockets would connect to the local node using a socket and then open TCP connection to all the other hosts. A good example is connecting locally to a standalone or a single cluster node to gain performance.
 
-SSL and StartTLS are supported; Client certificates are not supported.
+Unix Domain Socket connections are currently limited to Linux x86_64 systems with a minimum netty version of 4.0.26.Final. You can, however, port the native library to your system. The netty guys would appreciate.
 
-See https://github.com/mp911de/lettuce/wiki/SSL-Connections for details on SSL connections.
+See https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets
 
 Enhancements
 -----
-* Change build environment to JDK8 #49
-* Allows lambda expressions on streaming channels enhancement #47
-* JavaDoc compatibility with Java 8 #39
-* Add cluster commands: Readonly, and clusterNodes #38 (for standalone) (Thanks to @taer)
-* Add RedisFuture return to RedisPubSubConnection API enhancement #34
-* Provide API and visibility in order to extend RedisClient and its connections #33
-* SSL support enhancement and improved channel initialization #28
-* Allow reset on internal connection state enhancement #25
-* Enhance lettuce resilience enhancement #24
-* Add jsr305 annotation lib #45
+* Provide an option to connect to Redis via Unix Domain Sockets #52
+* Add new cluster command MYID #53 (Thanks to @taer)
 
 Fixes
 -----
-* Fix synchronized issue  enhancement #44 (Thanks to @taer)
-* RedisClusterConnection stops operation after #42 (Thanks to @taer)
-* Fix time conversion for timeout settings #36  (Thanks to @taer)
-* Pool return no longer nulls connection #35  (Thanks to @taer)
-* Fix Method Signature RedisClient.connectPubSub bug #23
-* Fix URL parsing #32
+* RedisPubSubConnectionImpl.activated does not call super.activated() #55
+
+Other
+------
+* Inspect lettuce using YourKit #54
+
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested continuously against Redis 3.0.
 

@@ -18,6 +18,7 @@ This version of lettuce has been tested against Redis and 3.0.
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
+* [SSL](https://github.com/mp911de/lettuce/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets) connections
 * [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
 * [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
