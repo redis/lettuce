@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import io.netty.util.internal.SystemPropertyUtil;
@@ -15,6 +16,8 @@ import io.netty.util.internal.SystemPropertyUtil;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class UnixDomainSocketTest {
+
+    protected Logger log = Logger.getLogger(getClass());
 
     protected String key = "key";
     protected String value = "value";
@@ -87,6 +90,10 @@ public class UnixDomainSocketTest {
         uri.setSentinelMasterId("mymaster");
 
         RedisClient redisClient = new RedisClient(uri);
+
+        RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient
+                .connectSentinelAsync(getSentinelSocketRedisUri());
+        log.info("Masters: " + sentinelConnection.masters().get());
 
         try {
             redisClient.connect();
