@@ -3,6 +3,7 @@
 package com.lambdaworks.redis;
 
 import static com.google.common.base.Preconditions.*;
+import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -250,8 +251,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkValidRedisURI(RedisURI redisURI) {
-        checkArgument(redisURI != null && LettuceStrings.isNotEmpty(redisURI.getHost()),
-                "A valid RedisURI with a host is needed");
+        checkArgument(redisURI != null && isNotEmpty(redisURI.getHost()), "A valid RedisURI with a host is needed");
     }
 
     @SuppressWarnings({ "rawtypes" })
@@ -425,7 +425,7 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), true, connectionBuilder, redisURI);
 
-        if (redisURI.getSentinels().isEmpty() && LettuceStrings.isNotEmpty(redisURI.getHost())) {
+        if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);
             initializeChannel(connectionBuilder);
         } else {
