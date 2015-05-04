@@ -2,10 +2,7 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -98,6 +95,7 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
 
     @Override
     public void activated() {
+        super.activated();
 
         if (!channels.isEmpty()) {
             subscribe(toArray(channels));

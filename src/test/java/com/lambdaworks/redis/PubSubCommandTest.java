@@ -62,6 +62,22 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         };
     }
 
+    @Test
+    public void authWithReconnect() throws Exception {
+        new WithPasswordRequired() {
+            @Override
+            protected void run(RedisClient client) throws Exception {
+                RedisPubSubConnection<String, String> connection = client.connectPubSub();
+                connection.addListener(PubSubCommandTest.this);
+                connection.auth(passwd);
+                connection.quit().get();
+
+                connection.subscribe(channel);
+                assertThat(channels.take()).isEqualTo(channel);
+            }
+        };
+    }
+
     @Test(timeout = 200)
     public void message() throws Exception {
         pubsub.subscribe(channel);
