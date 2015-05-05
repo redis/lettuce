@@ -1,14 +1,16 @@
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.TestSettings.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-import org.junit.Test;
+import org.junit.*;
 
 import io.netty.util.internal.SystemPropertyUtil;
 
@@ -17,10 +19,33 @@ import io.netty.util.internal.SystemPropertyUtil;
  */
 public class UnixDomainSocketTest {
 
+    public static final String MASTER_ID = "mymaster";
+
+    private static RedisClient sentinelClient;
+
+    @Rule
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
+
     protected Logger log = Logger.getLogger(getClass());
 
     protected String key = "key";
     protected String value = "value";
+
+    @BeforeClass
+    public static void setupClient() {
+        sentinelClient = getRedisSentinelClient();
+    }
+
+    @AfterClass
+    public static void shutdownClient() {
+        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+    }
+
+    @Before
+    public void openConnection() throws Exception {
+
+        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1);
+    }
 
     @Test
     public void standalone_Linux_x86_64_socket() throws Exception {
@@ -111,5 +136,9 @@ public class UnixDomainSocketTest {
         String result = connection.get(key);
 
         assertThat(result).isEqualTo(value);
+    }
+
+    protected static RedisClient getRedisSentinelClient() {
+        return new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 }
