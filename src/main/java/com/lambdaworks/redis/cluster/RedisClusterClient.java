@@ -136,7 +136,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             public SocketAddress get() {
                 return socketAddress;
             }
-        }, true);
+        });
 
         connection.registerCloseables(closeableResources, connection);
 
@@ -175,7 +175,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 pooledClusterConnectionProvider);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(clusterWriter, codec, timeout, unit);
 
-        connectAsyncImpl(handler, connection, socketAddressSupplier, true);
+        connectAsyncImpl(handler, connection, socketAddressSupplier);
 
         connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
 

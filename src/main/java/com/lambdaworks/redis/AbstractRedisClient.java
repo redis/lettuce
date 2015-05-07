@@ -64,6 +64,7 @@ public abstract class AbstractRedisClient {
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = Sets.newConcurrentHashSet();
+    protected ClientOptions clientOptions = new ClientOptions.Builder().build();
 
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
@@ -87,10 +88,11 @@ public abstract class AbstractRedisClient {
 
     @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
-            final T connection, final Supplier<SocketAddress> socketAddressSupplier, final boolean withReconnect) {
+            final T connection, final Supplier<SocketAddress> socketAddressSupplier) {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
-        connectionBuilder(handler, connection, socketAddressSupplier, withReconnect, connectionBuilder, null);
+        connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, null);
         channelType(connectionBuilder, null);
         return (T) initializeChannel(connectionBuilder);
     }
@@ -101,12 +103,11 @@ public abstract class AbstractRedisClient {
      * @param handler instance of a CommandHandler for writing redis commands
      * @param connection implementation of a RedisConnection
      * @param socketAddressSupplier address supplier for initial connect and re-connect
-     * @param withReconnect {@literal true} if the connection should auto-reconnect
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the redis instance
      */
     protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
-            Supplier<SocketAddress> socketAddressSupplier, boolean withReconnect, ConnectionBuilder connectionBuilder,
+            Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
@@ -117,7 +118,7 @@ public abstract class AbstractRedisClient {
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) redisURI.getUnit()
                     .toMillis(redisURI.getTimeout()));
         }
-        connectionBuilder.bootstrap(redisBootstrap).withReconnect(withReconnect);
+        connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
 
@@ -303,5 +304,26 @@ public abstract class AbstractRedisClient {
 
         checkArgument(listener != null, "RedisConnectionStateListener must not be null");
         connectionEvents.removeListener(listener);
+    }
+
+    /**
+     * Returns the {@link ClientOptions} which are valid for that client. Connections inherit the current options at the moment
+     * the connection is created. Changes to options will not affect existing connections.
+     * 
+     * @return the {@link ClientOptions} for this client
+     */
+    public ClientOptions getOptions() {
+        return clientOptions;
+    }
+
+    /**
+     * Set the {@link ClientOptions} for the client.
+     * 
+     * @param clientOptions
+     */
+    public void setOptions(ClientOptions clientOptions) {
+        checkArgument(clientOptions != null, "clientOptions must not be null");
+
+        this.clientOptions = clientOptions;
     }
 }
