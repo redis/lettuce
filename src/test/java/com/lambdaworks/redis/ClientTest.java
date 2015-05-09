@@ -252,6 +252,9 @@ public class ClientTest extends AbstractCommandTest {
         Logger.getLogger("com.lambdaworks.redis.protocol").setLevel(Level.ALL);
 
         redis.set(key, value);
+
+        Logger.getLogger("com.lambdaworks.redis.protocol").setLevel(Level.INFO);
+
         redis.quit();
         Thread.sleep(100);
         assertThat(redis.get(key)).isEqualTo(value);
