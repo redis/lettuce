@@ -15,10 +15,14 @@ import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.server.RandomResponseServer;
+import io.netty.channel.Channel;
 
 public class ClientTest extends AbstractCommandTest {
     @Rule
@@ -49,12 +53,94 @@ public class ClientTest extends AbstractCommandTest {
 
         client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
+
+        Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+        ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+        assertThat(connectionWatchdog).isNull();
 
         connection.quit();
         Thread.sleep(500);
         try {
-            System.out.println(connection.get(key));
+            connection.get(key);
+        } finally {
+            connection.close();
+        }
+    }
+
+    /**
+     * Expect to run into invalid something exception instead of timeout.
+     * 
+     * @throws Exception
+     */
+    @Test(timeout = 10000)
+    public void pingBeforeConnectFails() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        RandomResponseServer ts = new RandomResponseServer();
+        ts.initialize(TestSettings.port(500));
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(500))
+                .withTimeout(10, TimeUnit.MINUTES).build();
+
+        exception.expect(RedisConnectionException.class);
+
+        try {
+            client.connect(redisUri);
+            Thread.sleep(500);
+        } finally {
+            ts.shutdown();
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void pingBeforeConnectFailOnReconnect() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        RandomResponseServer ts = new RandomResponseServer();
+        ts.initialize(TestSettings.port(500));
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(10, TimeUnit.MINUTES)
+                .build();
+
+        try {
+            RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);
+
+            Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+            ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+
+            assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+            assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
+
+            connection.set(key, value);
+
+            Thread.sleep(100);
+            redisUri.setPort(TestSettings.port(500));
+            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
+
+            connection.quit();
+            Thread.sleep(500);
+            assertThat(connection.isOpen()).isFalse();
+            assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+            assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
+
+        } finally {
+            ts.shutdown();
+        }
+    }
+
+    @Test
+    public void pingBeforeConnect() throws Exception {
+
+        redis.set(key, value);
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+        RedisConnection<String, String> connection = client.connect();
+
+        try {
+            String result = connection.get(key);
+            assertThat(result).isEqualTo(value);
         } finally {
             connection.close();
         }

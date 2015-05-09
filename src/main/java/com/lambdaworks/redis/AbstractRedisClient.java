@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -107,16 +108,18 @@ public abstract class AbstractRedisClient {
      * @param redisURI URI of the redis instance
      */
     protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
-            Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            RedisURI redisURI) {
+            Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
 
         if (redisURI == null) {
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
+            connectionBuilder.timeout(timeout, unit);
         } else {
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) redisURI.getUnit()
                     .toMillis(redisURI.getTimeout()));
+
+            connectionBuilder.timeout(redisURI.getTimeout(), redisURI.getUnit());
         }
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
@@ -187,7 +190,12 @@ public abstract class AbstractRedisClient {
                 connectFuture.get();
             }
 
-            initializer.channelInitialized().get(timeout, unit);
+            try {
+                initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
+            } catch (TimeoutException e) {
+                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout()
+                        + " " + connectionBuilder.getTimeUnit());
+            }
             connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
             return (T) connection;

@@ -34,8 +34,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private Bootstrap bootstrap;
     private Channel channel;
     private Timer timer;
-    private boolean reconnect;
-    private boolean doNotReconnect;
+    private boolean listenOnChannelInactive;
+    private boolean reconnectSuspended;
     private int attempts;
     private SocketAddress remoteAddress;
     private Supplier<SocketAddress> socketAddressSupplier;
@@ -66,16 +66,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         this.socketAddressSupplier = socketAddressSupplier;
     }
 
-    public void setReconnect(boolean reconnect) {
-        this.reconnect = reconnect;
-    }
-
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         logger.debug("userEventTriggered(" + ctx + ", " + evt + ")");
         if (evt instanceof ConnectionEvents.PrepareClose) {
             ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
-            setReconnect(false);
+            setListenOnChannelInactive(false);
             prepareClose.getPrepareCloseFuture().set(true);
         }
         super.userEventTriggered(ctx, evt);
@@ -96,7 +92,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         logger.debug("channelInactive(" + ctx + ")");
         channel = null;
-        if (reconnect && !doNotReconnect) {
+        if (listenOnChannelInactive && !reconnectSuspended) {
             scheduleReconnect();
         }
         super.channelInactive(ctx);
@@ -161,13 +157,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         connect.sync().await();
 
         try {
-            doNotReconnect = true;
+            reconnectSuspended = true;
             RedisChannelInitializer channelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
             channelInitializer.channelInitialized().get();
-            doNotReconnect = false;
+            reconnectSuspended = false;
             logger.log(infoLevel, "Reconnected to " + remoteAddress);
         } catch (Exception e) {
-            doNotReconnect = true;
+            reconnectSuspended = true;
             logger.error("Cannot initialize channel. Disabling autoReconnect", e);
         }
 
@@ -182,5 +178,26 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
 
         return true;
+    }
+
+    /**
+     * @deprecated use {@link #setListenOnChannelInactive(boolean)}
+     * @param reconnect
+     */
+    @Deprecated
+    public void setReconnect(boolean reconnect) {
+        setListenOnChannelInactive(reconnect);
+    }
+
+    public void setListenOnChannelInactive(boolean listenOnChannelInactive) {
+        this.listenOnChannelInactive = listenOnChannelInactive;
+    }
+
+    public boolean isListenOnChannelInactive() {
+        return listenOnChannelInactive;
+    }
+
+    public boolean isReconnectSuspended() {
+        return reconnectSuspended;
     }
 }

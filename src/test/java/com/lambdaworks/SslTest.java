@@ -48,6 +48,18 @@ public class SslTest {
     }
 
     @Test
+    public void pingBeforeActivate() throws Exception {
+        RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
+        redisClient.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        RedisConnection<String, String> connection = redisClient.connect(redisUri);
+        connection.set("key", "value");
+        assertThat(connection.get("key")).isEqualTo("value");
+
+        connection.close();
+    }
+
+    @Test
     public void regularSslWithReconnect() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 

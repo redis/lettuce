@@ -108,6 +108,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 readLock.unlock();
             }
 
+        } catch (Exception e) {
+            throw e;
         } finally {
             input.release();
         }
