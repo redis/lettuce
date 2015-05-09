@@ -1579,14 +1579,14 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(type, output, null);
     }
 
-    protected synchronized <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
+    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
             CommandArgs<K, V> args) {
         Command<K, V, T> cmd = new Command<K, V, T>(type, output, args, multi != null);
         return dispatch(cmd);
     }
 
     @Override
-    public synchronized <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+    public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
         if (multi != null && cmd instanceof Command) {
             Command<K, V, T> command = (Command<K, V, T>) cmd;
             command.setMulti(true);
