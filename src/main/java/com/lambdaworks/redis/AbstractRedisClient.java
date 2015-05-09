@@ -260,12 +260,6 @@ public abstract class AbstractRedisClient {
             closeFutures.add(groupCloseFuture);
         }
 
-        try {
-            closeFuture.get();
-        } catch (Exception e) {
-            throw new RedisException(e);
-        }
-
         for (Future<?> future : closeFutures) {
             try {
                 future.get();

@@ -48,6 +48,20 @@ public class ClientTest extends AbstractCommandTest {
         redis.get(key);
     }
 
+    @Test
+    public void variousClientOptions() throws Exception {
+
+        RedisAsyncConnectionImpl<String, String> plain = (RedisAsyncConnectionImpl) client.connectAsync();
+        assertThat(plain.getOptions().isAutoReconnect()).isTrue();
+
+        client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
+        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
+        assertThat(connection.getOptions().isAutoReconnect()).isFalse();
+
+        assertThat(plain.getOptions().isAutoReconnect()).isTrue();
+
+    }
+
     @Test(expected = RedisException.class)
     public void disconnectedConnectionWithoutReconnect() throws Exception {
 
@@ -66,6 +80,17 @@ public class ClientTest extends AbstractCommandTest {
         } finally {
             connection.close();
         }
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void pingBeforeConnectFailsWithVeryShortTimeout() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
+                .withTimeout(1, TimeUnit.NANOSECONDS).build();
+
+        client.connect(redisUri);
     }
 
     /**
@@ -88,7 +113,6 @@ public class ClientTest extends AbstractCommandTest {
 
         try {
             client.connect(redisUri);
-            Thread.sleep(500);
         } finally {
             ts.shutdown();
         }
@@ -184,6 +208,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isEqualTo(connection);
 
+        client.shutdown();
     }
 
     @Test
@@ -212,6 +237,8 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(removedListener.onDisconnected).isNull();
         assertThat(removedListener.onException).isNull();
 
+        client.shutdown();
+
     }
 
     @Test(expected = RedisException.class)
@@ -222,6 +249,8 @@ public class ClientTest extends AbstractCommandTest {
 
     @Test
     public void reconnect() throws Exception {
+        Logger.getLogger("com.lambdaworks.redis.protocol").setLevel(Level.ALL);
+
         redis.set(key, value);
         redis.quit();
         Thread.sleep(100);

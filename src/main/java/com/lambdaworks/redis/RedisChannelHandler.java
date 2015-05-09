@@ -142,10 +142,6 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         closeEvents.addListener(listener);
     }
 
-    protected void removeListener(CloseEvents.CloseListener listener) {
-        closeEvents.removeListener(listener);
-    }
-
     /**
      * 
      * @return true if the connection is closed (final state in the connection lifecyle).

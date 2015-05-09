@@ -153,7 +153,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 writeLock.lock();
                 if (channel != null) {
                     if (logger.isDebugEnabled()) {
-
                         logger.debug("[" + this + "] write() writeAndFlush Command " + command);
                     }
                     channel.writeAndFlush(command);
