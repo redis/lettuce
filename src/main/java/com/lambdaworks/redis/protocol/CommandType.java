@@ -2,8 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import jdk.nashorn.internal.ir.PropertyKey;
-
 /**
  * Redis commands.
  * 
