@@ -35,36 +35,6 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     /**
      * Create a new command with the supplied type and args.
-     * 
-     * @param type Command type.
-     * @param output Command output.
-     * @param args Command args, if any.
-     * @deprecated Use {@link Command#Command(ProtocolKeyword, CommandOutput, CommandArgs)}
-     */
-    @Deprecated
-    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        this(type, output, args, false);
-    }
-
-    /**
-     * Create a new command with the supplied type and args.
-     * 
-     * @param type Command type.
-     * @param output Command output.
-     * @param args Command args, if any.
-     * @param multi Flag indicating if MULTI active.
-     * @deprecated Use {@link Command#Command(ProtocolKeyword, CommandOutput, CommandArgs, boolean)}
-     */
-    @Deprecated
-    public Command(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
-        this.type = type;
-        this.output = output;
-        this.args = args;
-        setMulti(multi);
-    }
-
-    /**
-     * Create a new command with the supplied type and args.
      *
      * @param type Command type.
      * @param output Command output.
