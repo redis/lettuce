@@ -116,7 +116,7 @@ public class RedisClient extends AbstractRedisClient {
                 new RedisConnectionProvider<RedisConnection<K, V>>() {
                     @Override
                     public RedisConnection<K, V> createConnection() {
-                        return connect(codec, false, redisURI);
+                        return connect(codec, redisURI);
                     }
 
                     @Override
@@ -190,7 +190,7 @@ public class RedisClient extends AbstractRedisClient {
                 new RedisConnectionProvider<RedisAsyncConnection<K, V>>() {
                     @Override
                     public RedisAsyncConnection<K, V> createConnection() {
-                        return connectAsync(codec, false, redisURI);
+                        return connectAsync(codec, redisURI);
                     }
 
                     @Override
@@ -235,7 +235,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
         checkForRedisURI();
         checkArgument(codec != null, "RedisCodec must not be null");
-        return connect(codec, true, this.redisURI);
+        return connect(codec, this.redisURI);
     }
 
     /**
@@ -247,7 +247,7 @@ public class RedisClient extends AbstractRedisClient {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public RedisConnection<String, String> connect(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
-        return (RedisConnection<String, String>) connect((RedisCodec) codec, true, redisURI);
+        return (RedisConnection<String, String>) connect((RedisCodec) codec, redisURI);
     }
 
     private void checkValidRedisURI(RedisURI redisURI) {
@@ -255,9 +255,8 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     @SuppressWarnings({ "rawtypes" })
-    private <K, V> RedisConnection connect(RedisCodec<K, V> codec, boolean withReconnect, RedisURI redisURI) {
-        return (RedisConnection) syncHandler(connectAsync(codec, withReconnect, redisURI), RedisConnection.class,
-                RedisClusterConnection.class);
+    private <K, V> RedisConnection connect(RedisCodec<K, V> codec, RedisURI redisURI) {
+        return (RedisConnection) syncHandler(connectAsync(codec, redisURI), RedisConnection.class, RedisClusterConnection.class);
     }
 
     /**
@@ -281,7 +280,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec) {
         checkForRedisURI();
         checkArgument(codec != null, "RedisCodec must not be null");
-        return connectAsync(codec, true, redisURI);
+        return connectAsync(codec, redisURI);
     }
 
     /**
@@ -292,22 +291,21 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisAsyncConnection<String, String> connectAsync(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
-        return connectAsync(codec, true, redisURI);
+        return connectAsync(codec, redisURI);
     }
 
-    private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, boolean withReconnect, RedisURI redisURI) {
+    private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
-        connectAsync(handler, connection, withReconnect, redisURI);
+        connectAsync(handler, connection, redisURI);
 
         return connection;
     }
 
-    private <K, V> void connectAsync(CommandHandler<K, V> handler, RedisAsyncConnectionImpl<K, V> connection,
-            boolean withReconnect, RedisURI redisURI) {
+    private <K, V> void connectAsync(CommandHandler<K, V> handler, RedisAsyncConnectionImpl<K, V> connection, RedisURI redisURI) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -318,7 +316,8 @@ public class RedisClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
-        connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), withReconnect, connectionBuilder, redisURI);
+        connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
         initializeChannel(connectionBuilder);
 
@@ -373,7 +372,7 @@ public class RedisClient extends AbstractRedisClient {
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
 
-        connectAsync(handler, connection, true, redisURI);
+        connectAsync(handler, connection, redisURI);
 
         return connection;
     }
@@ -416,14 +415,16 @@ public class RedisClient extends AbstractRedisClient {
     private <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsyncImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
+        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
+        connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
+
         final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(queue);
         final RedisSentinelAsyncConnectionImpl<K, V> connection = newRedisSentinelAsyncConnectionImpl(commandHandler, codec,
                 timeout, unit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
-        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
-        connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), true, connectionBuilder, redisURI);
+        connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);

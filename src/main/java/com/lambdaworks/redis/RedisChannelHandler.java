@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,6 +34,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     private boolean closed;
     private final RedisChannelWriter<K, V> channelWriter;
     private boolean active = true;
+    private ClientOptions clientOptions;
 
     /**
      * @param writer the channel writer
@@ -97,6 +100,12 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+
+        if (clientOptions != null && !clientOptions.isAutoReconnect() && !active) {
+            throw new RedisException(
+                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted.");
+        }
+
         return channelWriter.write(cmd);
     }
 
@@ -179,5 +188,14 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     public void reset() {
         channelWriter.reset();
+    }
+
+    public ClientOptions getOptions() {
+        return clientOptions;
+    }
+
+    public void setOptions(ClientOptions clientOptions) {
+        checkArgument(clientOptions != null, "clientOptions must not be null");
+        this.clientOptions = clientOptions;
     }
 }

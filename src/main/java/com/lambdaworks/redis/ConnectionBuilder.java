@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.SocketAddress;
 import java.util.List;
@@ -12,9 +12,7 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.Timer;
 
 /**
@@ -24,13 +22,13 @@ import io.netty.util.Timer;
 public class ConnectionBuilder {
 
     private Supplier<SocketAddress> socketAddressSupplier;
-    private boolean withReconnect;
     private ConnectionEvents connectionEvents;
     private RedisChannelHandler<?, ?> connection;
     private CommandHandler<?, ?> commandHandler;
     private ChannelGroup channelGroup;
     private Timer timer;
     private Bootstrap bootstrap;
+    private ClientOptions clientOptions;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -46,8 +44,8 @@ public class ConnectionBuilder {
         return socketAddressSupplier.get();
     }
 
-    public ConnectionBuilder withReconnect(boolean withReconnect) {
-        this.withReconnect = withReconnect;
+    public ConnectionBuilder clientOptions(ClientOptions clientOptions) {
+        this.clientOptions = clientOptions;
         return this;
     }
 
@@ -84,10 +82,10 @@ public class ConnectionBuilder {
     protected List<ChannelHandler> buildHandlers() {
         checkState(channelGroup != null, "channelGroup must be set");
         checkState(connectionEvents != null, "connectionEvents must be set");
-        checkState(connection != null, "channelGroup must be set");
+        checkState(connection != null, "connection must be set");
 
         List<ChannelHandler> handlers = Lists.newArrayList();
-        if (withReconnect) {
+        if (clientOptions.isAutoReconnect()) {
             checkState(bootstrap != null, "bootstrap must be set for withReconnect=true");
             checkState(timer != null, "timer must be set for withReconnect=true");
             checkState(socketAddressSupplier != null, "socketAddressSupplier must be set for withReconnect=true");
@@ -97,6 +95,8 @@ public class ConnectionBuilder {
             watchdog.setReconnect(true);
             handlers.add(watchdog);
         }
+
+        connection.setOptions(clientOptions);
 
         handlers.add(new ChannelGroupListener(channelGroup));
         handlers.add(commandHandler);
