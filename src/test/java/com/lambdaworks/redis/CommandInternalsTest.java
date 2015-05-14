@@ -61,7 +61,7 @@ public class CommandInternalsTest {
 
     @Test
     public void customKeywordWithArgs() throws Exception {
-
+        command = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec), false);
         command.getArgs().add(MyKeywords.DUMMY);
         assertThat(command.getArgs().toString()).contains(MyKeywords.DUMMY.name());
         assertThat(command.getArgs().getKeywords()).contains(MyKeywords.DUMMY);
@@ -80,7 +80,7 @@ public class CommandInternalsTest {
         assertThat(command.get(2, TimeUnit.MICROSECONDS)).isNull();
     }
 
-    @Test(timeout = 10)
+    @Test(timeout = 100)
     public void awaitTimeout() throws Exception {
         assertThat(command.await(2, TimeUnit.MICROSECONDS)).isFalse();
     }

@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.server;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -22,7 +23,8 @@ public class RandomServerHandler extends ChannelInboundHandlerAdapter {
         random.nextBytes(initial);
 
         byte[] response = new byte[Math.abs((int) initial[0])];
-        random.nextBytes(response);
+
+        Arrays.fill(response, "A".getBytes()[0]);
 
         ByteBuf buf = ctx.alloc().heapBuffer(response.length);
 
