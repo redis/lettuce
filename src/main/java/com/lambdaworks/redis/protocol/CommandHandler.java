@@ -9,18 +9,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.lambdaworks.redis.ConnectionEvents;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisCommandInterruptedException;
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.*;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -35,6 +27,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+    protected ClientOptions clientOptions;
     protected BlockingQueue<RedisCommand<K, V, ?>> queue;
     protected BlockingQueue<RedisCommand<K, V, ?>> commandBuffer = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
     protected ByteBuf buffer;
@@ -49,10 +42,12 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
-     * 
+     *
+     * @param clientOptions
      * @param queue The command queue.
      */
-    public CommandHandler(BlockingQueue<RedisCommand<K, V, ?>> queue) {
+    public CommandHandler(ClientOptions clientOptions, BlockingQueue<RedisCommand<K, V, ?>> queue) {
+        this.clientOptions = clientOptions;
         this.queue = queue;
     }
 
@@ -189,10 +184,28 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         connected = true;
         closed = false;
         logger.debug("[" + this + "] channelActive()");
+        try {
+            executeQueuedCommands(ctx);
+            logger.debug("[" + this + "] channelActive() done");
+
+        } catch (Exception e) {
+            logger.debug("[" + this + "] channelActive() ran into an exception");
+
+            if (clientOptions.isCancelCommandsOnReconnectFailure()) {
+                reset();
+            }
+            throw e;
+        }
+
+        super.channelActive(ctx);
+    }
+
+    protected void executeQueuedCommands(ChannelHandlerContext ctx) {
         List<RedisCommand<K, V, ?>> tmp = new ArrayList<RedisCommand<K, V, ?>>(queue.size() + commandBuffer.size());
 
         try {
             writeLock.lock();
+            connectionError = null;
 
             tmp.addAll(commandBuffer);
             tmp.addAll(queue);
@@ -221,9 +234,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         tmp.clear();
-
-        logger.debug("[" + this + "] channelActive() done");
-        super.channelActive(ctx);
     }
 
     /**
@@ -357,6 +367,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     @Override
     public void reset() {
+        logger.debug("[" + this + "] reset()");
         try {
             writeLock.lock();
             cancelCommands("Reset");

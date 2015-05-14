@@ -128,7 +128,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectAsyncImpl(" + socketAddress + ")");
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, new Supplier<SocketAddress>() {
@@ -166,7 +166,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
         final PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(
                 this, partitions, codec);

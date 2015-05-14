@@ -103,11 +103,11 @@ class ConnectionBuilder {
 
         List<ChannelHandler> handlers = Lists.newArrayList();
         if (clientOptions.isAutoReconnect()) {
-            checkState(bootstrap != null, "bootstrap must be set for withReconnect=true");
-            checkState(timer != null, "timer must be set for withReconnect=true");
-            checkState(socketAddressSupplier != null, "socketAddressSupplier must be set for withReconnect=true");
+            checkState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
+            checkState(timer != null, "timer must be set for autoReconnect=true");
+            checkState(socketAddressSupplier != null, "socketAddressSupplier must be set for autoReconnect=true");
 
-            ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, timer, socketAddressSupplier);
+            ConnectionWatchdog watchdog = new ConnectionWatchdog(clientOptions, bootstrap, timer, socketAddressSupplier);
 
             watchdog.setListenOnChannelInactive(true);
             handlers.add(watchdog);

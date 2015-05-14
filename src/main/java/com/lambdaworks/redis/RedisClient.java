@@ -297,7 +297,7 @@ public class RedisClient extends AbstractRedisClient {
     private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         connectAsync(handler, connection, redisURI);
@@ -369,7 +369,7 @@ public class RedisClient extends AbstractRedisClient {
         checkArgument(codec != null, "RedisCodec must not be null");
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
 
         connectAsync(handler, connection, redisURI);
@@ -418,7 +418,7 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(queue);
+        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(clientOptions, queue);
         final RedisSentinelAsyncConnectionImpl<K, V> connection = newRedisSentinelAsyncConnectionImpl(commandHandler, codec,
                 timeout, unit);
 
