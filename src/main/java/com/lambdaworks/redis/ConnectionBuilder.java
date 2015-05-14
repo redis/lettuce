@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.*;
 
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -19,7 +20,7 @@ import io.netty.util.Timer;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 02.02.15 09:40
  */
-public class ConnectionBuilder {
+class ConnectionBuilder {
 
     private Supplier<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
@@ -29,6 +30,8 @@ public class ConnectionBuilder {
     private Timer timer;
     private Bootstrap bootstrap;
     private ClientOptions clientOptions;
+    private long timeout;
+    private TimeUnit timeUnit;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -42,6 +45,20 @@ public class ConnectionBuilder {
     public SocketAddress socketAddress() {
         checkState(socketAddressSupplier != null, "socketAddressSupplier must be set");
         return socketAddressSupplier.get();
+    }
+
+    public ConnectionBuilder timeout(long timeout, TimeUnit timeUnit) {
+        this.timeout = timeout;
+        this.timeUnit = timeUnit;
+        return this;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
     }
 
     public ConnectionBuilder clientOptions(ClientOptions clientOptions) {
@@ -86,19 +103,20 @@ public class ConnectionBuilder {
 
         List<ChannelHandler> handlers = Lists.newArrayList();
         if (clientOptions.isAutoReconnect()) {
-            checkState(bootstrap != null, "bootstrap must be set for withReconnect=true");
-            checkState(timer != null, "timer must be set for withReconnect=true");
-            checkState(socketAddressSupplier != null, "socketAddressSupplier must be set for withReconnect=true");
+            checkState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
+            checkState(timer != null, "timer must be set for autoReconnect=true");
+            checkState(socketAddressSupplier != null, "socketAddressSupplier must be set for autoReconnect=true");
 
-            ConnectionWatchdog watchdog = new ConnectionWatchdog(bootstrap, timer, socketAddressSupplier);
+            ConnectionWatchdog watchdog = new ConnectionWatchdog(clientOptions, bootstrap, timer, socketAddressSupplier);
 
-            watchdog.setReconnect(true);
+            watchdog.setListenOnChannelInactive(true);
             handlers.add(watchdog);
         }
 
         connection.setOptions(clientOptions);
 
         handlers.add(new ChannelGroupListener(channelGroup));
+
         handlers.add(commandHandler);
         handlers.add(connection);
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection));
@@ -108,8 +126,7 @@ public class ConnectionBuilder {
     }
 
     public RedisChannelInitializer build() {
-
-        return new PlainChannelInitializer(buildHandlers());
+        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), buildHandlers());
     }
 
     public RedisChannelHandler<?, ?> connection() {
@@ -122,6 +139,10 @@ public class ConnectionBuilder {
 
     public Bootstrap bootstrap() {
         return bootstrap;
+    }
+
+    public ClientOptions clientOptions() {
+        return clientOptions;
     }
 
 }

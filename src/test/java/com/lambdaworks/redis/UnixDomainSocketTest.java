@@ -44,7 +44,7 @@ public class UnixDomainSocketTest {
     @Before
     public void openConnection() throws Exception {
 
-        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1);
+        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
     }
 
     @Test

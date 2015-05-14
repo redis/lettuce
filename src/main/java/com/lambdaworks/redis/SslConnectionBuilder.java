@@ -12,6 +12,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLParameters;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.lambdaworks.redis.protocol.Command;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -25,7 +26,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class SslConnectionBuilder extends ConnectionBuilder {
+class SslConnectionBuilder extends ConnectionBuilder {
     private RedisURI redisURI;
 
     public static SslConnectionBuilder sslConnectionBuilder() {
@@ -50,7 +51,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         final List<ChannelHandler> channelHandlers = buildHandlers();
 
-        return new SslChannelInitializer(channelHandlers, redisURI);
+        return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), channelHandlers, redisURI);
     }
 
     /**
@@ -59,11 +60,13 @@ public class SslConnectionBuilder extends ConnectionBuilder {
      */
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
+        private boolean pingBeforeActivate;
         private List<ChannelHandler> handlers;
         private SettableFuture<Boolean> initializedFuture = SettableFuture.create();
         private RedisURI redisURI;
 
-        public SslChannelInitializer(List<ChannelHandler> handlers, RedisURI redisURI) {
+        public SslChannelInitializer(boolean pingBeforeActivate, List<ChannelHandler> handlers, RedisURI redisURI) {
+            this.pingBeforeActivate = pingBeforeActivate;
             this.handlers = handlers;
             this.redisURI = redisURI;
         }
@@ -93,6 +96,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             if (channel.pipeline().get("channelActivator") == null) {
                 channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
+                    private Command<?, ?, ?> pingCommand;
+
                     @Override
                     public Future<Boolean> channelInitialized() {
                         return initializedFuture;
@@ -101,6 +106,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                         initializedFuture = SettableFuture.create();
+                        pingCommand = null;
                         super.channelInactive(ctx);
                     }
 
@@ -113,15 +119,19 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                     @Override
                     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-                        if (evt instanceof SslHandshakeCompletionEvent) {
-                            if (!initializedFuture.isDone()) {
-                                SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
-                                if (event.isSuccess()) {
+                        if (evt instanceof SslHandshakeCompletionEvent && !initializedFuture.isDone()) {
+
+                            SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
+                            if (event.isSuccess()) {
+                                if (pingBeforeActivate) {
+                                    pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                                    pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
+                                } else {
                                     initializedFuture.set(true);
                                     ctx.fireChannelActive();
-                                } else {
-                                    initializedFuture.setException(event.cause());
                                 }
+                            } else {
+                                initializedFuture.setException(event.cause());
                             }
                         }
 

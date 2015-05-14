@@ -393,7 +393,7 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertEquals("0", cursor2.getCursor());
         assertTrue(cursor2.isFinished());
 
-        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.limit(100).match("*"));
+        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.matches("*").limit(100));
 
         assertEquals(1, cursor3.getCount());
         assertEquals("0", cursor3.getCursor());

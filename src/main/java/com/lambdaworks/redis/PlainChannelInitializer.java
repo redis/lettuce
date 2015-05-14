@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandHandler;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -16,10 +19,15 @@ import io.netty.channel.ChannelPipeline;
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
+    final static RedisCommandBuilder INITIALIZING_CMD_BUILDER = new RedisCommandBuilder(new Utf8StringCodec());
+
+    protected boolean pingBeforeActivate;
     private List<ChannelHandler> handlers;
+
     protected SettableFuture<Boolean> initializedFuture = SettableFuture.create();
 
-    public PlainChannelInitializer(List<ChannelHandler> handlers) {
+    public PlainChannelInitializer(boolean pingBeforeActivateConnection, List<ChannelHandler> handlers) {
+        this.pingBeforeActivate = pingBeforeActivateConnection;
         this.handlers = handlers;
     }
 
@@ -30,6 +38,8 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
             channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
+                private Command<?, ?, ?> pingCommand;
+
                 @Override
                 public Future<Boolean> channelInitialized() {
                     return initializedFuture;
@@ -38,7 +48,13 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 @Override
                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                     initializedFuture = SettableFuture.create();
+                    pingCommand = null;
                     super.channelInactive(ctx);
+                }
+
+                @Override
+                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                    super.channelRead(ctx, msg);
                 }
 
                 @Override
@@ -52,13 +68,17 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 }
 
                 @Override
-                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 
-                    if (!initializedFuture.isDone()) {
-                        initializedFuture.set(true);
+                    if (pingBeforeActivate) {
+                        pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                        pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
+                    } else {
+                        if (!initializedFuture.isDone()) {
+                            initializedFuture.set(true);
+                        }
+                        super.channelActive(ctx);
                     }
-
-                    super.channelActive(ctx);
                 }
 
                 @Override
@@ -77,6 +97,19 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         }
     }
 
+    static void pingBeforeActivate(final Command<?, ?, ?> cmd, final SettableFuture<Boolean> initializedFuture,
+            final ChannelHandlerContext ctx, final List<ChannelHandler> handlers) throws Exception {
+        cmd.addListener(new PingResponseListener(initializedFuture, cmd, ctx), ctx.executor());
+
+        for (ChannelHandler handler : handlers) {
+            if (handler instanceof CommandHandler) {
+                CommandHandler ch = (CommandHandler) handler;
+                ch.write(ctx, cmd, ctx.newPromise());
+                ctx.flush();
+            }
+        }
+    }
+
     static void removeIfExists(ChannelPipeline pipeline, Class<? extends ChannelHandler> handlerClass) {
         ChannelHandler channelHandler = pipeline.get(handlerClass);
         if (channelHandler != null) {
@@ -87,5 +120,31 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
     @Override
     public Future<Boolean> channelInitialized() {
         return initializedFuture;
+    }
+
+    private static class PingResponseListener implements Runnable {
+
+        private final SettableFuture<Boolean> initializedFuture;
+        private final Command<?, ?, ?> cmd;
+        private final ChannelHandlerContext ctx;
+
+        public PingResponseListener(SettableFuture<Boolean> initializedFuture, Command<?, ?, ?> cmd, ChannelHandlerContext ctx) {
+            this.initializedFuture = initializedFuture;
+            this.cmd = cmd;
+            this.ctx = ctx;
+        }
+
+        @Override
+        public void run() {
+            if (!initializedFuture.isDone()) {
+                if (cmd.getException() != null) {
+                    initializedFuture.setException(cmd.getException());
+                    return;
+                }
+
+                initializedFuture.set(true);
+                ctx.fireChannelActive();
+            }
+        }
     }
 }

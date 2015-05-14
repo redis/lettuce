@@ -7,6 +7,7 @@ import static com.google.code.tempusfugit.temporal.WaitFor.*;
 import static com.lambdaworks.redis.ScriptOutputType.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -15,10 +16,14 @@ import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.server.RandomResponseServer;
+import io.netty.channel.Channel;
 
 public class ClientTest extends AbstractCommandTest {
     @Rule
@@ -44,17 +49,220 @@ public class ClientTest extends AbstractCommandTest {
         redis.get(key);
     }
 
-    @Test(expected = RedisException.class)
+    @Test
+    public void variousClientOptions() throws Exception {
+
+        RedisAsyncConnectionImpl<String, String> plain = (RedisAsyncConnectionImpl) client.connectAsync();
+        assertThat(plain.getOptions().isAutoReconnect()).isTrue();
+
+        client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
+        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
+        assertThat(connection.getOptions().isAutoReconnect()).isFalse();
+
+        assertThat(plain.getOptions().isAutoReconnect()).isTrue();
+
+    }
+
+    @Test
     public void disconnectedConnectionWithoutReconnect() throws Exception {
 
         client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
+
+        Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+        ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+        assertThat(connectionWatchdog).isNull();
 
         connection.quit();
         Thread.sleep(500);
         try {
-            System.out.println(connection.get(key));
+            connection.get(key).get();
+        } catch (Exception e) {
+            assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining(
+                    "Connection is in a disconnected state and reconnect is disabled");
+        } finally {
+            connection.close();
+        }
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void pingBeforeConnectFailsWithVeryShortTimeout() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
+                .withTimeout(1, TimeUnit.NANOSECONDS).build();
+
+        client.connect(redisUri);
+    }
+
+    /**
+     * Expect to run into invalid something exception instead of timeout.
+     * 
+     * @throws Exception
+     */
+    @Test(timeout = 10000)
+    public void pingBeforeConnectFails() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        RandomResponseServer ts = getRandomResponseServer();
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(500))
+                .withTimeout(10, TimeUnit.MINUTES).build();
+
+        try {
+            client.connect(redisUri);
+        } catch (Exception e) {
+            assertThat(e).isExactlyInstanceOf(RedisConnectionException.class);
+            assertThat(e.getCause()).hasMessageContaining("Invalid first byte:");
+        } finally {
+            ts.shutdown();
+        }
+    }
+
+    /**
+     * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect. Meanwhile a command
+     * is fired to the connection and the watchdog is triggered afterwards to reconnect.
+     * 
+     * Expectation: Command after failed reconnect contains the reconnect exception.
+     * 
+     * @throws Exception
+     */
+    @Test(timeout = 10000)
+    public void pingBeforeConnectFailOnReconnect() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true)
+                .suspendReconnectOnProtocolFailure(true).build());
+
+        RandomResponseServer ts = getRandomResponseServer();
+
+        RedisURI redisUri = getDefaultRedisURI();
+
+        try {
+            RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);
+
+            Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+            ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+
+            assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+            assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
+
+            connection.set(key, value);
+
+            Thread.sleep(100);
+            redisUri.setPort(TestSettings.port(500));
+            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
+
+            connection.quit();
+            Thread.sleep(500);
+            assertThat(connection.isOpen()).isFalse();
+            assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+            assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
+
+            try {
+                connection.info().get();
+            } catch (ExecutionException e) {
+                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
+                assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
+            }
+        } finally {
+            ts.shutdown();
+        }
+    }
+
+    protected RandomResponseServer getRandomResponseServer() throws InterruptedException {
+        RandomResponseServer ts = new RandomResponseServer();
+        ts.initialize(TestSettings.port(500));
+        return ts;
+    }
+
+    protected RedisURI getDefaultRedisURI() {
+        return RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
+    }
+
+    /**
+     * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect. Meanwhile a command
+     * is fired to the connection and the watchdog is triggered afterwards to reconnect.
+     * 
+     * Expectation: Queued commands are canceled (reset), subsequent commands contain the connection exception.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void cancelCommandsOnReconnectFailure() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true)
+                .build());
+
+        RandomResponseServer ts = getRandomResponseServer();
+
+        RedisURI redisUri = getDefaultRedisURI();
+
+        try {
+            RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);
+
+            Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+            ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+
+            assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+
+            connectionWatchdog.setReconnectSuspended(true);
+            redisUri.setPort(TestSettings.port(500));
+            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
+
+            connection.quit();
+            Thread.sleep(100);
+
+            assertThat(connection.isOpen()).isFalse();
+
+            RedisFuture<String> set1 = connection.set(key, value);
+            RedisFuture<String> set2 = connection.set(key, value);
+
+            assertThat(set1.isDone()).isFalse();
+            assertThat(set1.isCancelled()).isFalse();
+
+            connectionWatchdog.setReconnectSuspended(false);
+            connectionWatchdog.scheduleReconnect();
+            Thread.sleep(500);
+            assertThat(connection.isOpen()).isFalse();
+
+            try {
+                set1.get();
+            } catch (ExecutionException e) {
+                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
+                assertThat(e.getCause()).hasMessageStartingWith("Reset");
+            }
+
+            try {
+                set2.get();
+            } catch (ExecutionException e) {
+                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
+                assertThat(e.getCause()).hasMessageStartingWith("Reset");
+            }
+
+            try {
+                connection.info().get();
+            } catch (ExecutionException e) {
+                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
+                assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
+            }
+        } finally {
+            ts.shutdown();
+        }
+    }
+
+    @Test
+    public void pingBeforeConnect() throws Exception {
+
+        redis.set(key, value);
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+        RedisConnection<String, String> connection = client.connect();
+
+        try {
+            String result = connection.get(key);
+            assertThat(result).isEqualTo(value);
         } finally {
             connection.close();
         }
@@ -98,6 +306,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isEqualTo(connection);
 
+        client.shutdown();
     }
 
     @Test
@@ -126,6 +335,8 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(removedListener.onDisconnected).isNull();
         assertThat(removedListener.onException).isNull();
 
+        client.shutdown();
+
     }
 
     @Test(expected = RedisException.class)
@@ -136,7 +347,12 @@ public class ClientTest extends AbstractCommandTest {
 
     @Test
     public void reconnect() throws Exception {
+        Logger.getLogger("com.lambdaworks.redis.protocol").setLevel(Level.ALL);
+
         redis.set(key, value);
+
+        Logger.getLogger("com.lambdaworks.redis.protocol").setLevel(Level.INFO);
+
         redis.quit();
         Thread.sleep(100);
         assertThat(redis.get(key)).isEqualTo(value);

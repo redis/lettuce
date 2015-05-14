@@ -37,7 +37,7 @@ public class SentinelFailoverTest extends AbstractCommandTest {
         sentinel = sentinelClient.connectSentinelAsync();
 
         int masterPort = sentinelRule.findMaster(port(5), port(6));
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, TestSettings.hostAddr(), masterPort, 1);
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, TestSettings.hostAddr(), masterPort, 1, true);
 
     }
 

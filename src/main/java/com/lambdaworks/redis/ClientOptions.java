@@ -12,6 +12,7 @@ public class ClientOptions implements Serializable {
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
     private final boolean cancelCommandsOnReconnectFailure;
+    private final boolean suspendReconnectOnProtocolFailure;
 
     /**
      * Create a copy of {@literal options}
@@ -31,6 +32,7 @@ public class ClientOptions implements Serializable {
         private boolean pingBeforeActivateConnection = false;
         private boolean autoReconnect = true;
         private boolean cancelCommandsOnReconnectFailure = false;
+        private boolean suspendReconnectOnProtocolFailure = false;
 
         /**
          * Sets the {@literal PING} before activate connection flag.
@@ -44,13 +46,24 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Enables or disables auto reconnection on connection loss
+         * Enables or disables auto reconnection on connection loss.
          * 
          * @param autoReconnect true/false
          * @return {@code this}
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * Suspends reconnect when reconnects run into protocol failures (SSL verification, PING before connect fails).
+         * 
+         * @param suspendReconnectOnProtocolFailure true/false
+         * @return {@code this}
+         */
+        public Builder suspendReconnectOnProtocolFailure(boolean suspendReconnectOnProtocolFailure) {
+            this.suspendReconnectOnProtocolFailure = suspendReconnectOnProtocolFailure;
             return this;
         }
 
@@ -79,18 +92,21 @@ public class ClientOptions implements Serializable {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         autoReconnect = builder.autoReconnect;
+        suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
     }
 
     private ClientOptions(ClientOptions original) {
         this.pingBeforeActivateConnection = original.pingBeforeActivateConnection;
         this.autoReconnect = original.autoReconnect;
         this.cancelCommandsOnReconnectFailure = original.cancelCommandsOnReconnectFailure;
+        this.suspendReconnectOnProtocolFailure = original.suspendReconnectOnProtocolFailure;
     }
 
     protected ClientOptions() {
         pingBeforeActivateConnection = false;
         autoReconnect = true;
         cancelCommandsOnReconnectFailure = false;
+        suspendReconnectOnProtocolFailure = false;
     }
 
     /**
@@ -127,4 +143,13 @@ public class ClientOptions implements Serializable {
         return cancelCommandsOnReconnectFailure;
     }
 
+    /**
+     * If this flag is {@literal true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
+     * negotiation or when PING before connect fails.
+     * 
+     * @return {@literal true} if reconnect will be suspended on protocol errors.
+     */
+    public boolean isSuspendReconnectOnProtocolFailure() {
+        return suspendReconnectOnProtocolFailure;
+    }
 }

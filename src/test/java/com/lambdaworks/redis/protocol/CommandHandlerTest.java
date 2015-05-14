@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import com.lambdaworks.redis.ClientOptions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -25,7 +26,7 @@ public class CommandHandlerTest {
 
     private BlockingQueue<RedisCommand<String, String, ?>> q = new ArrayBlockingQueue<RedisCommand<String, String, ?>>(10);
 
-    private CommandHandler<String, String> sut = new CommandHandler<String, String>(q);
+    private CommandHandler<String, String> sut = new CommandHandler<String, String>(new ClientOptions.Builder().build(), q);
 
     @Mock
     private ChannelHandlerContext context;

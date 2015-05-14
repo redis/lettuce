@@ -195,6 +195,18 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     }
 
+    @Test
+    public void pubsubCloseOnClientShutdown() throws Exception {
+
+        RedisClient redisClient = new RedisClient(host, port);
+
+        RedisPubSubConnection<String, String> connection = redisClient.connectPubSub();
+
+        redisClient.shutdown();
+
+        assertThat(connection.isOpen()).isFalse();
+    }
+
     @Test(timeout = 200)
     public void utf8Channel() throws Exception {
         String channel = "channelλ";
