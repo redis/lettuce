@@ -7,6 +7,10 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.Duration;
+import com.google.code.tempusfugit.temporal.Timeout;
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.Maps;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
@@ -67,11 +71,41 @@ public class SentinelRule implements TestRule {
         }
     }
 
-    public void monitor(String key, String ip, int port, int quorum) {
+    /**
+     * Monitor a master and wait until all sentinels ACK'd by checking last-ping-reply
+     * 
+     * @param key
+     * @param ip
+     * @param port
+     * @param quorum
+     */
+    public void monitor(final String key, String ip, int port, int quorum, boolean sync) {
         try {
             for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
                 connection.monitor(key, ip, port, quorum).get();
             }
+
+            if (sync) {
+                WaitFor.waitOrTimeout(new Condition() {
+                    @Override
+                    public boolean isSatisfied() {
+
+                        for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
+                            try {
+                                Map<String, String> map = connection.master(key).get();
+                                String reply = map.get("last-ping-reply");
+                                if (reply == null || "0".equals(reply)) {
+                                    return false;
+                                }
+                            } catch (Exception e) {
+                                throw new IllegalStateException(e);
+                            }
+                        }
+                        return true;
+                    }
+                }, Timeout.timeout(Duration.seconds(5)));
+            }
+
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -121,8 +155,8 @@ public class SentinelRule implements TestRule {
 
         for (int redisPort : redisPorts) {
 
-            RedisConnection<String, String> connection = redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort)
-                    .build());
+            RedisConnection<String, String> connection = redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(),
+                    redisPort).build());
             List<Object> role = connection.role();
             connection.close();
 

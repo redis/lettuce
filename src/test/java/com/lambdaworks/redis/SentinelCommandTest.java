@@ -50,8 +50,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
 
-        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1);
-        sentinelRule.monitor(SLAVE_ID, hostAddr(), 16379, 1);
+        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
+        sentinelRule.monitor(SLAVE_ID, hostAddr(), 16379, 1, false);
     }
 
     @After
@@ -202,7 +202,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
         beMaster.slaveofNoOne();
         beSlave.slaveof(hostAddr(), port(5));
 
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, hostAddr(), sentinelRule.findMaster(port(5), port(6)), 1);
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, hostAddr(), sentinelRule.findMaster(port(5), port(6)), 1, true);
 
         try {
             WaitFor.waitOrTimeout(new Condition() {
