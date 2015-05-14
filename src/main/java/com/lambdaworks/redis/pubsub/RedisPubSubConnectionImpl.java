@@ -96,14 +96,27 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
     @Override
     public void activated() {
         super.activated();
+        resubscribe();
+    }
+
+    /**
+     * Re-subscribe to all previously subscribed channels and patterns.
+     * 
+     * @return list of the futures of the {@literal subscribe} and {@literal psubscribe} commands.
+     */
+    protected List<RedisFuture<Void>> resubscribe() {
+
+        List<RedisFuture<Void>> result = Lists.newArrayList();
 
         if (!channels.isEmpty()) {
-            subscribe(toArray(channels));
+            result.add(subscribe(toArray(channels)));
         }
 
         if (!patterns.isEmpty()) {
-            psubscribe(toArray(patterns));
+            result.add(psubscribe(toArray(patterns)));
         }
+
+        return result;
     }
 
     @Override

@@ -106,7 +106,12 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     @Test(timeout = 200)
     public void psubscribe() throws Exception {
-        pubsub.psubscribe(pattern);
+        RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
+        assertThat(psubscribe.get()).isNull();
+        assertThat(psubscribe.getError()).isNull();
+        assertThat(psubscribe.isCancelled()).isFalse();
+        assertThat(psubscribe.isDone()).isTrue();
+
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
     }

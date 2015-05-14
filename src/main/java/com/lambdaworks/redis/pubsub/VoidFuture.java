@@ -6,10 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import io.netty.buffer.ByteBuf;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -20,22 +17,6 @@ class VoidFuture implements RedisFuture<Void> {
 
     public VoidFuture(RedisCommand<?, ?, ?> redisFuture) {
         this.redisFuture = redisFuture;
-    }
-
-    public CommandOutput<?, ?, ?> getOutput() {
-        return redisFuture.getOutput();
-    }
-
-    public CommandArgs<?, ?> getArgs() {
-        return redisFuture.getArgs();
-    }
-
-    public void complete() {
-        redisFuture.complete();
-    }
-
-    public void encode(ByteBuf buf) {
-        redisFuture.encode(buf);
     }
 
     @Override
