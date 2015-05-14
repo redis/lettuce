@@ -41,4 +41,9 @@ public class JavaRuntimeTest {
         assertThat(JavaRuntime.AT_LEAST_JDK_7).isTrue();
         assertThat(JavaRuntime.AT_LEAST_JDK_8).isTrue();
     }
+
+    @Test
+    public void testNotPresentClass() {
+        assertThat(JavaRuntime.isPresent("total.fancy.class.name")).isFalse();
+    }
 }

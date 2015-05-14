@@ -9,9 +9,12 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,7 +93,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     @Test(timeout = 200)
     public void pmessage() throws Exception {
-        pubsub.psubscribe(pattern);
+        pubsub.psubscribe(pattern).await(1, TimeUnit.MINUTES);
         assertThat(patterns.take()).isEqualTo(pattern);
 
         redis.publish(channel, message);
@@ -116,6 +119,23 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
+    @Test(timeout = 200)
+    public void psubscribeWithListener() throws Exception {
+        RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
+        final List<Object> listener = Lists.newArrayList();
+        psubscribe.addListener(new Runnable() {
+            @Override
+            public void run() {
+                listener.add("done");
+            }
+        }, MoreExecutors.sameThreadExecutor());
+        psubscribe.await(1, TimeUnit.MINUTES);
+
+        assertThat(patterns.take()).isEqualTo(pattern);
+        assertThat((long) counts.take()).isEqualTo(1);
+        assertThat(listener).hasSize(1);
+    }
+
     @Test
     public void pubsubEmptyChannels() throws Exception {
         RedisFuture<Void> future = pubsub.subscribe();
@@ -127,7 +147,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     @Test
     public void pubsubChannels() throws Exception {
         RedisFuture<Void> future = pubsub.subscribe(channel);
-        future.get();
+        future.get(1, TimeUnit.MINUTES);
         List<String> result = redis.pubsubChannels();
         assertThat(result).contains(channel);
 
@@ -145,7 +165,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     @Test
     public void pubsubChannelsWithArg() throws Exception {
-        pubsub.subscribe(channel).get();
+        pubsub.subscribe(channel);
         List<String> result = redis.pubsubChannels(pattern);
         assertThat(result, hasItem(channel));
     }

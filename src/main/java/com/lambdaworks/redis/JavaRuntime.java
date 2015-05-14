@@ -22,7 +22,7 @@ public class JavaRuntime {
      */
     public final static boolean AT_LEAST_JDK_8 = isPresent("java.lang.FunctionalInterface");
 
-    private static boolean isPresent(String className) {
+    protected static boolean isPresent(String className) {
         try {
             forName(className, getDefaultClassLoader());
             return true;
