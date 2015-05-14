@@ -2,8 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -15,10 +15,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.*;
 
 public class CommandInternalsTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
@@ -50,8 +47,24 @@ public class CommandInternalsTest {
         command.getOutput().set(buffer("one"));
         command.complete();
         assertThat(command.get()).isEqualTo("one");
-        command.toString();
         command.getOutput().toString();
+    }
+
+    @Test
+    public void customKeyword() throws Exception {
+
+        command = new Command<String, String, String>(MyKeywords.DUMMY, null, null, false);
+        command.setOutput(new StatusOutput<String, String>(codec));
+
+        assertThat(command.toString()).contains(MyKeywords.DUMMY.name());
+    }
+
+    @Test
+    public void customKeywordWithArgs() throws Exception {
+
+        command.getArgs().add(MyKeywords.DUMMY);
+        assertThat(command.getArgs().toString()).contains(MyKeywords.DUMMY.name());
+        assertThat(command.getArgs().getKeywords()).contains(MyKeywords.DUMMY);
     }
 
     @Test
@@ -123,5 +136,14 @@ public class CommandInternalsTest {
     public void sillyTestsForEmmaCoverage() throws Exception {
         assertThat(CommandType.valueOf("APPEND")).isEqualTo(CommandType.APPEND);
         assertThat(CommandKeyword.valueOf("AFTER")).isEqualTo(CommandKeyword.AFTER);
+    }
+
+    private enum MyKeywords implements ProtocolKeyword {
+        DUMMY;
+
+        @Override
+        public byte[] getBytes() {
+            return name().getBytes();
+        }
     }
 }

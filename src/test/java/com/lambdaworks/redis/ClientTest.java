@@ -63,7 +63,7 @@ public class ClientTest extends AbstractCommandTest {
 
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void disconnectedConnectionWithoutReconnect() throws Exception {
 
         client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
@@ -162,7 +162,7 @@ public class ClientTest extends AbstractCommandTest {
             assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
 
             try {
-                connection.info().get();
+                connection.info().get(1, TimeUnit.MINUTES);
             } catch (ExecutionException e) {
                 assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
                 assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
@@ -190,7 +190,7 @@ public class ClientTest extends AbstractCommandTest {
      * 
      * @throws Exception
      */
-    @Test
+    @Test(timeout = 10000)
     public void cancelCommandsOnReconnectFailure() throws Exception {
 
         client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true)
@@ -223,6 +223,7 @@ public class ClientTest extends AbstractCommandTest {
             assertThat(set1.isDone()).isFalse();
             assertThat(set1.isCancelled()).isFalse();
 
+            assertThat(connection.isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
             connectionWatchdog.scheduleReconnect();
             Thread.sleep(500);
@@ -253,7 +254,7 @@ public class ClientTest extends AbstractCommandTest {
         }
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void pingBeforeConnect() throws Exception {
 
         redis.set(key, value);
