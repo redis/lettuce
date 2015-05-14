@@ -31,7 +31,7 @@ public class ClientTest extends AbstractCommandTest {
 
     @Override
     public void openConnection() throws Exception {
-        Logger logger = LogManager.getLogger(CommandHandler.class);
+        Logger logger = LogManager.getLogger("com.lambdaworks.redis.protocol");
         logger.setLevel(Level.ALL);
         super.openConnection();
     }
@@ -39,7 +39,7 @@ public class ClientTest extends AbstractCommandTest {
     @Override
     public void closeConnection() throws Exception {
         super.closeConnection();
-        Logger logger = LogManager.getLogger(CommandHandler.class);
+        Logger logger = LogManager.getLogger("com.lambdaworks.redis.protocol");
         logger.setLevel(Level.INFO);
     }
 
