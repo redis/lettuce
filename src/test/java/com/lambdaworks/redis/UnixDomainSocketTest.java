@@ -43,7 +43,7 @@ public class UnixDomainSocketTest {
 
     @Before
     public void openConnection() throws Exception {
-
+        System.out.println(TestSettings.sentinelSocket());
         sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
     }
 
@@ -70,12 +70,12 @@ public class UnixDomainSocketTest {
     }
 
     private RedisURI getSocketRedisUri() throws IOException {
-        File file = new File("work/socket-6479").getCanonicalFile();
+        File file = new File(TestSettings.socket()).getCanonicalFile();
         return RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
     }
 
     private RedisURI getSentinelSocketRedisUri() throws IOException {
-        File file = new File("work/socket-26379").getCanonicalFile();
+        File file = new File(TestSettings.sentinelSocket()).getCanonicalFile();
         return RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
     }
 
