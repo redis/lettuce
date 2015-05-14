@@ -14,3 +14,6 @@ work/
 .settings
 dependency-reduced-pom.xml
 .idea
+.vagrant
+Vagrantfile
+
