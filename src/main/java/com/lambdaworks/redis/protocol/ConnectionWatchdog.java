@@ -108,14 +108,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Schedule reconnect if channel is not available/not active.
      */
     public void scheduleReconnect() {
-
+        logger.debug("scheduleReconnect()");
         if (channel == null || !channel.isActive()) {
-            logger.debug("scheduleReconnect()");
             if (attempts < RETRY_TIMEOUT_MAX) {
                 attempts++;
             }
             int timeout = 2 << attempts;
             timer.newTimeout(this, timeout, TimeUnit.MILLISECONDS);
+        } else {
+            logger.debug("Skipping scheduleReconnect() because I have an active channel");
         }
     }
 
