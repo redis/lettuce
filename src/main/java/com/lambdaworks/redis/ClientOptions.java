@@ -122,7 +122,7 @@ public class ClientOptions implements Serializable {
 
     /**
      * Controls auto-reconnect behavior on connections. If auto-reconnect is {@literal true} (default), it is enabled. As soon
-     * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue the
+     * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any
      * queued commands.
      *
      * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
@@ -134,8 +134,8 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * If this flag is {@literal true} any queued commands will be canceled when a reconnect failes within the activation
-     * sequence.
+     * If this flag is {@literal true} any queued commands will be canceled when a reconnect fails within the activation
+     * sequence. Default is {@literal false}.
      * 
      * @return {@literal true} if commands should be cancelled on reconnect failures.
      */

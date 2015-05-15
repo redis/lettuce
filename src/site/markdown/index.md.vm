@@ -71,6 +71,10 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
       <artifactId>guava</artifactId>
     </exclusion>
     <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport-native-epoll</artifactId>
+    </exclusion>
+    <exclusion>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-pool2</artifactId>
     </exclusion>
