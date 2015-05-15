@@ -1,21 +1,24 @@
 lettuce - A scalable Java Redis client
 =============
 
+[![Join the chat at https://gitter.im/mp911de/lettuce](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mp911de/lettuce?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
 Lettuce is a scalable thread-safe Redis client providing both synchronous and
 asynchronous connections. Multiple threads may share one connection provided
 they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
 Multiple connections are efficiently managed by the excellent netty NIO
-framework. Support for advanced redis features such as Sentinel, Cluster and redis data models 
+framework. Support for advanced Redis features such as Sentinel, Cluster and Redis data models
 is included.
 
-This version of lettuce has been tested against redis 2.8.13 and 3.0 RC3.
+This version of lettuce has been tested against Redis and 3.0.
 
 * Works with Java 6, 7 and 8
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
+* [SSL](https://github.com/mp911de/lettuce/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets) connections
 * [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
 * [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
@@ -23,6 +26,7 @@ This version of lettuce has been tested against redis 2.8.13 and 3.0 RC3.
 
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
+
 
 I'm developing and maintaining actively the fork of https://github/wg/lettuce
 
