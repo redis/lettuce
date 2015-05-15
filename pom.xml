@@ -29,6 +29,11 @@
         <url>https://travis-ci.org/mp911de/lettuce</url>
     </ciManagement>
 
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/mp911de/lettuce/issues</url>
+    </issueManagement>
+
     <developers>
         <developer>
             <id>will</id>
