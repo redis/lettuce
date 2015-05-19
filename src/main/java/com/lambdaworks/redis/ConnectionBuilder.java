@@ -20,7 +20,7 @@ import io.netty.util.Timer;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 02.02.15 09:40
  */
-class ConnectionBuilder {
+public class ConnectionBuilder {
 
     private Supplier<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;

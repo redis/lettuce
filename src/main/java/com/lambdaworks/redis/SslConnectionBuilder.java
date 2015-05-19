@@ -26,7 +26,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-class SslConnectionBuilder extends ConnectionBuilder {
+public class SslConnectionBuilder extends ConnectionBuilder {
     private RedisURI redisURI;
 
     public static SslConnectionBuilder sslConnectionBuilder() {
