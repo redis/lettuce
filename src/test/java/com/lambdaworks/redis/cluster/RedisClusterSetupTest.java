@@ -3,10 +3,10 @@ package com.lambdaworks.redis.cluster;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.TestSettings;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -14,9 +14,8 @@ import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisURI;
+import com.google.common.collect.ImmutableSet;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -133,15 +132,23 @@ public class RedisClusterSetupTest {
             }
         }
 
-        redis1.clusterDelSlots(1, 2, 3, 4, 5, 6);
-        redis2.clusterDelSlots(7, 8, 9, 10, 11, 12);
+        final Set<Integer> set1 = ImmutableSet.of(1, 2, 3, 4, 5, 6);
+        final Set<Integer> set2 = ImmutableSet.of(7, 8, 9, 10, 11, 12);
+
+        deleteSlots(redis1, set1);
+        deleteSlots(redis2, set2);
 
         try {
             WaitFor.waitOrTimeout(new Condition() {
                 @Override
                 public boolean isSatisfied() {
                     Partitions partitions = ClusterPartitionParser.parse(redis2.clusterNodes());
-                    return partitions.getPartitions().size() == 2 && partitions.getPartitions().get(0).getSlots().isEmpty();
+                    boolean condition = partitions.getPartitions().size() == 2
+                            && partitions.getPartitions().get(0).getSlots().isEmpty();
+                    if (!condition) {
+                        deleteSlots(redis1, set1);
+                    }
+                    return condition;
                 }
             }, Timeout.timeout(Duration.seconds(5)));
         } catch (Exception e) {
@@ -153,6 +160,16 @@ public class RedisClusterSetupTest {
             }
             fail("Slots/Partitions not deleted. Partitions: " + detail.getPartitions().size() + ", Slots on (0):" + slotsOn1, e);
         }
+    }
+
+    private void deleteSlots(RedisClusterConnection<String, String> connection, Set<Integer> slots) {
+        for (Integer slot : slots) {
+            try {
+                connection.clusterDelSlots(slot);
+            } catch (RedisException e) {
+            }
+        }
+
     }
 
     @Test
