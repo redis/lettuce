@@ -20,8 +20,6 @@ import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -132,7 +130,8 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
 
         if (connectionPoint != null && connectionPoint.getSocket() != null) {
-            connectionBuilder.bootstrap().channel(EpollDomainSocketChannel.class);
+            checkForEpollLibrary();
+            connectionBuilder.bootstrap().channel(EpollProvider.epollDomainSocketChannelClass);
         } else {
             connectionBuilder.bootstrap().channel(NioSocketChannel.class);
         }
@@ -150,10 +149,13 @@ public abstract class AbstractRedisClient {
             eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
         }
 
-        if (connectionPoint != null && connectionPoint.getSocket() != null
-                && !eventLoopGroups.containsKey(EpollEventLoopGroup.class)) {
-            EpollEventLoopGroup epl = new EpollEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
-            eventLoopGroups.put(EpollEventLoopGroup.class, epl);
+        if (connectionPoint != null && connectionPoint.getSocket() != null) {
+            checkForEpollLibrary();
+
+            if (!eventLoopGroups.containsKey(EpollProvider.epollEventLoopGroupClass)) {
+                EventLoopGroup epl = EpollProvider.newEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
+                eventLoopGroups.put(EpollProvider.epollEventLoopGroupClass, epl);
+            }
         }
 
         if (connectionPoint == null || connectionPoint.getSocket() == null) {
@@ -161,10 +163,15 @@ public abstract class AbstractRedisClient {
         }
 
         if (connectionPoint != null && connectionPoint.getSocket() != null) {
-            return eventLoopGroups.get(EpollEventLoopGroup.class);
+            checkForEpollLibrary();
+            return eventLoopGroups.get(EpollProvider.epollEventLoopGroupClass);
         }
 
         throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
+    }
+
+    private void checkForEpollLibrary() {
+        EpollProvider.checkForEpollLibrary();
     }
 
     @SuppressWarnings("unchecked")

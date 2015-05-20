@@ -1,7 +1,5 @@
 package com.lambdaworks.redis;
 
-import org.springframework.util.ClassUtils;
-
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
@@ -24,12 +22,16 @@ public class JavaRuntime {
 
     protected static boolean isPresent(String className) {
         try {
-            forName(className, getDefaultClassLoader());
+            forName(className);
             return true;
         } catch (Throwable ex) {
             // Class or one of its dependencies is not present...
             return false;
         }
+    }
+
+    static Class<?> forName(String className) throws ClassNotFoundException {
+        return forName(className, getDefaultClassLoader());
     }
 
     private static Class<?> forName(String className, ClassLoader classLoader) throws ClassNotFoundException {
@@ -65,7 +67,7 @@ public class JavaRuntime {
         }
         if (cl == null) {
             // No thread context class loader -> use class loader of this class.
-            cl = ClassUtils.class.getClassLoader();
+            cl = JavaRuntime.class.getClassLoader();
         }
         return cl;
     }

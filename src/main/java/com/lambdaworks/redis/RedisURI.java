@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HostAndPort;
-import io.netty.channel.unix.DomainSocketAddress;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide as well the database, password and
@@ -299,16 +298,27 @@ public class RedisURI implements Serializable, ConnectionPoint {
         return sentinels;
     }
 
+    /**
+     * 
+     * @return the resolved {@link SocketAddress} based either on host/port or the socket.
+     */
     public SocketAddress getResolvedAddress() {
         if (resolvedAddress == null) {
-            if (getSocket() != null) {
-                resolvedAddress = new DomainSocketAddress(getSocket());
-            } else {
-                resolvedAddress = new InetSocketAddress(host, port);
-            }
+            resolveAddress();
         }
 
         return resolvedAddress;
+    }
+
+    /**
+     * Resolve the address.
+     */
+    private void resolveAddress() {
+        if (getSocket() != null) {
+            resolvedAddress = EpollProvider.newSocketAddress(getSocket());
+        } else {
+            resolvedAddress = new InetSocketAddress(host, port);
+        }
     }
 
     @Override
@@ -547,7 +557,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public RedisURI build() {
             return redisURI;
         }
-
     }
 
 }
