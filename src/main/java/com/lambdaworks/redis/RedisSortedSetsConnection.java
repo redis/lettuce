@@ -482,7 +482,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @param count the count
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      */
-    List<ScoredValue<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
+    List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
 
     /**
      * Stream over a range of members in a sorted set, by index, with scores ordered from high to low.
