@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.concurrent.ExecutionException;
 
@@ -35,12 +35,11 @@ class Connections {
             try {
                 redisAsyncConnection.ping().get();
                 return true;
-            } catch (RuntimeException e) {
+            } catch (ExecutionException | RuntimeException e) {
                 return false;
             } catch (InterruptedException e) {
-                return false;
-            } catch (ExecutionException e) {
-                return false;
+                Thread.currentThread().interrupt();
+                throw new RedisCommandInterruptedException(e);
             }
         }
 

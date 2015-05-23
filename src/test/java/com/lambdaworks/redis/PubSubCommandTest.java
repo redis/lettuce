@@ -9,16 +9,14 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
 import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
@@ -123,12 +121,8 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     public void psubscribeWithListener() throws Exception {
         RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
         final List<Object> listener = Lists.newArrayList();
-        psubscribe.addListener(new Runnable() {
-            @Override
-            public void run() {
-                listener.add("done");
-            }
-        }, MoreExecutors.sameThreadExecutor());
+
+        psubscribe.thenAccept(aVoid -> listener.add("done"));
         psubscribe.await(1, TimeUnit.MINUTES);
 
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -139,9 +133,11 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     @Test
     public void pubsubEmptyChannels() throws Exception {
         RedisFuture<Void> future = pubsub.subscribe();
-        future.get();
-        assertThat(future.getError()).isEqualTo("ERR wrong number of arguments for 'subscribe' command");
-
+        try {
+            future.get();
+        } catch (Exception e) {
+            assertThat(e).hasMessageContaining("ERR wrong number of arguments for 'subscribe' command");
+        }
     }
 
     @Test
