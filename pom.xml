@@ -78,7 +78,7 @@
   <scm>
     <url>http://github.com/mybatis/spring</url>
     <connection>scm:git:ssh://github.com/mybatis/spring.git</connection>
-    <developerConnection>scm:git:git+ssh://git@github.com/mybatis/spring.git</developerConnection>
+    <developerConnection>scm:git:ssh://git@github.com/mybatis/spring.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
   <issueManagement>
