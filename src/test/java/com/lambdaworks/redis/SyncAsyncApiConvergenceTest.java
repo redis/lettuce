@@ -1,8 +1,13 @@
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,33 +52,21 @@ public class SyncAsyncApiConvergenceTest {
     @Test
     public void testSameResultType() throws Exception {
         Method method = asyncClass.getMethod(this.method.getName(), this.method.getParameterTypes());
-        Class<?> returnType = method.getReturnType();
+        Type returnType = method.getGenericReturnType();
 
-        if (returnType.equals(RedisFuture.class)) {
+        if (method.getReturnType().equals(RedisFuture.class)) {
             ParameterizedType genericReturnType = (ParameterizedType) method.getGenericReturnType();
             Type[] actualTypeArguments = genericReturnType.getActualTypeArguments();
 
-            if (actualTypeArguments[0] instanceof TypeVariable) {
-
-                assertThat(Object.class).isEqualTo(this.method.getReturnType());
-                return;
-            }
-
-            if (actualTypeArguments[0] instanceof ParameterizedType) {
-
-                ParameterizedType parameterizedType = (ParameterizedType) actualTypeArguments[0];
-                returnType = (Class<?>) parameterizedType.getRawType();
-            } else if (actualTypeArguments[0] instanceof GenericArrayType) {
-
+            if (actualTypeArguments[0] instanceof GenericArrayType) {
                 GenericArrayType arrayType = (GenericArrayType) actualTypeArguments[0];
                 returnType = Array.newInstance((Class<?>) arrayType.getGenericComponentType(), 0).getClass();
             } else {
-                returnType = (Class<?>) actualTypeArguments[0];
+                returnType = actualTypeArguments[0];
             }
         }
 
-        assertThat(returnType).describedAs(this.method.toString())
-            .isEqualTo(this.method.getReturnType());
-
+        assertThat(returnType.toString()).describedAs(this.method.toString()).isEqualTo(
+                this.method.getGenericReturnType().toString());
     }
 }
