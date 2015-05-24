@@ -130,7 +130,7 @@
     <dependency>
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>3.0.4.RELEASE</version>
       <scope>provided</scope>
     </dependency>
 
@@ -153,7 +153,7 @@
     <dependency>
       <groupId>ognl</groupId>
       <artifactId>ognl</artifactId>
-      <version>3.0.8</version>
+      <version>3.0.11</version>
       <scope>test</scope>
     </dependency>
 
@@ -174,7 +174,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>2.2.1</version>
+      <version>3.0.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -221,10 +221,6 @@
         <exclusion>
           <groupId>nekohtml</groupId>
           <artifactId>nekohtml</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -310,6 +306,7 @@
     </testResources>
   </build>
 
+  <!-- TODO: Why is this necessary, the dependency is alreayd present at this scope? -->
   <!-- this is just a turnaround to Mac compilers -->
   <profiles>
     <profile>
