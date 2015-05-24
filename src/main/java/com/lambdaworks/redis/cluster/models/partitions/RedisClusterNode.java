@@ -43,6 +43,12 @@ public class RedisClusterNode implements Serializable {
         this.flags = flags;
     }
 
+    public static RedisClusterNode of(String nodeId) {
+        RedisClusterNode redisClusterNode = new RedisClusterNode();
+        redisClusterNode.setNodeId(nodeId);
+        return redisClusterNode;
+    }
+
     public RedisURI getUri() {
         return uri;
     }
@@ -126,9 +132,6 @@ public class RedisClusterNode implements Serializable {
 
         RedisClusterNode that = (RedisClusterNode) o;
 
-        if (uri != null ? !uri.equals(that.uri) : that.uri != null) {
-            return false;
-        }
         if (nodeId != null ? !nodeId.equals(that.nodeId) : that.nodeId != null) {
             return false;
         }
@@ -138,8 +141,7 @@ public class RedisClusterNode implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = uri != null ? uri.hashCode() : 0;
-        result = 31 * result + (nodeId != null ? nodeId.hashCode() : 0);
+        int result = 31 * (nodeId != null ? nodeId.hashCode() : 0);
         return result;
     }
 
