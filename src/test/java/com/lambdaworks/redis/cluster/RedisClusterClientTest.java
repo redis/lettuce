@@ -41,7 +41,6 @@ import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -50,16 +49,9 @@ import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
-public class RedisClusterClientTest {
-
-    public static final String host = TestSettings.hostAddr();
-    public static final int port1 = 7379;
-    public static final int port2 = 7380;
-    public static final int port3 = 7381;
-    public static final int port4 = 7382;
+public class RedisClusterClientTest extends AbstractClusterTest {
 
     protected static RedisClient client;
-    protected static RedisClusterClient clusterClient;
 
     protected Logger log = Logger.getLogger(getClass());
 
@@ -78,25 +70,13 @@ public class RedisClusterClientTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
+        setupClusterClient();
         client = new RedisClient(host, port1);
-
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
-
-    }
-
-    private static int[] createSlots(int from, int to) {
-        int[] result = new int[to - from];
-        int counter = 0;
-        for (int i = from; i < to; i++) {
-            result[counter++] = i;
-
-        }
-        return result;
     }
 
     @AfterClass
     public static void shutdownClient() {
-
+        shutdownClusterClient();
         client.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 

@@ -164,6 +164,24 @@ public class RedisClusterNode implements Serializable {
         return sb.toString();
     }
 
+    /**
+     * 
+     * @param nodeFlag
+     * @return true if the {@linkplain NodeFlag} is contained within the flags.
+     */
+    public boolean is(NodeFlag nodeFlag) {
+        return getFlags().contains(nodeFlag);
+    }
+
+    /**
+     * 
+     * @param slot
+     * @return true if the slot is contained within the handled slots.
+     */
+    public boolean hasSlot(int slot) {
+        return getSlots().contains(slot);
+    }
+
     public enum NodeFlag {
         NOFLAGS, MYSELF, SLAVE, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
