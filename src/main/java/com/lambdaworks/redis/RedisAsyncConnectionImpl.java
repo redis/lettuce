@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,8 +14,18 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.MultiOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.SetArgs;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -242,6 +252,10 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public RedisFuture<Long> del(K... keys) {
+        return dispatch(commandBuilder.del(keys));
+    }
+
+    public RedisFuture<Long> del(Iterable<K> keys) {
         return dispatch(commandBuilder.del(keys));
     }
 
@@ -536,6 +550,10 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public RedisFuture<List<V>> mget(K... keys) {
+        return dispatch(commandBuilder.mget(keys));
+    }
+
+    public RedisFuture<List<V>> mget(Iterable<K> keys) {
         return dispatch(commandBuilder.mget(keys));
     }
 
@@ -1579,8 +1597,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(type, output, null);
     }
 
-    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
-            CommandArgs<K, V> args) {
+    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         Command<K, V, T> cmd = new Command<K, V, T>(type, output, args, multi != null);
         return dispatch(cmd);
     }

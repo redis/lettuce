@@ -1,0 +1,53 @@
+package com.lambdaworks.redis.cluster;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import com.lambdaworks.redis.RedisFuture;
+
+/**
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ */
+public class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFuture<V> {
+
+    private CountDownLatch latch = new CountDownLatch(1);
+
+    public PipelinedRedisFuture(Map<Integer, ? extends RedisFuture<?>> executions,
+            Function<PipelinedRedisFuture<V>, V> converter) {
+
+        CompletableFuture.allOf(executions.values().toArray(new CompletableFuture[executions.size()]))
+                .thenRun(() -> complete(converter.apply(this))).exceptionally(throwable -> {
+                    completeExceptionally(throwable);
+                    return null;
+                });
+    }
+
+    @Override
+    public boolean complete(V value) {
+        boolean result = super.complete(value);
+        latch.countDown();
+        return result;
+    }
+
+    @Override
+    public boolean completeExceptionally(Throwable ex) {
+
+        boolean value = super.completeExceptionally(ex);
+        latch.countDown();
+        return value;
+    }
+
+    @Override
+    public String getError() {
+        return null;
+    }
+
+    @Override
+    public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+        return latch.await(timeout, unit);
+    }
+
+}
