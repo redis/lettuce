@@ -34,20 +34,11 @@ Maven Artifacts/Download
 
 Releases of lettuce are available in the maven central repository. Take also a look at the [Download](https://github.com/mp911de/lettuce/wiki/Download) page in the [Wiki](https://github.com/mp911de/lettuce/wiki).
 
-**Beta**
 ```xml
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.2.Beta1</version>
-</dependency>
-```
-**Stable**
-```xml
-<dependency>
-  <groupId>biz.paluch.redis</groupId>
-  <artifactId>lettuce</artifactId>
-  <version>3.1.Final</version>
+  <version>3.2.Final</version>
 </dependency>
 ```
 
@@ -57,7 +48,7 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>3.2.Beta1</version>
+  <version>3.2.Final</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
