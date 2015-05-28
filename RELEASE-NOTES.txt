@@ -1,29 +1,32 @@
-              lettuce 3.2.Beta1 RELEASE NOTES
+              lettuce 3.2.Final RELEASE NOTES
 
-This release features Unix domain sockets on linux-x86_64 systems. Local connections to a Redis instance are now possible
-without the use of the network. A second feature with a huge impact is client options. Client options allow to control behavior
-on a fine-grained base. It is now possible to turn off auto-reconnect, validate the connection with a PING before activating
-the connection for client usage and many more.
+This release features Unix domain sockets on linux-x86_64 systems. Local connections to a Redis
+instance are now possible without the use of the network. A second feature with a huge impact is client options.
+Client options allow to control behavior on a fine-grained base. It is now possible to turn off auto-reconnect,
+validate the connection with a PING before activating the connection for client usage and many more.
 
-We tested lettuce using YourKit for performance. Subtracting all IO the most time is spent on constructing the return futures and command objects.
-The async API can issue about 300Kops/sec whereas the sync API performs about 13Kops/sec (GET's, PING's) on a single thread.
+We tested lettuce using YourKit for performance. Subtracting all IO, the most time is spent on constructing the return
+futures and command objects. The async API can issue about 300Kops/sec whereas the sync API performs
+about 13Kops/sec (GET's, PING's) on a single thread.
 Sync performance depends on the Redis performance (tested on a Mac, 2,7 GHz Intel Core i7).
 
-lettuce provides now also base functionality for building clients using the Redis protocol. An example is spinach (https://github.com/mp911de/spinach).
+lettuce provides now also base functionality for building clients using the Redis protocol.
+An example is spinach (https://github.com/mp911de/spinach).
 
-lettuce is built with Java 8 but can be used with Java 6, 7 and 8. Java 6 and 7 support will be dropped with lettuce 4.0.
-The new lettuce-testcontainer project ensures until then. You can find the build results at https://travis-ci.org/mp911de/lettuce-testcontainer
+lettuce is built with Java 8 but can be used with Java 6, 7 and 8. Java 6 and 7 support will be
+dropped with lettuce 4.0. The new lettuce-testcontainer project ensures until then.
+You can find the build results at https://travis-ci.org/mp911de/lettuce-testcontainer
 
 If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
-
-From now on, mp911de/lettuce is a standalone repo that is no longer a Github fork of wg/lettuce.
-On code and IP-level, it is of course it is the fork of wg/lettuce. This Github fork flag prevented searching for code and searches for lettuce did not show up the repo itself. The change is only, how Github handles the repo, everything else
-stays the same.
 
 
 Unix Domain Sockets
 -----
-Unix Domain Sockets are useful only if connecting locally and maintaining the connection point on your own.
+Unix Domain Sockets are inter-process communication channels on POSIX compliant systems. They allow to exchange data
+between processes on the same host operating system. When using Redis, which is usually a network service,
+Unix Domain Sockets are usable only if connecting locally to a single instance. Redis Sentinel and Redis Cluster,
+maintain tables of remote or local nodes and act therefore as registry. Unix Domain Sockets are not beneficial with
+Redis Sentinel and Redis Cluster.
 Using RedisClusterClient with Unix Domain Sockets would connect to the local node using a socket and then open
 TCP connection to all the other hosts. A good example is connecting locally to a standalone or a single cluster node
 to gain performance.
@@ -42,11 +45,14 @@ Enhancements
 * Introduce ClientOptions to control specific behavior #58
 * Enhance stability when reconnecting #56
 * Extract and use interfaces for improved extensibility
+* Upgrade netty to 4.0.28.Final
 
 Fixes
 -----
 * RedisPubSubConnectionImpl.activated does not call super.activated() #55
 * RedisPubSubConnectionImpl.activated() deadlock #57
+* Fix zrevrangebyscoreWithScores signature bug #65
+* Handle absence of optional epoll library in a reasonable way bug #64
 
 Other
 ------
