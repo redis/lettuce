@@ -7,7 +7,9 @@
     <body>
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
-            <item name="Download" href="download.html"/>
+            <item name="Download (current)" href="download.html"/>
+            <item name="Download (archive)" href="https://github.com/mp911de/lettuce/wiki/Download"/>
+            <item name="Releases" href="https://github.com/mp911de/lettuce/releases"/>
         </menu>
 
         <menu name="Project Documentation">
