@@ -23,6 +23,14 @@
         <dependencySet>
             <includes>
                 <include>io.netty:*</include>
+            </includes>
+            <scope>provided</scope>
+            <outputDirectory>dependencies</outputDirectory>
+            <unpack>false</unpack>
+        </dependencySet>
+        <dependencySet>
+            <includes>
+                <include>io.netty:*</include>
                 <include>com.google.guava:*</include>
                 <include>org.apache.commons:*</include>
             </includes>

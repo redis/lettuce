@@ -11,7 +11,8 @@
         </menu>
 
         <menu name="Project Documentation">
-            <item name="JavaDoc" href="apidocs/index.html"/>
+            <item name="JavaDoc (current)" href="apidocs/index.html"/>
+            <item name="JavaDoc (archive)" href="docs/api/releases/"/>
         </menu>
 
         <menu ref="reports"/>

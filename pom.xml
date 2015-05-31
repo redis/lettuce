@@ -453,6 +453,7 @@
                     <scmBranch>gh-pages</scmBranch>
                     <content>${project.build.directory}/site</content>
                     <skipCheckin>${github.site.upload.skip}</skipCheckin>
+                    <skipDeletedFiles>true</skipDeletedFiles>
                     <pubScmUrl>scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
                 </configuration>
             </plugin>
