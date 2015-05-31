@@ -1,10 +1,6 @@
 lettuce - A scalable Java Redis client
 =============
 
-[![Join the chat at https://gitter.im/mp911de/lettuce](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mp911de/lettuce)
-
-[![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
-
 Lettuce is a scalable thread-safe Redis client providing both synchronous and
 asynchronous connections. Multiple threads may share one connection provided
 they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
@@ -24,17 +20,15 @@ This version of lettuce has been tested against Redis and 3.0.
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Connection Interfaces](https://github.com/mp911de/lettuce/wiki/Connection-Interfaces)
 
-
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
+I'm developing and maintaining actively the fork of https://github.com/wg/lettuce
 
-I'm developing and maintaining actively the fork of https://github/wg/lettuce
+[![Join the chat at https://gitter.im/mp911de/lettuce](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mp911de/lettuce) [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
 
 How to get
 -------------
-
-Maven:
 
 ```
 <dependency>

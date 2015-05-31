@@ -1,4 +1,6 @@
-<project name="lettuce">
+<project xmlns="http://maven.apache.org/DECORATION/1.6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/DECORATION/1.6.0 http://maven.apache.org/xsd/decoration-1.6.0.xsd"
+         name="lettuce">
     <bannerLeft>
         <name>lettuce - A scalable Java Redis client</name>
         <href>http://redis.paluch.biz/</href>
@@ -7,8 +9,9 @@
     <body>
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
-            <item name="Download (current)" href="download.html"/>
-            <item name="Download (archive)" href="https://github.com/mp911de/lettuce/wiki/Download"/>
+            <item name="Downloads" href="download.html" collapse="true">
+                <item name="Archive" href="https://github.com/mp911de/lettuce/wiki/Download"/>
+            </item>
             <item name="Releases" href="https://github.com/mp911de/lettuce/releases"/>
         </menu>
 
