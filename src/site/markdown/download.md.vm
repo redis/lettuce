@@ -47,12 +47,12 @@ Using lettuce on your classpath
   the dependencies listed below to your classpath.
 
     lettuce-${lettuce-release-version}.jar
-    netty-buffer-${netty.version}.jar
-    netty-codec-${netty.version}.Final.jar
-    netty-common-${netty.version}.Final.jar
-    netty-transport-${netty.version}.jar
-    netty-transport-native-epoll-${netty.version}.jar
-    netty-handler-${netty.version}.jar
+    netty-buffer-${netty-version}.jar
+    netty-codec-${netty-version}.Final.jar
+    netty-common-${netty-version}.Final.jar
+    netty-transport-${netty-version}.jar
+    netty-transport-native-epoll-${netty-version}.jar
+    netty-handler-${netty-version}.jar
     guava-17.0.jar
     commons-pool2-2.2.jar
 
