@@ -61,7 +61,7 @@ import org.springframework.context.annotation.Import;
  *
  * @author Michael Lanyon
  * @author Eduardo Macarron
- * 
+ *
  * @since 1.2.0
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
@@ -101,7 +101,7 @@ public @interface MapperScan {
    * within the Spring container.
    */
   Class<? extends BeanNameGenerator> nameGenerator() default BeanNameGenerator.class;
-  
+
   /**
    * This property specifies the annotation that the scanner will search for.
    * <p>
@@ -135,5 +135,11 @@ public @interface MapperScan {
    * have more than one datasource.
    */
   String sqlSessionFactoryRef() default "";
+
+  /**
+   * Specifies a custom MapperFactoryBean to return a mybatis proxy as spring bean.
+   *
+   */
+  Class<? extends MapperFactoryBean> factoryBean() default MapperFactoryBean.class;
 
 }

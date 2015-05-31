@@ -16,6 +16,7 @@
 package org.mybatis.spring.annotation;
 
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.After;
@@ -27,6 +28,7 @@ import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.MapperInterface;
 import org.mybatis.spring.mapper.MapperSubinterface;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
+import org.mybatis.spring.type.DummyMapperFactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -163,6 +165,22 @@ public final class MapperScanTest {
   }
 
   @Test
+  public void testCustomMapperFactoryBean() {
+    applicationContext.register(AppConfigWithCustomMapperFactoryBean.class);
+
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+
+    assertTrue(DummyMapperFactoryBean.getMapperCount() > 0);
+
+  }
+
+  @Test
   public void testScanWithNameConflict() {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(Object.class);
@@ -263,6 +281,11 @@ public final class MapperScanTest {
   @Configuration
   @MapperScan(basePackages = "org.mybatis.spring.mapper", nameGenerator = MapperScanTest.BeanNameGenerator.class)
   public static class AppConfigWithNameGenerator {
+  }
+
+  @Configuration
+  @MapperScan(basePackages = "org.mybatis.spring.mapper", factoryBean = DummyMapperFactoryBean.class)
+  public static class AppConfigWithCustomMapperFactoryBean {
   }
 
   public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {
