@@ -396,5 +396,5 @@ release:
 
 apidocs:
 	mvn site:site
-    ./apidocs.sh
+	./apidocs.sh
 
