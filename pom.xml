@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>24-SNAPSHOT</version>
+    <version>24</version>
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
@@ -110,7 +110,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.2.8</version>
+      <version>3.3.0</version>
       <scope>provided</scope>
     </dependency>
 
@@ -174,7 +174,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>3.0.0</version>
+      <version>3.0.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -306,8 +306,8 @@
     </testResources>
   </build>
 
-  <!-- TODO: Why is this necessary, the dependency is alreayd present at this scope? -->
-  <!-- this is just a turnaround to Mac compilers -->
+  <!-- TODO: Why is this necessary, the dependency is already present at this scope? -->
+  <!-- this is just a turn-around to Mac compilers -->
   <profiles>
     <profile>
       <id>mac-jvm-classloader-issue</id>

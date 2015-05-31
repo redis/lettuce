@@ -70,6 +70,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private Class<?> markerInterface;
 
+  private MapperFactoryBean mapperFactoryBean = new MapperFactoryBean();
+
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
   }
@@ -101,6 +103,11 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   public void setSqlSessionFactoryBeanName(String sqlSessionFactoryBeanName) {
     this.sqlSessionFactoryBeanName = sqlSessionFactoryBeanName;
   }
+
+  public void setMapperFactoryBean(MapperFactoryBean mapperFactoryBean) {
+    this.mapperFactoryBean = (mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean());
+  }
+
 
   /**
    * Configures parent scanner to search for the right interfaces. It can search
@@ -177,8 +184,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
       // the mapper interface is the original class of the bean
       // but, the actual class of the bean is MapperFactoryBean
-      definition.getConstructorArgumentValues().addGenericArgumentValue(definition.getBeanClassName());
-      definition.setBeanClass(MapperFactoryBean.class);
+      definition.getPropertyValues().add("mapperInterface", definition.getBeanClassName());
+      definition.setBeanClass(this.mapperFactoryBean.getClass());
 
       definition.getPropertyValues().add("addToConfig", this.addToConfig);
 

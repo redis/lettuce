@@ -48,7 +48,7 @@ import org.springframework.beans.factory.FactoryBean;
  * Note that this factory can only inject <em>interfaces</em>, not concrete classes.
  *
  * @author Eduardo Macarron
- * 
+ *
  * @see SqlSessionTemplate
  * @version $Id$
  */
@@ -64,30 +64,6 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
   }
 
   public MapperFactoryBean() {
-  }
-
-    /**
-   * Sets the mapper interface of the MyBatis mapper
-   *
-   * @param mapperInterface class of the interface
-   */
-  public void setMapperInterface(Class<T> mapperInterface) {
-    this.mapperInterface = mapperInterface;
-  }
-
-  /**
-   * If addToConfig is false the mapper will not be added to MyBatis. This means
-   * it must have been included in mybatis-config.xml.
-   * <p>
-   * If it is true, the mapper will be added to MyBatis in the case it is not already
-   * registered.
-   * <p>
-   * By default addToCofig is true.
-   *
-   * @param addToConfig
-   */
-  public void setAddToConfig(boolean addToConfig) {
-    this.addToConfig = addToConfig;
   }
 
   /**
@@ -136,4 +112,48 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
     return true;
   }
 
+  //------------- mutators --------------
+
+  /**
+   * Sets the mapper interface of the MyBatis mapper
+   *
+   * @param mapperInterface class of the interface
+   */
+  public void setMapperInterface(Class<T> mapperInterface) {
+    this.mapperInterface = mapperInterface;
+  }
+
+  /**
+   * Return the mapper interface of the MyBatis mapper
+   *
+   * @return class of the interface
+   */
+  public Class<T> getMapperInterface() {
+    return mapperInterface;
+  }
+
+  /**
+   * If addToConfig is false the mapper will not be added to MyBatis. This means
+   * it must have been included in mybatis-config.xml.
+   * <p/>
+   * If it is true, the mapper will be added to MyBatis in the case it is not already
+   * registered.
+   * <p/>
+   * By default addToCofig is true.
+   *
+   * @param addToConfig
+   */
+  public void setAddToConfig(boolean addToConfig) {
+    this.addToConfig = addToConfig;
+  }
+
+  /**
+   * Return the flag for addition into MyBatis config.
+   *
+   * @return true if the mapper will be added to MyBatis in the case it is not already
+   * registered.
+   */
+  public boolean isAddToConfig() {
+    return addToConfig;
+  }
 }
