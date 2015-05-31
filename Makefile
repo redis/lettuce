@@ -394,3 +394,7 @@ release:
 	ls target/checkout/target/*-bin.tar.gz | xargs gpg -b -a
 	cd target/checkout && mvn site:site && mvn -o scm-publish:publish-scm -Dgithub.site.upload.skip=false
 
+apidocs:
+	mvn site:site
+    ./apidocs.sh
+
