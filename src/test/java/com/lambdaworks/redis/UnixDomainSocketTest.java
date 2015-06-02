@@ -43,7 +43,6 @@ public class UnixDomainSocketTest {
 
     @Before
     public void openConnection() throws Exception {
-        System.out.println(TestSettings.sentinelSocket());
         sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
     }
 
