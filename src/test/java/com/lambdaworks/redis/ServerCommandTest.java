@@ -66,6 +66,11 @@ public class ServerCommandTest extends AbstractCommandTest {
         assertThat(redis.clientKill(m.group(1))).isEqualTo("OK");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void clientKillEmpty() throws Exception {
+        redis.clientKill("");
+    }
+
     @Test
     public void clientKillExtended() throws Exception {
 
@@ -173,8 +178,8 @@ public class ServerCommandTest extends AbstractCommandTest {
      */
     @Test
     public void debugSegfault() throws Exception {
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(
-                RedisURI.Builder.redis(host(), port(3)).build());
+        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(3))
+                .build());
         connection.debugSegfault();
         WaitFor.waitOrTimeout(new Condition() {
             @Override
@@ -226,9 +231,13 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void slaveof() throws Exception {
-
         assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
         redis.slaveofNoOne();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void slaveofEmptyHost() throws Exception {
+        redis.slaveof("", 0);
     }
 
     @Test
