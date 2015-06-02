@@ -3,6 +3,7 @@
 package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,6 +18,22 @@ public class HLLCommandTest extends AbstractCommandTest {
 
         assertThat(redis.pfadd(key, value, value)).isEqualTo(1);
         assertThat(redis.pfadd(key, value, value)).isEqualTo(0);
+
+        assertThat(redis.pfadd(key, value)).isEqualTo(0);
+    }
+
+    @Test
+    public void pfaddNullValues() throws Exception {
+        try {
+            redis.pfadd(key, null);
+            fail("Missing IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            redis.pfadd(key, value, null);
+            fail("Missing IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     @Test
