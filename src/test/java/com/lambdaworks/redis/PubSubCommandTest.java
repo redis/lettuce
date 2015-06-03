@@ -165,7 +165,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     @Test
     public void pubsubChannelsWithArg() throws Exception {
-        pubsub.subscribe(channel);
+        pubsub.subscribe(channel).get();
         List<String> result = redis.pubsubChannels(pattern);
         assertThat(result, hasItem(channel));
     }
