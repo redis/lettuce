@@ -28,7 +28,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
  */
 public class RedisClient extends AbstractRedisClient {
 
-    private final RedisCodec<String, String> codec = new Utf8StringCodec();
+    private final RedisCodec<String, String> codec = newStringStringCodec();
     private final RedisURI redisURI;
 
     /**
@@ -92,7 +92,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisConnectionPool<RedisConnection<String, String>> pool(int maxIdle, int maxActive) {
 
-        return pool(codec, maxIdle, maxActive);
+        return pool(newStringStringCodec(), maxIdle, maxActive);
     }
 
     /**
@@ -167,7 +167,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool(int maxIdle, int maxActive) {
 
-        return asyncPool(codec, maxIdle, maxActive);
+        return asyncPool(newStringStringCodec(), maxIdle, maxActive);
     }
 
     /**
@@ -219,7 +219,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public RedisConnection<String, String> connect() {
-        return (RedisConnection<String, String>) connect((RedisCodec) codec);
+        return connect(newStringStringCodec());
     }
 
     /**
@@ -247,7 +247,7 @@ public class RedisClient extends AbstractRedisClient {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public RedisConnection<String, String> connect(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
-        return (RedisConnection<String, String>) connect((RedisCodec) codec, redisURI);
+        return (RedisConnection<String, String>) connect(newStringStringCodec(), redisURI);
     }
 
     private void checkValidRedisURI(RedisURI redisURI) {
@@ -265,7 +265,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection.
      */
     public RedisAsyncConnection<String, String> connectAsync() {
-        return connectAsync(codec);
+        return connectAsync(newStringStringCodec());
     }
 
     /**
@@ -291,7 +291,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisAsyncConnection<String, String> connectAsync(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
-        return connectAsync(codec, redisURI);
+        return connectAsync(newStringStringCodec(), redisURI);
     }
 
     private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
@@ -347,7 +347,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public RedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
-        return connectPubSub(codec, redisURI);
+        return connectPubSub(newStringStringCodec(), redisURI);
     }
 
     /**
@@ -383,7 +383,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return a new connection.
      */
     public RedisSentinelAsyncConnection<String, String> connectSentinelAsync() {
-        return connectSentinelAsync(codec);
+        return connectSentinelAsync(newStringStringCodec());
     }
 
     /**
@@ -407,9 +407,8 @@ public class RedisClient extends AbstractRedisClient {
      * @param redisURI the redis server to connect to, must not be {@literal null}
      * @return A new connection.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public RedisSentinelAsyncConnection<String, String> connectSentinelAsync(RedisURI redisURI) {
-        return (RedisSentinelAsyncConnection<String, String>) connectSentinelAsyncImpl((RedisCodec) codec, redisURI);
+        return connectSentinelAsyncImpl(newStringStringCodec(), redisURI);
     }
 
     private <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsyncImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
@@ -576,6 +575,10 @@ public class RedisClient extends AbstractRedisClient {
         } finally {
             connection.close();
         }
+    }
+
+    protected Utf8StringCodec newStringStringCodec() {
+        return new Utf8StringCodec();
     }
 
 }
