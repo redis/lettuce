@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.List;
@@ -146,6 +146,18 @@ public class HashCommandTest extends AbstractCommandTest {
         hash.put("two", "2");
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
         assertThat(redis.hmget(key, "one", "two")).isEqualTo(list("1", "2"));
+    }
+
+    @Test
+    public void hmsetWithNulls() throws Exception {
+        Map<String, String> hash = new HashMap<String, String>();
+        hash.put("one", null);
+        assertThat(redis.hmset(key, hash)).isEqualTo("OK");
+        assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
+
+        hash.put("one", "");
+        assertThat(redis.hmset(key, hash)).isEqualTo("OK");
+        assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
     }
 
     @Test

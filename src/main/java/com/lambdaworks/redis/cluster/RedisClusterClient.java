@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -11,7 +13,13 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.AbstractRedisClient;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -33,7 +41,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
-    private final RedisCodec<String, String> codec = new Utf8StringCodec();
+
     private Partitions partitions;
 
     private List<RedisURI> initialUris = Lists.newArrayList();
@@ -72,7 +80,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public RedisClusterConnection<String, String> connectCluster() {
 
-        return connectCluster(codec);
+        return connectCluster(newStringStringCodec());
     }
 
     /**
@@ -96,7 +104,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection.
      */
     public RedisClusterAsyncConnection<String, String> connectClusterAsync() {
-        return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
+        return connectClusterAsyncImpl(newStringStringCodec(), getSocketAddressSupplier());
     }
 
     /**
@@ -112,7 +120,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     protected RedisAsyncConnectionImpl<String, String> connectAsyncImpl(SocketAddress socketAddress) {
-        return connectAsyncImpl(codec, socketAddress);
+        return connectAsyncImpl(newStringStringCodec(), socketAddress);
     }
 
     /**
@@ -286,4 +294,9 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         };
     }
+
+    protected Utf8StringCodec newStringStringCodec() {
+        return new Utf8StringCodec();
+    }
+
 }
