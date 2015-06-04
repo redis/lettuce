@@ -28,7 +28,6 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
  */
 public class RedisClient extends AbstractRedisClient {
 
-    private final RedisCodec<String, String> codec = newStringStringCodec();
     private final RedisURI redisURI;
 
     /**
@@ -336,7 +335,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection.
      */
     public RedisPubSubConnection<String, String> connectPubSub() {
-        return connectPubSub(codec);
+        return connectPubSub(newStringStringCodec());
     }
 
     /**
