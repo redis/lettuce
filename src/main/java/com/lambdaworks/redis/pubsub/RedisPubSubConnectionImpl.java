@@ -2,7 +2,10 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
+import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -75,22 +78,22 @@ public class RedisPubSubConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K,
 
     @Override
     public RedisFuture<Void> psubscribe(K... patterns) {
-        return new VoidFuture(dispatch(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
+        return (RedisFuture<Void>) dispatch(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
     }
 
     @Override
     public RedisFuture<Void> punsubscribe(K... patterns) {
-        return new VoidFuture(dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
+        return (RedisFuture<Void>) dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
     }
 
     @Override
     public RedisFuture<Void> subscribe(K... channels) {
-        return new VoidFuture(dispatch(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
+        return (RedisFuture<Void>) dispatch(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
     }
 
     @Override
     public RedisFuture<Void> unsubscribe(K... channels) {
-        return new VoidFuture(dispatch(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
+        return (RedisFuture<Void>) dispatch(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
     }
 
     @Override

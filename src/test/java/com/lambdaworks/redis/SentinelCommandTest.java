@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -239,8 +240,11 @@ public class SentinelCommandTest extends AbstractCommandTest {
     public void failover() throws Exception {
 
         RedisFuture<String> mymaster = sentinel.failover(MASTER_ID);
-        String s = mymaster.get();
-        assertThat(s).isNull();
+        try {
+            String s = mymaster.get();
+        } catch (Exception e) {
+            assertThat(e).hasMessageContaining("NOGOODSLAVE No suitable slave to promote");
+        }
     }
 
     @Test

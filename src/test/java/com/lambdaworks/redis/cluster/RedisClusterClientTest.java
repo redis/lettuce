@@ -1,8 +1,9 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -13,7 +14,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -25,7 +32,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -206,8 +222,13 @@ public class RedisClusterClientTest {
             log.info("Cluster nodes seen from node 1:" + Layout.LINE_SEP + redissync1.clusterNodes());
 
             RedisFuture<String> future = redis1.clusterFailover(false);
-            future.get();
-            assertThat(future.getError()).isEqualTo("ERR You should send CLUSTER FAILOVER to a slave");
+            try {
+                future.get();
+            } catch (Exception e) {
+                assertThat(e)
+                        .hasMessage(
+                                "com.lambdaworks.redis.RedisCommandExecutionException: ERR You should send CLUSTER FAILOVER to a slave");
+            }
 
             String failover = redissync4.clusterFailover(true);
             assertThat(failover).isEqualTo("OK");
@@ -282,9 +303,11 @@ public class RedisClusterClientTest {
         assertThat(redissync3.set("a", "value")).isEqualTo("OK");
 
         RedisFuture<String> resultMoved = redis1.set("a", "value");
-        resultMoved.get();
-        assertThat(resultMoved.getError()).contains("MOVED 15495");
-        assertThat(resultMoved.get()).isEqualTo(null);
+        try {
+            resultMoved.get();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("MOVED 15495");
+        }
 
         clusterClient.reloadPartitions();
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();

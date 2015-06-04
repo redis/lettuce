@@ -50,7 +50,10 @@ public class ClusterRule implements TestRule {
                 }
 
                 for (Future future : futures) {
-                    future.get();
+                    try {
+                        future.get();
+                    } catch (Exception e) {
+                    }
                 }
             }
         };

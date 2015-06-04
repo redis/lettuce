@@ -78,7 +78,6 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         for (int i = 0; i < 1000; i++) {
             redis.lpush(key, "" + i);
         }
-        ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
 
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
@@ -88,7 +87,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         RedisFuture<List<String>> sort = connection.sort(key);
         assertThat(sort.isCancelled()).isFalse();
 
-        sort.addListener(listener, executor);
+        sort.thenRun(listener);
 
         sort.get();
         Thread.sleep(100);
@@ -109,14 +108,12 @@ public class AsyncConnectionTest extends AbstractCommandTest {
             }
         };
 
-        ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
-
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
         RedisFuture<String> set = connection.set(key, value);
         set.get();
 
-        set.addListener(listener, executor);
+        set.thenRun(listener);
 
         assertThat(run).hasSize(1);
 

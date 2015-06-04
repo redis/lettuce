@@ -7,6 +7,7 @@ import static com.google.code.tempusfugit.temporal.WaitFor.*;
 import static com.lambdaworks.redis.ScriptOutputType.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -231,16 +232,14 @@ public class ClientTest extends AbstractCommandTest {
 
             try {
                 set1.get();
-            } catch (ExecutionException e) {
-                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
-                assertThat(e.getCause()).hasMessageStartingWith("Reset");
+            } catch (CancellationException e) {
+                assertThat(e).hasNoCause();
             }
 
             try {
                 set2.get();
-            } catch (ExecutionException e) {
-                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
-                assertThat(e.getCause()).hasMessageStartingWith("Reset");
+            } catch (CancellationException e) {
+                assertThat(e).hasNoCause();
             }
 
             try {

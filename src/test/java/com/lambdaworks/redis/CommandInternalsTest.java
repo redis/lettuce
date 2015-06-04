@@ -32,7 +32,7 @@ public class CommandInternalsTest {
         assertThat(command.isCancelled()).isFalse();
         assertThat(command.cancel(true)).isTrue();
         assertThat(command.isCancelled()).isTrue();
-        assertThat(command.cancel(true)).isFalse();
+        assertThat(command.cancel(true)).isTrue();
     }
 
     @Test
@@ -85,13 +85,13 @@ public class CommandInternalsTest {
         assertThat(command.await(2, TimeUnit.MICROSECONDS)).isFalse();
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = InterruptedException.class, timeout = 10)
     public void getInterrupted() throws Exception {
         Thread.currentThread().interrupt();
         command.get();
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = InterruptedException.class, timeout = 10)
     public void getInterrupted2() throws Exception {
         Thread.currentThread().interrupt();
         command.get(5, TimeUnit.MILLISECONDS);

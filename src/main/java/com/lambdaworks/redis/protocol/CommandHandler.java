@@ -125,8 +125,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (!queue.isEmpty()) {
             RedisCommand<K, V, ?> command = queue.take();
-            command.setException(cause);
-            command.complete();
+            command.completeExceptionally(cause);
         }
 
         if (channel == null || !connected) {
@@ -157,8 +156,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                         if (logger.isDebugEnabled()) {
                             logger.debug("[" + this + "] write() completing Command " + command + " due to connection error");
                         }
-                        command.setException(connectionError);
-                        command.complete();
+                        command.completeExceptionally(connectionError);
                         return command;
                     }
 
@@ -172,6 +170,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         }
 
@@ -335,7 +334,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             try {
                 currentChannel.closeFuture().await();
             } catch (InterruptedException e) {
-                throw new RedisException(e);
+                Thread.currentThread().interrupt();
+                throw new RedisCommandInterruptedException(e);
             }
         }
     }
