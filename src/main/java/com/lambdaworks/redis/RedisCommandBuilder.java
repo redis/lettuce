@@ -210,6 +210,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> del(Iterable<K> keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> discard() {
         return createCommand(DISCARD, new StatusOutput<K, V>(codec));
     }
@@ -468,6 +473,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<V>> mget(Iterable<K> keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, K... keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
@@ -524,6 +534,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> ping() {
         return createCommand(PING, new StatusOutput<K, V>(codec));
     }
+
     public Command<K, V, String> readOnly() {
         return createCommand(READONLY, new StatusOutput<K, V>(codec));
     }
@@ -531,7 +542,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> readWrite() {
         return createCommand(READWRITE, new StatusOutput<K, V>(codec));
     }
-
 
     public Command<K, V, Long> pttl(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);

@@ -20,7 +20,9 @@ import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
@@ -126,8 +128,91 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             assertThat(execution.toCompletableFuture().get()).isEqualTo("OK");
         }
 
+        CompletableFuture.allOf(eval.futures()).exceptionally(throwable -> {
+            return null;
+        }).get();
+
         for (CompletableFuture<Object> future : eval.futures()) {
             assertThat(future.isDone()).isTrue();
         }
     }
+
+    @Test
+    public void msetCrossSlot() throws Exception {
+
+        Map<String, String> mset = Maps.newHashMap();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            mset.put(key, "value-" + key);
+        }
+
+        RedisFuture<String> result = connection.mset(mset);
+
+        assertThat(result.get()).isEqualTo("OK");
+
+        for (String mykey : mset.keySet()) {
+            String s1 = connection.get(mykey).get();
+            assertThat(s1).isEqualTo("value-" + mykey);
+        }
+    }
+
+    @Test
+    public void msetnxCrossSlot() throws Exception {
+
+        Map<String, String> mset = Maps.newHashMap();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            mset.put(key, "value-" + key);
+        }
+
+        RedisFuture<Boolean> result = connection.msetnx(mset);
+
+        assertThat(result.get()).isTrue();
+
+        for (String mykey : mset.keySet()) {
+            String s1 = connection.get(mykey).get();
+            assertThat(s1).isEqualTo("value-" + mykey);
+        }
+    }
+
+    @Test
+    public void mgetCrossSlot() throws Exception {
+
+        msetCrossSlot();
+        List<String> keys = Lists.newArrayList();
+        List<String> expectation = Lists.newArrayList();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            keys.add(key);
+            expectation.add("value-" + key);
+        }
+
+        RedisFuture<List<String>> result = connection.mget(keys.toArray(new String[keys.size()]));
+
+        assertThat(result.get()).hasSize(keys.size());
+        assertThat(result.get()).isEqualTo(expectation);
+
+    }
+
+    @Test
+    public void delCrossSlot() throws Exception {
+
+        msetCrossSlot();
+        List<String> keys = Lists.newArrayList();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            keys.add(key);
+        }
+
+        RedisFuture<Long> result = connection.del(keys.toArray(new String[keys.size()]));
+
+        assertThat(result.get()).isEqualTo(25);
+
+        for (String mykey : keys) {
+            String s1 = connection.get(mykey).get();
+            assertThat(s1).isNull();
+        }
+
+    }
+
 }

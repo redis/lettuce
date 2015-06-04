@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static java.lang.Math.*;
+import static java.lang.Math.max;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -45,6 +45,13 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> addKey(K key) {
         keys.add(key);
         return write(codec.encodeKey(key));
+    }
+
+    public CommandArgs<K, V> addKeys(Iterable<K> keys) {
+        for (K key : keys) {
+            addKey(key);
+        }
+        return this;
     }
 
     public CommandArgs<K, V> addKeys(K... keys) {

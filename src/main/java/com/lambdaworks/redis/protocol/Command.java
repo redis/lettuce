@@ -66,7 +66,6 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
         return multi;
     }
 
-
     /**
      * Wait up to the specified time for the command output to become available.
      *
@@ -100,8 +99,8 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
      */
     @Override
     public void complete() {
-        latch.countDown();
-        if (latch.getCount() == 0) {
+
+        if (latch.getCount() == 1) {
             if (output == null) {
                 complete(null);
             } else if (output.hasError()) {
@@ -110,6 +109,17 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
                 complete(output.get());
             }
         }
+        latch.countDown();
+    }
+
+    @Override
+    public boolean completeExceptionally(Throwable ex) {
+        boolean result = false;
+        if (latch.getCount() == 1) {
+            result = super.completeExceptionally(ex);
+        }
+        latch.countDown();
+        return result;
     }
 
     /**
