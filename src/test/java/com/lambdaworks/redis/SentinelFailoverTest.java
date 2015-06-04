@@ -1,13 +1,19 @@
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.TestSettings.port;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
@@ -49,22 +55,28 @@ public class SentinelFailoverTest extends AbstractCommandTest {
     @Test
     public void connectToRedisUsingSentinel() throws Exception {
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
-            }
-        }, timeout(seconds(20)));
+        waitForAvailableSlave();
 
         RedisConnection<String, String> connect = sentinelClient.connect();
         assertThat(connect.ping()).isEqualToIgnoringCase("PONG");
 
         connect.close();
         this.sentinel.failover(MASTER_WITH_SLAVE_ID).get();
+        waitForAvailableSlave();
 
         RedisConnection<String, String> connect2 = sentinelClient.connect();
         assertThat(connect2.ping()).isEqualToIgnoringCase("PONG");
         connect2.close();
+    }
+
+    protected void waitForAvailableSlave() throws InterruptedException, TimeoutException {
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID)
+                        && sentinel.getMasterAddrByName(MASTER_WITH_SLAVE_ID) != null;
+            }
+        }, timeout(seconds(20)));
     }
 
     protected static RedisClient getRedisSentinelClient() {
