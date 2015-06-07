@@ -66,7 +66,6 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
         return multi;
     }
 
-
     /**
      * Wait up to the specified time for the command output to become available.
      *
@@ -181,4 +180,8 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
         this.output = output;
     }
 
+    @Override
+    public ProtocolKeyword getType() {
+        return type;
+    }
 }

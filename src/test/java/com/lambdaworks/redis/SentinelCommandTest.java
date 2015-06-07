@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

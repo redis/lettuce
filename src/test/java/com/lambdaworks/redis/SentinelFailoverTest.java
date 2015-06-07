@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;

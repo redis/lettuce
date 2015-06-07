@@ -3,6 +3,7 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;

@@ -12,6 +12,7 @@ import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
 
@@ -120,5 +121,10 @@ class ClusterCommand<K, V, T> extends CompletableFuture<T> implements RedisComma
     @Override
     public boolean completeExceptionally(Throwable ex) {
         return command.completeExceptionally(ex);
+    }
+
+    @Override
+    public ProtocolKeyword getType() {
+        return command.getType();
     }
 }

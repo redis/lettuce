@@ -1,9 +1,11 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.api;
 
 import java.util.List;
 
+import com.lambdaworks.redis.ScriptOutputType;
+
 /**
- * Synchronous executed commands for Scripting.
+ * ${intent} for Scripting.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
@@ -88,4 +90,12 @@ public interface RedisScriptingConnection<K, V> {
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
      */
     String scriptLoad(V script);
+
+    /**
+     * Create a SHA1 digest from a Lua script.
+     * 
+     * @param script script content
+     * @return the SHA1 value
+     */
+    String digest(V script);
 }

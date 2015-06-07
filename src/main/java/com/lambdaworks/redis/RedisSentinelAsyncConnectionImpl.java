@@ -1,18 +1,18 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandOutput;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -32,26 +32,32 @@ class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> i
     }
 
     @Override
-    public Future<SocketAddress> getMasterAddrByName(K key) {
+    public RedisFuture<SocketAddress> getMasterAddrByName(K key) {
 
         Command<K, V, List<V>> cmd = commandBuilder.getMasterAddrByKey(key);
-        final Future<List<V>> future = dispatch(cmd);
-
-        Future<SocketAddress> result = Futures.lazyTransform(future, new Function<List<V>, SocketAddress>() {
+        RedisFuture<List<V>> future = dispatch(cmd);
+        AtomicReference<SocketAddress> ref = new AtomicReference<>();
+        Command<K, V, SocketAddress> convert = new Command<>(cmd.getType(), new CommandOutput<K, V, SocketAddress>(null, null) {
             @Override
-            public SocketAddress apply(List<V> input) {
-                if (input.isEmpty()) {
-                    return null;
-                }
+            public SocketAddress get() {
+                return ref.get();
+            }
+        }, cmd.getArgs());
 
-                checkArgument(input.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
-                String hostname = (String) input.get(0);
-                String port = (String) input.get(1);
-                return new InetSocketAddress(hostname, Integer.parseInt(port));
+        future.whenComplete((list, t) -> {
+
+            if (t != null) {
+                convert.completeExceptionally(t);
+            } else if (!list.isEmpty()) {
+                checkArgument(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
+                String hostname = (String) list.get(0);
+                String port = (String) list.get(1);
+                ref.set(new InetSocketAddress(hostname, Integer.parseInt(port)));
+                convert.complete();
             }
         });
 
-        return result;
+        return convert;
     }
 
     @Override

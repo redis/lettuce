@@ -1,11 +1,15 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.api;
 
 import java.util.Set;
 
+import com.lambdaworks.redis.ScanArgs;
+import com.lambdaworks.redis.ScanCursor;
+import com.lambdaworks.redis.StreamScanCursor;
+import com.lambdaworks.redis.ValueScanCursor;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
- * Synchronous executed commands for Sets.
+ * ${intent} for Sets.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

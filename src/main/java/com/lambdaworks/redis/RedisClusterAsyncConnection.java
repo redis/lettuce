@@ -2,6 +2,8 @@ package com.lambdaworks.redis;
 
 import java.util.List;
 
+import com.lambdaworks.redis.api.async.*;
+
 /**
  * Complete asynchronous cluster Redis API with 400+ Methods..
  * 
@@ -59,16 +61,16 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
     /**
      * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
      * queries.
-     * 
+     *
      * @return String simple-string-reply
      */
-    String readOnly();
+    RedisFuture<String> readOnly();
 
     /**
      * Resets readOnly flag.
-     * 
+     *
      * @return String simple-string-reply
      */
-    String readWrite();
+    RedisFuture<String> readWrite();
 
 }

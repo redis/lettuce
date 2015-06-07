@@ -45,4 +45,10 @@ public interface RedisCommand<K, V, T> extends RedisFuture<T> {
      *         {@code false}
      */
     boolean completeExceptionally(Throwable throwable);
+
+    /**
+     *
+     * @return the redis command type like {@literal SADD}, {@literal HMSET}, {@literal QUIT}.
+     */
+    ProtocolKeyword getType();
 }

@@ -1,4 +1,4 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.api;
 
 import java.util.List;
 import java.util.Map;
@@ -7,7 +7,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
- * Synchronous executed commands for Strings.
+ * ${intent} for Strings.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

@@ -1,12 +1,19 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.api;
 
 import java.util.List;
 
+import com.lambdaworks.redis.ScanArgs;
+import com.lambdaworks.redis.ScanCursor;
+import com.lambdaworks.redis.ScoredValue;
+import com.lambdaworks.redis.ScoredValueScanCursor;
+import com.lambdaworks.redis.StreamScanCursor;
+import com.lambdaworks.redis.ZAddArgs;
+import com.lambdaworks.redis.ZStoreArgs;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
- * Synchronous executed commands for Sorted Sets.
+ * ${intent} for Sorted Sets.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
@@ -629,7 +636,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @return Long count of elements in the specified range.
      */
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
-            long count);
+                                    long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -643,7 +650,7 @@ public interface RedisSortedSetsConnection<K, V> {
      * @return Long count of elements in the specified range.
      */
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
-            long count);
+                                    long count);
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.

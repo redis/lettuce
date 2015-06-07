@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,8 +14,18 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.MultiOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.SetArgs;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -608,23 +618,26 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public String readOnly() {
+    public RedisFuture<String> readOnly() {
         RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readOnly());
-        String status = LettuceFutures.await(cmd, timeout, unit);
-        if ("OK".equals(status)) {
-            readOnly = true;
-        }
-        return status;
+        cmd.thenAccept(status -> {
+            if ("OK".equals(status)) {
+                readOnly = true;
+            }
+        });
+        return cmd;
     }
 
     @Override
-    public String readWrite() {
+    public RedisFuture<String> readWrite() {
         RedisCommand<K, V, String> cmd = dispatch(commandBuilder.readWrite());
-        String status = LettuceFutures.await(cmd, timeout, unit);
-        if ("OK".equals(status)) {
-            readOnly = false;
-        }
-        return status;
+        cmd.thenAccept(status -> {
+            if ("OK".equals(status)) {
+                readOnly = false;
+            }
+        });
+
+        return cmd;
     }
 
     @Override

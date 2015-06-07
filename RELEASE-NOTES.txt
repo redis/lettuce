@@ -1,4 +1,4 @@
-              lettuce 3.2.Final RELEASE NOTES
+              lettuce 4.0.Beta1 RELEASE NOTES
 
 This release features Unix domain sockets on linux-x86_64 systems. Local connections to a Redis
 instance are now possible without the use of the network. A second feature with a huge impact is client options.
@@ -13,53 +13,133 @@ Sync performance depends on the Redis performance (tested on a Mac, 2,7 GHz Inte
 lettuce provides now also base functionality for building clients using the Redis protocol.
 An example is spinach (https://github.com/mp911de/spinach).
 
-lettuce is built with Java 8 but can be used with Java 6, 7 and 8. Java 6 and 7 support will be
-dropped with lettuce 4.0. The new lettuce-testcontainer project ensures until then.
-You can find the build results at https://travis-ci.org/mp911de/lettuce-testcontainer
+lettuce 4.0 is built with Java 8 and cannot be used with Java 6 or 7.
 
 If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
 
 
-Unix Domain Sockets
+Rearchitecting the API
 -----
-Unix Domain Sockets are inter-process communication channels on POSIX compliant systems. They allow to exchange data
-between processes on the same host operating system. When using Redis, which is usually a network service,
-Unix Domain Sockets are usable only if connecting locally to a single instance. Redis Sentinel and Redis Cluster,
-maintain tables of remote or local nodes and act therefore as registry. Unix Domain Sockets are not beneficial with
-Redis Sentinel and Redis Cluster.
-Using RedisClusterClient with Unix Domain Sockets would connect to the local node using a socket and then open
-TCP connection to all the other hosts. A good example is connecting locally to a standalone or a single cluster node
-to gain performance.
+Lettuce provides right from the start two API's: Sync and async. Now comes a third one: Reactive. Behind the scenes, all commands are
+executed using netty and it does not really matter, from which API you come. But the connection ressources (sockets, events)
+were bound to a particular API. If one wanted to use sync calls for a certain scenario, he had to create another connection to redis.
 
-Unix Domain Socket connections are currently only available to Linux x86_64 systems with a minimum netty version of
-4.0.26.Final. You can, however, port the native library to your system. The netty guys would appreciate.
+This coupling is loosed now. By calling `connect()` you will no longer get a synchronous connection, you will get a `StatefulRedisConnection`
+with the access to the sync, async and reactive interface.
 
-See https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets
+3.x code:
+```java
+RedisConnection connection = client.connect();
+```
+
+4.x code:
+```java
+StatefulRedisConnection stateful = client.connect();
+RedisConnection connection = stateful.sync();
+```
+
+The other `connect` methods like `connectAsync` and `connectSentinelAsync` will remain unchanged.
+
+Affected `connect` methods are:
+
+* `RedisClient.connect` (provides a `StatefulRedisConnection`)
+* `RedisClient.connectPubSub` (provides a `StatefulRedisPubSubConnection`)
+* `RedisClusterClient.connect` (provides a `StatefulRedisClusterConnection`)
+
+New connect methods:
+
+* `RedisClient.connectSentinel` (provides a `StatefulRedisSentinelConnection`)
+
+Moving segregated API interfaces to own packages
+-----
+Starting with reactive API's, another 13 interfaces will be provided with lettuce. This increases the count of
+types within the `com.lambdaworks.redis` package and the package gets messier again. Therefore the segregated interfaces
+are relocated to own packages.
+
+All segregated API interfaces are moved from `com.lambdaworks.redis` to `com.lambdaworks.redis.api.(sync|async|rx)`
+
+You need to adjust your code to access those interfaces. So if you used `com.lambdaworks.redis.RedisListsAsyncConnection`
+you need to drop the import to `com.lambdaworks.redis.RedisListsAsyncConnection` and import `com.lambdaworks.redis.api.async.RedisListsAsyncConnection`
+instead.
+
+### Migration Matrix sync API:
+
+3.x package: `com.lambdaworks.redis`
+4.x package: `com.lambdaworks.redis.api.sync`
+
+
+Affected interfaces:
+
+* BaseRedisConnection
+* RedisHashesConnection
+* RedisHLLConnection
+* RedisKeysConnection
+* RedisListsConnection
+* RedisScriptingConnection
+* RedisServerConnection
+* RedisSetsConnection
+* RedisSortedSetsConnection
+* RedisStringsConnection
+* RedisTransactionalConnection
+
+
+### Migration Matrix async API:
+
+3.x package: `com.lambdaworks.redis`
+4.x package: `com.lambdaworks.redis.api.async`
+
+
+Affected interfaces:
+
+* BaseRedisAsyncConnection
+* RedisHashesAsyncConnection
+* RedisHLLAsyncConnection
+* RedisKeysAsyncConnection
+* RedisListsAsyncConnection
+* RedisScriptingAsyncConnection
+* RedisSentinelAsyncConnection
+* RedisServerAsyncConnection
+* RedisSetsAsyncConnection
+* RedisSortedSetsAsyncConnection
+* RedisStringsAsyncConnection
+* RedisTransactionalAsyncConnection
+
+*API Changes*
+
+* readOnly and readWrite changed from `String` return type to `RedisFuture<String>`. The connection state is maintained by the future completion.
+
+
+### New interfaces providing observable commands:
+
+4.x package: `com.lambdaworks.redis.api.rx`
+
+New interfaces:
+
+* BaseRedisRxConnection
+* RedisHashesRxConnection
+* RedisHLLRxConnection
+* RedisKeysRxConnection
+* RedisListsRxConnection
+* RedisScriptingRxConnection
+* RedisSentinelRxConnection
+* RedisServerRxConnection
+* RedisSetsRxConnection
+* RedisSortedSetsRxConnection
+* RedisStringsRxConnection
+* RedisTransactionalRxConnection
 
 Enhancements
 -----
-* Provide an option to connect to Redis via Unix Domain Sockets #52
-* Add new cluster command MYID #53 (Thanks to @taer)
-* Expose futures of re-subscription on reconnect #62 (Thanks to @kichik)
-* Ping before connect #61 (Thanks to @kichik)
-* Introduce ClientOptions to control specific behavior #58
-* Enhance stability when reconnecting #56
-* Extract and use interfaces for improved extensibility
-* Upgrade netty to 4.0.28.Final
+
 
 Fixes
 -----
-* RedisPubSubConnectionImpl.activated does not call super.activated() #55
-* RedisPubSubConnectionImpl.activated() deadlock #57
-* Fix zrevrangebyscoreWithScores signature bug #65
-* Handle absence of optional epoll library in a reasonable way bug #64
 
 Other
 ------
-* Inspect lettuce using YourKit #54
 
 
-lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested continuously against Redis 3.0.
+lettuce requires a minimum of Java 8 to build and run. It is tested continuously against Redis 3.0.
 
 For complete information on lettuce see the websites:
 

@@ -5,11 +5,11 @@ import static org.junit.Assert.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.sync.RedisHashesConnection;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 
 import com.lambdaworks.redis.RedisCommandTimeoutException;
-import com.lambdaworks.redis.RedisHashesConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 /**

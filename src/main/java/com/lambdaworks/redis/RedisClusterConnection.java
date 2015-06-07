@@ -2,6 +2,8 @@ package com.lambdaworks.redis;
 
 import java.util.List;
 
+import com.lambdaworks.redis.api.sync.*;
+
 /**
  * Complete synchronous cluster Redis API with 400+ Methods..
  * 
