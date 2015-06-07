@@ -339,7 +339,7 @@ stop:
 
 test-coveralls:
 	make start
-	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:jacoco
+	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:report
 	make stop
 
 test: start

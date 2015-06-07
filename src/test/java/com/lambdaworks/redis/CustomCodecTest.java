@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.junit.Test;
 
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -24,6 +25,17 @@ public class CustomCodecTest extends AbstractCommandTest {
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
+    }
+
+    @Test
+    public void testByteCodec() throws Exception {
+        RedisConnection<byte[], byte[]> connection = client.connect(new ByteArrayCodec());
+        String value = "üöäü+#";
+        connection.set(key.getBytes(), value.getBytes());
+        assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());
+
+        List<byte[]> keys = connection.keys(key.getBytes());
+        assertThat(keys).contains(key.getBytes());
     }
 
     public class SerializedObjectCodec extends RedisCodec<String, Object> {

@@ -974,12 +974,27 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     @Override
     public RedisFuture<Long> zadd(K key, double score, V member) {
-        return dispatch(commandBuilder.zadd(key, score, member));
+        return dispatch(commandBuilder.zadd(key, null, score, member));
     }
 
     @Override
     public RedisFuture<Long> zadd(K key, Object... scoresAndValues) {
-        return dispatch(commandBuilder.zadd(key, scoresAndValues));
+        return dispatch(commandBuilder.zadd(key, null, scoresAndValues));
+    }
+
+    @Override
+    public RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
+        return dispatch(commandBuilder.zadd(key, zAddArgs, score, member));
+    }
+
+    @Override
+    public RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
+        return dispatch(commandBuilder.zadd(key, zAddArgs, scoresAndValues));
+    }
+
+    @Override
+    public RedisFuture<Double> zaddincr(K key, double score, V member) {
+        return dispatch(commandBuilder.zaddincr(key, score, member));
     }
 
     @Override
@@ -1579,8 +1594,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(type, output, null);
     }
 
-    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output,
-            CommandArgs<K, V> args) {
+    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         Command<K, V, T> cmd = new Command<K, V, T>(type, output, args, multi != null);
         return dispatch(cmd);
     }

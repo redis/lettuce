@@ -59,6 +59,11 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                 return LettuceFutures.await(command, timeout, unit);
             }
 
+            if (result instanceof RedisClusterAsyncConnection) {
+                return AbstractRedisClient.syncHandler((RedisChannelHandler) result, RedisConnection.class,
+                        RedisClusterConnection.class);
+            }
+
             return result;
 
         } catch (InvocationTargetException e) {

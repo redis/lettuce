@@ -943,17 +943,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(UNWATCH, new StatusOutput<K, V>(codec));
     }
 
-    public Command<K, V, Long> zadd(K key, double score, V member) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(score).addValue(member);
+    public Command<K, V, Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+
+        if (zAddArgs != null) {
+            zAddArgs.build(args);
+        }
+        args.add(score).addValue(member);
+
         return createCommand(ZADD, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Double> zaddincr(K key, double score, V member) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        args.add(INCR);
+        args.add(score).addValue(member);
+
+        return createCommand(ZADD, new DoubleOutput<K, V>(codec), args);
+    }
+
     @SuppressWarnings("unchecked")
-    public Command<K, V, Long> zadd(K key, Object... scoresAndValues) {
+    public Command<K, V, Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
         assertNotEmpty(scoresAndValues, "scoresAndValues " + MUST_NOT_BE_EMPTY);
         assertNoNullElements(scoresAndValues, "scoresAndValues " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        assertTrue(scoresAndValues.length % 2 == 0, "scoresAndValues.length must be a multiple of 2 and contain a "
+                + "sequence of score1, value1, score2, value2, scoreN,valueN");
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+
+        if (zAddArgs != null) {
+            zAddArgs.build(args);
+        }
+
         for (int i = 0; i < scoresAndValues.length; i += 2) {
             args.add((Double) scoresAndValues[i]);
             args.addValue((V) scoresAndValues[i + 1]);
@@ -1683,6 +1704,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
                     throw new IllegalArgumentException(message);
                 }
             }
+        }
+    }
+
+    /**
+     * Assert that {@code value} is {@literal true}.
+     * 
+     * @param value the value to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array contains a {@code null} element
+     */
+    public static void assertTrue(boolean value, String message) {
+        if (!value) {
+            throw new IllegalArgumentException(message);
         }
     }
 

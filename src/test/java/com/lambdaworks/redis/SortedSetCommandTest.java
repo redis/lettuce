@@ -30,6 +30,46 @@ public class SortedSetCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void zaddnx() throws Exception {
+        assertEquals(1, (long) redis.zadd(key, 1.0, "a"));
+        assertEquals(0, (long) redis.zadd(key, ZAddArgs.Builder.nx(), 2.0, "a"));
+
+        assertEquals(1, (long) redis.zadd(key, ZAddArgs.Builder.nx(), 2.0, "b"));
+
+        assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b")), redis.zrangeWithScores(key, 0, -1));
+    }
+
+    @Test
+    public void zaddxx() throws Exception {
+        assertEquals(1, (long) redis.zadd(key, 1.0, "a"));
+        assertEquals(0, (long) redis.zadd(key, ZAddArgs.Builder.xx(), 2.0, "a"));
+
+        assertEquals(0, (long) redis.zadd(key, ZAddArgs.Builder.xx(), 2.0, "b"));
+
+        assertEquals(svlist(sv(2.0, "a")), redis.zrangeWithScores(key, 0, -1));
+    }
+
+    @Test
+    public void zaddch() throws Exception {
+        assertEquals(1, (long) redis.zadd(key, 1.0, "a"));
+        assertEquals(1, (long) redis.zadd(key, ZAddArgs.Builder.ch(), 2.0, "a"));
+
+        assertEquals(1, (long) redis.zadd(key, ZAddArgs.Builder.ch(), 2.0, "b"));
+
+        assertEquals(svlist(sv(2.0, "a"), sv(2.0, "b")), redis.zrangeWithScores(key, 0, -1));
+    }
+
+    @Test
+    public void zaddincr() throws Exception {
+        assertEquals(1, redis.zadd(key, 1.0, "a").longValue());
+        assertEquals(3, redis.zaddincr(key, 2.0, "a").longValue());
+
+        assertEquals(2, redis.zaddincr(key, 2.0, "b").longValue());
+
+        assertEquals(svlist(sv(2.0, "b"), sv(3.0, "a")), redis.zrangeWithScores(key, 0, -1));
+    }
+
+    @Test
     public void zcard() throws Exception {
         assertEquals(0, (long) redis.zcard(key));
         redis.zadd(key, 1.0, "a");
