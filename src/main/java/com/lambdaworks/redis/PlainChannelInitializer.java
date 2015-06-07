@@ -99,7 +99,15 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
     static void pingBeforeActivate(final Command<?, ?, ?> cmd, final SettableFuture<Boolean> initializedFuture,
             final ChannelHandlerContext ctx, final List<ChannelHandler> handlers) throws Exception {
-        cmd.addListener(new PingResponseListener(initializedFuture, cmd, ctx), ctx.executor());
+        cmd.handle((o, throwable) -> {
+            if (throwable == null) {
+                initializedFuture.set(true);
+                ctx.fireChannelActive();
+            } else {
+                initializedFuture.setException(throwable);
+            }
+            return null;
+        });
 
         for (ChannelHandler handler : handlers) {
             if (handler instanceof CommandHandler) {
@@ -122,29 +130,4 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         return initializedFuture;
     }
 
-    private static class PingResponseListener implements Runnable {
-
-        private final SettableFuture<Boolean> initializedFuture;
-        private final Command<?, ?, ?> cmd;
-        private final ChannelHandlerContext ctx;
-
-        public PingResponseListener(SettableFuture<Boolean> initializedFuture, Command<?, ?, ?> cmd, ChannelHandlerContext ctx) {
-            this.initializedFuture = initializedFuture;
-            this.cmd = cmd;
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void run() {
-            if (!initializedFuture.isDone()) {
-                if (cmd.getException() != null) {
-                    initializedFuture.setException(cmd.getException());
-                    return;
-                }
-
-                initializedFuture.set(true);
-                ctx.fireChannelActive();
-            }
-        }
-    }
 }

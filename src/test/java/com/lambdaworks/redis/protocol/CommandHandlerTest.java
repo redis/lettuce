@@ -9,12 +9,12 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import com.lambdaworks.redis.ClientOptions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 
@@ -63,9 +63,11 @@ public class CommandHandlerTest {
         sut.exceptionCaught(context, new Exception());
 
         assertThat(q).isEmpty();
-        assertThat(command.getException()).isNotNull();
+        command.handle((s, throwable) -> {
+            assertThat(throwable).isNotNull();
+            return s;
+        }).get();
 
         verify(context).fireExceptionCaught(any(Exception.class));
     }
-
 }

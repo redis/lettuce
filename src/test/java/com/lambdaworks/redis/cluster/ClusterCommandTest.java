@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.Command;
@@ -29,9 +28,11 @@ public class ClusterCommandTest {
     @Test
     public void testException() throws Exception {
 
-        assertThat(command.getException()).isNull();
-        sut.setException(new Exception());
-        assertThat(command.getException()).isNotNull();
+        sut.completeExceptionally(new Exception());
+        sut.exceptionally(throwable -> {
+            assertThat(throwable).isExactlyInstanceOf(Exception.class);
+            return null;
+        });
     }
 
     @Test
@@ -55,13 +56,9 @@ public class ClusterCommandTest {
     public void testCompleteListener() throws Exception {
 
         final List<String> someList = Lists.newArrayList();
-        sut.addListener(new Runnable() {
-            @Override
-            public void run() {
-                someList.add("");
-            }
-        }, MoreExecutors.sameThreadExecutor());
-        command.complete();
+
+        command.thenRun(() -> someList.add(""));
+        sut.complete();
         sut.await(1, TimeUnit.MINUTES);
 
         assertThat(sut.isDone()).isTrue();

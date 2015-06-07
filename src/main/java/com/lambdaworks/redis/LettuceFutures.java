@@ -63,18 +63,23 @@ public class LettuceFutures {
      * @param <K> Key type.
      * @param <V> Value type.
      * @param <T> Result type.
-     * 
+     *
      * @return True if all futures complete in time.
      */
     public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
-        if (!cmd.await(timeout, unit)) {
-            cmd.cancel(true);
-            throw new RedisCommandTimeoutException();
+        try {
+            if (!cmd.await(timeout, unit)) {
+                cmd.cancel(true);
+                throw new RedisCommandTimeoutException();
+            }
+            CommandOutput<K, V, T> output = cmd.getOutput();
+            if (output.hasError()) {
+                throw new RedisCommandExecutionException(output.getError());
+            }
+            return output.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
         }
-        CommandOutput<K, V, T> output = cmd.getOutput();
-        if (output.hasError()) {
-            throw new RedisCommandExecutionException(output.getError());
-        }
-        return output.get();
     }
 }

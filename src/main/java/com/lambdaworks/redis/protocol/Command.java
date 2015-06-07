@@ -2,12 +2,11 @@
 
 package com.lambdaworks.redis.protocol;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import com.google.common.util.concurrent.AbstractFuture;
+import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import io.netty.buffer.ByteBuf;
 
@@ -20,7 +19,7 @@ import io.netty.buffer.ByteBuf;
  * 
  * @author Will Glozer
  */
-public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
+public class Command<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T> {
 
     private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
@@ -30,7 +29,6 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     private final ProtocolKeyword type;
     private boolean multi;
-    private Throwable exception;
     private boolean cancelled = false;
 
     /**
@@ -68,85 +66,13 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         return multi;
     }
 
-    @Override
-    protected void interruptTask() {
-        cancelled = true;
-
-        if (latch.getCount() == 1) {
-            latch.countDown();
-        }
-    }
-
-    /**
-     * Check if the command has been cancelled.
-     * 
-     * @return True if the command was cancelled.
-     */
-    @Override
-    public boolean isCancelled() {
-        return latch.getCount() == 0 && cancelled;
-    }
-
-    /**
-     * Check if the command has completed.
-     * 
-     * @return true if the command has completed.
-     */
-    @Override
-    public boolean isDone() {
-        return latch.getCount() == 0;
-    }
-
-    /**
-     * Get the command output and if the command hasn't completed yet, wait until it does.
-     * 
-     * @return The command output.
-     */
-    @Override
-    public T get() throws ExecutionException {
-        try {
-            latch.await();
-            if (exception != null) {
-                throw new ExecutionException(exception);
-            }
-
-            return output.get();
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
-        }
-    }
-
-    /**
-     * Get the command output and if the command hasn't completed yet, wait up to the specified time until it does.
-     * 
-     * @param timeout Maximum time to wait for a result.
-     * @param unit Unit of time for the timeout.
-     * 
-     * @return The command output.
-     * 
-     * @throws TimeoutException if the wait timed out.
-     */
-    @Override
-    public T get(long timeout, TimeUnit unit) throws TimeoutException, ExecutionException {
-        try {
-            if (!latch.await(timeout, unit)) {
-                throw new TimeoutException("Command timed out");
-            }
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
-        }
-        if (exception != null) {
-            throw new ExecutionException(exception);
-        }
-        return output.get();
-    }
 
     /**
      * Wait up to the specified time for the command output to become available.
-     * 
+     *
      * @param timeout Maximum time to wait for a result.
      * @param unit Unit of time for the timeout.
-     * 
+     *
      * @return true if the output became available.
      */
     @Override
@@ -154,6 +80,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         try {
             return latch.await(timeout, unit);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         }
     }
@@ -176,9 +103,11 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         latch.countDown();
         if (latch.getCount() == 0) {
             if (output == null) {
-                set(null);
+                complete(null);
+            } else if (output.hasError()) {
+                completeExceptionally(new RedisCommandExecutionException(output.getError()));
             } else {
-                set(output.get());
+                complete(output.get());
             }
         }
     }
@@ -250,16 +179,6 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     public void setOutput(CommandOutput<K, V, T> output) {
         this.output = output;
-    }
-
-    public Throwable getException() {
-        return exception;
-    }
-
-    @Override
-    public boolean setException(Throwable exception) {
-        this.exception = exception;
-        return true;
     }
 
 }

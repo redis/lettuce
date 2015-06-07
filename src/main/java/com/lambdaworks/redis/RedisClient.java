@@ -2,13 +2,19 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.LettuceStrings.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -536,10 +542,9 @@ public class RedisClient extends AbstractRedisClient {
                 try {
                     return getSocketAddress(redisURI);
                 } catch (InterruptedException e) {
-                    throw new RedisException(e);
-                } catch (TimeoutException e) {
-                    throw new RedisException(e);
-                } catch (ExecutionException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RedisCommandInterruptedException(e);
+                } catch (TimeoutException | ExecutionException e) {
                     throw new RedisException(e);
                 }
             }
