@@ -48,13 +48,18 @@ class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> i
 
             if (t != null) {
                 convert.completeExceptionally(t);
-            } else if (!list.isEmpty()) {
+                return;
+            }
+
+            if (!list.isEmpty()) {
                 checkArgument(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
                 String hostname = (String) list.get(0);
                 String port = (String) list.get(1);
                 ref.set(new InetSocketAddress(hostname, Integer.parseInt(port)));
-                convert.complete();
             }
+
+            convert.complete();
+
         });
 
         return convert;
