@@ -63,6 +63,9 @@ public class CompilationUnitFactory {
 
         ClassOrInterfaceDeclaration templateTypeDeclaration = (ClassOrInterfaceDeclaration) template.getTypes().get(0);
         resultType = new ClassOrInterfaceDeclaration(ModifierSet.PUBLIC, true, targetName);
+        if (templateTypeDeclaration.getExtends() != null) {
+            resultType.setExtends(templateTypeDeclaration.getExtends());
+        }
 
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
             resultType.setTypeParameters(new ArrayList<TypeParameter>());
@@ -84,7 +87,6 @@ public class CompilationUnitFactory {
             result.getImports().add(new ImportDeclaration(new NameExpr(importLine), false, false));
         }
 
-        // visit and print the methods names
         new MethodVisitor().visit(template, null);
 
         FileOutputStream fos = new FileOutputStream(target);

@@ -11,7 +11,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.AbstractCommandTest;
+import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisConnectionStateListener;
 import com.lambdaworks.redis.RedisURI;
 
@@ -33,13 +33,13 @@ public class CdiTest {
 
     @Produces
     public RedisURI redisURI() {
-        return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
+        return RedisURI.Builder.redis(AbstractRedisClientTest.host, AbstractRedisClientTest.port).build();
     }
 
     @PersonDB
     @Produces
     public RedisURI redisURIQualified() {
-        return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port + 1).build();
+        return RedisURI.Builder.redis(AbstractRedisClientTest.host, AbstractRedisClientTest.port + 1).build();
     }
 
     @Test

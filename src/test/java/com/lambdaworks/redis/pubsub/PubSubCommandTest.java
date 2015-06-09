@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -12,17 +12,17 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
-public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSubListener<String, String> {
-    private RedisPubSubConnection<String, String> pubsub;
+public class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
+    private RedisPubSubAsyncConnection<String, String> pubsub;
 
     private BlockingQueue<String> channels;
     private BlockingQueue<String> patterns;
@@ -53,7 +53,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubConnection<String, String> connection = client.connectPubSub();
+                RedisPubSubAsyncConnection<String, String> connection = client.connectPubSub();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
 
@@ -68,7 +68,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubConnection<String, String> connection = client.connectPubSub();
+                RedisPubSubAsyncConnection<String, String> connection = client.connectPubSub();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
                 connection.quit().get();
@@ -221,7 +221,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
         RedisClient redisClient = new RedisClient(host, port);
 
-        RedisPubSubConnection<String, String> connection = redisClient.connectPubSub();
+        RedisPubSubAsyncConnection<String, String> connection = redisClient.connectPubSub();
 
         redisClient.shutdown();
 

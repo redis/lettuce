@@ -1,13 +1,23 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.sentinel;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
+import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
+import static com.lambdaworks.redis.protocol.CommandType.MONITOR;
+import static com.lambdaworks.redis.protocol.CommandType.PING;
+import static com.lambdaworks.redis.protocol.CommandType.SENTINEL;
+import static com.lambdaworks.redis.protocol.CommandType.SET;
 
 import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.ListOfMapsOutput;
+import com.lambdaworks.redis.output.MapOutput;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.output.ValueListOutput;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
@@ -17,6 +27,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
  * @since 3.0
  */
 class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
+
     public SentinelCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
     }
@@ -69,4 +80,5 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(CommandKeyword.REMOVE).addKey(key);
         return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
     }
+
 }

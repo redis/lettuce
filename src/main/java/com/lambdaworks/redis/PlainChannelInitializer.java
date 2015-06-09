@@ -5,6 +5,7 @@ import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandHandler;
 
@@ -38,7 +39,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
             channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-                private Command<?, ?, ?> pingCommand;
+                private AsyncCommand<?, ?, ?> pingCommand;
 
                 @Override
                 public Future<Boolean> channelInitialized() {
@@ -71,7 +72,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 
                     if (pingBeforeActivate) {
-                        pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                         pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                     } else {
                         if (!initializedFuture.isDone()) {
@@ -97,7 +98,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         }
     }
 
-    static void pingBeforeActivate(final Command<?, ?, ?> cmd, final SettableFuture<Boolean> initializedFuture,
+    static void pingBeforeActivate(final AsyncCommand<?, ?, ?> cmd, final SettableFuture<Boolean> initializedFuture,
             final ChannelHandlerContext ctx, final List<ChannelHandler> handlers) throws Exception {
         cmd.handle((o, throwable) -> {
             if (throwable == null) {

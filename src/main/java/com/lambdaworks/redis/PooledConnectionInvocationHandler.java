@@ -15,7 +15,7 @@ import com.google.common.reflect.AbstractInvocationHandler;
  * @since 3.0
  */
 class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
-    public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit");
+    public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit", "getStatefulConnection");
 
     private T connection;
     private final RedisConnectionPool<T> pool;

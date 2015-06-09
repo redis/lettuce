@@ -91,6 +91,8 @@ public class RedisConnectionPool<T> implements Closeable {
      * Allocate a connection from the pool. It must be returned using freeConnection (or alternatively call {@code close()} on
      * the connection).
      *
+     * The connections returned by this method are proxies to the underlying connections.
+     *
      * @return a pooled connection.
      */
     public T allocateConnection() {

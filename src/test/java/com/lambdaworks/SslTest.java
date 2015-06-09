@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
+import com.lambdaworks.redis.pubsub.RedisPubSubAsyncConnection;
 import io.netty.handler.codec.DecoderException;
 
 /**
@@ -84,12 +84,12 @@ public class SslTest {
     public void pubSubSsl() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        RedisPubSubConnection<String, String> connection = redisClient.connectPubSub(redisUri);
+        RedisPubSubAsyncConnection<String, String> connection = redisClient.connectPubSub(redisUri);
         connection.subscribe("c1");
         connection.subscribe("c2");
         Thread.sleep(100);
 
-        RedisPubSubConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
+        RedisPubSubAsyncConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
 
         assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
         connection.quit();
@@ -107,12 +107,12 @@ public class SslTest {
 
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        RedisPubSubConnection<String, String> connection = redisClient.connectPubSub(redisUri);
+        RedisPubSubAsyncConnection<String, String> connection = redisClient.connectPubSub(redisUri);
         connection.subscribe("c1");
         connection.subscribe("c2");
         Thread.sleep(100);
 
-        RedisPubSubConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
+        RedisPubSubAsyncConnection<String, String> connection2 = redisClient.connectPubSub(redisUri);
         assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
 
         redisUri.setVerifyPeer(true);

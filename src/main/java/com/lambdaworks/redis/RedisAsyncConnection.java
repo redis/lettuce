@@ -2,7 +2,19 @@ package com.lambdaworks.redis;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.async.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.BaseRedisAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisHLLAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisHashesAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisKeysAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisListsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisScriptingAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisServerAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSetsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSortedSetsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisStringsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisTransactionalAsyncConnection;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
  * Complete async Redis API with 400+ Methods.
@@ -41,5 +53,10 @@ public interface RedisAsyncConnection<K, V> extends RedisHashesAsyncConnection<K
      * @return String simple-string-reply
      */
     String select(int db);
+
+    /**
+     * @return the underlying connection.
+     */
+    StatefulRedisConnection<K, V> getStatefulConnection();
 
 }

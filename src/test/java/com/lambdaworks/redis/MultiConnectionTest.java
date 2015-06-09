@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 
 import org.junit.Test;
 
-public class MultiConnectionTest extends AbstractCommandTest {
+public class MultiConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void twoConnections() throws Exception {

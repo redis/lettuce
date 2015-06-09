@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.Test;
 
-import com.lambdaworks.redis.AbstractCommandTest;
+import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
 
-public class WithConnectionTest extends AbstractCommandTest {
+public class WithConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void testPooling() throws Exception {

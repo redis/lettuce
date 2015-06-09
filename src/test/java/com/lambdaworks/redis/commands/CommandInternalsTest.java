@@ -1,13 +1,15 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,16 +17,22 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandKeyword;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 public class CommandInternalsTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
-    protected Command<String, String, String> command;
+    protected AsyncCommand<String, String, String> command;
 
     @Before
     public final void createCommand() throws Exception {
         CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);
-        command = new Command<String, String, String>(CommandType.INFO, output, null, false);
+        command = new AsyncCommand<>(new Command<String, String, String>(CommandType.INFO, output, null));
     }
 
     @Test
@@ -53,15 +61,16 @@ public class CommandInternalsTest {
     @Test
     public void customKeyword() throws Exception {
 
-        command = new Command<String, String, String>(MyKeywords.DUMMY, null, null, false);
-        command.setOutput(new StatusOutput<String, String>(codec));
+        command = new AsyncCommand<>(new Command<String, String, String>(MyKeywords.DUMMY, new StatusOutput<String, String>(
+                codec), null));
 
         assertThat(command.toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     public void customKeywordWithArgs() throws Exception {
-        command = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec), false);
+        command = new AsyncCommand<>(new Command<String, String, String>(MyKeywords.DUMMY, null,
+                new CommandArgs<String, String>(codec)));
         command.getArgs().add(MyKeywords.DUMMY);
         assertThat(command.getArgs().toString()).contains(MyKeywords.DUMMY.name());
         assertThat(command.getArgs().getKeywords()).contains(MyKeywords.DUMMY);

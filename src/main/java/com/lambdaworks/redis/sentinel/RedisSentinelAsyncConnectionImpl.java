@@ -1,4 +1,4 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.sentinel;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -6,13 +6,16 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -22,12 +25,13 @@ import io.netty.channel.ChannelHandler;
  * @since 3.0
  */
 @ChannelHandler.Sharable
-class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements RedisSentinelAsyncConnection<K, V> {
+public class RedisSentinelAsyncConnectionImpl<K, V> implements RedisSentinelAsyncConnection<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
+    private final StatefulConnection<K, V> connection;
 
-    public RedisSentinelAsyncConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        super(writer, timeout, unit);
+    public RedisSentinelAsyncConnectionImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
+        this.connection = connection;
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
     }
 
@@ -35,14 +39,14 @@ class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> i
     public RedisFuture<SocketAddress> getMasterAddrByName(K key) {
 
         Command<K, V, List<V>> cmd = commandBuilder.getMasterAddrByKey(key);
-        RedisFuture<List<V>> future = dispatch(cmd);
+        CompletionStage<List<V>> future = dispatch(cmd);
         AtomicReference<SocketAddress> ref = new AtomicReference<>();
-        Command<K, V, SocketAddress> convert = new Command<>(cmd.getType(), new CommandOutput<K, V, SocketAddress>(null, null) {
+        AsyncCommand<K, V, SocketAddress> convert = new AsyncCommand<K, V, SocketAddress>((RedisCommand) cmd) {
             @Override
-            public SocketAddress get() {
-                return ref.get();
+            protected void completeResult() {
+                complete(ref.get());
             }
-        }, cmd.getArgs());
+        };
 
         future.whenComplete((list, t) -> {
 
@@ -116,4 +120,19 @@ class RedisSentinelAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> i
     public RedisFuture<String> ping() {
         return dispatch(commandBuilder.ping());
     }
+
+    public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+        return connection.dispatch(new AsyncCommand<>(cmd));
+    }
+
+    @Override
+    public void close() {
+        connection.close();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return connection.isOpen();
+    }
+
 }

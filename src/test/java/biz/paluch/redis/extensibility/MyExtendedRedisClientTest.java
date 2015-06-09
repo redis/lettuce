@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.pubsub.RedisPubSubAsyncConnectionImpl;
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -11,7 +12,7 @@ import org.junit.Test;
 
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
+import com.lambdaworks.redis.pubsub.RedisPubSubAsyncConnection;
 
 /**
  * Test for override/extensability of RedisClient
@@ -42,8 +43,9 @@ public class MyExtendedRedisClientTest {
 
     @Test
     public void testPubsub() throws Exception {
-        RedisPubSubConnection<String, String> connection = client.connectPubSub();
-        assertThat(connection).isInstanceOf(MyPubSubConnection.class);
+        RedisPubSubAsyncConnection<String, String> connection = client.connectPubSub();
+        assertThat(connection).isInstanceOf(RedisPubSubAsyncConnectionImpl.class);
+        assertThat(connection.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
         connection.set("key", "value").get();
         connection.close();
 

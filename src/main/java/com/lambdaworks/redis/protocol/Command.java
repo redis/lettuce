@@ -2,12 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.RedisCommandExecutionException;
-import com.lambdaworks.redis.RedisCommandInterruptedException;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -19,17 +13,16 @@ import io.netty.buffer.ByteBuf;
  * 
  * @author Will Glozer
  */
-public class Command<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T> {
+public class Command<K, V, T> implements RedisCommand<K, V, T> {
 
     private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
+    private final ProtocolKeyword type;
+
     protected CommandArgs<K, V> args;
     protected CommandOutput<K, V, T> output;
-    protected CountDownLatch latch;
-
-    private final ProtocolKeyword type;
-    private boolean multi;
-    private boolean cancelled = false;
+    protected Throwable exception;
+    protected boolean cancelled = false;
 
     /**
      * Create a new command with the supplied type and args.
@@ -39,49 +32,9 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
      * @param args Command args, if any.
      */
     public Command(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        this(type, output, args, false);
-    }
-
-    /**
-     * Create a new command with the supplied type and args.
-     *
-     * @param type Command type.
-     * @param output Command output.
-     * @param args Command args, if any.
-     * @param multi Flag indicating if MULTI active.
-     */
-    public Command(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args, boolean multi) {
         this.type = type;
         this.output = output;
         this.args = args;
-        setMulti(multi);
-    }
-
-    public void setMulti(boolean multi) {
-        this.latch = new CountDownLatch(multi ? 2 : 1);
-        this.multi = multi;
-    }
-
-    public boolean isMulti() {
-        return multi;
-    }
-
-    /**
-     * Wait up to the specified time for the command output to become available.
-     *
-     * @param timeout Maximum time to wait for a result.
-     * @param unit Unit of time for the timeout.
-     *
-     * @return true if the output became available.
-     */
-    @Override
-    public boolean await(long timeout, TimeUnit unit) {
-        try {
-            return latch.await(timeout, unit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        }
     }
 
     /**
@@ -94,21 +47,26 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
         return output;
     }
 
+    @Override
+    public boolean completeExceptionally(Throwable throwable) {
+        if (output != null) {
+            output.setError(throwable.getMessage());
+        }
+
+        exception = throwable;
+        return true;
+    }
+
     /**
      * Mark this command complete and notify all waiting threads.
      */
     @Override
     public void complete() {
-        latch.countDown();
-        if (latch.getCount() == 0) {
-            if (output == null) {
-                complete(null);
-            } else if (output.hasError()) {
-                completeExceptionally(new RedisCommandExecutionException(output.getError()));
-            } else {
-                complete(output.get());
-            }
-        }
+    }
+
+    @Override
+    public void cancel() {
+        cancelled = true;
     }
 
     /**
@@ -117,7 +75,6 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
      * 
      * @param buf Buffer to write to.
      */
-    @Override
     public void encode(ByteBuf buf) {
         buf.writeByte('*');
         writeInt(buf, 1 + (args != null ? args.count() : 0));
@@ -156,7 +113,6 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
         }
     }
 
-    @Override
     public String getError() {
         return output.getError();
     }
@@ -183,5 +139,10 @@ public class Command<K, V, T> extends CompletableFuture<T> implements RedisComma
     @Override
     public ProtocolKeyword getType() {
         return type;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
     }
 }

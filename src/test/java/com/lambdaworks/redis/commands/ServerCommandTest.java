@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.commands;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.Timeout.timeout;
@@ -16,6 +16,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.KillArgs;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -26,7 +35,7 @@ import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 import com.lambdaworks.redis.protocol.CommandType;
 
-public class ServerCommandTest extends AbstractCommandTest {
+public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void bgrewriteaof() throws Exception {
         String msg = "Background append only file rewriting";
@@ -39,21 +48,21 @@ public class ServerCommandTest extends AbstractCommandTest {
             Thread.sleep(100);
         }
         String msg = "Background saving started";
-        assertThat(redis.bgsave()).isEqualTo(msg);
+        Assertions.assertThat(redis.bgsave()).isEqualTo(msg);
     }
 
     @Test
     public void clientGetSetname() throws Exception {
-        assertThat(redis.clientGetname()).isNull();
-        assertThat(redis.clientSetname("test")).isEqualTo("OK");
-        assertThat(redis.clientGetname()).isEqualTo("test");
-        assertThat(redis.clientSetname("")).isEqualTo("OK");
-        assertThat(redis.clientGetname()).isNull();
+        Assertions.assertThat(redis.clientGetname()).isNull();
+        Assertions.assertThat(redis.clientSetname("test")).isEqualTo("OK");
+        Assertions.assertThat(redis.clientGetname()).isEqualTo("test");
+        Assertions.assertThat(redis.clientSetname("")).isEqualTo("OK");
+        Assertions.assertThat(redis.clientGetname()).isNull();
     }
 
     @Test
     public void clientPause() throws Exception {
-        assertThat(redis.clientPause(1000)).isEqualTo("OK");
+        Assertions.assertThat(redis.clientPause(1000)).isEqualTo("OK");
     }
 
     @Test
@@ -63,7 +72,7 @@ public class ServerCommandTest extends AbstractCommandTest {
         Matcher m = p.matcher(clients);
 
         assertThat(m.lookingAt()).isTrue();
-        assertThat(redis.clientKill(m.group(1))).isEqualTo("OK");
+        Assertions.assertThat(redis.clientKill(m.group(1))).isEqualTo("OK");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -83,24 +92,24 @@ public class ServerCommandTest extends AbstractCommandTest {
 
         assertThat(m.matches()).isTrue();
         String addr = m.group(1);
-        assertThat(redis.clientKill(KillArgs.Builder.addr(addr).skipme())).isGreaterThan(0);
+        Assertions.assertThat(redis.clientKill(KillArgs.Builder.addr(addr).skipme())).isGreaterThan(0);
 
-        assertThat(redis.clientKill(KillArgs.Builder.id(4234))).isEqualTo(0);
-        assertThat(redis.clientKill(KillArgs.Builder.typeSlave().id(4234))).isEqualTo(0);
-        assertThat(redis.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
-        assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
+        Assertions.assertThat(redis.clientKill(KillArgs.Builder.id(4234))).isEqualTo(0);
+        Assertions.assertThat(redis.clientKill(KillArgs.Builder.typeSlave().id(4234))).isEqualTo(0);
+        Assertions.assertThat(redis.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
+        Assertions.assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
 
         connection2.close();
     }
 
     @Test
     public void clientList() throws Exception {
-        assertThat(redis.clientList().contains("addr=")).isTrue();
+        Assertions.assertThat(redis.clientList().contains("addr=")).isTrue();
     }
 
     @Test
     public void commandCount() throws Exception {
-        assertThat(redis.commandCount()).isGreaterThan(100);
+        Assertions.assertThat(redis.commandCount()).isGreaterThan(100);
     }
 
     @Test
@@ -132,22 +141,22 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void configGet() throws Exception {
-        assertThat(redis.configGet("maxmemory")).isEqualTo(list("maxmemory", "0"));
+        Assertions.assertThat(redis.configGet("maxmemory")).isEqualTo(list("maxmemory", "0"));
     }
 
     @Test
     public void configResetstat() throws Exception {
         redis.get(key);
         redis.get(key);
-        assertThat(redis.configResetstat()).isEqualTo("OK");
-        assertThat(redis.info().contains("keyspace_misses:0")).isTrue();
+        Assertions.assertThat(redis.configResetstat()).isEqualTo("OK");
+        Assertions.assertThat(redis.info().contains("keyspace_misses:0")).isTrue();
     }
 
     @Test
     public void configSet() throws Exception {
         String maxmemory = redis.configGet("maxmemory").get(1);
-        assertThat(redis.configSet("maxmemory", "1024")).isEqualTo("OK");
-        assertThat(redis.configGet("maxmemory").get(1)).isEqualTo("1024");
+        Assertions.assertThat(redis.configSet("maxmemory", "1024")).isEqualTo("OK");
+        Assertions.assertThat(redis.configGet("maxmemory").get(1)).isEqualTo("1024");
         redis.configSet("maxmemory", maxmemory);
     }
 
@@ -160,9 +169,9 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void dbsize() throws Exception {
-        assertThat(redis.dbsize()).isEqualTo(0);
+        Assertions.assertThat(redis.dbsize()).isEqualTo(0);
         redis.set(key, value);
-        assertThat(redis.dbsize()).isEqualTo(1);
+        Assertions.assertThat(redis.dbsize()).isEqualTo(1);
     }
 
     @Test
@@ -193,8 +202,8 @@ public class ServerCommandTest extends AbstractCommandTest {
     @Test
     public void flushall() throws Exception {
         redis.set(key, value);
-        assertThat(redis.flushall()).isEqualTo("OK");
-        assertThat(redis.get(key)).isNull();
+        Assertions.assertThat(redis.flushall()).isEqualTo("OK");
+        Assertions.assertThat(redis.get(key)).isNull();
     }
 
     @Test
@@ -202,16 +211,16 @@ public class ServerCommandTest extends AbstractCommandTest {
         redis.set(key, value);
         redis.select(1);
         redis.set(key, value + "X");
-        assertThat(redis.flushdb()).isEqualTo("OK");
-        assertThat(redis.get(key)).isNull();
+        Assertions.assertThat(redis.flushdb()).isEqualTo("OK");
+        Assertions.assertThat(redis.get(key)).isNull();
         redis.select(0);
-        assertThat(redis.get(key)).isEqualTo(value);
+        Assertions.assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void info() throws Exception {
-        assertThat(redis.info().contains("redis_version")).isTrue();
-        assertThat(redis.info("server").contains("redis_version")).isTrue();
+        Assertions.assertThat(redis.info().contains("redis_version")).isTrue();
+        Assertions.assertThat(redis.info("server").contains("redis_version")).isTrue();
     }
 
     @Test
@@ -226,12 +235,12 @@ public class ServerCommandTest extends AbstractCommandTest {
         while (redis.info().contains("aof_rewrite_in_progress:1")) {
             Thread.sleep(100);
         }
-        assertThat(redis.save()).isEqualTo("OK");
+        Assertions.assertThat(redis.save()).isEqualTo("OK");
     }
 
     @Test
     public void slaveof() throws Exception {
-        assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
+        Assertions.assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
         redis.slaveofNoOne();
     }
 
@@ -292,7 +301,7 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void slaveofNoOne() throws Exception {
-        assertThat(redis.slaveofNoOne()).isEqualTo("OK");
+        Assertions.assertThat(redis.slaveofNoOne()).isEqualTo("OK");
     }
 
     @Test
@@ -300,8 +309,8 @@ public class ServerCommandTest extends AbstractCommandTest {
     public void slowlog() throws Exception {
         long start = System.currentTimeMillis() / 1000;
 
-        assertThat(redis.configSet("slowlog-log-slower-than", "1")).isEqualTo("OK");
-        assertThat(redis.slowlogReset()).isEqualTo("OK");
+        Assertions.assertThat(redis.configSet("slowlog-log-slower-than", "1")).isEqualTo("OK");
+        Assertions.assertThat(redis.slowlogReset()).isEqualTo("OK");
         redis.set(key, value);
 
         List<Object> log = redis.slowlogGet();
@@ -321,7 +330,7 @@ public class ServerCommandTest extends AbstractCommandTest {
         assertThat(entry.get(2) instanceof Long).isTrue();
         assertThat(entry.get(3)).isEqualTo(list("SLOWLOG", "RESET"));
 
-        assertThat(redis.slowlogGet(1)).hasSize(1);
+        Assertions.assertThat(redis.slowlogGet(1)).hasSize(1);
         assertThat((long) redis.slowlogLen()).isGreaterThanOrEqualTo(4);
 
         redis.configSet("slowlog-log-slower-than", "0");
@@ -329,7 +338,7 @@ public class ServerCommandTest extends AbstractCommandTest {
 
     @Test
     public void sync() throws Exception {
-        assertThat(redis.sync().startsWith("REDIS")).isTrue();
+        Assertions.assertThat(redis.sync().startsWith("REDIS")).isTrue();
     }
 
     @Test

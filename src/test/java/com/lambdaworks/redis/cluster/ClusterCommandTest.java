@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class ClusterCommandTest {
     @Test
     public void testComplete() throws Exception {
 
-        command.complete();
+        sut.complete();
         sut.await(1, TimeUnit.MINUTES);
         assertThat(sut.isDone()).isTrue();
         assertThat(sut.isCancelled()).isFalse();
@@ -57,9 +58,11 @@ public class ClusterCommandTest {
 
         final List<String> someList = Lists.newArrayList();
 
-        command.thenRun(() -> someList.add(""));
-        sut.complete();
-        sut.await(1, TimeUnit.MINUTES);
+        AsyncCommand asyncCommand = new AsyncCommand(sut);
+
+        asyncCommand.thenRun(() -> someList.add(""));
+        asyncCommand.complete();
+        asyncCommand.await(1, TimeUnit.MINUTES);
 
         assertThat(sut.isDone()).isTrue();
         assertThat(someList.size()).describedAs("Inner listener has to add one element").isEqualTo(1);

@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.commands;
 
 import static com.lambdaworks.redis.ScriptOutputType.BOOLEAN;
 import static com.lambdaworks.redis.ScriptOutputType.INTEGER;
@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.RedisAsyncConnection;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,7 +20,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class ScriptingCommandTest extends AbstractCommandTest {
+public class ScriptingCommandTest extends AbstractRedisClientTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 

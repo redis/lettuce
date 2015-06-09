@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.commands;
 
 import static com.lambdaworks.redis.protocol.SetArgs.Builder.ex;
 import static com.lambdaworks.redis.protocol.SetArgs.Builder.nx;
@@ -10,6 +10,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.ListStreamingAdapter;
+import com.lambdaworks.redis.RedisException;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -18,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class StringCommandTest extends AbstractCommandTest {
+public class StringCommandTest extends AbstractRedisClientTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -32,7 +37,7 @@ public class StringCommandTest extends AbstractCommandTest {
     public void get() throws Exception {
         assertNull(redis.get(key));
         redis.set(key, value);
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals(value, redis.get(key));
     }
 
     @Test
@@ -44,28 +49,27 @@ public class StringCommandTest extends AbstractCommandTest {
 
     @Test
     public void getrange() throws Exception {
-        assertEquals("", redis.getrange(key, 0, -1));
+        Assert.assertEquals("", redis.getrange(key, 0, -1));
         redis.set(key, "foobar");
-        assertEquals("oba", redis.getrange(key, 2, 4));
-        assertEquals("bar", redis.getrange(key, 3, -1));
+        Assert.assertEquals("oba", redis.getrange(key, 2, 4));
+        Assert.assertEquals("bar", redis.getrange(key, 3, -1));
     }
 
     @Test
     public void getset() throws Exception {
         assertNull(redis.getset(key, value));
-        assertEquals(value, redis.getset(key, "two"));
-        assertEquals("two", redis.get(key));
+        Assert.assertEquals(value, redis.getset(key, "two"));
+        Assert.assertEquals("two", redis.get(key));
     }
 
     @Test
     public void mget() throws Exception {
         setupMget();
-        assertEquals(list("1", "2"), redis.mget("one", "two"));
+        Assert.assertEquals(list("1", "2"), redis.mget("one", "two"));
     }
 
-    private void setupMget()
-    {
-        assertEquals(list((String) null), redis.mget(key));
+    private void setupMget() {
+        Assert.assertEquals(list((String) null), redis.mget(key));
         redis.set("one", "1");
         redis.set("two", "2");
     }
@@ -83,12 +87,12 @@ public class StringCommandTest extends AbstractCommandTest {
 
     @Test
     public void mset() throws Exception {
-        assertEquals(list(null, null), redis.mget("one", "two"));
+        Assert.assertEquals(list(null, null), redis.mget("one", "two"));
         Map<String, String> map = new HashMap<String, String>();
         map.put("one", "1");
         map.put("two", "2");
-        assertEquals("OK", redis.mset(map));
-        assertEquals(list("1", "2"), redis.mget("one", "two"));
+        Assert.assertEquals("OK", redis.mset(map));
+        Assert.assertEquals(list("1", "2"), redis.mget("one", "two"));
     }
 
     @Test
@@ -100,40 +104,40 @@ public class StringCommandTest extends AbstractCommandTest {
         assertFalse(redis.msetnx(map));
         redis.del("one");
         assertTrue(redis.msetnx(map));
-        assertEquals("2", redis.get("two"));
+        Assert.assertEquals("2", redis.get("two"));
     }
 
     @Test
     public void set() throws Exception {
         assertNull(redis.get(key));
-        assertEquals("OK", redis.set(key, value));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value));
+        Assert.assertEquals(value, redis.get(key));
 
-        assertEquals("OK", redis.set(key, value, ex(10)));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value, ex(10)));
+        Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
 
-        assertEquals("OK", redis.set(key, value, ex(10).px(20000)));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value, ex(10).px(20000)));
+        Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 19);
 
-        assertEquals("OK", redis.set(key, value, px(10000)));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value, px(10000)));
+        Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
 
         assertNull(redis.set(key, value, nx()));
-        assertEquals("OK", redis.set(key, value, xx()));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value, xx()));
+        Assert.assertEquals(value, redis.get(key));
 
         redis.del(key);
 
-        assertEquals("OK", redis.set(key, value, nx()));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value, nx()));
+        Assert.assertEquals(value, redis.get(key));
 
         redis.del(key);
 
-        assertEquals("OK", redis.set(key, value, ex(10).px(20000).nx()));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.set(key, value, ex(10).px(20000).nx()));
+        Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 19);
     }
 
@@ -155,15 +159,15 @@ public class StringCommandTest extends AbstractCommandTest {
 
     @Test
     public void setex() throws Exception {
-        assertEquals("OK", redis.setex(key, 10, value));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.setex(key, 10, value));
+        Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
     }
 
     @Test
     public void psetex() throws Exception {
-        assertEquals("OK", redis.psetex(key, 20000, value));
-        assertEquals(value, redis.get(key));
+        Assert.assertEquals("OK", redis.psetex(key, 20000, value));
+        Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.pttl(key) >= 19000);
     }
 
@@ -177,7 +181,7 @@ public class StringCommandTest extends AbstractCommandTest {
     public void setrange() throws Exception {
         assertEquals("foo".length(), (long) redis.setrange(key, 0, "foo"));
         assertEquals(6, (long) redis.setrange(key, 3, "bar"));
-        assertEquals("foobar", redis.get(key));
+        Assert.assertEquals("foobar", redis.get(key));
     }
 
     @Test

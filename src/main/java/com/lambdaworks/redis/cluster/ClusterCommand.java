@@ -2,13 +2,11 @@ package com.lambdaworks.redis.cluster;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandOutput;
@@ -20,16 +18,15 @@ import io.netty.buffer.ByteBuf;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-class ClusterCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T> {
+class ClusterCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisCommand<K, V, T> {
 
-    private RedisCommand<K, V, T> command;
     private RedisChannelWriter<K, V> retry;
     private int executions;
     private int executionLimit;
     private List<Throwable> exceptions = new ArrayList<Throwable>();
 
     ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
-        this.command = command;
+        super(command);
         this.retry = retry;
         this.executionLimit = executionLimit;
     }
@@ -48,14 +45,7 @@ class ClusterCommand<K, V, T> extends CompletableFuture<T> implements RedisComma
             return;
         }
 
-        command.complete();
-        if (command.getOutput() == null) {
-            complete(null);
-        } else if (command.getOutput().hasError()) {
-            completeExceptionally(new RedisCommandExecutionException(command.getOutput().getError()));
-        } else {
-            complete(command.getOutput().get());
-        }
+        super.complete();
     }
 
     public boolean isMoved() {
@@ -63,36 +53,6 @@ class ClusterCommand<K, V, T> extends CompletableFuture<T> implements RedisComma
             return true;
         }
         return false;
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return command.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return command.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-        return command.isDone();
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        return command.get(timeout, unit);
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-        return command.get();
-    }
-
-    @Override
-    public String getError() {
-        return command.getError();
     }
 
     @Override
@@ -111,11 +71,6 @@ class ClusterCommand<K, V, T> extends CompletableFuture<T> implements RedisComma
     @Override
     public void encode(ByteBuf buf) {
         command.encode(buf);
-    }
-
-    @Override
-    public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
-        return command.await(timeout, unit);
     }
 
     @Override

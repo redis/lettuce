@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -24,10 +26,11 @@ import com.google.common.collect.Lists;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @RunWith(Parameterized.class)
+@Ignore
 public class CreateReactiveApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "readOnly", "readWrite");
+            "isOpen", "readOnly", "readWrite", "reset");
 
     private CompilationUnitFactory factory;
 
@@ -74,7 +77,9 @@ public class CreateReactiveApi {
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
         return method -> {
 
-            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())) {
+            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
+            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())
+                    || KEEP_METHOD_RESULT_TYPE.contains(classOfMethod.getName() + "." + method.getName())) {
                 return method.getType();
             }
 

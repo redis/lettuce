@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -24,15 +25,15 @@ public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
     private int[] ports;
-    private Map<Integer, RedisAsyncConnectionImpl<?, ?>> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisClusterAsyncConnection<?, ?>> connectionCache = Maps.newHashMap();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
         this.ports = ports;
 
         for (int port : ports) {
-            RedisAsyncConnectionImpl<String, String> connection = clusterClient.connectAsyncImpl(new InetSocketAddress(
-                    "localhost", port));
+            RedisClusterAsyncConnection<String, String> connection = clusterClient.connectImpl(
+                    new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
     }
@@ -45,7 +46,7 @@ public class ClusterRule implements TestRule {
             public void evaluate() throws Throwable {
                 List<Future> futures = Lists.newArrayList();
 
-                for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
+                for (RedisClusterAsyncConnection<?, ?> connection : connectionCache.values()) {
                     futures.add(connection.flushall());
                 }
 
@@ -71,8 +72,8 @@ public class ClusterRule implements TestRule {
 
     public boolean isStable() {
 
-        RedisAsyncConnectionImpl<String, String> connection = clusterClient.connectAsyncImpl(new InetSocketAddress("localhost",
-                ports[0]));
+        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectImpl(
+                new InetSocketAddress("localhost", ports[0])).async();
         try {
             String info = connection.clusterInfo().get();
             if (info != null && info.contains("cluster_state:ok")) {
@@ -101,7 +102,7 @@ public class ClusterRule implements TestRule {
 
     public void flushdb() {
         try {
-            for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
+            for (RedisClusterAsyncConnection<?, ?> connection : connectionCache.values()) {
                 connection.flushdb().get();
             }
         } catch (Exception e) {
@@ -112,7 +113,7 @@ public class ClusterRule implements TestRule {
     public void clusterReset() {
         try {
 
-            for (RedisAsyncConnectionImpl<?, ?> connection : connectionCache.values()) {
+            for (RedisClusterAsyncConnection<?, ?> connection : connectionCache.values()) {
                 connection.clusterReset(false).get();
                 connection.clusterReset(true).get();
                 connection.clusterFlushslots().get();

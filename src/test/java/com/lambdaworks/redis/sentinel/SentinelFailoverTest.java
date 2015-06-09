@@ -1,4 +1,4 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.sentinel;
 
 import static com.google.code.tempusfugit.temporal.Duration.*;
 import static com.google.code.tempusfugit.temporal.Timeout.*;
@@ -7,13 +7,18 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 
-public class SentinelFailoverTest extends AbstractCommandTest {
+public class SentinelFailoverTest extends AbstractRedisClientTest {
 
     public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
 

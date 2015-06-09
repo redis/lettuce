@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import java.io.Closeable;
 
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.cluster.api.StatefulClusterConnection;
 
 /**
  * Connection provider for cluster operations.
@@ -18,7 +19,7 @@ interface ClusterConnectionProvider extends Closeable {
      * @param slot
      * @return a valid connection which handles the slot.
      */
-    <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot);
+    <K, V> StatefulClusterConnection<K, V> getConnection(Intent intent, int slot);
 
     /**
      * Provide a connection for the intent and host/port.
@@ -28,7 +29,7 @@ interface ClusterConnectionProvider extends Closeable {
      * @param port
      * @return a valid connection to the given host.
      */
-    <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port);
+    <K, V> StatefulClusterConnection<K, V> getConnection(Intent intent, String host, int port);
 
     /**
      * Close the connections and free all resources.

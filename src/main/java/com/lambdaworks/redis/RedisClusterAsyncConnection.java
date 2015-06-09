@@ -1,8 +1,19 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.async.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.BaseRedisAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisHLLAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisHashesAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisKeysAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisListsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisScriptingAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisServerAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSetsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSortedSetsAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisStringsAsyncConnection;
 
 /**
  * Complete asynchronous cluster Redis API with 400+ Methods..
@@ -16,6 +27,22 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
         RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V> {
+
+    /**
+     * Set the default timeout for operations.
+     * 
+     * @param timeout the timeout value
+     * @param unit the unit of the timeout value
+     */
+    void setTimeout(long timeout, TimeUnit unit);
+
+    /**
+     * Authenticate to the server.
+     * 
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    String auth(String password);
 
     RedisFuture<String> clusterMeet(String ip, int port);
 

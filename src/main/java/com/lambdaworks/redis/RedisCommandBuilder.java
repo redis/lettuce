@@ -3,7 +3,6 @@ package com.lambdaworks.redis;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -21,9 +20,9 @@ import com.lambdaworks.redis.protocol.*;
  */
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
-    private static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
-    private static final String MUST_NOT_BE_EMPTY = "must not be empty";
-    private static final String MUST_NOT_BE_NULL = "must not be null";
+    static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
+    static final String MUST_NOT_BE_EMPTY = "must not be empty";
+    static final String MUST_NOT_BE_NULL = "must not be null";
 
     public RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);

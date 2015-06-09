@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,41 +8,48 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.KeyValueStreamingAdapter;
+import com.lambdaworks.redis.ListStreamingAdapter;
+import com.lambdaworks.redis.MapScanCursor;
+import com.lambdaworks.redis.ScanArgs;
+import com.lambdaworks.redis.StreamScanCursor;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 
-public class HashCommandTest extends AbstractCommandTest {
+public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hdel() throws Exception {
-        assertThat(redis.hdel(key, "one")).isEqualTo(0);
+        Assertions.assertThat(redis.hdel(key, "one")).isEqualTo(0);
         redis.hset(key, "two", "2");
-        assertThat(redis.hdel(key, "one")).isEqualTo(0);
+        Assertions.assertThat(redis.hdel(key, "one")).isEqualTo(0);
         redis.hset(key, "one", "1");
-        assertThat(redis.hdel(key, "one")).isEqualTo(1);
+        Assertions.assertThat(redis.hdel(key, "one")).isEqualTo(1);
         redis.hset(key, "one", "1");
-        assertThat(redis.hdel(key, "one", "two")).isEqualTo(2);
+        Assertions.assertThat(redis.hdel(key, "one", "two")).isEqualTo(2);
     }
 
     @Test
     public void hexists() throws Exception {
-        assertThat(redis.hexists(key, "one")).isFalse();
+        Assertions.assertThat(redis.hexists(key, "one")).isFalse();
         redis.hset(key, "two", "2");
-        assertThat(redis.hexists(key, "one")).isFalse();
+        Assertions.assertThat(redis.hexists(key, "one")).isFalse();
         redis.hset(key, "one", "1");
-        assertThat(redis.hexists(key, "one")).isTrue();
+        Assertions.assertThat(redis.hexists(key, "one")).isTrue();
     }
 
     @Test
     public void hget() throws Exception {
-        assertThat(redis.hget(key, "one")).isNull();
+        Assertions.assertThat(redis.hget(key, "one")).isNull();
         redis.hset(key, "one", "1");
-        assertThat(redis.hget(key, "one")).isEqualTo("1");
+        Assertions.assertThat(redis.hget(key, "one")).isEqualTo("1");
     }
 
     @Test
     public void hgetall() throws Exception {
-        assertThat(redis.hgetall(key).isEmpty()).isTrue();
+        Assertions.assertThat(redis.hgetall(key).isEmpty()).isTrue();
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         Map<String, String> map = redis.hgetall(key);
@@ -56,7 +63,7 @@ public class HashCommandTest extends AbstractCommandTest {
 
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
 
-        assertThat(redis.hgetall(key).isEmpty()).isTrue();
+        Assertions.assertThat(redis.hgetall(key).isEmpty()).isTrue();
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         Long count = redis.hgetall(adapter, key);
@@ -69,14 +76,14 @@ public class HashCommandTest extends AbstractCommandTest {
 
     @Test
     public void hincrby() throws Exception {
-        assertThat(redis.hincrby(key, "one", 1)).isEqualTo(1);
-        assertThat(redis.hincrby(key, "one", -2)).isEqualTo(-1);
+        Assertions.assertThat(redis.hincrby(key, "one", 1)).isEqualTo(1);
+        Assertions.assertThat(redis.hincrby(key, "one", -2)).isEqualTo(-1);
     }
 
     @Test
     public void hincrbyfloat() throws Exception {
-        assertThat(redis.hincrbyfloat(key, "one", 1.0)).isEqualTo(1.0);
-        assertThat(redis.hincrbyfloat(key, "one", -2.0)).isEqualTo(-1.0);
+        Assertions.assertThat(redis.hincrbyfloat(key, "one", 1.0)).isEqualTo(1.0);
+        Assertions.assertThat(redis.hincrbyfloat(key, "one", -2.0)).isEqualTo(-1.0);
     }
 
     @Test
@@ -101,7 +108,7 @@ public class HashCommandTest extends AbstractCommandTest {
     }
 
     private void setup() {
-        assertThat(redis.hkeys(key)).isEqualTo(list());
+        Assertions.assertThat(redis.hkeys(key)).isEqualTo(list());
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
     }
@@ -122,7 +129,7 @@ public class HashCommandTest extends AbstractCommandTest {
     }
 
     private void setupHmget() {
-        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(null, null));
+        Assertions.assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(null, null));
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
     }
@@ -144,38 +151,38 @@ public class HashCommandTest extends AbstractCommandTest {
         Map<String, String> hash = new HashMap<String, String>();
         hash.put("one", "1");
         hash.put("two", "2");
-        assertThat(redis.hmset(key, hash)).isEqualTo("OK");
-        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list("1", "2"));
+        Assertions.assertThat(redis.hmset(key, hash)).isEqualTo("OK");
+        Assertions.assertThat(redis.hmget(key, "one", "two")).isEqualTo(list("1", "2"));
     }
 
     @Test
     public void hmsetWithNulls() throws Exception {
         Map<String, String> hash = new HashMap<String, String>();
         hash.put("one", null);
-        assertThat(redis.hmset(key, hash)).isEqualTo("OK");
-        assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
+        Assertions.assertThat(redis.hmset(key, hash)).isEqualTo("OK");
+        Assertions.assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
 
         hash.put("one", "");
-        assertThat(redis.hmset(key, hash)).isEqualTo("OK");
-        assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
+        Assertions.assertThat(redis.hmset(key, hash)).isEqualTo("OK");
+        Assertions.assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
     }
 
     @Test
     public void hset() throws Exception {
-        assertThat(redis.hset(key, "one", "1")).isTrue();
-        assertThat(redis.hset(key, "one", "1")).isFalse();
+        Assertions.assertThat(redis.hset(key, "one", "1")).isTrue();
+        Assertions.assertThat(redis.hset(key, "one", "1")).isFalse();
     }
 
     @Test
     public void hsetnx() throws Exception {
         redis.hset(key, "one", "1");
-        assertThat(redis.hsetnx(key, "one", "2")).isFalse();
-        assertThat(redis.hget(key, "one")).isEqualTo("1");
+        Assertions.assertThat(redis.hsetnx(key, "one", "2")).isFalse();
+        Assertions.assertThat(redis.hget(key, "one")).isEqualTo("1");
     }
 
     @Test
     public void hvals() throws Exception {
-        assertThat(redis.hvals(key)).isEqualTo(list());
+        Assertions.assertThat(redis.hvals(key)).isEqualTo(list());
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
         List<String> values = redis.hvals(key);
@@ -185,7 +192,7 @@ public class HashCommandTest extends AbstractCommandTest {
 
     @Test
     public void hvalsStreaming() throws Exception {
-        assertThat(redis.hvals(key)).isEqualTo(list());
+        Assertions.assertThat(redis.hvals(key)).isEqualTo(list());
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
 

@@ -8,13 +8,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.KeyValue;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.ScoredValue;
+import com.lambdaworks.redis.TestSettings;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-public abstract class AbstractCommandTest {
+public abstract class AbstractRedisClientTest {
     public static final String host = TestSettings.host();
     public static final int port = TestSettings.port();
     public static final String passwd = TestSettings.password();
@@ -52,27 +58,27 @@ public abstract class AbstractCommandTest {
         redis.close();
     }
 
-    protected List<String> list(String... args) {
+    public List<String> list(String... args) {
         return Arrays.asList(args);
     }
 
-    protected List<Object> list(Object... args) {
+    public List<Object> list(Object... args) {
         return Arrays.asList(args);
     }
 
-    protected List<ScoredValue<String>> svlist(ScoredValue<String>... args) {
+    public List<ScoredValue<String>> svlist(ScoredValue<String>... args) {
         return Arrays.asList(args);
     }
 
-    protected KeyValue<String, String> kv(String key, String value) {
+    public KeyValue<String, String> kv(String key, String value) {
         return new KeyValue<String, String>(key, value);
     }
 
-    protected ScoredValue<String> sv(double score, String value) {
+    public ScoredValue<String> sv(double score, String value) {
         return new ScoredValue<String>(score, value);
     }
 
-    protected Set<String> set(String... args) {
+    public Set<String> set(String... args) {
         return new HashSet<String>(Arrays.asList(args));
     }
 

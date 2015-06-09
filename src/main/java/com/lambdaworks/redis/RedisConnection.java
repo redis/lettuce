@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.*;
 
 /**
@@ -41,4 +42,9 @@ public interface RedisConnection<K, V> extends RedisHashesConnection<K, V>, Redi
      * @return String simple-string-reply
      */
     String select(int db);
+
+    /**
+     * @return the underlying connection.
+     */
+    StatefulRedisConnection<K, V> getStatefulConnection();
 }

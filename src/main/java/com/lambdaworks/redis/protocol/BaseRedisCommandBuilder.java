@@ -1,17 +1,15 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.protocol;
 
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.ScriptOutputType;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-class BaseRedisCommandBuilder<K, V> {
+public class BaseRedisCommandBuilder<K, V> {
     protected RedisCodec<K, V> codec;
 
     public BaseRedisCommandBuilder(RedisCodec<K, V> codec) {
@@ -59,7 +57,7 @@ class BaseRedisCommandBuilder<K, V> {
         }
     }
 
-    protected String string(double n) {
+    public static String string(double n) {
         if (Double.isInfinite(n)) {
             return (n > 0) ? "+inf" : "-inf";
         }

@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
@@ -27,7 +28,7 @@ import com.google.common.collect.Lists;
 public class CreateAsyncApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen");
+            "isOpen", "BaseRedisConnection.reset");
 
     private CompilationUnitFactory factory;
 
@@ -72,8 +73,9 @@ public class CreateAsyncApi {
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
         return method -> {
-
-            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())) {
+            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
+            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())
+                    || KEEP_METHOD_RESULT_TYPE.contains(classOfMethod.getName() + "." + method.getName())) {
                 return method.getType();
             }
 

@@ -13,4 +13,10 @@ public interface ProtocolKeyword {
      * 
      */
     byte[] getBytes();
+
+    /**
+     *
+     * @return name of the command.
+     */
+    String name();
 }

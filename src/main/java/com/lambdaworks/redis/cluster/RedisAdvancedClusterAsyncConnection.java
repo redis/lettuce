@@ -2,6 +2,8 @@ package com.lambdaworks.redis.cluster;
 
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.StatefulClusterConnection;
 
 /**
  * Advanced asynchronous cluster API.
@@ -27,4 +29,9 @@ public interface RedisAdvancedClusterAsyncConnection<K, V> extends RedisClusterA
      * @return a connection to the requested cluster node
      */
     RedisClusterAsyncConnection<K, V> getConnection(String host, int port);
+
+    /**
+     * @return the underlying connection.
+     */
+    StatefulClusterConnection<K, V> getStatefulConnection();
 }

@@ -15,10 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-
-public class AsyncConnectionTest extends AbstractCommandTest {
+public class AsyncConnectionTest extends AbstractRedisClientTest {
     private RedisAsyncConnection<String, String> async;
 
     @Rule

@@ -14,7 +14,7 @@ import com.lambdaworks.redis.api.sync.*;
  */
 public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
-        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V> {
+        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, AutoCloseable {
 
     String clusterMeet(String ip, int port);
 

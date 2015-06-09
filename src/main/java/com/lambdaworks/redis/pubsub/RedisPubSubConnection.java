@@ -1,15 +1,14 @@
 package com.lambdaworks.redis.pubsub;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisConnection;
 
 /**
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 3.0
+ * @since 4.0
  */
-public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> {
+public interface RedisPubSubConnection<K, V> extends RedisConnection<K, V> {
 
     /**
      * Add a new listener.
@@ -29,31 +28,32 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
      * Listen for messages published to channels matching the given patterns.
      * 
      * @param patterns the patterns
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion
      */
-    RedisFuture<Void> psubscribe(K... patterns);
+    void psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
      * 
      * @param patterns the patterns
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion
      */
-    RedisFuture<Void> punsubscribe(K... patterns);
+    void punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
      * 
      * @param channels the channels
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
      */
-    RedisFuture<Void> subscribe(K... channels);
+    void subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
      * 
      * @param channels the channels
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */
-    RedisFuture<Void> unsubscribe(K... channels);
+    void unsubscribe(K... channels);
+
+    /**
+     * @return the underlying connection.
+     */
+    StatefulRedisPubSubConnection<K, V> getStatefulConnection();
 }

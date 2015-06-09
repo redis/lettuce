@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
 
-public class PoolConnectionTest extends AbstractCommandTest {
+public class PoolConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void twoConnections() throws Exception {
@@ -23,12 +23,19 @@ public class PoolConnectionTest extends AbstractCommandTest {
         String result2 = c2.ping();
         assertThat(result1).isEqualTo("PONG");
         assertThat(result2).isEqualTo("PONG");
+    }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void getStatefulConnection() throws Exception {
+
+        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnection<String, String> c1 = pool.allocateConnection();
+
+        c1.getStatefulConnection();
     }
 
     @Test
     public void sameConnectionAfterFree() throws Exception {
-
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         pool.freeConnection(c1);
@@ -37,6 +44,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnection<String, String> c2 = pool.allocateConnection();
         assertThat(c2).isSameAs(c1);
     }
+
     @Test
     public void connectionCloseDoesNotClose() throws Exception {
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
@@ -52,7 +60,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
     }
 
     private RedisConnection assertConnectionStillThere(RedisConnection<String, String> c1) {
-        //unwrap code from RedisConnectionPool destroyObject
+        // unwrap code from RedisConnectionPool destroyObject
         if (Proxy.isProxyClass(c1.getClass())) {
             PooledConnectionInvocationHandler<RedisConnection> invocationHandler = (PooledConnectionInvocationHandler<RedisConnection>) Proxy
                     .getInvocationHandler(c1);

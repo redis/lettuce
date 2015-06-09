@@ -22,7 +22,7 @@ public interface RedisChannelWriter<K, V> extends Closeable {
      * @param <T> result type
      * @return the written redis command
      */
-    <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
+    <T, C extends RedisCommand<K, V, T>> C write(C command);
 
     @Override
     void close();

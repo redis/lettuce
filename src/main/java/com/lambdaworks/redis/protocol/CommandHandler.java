@@ -9,10 +9,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.ConnectionEvents;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -136,7 +145,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     @Override
-    public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
+    public <T, C extends RedisCommand<K, V, T>> C write(C command) {
         try {
 
             if (closed) {
@@ -309,7 +318,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (cmd.getOutput() != null) {
                 cmd.getOutput().setError(message);
             }
-            cmd.cancel(true);
+            cmd.cancel();
         }
     }
 

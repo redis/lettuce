@@ -12,7 +12,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLParameters;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -96,7 +96,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             if (channel.pipeline().get("channelActivator") == null) {
                 channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-                    private Command<?, ?, ?> pingCommand;
+                    private AsyncCommand<?, ?, ?> pingCommand;
 
                     @Override
                     public Future<Boolean> channelInitialized() {
@@ -124,7 +124,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
                             if (event.isSuccess()) {
                                 if (pingBeforeActivate) {
-                                    pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                                    pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                                     pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                                 } else {
                                     initializedFuture.set(true);

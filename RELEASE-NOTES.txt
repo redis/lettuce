@@ -107,7 +107,7 @@ Affected interfaces:
 *API Changes*
 
 * readOnly and readWrite changed from `String` return type to `RedisFuture<String>`. The connection state is maintained by the future completion.
-
+* Renamed `RedisPubSubConnection` to `RedisPubSubAsyncConnection` in order to provide a synchronous interface `RedisPubSubConnection`
 
 ### New interfaces providing observable commands:
 

@@ -67,7 +67,7 @@ public abstract class AbstractRedisClient {
 
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();
+        eventLoopGroups = new ConcurrentHashMap<>();
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
         unit = TimeUnit.SECONDS;
@@ -86,7 +86,7 @@ public abstract class AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
+    protected <K, V, T extends RedisChannelHandler<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
             final T connection, final Supplier<SocketAddress> socketAddressSupplier) {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
@@ -287,7 +287,7 @@ public abstract class AbstractRedisClient {
     }
 
     protected static <K, V> Object syncHandler(RedisChannelHandler<K, V> connection, Class<?>... interfaceClasses) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connection);
+        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(null, null);
         return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaceClasses, h);
     }
 

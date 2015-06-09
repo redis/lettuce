@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import java.io.Closeable;
+import java.lang.AutoCloseable;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +13,7 @@ import java.util.Map;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public interface BaseRedisConnection<K, V> extends Closeable {
+public interface BaseRedisConnection<K, V> extends AutoCloseable {
 
     /**
      * Post a message to a channel.
@@ -118,4 +118,11 @@ public interface BaseRedisConnection<K, V> extends Closeable {
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();
+
+    /**
+     * Reset the command state. Queued commands will be canceled and the internal state will be reset. This is useful when the
+     * internal state machine gets out of sync with the connection.
+     */
+    void reset();
+
 }
