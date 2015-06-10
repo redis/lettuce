@@ -17,7 +17,7 @@ import com.lambdaworks.redis.api.async.RedisTransactionalAsyncConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
- * Complete async Redis API with 400+ Methods.
+ * A complete asynchronous and thread-safe Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

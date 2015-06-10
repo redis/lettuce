@@ -4,6 +4,8 @@ import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
 
 /**
+ * Asynchronous and thread-safe Redis PubSub API.
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>

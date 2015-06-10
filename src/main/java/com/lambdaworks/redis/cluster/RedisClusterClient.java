@@ -15,7 +15,9 @@ import com.google.common.collect.Lists;
 import com.lambdaworks.redis.AbstractRedisClient;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.cluster.api.StatefulClusterConnection;
+import com.lambdaworks.redis.StatefulRedisConnectionImpl;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -113,8 +115,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectClusterImpl(codec, getSocketAddressSupplier()).async();
     }
 
-    protected StatefulClusterConnection<String, String> connectImpl(SocketAddress socketAddress) {
-        return connectImpl(newStringStringCodec(), socketAddress);
+    protected StatefulRedisConnection<String, String> connectToNode(SocketAddress socketAddress) {
+        return connectToNode(newStringStringCodec(), socketAddress);
     }
 
     /**
@@ -125,23 +127,28 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type.
      * @return a new connection
      */
-    <K, V> StatefulClusterConnection<K, V> connectImpl(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
+    <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
 
         logger.debug("connectAsyncImpl(" + socketAddress + ")");
         BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
-        StatefulClusterConnectionImpl<K, V> connection = new StatefulClusterConnectionImpl<K, V>(handler, codec, timeout, unit);
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, () -> socketAddress);
 
         connection.registerCloseables(closeableResources, connection);
 
+        RedisURI redisURI = initialUris.get(0);
+        if (initialUris.get(0).getPassword() != null && redisURI.getPassword().length != 0) {
+            connection.async().auth(new String(redisURI.getPassword()));
+        }
+
         return connection;
     }
 
-    <K, V> StatefulClusterConnection<K, V> connectClusterImpl(RedisCodec<K, V> codec) {
+    <K, V> StatefulRedisClusterConnection<K, V> connectClusterImpl(RedisCodec<K, V> codec) {
         return connectClusterImpl(codec, getSocketAddressSupplier());
     }
 
@@ -154,7 +161,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type.
      * @return a new connection
      */
-    <K, V> StatefulClusterConnectionImpl<K, V> connectClusterImpl(RedisCodec<K, V> codec,
+    <K, V> StatefulRedisClusterConnectionImpl<K, V> connectClusterImpl(RedisCodec<K, V> codec,
             final Supplier<SocketAddress> socketAddressSupplier) {
 
         if (partitions == null) {
@@ -171,7 +178,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
                 pooledClusterConnectionProvider);
-        StatefulClusterConnectionImpl<K, V> connection = new StatefulClusterConnectionImpl(clusterWriter, codec, timeout, unit);
+        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl(clusterWriter, codec,
+                timeout, unit);
 
         connection.setPartitions(partitions);
         connectAsyncImpl(handler, connection, socketAddressSupplier);
@@ -221,7 +229,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (RedisURI initialUri : initialUris) {
 
             try {
-                StatefulClusterConnection<String, String> connection = connectImpl(initialUri.getResolvedAddress());
+                StatefulRedisConnection<String, String> connection = connectToNode(initialUri.getResolvedAddress());
                 nodeUri = initialUri;
                 clusterNodes = connection.sync().clusterNodes();
                 connection.close();

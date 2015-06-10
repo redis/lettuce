@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
+import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
 /**

@@ -2,10 +2,10 @@
 
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.protocol.SetArgs.Builder.ex;
-import static com.lambdaworks.redis.protocol.SetArgs.Builder.nx;
-import static com.lambdaworks.redis.protocol.SetArgs.Builder.px;
-import static com.lambdaworks.redis.protocol.SetArgs.Builder.xx;
+import static com.lambdaworks.redis.SetArgs.Builder.ex;
+import static com.lambdaworks.redis.SetArgs.Builder.nx;
+import static com.lambdaworks.redis.SetArgs.Builder.px;
+import static com.lambdaworks.redis.SetArgs.Builder.xx;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;

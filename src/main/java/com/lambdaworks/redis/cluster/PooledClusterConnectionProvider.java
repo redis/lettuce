@@ -3,7 +3,6 @@ package com.lambdaworks.redis.cluster;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
-import com.lambdaworks.redis.cluster.api.StatefulClusterConnection;
 import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
 import org.apache.commons.pool2.KeyedObjectPool;
 import org.apache.commons.pool2.PooledObject;
@@ -12,10 +11,9 @@ import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
 import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -33,7 +31,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
-    private KeyedObjectPool<PoolKey, StatefulClusterConnection<K, V>> partitionPool;
+    private KeyedObjectPool<PoolKey, StatefulRedisConnection<K, V>> partitionPool;
     private final Partitions partitions;
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, Partitions partitions,
@@ -51,7 +49,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
-    public <K, V> StatefulClusterConnection<K, V> getConnection(Intent intent, int slot) {
+    public <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, int slot) {
         logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
         if (partition == null) {
@@ -60,9 +58,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         try {
             PoolKey key = new PoolKey(intent, partition.getUri());
-            StatefulClusterConnection connection = partitionPool.borrowObject(key);
+            StatefulRedisConnection connection = partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
-            return (StatefulClusterConnection<K, V>) connection;
+            return connection;
         } catch (Exception e) {
             throw new RedisException(e);
         }
@@ -70,20 +68,20 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
-    public <K, V> StatefulClusterConnection<K, V> getConnection(Intent intent, String host, int port) {
+    public <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port) {
         try {
             logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
             PoolKey key = new PoolKey(intent, host, port);
-            StatefulClusterConnection connection = partitionPool.borrowObject(key);
+            StatefulRedisConnection connection = partitionPool.borrowObject(key);
             partitionPool.returnObject(key, connection);
-            return (StatefulClusterConnection<K, V>) connection;
+            return connection;
         } catch (Exception e) {
             throw new RedisException(e);
         }
     }
 
     private static class KeyedConnectionFactory<K, V> extends
-            BaseKeyedPooledObjectFactory<PoolKey, StatefulClusterConnection<K, V>> {
+            BaseKeyedPooledObjectFactory<PoolKey, StatefulRedisConnection<K, V>> {
         private final RedisClusterClient redisClusterClient;
         private final RedisCodec<K, V> redisCodec;
 
@@ -93,24 +91,24 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
 
         @Override
-        public StatefulClusterConnection<K, V> create(final PoolKey key) throws Exception {
+        public StatefulRedisConnection<K, V> create(final PoolKey key) throws Exception {
 
             logger.debug("createConnection(" + key.getIntent() + ", " + key.getSocketAddress() + ")");
-            return redisClusterClient.connectImpl(redisCodec, key.getSocketAddress());
+            return redisClusterClient.connectToNode(redisCodec, key.getSocketAddress());
         }
 
         @Override
-        public boolean validateObject(PoolKey key, PooledObject<StatefulClusterConnection<K, V>> p) {
+        public boolean validateObject(PoolKey key, PooledObject<StatefulRedisConnection<K, V>> p) {
             return p.getObject().isOpen();
         }
 
         @Override
-        public void destroyObject(PoolKey key, PooledObject<StatefulClusterConnection<K, V>> p) throws Exception {
+        public void destroyObject(PoolKey key, PooledObject<StatefulRedisConnection<K, V>> p) throws Exception {
             p.getObject().close();
         }
 
         @Override
-        public PooledObject<StatefulClusterConnection<K, V>> wrap(StatefulClusterConnection<K, V> value) {
+        public PooledObject<StatefulRedisConnection<K, V>> wrap(StatefulRedisConnection<K, V> value) {
             return new DefaultPooledObject<>(value);
         }
     }

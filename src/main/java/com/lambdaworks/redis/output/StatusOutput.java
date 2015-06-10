@@ -5,7 +5,6 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 

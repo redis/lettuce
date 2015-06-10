@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
- * ${intent} for Sentinel.
+ * ${intent} for Redis Sentinel.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

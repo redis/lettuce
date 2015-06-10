@@ -3,7 +3,6 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * Streaming-Output of Values. Returns the count of all values (including null).

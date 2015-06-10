@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * {@link java.util.List} of objects and lists to support dynamic nested structures (List with mixed content of values and

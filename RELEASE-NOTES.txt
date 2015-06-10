@@ -1,19 +1,14 @@
               lettuce 4.0.Beta1 RELEASE NOTES
 
-This release features Unix domain sockets on linux-x86_64 systems. Local connections to a Redis
-instance are now possible without the use of the network. A second feature with a huge impact is client options.
-Client options allow to control behavior on a fine-grained base. It is now possible to turn off auto-reconnect,
-validate the connection with a PING before activating the connection for client usage and many more.
+TBD.
+- Stateful Connections
+- Sync interface for PubSub
+- Advanced cluster API
+- Switch to Java 8 and drop 6+7 support
+- Deprecate connection API's and use command apis
 
-We tested lettuce using YourKit for performance. Subtracting all IO, the most time is spent on constructing the return
-futures and command objects. The async API can issue about 300Kops/sec whereas the sync API performs
-about 13Kops/sec (GET's, PING's) on a single thread.
-Sync performance depends on the Redis performance (tested on a Mac, 2,7 GHz Intel Core i7).
 
-lettuce provides now also base functionality for building clients using the Redis protocol.
-An example is spinach (https://github.com/mp911de/spinach).
-
-lettuce 4.0 is built with Java 8 and cannot be used with Java 6 or 7.
+lettuce 4.0 is needs Java 8 and cannot be used with Java 6 or 7.
 
 If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
 
@@ -21,7 +16,7 @@ If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
 Rearchitecting the API
 -----
 Lettuce provides right from the start two API's: Sync and async. Now comes a third one: Reactive. Behind the scenes, all commands are
-executed using netty and it does not really matter, from which API you come. But the connection ressources (sockets, events)
+executed using netty and it does not really matter, from which API you come. But the connection resources (sockets, events)
 were bound to a particular API. If one wanted to use sync calls for a certain scenario, he had to create another connection to redis.
 
 This coupling is loosed now. By calling `connect()` you will no longer get a synchronous connection, you will get a `StatefulRedisConnection`
@@ -108,6 +103,9 @@ Affected interfaces:
 
 * readOnly and readWrite changed from `String` return type to `RedisFuture<String>`. The connection state is maintained by the future completion.
 * Renamed `RedisPubSubConnection` to `RedisPubSubAsyncConnection` in order to provide a synchronous interface `RedisPubSubConnection`
+* Moved `CommandOutput` from `com.lambdaworks.redis.protocol` to  `com.lambdaworks.redis.output`
+* Moved `SetArgs` from `com.lambdaworks.redis.protocol` to `com.lambdaworks.redis`
+* All connections are `AutoCloseable` so you can handle connections using try-with-resources.
 
 ### New interfaces providing observable commands:
 
@@ -127,6 +125,15 @@ New interfaces:
 * RedisSortedSetsRxConnection
 * RedisStringsRxConnection
 * RedisTransactionalRxConnection
+
+## New API's
+
+* StatefulClusterConnection
+* StatefulRedisPubSubConnection
+* StatefulClusterConnection
+* StatefulRedisSentinelConnection
+* RedisPubSubAsyncConnection and RedisPubSubConnection
+
 
 Enhancements
 -----

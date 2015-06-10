@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * {@link Map} of keys and values output.

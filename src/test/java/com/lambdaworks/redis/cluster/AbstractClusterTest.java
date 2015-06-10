@@ -27,8 +27,6 @@ public class AbstractClusterTest {
 
     protected Logger log = Logger.getLogger(getClass());
 
-    protected RedisClusterAsyncConnection<String, String> redis1;
-
     protected String key = "key";
     protected String value = "value";
 

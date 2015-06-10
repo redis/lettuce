@@ -122,7 +122,7 @@ public class RedisClient extends AbstractRedisClient {
 
         long maxWait = makeTimeout();
         RedisConnectionPool<RedisConnection<K, V>> pool = new RedisConnectionPool<RedisConnection<K, V>>(
-                new RedisConnectionProvider<RedisConnection<K, V>>() {
+                new RedisConnectionPool.RedisConnectionProvider<RedisConnection<K, V>>() {
                     @Override
                     public RedisConnection<K, V> createConnection() {
                         return connect(codec, redisURI);
@@ -196,7 +196,7 @@ public class RedisClient extends AbstractRedisClient {
         checkForRedisURI();
         long maxWait = makeTimeout();
         RedisConnectionPool<RedisAsyncConnection<K, V>> pool = new RedisConnectionPool<RedisAsyncConnection<K, V>>(
-                new RedisConnectionProvider<RedisAsyncConnection<K, V>>() {
+                new RedisConnectionPool.RedisConnectionProvider<RedisAsyncConnection<K, V>>() {
                     @Override
                     public RedisAsyncConnection<K, V> createConnection() {
                         return connectStateful(codec, redisURI).async();

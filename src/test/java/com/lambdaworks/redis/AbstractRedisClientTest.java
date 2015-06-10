@@ -48,9 +48,13 @@ public abstract class AbstractRedisClientTest {
     @Before
     public void openConnection() throws Exception {
         client.setOptions(new ClientOptions.Builder().build());
-        redis = client.connect();
+        redis = connect();
         redis.flushall();
         redis.flushdb();
+    }
+
+    protected RedisConnection<String, String> connect() {
+        return client.connect();
     }
 
     @After

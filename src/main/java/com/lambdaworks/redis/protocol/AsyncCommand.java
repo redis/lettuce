@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
 /**

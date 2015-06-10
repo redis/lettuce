@@ -13,14 +13,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
- * An asynchronous thread-safe pub/sub connection to a redis server. After one or more channels are subscribed to only pub/sub
- * related commands or {@link #quit} may be called.
- * 
- * Incoming messages and results of the {@link #subscribe}/{@link #unsubscribe} calls will be passed to all registered
- * {@link RedisPubSubListener}s.
- * 
- * A {@link com.lambdaworks.redis.protocol.ConnectionWatchdog} monitors each connection and reconnects automatically until
- * {@link #close} is called. Channel and pattern subscriptions are renewed after reconnecting.
+ * An asynchronous thread-safe API to a redis connection
  * 
  * @param <K> Key type.
  * @param <V> Value type.

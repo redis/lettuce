@@ -5,7 +5,6 @@ package com.lambdaworks.redis.output;
 import java.util.Date;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * Date output with no milliseconds.

@@ -5,7 +5,7 @@ package com.lambdaworks.redis.pubsub;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.output.CommandOutput;
 
 /**
  * One element of the redis pub/sub stream. May be a message or notification of subscription details.

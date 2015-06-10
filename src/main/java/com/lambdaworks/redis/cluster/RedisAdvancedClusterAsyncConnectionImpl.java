@@ -2,7 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import com.lambdaworks.redis.BaseRedisAsyncCommands;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.cluster.api.StatefulClusterConnection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
@@ -20,12 +20,12 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends BaseRedisAsyn
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
      */
-    public RedisAdvancedClusterAsyncConnectionImpl(StatefulClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
+    public RedisAdvancedClusterAsyncConnectionImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
     }
 
-    public StatefulClusterConnection<K, V> getStatefulConnection() {
-        return (StatefulClusterConnection<K, V>) connection;
+    public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterConnection<K, V>) connection;
     }
 
     @Override

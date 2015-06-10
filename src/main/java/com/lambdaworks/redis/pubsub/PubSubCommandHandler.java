@@ -7,7 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.buffer.ByteBuf;

@@ -249,6 +249,21 @@ unixsocket $(ROOT_DIR)/work/socket-7384
 unixsocketperm 777
 endef
 
+define REDIS_CLUSTER_NODE7_CONF
+daemonize yes
+port 7385
+cluster-node-timeout 5000
+pidfile work/redis-cluster-node7-7385.pid
+logfile work/redis-cluster-node7-7385.log
+save ""
+requirepass foobared
+appendonly no
+cluster-enabled yes
+cluster-config-file work/redis-cluster-config6-7385.conf
+unixsocket $(ROOT_DIR)/work/socket-7384
+unixsocketperm 777
+endef
+
 define STUNNEL_CONF
 cert=$(ROOT_DIR)/work/cert.pem
 key=$(ROOT_DIR)/work/key.pem
@@ -284,6 +299,7 @@ export REDIS_CLUSTER_NODE4_CONF
 export REDIS_CLUSTER_CONFIG4
 export REDIS_CLUSTER_NODE5_CONF
 export REDIS_CLUSTER_NODE6_CONF
+export REDIS_CLUSTER_NODE7_CONF
 
 export STUNNEL_CONF
 
@@ -312,6 +328,7 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_NODE4_CONF" > work/redis-clusternode4-7382.conf && redis-server work/redis-clusternode4-7382.conf
 	echo "$$REDIS_CLUSTER_NODE5_CONF" > work/redis-clusternode5-7383.conf && redis-server work/redis-clusternode5-7383.conf
 	echo "$$REDIS_CLUSTER_NODE6_CONF" > work/redis-clusternode6-7384.conf && redis-server work/redis-clusternode6-7384.conf
+	echo "$$REDIS_CLUSTER_NODE7_CONF" > work/redis-clusternode7-7385.conf && redis-server work/redis-clusternode7-7385.conf
 	echo "$$STUNNEL_CONF" > work/stunnel.conf
 	which stunnel4 >/dev/null 2>&1 && stunnel4 work/stunnel.conf || stunnel work/stunnel.conf
 

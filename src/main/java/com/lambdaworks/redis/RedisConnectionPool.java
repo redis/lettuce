@@ -1,8 +1,13 @@
 package com.lambdaworks.redis;
 
 import java.io.Closeable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.AbstractInvocationHandler;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
@@ -155,16 +160,70 @@ public class RedisConnectionPool<T> implements Closeable {
      * 
      * @param listener the listener
      */
-    public void addListener(CloseEvents.CloseListener listener) {
+    void addListener(CloseEvents.CloseListener listener) {
         closeEvents.addListener(listener);
     }
 
+
     /**
-     * Removes a CloseListener.
-     * 
-     * @param listener the listener
+     * Invocation handler which takes care of connection.close(). Connections are returned to the pool on a close()-call.
+     *
+     * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+     * @param <T> Connection type.
+     * @since 3.0
      */
-    public void removeListener(CloseEvents.CloseListener listener) {
-        closeEvents.removeListener(listener);
+    static class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
+        public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit", "getStatefulConnection");
+
+        private T connection;
+        private final RedisConnectionPool<T> pool;
+
+        public PooledConnectionInvocationHandler(T connection, RedisConnectionPool<T> pool) {
+            this.connection = connection;
+            this.pool = pool;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
+
+            if (DISABLED_METHODS.contains(method.getName())) {
+                throw new UnsupportedOperationException("Calls to " + method.getName()
+                        + " are not supported on pooled connections");
+            }
+
+            if (connection == null) {
+                throw new RedisException("Connection is deallocated and cannot be used anymore.");
+            }
+
+            if (method.getName().equals("close")) {
+                pool.freeConnection((T) proxy);
+                return null;
+            }
+
+            Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
+            try {
+                return targetMethod.invoke(connection, args);
+            } catch (InvocationTargetException e) {
+                throw e.getTargetException();
+            }
+        }
+
+        public T getConnection() {
+            return connection;
+        }
+    }
+
+    /**
+     * Connection provider for redis connections.
+     *
+     * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+     * @param <T> Connection type.
+     * @since 3.0
+     */
+    interface RedisConnectionProvider<T> {
+        T createConnection();
+
+        Class<? extends T> getComponentType();
     }
 }

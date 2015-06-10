@@ -12,8 +12,6 @@ import org.junit.runners.model.Statement;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -32,7 +30,7 @@ public class ClusterRule implements TestRule {
         this.ports = ports;
 
         for (int port : ports) {
-            RedisClusterAsyncConnection<String, String> connection = clusterClient.connectImpl(
+            RedisClusterAsyncConnection<String, String> connection = clusterClient.connectToNode(
                     new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
@@ -72,7 +70,7 @@ public class ClusterRule implements TestRule {
 
     public boolean isStable() {
 
-        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectImpl(
+        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectToNode(
                 new InetSocketAddress("localhost", ports[0])).async();
         try {
             String info = connection.clusterInfo().get();

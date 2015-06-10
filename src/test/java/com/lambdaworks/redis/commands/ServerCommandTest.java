@@ -12,23 +12,20 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.KillArgs;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.KillArgs;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.models.command.CommandDetail;
 import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
@@ -180,25 +177,6 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         redis.debugObject(key);
     }
 
-    /**
-     * this test causes a stop of the redis. This means, you cannot repeat the test without restarting your redis.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void debugSegfault() throws Exception {
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(3))
-                .build());
-        connection.debugSegfault();
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return !connection.isOpen();
-            }
-        }, timeout(seconds(5)));
-        assertThat(connection.isOpen()).isFalse();
-    }
-
     @Test
     public void flushall() throws Exception {
         redis.set(key, value);
@@ -252,51 +230,13 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void role() throws Exception {
 
-        RedisClient redisClient = new RedisClient(host(), port(1));
-        RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
-        try {
+        List<Object> objects = redis.role();
 
-            RedisFuture<List<Object>> role = connection.role();
-            List<Object> objects = role.get();
+        assertThat(objects.get(0)).isEqualTo("master");
+        assertThat(objects.get(1).getClass()).isEqualTo(Long.class);
 
-            assertThat(objects.get(0)).isEqualTo("master");
-            assertThat(objects.get(1).getClass()).isEqualTo(Long.class);
-
-            RedisInstance redisInstance = RoleParser.parse(objects);
-            assertThat(redisInstance.getRole()).isEqualTo(RedisInstance.Role.MASTER);
-        } finally {
-            connection.close();
-            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    /**
-     * this test causes a stop of the redis. This means, you cannot repeat the test without restarting your redis.
-     * 
-     * @throws Exception
-     */
-    @Test
-    public void shutdown() throws Exception {
-
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(4))
-                .build());
-        try {
-
-            connection.shutdown(true);
-            connection.shutdown(false);
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return !connection.isOpen();
-                }
-            }, timeout(seconds(5)));
-
-            assertThat(connection.isOpen()).isFalse();
-
-        } finally {
-            connection.close();
-        }
-
+        RedisInstance redisInstance = RoleParser.parse(objects);
+        assertThat(redisInstance.getRole()).isEqualTo(RedisInstance.Role.MASTER);
     }
 
     @Test
@@ -341,11 +281,4 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         Assertions.assertThat(redis.sync().startsWith("REDIS")).isTrue();
     }
 
-    @Test
-    public void migrate() throws Exception {
-        redis.set(key, value);
-
-        String result = redis.migrate("localhost", port + 1, key, 0, 10);
-        assertThat(result).isEqualTo("OK");
-    }
 }

@@ -24,7 +24,7 @@ import com.lambdaworks.redis.protocol.TransactionalCommand;
 import io.netty.channel.ChannelHandler;
 
 /**
- * An thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
+ * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.

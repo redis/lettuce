@@ -15,4 +15,8 @@ public class RedisConnectionException extends RedisException {
     public RedisConnectionException(String msg, Throwable e) {
         super(msg, e);
     }
+
+    public RedisConnectionException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * {@link java.util.List} of maps output.

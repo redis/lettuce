@@ -23,11 +23,7 @@ class CloseEvents {
         listeners.add(listener);
     }
 
-    public void removeListener(CloseListener listener) {
-        listeners.remove(listener);
-    }
-
-    public interface CloseListener {
+    interface CloseListener {
         void resourceClosed(Object resource);
     }
 }

@@ -7,7 +7,7 @@ import com.lambdaworks.redis.api.sync.*;
 
 /**
  * 
- * Complete synchronous Redis API with 400+ Methods.
+ * A complete synchronous and thread-safe Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

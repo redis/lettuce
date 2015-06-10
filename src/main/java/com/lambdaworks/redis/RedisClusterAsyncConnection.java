@@ -16,7 +16,7 @@ import com.lambdaworks.redis.api.async.RedisSortedSetsAsyncConnection;
 import com.lambdaworks.redis.api.async.RedisStringsAsyncConnection;
 
 /**
- * Complete asynchronous cluster Redis API with 400+ Methods..
+ * A complete asynchronous and thread-safe cluster Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

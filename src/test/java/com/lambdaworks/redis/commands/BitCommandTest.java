@@ -6,26 +6,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisConnection;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 public class BitCommandTest extends AbstractRedisClientTest {
     protected RedisConnection<String, String> bitstring;
 
-    @Before
-    public final void openBitStringConnection() throws Exception {
+    @Override
+    protected RedisConnection<String, String> connect() {
+        connectBitString();
+        return super.connect();
+    }
+
+    protected void connectBitString() {
         bitstring = client.connect(new BitStringCodec());
     }
 
-    @After
-    public final void closeBitStringConnection() throws Exception {
+    @Override
+    public void closeConnection() throws Exception {
         bitstring.close();
+        super.closeConnection();
     }
 
     @Test

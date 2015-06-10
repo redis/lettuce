@@ -1,22 +1,27 @@
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.TestSettings.port;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
-import org.junit.*;
-
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
 
 public class SentinelFailoverTest extends AbstractRedisClientTest {
 
@@ -55,22 +60,24 @@ public class SentinelFailoverTest extends AbstractRedisClientTest {
     @Test
     public void connectToRedisUsingSentinel() throws Exception {
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
-            }
-        }, timeout(seconds(20)));
+        waitForSlave();
 
         RedisConnection<String, String> connect = sentinelClient.connect();
         assertThat(connect.ping()).isEqualToIgnoringCase("PONG");
 
         connect.close();
         this.sentinel.failover(MASTER_WITH_SLAVE_ID).get();
+        waitForSlave();
 
         RedisConnection<String, String> connect2 = sentinelClient.connect();
         assertThat(connect2.ping()).isEqualToIgnoringCase("PONG");
         connect2.close();
+    }
+
+    protected void waitForSlave() throws InterruptedException, TimeoutException {
+        WaitFor.waitOrTimeout(() -> {
+            return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
+        }, timeout(seconds(20)));
     }
 
     protected static RedisClient getRedisSentinelClient() {

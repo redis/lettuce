@@ -83,6 +83,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         redis.select(1);
         redis.set(key, value);
         redis.quit();
+        Thread.sleep(200);
         Assertions.assertThat(redis.get(key)).isEqualTo(value);
     }
 

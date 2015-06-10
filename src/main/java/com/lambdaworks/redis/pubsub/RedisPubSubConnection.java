@@ -3,6 +3,9 @@ package com.lambdaworks.redis.pubsub;
 import com.lambdaworks.redis.RedisConnection;
 
 /**
+ * 
+ * Synchronous and thread-safe Redis PubSub API.
+ * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>

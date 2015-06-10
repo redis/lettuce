@@ -3,7 +3,7 @@ package com.lambdaworks.redis.api.sync;
 import java.util.List;
 import java.util.Map;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.SetArgs;
+import com.lambdaworks.redis.SetArgs;
 
 /**
  * Synchronous executed commands for Strings.

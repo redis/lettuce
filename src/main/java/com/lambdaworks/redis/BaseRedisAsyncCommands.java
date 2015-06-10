@@ -25,10 +25,9 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
  * An asynchronous thread-safe API to a redis connection.

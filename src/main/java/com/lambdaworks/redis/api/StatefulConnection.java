@@ -13,10 +13,10 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 4.0
  */
-public interface StatefulConnection<K, V> {
+public interface StatefulConnection<K, V> extends AutoCloseable {
 
     /**
-     * Set the command timeout for this connection.
+     * Set the default command timeout for this connection.
      *
      * @param timeout Command timeout.
      * @param unit Unit of time for the timeout.

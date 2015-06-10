@@ -5,7 +5,6 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * 64-bit integer output, may be null.

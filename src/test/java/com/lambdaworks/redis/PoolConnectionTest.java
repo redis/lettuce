@@ -62,7 +62,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     private RedisConnection assertConnectionStillThere(RedisConnection<String, String> c1) {
         // unwrap code from RedisConnectionPool destroyObject
         if (Proxy.isProxyClass(c1.getClass())) {
-            PooledConnectionInvocationHandler<RedisConnection> invocationHandler = (PooledConnectionInvocationHandler<RedisConnection>) Proxy
+            RedisConnectionPool.PooledConnectionInvocationHandler<RedisConnection> invocationHandler = (RedisConnectionPool.PooledConnectionInvocationHandler<RedisConnection>) Proxy
                     .getInvocationHandler(c1);
 
             RedisConnection connection = invocationHandler.getConnection();

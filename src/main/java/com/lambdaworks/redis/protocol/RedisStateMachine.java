@@ -11,6 +11,7 @@ import java.util.LinkedList;
 
 import com.lambdaworks.redis.RedisException;
 
+import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;

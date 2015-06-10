@@ -9,7 +9,7 @@ import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -37,6 +37,11 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
+
+        if (closed) {
+            throw new RedisException("Connection is closed");
+        }
+
         RedisCommand<K, V, T> commandToSend = command;
         CommandArgs<K, V> args = command.getArgs();
 

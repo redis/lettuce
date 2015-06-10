@@ -1,7 +1,9 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 // Copyright (C) 2013 - Vincent Rischmann.  All rights reserved.
 
-package com.lambdaworks.redis.protocol;
+package com.lambdaworks.redis;
+
+import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
  * Argument list builder for the new redis <a href="http://redis.io/commands/set">SET</a> command starting from Redis 2.6.12.

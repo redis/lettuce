@@ -1,6 +1,6 @@
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
-package com.lambdaworks.redis.protocol;
+package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 
