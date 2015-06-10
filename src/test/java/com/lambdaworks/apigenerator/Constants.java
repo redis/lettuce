@@ -7,10 +7,9 @@ import java.io.File;
  */
 class Constants {
 
-    public final static String[] TEMPLATE_NAMES = { "RedisHashesConnection", "RedisHLLConnection", "RedisKeysConnection",
-            "RedisListsConnection", "RedisScriptingConnection", "RedisServerConnection", "RedisSetsConnection",
-            "RedisSortedSetsConnection", "RedisStringsConnection", "RedisTransactionalConnection", "RedisSentinelConnection",
-            "BaseRedisConnection" };
+    public final static String[] TEMPLATE_NAMES = { "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands",
+            "RedisListCommands", "RedisScriptingCommands", "RedisServerCommands", "RedisSetCommands", "RedisSortedSetCommands",
+            "RedisStringCommands", "RedisTransactionalCommands", "RedisSentinelCommands", "BaseRedisCommands" };
 
     public final static File TEMPLATES = new File("src/main/templates");
     public final static File SOURCES = new File("src/main/java");

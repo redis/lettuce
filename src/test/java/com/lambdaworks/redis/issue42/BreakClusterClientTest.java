@@ -59,14 +59,10 @@ public class BreakClusterClientTest extends BreakClientBase {
         clusterConnection.close();
     }
 
-    @Test
-    public void testStandAlone() throws Exception {
-        testSingle(clusterConnection);
-    }
-
-    @Test
-    public void testLooping() throws Exception {
-        testLoop(clusterConnection);
-    }
+    /*
+     * @Test public void testStandAlone() throws Exception { testSingle(clusterConnection); }
+     * 
+     * @Test public void testLooping() throws Exception { testLoop(clusterConnection); }
+     */
 
 }

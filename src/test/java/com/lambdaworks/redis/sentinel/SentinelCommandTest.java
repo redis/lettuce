@@ -22,7 +22,7 @@ import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -40,7 +40,7 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
     public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
 
     private static RedisClient sentinelClient;
-    private RedisSentinelAsyncConnection<String, String> sentinel;
+    private RedisSentinelAsyncCommands<String, String> sentinel;
 
     @Rule
     public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
@@ -120,7 +120,7 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
         RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID)
                 .withSentinel(TestSettings.host()).build());
 
-        RedisSentinelAsyncConnection<String, String> sentinelConnection = client.connectSentinelAsync();
+        RedisSentinelAsyncCommands<String, String> sentinelConnection = client.connectSentinelAsync();
         assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
 
         sentinelConnection.close();
@@ -152,7 +152,7 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
 
         RedisClient client = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), port).build());
 
-        RedisSentinelAsyncConnection<String, String> connection = client.connectSentinelAsync();
+        RedisSentinelAsyncCommands<String, String> connection = client.connectSentinelAsync();
         assertThat(connection.ping().get()).isEqualTo("PONG");
 
         connection.close();

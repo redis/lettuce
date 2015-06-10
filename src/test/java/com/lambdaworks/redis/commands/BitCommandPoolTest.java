@@ -4,13 +4,14 @@ package com.lambdaworks.redis.commands;
 
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 public class BitCommandPoolTest extends BitCommandTest {
-    RedisConnectionPool<RedisConnection<String, String>> pool;
-    RedisConnectionPool<RedisConnection<String, String>> bitpool;
+    RedisConnectionPool<RedisCommands<String, String>> pool;
+    RedisConnectionPool<RedisCommands<String, String>> bitpool;
 
     @Override
-    protected RedisConnection<String, String> connect() {
+    protected RedisCommands<String, String> connect() {
         pool = client.pool(new BitStringCodec(), 1, 5);
         bitpool = client.pool(new BitStringCodec(), 1, 5);
         bitstring = bitpool.allocateConnection();

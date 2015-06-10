@@ -6,6 +6,9 @@ import static org.assertj.core.api.Assertions.fail;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
@@ -15,8 +18,8 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void twoConnections() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        RedisConnection<String, String> c1 = pool.allocateConnection();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
+        RedisCommands<String, String> c1 = pool.allocateConnection();
         RedisConnection<String, String> c2 = pool.allocateConnection();
 
         String result1 = c1.ping();
@@ -28,16 +31,16 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test(expected = UnsupportedOperationException.class)
     public void getStatefulConnection() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        RedisConnection<String, String> c1 = pool.allocateConnection();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
+        RedisCommands<String, String> c1 = pool.allocateConnection();
 
         c1.getStatefulConnection();
     }
 
     @Test
     public void sameConnectionAfterFree() throws Exception {
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        RedisConnection<String, String> c1 = pool.allocateConnection();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
+        RedisCommands<String, String> c1 = pool.allocateConnection();
         pool.freeConnection(c1);
         assertConnectionStillThere(c1);
 
@@ -47,7 +50,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void connectionCloseDoesNotClose() throws Exception {
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         c1.close();
         RedisConnection actualConnection1 = assertConnectionStillThere(c1);
@@ -75,7 +78,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void releaseConnectionWithClose() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         assertThat(pool.getNumActive()).isEqualTo(1);
         c1.close();
@@ -88,29 +91,29 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test(expected = UnsupportedOperationException.class)
     public void unsupportedAuthOnPooledConnection() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         pool.allocateConnection().auth("");
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void unsupportedSelectOnPooledConnection() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         pool.allocateConnection().select(99);
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void unsupportedQuitOnPooledConnection() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         pool.allocateConnection().quit();
     }
 
     @Test
     public void connectionsClosedAfterPoolClose() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        RedisConnection<String, String> c1 = pool.allocateConnection();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
+        RedisCommands<String, String> c1 = pool.allocateConnection();
         pool.freeConnection(c1);
         pool.close();
 
@@ -124,7 +127,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void connectionNotClosedWhenBorrowed() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         pool.close();
 
@@ -134,8 +137,8 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void connectionNotClosedWhenBorrowed2() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        RedisConnection<String, String> c1 = pool.allocateConnection();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
+        RedisCommands<String, String> c1 = pool.allocateConnection();
         pool.freeConnection(c1);
         c1 = pool.allocateConnection();
         pool.close();
@@ -151,7 +154,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         assertThat(redisClient.getChannelCount()).isEqualTo(0);
         assertThat(redisClient.getResourceCount()).isEqualTo(0);
 
-        RedisConnectionPool<RedisAsyncConnection<String, String>> pool1 = redisClient.asyncPool();
+        RedisConnectionPool<RedisAsyncCommands<String, String>> pool1 = redisClient.asyncPool();
 
         assertThat(redisClient.getChannelCount()).isEqualTo(0);
         assertThat(redisClient.getResourceCount()).isEqualTo(1);
@@ -161,7 +164,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         assertThat(redisClient.getChannelCount()).isEqualTo(1);
         assertThat(redisClient.getResourceCount()).isEqualTo(3);
 
-        RedisConnectionPool<RedisConnection<String, String>> pool2 = redisClient.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool2 = redisClient.pool();
 
         assertThat(redisClient.getResourceCount()).isEqualTo(4);
 
@@ -182,7 +185,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void syncPoolPerformanceTest() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
 
         c1.ping();
@@ -201,7 +204,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void asyncPoolPerformanceTest() throws Exception {
 
-        RedisConnectionPool<RedisAsyncConnection<String, String>> pool = client.asyncPool();
+        RedisConnectionPool<RedisAsyncCommands<String, String>> pool = client.asyncPool();
         RedisAsyncConnection<String, String> c1 = pool.allocateConnection();
 
         c1.ping();

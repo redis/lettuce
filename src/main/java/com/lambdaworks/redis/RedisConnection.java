@@ -13,11 +13,13 @@ import com.lambdaworks.redis.api.sync.*;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisCommands}
  */
+@Deprecated
 public interface RedisConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
         RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, BaseRedisConnection<K, V>,
-        RedisClusterConnection<K, V>, RedisTransactionalConnection<K, V> {
+        RedisClusterConnection<K, V>, RedisTransactionalCommands<K, V> {
 
     /**
      * Set the default timeout for operations.

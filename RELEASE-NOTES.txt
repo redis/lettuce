@@ -48,14 +48,39 @@ New connect methods:
 Moving segregated API interfaces to own packages
 -----
 Starting with reactive API's, another 13 interfaces will be provided with lettuce. This increases the count of
-types within the `com.lambdaworks.redis` package and the package gets messier again. Therefore the segregated interfaces
-are relocated to own packages.
+types within the `com.lambdaworks.redis` package and the package gets messier again. In combination with the stateful connection
+the original `...Connection` or `...AsyncConnection` interfaces no longer reflect the real purpose. New `Commands` interfaces provide
+the same functionality and are located in `api.sync` and `api.async` packages (respective `cluster.api.sync`, `cluster.api.async` and so on
+for the Redis Cluster client and PubSub).
 
-All segregated API interfaces are moved from `com.lambdaworks.redis` to `com.lambdaworks.redis.api.(sync|async|rx)`
+The following interfaces are deprecated and substituted by new `...Commands` interfaces:
 
-You need to adjust your code to access those interfaces. So if you used `com.lambdaworks.redis.RedisListsAsyncConnection`
-you need to drop the import to `com.lambdaworks.redis.RedisListsAsyncConnection` and import `com.lambdaworks.redis.api.async.RedisListsAsyncConnection`
-instead.
+* RedisHashesAsyncConnection
+* RedisHashesConnection
+* RedisHLLAsyncConnection
+* RedisHLLConnection
+* RedisKeysAsyncConnection
+* RedisKeysConnection
+* RedisListsAsyncConnection
+* RedisListsConnection
+* RedisScriptingAsyncConnection
+* RedisScriptingConnection
+* RedisSentinelAsyncConnection
+* RedisServerAsyncConnection
+* RedisServerConnection
+* RedisSetsAsyncConnection
+* RedisSetsConnection
+* RedisSortedSetsAsyncConnection
+* RedisSortedSetsConnection
+* RedisStringsAsyncConnection
+* RedisStringsConnection
+* RedisClusterConnection
+* RedisConnection
+* RedisClusterAsyncConnection
+* RedisAsyncConnection
+* BaseRedisConnection
+* BaseRedisAsyncConnection
+
 
 ### Migration Matrix sync API:
 
@@ -63,20 +88,22 @@ instead.
 4.x package: `com.lambdaworks.redis.api.sync`
 
 
-Affected interfaces:
+New command interfaces:
 
-* BaseRedisConnection
-* RedisHashesConnection
-* RedisHLLConnection
-* RedisKeysConnection
-* RedisListsConnection
-* RedisScriptingConnection
-* RedisServerConnection
-* RedisSetsConnection
-* RedisSortedSetsConnection
-* RedisStringsConnection
-* RedisTransactionalConnection
-
+* RedisCommands
+* RedisClusterCommands
+* BaseRedisComands
+* RedisHashCommands
+* RedisHLLCommands
+* RedisKeyCommands
+* RedisListCommands
+* RedisScriptingCommands
+* RedisServerCommands
+* RedisSetCommands
+* RedisSortedSetCommands
+* RedisStringsCommands
+* RedisTransactionalCommands
+* RedisPubSubCommands
 
 ### Migration Matrix async API:
 
@@ -84,28 +111,24 @@ Affected interfaces:
 4.x package: `com.lambdaworks.redis.api.async`
 
 
-Affected interfaces:
+New command interfaces:
 
-* BaseRedisAsyncConnection
-* RedisHashesAsyncConnection
-* RedisHLLAsyncConnection
-* RedisKeysAsyncConnection
-* RedisListsAsyncConnection
-* RedisScriptingAsyncConnection
-* RedisSentinelAsyncConnection
-* RedisServerAsyncConnection
-* RedisSetsAsyncConnection
-* RedisSortedSetsAsyncConnection
-* RedisStringsAsyncConnection
-* RedisTransactionalAsyncConnection
+* RedisAsyncCommands
+* RedisClusterAsyncCommands
+* BaseRedisAsyncCommands
+* RedisHashAsyncCommands
+* RedisHLLAsyncCommands
+* RedisKeyAsyncCommands
+* RedisListAsyncCommands
+* RedisScriptingAsyncCommands
+* RedisSentinelAsyncCommands
+* RedisServerAsyncCommands
+* RedisSetAsyncCommands
+* RedisSortedSetAsyncCommands
+* RedisStringAsyncCommands
+* RedisTransactionalAsyncCommands
+* RedisPubSubAsyncCommands
 
-*API Changes*
-
-* readOnly and readWrite changed from `String` return type to `RedisFuture<String>`. The connection state is maintained by the future completion.
-* Renamed `RedisPubSubConnection` to `RedisPubSubAsyncConnection` in order to provide a synchronous interface `RedisPubSubConnection`
-* Moved `CommandOutput` from `com.lambdaworks.redis.protocol` to  `com.lambdaworks.redis.output`
-* Moved `SetArgs` from `com.lambdaworks.redis.protocol` to `com.lambdaworks.redis`
-* All connections are `AutoCloseable` so you can handle connections using try-with-resources.
 
 ### New interfaces providing observable commands:
 
@@ -134,6 +157,14 @@ New interfaces:
 * StatefulRedisSentinelConnection
 * RedisPubSubAsyncConnection and RedisPubSubConnection
 
+## API Changes
+
+* readOnly and readWrite changed from `String` return type to `RedisFuture<String>`. The connection state is maintained by the future completion.
+* Moved `CommandOutput` from `com.lambdaworks.redis.protocol` to  `com.lambdaworks.redis.output`
+* Moved `SetArgs` from `com.lambdaworks.redis.protocol` to `com.lambdaworks.redis`
+* All connections are `AutoCloseable` so you can handle connections using try-with-resources.
+* `RedisFuture`s are based on `CompleteableFuture` and throw now any occured exception when accessing the value using `get()`.
+Exceptions are passed down the `CompletionStage`s.
 
 Enhancements
 -----

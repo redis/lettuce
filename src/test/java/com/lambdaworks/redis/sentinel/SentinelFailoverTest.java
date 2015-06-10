@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -21,14 +22,13 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
 
 public class SentinelFailoverTest extends AbstractRedisClientTest {
 
     public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
 
     private static RedisClient sentinelClient;
-    private RedisSentinelAsyncConnection<String, String> sentinel;
+    private RedisSentinelAsyncCommands<String, String> sentinel;
 
     @Rule
     public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);

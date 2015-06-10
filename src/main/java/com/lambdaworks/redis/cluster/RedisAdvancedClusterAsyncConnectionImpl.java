@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import com.lambdaworks.redis.BaseRedisAsyncCommands;
+import com.lambdaworks.redis.AbstractRedisAsyncCommands;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -11,7 +11,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
  */
-public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends BaseRedisAsyncCommands<K, V> implements
+public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncConnection<K, V> {
 
     /**

@@ -17,6 +17,8 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -33,8 +35,8 @@ import io.netty.channel.ChannelHandler;
 public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V> implements
         StatefulRedisPubSubConnection<K, V> {
 
-    protected RedisPubSubAsyncConnection<K, V> async;
-    protected RedisPubSubConnection<K, V> sync;
+    protected RedisPubSubAsyncCommands<K, V> async;
+    protected RedisPubSubCommands<K, V> sync;
     protected final List<RedisPubSubListener<K, V>> listeners;
     protected final Set<K> channels;
     protected final Set<K> patterns;
@@ -76,7 +78,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         listeners.remove(listener);
     }
 
-    public RedisPubSubAsyncConnection<K, V> async() {
+    public RedisPubSubAsyncCommands<K, V> async() {
         if (async == null) {
             async = newRedisPubSubConnectionImpl();
         }
@@ -85,17 +87,17 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     }
 
     @Override
-    public RedisPubSubConnection<K, V> sync() {
+    public RedisPubSubCommands<K, V> sync() {
         if (sync == null) {
-            sync = (RedisPubSubConnection) syncHandler(RedisConnection.class, RedisClusterConnection.class,
-                    RedisPubSubConnection.class);
+            sync = (RedisPubSubCommands) syncHandler(RedisConnection.class, RedisClusterConnection.class,
+                    RedisPubSubCommands.class);
         }
 
         return sync;
     }
 
-    protected RedisPubSubAsyncConnectionImpl<K, V> newRedisPubSubConnectionImpl() {
-        return new RedisPubSubAsyncConnectionImpl<>(this, codec);
+    protected RedisPubSubAsyncCommandsImpl<K, V> newRedisPubSubConnectionImpl() {
+        return new RedisPubSubAsyncCommandsImpl<>(this, codec);
     }
 
     @Override

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -14,10 +15,10 @@ import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 public class BitCommandTest extends AbstractRedisClientTest {
-    protected RedisConnection<String, String> bitstring;
+    protected RedisCommands<String, String> bitstring;
 
     @Override
-    protected RedisConnection<String, String> connect() {
+    protected RedisCommands<String, String> connect() {
         connectBitString();
         return super.connect();
     }

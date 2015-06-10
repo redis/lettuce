@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 /**
  * An asynchronous thread-safe pub/sub connection to a redis server. After one or more channels are subscribed to only pub/sub
@@ -20,18 +22,18 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnection<K, V> {
 
     /**
-     * Returns the {@link RedisPubSubAsyncConnection} API for the current connection. Does not create a new connection.
+     * Returns the {@link RedisPubSubAsyncCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the asynchronous API for the underlying connection.
      */
-    RedisPubSubAsyncConnection<K, V> async();
+    RedisPubSubAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisPubSubConnection} API for the current connection. Does not create a new connection.
+     * Returns the {@link RedisPubSubCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the synchronous API for the underlying connection.
      */
-    RedisPubSubConnection<K, V> sync();
+    RedisPubSubCommands<K, V> sync();
 
     /**
      * Add a new listener.

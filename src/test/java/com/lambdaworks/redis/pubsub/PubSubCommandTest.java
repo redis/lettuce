@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +23,7 @@ import org.junit.Test;
 import com.google.common.collect.Lists;
 
 public class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
-    private RedisPubSubAsyncConnection<String, String> pubsub;
+    private RedisPubSubAsyncCommands<String, String> pubsub;
 
     private BlockingQueue<String> channels;
     private BlockingQueue<String> patterns;
@@ -53,7 +54,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubAsyncConnection<String, String> connection = client.connectPubSub();
+                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
 
@@ -68,7 +69,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubAsyncConnection<String, String> connection = client.connectPubSub();
+                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
                 connection.quit().get();
@@ -221,7 +222,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
         RedisClient redisClient = new RedisClient(host, port);
 
-        RedisPubSubAsyncConnection<String, String> connection = redisClient.connectPubSub();
+        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub();
 
         redisClient.shutdown();
 

@@ -1,12 +1,8 @@
 package com.lambdaworks.redis.sentinel.api;
 
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one
@@ -22,5 +18,10 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnection<K, V> {
 
-    RedisSentinelAsyncConnection<K, V> async();
+    /**
+     * Returns the async sentinel API.
+     * 
+     * @return the asynchronous API for the underlying connection.
+     */
+    RedisSentinelAsyncCommands<K, V> async();
 }

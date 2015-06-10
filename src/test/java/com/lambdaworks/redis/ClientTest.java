@@ -216,7 +216,8 @@ public class ClientTest extends AbstractRedisClientTest {
         RedisURI redisUri = getDefaultRedisURI();
 
         try {
-            RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);
+            RedisAsyncConnectionCommandsImpl<String, String> connection = (RedisAsyncConnectionCommandsImpl) client
+                    .connectAsync(redisUri);
             RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) connection
                     .getStatefulConnection();
 
@@ -464,7 +465,8 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test(timeout = 20000)
     public void reset() throws Exception {
 
-        RedisAsyncConnectionImpl<String, String> async = (RedisAsyncConnectionImpl<String, String>) client.connectAsync();
+        RedisAsyncConnectionCommandsImpl<String, String> async = (RedisAsyncConnectionCommandsImpl<String, String>) client
+                .connectAsync();
 
         async.set(key, value).get();
         async.reset();

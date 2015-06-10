@@ -3,6 +3,7 @@ package com.lambdaworks.redis.support;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
@@ -15,7 +16,7 @@ public class PoolingProxyFactoryTest extends AbstractRedisClientTest {
     @Test
     public void testCreateDefault() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisConnection<String, String> connection = PoolingProxyFactory.create(pool);
 
         connection.set("a", "b");
@@ -27,7 +28,7 @@ public class PoolingProxyFactoryTest extends AbstractRedisClientTest {
     @Test
     public void testCloseReturnsConnection() throws Exception {
 
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         assertThat(pool.getNumActive()).isEqualTo(0);
         RedisConnection<String, String> connection = pool.allocateConnection();
         assertThat(pool.getNumActive()).isEqualTo(1);

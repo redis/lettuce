@@ -3,18 +3,8 @@ package com.lambdaworks.redis;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.BaseRedisAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisHLLAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisHashesAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisKeysAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisListsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisScriptingAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisServerAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisSetsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisSortedSetsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisStringsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisTransactionalAsyncConnection;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisTransactionalAsyncCommands;
 
 /**
  * A complete asynchronous and thread-safe Redis API with 400+ Methods.
@@ -23,12 +13,14 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisAsyncCommands}
  */
+@Deprecated
 public interface RedisAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
         RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V>, RedisClusterAsyncConnection<K, V>,
-        RedisTransactionalAsyncConnection<K, V> {
+        RedisTransactionalAsyncCommands<K, V> {
 
     /**
      * Set the default timeout for operations.

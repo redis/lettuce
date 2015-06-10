@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 public class CreateAsyncApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisConnection.reset");
+            "isOpen", "BaseRedisCommands.reset");
 
     private CompilationUnitFactory factory;
 
@@ -48,7 +48,7 @@ public class CreateAsyncApi {
      */
     public CreateAsyncApi(String templateName) {
 
-        String targetName = templateName.replace("Connection", "AsyncConnection");
+        String targetName = templateName.replace("Commands", "AsyncCommands");
         File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
         String targetPackage = "com.lambdaworks.redis.api.async";
 

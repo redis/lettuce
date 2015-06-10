@@ -14,6 +14,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -27,7 +28,7 @@ public abstract class AbstractRedisClientTest {
 
     protected static RedisClient client;
     protected Logger log = Logger.getLogger(getClass());
-    protected RedisConnection<String, String> redis;
+    protected RedisCommands<String, String> redis;
     protected String key = "key";
     protected String value = "value";
 
@@ -53,7 +54,7 @@ public abstract class AbstractRedisClientTest {
         redis.flushdb();
     }
 
-    protected RedisConnection<String, String> connect() {
+    protected RedisCommands<String, String> connect() {
         return client.connect();
     }
 

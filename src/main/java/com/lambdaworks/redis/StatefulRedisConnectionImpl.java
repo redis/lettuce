@@ -15,6 +15,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.MultiOutput;
 import com.lambdaworks.redis.protocol.AsyncCommand;
@@ -37,8 +40,8 @@ import io.netty.channel.ChannelHandler;
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
 
     protected RedisCodec<K, V> codec;
-    protected RedisConnection<K, V> sync;
-    protected RedisAsyncConnectionImpl<K, V> async;
+    protected RedisCommands<K, V> sync;
+    protected RedisAsyncConnectionCommandsImpl<K, V> async;
 
     protected MultiOutput<K, V> multi;
     private char[] password;
@@ -59,11 +62,11 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     }
 
-    public RedisAsyncConnection<K, V> async() {
-        return getAsyncConnection();
+    public RedisAsyncCommands<K, V> async() {
+        return getAsyncCommands();
     }
 
-    protected RedisAsyncConnectionImpl<K, V> getAsyncConnection() {
+    protected RedisAsyncConnectionCommandsImpl<K, V> getAsyncCommands() {
         if (async == null) {
             async = newRedisAsyncConnectionImpl();
         }
@@ -71,13 +74,13 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return async;
     }
 
-    protected RedisAsyncConnectionImpl<K, V> newRedisAsyncConnectionImpl() {
-        return new RedisAsyncConnectionImpl<>(this, codec);
+    protected RedisAsyncConnectionCommandsImpl<K, V> newRedisAsyncConnectionImpl() {
+        return new RedisAsyncConnectionCommandsImpl<>(this, codec);
     }
 
-    public RedisConnection<K, V> sync() {
+    public RedisCommands<K, V> sync() {
         if (sync == null) {
-            sync = (RedisConnection) syncHandler(RedisConnection.class, RedisClusterConnection.class);
+            sync = (RedisCommands) syncHandler(RedisCommands.class, RedisClusterCommands.class);
         }
         return sync;
     }
@@ -105,15 +108,15 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            getAsyncConnection().authAsync(new String(password));
+            getAsyncCommands().authAsync(new String(password));
         }
 
         if (db != 0) {
-            getAsyncConnection().selectAsync(db);
+            getAsyncCommands().selectAsync(db);
         }
 
         if (readOnly) {
-            getAsyncConnection().readOnly();
+            getAsyncCommands().readOnly();
         }
     }
 

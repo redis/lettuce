@@ -91,7 +91,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     public void isValid() throws Exception {
 
         Assertions.assertThat(Connections.isValid(redis)).isTrue();
-        RedisAsyncConnectionImpl<String, String> asyncConnection = (RedisAsyncConnectionImpl<String, String>) client
+        RedisAsyncConnectionCommandsImpl<String, String> asyncConnection = (RedisAsyncConnectionCommandsImpl<String, String>) client
                 .connectAsync();
         RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler) asyncConnection.getStatefulConnection();
 

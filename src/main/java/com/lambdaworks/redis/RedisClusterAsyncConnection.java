@@ -3,17 +3,7 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.BaseRedisAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisHLLAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisHashesAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisKeysAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisListsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisScriptingAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisServerAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisSetsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisSortedSetsAsyncConnection;
-import com.lambdaworks.redis.api.async.RedisStringsAsyncConnection;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 
 /**
  * A complete asynchronous and thread-safe cluster Redis API with 400+ Methods.
@@ -22,7 +12,9 @@ import com.lambdaworks.redis.api.async.RedisStringsAsyncConnection;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisClusterAsyncCommands}
  */
+@Deprecated
 public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
@@ -30,7 +22,7 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     /**
      * Set the default timeout for operations.
-     * 
+     *
      * @param timeout the timeout value
      * @param unit the unit of the timeout value
      */
@@ -38,7 +30,7 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     /**
      * Authenticate to the server.
-     * 
+     *
      * @param password the password
      * @return String simple-string-reply
      */
@@ -62,7 +54,7 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     /**
      * Get array of Cluster slot to node mappings.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     RedisFuture<List<Object>> clusterSlots();

@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.commands;
 
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisConnection;
@@ -10,10 +11,10 @@ import com.lambdaworks.redis.RedisConnectionPool;
  */
 public class ServerCommandPoolTest extends ServerCommandTest {
 
-    RedisConnectionPool<RedisConnection<String, String>> pool;
+    RedisConnectionPool<RedisCommands<String, String>> pool;
 
     @Override
-    protected RedisConnection<String, String> connect() {
+    protected RedisCommands<String, String> connect() {
         pool = client.pool();
         return pool.allocateConnection();
     }

@@ -5,9 +5,10 @@ import java.util.Map;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisSentinelAsyncConnection;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -27,14 +28,14 @@ public class SentinelRule implements TestRule {
 
     private RedisClient redisClient;
     private int[] ports;
-    private Map<Integer, RedisSentinelAsyncConnection<String, String>> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisSentinelAsyncCommands<String, String>> connectionCache = Maps.newHashMap();
 
     public SentinelRule(RedisClient redisClient, int... ports) {
         this.redisClient = redisClient;
         this.ports = ports;
 
         for (int port : ports) {
-            RedisSentinelAsyncConnection<String, String> connection = redisClient.connectSentinelAsync(RedisURI.Builder.redis(
+            RedisSentinelAsyncCommands<String, String> connection = redisClient.connectSentinelAsync(RedisURI.Builder.redis(
                     TestSettings.host(), port).build());
             connectionCache.put(port, connection);
         }
@@ -63,7 +64,7 @@ public class SentinelRule implements TestRule {
     public void flush() {
 
         try {
-            for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
+            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
                 List<Map<String, String>> masters = connection.masters().get();
 
                 for (Map<String, String> master : masters) {
@@ -86,7 +87,7 @@ public class SentinelRule implements TestRule {
      */
     public void monitor(final String key, String ip, int port, int quorum, boolean sync) {
         try {
-            for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
+            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
                 connection.monitor(key, ip, port, quorum).get();
             }
 
@@ -118,7 +119,7 @@ public class SentinelRule implements TestRule {
 
     public boolean hasSlaves(String masterId) {
         try {
-            for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
+            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
                 return !connection.slaves(masterId).get().isEmpty();
             }
         } catch (Exception e) {
@@ -130,7 +131,7 @@ public class SentinelRule implements TestRule {
 
     public boolean hasConnectedSlaves(String masterId) {
         try {
-            for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
+            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
                 List<Map<String, String>> slaves = connection.slaves(masterId).get();
                 for (Map<String, String> slave : slaves) {
 
