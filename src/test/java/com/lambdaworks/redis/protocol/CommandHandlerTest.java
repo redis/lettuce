@@ -57,13 +57,15 @@ public class CommandHandlerTest {
 
         sut.channelActive(context);
 
-        Command<String, String, String> command = new Command<String, String, String>(CommandType.APPEND,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
-        q.add(command);
+        Command<String, String, String> command = new Command<String, String, String>(CommandType.APPEND, new StatusOutput<>(
+                new Utf8StringCodec()), null);
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
+        q.add(async);
         sut.exceptionCaught(context, new Exception());
 
         assertThat(q).isEmpty();
-        command.handle((s, throwable) -> {
+        async.handle((s, throwable) -> {
             assertThat(throwable).isNotNull();
             return s;
         }).get();

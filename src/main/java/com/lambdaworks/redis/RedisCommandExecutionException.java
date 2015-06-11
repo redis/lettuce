@@ -11,4 +11,12 @@ public class RedisCommandExecutionException extends RedisException {
     public RedisCommandExecutionException(String msg) {
         super(msg);
     }
+
+    public RedisCommandExecutionException(String msg, Throwable e) {
+        super(msg, e);
+    }
+
+    public RedisCommandExecutionException(Throwable cause) {
+        super(cause);
+    }
 }

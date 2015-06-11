@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.sentinel.SentinelRule;
 import org.apache.log4j.Logger;
 import org.junit.*;
 

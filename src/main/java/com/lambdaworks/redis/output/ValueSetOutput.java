@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * {@link Set} of value output.

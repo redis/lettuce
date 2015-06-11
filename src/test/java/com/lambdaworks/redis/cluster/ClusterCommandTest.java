@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandType;
 
@@ -46,7 +47,7 @@ public class ClusterCommandTest {
     @Test
     public void testComplete() throws Exception {
 
-        command.complete();
+        sut.complete();
         sut.await(1, TimeUnit.MINUTES);
         assertThat(sut.isDone()).isTrue();
         assertThat(sut.isCancelled()).isFalse();
@@ -57,9 +58,11 @@ public class ClusterCommandTest {
 
         final List<String> someList = Lists.newArrayList();
 
-        command.thenRun(() -> someList.add(""));
-        sut.complete();
-        sut.await(1, TimeUnit.MINUTES);
+        AsyncCommand<?, ?, ?> asyncCommand = new AsyncCommand<>(sut);
+
+        asyncCommand.thenRun(() -> someList.add(""));
+        asyncCommand.complete();
+        asyncCommand.await(1, TimeUnit.MINUTES);
 
         assertThat(sut.isDone()).isTrue();
         assertThat(someList.size()).describedAs("Inner listener has to add one element").isEqualTo(1);

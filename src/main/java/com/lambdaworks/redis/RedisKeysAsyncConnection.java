@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import java.util.Date;
 import java.util.List;
 
+import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisKeyCommands;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
@@ -13,11 +15,13 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@literal RedisKeyAsyncCommands}
  */
+@Deprecated
 public interface RedisKeysAsyncConnection<K, V> {
     /**
      * Delete a key.
-     * 
+     *
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
      */
@@ -25,7 +29,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Return a serialized version of the value stored at the specified key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;byte[]&gt;bulk-string-reply the serialized value.
      */
@@ -33,21 +37,21 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Determine if a key exists.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the key exists. {@literal false} if the key does not exist.
      */
     RedisFuture<Boolean> exists(K key);
 
     /**
      * Set a key's time to live in seconds.
-     * 
+     *
      * @param key the key
      * @param seconds the seconds type: long
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
@@ -55,11 +59,11 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
-     * 
+     *
      * @param key the key
      * @param timestamp the timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
@@ -67,11 +71,11 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
-     * 
+     *
      * @param key the key
      * @param timestamp the timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
@@ -79,7 +83,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Find all keys matching the given pattern.
-     * 
+     *
      * @param pattern the pattern type: patternkey (pattern)
      * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply list of keys matching {@code pattern}.
      */
@@ -87,30 +91,30 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Find all keys matching the given pattern.
-     * 
+     *
      * @param channel the channel
      * @param pattern the pattern
-     * 
+     *
      * @return RedisFuture&lt;Long&gt; array-reply list of keys matching {@code pattern}.
      */
     RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.
-     * 
+     *
      * @param host the host
      * @param port the port
      * @param key the key
      * @param db the database
      * @param timeout the timeout in milliseconds
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply The command returns OK on success.
      */
     RedisFuture<String> migrate(String host, int port, K key, int db, long timeout);
 
     /**
      * Move a key to another database.
-     * 
+     *
      * @param key the key
      * @param db the db type: long
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
@@ -119,7 +123,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * returns the kind of internal representation used in order to store the value associated with a key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;String&gt;
      */
@@ -128,7 +132,7 @@ public interface RedisKeysAsyncConnection<K, V> {
     /**
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Long&gt; number of seconds since the object stored at the specified key is idle.
      */
@@ -136,7 +140,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * returns the number of references of the value associated with the specified key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Long&gt;
      */
@@ -144,10 +148,10 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Remove the expiration from a key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the timeout was removed. {@literal false} if {@code key} does not exist or does not have an
      *         associated timeout.
      */
@@ -155,11 +159,11 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Set a key's time to live in milliseconds.
-     * 
+     *
      * @param key the key
      * @param milliseconds the milliseconds type: long
      * @return integer-reply, specifically:
-     * 
+     *
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
@@ -167,11 +171,11 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
-     * 
+     *
      * @param key the key
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
@@ -179,11 +183,11 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
-     * 
+     *
      * @param key the key
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
@@ -191,7 +195,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Get the time to live for a key in milliseconds.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Long&gt; integer-reply TTL in milliseconds, or a negative value in order to signal an error (see
      *         the description above).
@@ -200,14 +204,14 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Return a random key from the keyspace.
-     * 
+     *
      * @return RedisFuture&lt;V&gt; bulk-string-reply the random key, or {@literal null} when the database is empty.
      */
     RedisFuture<V> randomkey();
 
     /**
      * Rename a key.
-     * 
+     *
      * @param key the key
      * @param newKey the newkey type: key
      * @return RedisFuture&lt;String&gt; simple-string-reply
@@ -216,18 +220,18 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Rename a key, only if the new key does not exist.
-     * 
+     *
      * @param key the key
      * @param newKey the newkey type: key
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if {@code key} was renamed to {@code newkey}. {@literal false} if {@code newkey} already exists.
      */
     RedisFuture<Boolean> renamenx(K key, K newKey);
 
     /**
      * Create a key using the provided serialized value, previously obtained using DUMP.
-     * 
+     *
      * @param key the key
      * @param ttl the ttl type: long
      * @param value the serialized-value type: string
@@ -283,7 +287,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Get the time to live for a key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Long&gt; integer-reply TTL in seconds, or a negative value in order to signal an error (see the
      *         description above).
@@ -292,7 +296,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Determine the type stored at key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;String&gt; simple-string-reply type of {@code key}, or {@code none} when {@code key} does not
      *         exist.
@@ -350,7 +354,7 @@ public interface RedisKeysAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate the keys space.
-     * 
+     *
      * @param channel streaming channel that receives a call for every key
      * @param scanCursor cursor to resume from a previous scan
      * @param scanArgs scan arguments

@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.List;
 
+import com.lambdaworks.redis.api.async.RedisSortedSetAsyncCommands;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
@@ -12,7 +13,9 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@literal RedisSortedSetAsyncCommands}
  */
+@Deprecated
 public interface RedisSortedSetsAsyncConnection<K, V> {
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.

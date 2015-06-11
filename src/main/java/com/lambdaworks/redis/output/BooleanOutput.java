@@ -5,7 +5,6 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * Boolean output. The actual value is returned as an integer where 0 indicates false and 1 indicates true, or as a null bulk

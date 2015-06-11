@@ -15,6 +15,7 @@ import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -92,6 +93,21 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             RedisClusterConnection<String, String> nodeConnection = sync.getConnection(redisClusterNode.getNodeId());
 
             String myid = nodeConnection.clusterMyId();
+            assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
+
+        }
+    }
+
+    @Test
+    public void asyncConnections() throws Exception {
+
+        assertThat(clusterClient.getPartitions()).hasSize(4);
+
+        RedisAdvancedClusterAsyncConnection<String, String> async = clusterClient.connectClusterAsync();
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+            RedisClusterAsyncConnection<String, String> nodeConnection = async.getConnection(redisClusterNode.getNodeId());
+
+            String myid = nodeConnection.clusterMyId().get();
             assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
         }
     }

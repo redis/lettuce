@@ -3,25 +3,26 @@ package com.lambdaworks.redis.support;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 
-import com.lambdaworks.redis.AbstractCommandTest;
+import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
 
-public class WithConnectionTest extends AbstractCommandTest {
+public class WithConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void testPooling() throws Exception {
-        final RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        final RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
 
         assertThat(pool.getNumActive()).isEqualTo(0);
         assertThat(pool.getNumIdle()).isEqualTo(0);
 
-        new WithConnection<RedisConnection<String, String>>(pool) {
+        new WithConnection<RedisCommands<String, String>>(pool) {
 
             @Override
-            protected void run(RedisConnection<String, String> connection) {
+            protected void run(RedisCommands<String, String> connection) {
                 connection.set("key", "value");
                 String result = connection.get("key");
                 assertThat(result).isEqualTo("value");
@@ -38,16 +39,16 @@ public class WithConnectionTest extends AbstractCommandTest {
 
     @Test
     public void testPoolingWithException() throws Exception {
-        final RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
+        final RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
 
         assertThat(pool.getNumActive()).isEqualTo(0);
         assertThat(pool.getNumIdle()).isEqualTo(0);
 
         try {
-            new WithConnection<RedisConnection<String, String>>(pool) {
+            new WithConnection<RedisCommands<String, String>>(pool) {
 
                 @Override
-                protected void run(RedisConnection<String, String> connection) {
+                protected void run(RedisCommands<String, String> connection) {
                     connection.set("key", "value");
                     throw new IllegalStateException("test");
                 }

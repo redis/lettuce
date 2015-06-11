@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
+import com.lambdaworks.redis.output.CommandOutput;
 import org.junit.Before;
 import org.junit.Test;
 

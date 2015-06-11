@@ -1,16 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.List;
 
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -37,16 +36,18 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     }
 
     @Override
-    public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
+    public <T, C extends RedisCommand<K, V, T>> C write(C command) {
+
+        if (closed) {
+            throw new RedisException("Connection is closed");
+        }
 
         RedisCommand<K, V, T> commandToSend = command;
         CommandArgs<K, V> args = command.getArgs();
 
-        if (command instanceof Command) {
-            Command<K, V, T> singleCommand = (Command<K, V, T>) command;
-            if (!singleCommand.isMulti()) {
-                commandToSend = new ClusterCommand<K, V, T>(singleCommand, this, executionLimit);
-            }
+        if (!(command instanceof ClusterCommand)) {
+            RedisCommand<K, V, T> singleCommand = command;
+            commandToSend = new ClusterCommand<K, V, T>(singleCommand, this, executionLimit);
         }
 
         RedisChannelWriter<K, V> channelWriter = null;
@@ -56,7 +57,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             if (!clusterCommand.isDone() && clusterCommand.isMoved()) {
                 HostAndPort moveTarget = getMoveTarget(clusterCommand.getError());
 
-                RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
+                RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(
                         ClusterConnectionProvider.Intent.WRITE, moveTarget.getHostText(), moveTarget.getPort());
                 channelWriter = connection.getChannelWriter();
             }
@@ -66,11 +67,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         if (channelWriter == null && args != null && !args.getKeys().isEmpty()) {
 
             int hash = getHash(args.getEncodedKey(0));
-            RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
+            RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(
                     ClusterConnectionProvider.Intent.WRITE, hash);
 
             channelWriter = connection.getChannelWriter();
-
         }
 
         if (channelWriter instanceof ClusterDistributionChannelWriter) {
@@ -80,10 +80,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         commandToSend.getOutput().setError((String) null);
         if (channelWriter != null && channelWriter != this && channelWriter != defaultWriter) {
-            return channelWriter.write(commandToSend);
+            return channelWriter.write((C) commandToSend);
         }
 
-        return defaultWriter.write(commandToSend);
+        return defaultWriter.write((C) commandToSend);
     }
 
     private HostAndPort getMoveTarget(String errorMessage) {

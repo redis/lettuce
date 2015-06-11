@@ -71,7 +71,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         logger.debug("close()");
 
         if (closed) {
-            logger.warn("Client is already closed");
+            logger.warn("Connection is already closed");
             return;
         }
 
@@ -99,7 +99,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     }
 
-    protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+    protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
 
         if (clientOptions != null && !clientOptions.isAutoReconnect() && !active) {
             cmd.completeExceptionally(new RedisException(
@@ -194,5 +194,13 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     public void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
         this.clientOptions = clientOptions;
+    }
+
+    public TimeUnit getTimeoutUnit() {
+        return unit;
+    }
+
+    public long getTimeout() {
+        return timeout;
     }
 }

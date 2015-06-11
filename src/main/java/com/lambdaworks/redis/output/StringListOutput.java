@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * {@link List} of string output.

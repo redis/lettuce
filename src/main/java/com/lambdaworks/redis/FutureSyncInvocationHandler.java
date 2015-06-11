@@ -2,10 +2,10 @@ package com.lambdaworks.redis;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.reflect.AbstractInvocationHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -18,14 +18,12 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
-    private final RedisChannelHandler<K, V> connection;
-    protected long timeout;
-    protected TimeUnit unit;
+    private final StatefulConnection<K, V> connection;
+    private final Object asyncApi;
 
-    public FutureSyncInvocationHandler(RedisChannelHandler<K, V> connection) {
+    public FutureSyncInvocationHandler(StatefulConnection<K, V> connection, Object asyncApi) {
         this.connection = connection;
-        this.timeout = connection.timeout;
-        this.unit = connection.unit;
+        this.asyncApi = asyncApi;
     }
 
     /**
@@ -38,25 +36,19 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
         try {
 
-            // void setTimeout(long timeout, TimeUnit unit)
-            if (method.getName().equals("setTimeout")) {
-                setTimeout((Long) args[0], (TimeUnit) args[1]);
-                return null;
-            }
+            Method targetMethod = asyncApi.getClass().getMethod(method.getName(), method.getParameterTypes());
 
-            Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
+            Object result = targetMethod.invoke(asyncApi, args);
 
-            Object result = targetMethod.invoke(connection, args);
-
-            if (result instanceof RedisCommand) {
-                RedisCommand<?, ?, ?> command = (RedisCommand<?, ?, ?>) result;
+            if (result instanceof RedisFuture) {
+                RedisFuture<?> command = (RedisFuture<?>) result;
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                    if (connection instanceof RedisAsyncConnectionImpl && ((RedisAsyncConnectionImpl) connection).isMulti()) {
+                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
                         return null;
                     }
                 }
 
-                return LettuceFutures.await(command, timeout, unit);
+                return LettuceFutures.await(command, connection.getTimeout(), connection.getTimeoutUnit());
             }
 
             if (result instanceof RedisClusterAsyncConnection) {
@@ -70,10 +62,5 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
             throw e.getTargetException();
         }
 
-    }
-
-    private void setTimeout(long timeout, TimeUnit unit) {
-        this.timeout = timeout;
-        this.unit = unit;
     }
 }

@@ -3,8 +3,8 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
  * Asynchronous executed commands for Strings.
@@ -13,7 +13,9 @@ import com.lambdaworks.redis.protocol.SetArgs;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@literal RedisStringAsyncCommands}
  */
+@Deprecated
 public interface RedisStringsAsyncConnection<K, V> {
     /**
      * Append a value to a key.

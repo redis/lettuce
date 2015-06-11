@@ -37,14 +37,10 @@ public class BreakClientTest extends BreakClientBase {
         redis.close();
     }
 
-    @Test
-    public void testStandAlone() throws Exception {
-        testSingle(redis);
-    }
-
-    @Test
-    public void testLooping() throws Exception {
-        testLoop(redis);
-    }
+    /*
+     * @Test public void testStandAlone() throws Exception { testSingle(redis); }
+     * 
+     * @Test public void testLooping() throws Exception { testLoop(redis); }
+     */
 
 }

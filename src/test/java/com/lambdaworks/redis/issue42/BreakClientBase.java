@@ -5,11 +5,11 @@ import static org.junit.Assert.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.sync.RedisHashCommands;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 
 import com.lambdaworks.redis.RedisCommandTimeoutException;
-import com.lambdaworks.redis.RedisHashesConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 /**
@@ -24,7 +24,7 @@ public abstract class BreakClientBase {
 
     protected Logger log = Logger.getLogger(getClass());
 
-    public void testSingle(RedisHashesConnection<String, String> client) throws InterruptedException {
+    public void testSingle(RedisHashCommands<String, String> client) throws InterruptedException {
         populateTest(0, client);
 
         assertEquals(16385, client.hvals(TEST_KEY).size());
@@ -34,7 +34,7 @@ public abstract class BreakClientBase {
         assertEquals(16385, client.hvals(TEST_KEY).size());
     }
 
-    public void testLoop(RedisHashesConnection<String, String> client) throws InterruptedException {
+    public void testLoop(RedisHashCommands<String, String> client) throws InterruptedException {
         populateTest(100, client);
         assertEquals(16385 + 100, client.hvals(TEST_KEY).size());
 
@@ -43,14 +43,14 @@ public abstract class BreakClientBase {
         assertExtraKeys(100, client);
     }
 
-    public void assertExtraKeys(int howmany, RedisHashesConnection<String, String> target) {
+    public void assertExtraKeys(int howmany, RedisHashCommands<String, String> target) {
         for (int x = 0; x < howmany; x++) {
             int i = Integer.parseInt(target.hget(TEST_KEY, "GET-" + x));
             Assert.assertEquals(x, i);
         }
     }
 
-    protected void breakClient(RedisHashesConnection<String, String> target) throws InterruptedException {
+    protected void breakClient(RedisHashCommands<String, String> target) throws InterruptedException {
         try {
             this.sleep = true;
             log.info("This should timeout");
@@ -63,7 +63,7 @@ public abstract class BreakClientBase {
         TimeUnit.SECONDS.sleep(5);
     }
 
-    protected void populateTest(int loopFor, RedisHashesConnection<String, String> target) {
+    protected void populateTest(int loopFor, RedisHashCommands<String, String> target) {
         log.info("populating hash");
         target.hset(TEST_KEY, TEST_KEY, TEST_KEY);
 

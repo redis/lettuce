@@ -7,7 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.buffer.ByteBuf;
@@ -30,13 +30,14 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
     /**
      * Initialize a new instance.
      * 
+     * @param clientOptions client options for the connection
      * @param queue Command queue.
      * @param codec Codec.
      */
     public PubSubCommandHandler(ClientOptions clientOptions, BlockingQueue<RedisCommand<K, V, ?>> queue, RedisCodec<K, V> codec) {
         super(clientOptions, queue);
         this.codec = codec;
-        this.output = new PubSubOutput<K, V, V>(codec);
+        this.output = new PubSubOutput<>(codec);
     }
 
     @Override

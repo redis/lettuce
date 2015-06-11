@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 
-public class CustomCodecTest extends AbstractCommandTest {
+public class CustomCodecTest extends AbstractRedisClientTest {
     @Test
     public void test() throws Exception {
         RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec());

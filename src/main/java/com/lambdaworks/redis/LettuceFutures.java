@@ -1,11 +1,9 @@
 package com.lambdaworks.redis;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -19,11 +17,10 @@ public class LettuceFutures {
 
     /**
      * Wait until futures are complete or the supplied timeout is reached.
-     * 
+     *
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param futures Futures to wait for.
-     * 
      * @return True if all futures complete in time.
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
@@ -46,6 +43,11 @@ public class LettuceFutures {
             complete = true;
         } catch (TimeoutException e) {
             complete = false;
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+            throw new RedisException(e.getCause());
         } catch (Exception e) {
             throw new RedisCommandInterruptedException(e);
         }
@@ -55,31 +57,30 @@ public class LettuceFutures {
 
     /**
      * Wait until futures are complete or the supplied timeout is reached.
-     * 
+     *
      * @param cmd Command to wait for.
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param unit Unit of time for the timeout.
-     * @param <K> Key type.
-     * @param <V> Value type.
      * @param <T> Result type.
-     *
      * @return True if all futures complete in time.
      */
-    public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
+    public static <T> T await(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
         try {
             if (!cmd.await(timeout, unit)) {
                 cmd.cancel(true);
                 throw new RedisCommandTimeoutException();
             }
-            CommandOutput<K, V, T> output = cmd.getOutput();
-            if (output.hasError()) {
-                throw new RedisCommandExecutionException(output.getError());
-            }
-            return output.get();
+
+            return cmd.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+            throw new RedisException(e.getCause());
         }
     }
 }

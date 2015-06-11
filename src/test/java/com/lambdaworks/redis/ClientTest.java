@@ -2,10 +2,10 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.WaitFor.*;
-import static com.lambdaworks.redis.ScriptOutputType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
+import static com.lambdaworks.redis.ScriptOutputType.STATUS;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -21,12 +21,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
-import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
 
-public class ClientTest extends AbstractCommandTest {
+public class ClientTest extends AbstractRedisClientTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -51,16 +51,28 @@ public class ClientTest extends AbstractCommandTest {
     }
 
     @Test
+    public void statefulConnectionFromSync() throws Exception {
+        assertThat(redis.getStatefulConnection().sync()).isSameAs(redis);
+    }
+
+    @Test
+    public void statefulConnectionFromAsync() throws Exception {
+        RedisAsyncConnection<String, String> async = client.connectAsync();
+        assertThat(async.getStatefulConnection().async()).isSameAs(async);
+    }
+
+    @Test
     public void variousClientOptions() throws Exception {
 
-        RedisAsyncConnectionImpl<String, String> plain = (RedisAsyncConnectionImpl) client.connectAsync();
-        assertThat(plain.getOptions().isAutoReconnect()).isTrue();
+        RedisAsyncConnection<String, String> plain = client.connectAsync();
+
+        assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
 
         client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
-        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
-        assertThat(connection.getOptions().isAutoReconnect()).isFalse();
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        assertThat(getStatefulConnection(connection).getOptions().isAutoReconnect()).isFalse();
 
-        assertThat(plain.getOptions().isAutoReconnect()).isTrue();
+        assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
 
     }
 
@@ -69,9 +81,10 @@ public class ClientTest extends AbstractCommandTest {
 
         client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
 
-        RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        RedisChannelHandler<String, String> channelHandler = getStatefulConnection(connection);
 
-        Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+        Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
         ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
         assertThat(connectionWatchdog).isNull();
 
@@ -142,9 +155,10 @@ public class ClientTest extends AbstractCommandTest {
         RedisURI redisUri = getDefaultRedisURI();
 
         try {
-            RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);
+            RedisAsyncConnection<String, String> connection = client.connectAsync(redisUri);
+            RedisChannelHandler<String, String> channelHandler = getStatefulConnection(connection);
 
-            Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+            Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
             ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
@@ -202,9 +216,12 @@ public class ClientTest extends AbstractCommandTest {
         RedisURI redisUri = getDefaultRedisURI();
 
         try {
-            RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);
+            RedisAsyncConnectionCommandsImpl<String, String> connection = (RedisAsyncConnectionCommandsImpl<String, String>) client
+                    .connectAsync(redisUri);
+            RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) connection
+                    .getStatefulConnection();
 
-            Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+            Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
             ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
@@ -281,15 +298,12 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(listener.onException).isNull();
 
         RedisAsyncConnection<String, String> connection = client.connectAsync();
-        waitOrTimeout(new Condition() {
 
-            @Override
-            public boolean isSatisfied() {
-                return listener.onConnected != null;
-            }
-        }, Timeout.timeout(seconds(2)));
+        StatefulRedisConnection<String, String> statefulRedisConnection = getStatefulConnection(connection);
 
-        assertThat(listener.onConnected).isEqualTo(connection);
+        waitOrTimeout(() -> listener.onConnected != null, Timeout.timeout(seconds(2)));
+
+        assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
         assertThat(listener.onDisconnected).isNull();
 
         connection.set(key, value).get();
@@ -303,8 +317,8 @@ public class ClientTest extends AbstractCommandTest {
             }
         }, Timeout.timeout(seconds(2)));
 
-        assertThat(listener.onConnected).isEqualTo(connection);
-        assertThat(listener.onDisconnected).isEqualTo(connection);
+        assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
+        assertThat(listener.onDisconnected).isEqualTo(statefulRedisConnection);
 
         client.shutdown();
     }
@@ -442,10 +456,11 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(e).hasCauseExactlyInstanceOf(RuntimeException.class);
     }
 
-    @Test
+    @Test(timeout = 20000)
     public void reset() throws Exception {
 
-        RedisAsyncConnectionImpl<String, String> async = (RedisAsyncConnectionImpl<String, String>) client.connectAsync();
+        RedisAsyncConnectionCommandsImpl<String, String> async = (RedisAsyncConnectionCommandsImpl<String, String>) client
+                .connectAsync();
 
         async.set(key, value).get();
         async.reset();
@@ -464,6 +479,11 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(redis.scriptKill()).isEqualTo("OK");
 
         async.close();
+    }
+
+    <K, V> StatefulRedisConnectionImpl<K, V> getStatefulConnection(RedisAsyncConnection<K, V> redisAsyncConnection) {
+
+        return (StatefulRedisConnectionImpl<K, V>) redisAsyncConnection.getStatefulConnection();
     }
 
 }

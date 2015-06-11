@@ -67,7 +67,7 @@ public abstract class AbstractRedisClient {
 
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
-        eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();
+        eventLoopGroups = new ConcurrentHashMap<>();
         channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         timer.start();
         unit = TimeUnit.SECONDS;
@@ -86,7 +86,7 @@ public abstract class AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
+    protected <K, V, T extends RedisChannelHandler<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
             final T connection, final Supplier<SocketAddress> socketAddressSupplier) {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
@@ -201,7 +201,7 @@ public abstract class AbstractRedisClient {
                 initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
             } catch (TimeoutException e) {
                 throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout()
-                        + " " + connectionBuilder.getTimeUnit());
+                        + " " + connectionBuilder.getTimeUnit(), e);
             }
             connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
@@ -287,7 +287,7 @@ public abstract class AbstractRedisClient {
     }
 
     protected static <K, V> Object syncHandler(RedisChannelHandler<K, V> connection, Class<?>... interfaceClasses) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connection);
+        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(null, null);
         return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaceClasses, h);
     }
 
@@ -328,11 +328,11 @@ public abstract class AbstractRedisClient {
     /**
      * Set the {@link ClientOptions} for the client.
      * 
-     * @param clientOptions
+     * @param clientOptions the new client options
+     * @throws IllegalArgumentException if {@literal clientOptions} is null
      */
     public void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
-
         this.clientOptions = clientOptions;
     }
 }

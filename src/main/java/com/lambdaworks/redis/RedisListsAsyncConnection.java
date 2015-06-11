@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.List;
 
+import com.lambdaworks.redis.api.async.RedisListAsyncCommands;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
@@ -11,7 +12,9 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisListAsyncCommands}
  */
+@Deprecated
 public interface RedisListsAsyncConnection<K, V> {
     /**
      * Remove and get the first element in a list, or block until one is available.

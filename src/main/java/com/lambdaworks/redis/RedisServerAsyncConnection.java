@@ -3,6 +3,7 @@ package com.lambdaworks.redis;
 import java.util.Date;
 import java.util.List;
 
+import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
 import com.lambdaworks.redis.protocol.CommandType;
 
 /**
@@ -12,7 +13,9 @@ import com.lambdaworks.redis.protocol.CommandType;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisServerAsyncCommands}
  */
+@Deprecated
 public interface RedisServerAsyncConnection<K, V> {
     /**
      * Asynchronously rewrite the append-only file.

@@ -1,19 +1,40 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 
 /**
- * Complete asynchronous cluster Redis API with 400+ Methods..
+ * A complete asynchronous and thread-safe cluster Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisClusterAsyncCommands}
  */
+@Deprecated
 public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
         RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V> {
+
+    /**
+     * Set the default timeout for operations.
+     *
+     * @param timeout the timeout value
+     * @param unit the unit of the timeout value
+     */
+    void setTimeout(long timeout, TimeUnit unit);
+
+    /**
+     * Authenticate to the server.
+     *
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    String auth(String password);
 
     RedisFuture<String> clusterMeet(String ip, int port);
 
@@ -33,7 +54,7 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
 
     /**
      * Get array of Cluster slot to node mappings.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     RedisFuture<List<Object>> clusterSlots();
@@ -59,16 +80,16 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
     /**
      * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
      * queries.
-     * 
+     *
      * @return String simple-string-reply
      */
-    String readOnly();
+    RedisFuture<String> readOnly();
 
     /**
      * Resets readOnly flag.
-     * 
+     *
      * @return String simple-string-reply
      */
-    String readWrite();
+    RedisFuture<String> readWrite();
 
 }

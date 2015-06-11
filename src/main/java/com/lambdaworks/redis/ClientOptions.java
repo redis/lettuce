@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
 
 /**
@@ -17,11 +19,13 @@ public class ClientOptions implements Serializable {
     /**
      * Create a copy of {@literal options}
      * 
-     * @param options
+     * @param clientOptions source for copy
      * @return A new instance of {@link ClientOptions} containing the values of {@literal options}
+     * @throws IllegalArgumentException if {@literal clientOptions} is null
      */
-    public static ClientOptions copyOf(ClientOptions options) {
-        return new ClientOptions(options);
+    public static ClientOptions copyOf(ClientOptions clientOptions) {
+        checkArgument(clientOptions != null, "clientOptions is null");
+        return new ClientOptions(clientOptions);
     }
 
     /**

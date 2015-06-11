@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.Set;
 
+import com.lambdaworks.redis.api.sync.RedisSetCommands;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
@@ -11,7 +12,9 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisSetCommands}
  */
+@Deprecated
 public interface RedisSetsConnection<K, V> {
     /**
      * Add one or more members to a set.
