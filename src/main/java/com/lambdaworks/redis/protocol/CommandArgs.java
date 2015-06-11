@@ -49,6 +49,13 @@ public class CommandArgs<K, V> {
         return write(codec.encodeKey(key));
     }
 
+    public CommandArgs<K, V> addKeys(Iterable<K> keys) {
+        for (K key : keys) {
+            addKey(key);
+        }
+        return this;
+    }
+
     public CommandArgs<K, V> addKeys(K... keys) {
         for (K key : keys) {
             addKey(key);

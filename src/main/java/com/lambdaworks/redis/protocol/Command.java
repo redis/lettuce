@@ -39,6 +39,16 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
         this.args = args;
     }
 
+    public void setMulti(boolean multi) {
+        this.latch = new CountDownLatch(multi ? 2 : 1);
+        this.multi = multi;
+    }
+
+    public boolean isMulti() {
+        return multi;
+    }
+
+
     /**
      * Get the object that holds this command's output.
      * 
@@ -64,7 +74,16 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      */
     @Override
     public void complete() {
-        completed = true;
+        latch.countDown();
+        if (latch.getCount() == 0) {
+            if (output == null) {
+                complete(null);
+            } else if (output.hasError()) {
+                completeExceptionally(new RedisCommandExecutionException(output.getError()));
+            } else {
+                complete(output.get());
+            }
+        }
     }
 
     @Override

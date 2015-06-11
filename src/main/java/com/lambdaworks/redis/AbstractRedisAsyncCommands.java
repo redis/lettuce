@@ -38,6 +38,19 @@ import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.MultiOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.SetArgs;
+import io.netty.channel.ChannelHandler;
 
 /**
  * An asynchronous thread-safe API to a redis connection.
@@ -262,6 +275,10 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
 
     @Override
     public RedisFuture<Long> del(K... keys) {
+        return dispatch(commandBuilder.del(keys));
+    }
+
+    public RedisFuture<Long> del(Iterable<K> keys) {
         return dispatch(commandBuilder.del(keys));
     }
 
@@ -547,6 +564,10 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
 
     @Override
     public RedisFuture<List<V>> mget(K... keys) {
+        return dispatch(commandBuilder.mget(keys));
+    }
+
+    public RedisFuture<List<V>> mget(Iterable<K> keys) {
         return dispatch(commandBuilder.mget(keys));
     }
 

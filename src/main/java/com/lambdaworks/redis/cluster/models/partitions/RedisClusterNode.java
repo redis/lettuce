@@ -43,6 +43,12 @@ public class RedisClusterNode implements Serializable {
         this.flags = flags;
     }
 
+    public static RedisClusterNode of(String nodeId) {
+        RedisClusterNode redisClusterNode = new RedisClusterNode();
+        redisClusterNode.setNodeId(nodeId);
+        return redisClusterNode;
+    }
+
     public RedisURI getUri() {
         return uri;
     }
@@ -126,9 +132,6 @@ public class RedisClusterNode implements Serializable {
 
         RedisClusterNode that = (RedisClusterNode) o;
 
-        if (uri != null ? !uri.equals(that.uri) : that.uri != null) {
-            return false;
-        }
         if (nodeId != null ? !nodeId.equals(that.nodeId) : that.nodeId != null) {
             return false;
         }
@@ -138,8 +141,7 @@ public class RedisClusterNode implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = uri != null ? uri.hashCode() : 0;
-        result = 31 * result + (nodeId != null ? nodeId.hashCode() : 0);
+        int result = 31 * (nodeId != null ? nodeId.hashCode() : 0);
         return result;
     }
 
@@ -160,6 +162,24 @@ public class RedisClusterNode implements Serializable {
         }
         sb.append(']');
         return sb.toString();
+    }
+
+    /**
+     * 
+     * @param nodeFlag
+     * @return true if the {@linkplain NodeFlag} is contained within the flags.
+     */
+    public boolean is(NodeFlag nodeFlag) {
+        return getFlags().contains(nodeFlag);
+    }
+
+    /**
+     * 
+     * @param slot
+     * @return true if the slot is contained within the handled slots.
+     */
+    public boolean hasSlot(int slot) {
+        return getSlots().contains(slot);
     }
 
     public enum NodeFlag {

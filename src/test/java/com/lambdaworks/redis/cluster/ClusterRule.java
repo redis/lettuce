@@ -120,4 +120,10 @@ public class ClusterRule implements TestRule {
             throw new IllegalStateException(e);
         }
     }
+
+    public void meet(String host, int port) {
+        for (RedisAsyncConnectionImpl<?, ?> redisAsyncConnection : connectionCache.values()) {
+            redisAsyncConnection.clusterMeet(host, port);
+        }
+    }
 }

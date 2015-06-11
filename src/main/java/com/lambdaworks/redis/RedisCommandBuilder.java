@@ -235,6 +235,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> del(Iterable<K> keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> discard() {
         return createCommand(DISCARD, new StatusOutput<K, V>(codec));
     }
@@ -507,6 +512,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, List<V>> mget(K... keys) {
         assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
 
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<V>> mget(Iterable<K> keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
     }

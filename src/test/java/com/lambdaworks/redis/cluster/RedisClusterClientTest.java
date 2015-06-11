@@ -71,6 +71,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
+        setupClusterClient();
         client = new RedisClient(host, port1);
         clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
 
@@ -79,7 +80,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     @AfterClass
     public static void shutdownClient() {
-
+        shutdownClusterClient();
         client.shutdown(0, 0, TimeUnit.MILLISECONDS);
         clusterClient.shutdown();
     }

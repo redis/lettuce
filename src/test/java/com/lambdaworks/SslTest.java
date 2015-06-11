@@ -43,7 +43,6 @@ public class SslTest {
         RedisConnection<String, String> connection = redisClient.connect(redisUri);
         connection.set("key", "value");
         assertThat(connection.get("key")).isEqualTo("value");
-
         connection.close();
     }
 
