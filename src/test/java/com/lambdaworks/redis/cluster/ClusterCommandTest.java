@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.protocol.AsyncCommand;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandType;
 
@@ -58,7 +58,7 @@ public class ClusterCommandTest {
 
         final List<String> someList = Lists.newArrayList();
 
-        AsyncCommand asyncCommand = new AsyncCommand(sut);
+        AsyncCommand<?, ?, ?> asyncCommand = new AsyncCommand<>(sut);
 
         asyncCommand.thenRun(() -> someList.add(""));
         asyncCommand.complete();

@@ -55,21 +55,25 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncConnectionComm
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisFuture<Void> psubscribe(K... patterns) {
         return (RedisFuture<Void>) dispatch(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisFuture<Void> punsubscribe(K... patterns) {
         return (RedisFuture<Void>) dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisFuture<Void> subscribe(K... channels) {
         return (RedisFuture<Void>) dispatch(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisFuture<Void> unsubscribe(K... channels) {
         return (RedisFuture<Void>) dispatch(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
     }
@@ -81,6 +85,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncConnectionComm
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();
     }

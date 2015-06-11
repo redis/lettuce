@@ -6,12 +6,11 @@ import static org.assertj.core.api.Assertions.fail;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 public class PoolConnectionTest extends AbstractRedisClientTest {
 
@@ -53,22 +52,24 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         c1.close();
-        RedisConnection actualConnection1 = assertConnectionStillThere(c1);
+        RedisConnection<String, String> actualConnection1 = assertConnectionStillThere(c1);
 
         RedisConnection<String, String> c2 = pool.allocateConnection();
         assertThat(c2).isSameAs(c1);
 
-        RedisConnection actualConnection2 = assertConnectionStillThere(c2);
+        RedisConnection<String, String> actualConnection2 = assertConnectionStillThere(c2);
         assertThat(actualConnection1).isSameAs(actualConnection2);
     }
 
-    private RedisConnection assertConnectionStillThere(RedisConnection<String, String> c1) {
+    @SuppressWarnings("unchecked")
+    private RedisConnection<String, String> assertConnectionStillThere(RedisConnection<String, String> c1) {
         // unwrap code from RedisConnectionPool destroyObject
         if (Proxy.isProxyClass(c1.getClass())) {
-            RedisConnectionPool.PooledConnectionInvocationHandler<RedisConnection> invocationHandler = (RedisConnectionPool.PooledConnectionInvocationHandler<RedisConnection>) Proxy
+            RedisConnectionPool.PooledConnectionInvocationHandler<RedisConnection<String, String>> invocationHandler;
+            invocationHandler = (RedisConnectionPool.PooledConnectionInvocationHandler<RedisConnection<String, String>>) Proxy
                     .getInvocationHandler(c1);
 
-            RedisConnection connection = invocationHandler.getConnection();
+            RedisConnection<String, String> connection = invocationHandler.getConnection();
             assertThat(connection).isNotNull();
             return connection;
         }

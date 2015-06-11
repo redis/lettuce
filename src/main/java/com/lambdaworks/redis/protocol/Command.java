@@ -24,6 +24,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     protected CommandOutput<K, V, T> output;
     protected Throwable exception;
     protected boolean cancelled = false;
+    protected boolean completed = false;
 
     /**
      * Create a new command with the supplied type and args.
@@ -63,6 +64,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      */
     @Override
     public void complete() {
+        completed = true;
     }
 
     @Override
@@ -123,6 +125,17 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
         return args;
     }
 
+    /**
+     *
+     * @return the resut from the output.
+     */
+    public T get() {
+        if (output != null) {
+            return output.get();
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -134,6 +147,9 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     }
 
     public void setOutput(CommandOutput<K, V, T> output) {
+        if (isCancelled() || completed) {
+            throw new IllegalStateException("Command is completed/cancelled. Cannot set a new output");
+        }
         this.output = output;
     }
 

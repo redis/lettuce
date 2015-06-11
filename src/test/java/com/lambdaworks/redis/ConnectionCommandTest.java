@@ -10,15 +10,15 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ExecutionException;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import org.assertj.core.api.Assertions;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-
-import com.lambdaworks.redis.protocol.CommandHandler;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
+import com.lambdaworks.redis.protocol.CommandHandler;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConnectionCommandTest extends AbstractRedisClientTest {
@@ -93,14 +93,15 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         Assertions.assertThat(Connections.isValid(redis)).isTrue();
         RedisAsyncConnectionCommandsImpl<String, String> asyncConnection = (RedisAsyncConnectionCommandsImpl<String, String>) client
                 .connectAsync();
-        RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler) asyncConnection.getStatefulConnection();
+        RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) asyncConnection
+                .getStatefulConnection();
 
         assertThat(Connections.isValid(asyncConnection)).isTrue();
         assertThat(Connections.isOpen(asyncConnection)).isTrue();
         assertThat(asyncConnection.isOpen()).isTrue();
         assertThat(channelHandler.isClosed()).isFalse();
 
-        CommandHandler<String, String> channelWriter = (CommandHandler) channelHandler.getChannelWriter();
+        CommandHandler<String, String> channelWriter = (CommandHandler<String, String>) channelHandler.getChannelWriter();
         assertThat(channelWriter.isClosed()).isFalse();
         assertThat(channelWriter.isSharable()).isTrue();
 
@@ -167,6 +168,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void authInvalidPassword() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
@@ -183,6 +185,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void selectInvalid() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {

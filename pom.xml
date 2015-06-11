@@ -331,9 +331,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <compilerArgument>-Xlint</compilerArgument>
+                    <compilerArgument>-Xlint:all,-deprecation</compilerArgument>
                     <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
+                    <showDeprecation>false</showDeprecation>
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
@@ -359,6 +359,13 @@
                         <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
                     </links>
                     <additionalparam>-Xdoclint:all -Xdoclint:-html</additionalparam>
+                    <tags>
+                        <tag>
+                            <name>generated</name>
+                            <placement>a</placement>
+                            <head>Generated class:</head>
+                        </tag>
+                    </tags>
                 </configuration>
             </plugin>
 
@@ -536,6 +543,14 @@
                         <link>http://commons.apache.org/proper/commons-pool/api-2.2/</link>
                         <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
                     </links>
+                    <additionalparam>-Xdoclint:all -Xdoclint:-html</additionalparam>
+                    <tags>
+                        <tag>
+                            <name>generated</name>
+                            <placement>a</placement>
+                            <head>Generated class:</head>
+                        </tag>
+                    </tags>
                 </configuration>
             </plugin>
 

@@ -21,13 +21,17 @@ public class RedisAsyncConnectionCommandsImpl<K, V> extends AbstractRedisAsyncCo
     /**
      * Initialize a new instance.
      * 
+     * @param connection the connection to operate on
+     * @param codec the codec for command encoding
+     * 
      */
     public RedisAsyncConnectionCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public StatefulRedisConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisConnection) connection;
+        return (StatefulRedisConnection<K, V>) connection;
     }
 }

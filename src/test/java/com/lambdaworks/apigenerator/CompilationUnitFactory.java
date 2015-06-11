@@ -98,7 +98,7 @@ public class CompilationUnitFactory {
     /**
      * Simple visitor implementation for visiting MethodDeclaration nodes.
      */
-    private class MethodVisitor extends VoidVisitorAdapter {
+    private class MethodVisitor extends VoidVisitorAdapter<Object> {
 
         @Override
         public void visit(MethodDeclaration n, Object arg) {

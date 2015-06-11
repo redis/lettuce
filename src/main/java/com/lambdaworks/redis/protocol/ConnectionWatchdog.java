@@ -11,7 +11,12 @@ import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelInitializer;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -47,7 +52,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true.
      * 
-     * @param clientOptions
+     * @param clientOptions client options for this connection
      * @param bootstrap Configuration for new channels.
      * @param timer Timer used for delayed reconnect.
      */
@@ -59,7 +64,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
      *
-     * @param clientOptions
+     * @param clientOptions client options for this connection
      * @param bootstrap Configuration for new channels.
      * @param timer Timer used for delayed reconnect.
      * @param socketAddressSupplier the socket address suplier for gaining an address to reconnect to
@@ -200,7 +205,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     /**
      * @deprecated use {@link #setListenOnChannelInactive(boolean)}
-     * @param reconnect
+     * @param reconnect true, if reconnect is activated
      */
     @Deprecated
     public void setReconnect(boolean reconnect) {

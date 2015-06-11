@@ -41,7 +41,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * An asynchronous thread-safe API to a redis connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -65,6 +65,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     /**
      * Initialize a new instance.
      *
+     * @param connection the connection to operate on
+     * @param codec the codec for command encoding
      */
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
@@ -325,7 +327,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
 
     @Override
     public RedisFuture<List<Object>> exec() {
-
         return dispatch(EXEC, null);
     }
 
@@ -1621,5 +1622,4 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     public StatefulConnection<K, V> getConnection() {
         return connection;
     }
-
 }

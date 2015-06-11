@@ -42,13 +42,13 @@ public class ClusterRule implements TestRule {
         final Statement beforeCluster = new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                List<Future> futures = Lists.newArrayList();
+                List<Future<?>> futures = Lists.newArrayList();
 
                 for (RedisClusterAsyncConnection<?, ?> connection : connectionCache.values()) {
                     futures.add(connection.flushall());
                 }
 
-                for (Future future : futures) {
+                for (Future<?> future : futures) {
                     try {
                         future.get();
                     } catch (Exception e) {

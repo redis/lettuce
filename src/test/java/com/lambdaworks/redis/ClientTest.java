@@ -216,7 +216,7 @@ public class ClientTest extends AbstractRedisClientTest {
         RedisURI redisUri = getDefaultRedisURI();
 
         try {
-            RedisAsyncConnectionCommandsImpl<String, String> connection = (RedisAsyncConnectionCommandsImpl) client
+            RedisAsyncConnectionCommandsImpl<String, String> connection = (RedisAsyncConnectionCommandsImpl<String, String>) client
                     .connectAsync(redisUri);
             RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) connection
                     .getStatefulConnection();
@@ -299,15 +299,9 @@ public class ClientTest extends AbstractRedisClientTest {
 
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
-        StatefulRedisConnection statefulRedisConnection = getStatefulConnection(connection);
+        StatefulRedisConnection<String, String> statefulRedisConnection = getStatefulConnection(connection);
 
-        waitOrTimeout(new Condition() {
-
-            @Override
-            public boolean isSatisfied() {
-                return listener.onConnected != null;
-            }
-        }, Timeout.timeout(seconds(2)));
+        waitOrTimeout(() -> listener.onConnected != null, Timeout.timeout(seconds(2)));
 
         assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
         assertThat(listener.onDisconnected).isNull();
@@ -487,9 +481,9 @@ public class ClientTest extends AbstractRedisClientTest {
         async.close();
     }
 
-    <K, V> StatefulRedisConnectionImpl<K, V> getStatefulConnection(RedisAsyncConnection redisAsyncConnection) {
+    <K, V> StatefulRedisConnectionImpl<K, V> getStatefulConnection(RedisAsyncConnection<K, V> redisAsyncConnection) {
 
-        return (StatefulRedisConnectionImpl) redisAsyncConnection.getStatefulConnection();
+        return (StatefulRedisConnectionImpl<K, V>) redisAsyncConnection.getStatefulConnection();
     }
 
 }

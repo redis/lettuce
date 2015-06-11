@@ -30,20 +30,20 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
         assertThat((Number) redis.eval("return 1 + 1", INTEGER)).isEqualTo(2L);
         assertThat((String) redis.eval("return {ok='status'}", STATUS)).isEqualTo("status");
         assertThat((String) redis.eval("return 'one'", VALUE)).isEqualTo("one");
-        assertThat((List) redis.eval("return {1, 'one', {2}}", MULTI)).isEqualTo(list(1L, "one", list(2L)));
+        assertThat((List<?>) redis.eval("return {1, 'one', {2}}", MULTI)).isEqualTo(list(1L, "one", list(2L)));
         exception.expectMessage("Oops!");
         redis.eval("return {err='Oops!'}", STATUS);
     }
 
     @Test
     public void evalWithKeys() throws Exception {
-        assertThat((List) redis.eval("return {KEYS[1], KEYS[2]}", MULTI, "one", "two")).isEqualTo(list("one", "two"));
+        assertThat((List<?>) redis.eval("return {KEYS[1], KEYS[2]}", MULTI, "one", "two")).isEqualTo(list("one", "two"));
     }
 
     @Test
     public void evalWithArgs() throws Exception {
         String[] keys = new String[0];
-        assertThat((List) redis.eval("return {ARGV[1], ARGV[2]}", MULTI, keys, "a", "b")).isEqualTo(list("a", "b"));
+        assertThat((List<?>) redis.eval("return {ARGV[1], ARGV[2]}", MULTI, keys, "a", "b")).isEqualTo(list("a", "b"));
     }
 
     @Test

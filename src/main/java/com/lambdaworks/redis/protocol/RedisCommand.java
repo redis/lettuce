@@ -68,9 +68,10 @@ public interface RedisCommand<K, V, T> {
     boolean isCancelled();
 
     /**
-     * Set a new output.
+     * Set a new output. Only possible as long as the command is not completed/cancelled.
      * 
-     * @param output
+     * @param output the new command output
+     * @throws IllegalStateException if the command is cancelled/completed
      */
     void setOutput(CommandOutput<K, V, T> output);
 }

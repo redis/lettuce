@@ -43,6 +43,11 @@ public class LettuceFutures {
             complete = true;
         } catch (TimeoutException e) {
             complete = false;
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+            throw new RedisException(e.getCause());
         } catch (Exception e) {
             throw new RedisCommandInterruptedException(e);
         }
@@ -72,18 +77,10 @@ public class LettuceFutures {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RedisException) {
-                try {
-                    throw (RedisException) cause.getClass().getConstructor(String.class, Throwable.class)
-                            .newInstance(cause.getMessage(), cause);
-                } catch (RedisException e1) {
-                    throw e1;
-                } catch (Exception e1) {
-                    throw new RedisException(e1);
-                }
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
             }
-            throw new RedisException(cause);
+            throw new RedisException(e.getCause());
         }
     }
 }
