@@ -217,7 +217,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void slaveof() throws Exception {
 
-        assertThat(redis.slaveof(TestSettin.host(), 0)).isEqualTo("OK");
+        assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
         redis.slaveofNoOne();
     }
 
