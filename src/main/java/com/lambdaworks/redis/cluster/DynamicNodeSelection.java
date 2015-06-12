@@ -4,18 +4,19 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-class DynamicNodeSelection<K, V> extends AbstractNodeSelection<K, V> {
+class DynamicNodeSelection<T, K, V, CMDType> extends AbstractNodeSelection<T, CMDType, K, V> {
 
     private final Predicate<RedisClusterNode> selector;
 
-    public DynamicNodeSelection(RedisAdvancedClusterConnectionImpl<K, V> globalConnection, Predicate<RedisClusterNode> selector) {
-        super(globalConnection);
-
+    public DynamicNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, Predicate<RedisClusterNode> selector,
+            ClusterConnectionProvider.Intent intent) {
+        super(globalConnection, intent);
         this.selector = selector;
     }
 

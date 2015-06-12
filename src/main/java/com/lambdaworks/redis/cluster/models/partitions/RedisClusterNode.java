@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -54,6 +56,7 @@ public class RedisClusterNode implements Serializable {
     }
 
     public void setUri(RedisURI uri) {
+        checkArgument(uri != null, "uri must not be null");
         this.uri = uri;
     }
 
@@ -62,6 +65,7 @@ public class RedisClusterNode implements Serializable {
     }
 
     public void setNodeId(String nodeId) {
+        checkArgument(nodeId != null, "nodeId must not be null");
         this.nodeId = nodeId;
     }
 
@@ -110,6 +114,8 @@ public class RedisClusterNode implements Serializable {
     }
 
     public void setSlots(List<Integer> slots) {
+        checkArgument(slots != null, "slots must not be null");
+
         this.slots = slots;
     }
 

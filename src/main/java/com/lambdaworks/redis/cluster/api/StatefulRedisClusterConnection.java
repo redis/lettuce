@@ -4,6 +4,9 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
+import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
 /**
  * A stateful cluster connection providing. Advanced cluster connections provide transparent command routing based on the first
@@ -21,14 +24,14 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * @return the asynchronous API for the underlying connection.
      */
-    RedisAdvancedClusterAsyncConnection<K, V> async();
+    RedisAdvancedClusterAsyncCommands<K, V> async();
 
     /**
      * Returns the {@link RedisAdvancedClusterConnection} API for the current connection. Does not create a new connection.
      *
      * @return the synchronous API for the underlying connection.
      */
-    RedisAdvancedClusterConnection<K, V> sync();
+    RedisAdvancedClusterCommands<K, V> sync();
 
     /**
      * Retrieve a stateful connection to the specified cluster node using the nodeId. Host and port are looked up in the node
@@ -49,4 +52,9 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      */
     StatefulRedisConnection<K, V> getConnection(String host, int port);
 
+    /**
+     *
+     * @return Known partitions for this connection.
+     */
+    Partitions getPartitions();
 }

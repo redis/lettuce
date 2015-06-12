@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.github.javaparser.ASTHelper;
@@ -35,6 +36,7 @@ public class CompilationUnitFactory {
 
     private Function<String, String> typeDocFunction;
     private Function<MethodDeclaration, Type> methodReturnTypeFunction;
+    private Predicate<MethodDeclaration> methodFilter;
     private Supplier<List<String>> importSupplier;
 
     CompilationUnit template;
@@ -43,13 +45,15 @@ public class CompilationUnitFactory {
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
             Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
-            Supplier<List<String>> importSupplier) {
+            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier) {
+
         this.templateFile = templateFile;
         this.sources = sources;
         this.targetPackage = targetPackage;
         this.targetName = targetName;
         this.typeDocFunction = typeDocFunction;
         this.methodReturnTypeFunction = methodReturnTypeFunction;
+        this.methodFilter = methodFilter;
         this.importSupplier = importSupplier;
 
         this.target = new File(sources, targetPackage.replace('.', '/') + "/" + targetName + ".java");
@@ -102,6 +106,10 @@ public class CompilationUnitFactory {
 
         @Override
         public void visit(MethodDeclaration n, Object arg) {
+
+            if (!methodFilter.test(n)) {
+                return;
+            }
 
             MethodDeclaration method = new MethodDeclaration(n.getModifiers(), methodReturnTypeFunction.apply(n), n.getName());
 

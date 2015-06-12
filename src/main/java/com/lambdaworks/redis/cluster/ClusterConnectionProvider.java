@@ -2,8 +2,8 @@ package com.lambdaworks.redis.cluster;
 
 import java.io.Closeable;
 
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 
 /**
  * Connection provider for cluster operations.
@@ -15,18 +15,23 @@ interface ClusterConnectionProvider extends Closeable {
     /**
      * Provide a connection for the intent and cluster slot.
      * 
-     * @param intent
-     * @param slot
+     * @param intent {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#READ} or
+     *        {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#WRITE} {@literal READ} connections will be
+     *        provided in {@literal READONLY} mode
+     * @param slot hash slot
      * @return a valid connection which handles the slot.
+     * @throws RedisException if no know node can be found for the slot
      */
     <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, int slot);
 
     /**
      * Provide a connection for the intent and host/port.
      * 
-     * @param intent
-     * @param host
-     * @param port
+     * @param intent {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#READ} or
+     *        {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#WRITE} {@literal READ} connections will be
+     *        provided in {@literal READONLY} mode
+     * @param host host of the node
+     * @param port port of the node
      * @return a valid connection to the given host.
      */
     <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port);

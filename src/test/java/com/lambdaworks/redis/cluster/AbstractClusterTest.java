@@ -53,8 +53,4 @@ public class AbstractClusterTest {
         return result;
     }
 
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/advanced-cluster-api

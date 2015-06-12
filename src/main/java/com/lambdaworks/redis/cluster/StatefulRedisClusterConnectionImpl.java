@@ -21,6 +21,8 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -48,8 +50,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     private boolean readOnly;
 
     protected RedisCodec<K, V> codec;
-    protected RedisAdvancedClusterConnection<K, V> sync;
-    protected RedisAdvancedClusterAsyncConnectionImpl<K, V> async;
+    protected RedisAdvancedClusterCommands<K, V> sync;
+    protected RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
 
     /**
      * Initialize a new connection.
@@ -66,13 +68,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
-    public RedisAdvancedClusterAsyncConnection<K, V> async() {
+    public RedisAdvancedClusterAsyncCommands<K, V> async() {
         return getAsyncConnection();
     }
 
-    protected RedisAdvancedClusterAsyncConnectionImpl<K, V> getAsyncConnection() {
+    protected RedisAdvancedClusterAsyncCommandsImpl<K, V> getAsyncConnection() {
         if (async == null) {
-            async = new RedisAdvancedClusterAsyncConnectionImpl<>(this, codec);
+            async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
         }
         return async;
     }
@@ -88,11 +90,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
-    public RedisAdvancedClusterConnection<K, V> sync() {
+    public RedisAdvancedClusterCommands<K, V> sync() {
         if (sync == null) {
             ClusterFutureSyncInvocationHandler<K, V> h = new ClusterFutureSyncInvocationHandler<>(this, async());
-            sync = (RedisAdvancedClusterConnection) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                    new Class[] { RedisAdvancedClusterConnection.class }, h);
+            sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
+                    new Class[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
         }
 
         return sync;
@@ -182,6 +184,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     public void setPartitions(Partitions partitions) {
         this.partitions = partitions;
+    }
+
+    public Partitions getPartitions() {
+        return partitions;
     }
 
     /**

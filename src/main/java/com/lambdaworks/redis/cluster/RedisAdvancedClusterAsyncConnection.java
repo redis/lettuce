@@ -1,14 +1,20 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.function.Predicate;
+
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.cluster.api.NodeSelection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Advanced asynchronous and thread-safe cluster API.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
+ * @deprecated Use {@link com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands}
  */
+@Deprecated
 public interface RedisAdvancedClusterAsyncConnection<K, V> extends RedisClusterAsyncConnection<K, V> {
 
     /**
@@ -36,4 +42,5 @@ public interface RedisAdvancedClusterAsyncConnection<K, V> extends RedisClusterA
      * @return the underlying connection.
      */
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
+
 }

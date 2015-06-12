@@ -52,7 +52,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     public <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, int slot) {
         logger.debug("getConnection(" + intent + ", " + slot + ")");
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
-        if (partition == null) {
+        if (partition == null || partition.getUri() == null) {
             throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
         }
 
@@ -92,9 +92,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         @Override
         public StatefulRedisConnection<K, V> create(final PoolKey key) throws Exception {
-
             logger.debug("createConnection(" + key.getIntent() + ", " + key.getSocketAddress() + ")");
-            return redisClusterClient.connectToNode(redisCodec, key.getSocketAddress());
+            StatefulRedisConnection<K, V> connection = redisClusterClient.connectToNode(redisCodec, key.getSocketAddress());
+            if (key.getIntent() == Intent.READ) {
+                connection.sync().readOnly();
+            }
+            return connection;
         }
 
         @Override

@@ -5,55 +5,41 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.AbstractRedisAsyncCommands;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.cluster.api.NodeSelection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
+import com.lambdaworks.redis.cluster.api.async.NodeSelectionAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
-import io.netty.channel.ChannelHandler;
 
 /**
+ * Advanced asynchronous Cluster connection.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 3.3
  */
-@ChannelHandler.Sharable
-public class RedisAdvancedClusterConnectionImpl<K, V> extends RedisAsyncConnectionImpl<K, V> implements
-        RedisAdvancedClusterConnection<K, V> {
-
-    private Partitions partitions;
+public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
+        RedisAdvancedClusterAsyncConnection<K, V>, RedisAdvancedClusterAsyncCommands<K, V> {
 
     /**
      * Initialize a new connection.
      *
-     * @param writer the channel writer
+     * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
-     * @param timeout Maximum time to wait for a response.
-     * @param unit Unit of time for the timeout.
      */
-    public RedisAdvancedClusterConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
-            TimeUnit unit) {
-        super(writer, codec, timeout, unit);
-    }
-
-    @Override
-    public NodeSelectionAsyncOperations<K, V> nodes(Predicate<RedisClusterNode> predicate) {
-        return nodes(predicate, false);
-    }
-
-    @Override
-    public NodeSelectionAsyncOperations<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic) {
-
-        NodeSelection<K, V> selection = new StaticNodeSelection<>(this, predicate);
-        NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler(selection);
-        return (NodeSelectionAsyncOperations<K, V>) Proxy.newProxyInstance(NodeSelection.class.getClassLoader(),
-                new Class[] { NodeSelectionAsyncOperations.class }, h);
+    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
+        super(connection, codec);
     }
 
     @Override
@@ -208,11 +194,51 @@ public class RedisAdvancedClusterConnectionImpl<K, V> extends RedisAsyncConnecti
     }
 
     @Override
-    public Partitions getPartitions() {
-        return partitions;
+    public RedisClusterAsyncCommands<K, V> getConnection(String nodeId) {
+        return getStatefulConnection().getConnection(nodeId).async();
     }
 
-    public void setPartitions(Partitions partitions) {
-        this.partitions = partitions;
+    @Override
+    public RedisClusterAsyncCommands<K, V> getConnection(String host, int port) {
+        return getStatefulConnection().getConnection(host, port).async();
     }
+
+    @Override
+    public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterConnection<K, V>) connection;
+    }
+
+    @Override
+    public AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate) {
+        return nodes(predicate, false);
+    }
+
+    @Override
+    public AsyncNodeSelection<K, V> readonly(Predicate<RedisClusterNode> predicate) {
+        return nodes(predicate, ClusterConnectionProvider.Intent.READ, false);
+    }
+
+    @Override
+    public AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic) {
+        return nodes(predicate, ClusterConnectionProvider.Intent.WRITE, dynamic);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, ClusterConnectionProvider.Intent intent,
+            boolean dynamic) {
+
+        NodeSelection<RedisAsyncCommands<K, V>, ?> selection;
+
+        if (dynamic) {
+            selection = new DynamicNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate, intent);
+        } else {
+            selection = new StaticNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate, intent);
+        }
+
+        NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
+                false);
+        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelection.class.getClassLoader(), new Class[] {
+                NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
+    }
+
 }

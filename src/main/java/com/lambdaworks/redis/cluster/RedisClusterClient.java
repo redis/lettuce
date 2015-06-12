@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -18,11 +19,8 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -44,8 +42,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
-    private final RedisCodec<String, String> codec = new Utf8StringCodec();
     private Partitions partitions;
+    private StatefulRedisConnection<String, String> managementConnection;
+    private RedisURI managementConnectionUri = null;
 
     private List<RedisURI> initialUris = Lists.newArrayList();
 
@@ -81,7 +80,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    public RedisAdvancedClusterConnection<String, String> connectCluster() {
+    public RedisAdvancedClusterCommands<String, String> connectCluster() {
         return connectCluster(newStringStringCodec());
     }
 
@@ -95,7 +94,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection.
      */
     @SuppressWarnings("unchecked")
-    public <K, V> RedisAdvancedClusterConnection<K, V> connectCluster(RedisCodec<K, V> codec) {
+    public <K, V> RedisAdvancedClusterCommands<K, V> connectCluster(RedisCodec<K, V> codec) {
         return connectClusterImpl(codec, getSocketAddressSupplier()).sync();
     }
 
@@ -104,7 +103,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * 
      * @return A new connection.
      */
-    public RedisAdvancedClusterAsyncConnection<String, String> connectClusterAsync() {
+    public RedisAdvancedClusterAsyncCommands<String, String> connectClusterAsync() {
         return connectClusterImpl(newStringStringCodec(), getSocketAddressSupplier()).async();
     }
 
@@ -116,7 +115,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type.
      * @return A new connection.
      */
-    public <K, V> RedisAdvancedClusterAsyncConnection<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
+    public <K, V> RedisAdvancedClusterAsyncCommands<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
         return connectClusterImpl(codec, getSocketAddressSupplier()).async();
     }
 
@@ -219,6 +218,9 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     protected Partitions getPartitions() {
+        if (partitions == null) {
+            initializePartitions();
+        }
         return partitions;
     }
 
@@ -229,19 +231,21 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected Partitions loadPartitions() {
         String clusterNodes = null;
-        RedisURI nodeUri = null;
         Exception lastException = null;
-        for (RedisURI initialUri : initialUris) {
-
-            try {
-                StatefulRedisConnection<String, String> connection = connectToNode(initialUri.getResolvedAddress());
-                nodeUri = initialUri;
-                clusterNodes = connection.sync().clusterNodes();
-                connection.close();
-                break;
-            } catch (Exception e) {
-                lastException = e;
+        if (managementConnection == null) {
+            for (RedisURI initialUri : initialUris) {
+                try {
+                    managementConnection = connectToNode(initialUri.getResolvedAddress());
+                    managementConnectionUri = initialUri;
+                    break;
+                } catch (Exception e) {
+                    lastException = e;
+                }
             }
+        }
+
+        if (managementConnection != null) {
+            clusterNodes = managementConnection.sync().clusterNodes();
         }
 
         if (clusterNodes == null) {
@@ -257,11 +261,11 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         for (RedisClusterNode partition : loadedPartitions) {
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                partition.setUri(nodeUri);
+                partition.setUri(managementConnectionUri);
             }
 
-            if (nodeUri != null && nodeUri.getPassword() != null) {
-                partition.getUri().setPassword(new String(nodeUri.getPassword()));
+            if (managementConnectionUri != null && managementConnectionUri.getPassword() != null) {
+                partition.getUri().setPassword(new String(managementConnectionUri.getPassword()));
             }
         }
 
@@ -281,4 +285,12 @@ public class RedisClusterClient extends AbstractRedisClient {
         return new Utf8StringCodec();
     }
 
+    @Override
+    public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
+        if (managementConnection != null) {
+            managementConnection.close();
+            managementConnection = null;
+        }
+        super.shutdown(quietPeriod, timeout, timeUnit);
+    }
 }

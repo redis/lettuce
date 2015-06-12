@@ -6,12 +6,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.google.common.collect.ImmutableMap;
+import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
+class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
 
     private Map<RedisClusterNode, CompletionStage<T>> executions;
 

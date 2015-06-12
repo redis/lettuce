@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -23,14 +24,14 @@ public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
     private int[] ports;
-    private Map<Integer, RedisClusterAsyncConnection<?, ?>> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisClusterAsyncCommands<?, ?>> connectionCache = Maps.newHashMap();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
         this.ports = ports;
 
         for (int port : ports) {
-            RedisClusterAsyncConnection<String, String> connection = clusterClient.connectToNode(
+            RedisClusterAsyncCommands<String, String> connection = clusterClient.connectToNode(
                     new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
@@ -122,8 +123,12 @@ public class ClusterRule implements TestRule {
     }
 
     public void meet(String host, int port) {
-        for (RedisAsyncConnectionImpl<?, ?> redisAsyncConnection : connectionCache.values()) {
+        for (RedisClusterAsyncCommands<?, ?> redisAsyncConnection : connectionCache.values()) {
             redisAsyncConnection.clusterMeet(host, port);
         }
+    }
+
+    public RedisClusterClient getClusterClient() {
+        return clusterClient;
     }
 }

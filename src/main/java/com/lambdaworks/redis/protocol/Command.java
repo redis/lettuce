@@ -7,11 +7,11 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * A redis command and its result. All successfully executed commands will eventually return a {@link CommandOutput} object.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Command output type.
- * 
+ *
  * @author Will Glozer
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T> {
@@ -39,19 +39,9 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
         this.args = args;
     }
 
-    public void setMulti(boolean multi) {
-        this.latch = new CountDownLatch(multi ? 2 : 1);
-        this.multi = multi;
-    }
-
-    public boolean isMulti() {
-        return multi;
-    }
-
-
     /**
      * Get the object that holds this command's output.
-     * 
+     *
      * @return The command output object.
      */
     @Override
@@ -74,16 +64,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      */
     @Override
     public void complete() {
-        latch.countDown();
-        if (latch.getCount() == 0) {
-            if (output == null) {
-                complete(null);
-            } else if (output.hasError()) {
-                completeExceptionally(new RedisCommandExecutionException(output.getError()));
-            } else {
-                complete(output.get());
-            }
-        }
+        completed = true;
     }
 
     @Override
@@ -94,7 +75,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     /**
      * Encode and write this command to the supplied buffer using the new <a href="http://redis.io/topics/protocol">Unified
      * Request Protocol</a>.
-     * 
+     *
      * @param buf Buffer to write to.
      */
     public void encode(ByteBuf buf) {

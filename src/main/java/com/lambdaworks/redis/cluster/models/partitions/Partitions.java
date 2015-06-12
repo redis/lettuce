@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
+import java.util.AbstractCollection;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,7 +11,7 @@ import com.google.common.collect.Lists;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public class Partitions implements Iterable<RedisClusterNode> {
+public class Partitions extends AbstractCollection<RedisClusterNode> implements Collection<RedisClusterNode> {
     private List<RedisClusterNode> partitions = Lists.newArrayList();
 
     /**
@@ -48,4 +50,14 @@ public class Partitions implements Iterable<RedisClusterNode> {
         sb.append(" ").append(partitions);
         return sb.toString();
     }
+
+    @Override
+    public int size() {
+        return getPartitions().size();
+    }
+
+    public RedisClusterNode getPartition(int index) {
+        return getPartitions().get(index);
+    }
+
 }

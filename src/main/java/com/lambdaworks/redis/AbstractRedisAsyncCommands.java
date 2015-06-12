@@ -45,11 +45,9 @@ import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.SetArgs;
 import io.netty.channel.ChannelHandler;
 
 /**

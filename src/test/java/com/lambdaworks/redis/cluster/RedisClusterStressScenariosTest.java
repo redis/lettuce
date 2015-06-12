@@ -193,7 +193,7 @@ public class RedisClusterStressScenariosTest {
     @Test
     public void testClusterConnectionStability() throws Exception {
 
-        RedisAdvancedClusterAsyncConnectionImpl<String, String> connection = (RedisAdvancedClusterAsyncConnectionImpl<String, String>) clusterClient
+        RedisAdvancedClusterAsyncCommandsImpl<String, String> connection = (RedisAdvancedClusterAsyncCommandsImpl<String, String>) clusterClient
                 .connectClusterAsync();
 
         RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) connection.getStatefulConnection();

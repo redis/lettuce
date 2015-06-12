@@ -5,35 +5,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.NodeSelection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-abstract class AbstractNodeSelection<K, V> implements NodeSelection<K, V> {
+abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<T, CMDType> {
 
-    protected RedisAdvancedClusterConnectionImpl<K, V> globalConnection;
+    protected StatefulRedisClusterConnection<K, V> globalConnection;
+    private ClusterConnectionProvider.Intent intent;
     protected ClusterDistributionChannelWriter writer;
 
-    public AbstractNodeSelection(RedisAdvancedClusterConnectionImpl<K, V> globalConnection) {
+    public AbstractNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, ClusterConnectionProvider.Intent intent) {
         this.globalConnection = globalConnection;
-        writer = (ClusterDistributionChannelWriter) globalConnection.getChannelWriter();
+        this.intent = intent;
+        writer = ((StatefulRedisClusterConnectionImpl) globalConnection).getClusterDistributionChannelWriter();
     }
 
-    @Override
-    public RedisClusterAsyncConnection<K, V> node(int index) {
-
-        RedisClusterNode redisClusterNode = nodes().get(index);
-        return getConnection(redisClusterNode);
-    }
-
-    private RedisClusterAsyncConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+    private StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
         RedisURI uri = redisClusterNode.getUri();
-        return writer.getClusterConnectionProvider().getConnection(ClusterConnectionProvider.Intent.WRITE, uri.getHost(),
-                uri.getPort());
+        return writer.getClusterConnectionProvider().getConnection(intent, uri.getHost(), uri.getPort());
     }
 
     /**
@@ -46,22 +41,49 @@ abstract class AbstractNodeSelection<K, V> implements NodeSelection<K, V> {
         return nodes().size();
     }
 
-    @Override
-    public Map<RedisClusterNode, RedisClusterAsyncConnection<K, V>> asMap() {
+    public Map<RedisClusterNode, StatefulRedisConnection<K, V>> statefulMap() {
         return nodes().stream().collect(
                 Collectors.toMap(redisClusterNode -> redisClusterNode, redisClusterNode1 -> getConnection(redisClusterNode1)));
     }
 
+    /**
+     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
+     * 
+     * @return null
+     */
     @Override
-    public Map<RedisClusterNode, RedisFuture<String>> get(K key) {
-        for (RedisClusterAsyncConnection<K, V> kvRedisClusterAsyncConnection : this) {
-
-        }
+    public Map<RedisClusterNode, T> asMap() {
         return null;
     }
 
+    /**
+     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
+     * 
+     * @return null
+     */
     @Override
-    public Iterator<RedisClusterAsyncConnection<K, V>> iterator() {
-        return nodes().stream().map(this::getConnection).iterator();
+    public T node(int index) {
+        return null;
+    }
+
+    /**
+     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
+     * 
+     * @return null
+     */
+    @Override
+    public Iterator<T> iterator() {
+
+        return null;
+    }
+
+    /**
+     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
+     * 
+     * @return null
+     */
+    @Override
+    public CMDType commands() {
+        return null;
     }
 }

@@ -46,7 +46,7 @@ public class CreateSyncApi {
         String targetPackage = "com.lambdaworks.redis.api.sync";
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), importSupplier());
+                methodTypeMutator(), methodDeclaration -> true, importSupplier());
     }
 
     /**

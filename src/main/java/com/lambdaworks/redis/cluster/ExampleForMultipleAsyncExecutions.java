@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import java.util.List;
 
 import com.lambdaworks.redis.ScriptOutputType;
+import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 
 /**
