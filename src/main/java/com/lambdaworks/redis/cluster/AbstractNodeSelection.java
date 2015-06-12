@@ -26,7 +26,7 @@ abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<
         writer = ((StatefulRedisClusterConnectionImpl) globalConnection).getClusterDistributionChannelWriter();
     }
 
-    private StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+    protected StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
         RedisURI uri = redisClusterNode.getUri();
         return writer.getClusterConnectionProvider().getConnection(intent, uri.getHost(), uri.getPort());
     }

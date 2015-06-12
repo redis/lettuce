@@ -230,9 +230,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         NodeSelection<RedisAsyncCommands<K, V>, ?> selection;
 
         if (dynamic) {
-            selection = new DynamicNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate, intent);
+            selection = new DynamicAsyncNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate,
+                    intent);
         } else {
-            selection = new StaticNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate, intent);
+            selection = new StaticAsyncNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate,
+                    intent);
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,

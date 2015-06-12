@@ -54,38 +54,10 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
                 return new AsyncExecutionsImpl<>((Map) executions);
             }
 
-            if (method.getName().equals("asMap")) {
-                ImmutableMap.Builder<RedisClusterNode, Object> builder = ImmutableMap.builder();
-                nodes.forEach(redisClusterNode -> {
-                    if (sync) {
-                        builder.put(redisClusterNode, connections.get(redisClusterNode).sync());
-                    } else {
-                        builder.put(redisClusterNode, connections.get(redisClusterNode).async());
-                    }
-                });
 
-                return builder.build();
-            }
 
             if (method.getName().equals("commands") && args.length == 0) {
                 return proxy;
-            }
-
-            if (method.getName().equals("node") && args.length == 1) {
-                RedisClusterNode redisClusterNode = nodes.get(((Number) args[0]).intValue());
-                if (sync) {
-                    return connections.get(redisClusterNode).sync();
-                }
-                return connections.get(redisClusterNode).async();
-            }
-
-            if (method.getName().equals("iterator")) {
-                return nodes.stream().map(redisClusterNode -> {
-                    if (sync) {
-                        return connections.get(redisClusterNode).sync();
-                    }
-                    return connections.get(redisClusterNode).async();
-                }).iterator();
             }
 
             targetMethod = findMethod(NodeSelection.class, method, nodeSelectionMethods);
