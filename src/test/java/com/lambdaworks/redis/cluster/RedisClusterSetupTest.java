@@ -1,10 +1,11 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.cluster.AbstractClusterTest.createSlots;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -22,6 +23,7 @@ import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.RedisException;
@@ -37,6 +39,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 @SuppressWarnings("unchecked")
 public class RedisClusterSetupTest {
+
     public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7383;
     public static final int port2 = 7384;
@@ -67,8 +70,8 @@ public class RedisClusterSetupTest {
 
     @Before
     public void openConnection() throws Exception {
-        redis1 = (RedisClusterConnection<String, String>) client1.connect();
-        redis2 = (RedisClusterConnection<String, String>) client2.connect();
+        redis1 = client1.connect();
+        redis2 = client2.connect();
         clusterRule.clusterReset();
     }
 
@@ -111,62 +114,43 @@ public class RedisClusterSetupTest {
 
         Partitions partitionsAfterForget = ClusterPartitionParser.parse(redis1.clusterNodes());
         assertThat(partitionsAfterForget.getPartitions()).hasSize(1);
-
     }
 
     private void waitForCluster() throws InterruptedException, TimeoutException {
+        List<RedisClusterConnection<String, String>> connections = ImmutableList.of(redis1, redis2);
         WaitFor.waitOrTimeout(() -> {
-            Partitions partitionsAfterMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
-            return partitionsAfterMeet.size() == 2;
+
+            Set<String> nodeIds = Sets.newHashSet();
+            for (RedisClusterConnection<String, String> connection : connections) {
+                Partitions partitionsAfterMeet = ClusterPartitionParser.parse(connection.clusterNodes());
+                partitionsAfterMeet.forEach(redisClusterNode -> nodeIds.add(redisClusterNode.getNodeId()));
+            }
+
+            return nodeIds.size() == 2;
         }, Timeout.timeout(Duration.seconds(5)));
     }
 
     @Test
     public void clusterAddDelSlots() throws Exception {
 
+        recreateCluster();
+
+        addAllSlots();
+        waitForSlots(redis1, 12001);
+        waitForSlots(redis2, 4383);
+
+        Set<Integer> set1 = ImmutableSet.of(1, 2, 5, 6);
+
+        deleteSlots(redis1, set1);
+
+        waitForSlots(redis1, 11997);
+    }
+
+    protected void recreateCluster() throws InterruptedException, TimeoutException {
         clusterRule.clusterReset();
         redis1.clusterMeet(host, port2);
         redis2.clusterMeet(host, port1);
         waitForCluster();
-
-        add6SlotsEach();
-
-        waitForSlots(6, 6);
-
-        Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
-        for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
-            if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                assertThat(redisClusterNode.getSlots()).contains(1, 2, 3, 4, 5, 6);
-            } else {
-                assertThat(redisClusterNode.getSlots()).contains(7, 8, 9, 10, 11, 12);
-            }
-        }
-
-        final Set<Integer> set1 = ImmutableSet.of(1, 2, 3, 4, 5, 6);
-        final Set<Integer> set2 = ImmutableSet.of(7, 8, 9, 10, 11, 12);
-
-        deleteSlots(redis1, set1);
-        deleteSlots(redis2, set2);
-
-        try {
-            WaitFor.waitOrTimeout(() -> {
-                Partitions partitions1 = ClusterPartitionParser.parse(redis2.clusterNodes());
-                boolean condition = partitions1.getPartitions().size() == 2
-                        && partitions1.getPartitions().get(0).getSlots().isEmpty();
-                if (!condition) {
-                    deleteSlots(redis1, set1);
-                }
-                return condition;
-            }, Timeout.timeout(Duration.seconds(5)));
-        } catch (Exception e) {
-
-            Partitions detail = ClusterPartitionParser.parse(redis2.clusterNodes());
-            String slotsOn1 = "";
-            if (detail.getPartitions().size() > 0) {
-                slotsOn1 = detail.getPartitions().get(0).getSlots().toString();
-            }
-            fail("Slots/Partitions not deleted. Partitions: " + detail.getPartitions().size() + ", Slots on (0):" + slotsOn1, e);
-        }
     }
 
     private void deleteSlots(RedisClusterConnection<String, String> connection, Set<Integer> slots) {
@@ -176,63 +160,46 @@ public class RedisClusterSetupTest {
             } catch (RedisException e) {
             }
         }
-
     }
 
     @Test
     public void clusterSetSlots() throws Exception {
 
-        redis1.clusterMeet(host, port2);
-        waitForCluster();
+        recreateCluster();
 
-        add6SlotsEach();
-
-        waitForSlots(6, 6);
+        addAllSlots();
+        waitForSlots(redis1, 12001);
+        waitForSlots(redis2, 4383);
 
         redis1.clusterSetSlotNode(6, getNodeId(redis2));
-        waitForSlots(7, 5);
+
+        waitForSlots(redis1, 12000);
+        waitForSlots(redis2, 4383);
 
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
         for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
             if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                assertThat(redisClusterNode.getSlots()).contains(1, 2, 3, 4, 5);
-            } else {
-                assertThat(redisClusterNode.getSlots()).contains(6, 7, 8, 9, 10, 11, 12);
+                assertThat(redisClusterNode.getSlots()).contains(1, 2, 3, 4, 5).doesNotContain(6);
             }
-        }
-
-    }
-
-    private void add6SlotsEach() {
-        for (int i = 1; i < 7; i++) {
-            redis1.clusterAddSlots(i);
-        }
-        for (int i = 7; i < 13; i++) {
-            redis2.clusterAddSlots(i);
         }
     }
 
-    private void waitForSlots(final int expected0, final int expected1) throws InterruptedException, TimeoutException {
-        try {
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    Partitions partitionsAfterMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
-                    return partitionsAfterMeet.getPartitions().size() == 2
-                            && (partitionsAfterMeet.getPartitions().get(0).getSlots().size() == expected0 || partitionsAfterMeet
-                                    .getPartitions().get(0).getSlots().size() == expected1)
-                            && (partitionsAfterMeet.getPartitions().get(1).getSlots().size() == expected1 || partitionsAfterMeet
-                                    .getPartitions().get(1).getSlots().size() == expected0);
-                }
-            }, Timeout.timeout(Duration.seconds(5)));
-        } catch (Exception e) {
-            Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
-            String detail = "";
-            for (RedisClusterNode node : partitions) {
-                detail += node.getNodeId() + ": " + node.getSlots() + ", ";
+    private void addAllSlots() {
+        redis1.clusterAddSlots(createSlots(0, 12001));
+        redis2.clusterAddSlots(createSlots(12001, 16384));
+    }
+
+    private void waitForSlots(RedisClusterConnection<String, String> connection, int slotCount) throws InterruptedException,
+            TimeoutException {
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                Partitions partitionsAfterMeet = ClusterPartitionParser.parse(connection.clusterNodes());
+                Optional<RedisClusterNode> first = partitionsAfterMeet.stream()
+                        .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst();
+                return first.isPresent() && first.get().getSlots().size() == slotCount;
             }
-            fail("Fail on waiting for slots counts " + expected0 + ", " + expected1 + ", detail: " + detail, e);
-        }
+        }, Timeout.timeout(Duration.seconds(5)));
     }
 
     @Test
@@ -241,20 +208,13 @@ public class RedisClusterSetupTest {
         redis1.clusterMeet(host, port2);
         waitForCluster();
 
-        add6SlotsEach();
-
-        waitForSlots(6, 6);
+        addAllSlots();
+        waitForSlots(redis1, 12001);
+        waitForSlots(redis2, 4383);
 
         String nodeId1 = getNodeId(redis1);
         String nodeId2 = getNodeId(redis2);
         assertThat(redis1.clusterSetSlotMigrating(6, nodeId2)).isEqualTo("OK");
-        assertThat(redis1.clusterSetSlotImporting(12, nodeId2)).isEqualTo("OK");
-
-        RedisClusterNode partition1 = getOwnPartition(redis1);
-        RedisClusterNode partition2 = getOwnPartition(redis2);
-
-        assertThat(partition1.getSlots()).hasSize(6);
-        assertThat(partition2.getSlots()).hasSize(6);
+        assertThat(redis1.clusterSetSlotImporting(15000, nodeId2)).isEqualTo("OK");
     }
-
 }

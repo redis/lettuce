@@ -8,7 +8,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,6 +21,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 
 public class SentinelFailoverTest extends AbstractRedisClientTest {
 
@@ -49,6 +49,7 @@ public class SentinelFailoverTest extends AbstractRedisClientTest {
 
         int masterPort = sentinelRule.findMaster(port(5), port(6));
         sentinelRule.monitor(MASTER_WITH_SLAVE_ID, TestSettings.hostAddr(), masterPort, 1, true);
+        waitForSlave();
 
     }
 
@@ -66,7 +67,15 @@ public class SentinelFailoverTest extends AbstractRedisClientTest {
         assertThat(connect.ping()).isEqualToIgnoringCase("PONG");
 
         connect.close();
-        this.sentinel.failover(MASTER_WITH_SLAVE_ID).get();
+        WaitFor.waitOrTimeout(() -> {
+            try {
+                this.sentinel.failover(MASTER_WITH_SLAVE_ID).get();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }, timeout(seconds(10)));
+
         waitForSlave();
 
         RedisConnection<String, String> connect2 = sentinelClient.connect();
@@ -77,7 +86,7 @@ public class SentinelFailoverTest extends AbstractRedisClientTest {
     protected void waitForSlave() throws InterruptedException, TimeoutException {
         WaitFor.waitOrTimeout(() -> {
             return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
-        }, timeout(seconds(20)));
+        }, timeout(seconds(10)));
     }
 
     protected static RedisClient getRedisSentinelClient() {

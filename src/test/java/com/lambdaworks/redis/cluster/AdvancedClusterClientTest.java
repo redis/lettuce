@@ -152,15 +152,20 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testDynamicNodeSelection() throws Exception {
 
+        Partitions partitions = connection.getStatefulConnection().getPartitions();
+        partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(ImmutableSet.of()));
+
         AsyncNodeSelection<String, String> selection = connection.nodes(redisClusterNode -> redisClusterNode.getFlags()
                 .contains(RedisClusterNode.NodeFlag.MYSELF), true);
 
+        assertThat(selection).hasSize(0);
+        partitions.getPartition(0).setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
         assertThat(selection).hasSize(1);
 
-        connection.getStatefulConnection().getPartitions().getPartition(2)
-                .setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
-
+        partitions.getPartition(1).setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
         assertThat(selection).hasSize(2);
+
+        clusterClient.reloadPartitions();
     }
 
     @Test
@@ -207,7 +212,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testSlavesWithoutReadOnly() throws Exception {
+    public void testSlavesReadWrite() throws Exception {
 
         AsyncNodeSelection<String, String> nodes = connection.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
                 RedisClusterNode.NodeFlag.SLAVE));
@@ -227,7 +232,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         });
 
         CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null).get();
-        assertThat(t).hasSize(2);
+
+        assertThat(t.size()).isGreaterThan(0);
     }
 
     @Test
@@ -269,7 +275,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
 
             return false;
-        }, timeout(seconds(5)));
+        }, timeout(seconds(10)));
     }
 
     @Test
