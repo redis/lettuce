@@ -13,20 +13,42 @@ import java.util.stream.StreamSupport;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
- * Completes
+ * Asynchronous result holder for a command that was executed on multiple nodes.
+ *
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public interface AsyncExecutions<T> extends Iterable<CompletionStage<T>> {
 
+    /**
+     *
+     * @return map between {@link RedisClusterNode} and the {@link CompletionStage}
+     */
     Map<RedisClusterNode, CompletionStage<T>> asMap();
 
+    /**
+     *
+     * @return collection of nodes on which the command was executed.
+     */
     Collection<RedisClusterNode> nodes();
 
+    /**
+     *
+     * @param redisClusterNode the node
+     * @return the completion stage for this node
+     */
     CompletionStage<T> get(RedisClusterNode redisClusterNode);
 
+    /**
+     *
+     * @return array of futures.
+     */
     CompletableFuture<T>[] futures();
 
+    /**
+     *
+     * @return iterator over the {@link CompletionStage}s
+     */
     @Override
     default Iterator<CompletionStage<T>> iterator() {
         return asMap().values().iterator();

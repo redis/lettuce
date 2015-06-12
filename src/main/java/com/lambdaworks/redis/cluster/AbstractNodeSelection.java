@@ -46,6 +46,11 @@ abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<
                 Collectors.toMap(redisClusterNode -> redisClusterNode, redisClusterNode1 -> getConnection(redisClusterNode1)));
     }
 
+    @Override
+    public RedisClusterNode get(int index) {
+        return nodes().get(index);
+    }
+
     /**
      * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
      * 

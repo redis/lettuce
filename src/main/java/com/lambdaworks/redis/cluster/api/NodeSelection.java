@@ -21,10 +21,18 @@ public interface NodeSelection<NODECONNType, CMDType> extends Iterable<NODECONNT
     /**
      * Obtain the connection/commands to the node.
      * 
-     * @param index
+     * @param index index of the node
      * @return the connection/commands object
      */
     NODECONNType node(int index);
+
+    /**
+     * Get the {@link RedisClusterNode}.
+     *
+     * @param index index of the cluster node
+     * @return the cluster node
+     */
+    RedisClusterNode get(int index);
 
     /**
      * 

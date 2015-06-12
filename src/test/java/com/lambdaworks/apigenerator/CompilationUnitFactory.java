@@ -2,6 +2,7 @@ package com.lambdaworks.apigenerator;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -93,10 +94,14 @@ public class CompilationUnitFactory {
 
         new MethodVisitor().visit(template, null);
 
+        writeResult();
+
+    }
+
+    protected void writeResult() throws IOException {
         FileOutputStream fos = new FileOutputStream(target);
         fos.write(result.toString().getBytes());
         fos.close();
-
     }
 
     /**

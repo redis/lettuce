@@ -172,7 +172,7 @@ public class RedisClusterNode implements Serializable {
 
     /**
      * 
-     * @param nodeFlag
+     * @param nodeFlag the node flag
      * @return true if the {@linkplain NodeFlag} is contained within the flags.
      */
     public boolean is(NodeFlag nodeFlag) {
@@ -181,7 +181,7 @@ public class RedisClusterNode implements Serializable {
 
     /**
      * 
-     * @param slot
+     * @param slot the slot hash
      * @return true if the slot is contained within the handled slots.
      */
     public boolean hasSlot(int slot) {

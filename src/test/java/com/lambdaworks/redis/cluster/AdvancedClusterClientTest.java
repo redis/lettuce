@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,6 +16,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -24,6 +27,7 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -211,6 +215,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(nodes.size()).isEqualTo(2);
 
         connection.set(key, value).get();
+        waitForReplication(key, port2);
 
         List<Throwable> t = Lists.newArrayList();
         AsyncExecutions<String> keys = nodes.commands().get(key);
@@ -221,19 +226,24 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             });
         });
 
-        Thread.sleep(500);
+        CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null).get();
         assertThat(t).hasSize(2);
     }
 
     @Test
     public void testSlavesWithReadOnly() throws Exception {
 
+
         AsyncNodeSelection<String, String> nodes = connection.slaves(redisClusterNode -> redisClusterNode
                 .is(RedisClusterNode.NodeFlag.SLAVE));
+
+        AsyncExecutions<List<String>> executions = nodes.commands().keys("*");
+        executions.forEach(cs -> cs.thenAccept(keys -> System.out.println(keys)));
 
         assertThat(nodes.size()).isEqualTo(2);
 
         connection.set(key, value).get();
+        waitForReplication(key, port2);
 
         List<Throwable> t = Lists.newArrayList();
         List<String> strings = Lists.newArrayList();
@@ -246,9 +256,24 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             lcs.thenAccept(strings::add);
         });
 
-        Thread.sleep(500);
+        CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null).get();
+
         assertThat(t).hasSize(1);
         assertThat(strings).hasSize(1).contains(value);
+    }
+
+    protected void waitForReplication(String key, int port) throws Exception {
+        WaitFor.waitOrTimeout(() -> {
+            RedisClusterAsyncCommands<String, String> c2 = connection.getConnection(host, port);
+            c2.readOnly();
+            try {
+                return c2.get(key).get() != null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return false;
+        }, timeout(seconds(5)));
     }
 
     @Test

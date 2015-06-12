@@ -4,11 +4,13 @@ This release is a major release that introduces numerous changes. lettuce couple
 like other clients, too. The connection and the different API's are now decoupled. All connections are backed now by stateful
 connection and the API, as you know it from `RedisConnection` or `RedisAsyncConnection`, just operates on the connection. This
 is also the reason, why all `...Connection` and `...AsyncConnection` interfaces are deprecated and replaced by new `...Commands`
-interfaces. To sum it up, a lot changed under the hood, read more in New segregated command interfaces about the new interfaces.
+interfaces. To sum it up, a lot changed under the hood, read more in new segregated command interfaces about the new interfaces.
+
+The cluster API was extended to run a command on multiple nodes and invocation to multi-key commands del, mget, mset and msetnx
+perform automatic pipelining if the keys belong to different slots/masters.
 
 A couple of changes are breaking changes, and you need most likely to adopt your code to use lettuce 4.0.
 lettuce dropped Java 6 and 7 support and requires Java 8 to run. A couple API's changed, like the renaming of RedisPubSubConnection to RedisPubSubAsyncConnection. RedisPubSubConnection is now a synchronous API.
-
 
 lettuce 4.0 is needs Java 8 and cannot be used with Java 6 or 7.
 
@@ -168,8 +170,29 @@ New interfaces:
 * `RedisFuture`s are based on `CompleteableFuture` and throw now any occured exception when accessing the value using `get()`.
 Exceptions are passed down the `CompletionStage`s.
 
+Advanced cluster API
+-----
+The advanced cluster API allows to select nodes and run commands on the node selection:
+
+AsyncNodeSelection<String, String> nodes = connection.slaves();
+
+AsyncExecutions<List<String>> executions = nodes.commands().keys("*");
+executions.forEach(cs -> cs.thenAccept(keys -> System.out.println(keys)));
+
+This API is currently only available for async commands. Commands are dispatched to the nodes within the selection,
+the result (CompletionStage) is available though AsyncExecutions.
+
+
 Enhancements
 -----
+* Advanced cluster API (async) #78
+* Improve HLL command interface #77
+* Move segregated API interfaces to own packages  #76
+* Provide a stateful redis connection and decouple sync/async API from connection resources enhancement #75
+* Reactive support #68
+* Pipelining for certain cluster commands enhancement #66
+* Drop support for Java 6 and Java 7 #50
+* Migrate RedisFuture to CompletionStage #48
 
 
 Fixes

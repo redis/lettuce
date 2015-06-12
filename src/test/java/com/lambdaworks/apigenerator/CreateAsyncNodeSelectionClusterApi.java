@@ -56,6 +56,7 @@ public class CreateAsyncNodeSelectionClusterApi {
         File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
         String targetPackage = "com.lambdaworks.redis.cluster.api.async";
 
+        // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodFilter(), importSupplier());
     }
