@@ -215,7 +215,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(nodes.size()).isEqualTo(2);
 
         connection.set(key, value).get();
-        waitForReplication(key, port2);
+        waitForReplication(key, port4);
 
         List<Throwable> t = Lists.newArrayList();
         AsyncExecutions<String> keys = nodes.commands().get(key);
@@ -233,17 +233,13 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testSlavesWithReadOnly() throws Exception {
 
-
         AsyncNodeSelection<String, String> nodes = connection.slaves(redisClusterNode -> redisClusterNode
                 .is(RedisClusterNode.NodeFlag.SLAVE));
-
-        AsyncExecutions<List<String>> executions = nodes.commands().keys("*");
-        executions.forEach(cs -> cs.thenAccept(keys -> System.out.println(keys)));
 
         assertThat(nodes.size()).isEqualTo(2);
 
         connection.set(key, value).get();
-        waitForReplication(key, port2);
+        waitForReplication(key, port4);
 
         List<Throwable> t = Lists.newArrayList();
         List<String> strings = Lists.newArrayList();
