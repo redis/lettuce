@@ -17,6 +17,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -137,4 +138,8 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
         return connection.isOpen();
     }
 
+    @Override
+    public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
+        return (StatefulRedisSentinelConnection<K, V>) connection;
+    }
 }

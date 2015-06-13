@@ -1,8 +1,10 @@
 package com.lambdaworks.apigenerator;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -10,8 +12,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
@@ -28,7 +33,7 @@ import com.google.common.collect.Lists;
 public class CreateAsyncApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisCommands.reset");
+            "isOpen", "BaseRedisCommands.reset", "getStatefulConnection");
 
     private CompilationUnitFactory factory;
 
@@ -53,7 +58,24 @@ public class CreateAsyncApi {
         String targetPackage = "com.lambdaworks.redis.api.async";
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodDeclaration -> true, importSupplier());
+                methodTypeMutator(), methodDeclaration -> true, importSupplier(), typeMutator());
+    }
+
+    private Consumer<ClassOrInterfaceDeclaration> typeMutator() {
+        return type -> {
+
+            if (type.getName().contains("SentinelAsyncCommands")) {
+                type.getExtends().add(new ClassOrInterfaceType("RedisSentinelAsyncConnection<K, V>"));
+                CompilationUnit compilationUnit = (CompilationUnit) type.getParentNode();
+                if (compilationUnit.getImports() == null) {
+                    compilationUnit.setImports(new ArrayList<>());
+                }
+                compilationUnit.getImports()
+                        .add(new ImportDeclaration(new NameExpr("com.lambdaworks.redis.RedisSentinelAsyncConnection"), false,
+                                false));
+            }
+
+        };
     }
 
     /**

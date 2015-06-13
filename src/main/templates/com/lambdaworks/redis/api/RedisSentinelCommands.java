@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * ${intent} for Redis Sentinel.
@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public interface RedisSentinelCommands<K, V> extends Closeable {
+public interface RedisSentinelCommands<K, V> extends Closeable{
 
     /**
      * Return the ip and port number of the master with that name.
@@ -100,6 +100,9 @@ public interface RedisSentinelCommands<K, V> extends Closeable {
      */
     String ping();
 
+    /**
+     * close the underlying connection.
+     */
     @Override
     void close();
 
@@ -108,4 +111,10 @@ public interface RedisSentinelCommands<K, V> extends Closeable {
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();
+
+    /**
+     *
+     * @return the underlying connection.
+     */
+    StatefulRedisSentinelConnection<K, V> getStatefulConnection();
 }

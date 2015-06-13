@@ -2,6 +2,7 @@ package com.lambdaworks.redis.sentinel.api;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 /**
@@ -24,4 +25,11 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      * @return the asynchronous API for the underlying connection.
      */
     RedisSentinelAsyncCommands<K, V> async();
+
+    /**
+     * Returns the sync sentinel API.
+     * 
+     * @return the synchronous API for the underlying connection.
+     */
+    RedisSentinelCommands<K, V> sync();
 }

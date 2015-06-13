@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * Synchronous executed commands for Redis Sentinel.
@@ -101,6 +101,9 @@ public interface RedisSentinelCommands<K, V> extends Closeable {
      */
     String ping();
 
+    /**
+     * close the underlying connection.
+     */
     void close();
 
     /**
@@ -108,4 +111,10 @@ public interface RedisSentinelCommands<K, V> extends Closeable {
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();
+
+    /**
+     *
+     * @return the underlying connection.
+     */
+    StatefulRedisSentinelConnection<K, V> getStatefulConnection();
 }

@@ -6,6 +6,9 @@ import java.lang.reflect.Method;
 import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -16,7 +19,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
+public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<K, V> connection;
     private final Object asyncApi;
@@ -51,9 +54,9 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                 return LettuceFutures.await(command, connection.getTimeout(), connection.getTimeoutUnit());
             }
 
-            if (result instanceof RedisClusterAsyncConnection) {
+            if (result instanceof RedisClusterAsyncCommands) {
                 return AbstractRedisClient.syncHandler((RedisChannelHandler) result, RedisConnection.class,
-                        RedisClusterConnection.class);
+                        RedisClusterConnection.class, RedisCommands.class, RedisClusterCommands.class);
             }
 
             return result;

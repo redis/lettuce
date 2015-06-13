@@ -56,7 +56,7 @@ public class CreateReactiveApi {
         String targetPackage = "com.lambdaworks.redis.api.rx";
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodDeclaration -> true, importSupplier());
+                methodTypeMutator(), methodDeclaration -> true, importSupplier(), null);
     }
 
     /**

@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -39,6 +40,7 @@ public class CompilationUnitFactory {
     private Function<MethodDeclaration, Type> methodReturnTypeFunction;
     private Predicate<MethodDeclaration> methodFilter;
     private Supplier<List<String>> importSupplier;
+    private Consumer<ClassOrInterfaceDeclaration> typeMutator;
 
     CompilationUnit template;
     CompilationUnit result = new CompilationUnit();
@@ -46,7 +48,8 @@ public class CompilationUnitFactory {
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
             Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
-            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier) {
+            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
+            Consumer<ClassOrInterfaceDeclaration> typeMutator) {
 
         this.templateFile = templateFile;
         this.sources = sources;
@@ -56,6 +59,7 @@ public class CompilationUnitFactory {
         this.methodReturnTypeFunction = methodReturnTypeFunction;
         this.methodFilter = methodFilter;
         this.importSupplier = importSupplier;
+        this.typeMutator = typeMutator;
 
         this.target = new File(sources, targetPackage.replace('.', '/') + "/" + targetName + ".java");
     }
@@ -83,6 +87,7 @@ public class CompilationUnitFactory {
 
         result.setImports(new ArrayList<>());
         ASTHelper.addTypeDeclaration(result, resultType);
+        resultType.setParentNode(result);
 
         if (template.getImports() != null) {
             result.getImports().addAll(template.getImports());
@@ -93,6 +98,10 @@ public class CompilationUnitFactory {
         }
 
         new MethodVisitor().visit(template, null);
+
+        if (typeMutator != null) {
+            typeMutator.accept(resultType);
+        }
 
         writeResult();
 
