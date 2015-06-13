@@ -25,7 +25,7 @@ public class UnixDomainSocketTest {
     private static RedisClient sentinelClient;
 
     @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, true, 26379, 26380);
 
     protected Logger log = Logger.getLogger(getClass());
 
@@ -107,12 +107,13 @@ public class UnixDomainSocketTest {
     @Test
     public void sentinel_Linux_x86_64_socket_and_inet() throws Exception {
 
+        sentinelRule.waitForMaster(MASTER_ID);
         linuxOnly();
 
         RedisURI uri = new RedisURI();
         uri.getSentinels().add(getSentinelSocketRedisUri());
         uri.getSentinels().add(RedisURI.create(RedisURI.URI_SCHEME_REDIS + "://" + TestSettings.host() + ":26379"));
-        uri.setSentinelMasterId("mymaster");
+        uri.setSentinelMasterId(MASTER_ID);
 
         RedisClient redisClient = new RedisClient(uri);
 

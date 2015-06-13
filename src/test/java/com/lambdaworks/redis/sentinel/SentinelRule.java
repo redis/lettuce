@@ -1,43 +1,64 @@
 package com.lambdaworks.redis.sentinel;
 
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisSentinelAsyncConnection;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
+import org.apache.log4j.Logger;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.Timeout;
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.Maps;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 
 /**
+ * Rule to simplify Redis Sentinel handling.
+ *
+ * This rule allows to:
+ * <ul>
+ * <li>Flush masters before test</li>
+ * <li>Check for slave/alive slaves to a master</li>
+ * <li>Wait for slave/alive slaves to a master</li>
+ * <li>Find a master on a given set of ports</li>
+ * <li>Setup a master/slave combination</li>
+ * </ul>
+ *
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class SentinelRule implements TestRule {
 
     private RedisClient redisClient;
-    private int[] ports;
-    private Map<Integer, RedisSentinelAsyncCommands<String, String>> connectionCache = Maps.newHashMap();
+    private final boolean flushBeforeTest;
+    private Map<Integer, RedisSentinelCommands<String, String>> sentinelConnections = Maps.newHashMap();
+    protected Logger log = Logger.getLogger(getClass());
 
-    public SentinelRule(RedisClient redisClient, int... ports) {
+    /**
+     * 
+     * @param redisClient
+     * @param flushBeforeTest
+     * @param sentinelPorts
+     */
+    public SentinelRule(RedisClient redisClient, boolean flushBeforeTest, int... sentinelPorts) {
         this.redisClient = redisClient;
-        this.ports = ports;
+        this.flushBeforeTest = flushBeforeTest;
 
-        for (int port : ports) {
+        log.info("[Sentinel] Connecting to sentinels: " + Arrays.toString(sentinelPorts));
+        for (int port : sentinelPorts) {
             RedisSentinelAsyncCommands<String, String> connection = redisClient.connectSentinelAsync(RedisURI.Builder.redis(
                     TestSettings.host(), port).build());
-            connectionCache.put(port, connection);
+            sentinelConnections.put(port, connection.getStatefulConnection().sync());
         }
     }
 
@@ -47,8 +68,9 @@ public class SentinelRule implements TestRule {
         final Statement before = new Statement() {
             @Override
             public void evaluate() throws Exception {
-
-                flush();
+                if (flushBeforeTest) {
+                    flush();
+                }
             }
         };
 
@@ -57,122 +79,260 @@ public class SentinelRule implements TestRule {
             public void evaluate() throws Throwable {
                 before.evaluate();
                 base.evaluate();
+
+                for (RedisSentinelCommands<String, String> commands : sentinelConnections.values()) {
+                    commands.close();
+                }
             }
         };
     }
 
+    /**
+     * Flush Sentinel masters.
+     */
     public void flush() {
+        log.info("[Sentinel] Flushing masters of sentinels");
+        for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
+            List<Map<String, String>> masters = connection.masters();
 
-        try {
-            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
-                List<Map<String, String>> masters = connection.masters().get();
-
-                for (Map<String, String> master : masters) {
-                    connection.remove(master.get("name")).get();
-                    connection.reset("name").get();
-                }
+            for (Map<String, String> master : masters) {
+                connection.remove(master.get("name"));
+                connection.reset(master.get("name"));
             }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+        }
+
+        for (Map.Entry<Integer, RedisSentinelCommands<String, String>> entry : sentinelConnections.entrySet()) {
+            Wait.untilTrue(() -> entry.getValue().masters().isEmpty())
+                    .message("Sentinel on " + entry.getKey() + " has still masters").waitOrTimeout();
         }
     }
 
     /**
-     * Monitor a master and wait until all sentinels ACK'd by checking last-ping-reply
+     * Requires a master with a slave. If no master or slave is present, the rule flushes known masters and sets up a master
+     * with a slave.
      * 
+     * @param masterId
+     * @param redisPorts
+     */
+    public void needMasterWithSlave(String masterId, int... redisPorts) {
+
+        if (!hasSlaves(masterId) || !hasMaster(redisPorts)) {
+            flush();
+            int masterPort = setupMasterSlave(redisPorts);
+            monitor(masterId, TestSettings.hostAddr(), masterPort, 1, true);
+            waitForSlave(masterId);
+        }
+    }
+
+    /**
+     * Wait until the master has a connected slave.
+     * 
+     * @param masterId
+     */
+    public void waitForSlave(String masterId) {
+        log.info("[Sentinel] Waiting until master " + masterId + " has at least one connected slave");
+        Wait.untilTrue(() -> hasConnectedSlaves(masterId)).during(seconds(20)).message("No slave found").waitOrTimeout();
+        log.info("[Sentinel] Found a connected slave for master " + masterId);
+    }
+
+    /**
+     * Wait until sentinel can provide an address for the master.
+     * 
+     * @param masterId
+     */
+    public void waitForMaster(String masterId) {
+        log.info("[Sentinel] Waiting until master " + masterId + " can provide a socket address");
+        Wait.untilNoException(() -> {
+
+            for (RedisSentinelCommands<String, String> commands : sentinelConnections.values()) {
+                if (commands.getMasterAddrByName(masterId) == null) {
+                    throw new IllegalStateException("No address");
+                }
+            }
+
+        }).during(seconds(20)).message("Cannot provide an address for " + masterId).waitOrTimeout();
+        log.info("[Sentinel] Found master " + masterId);
+
+    }
+
+    /**
+     * Monitor a master and wait until all sentinels ACK'd by checking last-ping-reply
+     *
      * @param key
      * @param ip
      * @param port
      * @param quorum
      */
     public void monitor(final String key, String ip, int port, int quorum, boolean sync) {
-        try {
-            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
-                connection.monitor(key, ip, port, quorum).get();
-            }
 
-            if (sync) {
-                WaitFor.waitOrTimeout(new Condition() {
-                    @Override
-                    public boolean isSatisfied() {
+        log.info("[Sentinel] Monitoring master " + key + " (" + ip + ":" + port + ")");
+        for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
+            connection.monitor(key, ip, port, quorum);
+        }
 
-                        for (RedisSentinelAsyncConnection<String, String> connection : connectionCache.values()) {
-                            try {
-                                Map<String, String> map = connection.master(key).get();
-                                String reply = map.get("last-ping-reply");
-                                if (reply == null || "0".equals(reply)) {
-                                    return false;
-                                }
-                            } catch (Exception e) {
-                                throw new IllegalStateException(e);
-                            }
-                        }
-                        return true;
+        if (sync) {
+            Wait.untilTrue(() -> {
+                for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
+                    Map<String, String> map = connection.master(key);
+                    String reply = map.get("last-ping-reply");
+                    if (reply == null || "0".equals(reply)) {
+                        return false;
                     }
-                }, Timeout.timeout(Duration.seconds(5)));
-            }
+                }
+                return true;
+            }).waitOrTimeout();
 
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+            log.info("[Sentinel] Master " + key + " (" + ip + ":" + port + ") is monitored now");
         }
     }
 
+    /**
+     * Check if the master has slaves at all (no check for connection/alive).
+     * 
+     * @param masterId
+     * @return
+     */
     public boolean hasSlaves(String masterId) {
         try {
-            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
-                return !connection.slaves(masterId).get().isEmpty();
+            for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
+
+                return !connection.slaves(masterId).isEmpty();
             }
         } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-
-        return false;
-    }
-
-    public boolean hasConnectedSlaves(String masterId) {
-        try {
-            for (RedisSentinelAsyncCommands<String, String> connection : connectionCache.values()) {
-                List<Map<String, String>> slaves = connection.slaves(masterId).get();
-                for (Map<String, String> slave : slaves) {
-
-                    String masterLinkStatus = slave.get("master-link-status");
-                    if (masterLinkStatus == null || !masterLinkStatus.contains("ok")) {
-                        continue;
-                    }
-
-                    String flags = slave.get("flags");
-                    if (flags == null || flags.contains("disconnected") || flags.contains("down")) {
-                        continue;
-                    }
-
-                    return true;
-                }
-
+            if (e.getMessage().contains("No such master with that name")) {
                 return false;
             }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
         }
 
         return false;
     }
 
-    public int findMaster(int... redisPorts) {
+    /**
+     * Check if a master runs on any of the given ports.
+     * 
+     * @param redisPorts
+     * @return
+     */
+    public boolean hasMaster(int... redisPorts) {
 
+        Map<Integer, RedisCommands<String, String>> connections = Maps.newHashMap();
         for (int redisPort : redisPorts) {
+            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build()));
+        }
 
-            RedisConnection<String, String> connection = redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(),
-                    redisPort).build());
-            List<Object> role = connection.role();
-            connection.close();
+        try {
+            Integer masterPort = getMasterPort(connections);
+            if (masterPort != null) {
+                return true;
+            }
+        } finally {
+            for (RedisCommands<String, String> commands : connections.values()) {
+                commands.close();
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the master has connected slaves.
+     * 
+     * @param masterId
+     * @return
+     */
+    public boolean hasConnectedSlaves(String masterId) {
+        for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
+            List<Map<String, String>> slaves = connection.slaves(masterId);
+            for (Map<String, String> slave : slaves) {
+
+                String masterLinkStatus = slave.get("master-link-status");
+                if (masterLinkStatus == null || !masterLinkStatus.contains("ok")) {
+                    continue;
+                }
+
+                String masterPort = slave.get("master-port");
+                if (masterPort == null || masterPort.contains("?")) {
+                    continue;
+                }
+
+                String roleReported = slave.get("role-reported");
+                if (roleReported == null || !roleReported.contains("slave")) {
+                    continue;
+                }
+
+                String flags = slave.get("flags");
+                if (flags == null || flags.contains("disconnected") || flags.contains("down") | !flags.contains("slave")) {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * Setup a master with one or more slaves (depending on port count).
+     * 
+     * @param redisPorts
+     * @return
+     */
+    public int setupMasterSlave(int... redisPorts) {
+
+        log.info("[Sentinel] Create a master with slaves on ports " + Arrays.toString(redisPorts));
+        Map<Integer, RedisCommands<String, String>> connections = Maps.newHashMap();
+        for (int redisPort : redisPorts) {
+            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build()));
+        }
+
+        for (RedisCommands<String, String> commands : connections.values()) {
+            commands.slaveofNoOne();
+        }
+
+        for (Map.Entry<Integer, RedisCommands<String, String>> entry : connections.entrySet()) {
+            if (entry.getKey().intValue() != redisPorts[0]) {
+                entry.getValue().slaveof(TestSettings.hostAddr(), redisPorts[0]);
+            }
+        }
+
+        try {
+
+            Wait.untilTrue(() -> getMasterPort(connections) != null).message("Cannot find master").waitOrTimeout();
+            Integer masterPort = getMasterPort(connections);
+            log.info("[Sentinel] Master on port " + masterPort);
+            if (masterPort != null) {
+                return masterPort;
+            }
+        } finally {
+            for (RedisCommands<String, String> commands : connections.values()) {
+                commands.close();
+            }
+        }
+
+        throw new IllegalStateException("No master available on ports: " + connections.keySet());
+    }
+
+    /**
+     * Retrieve the port of the first found master.
+     * 
+     * @param connections
+     * @return
+     */
+    public Integer getMasterPort(Map<Integer, RedisCommands<String, String>> connections) {
+
+        for (Map.Entry<Integer, RedisCommands<String, String>> entry : connections.entrySet()) {
+
+            List<Object> role = entry.getValue().role();
 
             RedisInstance redisInstance = RoleParser.parse(role);
             if (redisInstance.getRole() == RedisInstance.Role.MASTER) {
-                return redisPort;
+                return entry.getKey();
             }
         }
-
-        return -1;
-
+        return null;
     }
+
 }

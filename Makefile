@@ -97,8 +97,11 @@ port 26379
 daemonize yes
 sentinel monitor mymaster 127.0.0.1 6479 1
 sentinel monitor myslave 127.0.0.1 16379 1
-sentinel down-after-milliseconds mymaster 2000
-sentinel failover-timeout mymaster 120000
+sentinel monitor master_with_slave 127.0.0.1 6484 1
+sentinel down-after-milliseconds mymaster 1000
+sentinel failover-timeout mymaster 1000
+sentinel down-after-milliseconds master_with_slave 1000
+sentinel failover-timeout master_with_slave 1000
 sentinel parallel-syncs mymaster 1
 pidfile work/sentinel1-26379.pid
 logfile work/sentinel1-26379.log
@@ -110,9 +113,12 @@ define REDIS_SENTINEL2
 port 26380
 daemonize yes
 sentinel monitor mymaster 127.0.0.1 6481 1
+sentinel monitor master_with_slave 127.0.0.1 6484 1
 sentinel down-after-milliseconds mymaster 2000
 sentinel parallel-syncs mymaster 1
 sentinel failover-timeout mymaster 120000
+sentinel down-after-milliseconds master_with_slave 1000
+sentinel failover-timeout master_with_slave 1000
 pidfile work/sentinel2-26380.pid
 logfile work/sentinel2-26380.log
 unixsocket $(ROOT_DIR)/work/socket-26380

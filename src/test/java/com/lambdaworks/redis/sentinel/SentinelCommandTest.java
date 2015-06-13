@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.sentinel;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +13,13 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
@@ -23,51 +28,22 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
-
-public class SentinelCommandTest extends AbstractRedisClientTest {
-
-    public static final String MASTER_ID = "mymaster";
-    public static final String SLAVE_ID = "myslave";
-    public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
-
-    private static RedisClient sentinelClient;
-    private RedisSentinelAsyncCommands<String, String> sentinel;
+public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, true, 26379, 26380);
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = getRedisSentinelClient();
-    }
-
-    @AfterClass
-    public static void shutdownClient() {
-        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
-
         sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
         sentinelRule.monitor(SLAVE_ID, hostAddr(), 16379, 1, false);
-    }
-
-    @After
-    public void closeConnection() throws Exception {
-        if (sentinel != null) {
-            sentinel.close();
-        }
     }
 
     @Test
@@ -75,7 +51,7 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
 
         Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
-        assertThat(socketAddress.getHostName()).contains(host);
+        assertThat(socketAddress.getHostName()).contains(TestSettings.host());
     }
 
     @Test
@@ -150,7 +126,7 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
     @Test
     public void sentinelConnect() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), port).build());
+        RedisClient client = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
 
         RedisSentinelAsyncCommands<String, String> connection = client.connectSentinelAsync();
         assertThat(connection.ping().get()).isEqualTo("PONG");
@@ -211,23 +187,9 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
         beMaster.slaveofNoOne();
         beSlave.slaveof(hostAddr(), port(5));
 
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, hostAddr(), sentinelRule.findMaster(port(5), port(6)), 1, true);
+        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, hostAddr(), sentinelRule.setupMasterSlave(port(5), port(6)), 1, true);
 
-        try {
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return sentinelRule.hasSlaves(MASTER_WITH_SLAVE_ID);
-                }
-            }, timeout(seconds(15)));
-        } catch (Exception e) {
-            RedisConnection<String, String> master = sentinelClient
-                    .connect(RedisURI.Builder.redis(hostAddr(), port(5)).build());
-            RedisConnection<String, String> slave = sentinelClient.connect(RedisURI.Builder.redis(hostAddr(), port(6)).build());
-
-            fail("Timeout when waiting for slaves: Master role " + master.role() + ", Slave role " + slave.role() + ", "
-                    + e.getMessage());
-        }
+        sentinelRule.waitForSlave(MASTER_WITH_SLAVE_ID);
 
         Future<List<Map<String, String>>> slaves = sentinel.slaves(MASTER_WITH_SLAVE_ID);
 
@@ -296,10 +258,6 @@ public class SentinelCommandTest extends AbstractRedisClientTest {
         connect.quit();
         connect.ping();
         connect.close();
-    }
-
-    protected static RedisClient getRedisSentinelClient() {
-        return new RedisClient(RedisURI.Builder.sentinel(host, MASTER_ID).build());
     }
 
 }
