@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -20,6 +21,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 
+@Ignore("For manual runs only. Fails too often due to slow sentinel sync")
 public class SentinelFailoverTest extends AbstractSentinelTest {
 
     @Rule
@@ -54,8 +56,6 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
 
         RedisCommands<String, String> aHost = redisClient.connect();
 
-        RedisInstance oldRole = RoleParser.parse(aHost.role());
-
         String tcpPort1 = connectUsingSentinelAndGetPort();
 
         sentinelRule.waitForSlave(MASTER_WITH_SLAVE_ID);
@@ -66,9 +66,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
         sentinelRule.waitForSlave(MASTER_WITH_SLAVE_ID);
 
         String tcpPort2 = connectUsingSentinelAndGetPort();
-
         assertThat(tcpPort1).isNotEqualTo(tcpPort2);
-
         redisClient.shutdown();
     }
 

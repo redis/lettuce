@@ -70,7 +70,17 @@ public class Wait {
         WaitBuilder<T> wb = new WaitBuilder<>();
 
         wb.supplier = actualSupplier;
-        wb.check = o -> !o.equals(expectation);
+        wb.check = o -> {
+            if (o == expectation) {
+                return false;
+            }
+
+            if ((o == null && expectation != null) || (o != null && expectation == null)) {
+                return true;
+            }
+
+            return !o.equals(expectation);
+        };
         wb.messageFunction = o -> "Objects are equal: " + expectation + " and " + o;
 
         return wb;

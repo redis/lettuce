@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.sentinel;
 
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -7,6 +8,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.code.tempusfugit.temporal.Duration;
+import com.lambdaworks.Delay;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -88,6 +91,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.sync().close();
+        Delay.delay(seconds(1));
         assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
     }
@@ -96,6 +100,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     public void testAsyncClose() throws Exception {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.async().close();
+        Delay.delay(seconds(1));
         assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
 

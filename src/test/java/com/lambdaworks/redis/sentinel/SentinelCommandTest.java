@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,13 +12,11 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
@@ -32,7 +29,7 @@ import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, true, 26379, 26380);
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
 
     @BeforeClass
     public static void setupClient() {
@@ -42,8 +39,15 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Before
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
-        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
-        sentinelRule.monitor(SLAVE_ID, hostAddr(), 16379, 1, false);
+
+        try {
+            sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
+        } catch (Exception e) {
+        }
+        try {
+            sentinelRule.monitor(SLAVE_ID, hostAddr(), 16379, 1, false);
+        } catch (Exception e) {
+        }
     }
 
     @Test
@@ -72,7 +76,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
         assertThat(socketAddress.getPort()).isEqualTo(16379);
-
     }
 
     @Test
@@ -87,7 +90,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         assertThat(map.get("flags")).isNotNull();
         assertThat(map.get("config-epoch")).isNotNull();
         assertThat(map.get("port")).isNotNull();
-
     }
 
     @Test
@@ -106,7 +108,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         connection2.quit();
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.close();
-        client.shutdown();
+        client.shutdown(0, 0, TimeUnit.SECONDS);
     }
 
     @Test
@@ -120,7 +122,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         } catch (RedisConnectionException e) {
         }
 
-        client.shutdown();
+        client.shutdown(0, 0, TimeUnit.SECONDS);
     }
 
     @Test
@@ -132,7 +134,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         assertThat(connection.ping().get()).isEqualTo("PONG");
 
         connection.close();
-        client.shutdown();
+        client.shutdown(0, 0, TimeUnit.SECONDS);
     }
 
     @Test
@@ -141,7 +143,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         Future<Map<String, String>> result = sentinel.master(SLAVE_ID);
         Map<String, String> map = result.get();
         assertThat(map.get("flags")).contains("disconnected");
-
     }
 
     @Test
@@ -151,7 +152,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         Map<String, String> map = result.get();
         assertThat(map.get("ip")).isEqualTo(hostAddr()); // !! IPv4/IPv6
         assertThat(map.get("role-reported")).isEqualTo("master");
-
     }
 
     @Test
@@ -168,7 +168,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
             assertThat(objects.get(0)).isEqualTo("sentinel");
             assertThat(objects.get(1).toString()).isEqualTo("[mymasterfailover]");
-
         } finally {
             connection.close();
             redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
@@ -203,7 +202,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         Future<Long> result = sentinel.reset(SLAVE_ID);
         Long val = result.get();
         assertThat(val.intValue()).isEqualTo(1);
-
     }
 
     @Test
@@ -225,7 +223,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         Future<String> result = sentinel.monitor("mymaster2", hostAddr(), 8989, 2);
         String val = result.get();
         assertThat(val).isEqualTo("OK");
-
     }
 
     @Test
@@ -259,5 +256,4 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         connect.ping();
         connect.close();
     }
-
 }

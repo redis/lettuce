@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,10 +14,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
@@ -265,17 +263,10 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     protected void waitForReplication(String key, int port) throws Exception {
-        WaitFor.waitOrTimeout(() -> {
-            RedisClusterAsyncCommands<String, String> c2 = connection.getConnection(host, port);
-            c2.readOnly();
-            try {
-                return c2.get(key).get() != null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
-            return false;
-        }, timeout(seconds(10)));
+        AsyncNodeSelection<String, String> selection = connection.slaves(redisClusterNode -> redisClusterNode.getUri()
+                .getPort() == port);
+        Wait.untilNotEquals(null, () -> selection.commands().get(key).futures()[0].get()).waitOrTimeout();
     }
 
     @Test
