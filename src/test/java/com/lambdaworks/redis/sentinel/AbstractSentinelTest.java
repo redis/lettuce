@@ -13,8 +13,6 @@ import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 public abstract class AbstractSentinelTest {
 
     public static final String MASTER_ID = "mymaster";
-    public static final String SLAVE_ID = "myslave";
-    public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
 
     protected static RedisClient sentinelClient;
     protected RedisSentinelAsyncCommands<String, String> sentinel;

@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.sentinel;
 
 import static com.lambdaworks.redis.TestSettings.hostAddr;
-import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -41,12 +40,9 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         sentinel = sentinelClient.connectSentinelAsync();
 
         try {
-            sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
+            sentinel.master(MASTER_ID).get();
         } catch (Exception e) {
-        }
-        try {
-            sentinelRule.monitor(SLAVE_ID, hostAddr(), 16379, 1, false);
-        } catch (Exception e) {
+            sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(3), 1, true);
         }
     }
 
@@ -61,21 +57,19 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void getMasterAddrButNoMasterPresent() throws Exception {
 
-        sentinelRule.flush();
-
-        Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
+        Future<SocketAddress> result = sentinel.getMasterAddrByName("unknown");
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
         assertThat(socketAddress).isNull();
     }
 
     @Test
-    public void getSlaveAddr() throws Exception {
+    public void getMasterAddrByName() throws Exception {
 
-        Future<SocketAddress> result = sentinel.getMasterAddrByName(SLAVE_ID);
+        Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
 
         InetSocketAddress socketAddress = (InetSocketAddress) result.get();
 
-        assertThat(socketAddress.getPort()).isEqualTo(16379);
+        assertThat(socketAddress.getPort()).isBetween(6479, 6485);
     }
 
     @Test
@@ -138,26 +132,18 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void getSlaveDownstate() throws Exception {
-
-        Future<Map<String, String>> result = sentinel.master(SLAVE_ID);
-        Map<String, String> map = result.get();
-        assertThat(map.get("flags")).contains("disconnected");
-    }
-
-    @Test
     public void getMaster() throws Exception {
 
         Future<Map<String, String>> result = sentinel.master(MASTER_ID);
         Map<String, String> map = result.get();
         assertThat(map.get("ip")).isEqualTo(hostAddr()); // !! IPv4/IPv6
-        assertThat(map.get("role-reported")).isEqualTo("master");
+        assertThat(map).containsKey("role-reported");
     }
 
     @Test
     public void role() throws Exception {
 
-        RedisClient redisClient = new RedisClient("localhost", 26381);
+        RedisClient redisClient = new RedisClient("localhost", 26380);
         RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
         try {
 
@@ -167,7 +153,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
             assertThat(objects).hasSize(2);
 
             assertThat(objects.get(0)).isEqualTo("sentinel");
-            assertThat(objects.get(1).toString()).isEqualTo("[mymasterfailover]");
+            assertThat(objects.get(1).toString()).isEqualTo("[" + MASTER_ID + "]");
         } finally {
             connection.close();
             redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
@@ -178,48 +164,36 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     public void getSlaves() throws Exception {
 
         Future<List<Map<String, String>>> result = sentinel.slaves(MASTER_ID);
-        assertThat(result.get()).hasSize(0);
-
-        RedisConnection<String, String> beMaster = sentinelClient.connect(RedisURI.Builder.redis(hostAddr(), port(5)).build());
-        RedisConnection<String, String> beSlave = sentinelClient.connect(RedisURI.Builder.redis(hostAddr(), port(6)).build());
-
-        beMaster.slaveofNoOne();
-        beSlave.slaveof(hostAddr(), port(5));
-
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, hostAddr(), sentinelRule.setupMasterSlave(port(5), port(6)), 1, true);
-
-        sentinelRule.waitForSlave(MASTER_WITH_SLAVE_ID);
-
-        Future<List<Map<String, String>>> slaves = sentinel.slaves(MASTER_WITH_SLAVE_ID);
-
-        assertThat(slaves.get()).hasSize(1);
-        assertThat(slaves.get().get(0)).containsKey("port");
+        assertThat(result.get()).hasSize(1);
+        assertThat(result.get().get(0)).containsKey("port");
     }
 
     @Test
     public void reset() throws Exception {
 
-        Future<Long> result = sentinel.reset(SLAVE_ID);
+        Future<Long> result = sentinel.reset("other");
         Long val = result.get();
-        assertThat(val.intValue()).isEqualTo(1);
+        assertThat(val.intValue()).isEqualTo(0);
     }
 
     @Test
     public void failover() throws Exception {
 
-        RedisFuture<String> mymaster = sentinel.failover(MASTER_ID);
+        RedisFuture<String> mymaster = sentinel.failover("other");
         try {
-            String s = mymaster.get();
+            mymaster.get();
         } catch (Exception e) {
-            assertThat(e).hasMessageContaining("NOGOODSLAVE No suitable slave to promote");
+            assertThat(e).hasMessageContaining("ERR No such master with that name");
         }
     }
 
     @Test
     public void monitor() throws Exception {
 
-        sentinelRule.flush();
-
+        try {
+            sentinel.remove("mymaster2").get();
+        } catch (Exception e) {
+        }
         Future<String> result = sentinel.monitor("mymaster2", hostAddr(), 8989, 2);
         String val = result.get();
         assertThat(val).isEqualTo("OK");

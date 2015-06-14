@@ -5,6 +5,7 @@ BREW_BIN := $(shell which brew)
 YUM_BIN := $(shell which yum)
 APT_BIN := $(shell which apt-get)
 
+# Main test instance
 define REDIS1_CONF
 daemonize yes
 port 6479
@@ -17,6 +18,7 @@ unixsocket $(ROOT_DIR)/work/socket-6479
 unixsocketperm 777
 endef
 
+# debugSegfault instance
 define REDIS2_CONF
 daemonize yes
 port 6480
@@ -29,6 +31,8 @@ unixsocketperm 777
 
 endef
 
+
+# shutdown instance
 define REDIS3_CONF
 daemonize yes
 port 6481
@@ -40,7 +44,7 @@ unixsocket $(ROOT_DIR)/work/socket-6481
 unixsocketperm 777
 endef
 
-# For debugSegfault test
+# Sentinel monitored master
 define REDIS4_CONF
 daemonize yes
 port 6482
@@ -48,12 +52,11 @@ pidfile work/redis4-6482.pid
 logfile work/redis4-6482.log
 save ""
 appendonly no
-slaveof 127.0.0.1 6481
 unixsocket $(ROOT_DIR)/work/socket-6482
 unixsocketperm 777
 endef
 
-# For Shutdown test
+# Sentinel monitored slave
 define REDIS5_CONF
 daemonize yes
 port 6483
@@ -61,47 +64,19 @@ pidfile work/redis5-6483.pid
 logfile work/redis5-6483.log
 save ""
 appendonly no
+slaveof 127.0.0.1 6482
 unixsocket $(ROOT_DIR)/work/socket-6483
 unixsocketperm 777
 endef
 
-# Sentinel-monitored master
-define REDIS6_CONF
-daemonize yes
-port 6484
-pidfile work/redis6-6484.pid
-logfile work/redis6-6484.log
-save ""
-appendonly no
-unixsocket $(ROOT_DIR)/work/socket-6484
-unixsocketperm 777
-endef
-
-
-# Sentinel-monitored slave
-define REDIS7_CONF
-daemonize yes
-port 6485
-pidfile work/redis7-6485.pid
-logfile work/redis7-6485.log
-save ""
-appendonly no
-slaveof 127.0.0.1 6484
-unixsocket $(ROOT_DIR)/work/socket-6485
-unixsocketperm 777
-endef
 
 # SENTINELS
 define REDIS_SENTINEL1
 port 26379
 daemonize yes
-sentinel monitor mymaster 127.0.0.1 6479 1
-sentinel monitor myslave 127.0.0.1 16379 1
-sentinel monitor master_with_slave 127.0.0.1 6484 1
+sentinel monitor mymaster 127.0.0.1 6482 1
 sentinel down-after-milliseconds mymaster 100
 sentinel failover-timeout mymaster 100
-sentinel down-after-milliseconds master_with_slave 100
-sentinel failover-timeout master_with_slave 100
 sentinel parallel-syncs mymaster 1
 pidfile work/sentinel1-26379.pid
 logfile work/sentinel1-26379.log
@@ -113,28 +88,12 @@ define REDIS_SENTINEL2
 port 26380
 daemonize yes
 sentinel monitor mymaster 127.0.0.1 6481 1
-sentinel monitor master_with_slave 127.0.0.1 6484 1
 sentinel down-after-milliseconds mymaster 100
 sentinel parallel-syncs mymaster 1
 sentinel failover-timeout mymaster 100
-sentinel down-after-milliseconds master_with_slave 100
-sentinel failover-timeout master_with_slave 100
 pidfile work/sentinel2-26380.pid
 logfile work/sentinel2-26380.log
 unixsocket $(ROOT_DIR)/work/socket-26380
-unixsocketperm 777
-endef
-
-define REDIS_SENTINEL3
-port 26381
-daemonize yes
-sentinel monitor mymasterfailover 127.0.0.1 6484 1
-sentinel down-after-milliseconds mymasterfailover 100
-sentinel failover-timeout mymasterfailover 100
-sentinel parallel-syncs mymasterfailover 1
-pidfile work/sentinel3-26381.pid
-logfile work/sentinel3-26381.log
-unixsocket $(ROOT_DIR)/work/socket-26381
 unixsocketperm 777
 endef
 
@@ -290,11 +249,8 @@ export REDIS2_CONF
 export REDIS3_CONF
 export REDIS4_CONF
 export REDIS5_CONF
-export REDIS6_CONF
-export REDIS7_CONF
 export REDIS_SENTINEL1
 export REDIS_SENTINEL2
-export REDIS_SENTINEL3
 export REDIS_CLUSTER_NODE1_CONF
 export REDIS_CLUSTER_CONFIG1
 export REDIS_CLUSTER_NODE2_CONF
@@ -315,13 +271,9 @@ start: cleanup
 	echo "$$REDIS3_CONF" > work/redis3-6481.conf && redis-server work/redis3-6481.conf
 	echo "$$REDIS4_CONF" > work/redis3-6482.conf && redis-server work/redis3-6482.conf
 	echo "$$REDIS5_CONF" > work/redis2-6483.conf && redis-server work/redis2-6483.conf
-	echo "$$REDIS6_CONF" > work/redis2-6484.conf && redis-server work/redis2-6484.conf
-	echo "$$REDIS7_CONF" > work/redis2-6485.conf && redis-server work/redis2-6485.conf
 	echo "$$REDIS_SENTINEL1" > work/sentinel1-26379.conf && redis-server work/sentinel1-26379.conf --sentinel
 	@sleep 0.5
 	echo "$$REDIS_SENTINEL2" > work/sentinel2-26380.conf && redis-server work/sentinel2-26380.conf --sentinel
-	@sleep 0.5
-	echo "$$REDIS_SENTINEL3" > work/sentinel3-26381.conf && redis-server work/sentinel3-26381.conf --sentinel
 
 	echo "$$REDIS_CLUSTER_CONFIG1" > work/redis-cluster-config1-7379.conf
 	echo "$$REDIS_CLUSTER_CONFIG2" > work/redis-cluster-config2-7380.conf

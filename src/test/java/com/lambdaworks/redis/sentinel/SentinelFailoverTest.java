@@ -18,8 +18,6 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.models.role.RedisInstance;
-import com.lambdaworks.redis.models.role.RoleParser;
 
 @Ignore("For manual runs only. Fails too often due to slow sentinel sync")
 public class SentinelFailoverTest extends AbstractSentinelTest {
@@ -29,15 +27,13 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 26380, MASTER_WITH_SLAVE_ID).build());
+        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 26380, MASTER_ID).build());
     }
 
     @Before
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
-
-        sentinelRule.needMasterWithSlave(MASTER_WITH_SLAVE_ID, port(5), port(6));
-
+        sentinelRule.needMasterWithSlave(MASTER_ID, port(3), port(4));
     }
 
     @Test
@@ -52,18 +48,16 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
     @Test
     public void failover() throws Exception {
 
-        RedisClient redisClient = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), port(5)).build());
-
-        RedisCommands<String, String> aHost = redisClient.connect();
+        RedisClient redisClient = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), port(3)).build());
 
         String tcpPort1 = connectUsingSentinelAndGetPort();
 
-        sentinelRule.waitForSlave(MASTER_WITH_SLAVE_ID);
-        sentinel.failover(MASTER_WITH_SLAVE_ID).get();
+        sentinelRule.waitForConnectedSlaves(MASTER_ID);
+        sentinel.failover(MASTER_ID).get();
 
         delay(seconds(5));
 
-        sentinelRule.waitForSlave(MASTER_WITH_SLAVE_ID);
+        sentinelRule.waitForConnectedSlaves(MASTER_ID);
 
         String tcpPort2 = connectUsingSentinelAndGetPort();
         assertThat(tcpPort1).isNotEqualTo(tcpPort2);

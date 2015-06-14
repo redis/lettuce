@@ -120,7 +120,7 @@ public class SentinelRule implements TestRule {
             flush();
             int masterPort = setupMasterSlave(redisPorts);
             monitor(masterId, TestSettings.hostAddr(), masterPort, 1, true);
-            waitForSlave(masterId);
+            waitForConnectedSlaves(masterId);
         }
     }
 
@@ -129,7 +129,7 @@ public class SentinelRule implements TestRule {
      * 
      * @param masterId
      */
-    public void waitForSlave(String masterId) {
+    public void waitForConnectedSlaves(String masterId) {
         log.info("[Sentinel] Waiting until master " + masterId + " has at least one connected slave");
         Wait.untilTrue(() -> hasConnectedSlaves(masterId)).during(seconds(20)).message("No slave found").waitOrTimeout();
         log.info("[Sentinel] Found a connected slave for master " + masterId);

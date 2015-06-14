@@ -25,7 +25,7 @@ public class UnixDomainSocketTest {
     private static RedisClient sentinelClient;
 
     @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, true, 26379, 26380);
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
 
     protected Logger log = Logger.getLogger(getClass());
 
@@ -42,10 +42,6 @@ public class UnixDomainSocketTest {
         sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
-    @Before
-    public void openConnection() throws Exception {
-        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
-    }
 
     @Test
     public void standalone_Linux_x86_64_socket() throws Exception {

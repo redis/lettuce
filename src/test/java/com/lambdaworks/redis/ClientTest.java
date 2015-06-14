@@ -123,7 +123,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
         RandomResponseServer ts = getRandomResponseServer();
 
-        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(500))
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.nonexistentPort())
                 .withTimeout(10, TimeUnit.MINUTES).build();
 
         try {
@@ -167,7 +167,7 @@ public class ClientTest extends AbstractRedisClientTest {
             connection.set(key, value);
 
             Thread.sleep(100);
-            redisUri.setPort(TestSettings.port(500));
+            redisUri.setPort(TestSettings.nonexistentPort());
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
@@ -189,7 +189,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
     protected RandomResponseServer getRandomResponseServer() throws InterruptedException {
         RandomResponseServer ts = new RandomResponseServer();
-        ts.initialize(TestSettings.port(500));
+        ts.initialize(TestSettings.nonexistentPort());
         return ts;
     }
 
@@ -227,7 +227,7 @@ public class ClientTest extends AbstractRedisClientTest {
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
             connectionWatchdog.setReconnectSuspended(true);
-            redisUri.setPort(TestSettings.port(500));
+            redisUri.setPort(TestSettings.nonexistentPort());
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
