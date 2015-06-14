@@ -88,6 +88,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.sync().close();
+        assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
     }
 
@@ -95,6 +96,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     public void testAsyncClose() throws Exception {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.async().close();
+        assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
 
     }

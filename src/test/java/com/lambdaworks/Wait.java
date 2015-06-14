@@ -102,12 +102,12 @@ public class Wait {
         private Predicate<T> check;
         private WaitCondition waitCondition;
 
-        public WaitBuilder during(Duration duration) {
+        public WaitBuilder<T> during(Duration duration) {
             this.duration = duration;
             return this;
         }
 
-        public WaitBuilder message(String message) {
+        public WaitBuilder<T> message(String message) {
             this.messageFunction = o -> message;
             return this;
         }

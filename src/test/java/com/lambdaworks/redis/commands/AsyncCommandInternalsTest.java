@@ -1,81 +1,137 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
-
 package com.lambdaworks.redis.commands;
 
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
-public class CommandInternalsTest {
+public class AsyncCommandInternalsTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
-    protected Command<String, String, String> sut;
+    protected Command<String, String, String> internal;
+    protected AsyncCommand<String, String, String> sut;
 
     @Before
     public final void createCommand() throws Exception {
         CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);
-        sut = new Command<>(CommandType.INFO, output, null);
+        internal = new Command<String, String, String>(CommandType.INFO, output, null);
+        sut = new AsyncCommand<>(internal);
     }
 
     @Test
     public void isCancelled() throws Exception {
         assertThat(sut.isCancelled()).isFalse();
-        sut.cancel();
-
+        assertThat(sut.cancel(true)).isTrue();
         assertThat(sut.isCancelled()).isTrue();
+        assertThat(sut.cancel(true)).isTrue();
     }
 
     @Test
-    public void get() throws Exception {
-        assertThat(sut.get()).isNull();
-        sut.getOutput().set(buffer("one"));
-        assertThat(sut.get()).isEqualTo("one");
+    public void isDone() throws Exception {
+        assertThat(sut.isDone()).isFalse();
+        sut.complete();
+        assertThat(sut.isDone()).isTrue();
     }
 
     @Test
     public void getError() throws Exception {
         sut.getOutput().setError("error");
-        assertThat(sut.getError()).isEqualTo("error");
+        assertThat(internal.getError()).isEqualTo("error");
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void setOutputAfterCompleted() throws Exception {
+    @Test(expected = ExecutionException.class)
+    public void getErrorAsync() throws Exception {
+        sut.getOutput().setError("error");
         sut.complete();
-        sut.setOutput(new StatusOutput<>(codec));
+        sut.get();
+    }
+
+    @Test(expected = ExecutionException.class)
+    public void completeExceptionally() throws Exception {
+        sut.completeExceptionally(new RuntimeException("test"));
+        assertThat(internal.getError()).isEqualTo("test");
+
+        sut.get();
     }
 
     @Test
-    public void testToString() throws Exception {
-        assertThat(sut.toString()).contains("Command");
+    public void asyncGet() throws Exception {
+        sut.getOutput().set(buffer("one"));
+        sut.complete();
+        assertThat(sut.get()).isEqualTo("one");
+        sut.getOutput().toString();
     }
 
     @Test
     public void customKeyword() throws Exception {
-        sut = new Command<String, String, String>(MyKeywords.DUMMY, new StatusOutput<String, String>(codec), null);
+        sut = new AsyncCommand<>(new Command<String, String, String>(MyKeywords.DUMMY, new StatusOutput<String, String>(codec),
+                null));
 
         assertThat(sut.toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     public void customKeywordWithArgs() throws Exception {
-        sut = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec));
+        sut = new AsyncCommand<>(new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(
+                codec)));
         sut.getArgs().add(MyKeywords.DUMMY);
         assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
         assertThat(sut.getArgs().getKeywords()).contains(MyKeywords.DUMMY);
+    }
+
+    @Test
+    public void getWithTimeout() throws Exception {
+        sut.getOutput().set(buffer("one"));
+        sut.complete();
+
+        assertThat(sut.get(0, TimeUnit.MILLISECONDS)).isEqualTo("one");
+    }
+
+    @Test(expected = TimeoutException.class, timeout = 100)
+    public void getTimeout() throws Exception {
+        assertThat(sut.get(2, TimeUnit.MILLISECONDS)).isNull();
+    }
+
+    @Test(timeout = 100)
+    public void awaitTimeout() throws Exception {
+        assertThat(sut.await(2, TimeUnit.MILLISECONDS)).isFalse();
+    }
+
+    @Test(expected = InterruptedException.class, timeout = 10)
+    public void getInterrupted() throws Exception {
+        Thread.currentThread().interrupt();
+        sut.get();
+    }
+
+    @Test(expected = InterruptedException.class, timeout = 10)
+    public void getInterrupted2() throws Exception {
+        Thread.currentThread().interrupt();
+        sut.get(5, TimeUnit.MILLISECONDS);
+    }
+
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    public void awaitInterrupted2() throws Exception {
+        Thread.currentThread().interrupt();
+        sut.await(5, TimeUnit.MILLISECONDS);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -105,12 +161,6 @@ public class CommandInternalsTest {
         NestedMultiOutput<String, String> output = new NestedMultiOutput<String, String>(codec);
         output.setError(buffer("Oops!"));
         assertThat(output.get().get(0) instanceof RedisException).isTrue();
-    }
-
-    @Test
-    public void sillyTestsForEmmaCoverage() throws Exception {
-        assertThat(CommandType.valueOf("APPEND")).isEqualTo(CommandType.APPEND);
-        assertThat(CommandKeyword.valueOf("AFTER")).isEqualTo(CommandKeyword.AFTER);
     }
 
     private enum MyKeywords implements ProtocolKeyword {

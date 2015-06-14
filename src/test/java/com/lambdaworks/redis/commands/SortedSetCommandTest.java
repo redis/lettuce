@@ -17,6 +17,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.ScanArgs;
@@ -25,8 +28,6 @@ import com.lambdaworks.redis.ScoredValueScanCursor;
 import com.lambdaworks.redis.ScoredValueStreamingAdapter;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.ZAddArgs;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class SortedSetCommandTest extends AbstractRedisClientTest {
     @Test
@@ -38,6 +39,11 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         Assert.assertEquals(list("a", "b", "c"), redis.zrange(key, 0, -1));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void zaddWrongArguments() throws Exception {
+        assertEquals(2, (long) redis.zadd(key, 2.0, "b", 3.0));
+    }
+
     @Test
     public void zaddnx() throws Exception {
         assertEquals(1, (long) redis.zadd(key, 1.0, "a"));
@@ -45,7 +51,14 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
         assertEquals(1, (long) redis.zadd(key, ZAddArgs.Builder.nx(), 2.0, "b"));
 
-        Assert.assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b")), redis.zrangeWithScores(key, 0, -1));
+        assertEquals(1, (long) redis.zadd(key, ZAddArgs.Builder.nx(), new Object[] { 2.0, "b", 3.0, "c" }));
+
+        Assert.assertEquals(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")), redis.zrangeWithScores(key, 0, -1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void zaddnxWrongArguments() throws Exception {
+        assertEquals(1, (long) redis.zadd(key, ZAddArgs.Builder.nx(), new Object[] { 2.0, "b", 3.0 }));
     }
 
     @Test
@@ -77,7 +90,6 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
         Assert.assertEquals(svlist(sv(2.0, "b"), sv(3.0, "a")), redis.zrangeWithScores(key, 0, -1));
     }
-
 
     @Test
     public void zcard() throws Exception {

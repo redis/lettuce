@@ -21,10 +21,10 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
  */
 public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
-    private final StatefulConnection<K, V> connection;
+    private final StatefulConnection<?, ?> connection;
     private final Object asyncApi;
 
-    public FutureSyncInvocationHandler(StatefulConnection<K, V> connection, Object asyncApi) {
+    public FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi) {
         this.connection = connection;
         this.asyncApi = asyncApi;
     }
@@ -35,6 +35,7 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
      *      java.lang.Object[])
      */
     @Override
+    @SuppressWarnings("unchecked")
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         try {
@@ -54,8 +55,8 @@ public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                 return LettuceFutures.await(command, connection.getTimeout(), connection.getTimeoutUnit());
             }
 
-            if (result instanceof RedisClusterAsyncCommands) {
-                return AbstractRedisClient.syncHandler((RedisChannelHandler) result, RedisConnection.class,
+            if (result instanceof RedisClusterAsyncCommands<?, ?>) {
+                return AbstractRedisClient.syncHandler((RedisChannelHandler<?, ?>) result, RedisConnection.class,
                         RedisClusterConnection.class, RedisCommands.class, RedisClusterCommands.class);
             }
 

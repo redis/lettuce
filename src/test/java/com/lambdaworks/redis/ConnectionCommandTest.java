@@ -64,6 +64,16 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         Assertions.assertThat(redis.get(key)).isNull();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void authNull() throws Exception {
+        redis.auth(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void authEmpty() throws Exception {
+        redis.auth("");
+    }
+
     @Test
     public void authReconnect() throws Exception {
         new WithPasswordRequired() {

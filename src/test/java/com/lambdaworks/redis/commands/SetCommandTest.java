@@ -3,28 +3,27 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.ValueScanCursor;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
 
 public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void sadd() throws Exception {
-        Assertions.assertThat(redis.sadd(key, "a")).isEqualTo(1L);
-        Assertions.assertThat(redis.sadd(key, "a")).isEqualTo(0);
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set("a"));
-        Assertions.assertThat(redis.sadd(key, "b", "c")).isEqualTo(2);
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
+        assertThat(redis.sadd(key, "a")).isEqualTo(1L);
+        assertThat(redis.sadd(key, "a")).isEqualTo(0);
+        assertThat(redis.smembers(key)).isEqualTo(set("a"));
+        assertThat(redis.sadd(key, "b", "c")).isEqualTo(2);
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
     }
 
     @Test
@@ -37,7 +36,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void sdiff() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.sdiff("key1", "key2", "key3")).isEqualTo(set("b", "d"));
+        assertThat(redis.sdiff("key1", "key2", "key3")).isEqualTo(set("b", "d"));
     }
 
     @Test
@@ -54,14 +53,14 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void sdiffstore() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
-        Assertions.assertThat(redis.smembers("newset")).isEqualTo(set("b", "d"));
+        assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
+        assertThat(redis.smembers("newset")).isEqualTo(set("b", "d"));
     }
 
     @Test
     public void sinter() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.sinter("key1", "key2", "key3")).isEqualTo(set("c"));
+        assertThat(redis.sinter("key1", "key2", "key3")).isEqualTo(set("c"));
     }
 
     @Test
@@ -78,30 +77,30 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void sinterstore() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.sinterstore("newset", "key1", "key2", "key3")).isEqualTo(1);
-        Assertions.assertThat(redis.smembers("newset")).isEqualTo(set("c"));
+        assertThat(redis.sinterstore("newset", "key1", "key2", "key3")).isEqualTo(1);
+        assertThat(redis.smembers("newset")).isEqualTo(set("c"));
     }
 
     @Test
     public void sismember() throws Exception {
-        Assertions.assertThat(redis.sismember(key, "a")).isFalse();
+        assertThat(redis.sismember(key, "a")).isFalse();
         redis.sadd(key, "a");
-        Assertions.assertThat(redis.sismember(key, "a")).isTrue();
+        assertThat(redis.sismember(key, "a")).isTrue();
     }
 
     @Test
     public void smove() throws Exception {
         redis.sadd(key, "a", "b", "c");
-        Assertions.assertThat(redis.smove(key, "key1", "d")).isFalse();
-        Assertions.assertThat(redis.smove(key, "key1", "a")).isTrue();
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set("b", "c"));
-        Assertions.assertThat(redis.smembers("key1")).isEqualTo(set("a"));
+        assertThat(redis.smove(key, "key1", "d")).isFalse();
+        assertThat(redis.smove(key, "key1", "a")).isTrue();
+        assertThat(redis.smembers(key)).isEqualTo(set("b", "c"));
+        assertThat(redis.smembers("key1")).isEqualTo(set("a"));
     }
 
     @Test
     public void smembers() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
     }
 
     @Test
@@ -115,19 +114,19 @@ public class SetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void spop() throws Exception {
-        Assertions.assertThat(redis.spop(key)).isNull();
+        assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c");
         String rand = redis.spop(key);
         assertThat(set("a", "b", "c").contains(rand)).isTrue();
-        Assertions.assertThat(redis.smembers(key).contains(rand)).isFalse();
+        assertThat(redis.smembers(key).contains(rand)).isFalse();
     }
 
     @Test
     public void srandmember() throws Exception {
-        Assertions.assertThat(redis.spop(key)).isNull();
+        assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c", "d");
         assertThat(set("a", "b", "c", "d").contains(redis.srandmember(key))).isTrue();
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c", "d"));
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c", "d"));
         Set<String> rand = redis.srandmember(key, 3);
         assertThat(rand).hasSize(3);
         assertThat(set("a", "b", "c", "d").containsAll(rand)).isTrue();
@@ -135,7 +134,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void srandmemberStreaming() throws Exception {
-        Assertions.assertThat(redis.spop(key)).isNull();
+        assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c", "d");
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
@@ -151,17 +150,32 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void srem() throws Exception {
         redis.sadd(key, "a", "b", "c");
-        Assertions.assertThat(redis.srem(key, "d")).isEqualTo(0);
-        Assertions.assertThat(redis.srem(key, "b")).isEqualTo(1);
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set("a", "c"));
-        Assertions.assertThat(redis.srem(key, "a", "c")).isEqualTo(2);
-        Assertions.assertThat(redis.smembers(key)).isEqualTo(set());
+        assertThat(redis.srem(key, "d")).isEqualTo(0);
+        assertThat(redis.srem(key, "b")).isEqualTo(1);
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "c"));
+        assertThat(redis.srem(key, "a", "c")).isEqualTo(2);
+        assertThat(redis.smembers(key)).isEqualTo(set());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void sremEmpty() throws Exception {
+        redis.srem(key);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void sremNulls() throws Exception {
+        redis.srem(key, null);
     }
 
     @Test
     public void sunion() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.sunion("key1", "key2", "key3")).isEqualTo(set("a", "b", "c", "d", "e"));
+        assertThat(redis.sunion("key1", "key2", "key3")).isEqualTo(set("a", "b", "c", "d", "e"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void sunionEmpty() throws Exception {
+        redis.sunion();
     }
 
     @Test
@@ -180,8 +194,8 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void sunionstore() throws Exception {
         setupSet();
-        Assertions.assertThat(redis.sunionstore("newset", "key1", "key2", "key3")).isEqualTo(5);
-        Assertions.assertThat(redis.smembers("newset")).isEqualTo(set("a", "b", "c", "d", "e"));
+        assertThat(redis.sunionstore("newset", "key1", "key2", "key3")).isEqualTo(5);
+        assertThat(redis.smembers("newset")).isEqualTo(set("a", "b", "c", "d", "e"));
     }
 
     @Test
@@ -254,8 +268,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(5));
 
-        assertThat(cursor.getCursor()).isNotNull();
-        assertNotEquals("0", cursor.getCursor());
+        assertThat(cursor.getCursor()).isNotNull().isNotEqualTo("0");
         assertThat(cursor.isFinished()).isFalse();
 
         check.addAll(cursor.getValues());

@@ -2,12 +2,13 @@ package com.lambdaworks.redis.cluster;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.net.ConnectException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -317,7 +318,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(clusterCommandA.isMoved()).isFalse();
 
         connection.close();
-
     }
 
     @Test
@@ -413,6 +413,15 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         // commands are dispatched to a different connection, therefore it works for us.
         syncConnection.set("b", "b");
 
+    }
+
+    @Test
+    public void clusterSlaves() throws Exception {
+
+        String nodeId = getNodeId(redissync1);
+        List<String> result = redissync1.clusterSlaves(nodeId);
+
+        assertThat(result.size()).isGreaterThan(0);
     }
 
     @Test(expected = RedisException.class)
@@ -516,6 +525,16 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         RedisAdvancedClusterAsyncConnection<String, String> async = syncConnection.getStatefulConnection().async();
 
         assertThat(async.ping().get()).isEqualTo("PONG");
+    }
+
+    @Test(expected = RedisException.class)
+    public void getButNoPartitionForSlothash() throws Exception {
+
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+            redisClusterNode.setSlots(new ArrayList<>());
+        }
+
+        syncConnection.get(key);
     }
 
 }
