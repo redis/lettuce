@@ -1,11 +1,9 @@
 package com.lambdaworks.redis.api;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnection}.
@@ -27,16 +25,23 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
     boolean isMulti();
 
     /**
-     * Returns the {@link RedisAsyncConnection} API for the current connection. Does not create a new connection.
+     * Returns the {@link RedisAsyncCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the asynchronous API for the underlying connection.
      */
     RedisAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisConnection} API for the current connection. Does not create a new connection.
+     * Returns the {@link RedisCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the synchronous API for the underlying connection.
      */
     RedisCommands<K, V> sync();
+
+    /**
+     * Returns the {@link RedisReactiveCommands} API for the current connection. Does not create a new connection.
+     * 
+     * @return the reactive API for the underlying connection.
+     */
+    RedisReactiveCommands<K, V> reactive();
 }

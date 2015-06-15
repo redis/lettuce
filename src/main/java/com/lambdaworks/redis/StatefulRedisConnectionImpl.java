@@ -10,12 +10,12 @@ import static com.lambdaworks.redis.protocol.CommandType.READONLY;
 import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 import static com.lambdaworks.redis.protocol.CommandType.SELECT;
 
-import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -41,7 +41,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     protected RedisCodec<K, V> codec;
     protected RedisCommands<K, V> sync;
-    protected RedisAsyncConnectionCommandsImpl<K, V> async;
+    protected RedisAsyncCommandsImpl<K, V> async;
+    protected RedisReactiveCommandsImpl<K, V> reactive;
 
     protected MultiOutput<K, V> multi;
     private char[] password;
@@ -66,28 +67,50 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return getAsyncCommands();
     }
 
-    protected RedisAsyncConnectionCommandsImpl<K, V> getAsyncCommands() {
+    protected RedisAsyncCommandsImpl<K, V> getAsyncCommands() {
         if (async == null) {
-            async = newRedisAsyncConnectionImpl();
+            async = newRedisAsyncCommandsImpl();
         }
 
         return async;
     }
 
-    protected RedisAsyncConnectionCommandsImpl<K, V> newRedisAsyncConnectionImpl() {
-        return new RedisAsyncConnectionCommandsImpl<>(this, codec);
+    /**
+     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
+     * 
+     * @return a new instance
+     */
+    protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
+        return new RedisAsyncCommandsImpl<>(this, codec);
+    }
+
+    @Override
+    public RedisReactiveCommands<K, V> reactive() {
+        return getReactiveCommands();
+    }
+
+    protected RedisReactiveCommandsImpl<K, V> getReactiveCommands() {
+        if (reactive == null) {
+            reactive = newRedisReactiveCommandsImpl();
+        }
+
+        return reactive;
+    }
+
+    /**
+     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
+     * 
+     * @return a new instance
+     */
+    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
+        return new RedisReactiveCommandsImpl<>(this, codec);
     }
 
     public RedisCommands<K, V> sync() {
         if (sync == null) {
-            sync = (RedisCommands) syncHandler(RedisCommands.class, RedisClusterCommands.class);
+            sync = syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
         }
         return sync;
-    }
-
-    protected Object syncHandler(Class... interfaces) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>(this, async());
-        return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }
 
     public static String string(double n) {

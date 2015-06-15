@@ -62,6 +62,12 @@ public class ClientTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void statefulConnectionFromReactive() throws Exception {
+        RedisAsyncConnection<String, String> async = client.connectAsync();
+        assertThat(async.getStatefulConnection().reactive().getStatefulConnection()).isSameAs(async.getStatefulConnection());
+    }
+
+    @Test
     public void variousClientOptions() throws Exception {
 
         RedisAsyncConnection<String, String> plain = client.connectAsync();
@@ -216,7 +222,7 @@ public class ClientTest extends AbstractRedisClientTest {
         RedisURI redisUri = getDefaultRedisURI();
 
         try {
-            RedisAsyncConnectionCommandsImpl<String, String> connection = (RedisAsyncConnectionCommandsImpl<String, String>) client
+            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
                     .connectAsync(redisUri);
             RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) connection
                     .getStatefulConnection();
@@ -459,8 +465,7 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test(timeout = 20000)
     public void reset() throws Exception {
 
-        RedisAsyncConnectionCommandsImpl<String, String> async = (RedisAsyncConnectionCommandsImpl<String, String>) client
-                .connectAsync();
+        RedisAsyncCommandsImpl<String, String> async = (RedisAsyncCommandsImpl<String, String>) client.connectAsync();
 
         async.set(key, value).get();
         async.reset();

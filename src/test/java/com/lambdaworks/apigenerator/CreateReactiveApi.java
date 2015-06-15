@@ -6,12 +6,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
@@ -21,16 +20,15 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 /**
- * Create sync API based on the templates.
+ * Create reactive API based on the templates.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @RunWith(Parameterized.class)
-@Ignore
 public class CreateReactiveApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "readOnly", "readWrite", "reset");
+            "isOpen", "BaseRedisCommands.reset", "getStatefulConnection");
 
     private CompilationUnitFactory factory;
 
@@ -51,7 +49,7 @@ public class CreateReactiveApi {
      */
     public CreateReactiveApi(String templateName) {
 
-        String targetName = templateName.replace("Connection", "RxConnection");
+        String targetName = templateName.replace("Commands", "ReactiveCommands");
         File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
         String targetPackage = "com.lambdaworks.redis.api.rx";
 
@@ -86,6 +84,12 @@ public class CreateReactiveApi {
             String typeAsString = method.getType().toStringWithoutComments().trim();
             if (typeAsString.equals("void")) {
                 typeAsString = "Void";
+            }
+
+            if (typeAsString.startsWith("List<")) {
+                typeAsString = typeAsString.substring(5, typeAsString.length() - 1);
+            } else if (typeAsString.startsWith("Set<")) {
+                typeAsString = typeAsString.substring(4, typeAsString.length() - 1);
             }
 
             return new ReferenceType(new ClassOrInterfaceType("Observable<" + typeAsString + ">"));

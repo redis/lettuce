@@ -4,10 +4,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -202,5 +204,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     public long getTimeout() {
         return timeout;
+    }
+
+    protected <T> T syncHandler(Object asyncApi, Class... interfaces) {
+        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>((StatefulConnection) this, asyncApi);
+        return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }
 }
