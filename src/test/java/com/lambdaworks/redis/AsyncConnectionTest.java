@@ -116,7 +116,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
 
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 500)
     public void discardCompletesFutures() throws Exception {
         async.multi();
         Future<String> set = async.set(key, value);
@@ -139,7 +139,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
         assertThat((long) append.get()).isEqualTo(value.length() * 2);
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 500)
     public void awaitAllTimeout() throws Exception {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
         assertThat(LettuceFutures.awaitAll(1, TimeUnit.NANOSECONDS, blpop)).isFalse();
