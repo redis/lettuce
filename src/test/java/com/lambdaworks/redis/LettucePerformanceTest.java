@@ -37,7 +37,7 @@ public class LettucePerformanceTest {
         int threads = 4;
         int totalCalls = 250000;
         boolean waitForFutureCompletion = true;
-        boolean connectionPerThread = true;
+        boolean connectionPerThread = false;
         // Keep in mind, that the size of the event loop threads is CPU count * 4 unless you
         // set -Dio.netty.eventLoopThreads=...
         // END OF TWEAK ME

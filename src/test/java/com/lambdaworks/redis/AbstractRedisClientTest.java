@@ -25,7 +25,8 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     }
 
     protected RedisCommands<String, String> connect() {
-        return client.connect();
+        RedisCommands<String, String> connect = client.connect();
+        return connect;
     }
 
     @Before
@@ -38,7 +39,9 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
 
     @After
     public void closeConnection() throws Exception {
-        redis.close();
+        if (redis != null) {
+            redis.close();
+        }
     }
 
     public abstract class WithPasswordRequired {

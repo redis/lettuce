@@ -86,6 +86,35 @@ public class Wait {
         return wb;
     }
 
+    /**
+     * Initialize a {@link com.lambdaworks.Wait.WaitBuilder} to wait until the {@code actualSupplier} provides an object that is
+     * not equal to {@code expectation}
+     *
+     * @param expectation
+     * @param actualSupplier
+     * @param <T>
+     * @return
+     */
+    public static <T> WaitBuilder<T> untilEquals(T expectation, Supplier<T> actualSupplier) {
+        WaitBuilder<T> wb = new WaitBuilder<>();
+
+        wb.supplier = actualSupplier;
+        wb.check = o -> {
+            if (o == expectation) {
+                return true;
+            }
+
+            if ((o == null && expectation != null) || (o != null && expectation == null)) {
+                return false;
+            }
+
+            return o.equals(expectation);
+        };
+        wb.messageFunction = o -> "Objects are not equal: " + expectation + " and " + o;
+
+        return wb;
+    }
+
     @FunctionalInterface
     public interface WaitCondition {
 

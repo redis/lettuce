@@ -11,18 +11,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisAsyncConnection;
+import org.junit.After;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisException;
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ScriptingCommandTest extends AbstractRedisClientTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
+
+    @After
+    public void tearDown() throws Exception {
+
+        try {
+            redis.scriptKill();
+        } catch (RedisException e) {
+
+        }
+    }
 
     @Test
     public void eval() throws Exception {

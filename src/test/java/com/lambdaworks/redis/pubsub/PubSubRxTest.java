@@ -71,7 +71,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         redis.publish(channel, message);
         redis.publish(channel, message);
 
-        Delay.delay(millis(500));
+        Wait.untilEquals(3, () -> channelMessages.size()).waitOrTimeout();
         assertThat(channelMessages).hasSize(3);
 
         subscription.unsubscribe();
@@ -202,7 +202,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubChannelsWithArg() throws Exception {
         pubsub.subscribe(channel).subscribe();
-        Delay.delay(millis(100));
+        Wait.untilTrue(() -> redis.pubsubChannels(pattern).contains(channel)).waitOrTimeout();
 
         List<String> result = redis.pubsubChannels(pattern);
         assertThat(result).contains(channel);
@@ -212,7 +212,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void pubsubNumsub() throws Exception {
 
         pubsub.subscribe(channel).subscribe();
-        Delay.delay(millis(100));
+        Wait.untilEquals(1, () -> redis.pubsubNumsub(channel).size()).waitOrTimeout();
 
         Map<String, Long> result = redis.pubsubNumsub(channel);
         assertThat(result).hasSize(1);
@@ -223,11 +223,13 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void pubsubNumpat() throws Exception {
 
         pubsub.psubscribe(pattern).subscribe();
+        Wait.untilEquals(1L, () -> redis.pubsubNumpat()).waitOrTimeout();
+
         Long result = redis.pubsubNumpat();
         assertThat(result.longValue()).isEqualTo(1L);
     }
 
-    @Test
+    @Test(timeout = 200)
     public void punsubscribe() throws Exception {
         pubsub.punsubscribe(pattern).subscribe();
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -286,8 +288,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
 
-        pubsub.quit().subscribe();
-
+        pubsub.quit().toBlocking().first();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
 
@@ -302,7 +303,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
 
-        pubsub.quit().subscribe();
+        pubsub.quit().toBlocking().first();
 
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);

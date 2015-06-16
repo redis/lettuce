@@ -8,12 +8,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.code.tempusfugit.temporal.Duration;
-import com.lambdaworks.Delay;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.lambdaworks.Delay;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
@@ -55,8 +54,8 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
             state.set(true);
             return null;
         });
-        future.await(5, TimeUnit.SECONDS);
 
+        assertThat(future.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(state.get()).isTrue();
     }
 

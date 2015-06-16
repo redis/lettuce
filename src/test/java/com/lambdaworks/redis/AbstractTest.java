@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.junit.Rule;
+
+import com.lambdaworks.CapturingLogRule;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -15,6 +18,9 @@ public class AbstractTest {
     public static final String host = TestSettings.host();
     public static final int port = TestSettings.port();
     public static final String passwd = TestSettings.password();
+
+    @Rule
+    public CapturingLogRule capturingLogRule = new CapturingLogRule();
 
     protected Logger log = Logger.getLogger(getClass());
     protected String key = "key";

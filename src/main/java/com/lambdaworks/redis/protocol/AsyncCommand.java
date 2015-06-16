@@ -64,11 +64,11 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
      */
     @Override
     public void complete() {
-        latch.countDown();
-        if (latch.getCount() == 0) {
-            command.complete();
+        if (latch.getCount() == 1) {
             completeResult();
+            command.complete();
         }
+        latch.countDown();
     }
 
     protected void completeResult() {

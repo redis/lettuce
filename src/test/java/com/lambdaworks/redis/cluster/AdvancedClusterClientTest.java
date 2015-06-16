@@ -77,10 +77,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         Partitions partitions = connection.getStatefulConnection().getPartitions();
         assertThat(partitions).hasSize(4);
-
-        partitions.iterator().forEachRemaining(
-                redisClusterNode -> System.out.println(redisClusterNode.getNodeId() + ": " + redisClusterNode.getFlags() + " "
-                        + redisClusterNode.getUri()));
     }
 
     @Test
