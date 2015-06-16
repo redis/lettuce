@@ -2,18 +2,19 @@
 
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.util.Arrays;
 import java.util.List;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisException;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisException;
 
 public class TransactionCommandTest extends AbstractRedisClientTest {
     @Rule
@@ -87,7 +88,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void execWithoutMulti() throws Exception {
-        exception.expect(RedisException.class);
+        exception.expect(RedisCommandExecutionException.class);
         exception.expectMessage("ERR EXEC without MULTI");
         redis.exec();
     }

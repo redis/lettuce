@@ -27,8 +27,8 @@ import com.google.common.collect.Lists;
 @RunWith(Parameterized.class)
 public class CreateReactiveApi {
 
-    private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisCommands.reset", "getStatefulConnection");
+    private Set<String> KEEP_METHOD_RESULT_TYPE = ImmutableSet.of("digest", "close", "isOpen", "BaseRedisCommands.reset",
+            "getStatefulConnection");
 
     private CompilationUnitFactory factory;
 

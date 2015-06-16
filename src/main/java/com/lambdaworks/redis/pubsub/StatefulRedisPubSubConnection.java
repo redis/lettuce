@@ -1,7 +1,9 @@
 package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 /**
@@ -48,5 +50,12 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param listener Listener.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
+
+    /**
+     * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
+     *
+     * @return the reactive API for the underlying connection.
+     */
+    RedisPubSubReactiveCommands<K, V> reactive();
 
 }

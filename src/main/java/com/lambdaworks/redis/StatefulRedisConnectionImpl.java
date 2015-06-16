@@ -2,13 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.AUTH;
-import static com.lambdaworks.redis.protocol.CommandType.DISCARD;
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
-import static com.lambdaworks.redis.protocol.CommandType.MULTI;
-import static com.lambdaworks.redis.protocol.CommandType.READONLY;
-import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
-import static com.lambdaworks.redis.protocol.CommandType.SELECT;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -20,7 +14,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.TransactionalCommand;
@@ -150,7 +144,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.password = cmd.getArgs().getStrings().get(0).toCharArray();
                 }
             });
@@ -158,7 +152,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.db = cmd.getArgs().getIntegers().get(0).intValue();
                 }
             });
@@ -166,7 +160,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(READONLY.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.readOnly = true;
                 }
             });
@@ -174,7 +168,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(READWRITE.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.readOnly = false;
                 }
             });
@@ -212,9 +206,9 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private <T> RedisCommand<K, V, T> attachOnComplete(RedisCommand<K, V, T> command, Consumer<T> consumer) {
 
-        if (command instanceof AsyncCommand) {
-            AsyncCommand<K, V, T> async = (AsyncCommand<K, V, T>) command;
-            async.thenAccept(consumer);
+        if (command instanceof CompleteableCommand) {
+            CompleteableCommand<T> async = (CompleteableCommand<T>) command;
+            async.onComplete(consumer);
         }
         return command;
     }

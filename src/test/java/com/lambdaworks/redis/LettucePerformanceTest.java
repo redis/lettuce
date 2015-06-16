@@ -18,7 +18,7 @@ import com.google.common.collect.Lists;
  */
 public class LettucePerformanceTest {
 
-    private RedisClient redisClient = new RedisClient(TestSettings.host(), TestSettings.port());
+    private RedisClient redisClient = DefaultRedisClient.get();
     private ExecutorService executor;
     private CountDownLatch latch = new CountDownLatch(1);
 
@@ -71,8 +71,6 @@ public class LettucePerformanceTest {
         double opsPerSecond = totalCalls / durationSeconds;
         System.out.println(String.format("Duration: %d ms (%.2f sec), operations: %d, %.2f ops/sec ", duration,
                 durationSeconds, totalCalls, opsPerSecond));
-
-        redisClient.shutdown();
 
     }
 

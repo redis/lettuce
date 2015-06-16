@@ -5,7 +5,6 @@ package com.lambdaworks.redis;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -18,12 +17,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        client = newRedisClient();
-    }
-
-    @AfterClass
-    public static void shutdownClient() {
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        client = DefaultRedisClient.get();
     }
 
     protected static RedisClient newRedisClient() {

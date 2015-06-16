@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.api.rx;
 
 import java.util.Date;
-import java.util.List;
+
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import rx.Observable;
@@ -158,12 +158,12 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Make the server crash: Invalid pointer access.
      */
-    void debugSegfault();
+    Observable<Void> debugSegfault();
 
     /**
      * Make the server crash: Out of memory.
      */
-    void debugOom();
+    Observable<Void> debugOom();
 
     /**
      * Remove all keys from all databases.
@@ -213,7 +213,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * 
      * @param save {@literal true} force save operation
      */
-    void shutdown(boolean save);
+    Observable<Void> shutdown(boolean save);
 
     /**
      * Make the server a slave of another instance, or promote it as master.

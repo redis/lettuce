@@ -2,27 +2,18 @@ package com.lambdaworks.redis.issue42;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.DefaultRedisClient;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.TestSettings;
-
 public class BreakClientTest extends BreakClientBase {
-    public static final String host = TestSettings.host();
-    public static final int port = TestSettings.port();
 
-    protected static RedisClient client;
+    protected static RedisClient client = DefaultRedisClient.get();
 
-    protected RedisConnection<String, String> redis;
-
-    @BeforeClass
-    public static void setupClient() {
-        client = new RedisClient(host, port);
-    }
+    protected RedisCommands<String, String> redis;
 
     @Before
     public void setUp() throws Exception {
@@ -37,10 +28,14 @@ public class BreakClientTest extends BreakClientBase {
         redis.close();
     }
 
-    /*
-     * @Test public void testStandAlone() throws Exception { testSingle(redis); }
-     * 
-     * @Test public void testLooping() throws Exception { testLoop(redis); }
-     */
+    @Test
+    public void testStandAlone() throws Exception {
+        testSingle(redis);
+    }
+
+    @Test
+    public void testLooping() throws Exception {
+        testLoop(redis);
+    }
 
 }

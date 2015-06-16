@@ -7,7 +7,7 @@ import rx.Observable;
 import rx.Subscriber;
 
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
@@ -43,13 +43,36 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
             command = commandSupplier.get();
         }
 
-        connection.dispatch(new AsyncCommand<K, V, T>(command) {
+        connection.dispatch(new ObservableCommand<>(command, subscriber, dissolve));
 
-            @Override
-            public void complete() {
-                super.complete();
-                if (getOutput() != null && getOutput().get() != null) {
-                    Object result = getOutput().get();
+        this.command = null;
+
+    }
+
+    private static class ObservableCommand<K, V, T> extends CommandWrapper<K, V, T> {
+
+        private final Subscriber<? super T> subscriber;
+        private final boolean dissolve;
+        private boolean completed = false;
+
+        public ObservableCommand(RedisCommand<K, V, T> command, Subscriber<? super T> subscriber, boolean dissolve) {
+            super(command);
+            this.subscriber = subscriber;
+            this.dissolve = dissolve;
+        }
+
+        @Override
+        public void complete() {
+            if (completed) {
+                return;
+            }
+
+            super.complete();
+
+            if (getOutput() != null) {
+                Object result = getOutput().get();
+                if (result != null) {
+
                     if (dissolve && result instanceof Collection) {
                         Collection<T> collection = (Collection<T>) result;
                         for (T t : collection) {
@@ -59,25 +82,40 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
                         subscriber.onNext((T) result);
                     }
                 }
-                subscriber.onCompleted();
+
+                if (getOutput().hasError()) {
+                    subscriber.onError(new RedisCommandExecutionException(getOutput().getError()));
+                    completed = true;
+                    return;
+                }
             }
 
-            @Override
-            public void cancel() {
-                super.cancel();
-                subscriber.onCompleted();
+            completed = true;
+            subscriber.onCompleted();
+        }
+
+        @Override
+        public void cancel() {
+
+            if (completed) {
+                return;
             }
 
-            @Override
-            public boolean completeExceptionally(Throwable throwable) {
-                boolean b = super.completeExceptionally(throwable);
-                subscriber.onError(throwable);
-                return b;
+            super.cancel();
+            subscriber.onCompleted();
+            completed = true;
+        }
+
+        @Override
+        public boolean completeExceptionally(Throwable throwable) {
+            if (completed) {
+                return false;
             }
-        });
 
-        this.command = null;
-
+            boolean b = super.completeExceptionally(throwable);
+            subscriber.onError(throwable);
+            completed = true;
+            return b;
+        }
     }
-
 }

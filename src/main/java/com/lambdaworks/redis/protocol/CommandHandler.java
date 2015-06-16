@@ -187,7 +187,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         } catch (Exception e) {
             logger.debug("[" + this + "] channelActive() ran into an exception");
-
             if (clientOptions.isCancelCommandsOnReconnectFailure()) {
                 reset();
             }

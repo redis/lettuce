@@ -25,7 +25,6 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -266,7 +265,14 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         AsyncNodeSelection<String, String> selection = connection.slaves(redisClusterNode -> redisClusterNode.getUri()
                 .getPort() == port);
-        Wait.untilNotEquals(null, () -> selection.commands().get(key).futures()[0].get()).waitOrTimeout();
+        Wait.untilNotEquals(null, () -> {
+            for (CompletableFuture<String> future : selection.commands().get(key).futures()) {
+                if (future.get() != null) {
+                    return future.get();
+                }
+            }
+            return null;
+        }).waitOrTimeout();
     }
 
     @Test

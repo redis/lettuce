@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,25 +14,10 @@ import rx.Observable;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.rx.BaseRedisReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisHLLReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisHashReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisListReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisSetReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisSortedSetReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisStringReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisTransactionalReactiveCommands;
+import com.lambdaworks.redis.api.rx.*;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.CommandOutput;
-import com.lambdaworks.redis.output.KeyStreamingChannel;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
@@ -231,13 +216,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public void debugSegfault() {
-        createObservable(commandBuilder::debugSegfault);
+    public Observable<Void> debugSegfault() {
+        return (Observable<Void>) createObservable(commandBuilder::debugSegfault);
     }
 
     @Override
-    public void debugOom() {
-        createObservable(commandBuilder::debugOom);
+    public Observable<Void> debugOom() {
+        return (Observable<Void>) createObservable(commandBuilder::debugOom);
     }
 
     @Override
@@ -792,15 +777,9 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createObservable(() -> commandBuilder.setrange(key, offset, value));
     }
 
-    @Deprecated
-    public void shutdown() {
-        createObservable(commandBuilder::shutdown);
-
-    }
-
     @Override
-    public void shutdown(boolean save) {
-        createObservable(() -> commandBuilder.shutdown(save));
+    public Observable<Void> shutdown(boolean save) {
+        return (Observable) createObservable(() -> commandBuilder.shutdown(save));
     }
 
     @Override
@@ -1578,7 +1557,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<V> zrangebylex(K key, String min, String max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
     }
-
 
     protected <T> Observable<T> createObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         return createObservable(() -> new Command<>(type, output, args));

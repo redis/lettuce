@@ -1,9 +1,9 @@
 package com.lambdaworks.redis.commands.rx;
 
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.commands.NumericCommandTest;
+import com.lambdaworks.redis.commands.SortedSetCommandTest;
 
-public class NumericRxCommandTest extends NumericCommandTest {
+public class SortedSetRxCommandTest extends SortedSetCommandTest {
     @Override
     protected RedisCommands<String, String> connect() {
         return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());

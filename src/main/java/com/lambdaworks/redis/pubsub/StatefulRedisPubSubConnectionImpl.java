@@ -10,14 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.channel.ChannelHandler;
 
@@ -37,6 +34,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     protected RedisPubSubAsyncCommands<K, V> async;
     protected RedisPubSubCommands<K, V> sync;
+    protected RedisPubSubReactiveCommands<K, V> reactive;
     protected final List<RedisPubSubListener<K, V>> listeners;
     protected final Set<K> channels;
     protected final Set<K> patterns;
@@ -80,7 +78,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     public RedisPubSubAsyncCommands<K, V> async() {
         if (async == null) {
-            async = newRedisPubSubConnectionImpl();
+            async = newRedisPubSubAsyncCommandsImpl();
         }
 
         return async;
@@ -89,15 +87,27 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     @Override
     public RedisPubSubCommands<K, V> sync() {
         if (sync == null) {
-            sync = (RedisPubSubCommands) syncHandler(RedisConnection.class, RedisClusterConnection.class,
-                    RedisPubSubCommands.class);
+            sync = syncHandler(RedisConnection.class, RedisClusterConnection.class, RedisPubSubCommands.class);
         }
 
         return sync;
     }
 
-    protected RedisPubSubAsyncCommandsImpl<K, V> newRedisPubSubConnectionImpl() {
+    protected RedisPubSubAsyncCommandsImpl<K, V> newRedisPubSubAsyncCommandsImpl() {
         return new RedisPubSubAsyncCommandsImpl<>(this, codec);
+    }
+
+    @Override
+    public RedisPubSubReactiveCommands<K, V> reactive() {
+        if (reactive == null) {
+            reactive = newRedisPubSubReactiveCommandsImpl();
+        }
+
+        return reactive;
+    }
+
+    protected RedisPubSubReactiveCommandsImpl<K, V> newRedisPubSubReactiveCommandsImpl() {
+        return new RedisPubSubReactiveCommandsImpl<>(this, codec);
     }
 
     @Override
