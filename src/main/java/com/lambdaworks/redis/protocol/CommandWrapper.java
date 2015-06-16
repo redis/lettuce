@@ -77,4 +77,15 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     public void onComplete(Consumer<? super T> action) {
         onComplete.add(action);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [type=").append(getType());
+        sb.append(", output=").append(getOutput());
+        sb.append(", commandType=").append(command.getClass().getName());
+        sb.append(']');
+        return sb.toString();
+    }
 }

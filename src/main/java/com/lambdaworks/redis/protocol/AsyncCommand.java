@@ -109,6 +109,7 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
         sb.append(getClass().getSimpleName());
         sb.append(" [type=").append(getType());
         sb.append(", output=").append(getOutput());
+        sb.append(", commandType=").append(command.getClass().getName());
         sb.append(']');
         return sb.toString();
     }

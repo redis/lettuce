@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.io.ByteStreams;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -103,6 +104,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
 
+        logger.debug("dispatching command {}",cmd);
         if (clientOptions != null && !clientOptions.isAutoReconnect() && !active) {
             cmd.completeExceptionally(new RedisException(
                     "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));
@@ -121,23 +123,20 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     public void registerCloseables(final Collection<Closeable> registry, final Closeable... closeables) {
         registry.addAll(Arrays.asList(closeables));
 
-        addListener(new CloseEvents.CloseListener() {
-            @Override
-            public void resourceClosed(Object resource) {
-                for (Closeable closeable : closeables) {
-                    if (closeable == RedisChannelHandler.this) {
-                        continue;
-                    }
-
-                    try {
-                        closeable.close();
-                    } catch (IOException e) {
-                        logger.debug(e.toString(), e);
-                    }
+        addListener(resource -> {
+            for (Closeable closeable : closeables) {
+                if (closeable == RedisChannelHandler.this) {
+                    continue;
                 }
 
-                registry.removeAll(Arrays.asList(closeables));
+                try {
+                    closeable.close();
+                } catch (IOException e) {
+                    logger.debug(e.toString(), e);
+                }
             }
+
+            registry.removeAll(Arrays.asList(closeables));
         });
     }
 
