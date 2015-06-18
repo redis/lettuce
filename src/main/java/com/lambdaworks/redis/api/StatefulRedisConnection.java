@@ -6,7 +6,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 /**
- * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnection}.
+ * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnection}.
  * 
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
@@ -25,18 +25,18 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
     boolean isMulti();
 
     /**
-     * Returns the {@link RedisAsyncCommands} API for the current connection. Does not create a new connection.
-     * 
-     * @return the asynchronous API for the underlying connection.
-     */
-    RedisAsyncCommands<K, V> async();
-
-    /**
      * Returns the {@link RedisCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the synchronous API for the underlying connection.
      */
     RedisCommands<K, V> sync();
+
+    /**
+     * Returns the {@link RedisAsyncCommands} API for the current connection. Does not create a new connection.
+     * 
+     * @return the asynchronous API for the underlying connection.
+     */
+    RedisAsyncCommands<K, V> async();
 
     /**
      * Returns the {@link RedisReactiveCommands} API for the current connection. Does not create a new connection.

@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
@@ -24,6 +23,13 @@ import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnection<K, V> {
 
     /**
+     * Returns the {@link RedisPubSubCommands} API for the current connection. Does not create a new connection.
+     * 
+     * @return the synchronous API for the underlying connection.
+     */
+    RedisPubSubCommands<K, V> sync();
+
+    /**
      * Returns the {@link RedisPubSubAsyncCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the asynchronous API for the underlying connection.
@@ -31,11 +37,11 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     RedisPubSubAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisPubSubCommands} API for the current connection. Does not create a new connection.
-     * 
-     * @return the synchronous API for the underlying connection.
+     * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
+     *
+     * @return the reactive API for the underlying connection.
      */
-    RedisPubSubCommands<K, V> sync();
+    RedisPubSubReactiveCommands<K, V> reactive();
 
     /**
      * Add a new listener.
@@ -50,12 +56,5 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param listener Listener.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
-
-    /**
-     * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
-     *
-     * @return the reactive API for the underlying connection.
-     */
-    RedisPubSubReactiveCommands<K, V> reactive();
 
 }

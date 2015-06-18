@@ -19,19 +19,20 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
  */
 public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection<K, V> {
 
-    /**
-     * Returns the {@link RedisAdvancedClusterAsyncConnection} API for the current connection. Does not create a new connection.
-     *
-     * @return the asynchronous API for the underlying connection.
-     */
-    RedisAdvancedClusterAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisAdvancedClusterConnection} API for the current connection. Does not create a new connection.
+     * Returns the {@link RedisAdvancedClusterCommands} API for the current connection. Does not create a new connection.
      *
      * @return the synchronous API for the underlying connection.
      */
     RedisAdvancedClusterCommands<K, V> sync();
+
+    /**
+     * Returns the {@link RedisAdvancedClusterAsyncCommands} API for the current connection. Does not create a new connection.
+     *
+     * @return the asynchronous API for the underlying connection.
+     */
+    RedisAdvancedClusterAsyncCommands<K, V> async();
 
     /**
      * Retrieve a stateful connection to the specified cluster node using the nodeId. Host and port are looked up in the node
