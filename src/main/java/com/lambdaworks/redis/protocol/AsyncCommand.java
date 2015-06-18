@@ -83,8 +83,13 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
 
     @Override
     public boolean completeExceptionally(Throwable ex) {
-        command.completeExceptionally(ex);
-        return super.completeExceptionally(ex);
+        boolean result = false;
+        if (latch.getCount() == 1) {
+            command.completeExceptionally(ex);
+            result = super.completeExceptionally(ex);
+        }
+        latch.countDown();
+        return result;
     }
 
     @Override
