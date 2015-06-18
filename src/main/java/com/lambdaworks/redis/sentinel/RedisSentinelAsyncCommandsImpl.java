@@ -26,7 +26,6 @@ import io.netty.channel.ChannelHandler;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-@ChannelHandler.Sharable
 public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncCommands<K, V>,
         RedisSentinelAsyncConnection<K, V> {
 

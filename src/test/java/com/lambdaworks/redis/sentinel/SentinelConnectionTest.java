@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,6 +23,8 @@ import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 public class SentinelConnectionTest extends AbstractSentinelTest {
 
+    private RedisSentinelAsyncCommands<String, String> sentinelAsync;
+
     @BeforeClass
     public static void setupClient() {
         sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
@@ -29,13 +32,14 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @Before
     public void openConnection() throws Exception {
-        sentinel = sentinelClient.connectSentinelAsync();
+        sentinel = sentinelClient.connectSentinelAsync().getStatefulConnection().sync();
+        sentinelAsync = sentinel.getStatefulConnection().async();
     }
 
     @Test
     public void testAsync() throws Exception {
 
-        RedisFuture<List<Map<String, String>>> future = sentinel.masters();
+        RedisFuture<List<Map<String, String>>> future = sentinelAsync.masters();
 
         assertThat(future.get()).isNotNull();
         assertThat(future.isDone()).isTrue();
@@ -46,7 +50,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     @Test
     public void testFuture() throws Exception {
 
-        RedisFuture<Map<String, String>> future = sentinel.master("unknown master");
+        RedisFuture<Map<String, String>> future = sentinelAsync.master("unknown master");
 
         AtomicBoolean state = new AtomicBoolean();
 
@@ -63,7 +67,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     public void testStatefulConnection() throws Exception {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        assertThat(sentinel).isSameAs(statefulConnection.async());
+        assertThat(statefulConnection).isSameAs(statefulConnection.async().getStatefulConnection());
 
     }
 

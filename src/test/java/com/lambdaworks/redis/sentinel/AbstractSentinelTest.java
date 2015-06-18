@@ -3,6 +3,7 @@ package com.lambdaworks.redis.sentinel;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.AbstractTest;
+import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,7 +17,7 @@ public abstract class AbstractSentinelTest extends AbstractTest {
     public static final String MASTER_ID = "mymaster";
 
     protected static RedisClient sentinelClient;
-    protected RedisSentinelAsyncCommands<String, String> sentinel;
+    protected RedisSentinelCommands<String, String> sentinel;
 
     @AfterClass
     public static void shutdownClient() {
@@ -25,7 +26,7 @@ public abstract class AbstractSentinelTest extends AbstractTest {
 
     @Before
     public void openConnection() throws Exception {
-        sentinel = sentinelClient.connectSentinelAsync();
+        sentinel = sentinelClient.connectSentinelAsync().getStatefulConnection().sync();
     }
 
     @After
