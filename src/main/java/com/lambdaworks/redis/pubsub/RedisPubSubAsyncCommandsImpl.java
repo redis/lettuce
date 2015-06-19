@@ -14,7 +14,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
- * An asynchronous thread-safe API to a redis pubsub connection
+ * An asynchronous and thread-safe API for a Redis pub/sub connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

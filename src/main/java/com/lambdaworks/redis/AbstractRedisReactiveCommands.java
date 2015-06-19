@@ -24,7 +24,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
- * A reactive thread-safe API to a redis connection.
+ * A reactive and thread-safe API for a Redis connection.
  *
  * @param <K> Key type.
  * @param <V> Value type.

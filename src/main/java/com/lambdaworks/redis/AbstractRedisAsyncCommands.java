@@ -38,20 +38,9 @@ import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.output.KeyStreamingChannel;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import io.netty.channel.ChannelHandler;
 
 /**
- * An asynchronous thread-safe API to a redis connection.
+ * An asynchronous and thread-safe API for a Redis connection.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -1616,7 +1605,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-        return connection.dispatch(new AsyncCommand<>(cmd));
+        AsyncCommand<K, V, T> asyncCommand = new AsyncCommand<>(cmd);
+        RedisCommand<K, V, T> dispatched = connection.dispatch(asyncCommand);
+        if (dispatched instanceof AsyncCommand) {
+            return (AsyncCommand<K, V, T>) dispatched;
+        }
+        return asyncCommand;
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

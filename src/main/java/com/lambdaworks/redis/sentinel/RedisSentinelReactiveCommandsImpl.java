@@ -19,7 +19,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
- * A reactive thread-safe API to a redis sentinel connection.
+ * A reactive and thread-safe API for a Redis Sentinel connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

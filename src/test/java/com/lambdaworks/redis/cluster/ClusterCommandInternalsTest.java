@@ -30,17 +30,14 @@ public class ClusterCommandInternalsTest {
     public void testException() throws Exception {
 
         sut.completeExceptionally(new Exception());
-        sut.exceptionally(throwable -> {
-            assertThat(throwable).isExactlyInstanceOf(Exception.class);
-            return null;
-        });
+        assertThat(sut.isCompleted());
     }
 
     @Test
     public void testCancel() throws Exception {
 
         assertThat(command.isCancelled()).isFalse();
-        sut.cancel(true);
+        sut.cancel();
         assertThat(command.isCancelled()).isTrue();
     }
 
@@ -48,8 +45,7 @@ public class ClusterCommandInternalsTest {
     public void testComplete() throws Exception {
 
         sut.complete();
-        sut.await(1, TimeUnit.MINUTES);
-        assertThat(sut.isDone()).isTrue();
+        assertThat(sut.isCompleted()).isTrue();
         assertThat(sut.isCancelled()).isFalse();
     }
 
@@ -64,7 +60,7 @@ public class ClusterCommandInternalsTest {
         asyncCommand.complete();
         asyncCommand.await(1, TimeUnit.MINUTES);
 
-        assertThat(sut.isDone()).isTrue();
+        assertThat(sut.isCompleted()).isTrue();
         assertThat(someList.size()).describedAs("Inner listener has to add one element").isEqualTo(1);
     }
 }

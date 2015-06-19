@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import rx.Observable;
 
@@ -79,6 +80,13 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
     }
 
     public static <K, V> RedisCommands<K, V> sync(StatefulRedisConnection<K, V> connection) {
+
+        RxSyncInvocationHandler<K, V> handler = new RxSyncInvocationHandler<>(connection, connection.reactive());
+        return (RedisCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
+                new Class[] { RedisCommands.class }, handler);
+    }
+
+    public static <K, V> RedisCommands<K, V> sync(StatefulRedisClusterConnection<K, V> connection) {
 
         RxSyncInvocationHandler<K, V> handler = new RxSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),

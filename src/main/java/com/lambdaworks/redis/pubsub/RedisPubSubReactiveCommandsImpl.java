@@ -13,7 +13,7 @@ import com.lambdaworks.redis.pubsub.api.rx.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 
 /**
- * An reactive thread-safe API to a redis pubsub connection
+ * A reactive and thread-safe API for a Redis pub/sub connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

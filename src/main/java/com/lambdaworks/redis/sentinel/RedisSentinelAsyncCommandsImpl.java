@@ -18,9 +18,10 @@ import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
-import io.netty.channel.ChannelHandler;
 
 /**
+ * An asynchronous and thread-safe API for a Redis Sentinel connection.
+ * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>

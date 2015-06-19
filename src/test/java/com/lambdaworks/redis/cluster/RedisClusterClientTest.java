@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -9,17 +9,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -202,27 +215,20 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         // appropriate cluster node
         RedisFuture<String> setB = connection.set("b", "myValue1");
 
-        assertThat(setB).isInstanceOf(ClusterCommand.class);
+        assertThat(setB).isInstanceOf(AsyncCommand.class);
 
-        ClusterCommand clusterCommandB = (ClusterCommand) setB;
         setB.get();
         assertThat(setB.getError()).isNull();
-        assertThat(clusterCommandB.getExecutions()).isEqualTo(1);
         assertThat(setB.get()).isEqualTo("OK");
-        assertThat(clusterCommandB.isMoved()).isFalse();
 
         // gets redirection to node 3
         RedisFuture<String> setA = connection.set("a", "myValue1");
 
-        assertThat(setA instanceof ClusterCommand).isTrue();
+        assertThat(setA instanceof AsyncCommand).isTrue();
 
-        ClusterCommand clusterCommandA = (ClusterCommand) setA;
         setA.get();
         assertThat(setA.getError()).isNull();
-        assertThat(clusterCommandA.getExecutions()).isEqualTo(2);
-        assertThat(clusterCommandA.getExecutionLimit()).isEqualTo(5);
         assertThat(setA.get()).isEqualTo("OK");
-        assertThat(clusterCommandA.isMoved()).isFalse();
 
         connection.close();
     }

@@ -5,6 +5,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
@@ -19,7 +20,6 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
  */
 public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection<K, V> {
 
-
     /**
      * Returns the {@link RedisAdvancedClusterCommands} API for the current connection. Does not create a new connection.
      *
@@ -33,6 +33,14 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @return the asynchronous API for the underlying connection.
      */
     RedisAdvancedClusterAsyncCommands<K, V> async();
+
+    /**
+     * Returns the {@link RedisAdvancedClusterReactiveCommands} API for the current connection. Does not create a new
+     * connection.
+     *
+     * @return the reactive API for the underlying connection.
+     */
+    RedisAdvancedClusterReactiveCommands<K, V> reactive();
 
     /**
      * Retrieve a stateful connection to the specified cluster node using the nodeId. Host and port are looked up in the node

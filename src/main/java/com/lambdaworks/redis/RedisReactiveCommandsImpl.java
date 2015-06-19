@@ -6,7 +6,7 @@ import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * A reactive thread-safe API to a redis connection.
+ * A reactive and thread-safe API for a Redis Sentinel connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

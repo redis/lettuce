@@ -13,7 +13,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T> {
 
-    private RedisCommand<K, V, T> command;
+    protected RedisCommand<K, V, T> command;
     private List<Consumer<? super T>> onComplete = Lists.newArrayList();
 
     public CommandWrapper(RedisCommand<K, V, T> command) {

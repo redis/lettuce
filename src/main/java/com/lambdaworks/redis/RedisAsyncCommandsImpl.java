@@ -8,7 +8,7 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * An asynchronous thread-safe API to a redis connection.
+ * An asynchronous and thread-safe API for a Redis connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

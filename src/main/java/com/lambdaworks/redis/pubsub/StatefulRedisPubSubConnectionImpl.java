@@ -1,5 +1,3 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
-
 package com.lambdaworks.redis.pubsub;
 
 import java.lang.reflect.Array;
@@ -23,7 +21,7 @@ import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.channel.ChannelHandler;
 
 /**
- * An thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisPubSubConnectionImpl}
+ * An thread-safe pub/sub connection to a Redis server. Multiple threads may share one {@link StatefulRedisPubSubConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.

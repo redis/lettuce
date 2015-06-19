@@ -1,8 +1,12 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
-
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.AUTH;
+import static com.lambdaworks.redis.protocol.CommandType.DISCARD;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import static com.lambdaworks.redis.protocol.CommandType.MULTI;
+import static com.lambdaworks.redis.protocol.CommandType.READONLY;
+import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
+import static com.lambdaworks.redis.protocol.CommandType.SELECT;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -21,7 +25,7 @@ import com.lambdaworks.redis.protocol.TransactionalCommand;
 import io.netty.channel.ChannelHandler;
 
 /**
- * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
+ * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
@@ -207,8 +211,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     private <T> RedisCommand<K, V, T> attachOnComplete(RedisCommand<K, V, T> command, Consumer<T> consumer) {
 
         if (command instanceof CompleteableCommand) {
-            CompleteableCommand<T> async = (CompleteableCommand<T>) command;
-            async.onComplete(consumer);
+            CompleteableCommand<T> completeable = (CompleteableCommand<T>) command;
+            completeable.onComplete(consumer);
         }
         return command;
     }
