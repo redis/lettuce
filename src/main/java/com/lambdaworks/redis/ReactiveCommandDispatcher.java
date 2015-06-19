@@ -62,6 +62,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public void complete() {
             if (completed) {
                 return;

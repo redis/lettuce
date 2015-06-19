@@ -50,6 +50,7 @@ public class HashClusterCommandTest extends HashCommandTest {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
         clusterConnection = (StatefulRedisClusterConnectionImpl) redisClusterClient.connectCluster().getStatefulConnection();
         InvocationHandler h = clusterConnection.syncInvocationHandler();

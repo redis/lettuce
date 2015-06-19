@@ -54,6 +54,7 @@ public class ListClusterCommandTest extends ListCommandTest {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
         clusterConnection = (StatefulRedisClusterConnectionImpl) redisClusterClient.connectCluster().getStatefulConnection();
         InvocationHandler h = clusterConnection.syncInvocationHandler();

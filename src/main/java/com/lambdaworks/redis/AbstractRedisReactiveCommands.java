@@ -1484,8 +1484,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<List<K>> clusterGetKeysInSlot(int slot, int count) {
-        return createObservable(() -> commandBuilder.clusterGetKeysInSlot(slot, count));
+    public Observable<K> clusterGetKeysInSlot(int slot, int count) {
+        return createDissolvingObservable(() -> commandBuilder.clusterGetKeysInSlot(slot, count));
     }
 
     @Override
@@ -1534,8 +1534,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<List<String>> clusterSlaves(String nodeId) {
-        return createObservable(() -> commandBuilder.clusterSlaves(nodeId));
+    public Observable<String> clusterSlaves(String nodeId) {
+        return createDissolvingObservable(() -> commandBuilder.clusterSlaves(nodeId));
     }
 
     @Override
