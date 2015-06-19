@@ -2,48 +2,31 @@
 
 package com.lambdaworks.redis;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.KeyValue;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.ScoredValue;
-import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import org.apache.log4j.Logger;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-public abstract class AbstractRedisClientTest {
-    public static final String host = TestSettings.host();
-    public static final int port = TestSettings.port();
-    public static final String passwd = TestSettings.password();
+import com.lambdaworks.redis.api.sync.RedisCommands;
+
+public abstract class AbstractRedisClientTest extends AbstractTest {
 
     protected static RedisClient client;
-    protected Logger log = Logger.getLogger(getClass());
     protected RedisCommands<String, String> redis;
-    protected String key = "key";
-    protected String value = "value";
 
     @BeforeClass
     public static void setupClient() {
-        client = getRedisClient();
+        client = DefaultRedisClient.get();
     }
 
-    protected static RedisClient getRedisClient() {
+    protected static RedisClient newRedisClient() {
         return new RedisClient(host, port);
     }
 
-    @AfterClass
-    public static void shutdownClient() {
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+    protected RedisCommands<String, String> connect() {
+        RedisCommands<String, String> connect = client.connect();
+        return connect;
     }
 
     @Before
@@ -54,37 +37,11 @@ public abstract class AbstractRedisClientTest {
         redis.flushdb();
     }
 
-    protected RedisCommands<String, String> connect() {
-        return client.connect();
-    }
-
     @After
     public void closeConnection() throws Exception {
-        redis.close();
-    }
-
-    public List<String> list(String... args) {
-        return Arrays.asList(args);
-    }
-
-    public List<Object> list(Object... args) {
-        return Arrays.asList(args);
-    }
-
-    public List<ScoredValue<String>> svlist(ScoredValue<String>... args) {
-        return Arrays.asList(args);
-    }
-
-    public KeyValue<String, String> kv(String key, String value) {
-        return new KeyValue<String, String>(key, value);
-    }
-
-    public ScoredValue<String> sv(double score, String value) {
-        return new ScoredValue<String>(score, value);
-    }
-
-    public Set<String> set(String... args) {
-        return new HashSet<String>(Arrays.asList(args));
+        if (redis != null) {
+            redis.close();
+        }
     }
 
     public abstract class WithPasswordRequired {
@@ -95,7 +52,7 @@ public abstract class AbstractRedisClientTest {
                 redis.configSet("requirepass", passwd);
                 redis.auth(passwd);
 
-                RedisClient client = getRedisClient();
+                RedisClient client = newRedisClient();
                 try {
                     run(client);
                 } finally {

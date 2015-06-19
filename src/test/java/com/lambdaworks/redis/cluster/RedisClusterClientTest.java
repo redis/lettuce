@@ -1,8 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -11,19 +8,16 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
@@ -31,7 +25,6 @@ import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
@@ -39,8 +32,7 @@ import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
-import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -58,12 +50,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     protected RedisClusterConnection<String, String> redissync4;
 
     protected RedisAdvancedClusterConnection<String, String> syncConnection;
-
-    protected String key = "key";
-    protected String value = "value";
-
-    @Rule
-    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
 
     @BeforeClass
     public static void setupClient() throws Exception {
@@ -119,48 +105,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterInfo() throws Exception {
-
-        RedisFuture<String> future = redis1.clusterInfo();
-
-        String status = future.get();
-
-        assertThat(status).contains("cluster_known_nodes:");
-        assertThat(status).contains("cluster_slots_fail:0");
-        assertThat(status).contains("cluster_state:");
-    }
-
-    @Test
-    public void testClusterNodes() throws Exception {
-
-        String string = redissync1.clusterNodes();
-
-        assertThat(string).contains("connected");
-        assertThat(string).contains("master");
-        assertThat(string).contains("myself");
-    }
-
-    @Test
-    public void testClusterNodesSync() throws Exception {
-
-        RedisClusterConnection<String, String> connection = clusterClient.connectCluster();
-
-        String string = connection.clusterNodes();
-        connection.close();
-
-        assertThat(string).contains("connected");
-        assertThat(string).contains("master");
-        assertThat(string).contains("myself");
-    }
-
-    @Test
-    public void testClusterSlaves() throws Exception {
-
-        RedisFuture<Long> replication = redis1.waitForReplication(1, 5);
-        assertThat(replication.get()).isGreaterThan(0L);
-    }
-
-    @Test
     public void reloadPartitions() throws Exception {
 
         assertThat(clusterClient.getPartitions()).hasSize(4);
@@ -177,11 +121,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(clusterClient.getPartitions().getPartition(2).getUri());
         assertThat(clusterClient.getPartitions().getPartition(3).getUri());
 
-    }
-
-    @Test
-    public void testAsking() throws Exception {
-        assertThat(redissync1.asking()).isEqualTo("OK");
     }
 
     @Test
@@ -245,25 +184,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterSlots() throws Exception {
-
-        List<Object> reply = redissync1.clusterSlots();
-        assertThat(reply.size()).isGreaterThan(1);
-
-        List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
-        assertThat(parse).hasSize(2);
-
-        ClusterSlotRange clusterSlotRange = parse.get(0);
-        assertThat(clusterSlotRange.getFrom()).isEqualTo(0);
-        assertThat(clusterSlotRange.getTo()).isEqualTo(11999);
-
-        assertThat(clusterSlotRange.getMaster()).isNotNull();
-        assertThat(clusterSlotRange.getSlaves()).isNotNull();
-        assertThat(clusterSlotRange.toString()).contains(ClusterSlotRange.class.getSimpleName());
-
-    }
-
-    @Test
     @SuppressWarnings({ "rawtypes" })
     public void testClusterCommandRedirection() throws Exception {
 
@@ -295,133 +215,22 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         // appropriate cluster node
         RedisFuture<String> setB = connection.set("b", "myValue1");
 
-        assertThat(setB).isInstanceOf(ClusterCommand.class);
+        assertThat(setB).isInstanceOf(AsyncCommand.class);
 
-        ClusterCommand clusterCommandB = (ClusterCommand) setB;
         setB.get();
         assertThat(setB.getError()).isNull();
-        assertThat(clusterCommandB.getExecutions()).isEqualTo(1);
         assertThat(setB.get()).isEqualTo("OK");
-        assertThat(clusterCommandB.isMoved()).isFalse();
 
         // gets redirection to node 3
         RedisFuture<String> setA = connection.set("a", "myValue1");
 
-        assertThat(setA instanceof ClusterCommand).isTrue();
+        assertThat(setA instanceof AsyncCommand).isTrue();
 
-        ClusterCommand clusterCommandA = (ClusterCommand) setA;
         setA.get();
         assertThat(setA.getError()).isNull();
-        assertThat(clusterCommandA.getExecutions()).isEqualTo(2);
-        assertThat(clusterCommandA.getExecutionLimit()).isEqualTo(5);
         assertThat(setA.get()).isEqualTo("OK");
-        assertThat(clusterCommandA.isMoved()).isFalse();
 
         connection.close();
-    }
-
-    @Test
-    public void readOnly() throws Exception {
-
-        // cluster node 3 is a slave for key "b"
-        String key = "b";
-        assertThat(SlotHash.getSlot(key)).isEqualTo(3300);
-        prepareReadonlyTest(key);
-
-        // assume cluster node 3 is a slave for the master 1
-        RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build());
-
-        assertThat(connect3.readOnly()).isEqualTo("OK");
-        waitUntilValueIsVisible(key, connect3);
-
-        String resultBViewedBySlave = connect3.get("b");
-        assertThat(resultBViewedBySlave).isEqualTo(value);
-        connect3.quit();
-
-        resultBViewedBySlave = connect3.get("b");
-        assertThat(resultBViewedBySlave).isEqualTo(value);
-
-    }
-
-    @Test
-    public void readOnlyWithReconnect() throws Exception {
-
-        // cluster node 3 is a slave for key "b"
-        String key = "b";
-        assertThat(SlotHash.getSlot(key)).isEqualTo(3300);
-        prepareReadonlyTest(key);
-
-        // assume cluster node 3 is a slave for the master 1
-        RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build());
-
-        assertThat(connect3.readOnly()).isEqualTo("OK");
-        connect3.quit();
-        waitUntilValueIsVisible(key, connect3);
-
-        String resultViewedBySlave = connect3.get("b");
-        assertThat(resultViewedBySlave).isEqualTo(value);
-
-    }
-
-    protected void waitUntilValueIsVisible(String key, RedisConnection<String, String> connection) throws InterruptedException,
-            TimeoutException {
-        WaitFor.waitOrTimeout(() -> connection.get(key) != null, timeout(seconds(5)));
-    }
-
-    protected void prepareReadonlyTest(String key) throws InterruptedException, TimeoutException,
-            java.util.concurrent.ExecutionException {
-
-        redis1.set(key, value);
-
-        String resultB = redis1.get(key).get();
-        assertThat(resultB).isEqualTo(value);
-        Thread.sleep(500); // give some time to replicate
-    }
-
-    @Test
-    public void readOnlyReadWrite() throws Exception {
-
-        // cluster node 3 is a slave for key "b"
-        String key = "b";
-        assertThat(SlotHash.getSlot(key)).isEqualTo(3300);
-        prepareReadonlyTest(key);
-
-        // assume cluster node 3 is a slave for the master 1
-        final RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build());
-
-        try {
-            connect3.get("b");
-        } catch (Exception e) {
-            assertThat(e).hasMessageContaining("MOVED");
-        }
-
-        assertThat(connect3.readOnly()).isEqualTo("OK");
-        waitUntilValueIsVisible(key, connect3);
-
-        connect3.readWrite();
-        try {
-            connect3.get("b");
-        } catch (Exception e) {
-            assertThat(e).hasMessageContaining("MOVED");
-        }
-    }
-
-    @Test
-    public void readOnlyOnCluster() throws Exception {
-
-        syncConnection.readOnly();
-        // commands are dispatched to a different connection, therefore it works for us.
-        syncConnection.set("b", "b");
-
-    }
-
-    @Test
-    public void clusterSlaves() throws Exception {
-
-        String nodeId = getNodeId(redissync1);
-        List<String> result = redissync1.clusterSlaves(nodeId);
-
-        assertThat(result.size()).isGreaterThan(0);
     }
 
     @Test(expected = RedisException.class)
@@ -535,6 +344,15 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         }
 
         syncConnection.get(key);
+    }
+
+    @Test
+    public void readOnlyOnCluster() throws Exception {
+
+        syncConnection.readOnly();
+        // commands are dispatched to a different connection, therefore it works for us.
+        syncConnection.set("b", "b");
+
     }
 
 }

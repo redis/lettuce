@@ -1,14 +1,17 @@
 package com.lambdaworks.redis.cluster.api.async;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
- * Advanced asynchronous and thread-safe cluster API.
+ * Advanced asynchronous and thread-safe Redis Cluster API.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 4.0
@@ -107,4 +110,41 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return a {@linkplain NodeSelection} matching {@code predicate}
      */
     AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic);
+
+    /**
+     * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     * 
+     * @param keys the key
+     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
+     */
+    RedisFuture<Long> del(K... keys);
+
+    /**
+     * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
+     * cluster nodes.
+     * 
+     * @param keys the key
+     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
+     */
+    RedisFuture<List<V>> mget(K... keys);
+
+    /**
+     * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
+     * cluster nodes.
+     * 
+     * @param map the map
+     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
+     */
+    RedisFuture<String> mset(Map<K, V> map);
+
+    /**
+     * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
+     * multiple calls to the particular cluster nodes.
+     * 
+     * @param map the null
+     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
+     * 
+     *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
+     */
+    RedisFuture<Boolean> msetnx(Map<K, V> map);
 }

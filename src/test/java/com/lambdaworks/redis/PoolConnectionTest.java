@@ -150,7 +150,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
     @Test
     public void testResourceCleaning() throws Exception {
 
-        RedisClient redisClient = getRedisClient();
+        RedisClient redisClient = newRedisClient();
 
         assertThat(redisClient.getChannelCount()).isEqualTo(0);
         assertThat(redisClient.getResourceCount()).isEqualTo(0);

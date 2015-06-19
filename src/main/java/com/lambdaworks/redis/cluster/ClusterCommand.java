@@ -7,7 +7,7 @@ import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
@@ -16,22 +16,17 @@ import io.netty.buffer.ByteBuf;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-class ClusterCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisCommand<K, V, T> {
+class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {
 
     private RedisChannelWriter<K, V> retry;
     private int executions;
     private int executionLimit;
-    private List<Throwable> exceptions = new ArrayList<Throwable>();
+    private boolean completed;
 
     ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
         super(command);
         this.retry = retry;
         this.executionLimit = executionLimit;
-    }
-
-    @Override
-    public CommandOutput<K, V, T> getOutput() {
-        return command.getOutput();
     }
 
     @Override
@@ -42,12 +37,13 @@ class ClusterCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisComm
             retry.write(this);
             return;
         }
-
         super.complete();
+        completed = true;
     }
 
     public boolean isMoved() {
-        if (getError() != null && getError().startsWith(CommandKeyword.MOVED.name())) {
+        if (command.getOutput() != null && command.getOutput().getError() != null
+                && command.getOutput().getError().startsWith(CommandKeyword.MOVED.name())) {
             return true;
         }
         return false;
@@ -73,11 +69,24 @@ class ClusterCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisComm
 
     @Override
     public boolean completeExceptionally(Throwable ex) {
-        return command.completeExceptionally(ex);
+        boolean result = command.completeExceptionally(ex);
+        completed = true;
+        return result;
     }
 
     @Override
     public ProtocolKeyword getType() {
         return command.getType();
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public String getError() {
+        if (command.getOutput() != null) {
+            return command.getOutput().getError();
+        }
+        return null;
     }
 }

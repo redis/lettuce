@@ -61,11 +61,23 @@ public class LettuceFutures {
      * @param cmd Command to wait for.
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
-     * @param unit Unit of time for the timeout.
      * @param <T> Result type.
      * @return True if all futures complete in time.
      */
     public static <T> T await(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
+        return await(timeout, unit, cmd);
+    }
+
+    /**
+     * Wait until futures are complete or the supplied timeout is reached.
+     *
+     * @param timeout Maximum time to wait for futures to complete.
+     * @param unit Unit of time for the timeout.
+     * @param cmd Command to wait for.
+     * @param <T> Result type.
+     * @return True if all futures complete in time.
+     */
+    public static <T> T await(long timeout, TimeUnit unit, RedisFuture<T> cmd) {
         try {
             if (!cmd.await(timeout, unit)) {
                 cmd.cancel(true);

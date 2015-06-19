@@ -2,12 +2,12 @@ package com.lambdaworks.redis.sentinel.api;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.api.rx.RedisSentinelReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 /**
- * An asynchronous thread-safe connection to a redis server. Multiple threads may share one
- * {@link StatefulRedisSentinelConnection}.
+ * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisSentinelConnection}.
  * 
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
@@ -20,16 +20,23 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnection<K, V> {
 
     /**
-     * Returns the async sentinel API.
+     * Returns the {@link RedisSentinelCommands} API for the current connection. Does not create a new connection.
+     * 
+     * @return the synchronous API for the underlying connection.
+     */
+    RedisSentinelCommands<K, V> sync();
+
+    /**
+     * Returns the {@link RedisSentinelAsyncCommands} API for the current connection. Does not create a new connection. *
      * 
      * @return the asynchronous API for the underlying connection.
      */
     RedisSentinelAsyncCommands<K, V> async();
 
     /**
-     * Returns the sync sentinel API.
-     * 
-     * @return the synchronous API for the underlying connection.
+     * Returns the {@link RedisSentinelReactiveCommands} API for the current connection. Does not create a new connection. *
+     *
+     * @return the reactive API for the underlying connection.
      */
-    RedisSentinelCommands<K, V> sync();
+    RedisSentinelReactiveCommands<K, V> reactive();
 }

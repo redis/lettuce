@@ -2,16 +2,15 @@
 
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 public class BitCommandTest extends AbstractRedisClientTest {
@@ -123,7 +122,7 @@ public class BitCommandTest extends AbstractRedisClientTest {
         Assertions.assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
     }
 
-    static class BitStringCodec extends Utf8StringCodec {
+    public static class BitStringCodec extends Utf8StringCodec {
         @Override
         public String decodeValue(ByteBuffer bytes) {
             StringBuilder bits = new StringBuilder(bytes.remaining() * 8);

@@ -8,7 +8,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -37,10 +36,10 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Before
     public void openConnection() throws Exception {
-        sentinel = sentinelClient.connectSentinelAsync();
+        super.openConnection();
 
         try {
-            sentinel.master(MASTER_ID).get();
+            sentinel.master(MASTER_ID);
         } catch (Exception e) {
             sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(3), 1, true);
         }
@@ -48,39 +47,31 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Test
     public void getMasterAddr() throws Exception {
-
-        Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
-        InetSocketAddress socketAddress = (InetSocketAddress) result.get();
+        SocketAddress result = sentinel.getMasterAddrByName(MASTER_ID);
+        InetSocketAddress socketAddress = (InetSocketAddress) result;
         assertThat(socketAddress.getHostName()).contains(TestSettings.host());
     }
 
     @Test
     public void getMasterAddrButNoMasterPresent() throws Exception {
-
-        Future<SocketAddress> result = sentinel.getMasterAddrByName("unknown");
-        InetSocketAddress socketAddress = (InetSocketAddress) result.get();
+        InetSocketAddress socketAddress = (InetSocketAddress) sentinel.getMasterAddrByName("unknown");
         assertThat(socketAddress).isNull();
     }
 
     @Test
     public void getMasterAddrByName() throws Exception {
-
-        Future<SocketAddress> result = sentinel.getMasterAddrByName(MASTER_ID);
-
-        InetSocketAddress socketAddress = (InetSocketAddress) result.get();
-
+        InetSocketAddress socketAddress = (InetSocketAddress) sentinel.getMasterAddrByName(MASTER_ID);
         assertThat(socketAddress.getPort()).isBetween(6479, 6485);
     }
 
     @Test
     public void masters() throws Exception {
 
-        Future<List<Map<String, String>>> result = sentinel.masters();
-        List<Map<String, String>> list = result.get();
+        List<Map<String, String>> result = sentinel.masters();
 
-        assertThat(list.size()).isGreaterThan(0);
+        assertThat(result.size()).isGreaterThan(0);
 
-        Map<String, String> map = list.get(0);
+        Map<String, String> map = result.get(0);
         assertThat(map.get("flags")).isNotNull();
         assertThat(map.get("config-epoch")).isNotNull();
         assertThat(map.get("port")).isNotNull();
@@ -134,10 +125,9 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void getMaster() throws Exception {
 
-        Future<Map<String, String>> result = sentinel.master(MASTER_ID);
-        Map<String, String> map = result.get();
-        assertThat(map.get("ip")).isEqualTo(hostAddr()); // !! IPv4/IPv6
-        assertThat(map).containsKey("role-reported");
+        Map<String, String> result = sentinel.master(MASTER_ID);
+        assertThat(result.get("ip")).isEqualTo(hostAddr()); // !! IPv4/IPv6
+        assertThat(result).containsKey("role-reported");
     }
 
     @Test
@@ -163,25 +153,23 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void getSlaves() throws Exception {
 
-        Future<List<Map<String, String>>> result = sentinel.slaves(MASTER_ID);
-        assertThat(result.get()).hasSize(1);
-        assertThat(result.get().get(0)).containsKey("port");
+        List<Map<String, String>> result = sentinel.slaves(MASTER_ID);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).containsKey("port");
     }
 
     @Test
     public void reset() throws Exception {
 
-        Future<Long> result = sentinel.reset("other");
-        Long val = result.get();
-        assertThat(val.intValue()).isEqualTo(0);
+        Long result = sentinel.reset("other");
+        assertThat(result.intValue()).isEqualTo(0);
     }
 
     @Test
     public void failover() throws Exception {
 
-        RedisFuture<String> mymaster = sentinel.failover("other");
         try {
-            mymaster.get();
+            sentinel.failover("other");
         } catch (Exception e) {
             assertThat(e).hasMessageContaining("ERR No such master with that name");
         }
@@ -191,28 +179,26 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     public void monitor() throws Exception {
 
         try {
-            sentinel.remove("mymaster2").get();
+            sentinel.remove("mymaster2");
         } catch (Exception e) {
         }
-        Future<String> result = sentinel.monitor("mymaster2", hostAddr(), 8989, 2);
-        String val = result.get();
-        assertThat(val).isEqualTo("OK");
+
+        String result = sentinel.monitor("mymaster2", hostAddr(), 8989, 2);
+        assertThat(result).isEqualTo("OK");
     }
 
     @Test
     public void ping() throws Exception {
 
-        Future<String> result = sentinel.ping();
-        String val = result.get();
-        assertThat(val).isEqualTo("PONG");
+        String result = sentinel.ping();
+        assertThat(result).isEqualTo("PONG");
     }
 
     @Test
     public void set() throws Exception {
 
-        Future<String> result = sentinel.set(MASTER_ID, "down-after-milliseconds", "1000");
-        String val = result.get();
-        assertThat(val).isEqualTo("OK");
+        String result = sentinel.set(MASTER_ID, "down-after-milliseconds", "1000");
+        assertThat(result).isEqualTo("OK");
     }
 
     @Test

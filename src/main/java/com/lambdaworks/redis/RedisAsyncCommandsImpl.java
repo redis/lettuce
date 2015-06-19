@@ -8,15 +8,14 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * An asynchronous thread-safe API to a redis connection.
+ * An asynchronous and thread-safe API for a Redis connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Will Glozer
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class RedisAsyncConnectionCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
-        RedisAsyncConnection<K, V>, RedisClusterAsyncConnection<K, V>, RedisAsyncCommands<K, V>,
-        RedisClusterAsyncCommands<K, V> {
+public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements RedisAsyncConnection<K, V>,
+        RedisClusterAsyncConnection<K, V>, RedisAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
     /**
      * Initialize a new instance.
@@ -25,7 +24,7 @@ public class RedisAsyncConnectionCommandsImpl<K, V> extends AbstractRedisAsyncCo
      * @param codec the codec for command encoding
      * 
      */
-    public RedisAsyncConnectionCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
+    public RedisAsyncCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
     }
 

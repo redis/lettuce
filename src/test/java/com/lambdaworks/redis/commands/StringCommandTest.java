@@ -11,17 +11,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.ListStreamingAdapter;
-import com.lambdaworks.redis.RedisException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.ListStreamingAdapter;
+import com.lambdaworks.redis.RedisException;
 
 public class StringCommandTest extends AbstractRedisClientTest {
     @Rule
@@ -68,7 +69,7 @@ public class StringCommandTest extends AbstractRedisClientTest {
         Assert.assertEquals(list("1", "2"), redis.mget("one", "two"));
     }
 
-    private void setupMget() {
+    protected void setupMget() {
         Assert.assertEquals(list((String) null), redis.mget(key));
         redis.set("one", "1");
         redis.set("two", "2");

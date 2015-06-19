@@ -7,21 +7,21 @@ import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
 import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
 import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
 
-import com.lambdaworks.redis.RedisAsyncConnectionCommandsImpl;
+import com.lambdaworks.redis.RedisAsyncCommandsImpl;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
- * An asynchronous thread-safe API to a redis connection
+ * An asynchronous and thread-safe API for a Redis pub/sub connection.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
  */
-public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncConnectionCommandsImpl<K, V> implements
-        RedisPubSubConnection<K, V>, RedisPubSubAsyncCommands<K, V> {
+public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubConnection<K, V>,
+        RedisPubSubAsyncCommands<K, V> {
 
     /**
      * Initialize a new connection.

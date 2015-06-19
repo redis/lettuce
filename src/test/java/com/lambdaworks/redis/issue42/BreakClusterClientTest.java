@@ -11,11 +11,11 @@ import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.ClusterRule;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 
 public class BreakClusterClientTest extends BreakClientBase {
     public static final String host = TestSettings.hostAddr();
@@ -25,7 +25,7 @@ public class BreakClusterClientTest extends BreakClientBase {
     public static final int port4 = 7382;
 
     private static RedisClusterClient clusterClient;
-    private RedisClusterConnection<String, String> clusterConnection;
+    private RedisClusterCommands<String, String> clusterConnection;
 
     @Rule
     public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
@@ -59,10 +59,14 @@ public class BreakClusterClientTest extends BreakClientBase {
         clusterConnection.close();
     }
 
-    /*
-     * @Test public void testStandAlone() throws Exception { testSingle(clusterConnection); }
-     * 
-     * @Test public void testLooping() throws Exception { testLoop(clusterConnection); }
-     */
+    @Test
+    public void testStandAlone() throws Exception {
+        testSingle(clusterConnection);
+    }
+
+    @Test
+    public void testLooping() throws Exception {
+        testLoop(clusterConnection);
+    }
 
 }

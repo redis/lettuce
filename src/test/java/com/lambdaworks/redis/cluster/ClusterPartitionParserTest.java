@@ -54,7 +54,6 @@ public class ClusterPartitionParserTest {
         assertThat(p3.toString()).contains(RedisClusterNode.class.getSimpleName());
         assertThat(result.toString()).contains(Partitions.class.getSimpleName());
 
-        assertThat(result.getPartitionBySlot(Integer.MAX_VALUE)).isNull();
 
     }
 

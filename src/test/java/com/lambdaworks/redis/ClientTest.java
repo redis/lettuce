@@ -14,9 +14,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -26,6 +28,7 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ClientTest extends AbstractRedisClientTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
@@ -59,6 +62,12 @@ public class ClientTest extends AbstractRedisClientTest {
     public void statefulConnectionFromAsync() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
+    }
+
+    @Test
+    public void statefulConnectionFromReactive() throws Exception {
+        RedisAsyncConnection<String, String> async = client.connectAsync();
+        assertThat(async.getStatefulConnection().reactive().getStatefulConnection()).isSameAs(async.getStatefulConnection());
     }
 
     @Test
@@ -103,12 +112,18 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test(expected = RedisConnectionException.class)
     public void pingBeforeConnectFailsWithVeryShortTimeout() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
-                .withTimeout(1, TimeUnit.NANOSECONDS).build();
+                .withTimeout(0, TimeUnit.NANOSECONDS).build();
+        RedisClient redisClient = new RedisClient(redisUri);
+        try {
 
-        client.connect(redisUri);
+            client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+            client.connect(redisUri);
+        } finally {
+            redisClient.shutdown();
+
+        }
     }
 
     /**
@@ -216,7 +231,7 @@ public class ClientTest extends AbstractRedisClientTest {
         RedisURI redisUri = getDefaultRedisURI();
 
         try {
-            RedisAsyncConnectionCommandsImpl<String, String> connection = (RedisAsyncConnectionCommandsImpl<String, String>) client
+            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
                     .connectAsync(redisUri);
             RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) connection
                     .getStatefulConnection();
@@ -459,8 +474,7 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test(timeout = 20000)
     public void reset() throws Exception {
 
-        RedisAsyncConnectionCommandsImpl<String, String> async = (RedisAsyncConnectionCommandsImpl<String, String>) client
-                .connectAsync();
+        RedisAsyncCommandsImpl<String, String> async = (RedisAsyncCommandsImpl<String, String>) client.connectAsync();
 
         async.set(key, value).get();
         async.reset();

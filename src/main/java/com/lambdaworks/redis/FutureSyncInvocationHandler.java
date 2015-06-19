@@ -19,7 +19,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
+class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
     private final Object asyncApi;

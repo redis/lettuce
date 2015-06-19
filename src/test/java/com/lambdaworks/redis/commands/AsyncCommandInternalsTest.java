@@ -10,8 +10,10 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.redis.LettuceFutures;
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisCommandTimeoutException;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
@@ -21,7 +23,6 @@ import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
@@ -50,6 +51,35 @@ public class AsyncCommandInternalsTest {
         assertThat(sut.isDone()).isFalse();
         sut.complete();
         assertThat(sut.isDone()).isTrue();
+    }
+
+    @Test
+    public void awaitAllCompleted() throws Exception {
+        sut.complete();
+        assertThat(LettuceFutures.awaitAll(5, TimeUnit.MILLISECONDS, sut)).isTrue();
+    }
+
+    @Test
+    public void awaitAll() throws Exception {
+        assertThat(LettuceFutures.awaitAll(-1, TimeUnit.NANOSECONDS, sut)).isFalse();
+    }
+
+    @Test(expected = RedisCommandTimeoutException.class)
+    public void awaitNotCompleted() throws Exception {
+        LettuceFutures.await(sut, 0, TimeUnit.NANOSECONDS);
+    }
+
+    @Test(expected = RedisException.class)
+    public void awaitWithExecutionException() throws Exception {
+        sut.completeExceptionally(new RedisException("error"));
+        LettuceFutures.await(sut, 1, TimeUnit.SECONDS);
+    }
+
+    @Test(expected = RedisException.class)
+    public void awaitAllWithExecutionException() throws Exception {
+        sut.completeExceptionally(new RedisCommandExecutionException("error"));
+
+        assertThat(LettuceFutures.awaitAll(0, TimeUnit.SECONDS, sut));
     }
 
     @Test

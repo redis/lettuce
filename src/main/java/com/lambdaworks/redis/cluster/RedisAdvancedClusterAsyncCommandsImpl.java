@@ -24,7 +24,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * Advanced asynchronous Cluster connection.
+ * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
@@ -45,13 +45,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<Long> del(K... keys) {
 
-        Map<Integer, List<K>> partitioned = Maps.newHashMap();
-        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
-        partition(partitioned, Arrays.asList(keys), Maps.newHashMap());
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
         if (partitioned.size() < 2) {
             return super.del(keys);
         }
+
+        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<Long> del = super.del(entry.getValue());
@@ -72,26 +72,17 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         });
     }
 
-    protected void partition(Map<Integer, List<K>> partitioned, Iterable<K> keys, Map<K, Integer> slots) {
-        for (K key : keys) {
-            int slot = SlotHash.getSlot(codec.encodeKey(key));
-            slots.put(key, slot);
-            List<K> list = commandPartition(partitioned, slot);
-            list.add(key);
-        }
-    }
-
     @Override
     public RedisFuture<List<V>> mget(K... keys) {
 
-        Map<Integer, List<K>> partitioned = Maps.newHashMap();
-        Map<K, Integer> slots = Maps.newHashMap();
-        Map<Integer, RedisFuture<List<V>>> executions = Maps.newHashMap();
-        partition(partitioned, Arrays.asList(keys), slots);
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
         if (partitioned.size() < 2) {
             return super.mget(keys);
         }
+
+        Map<K, Integer> slots = SlotHash.getSlots(partitioned);
+        Map<Integer, RedisFuture<List<V>>> executions = Maps.newHashMap();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<List<V>> mget = super.mget(entry.getValue());
@@ -115,14 +106,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> mset(Map<K, V> map) {
 
-        Map<Integer, List<K>> partitioned = Maps.newHashMap();
-        Map<K, Integer> slots = Maps.newHashMap();
-        Map<Integer, RedisFuture<String>> executions = Maps.newHashMap();
-        partition(partitioned, map.keySet(), slots);
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
             return super.mset(map);
         }
+
+        Map<Integer, RedisFuture<String>> executions = Maps.newHashMap();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
@@ -146,14 +136,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<Boolean> msetnx(Map<K, V> map) {
 
-        Map<Integer, List<K>> partitioned = Maps.newHashMap();
-        Map<K, Integer> slots = Maps.newHashMap();
-        Map<Integer, RedisFuture<Boolean>> executions = Maps.newHashMap();
-        partition(partitioned, map.keySet(), slots);
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
             return super.msetnx(map);
         }
+
+        Map<Integer, RedisFuture<Boolean>> executions = Maps.newHashMap();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
@@ -174,7 +163,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
             return false;
         });
-
     }
 
     private <T> T execute(Callable<T> function) {
@@ -184,13 +172,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             throw new RedisException(e);
         }
 
-    }
-
-    private List<K> commandPartition(Map<Integer, List<K>> partitioned, int slot) {
-        if (!partitioned.containsKey(slot)) {
-            partitioned.put(slot, Lists.newArrayList());
-        }
-        return partitioned.get(slot);
     }
 
     @Override

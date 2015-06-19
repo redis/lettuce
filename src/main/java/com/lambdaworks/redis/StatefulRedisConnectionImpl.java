@@ -1,5 +1,3 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
-
 package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.CommandType.AUTH;
@@ -10,24 +8,24 @@ import static com.lambdaworks.redis.protocol.CommandType.READONLY;
 import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 import static com.lambdaworks.redis.protocol.CommandType.SELECT;
 
-import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.protocol.TransactionalCommand;
 import io.netty.channel.ChannelHandler;
 
 /**
- * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
+ * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
@@ -41,7 +39,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     protected RedisCodec<K, V> codec;
     protected RedisCommands<K, V> sync;
-    protected RedisAsyncConnectionCommandsImpl<K, V> async;
+    protected RedisAsyncCommandsImpl<K, V> async;
+    protected RedisReactiveCommandsImpl<K, V> reactive;
 
     protected MultiOutput<K, V> multi;
     private char[] password;
@@ -66,28 +65,50 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return getAsyncCommands();
     }
 
-    protected RedisAsyncConnectionCommandsImpl<K, V> getAsyncCommands() {
+    protected RedisAsyncCommandsImpl<K, V> getAsyncCommands() {
         if (async == null) {
-            async = newRedisAsyncConnectionImpl();
+            async = newRedisAsyncCommandsImpl();
         }
 
         return async;
     }
 
-    protected RedisAsyncConnectionCommandsImpl<K, V> newRedisAsyncConnectionImpl() {
-        return new RedisAsyncConnectionCommandsImpl<>(this, codec);
+    /**
+     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
+     * 
+     * @return a new instance
+     */
+    protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
+        return new RedisAsyncCommandsImpl<>(this, codec);
+    }
+
+    @Override
+    public RedisReactiveCommands<K, V> reactive() {
+        return getReactiveCommands();
+    }
+
+    protected RedisReactiveCommandsImpl<K, V> getReactiveCommands() {
+        if (reactive == null) {
+            reactive = newRedisReactiveCommandsImpl();
+        }
+
+        return reactive;
+    }
+
+    /**
+     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
+     * 
+     * @return a new instance
+     */
+    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
+        return new RedisReactiveCommandsImpl<>(this, codec);
     }
 
     public RedisCommands<K, V> sync() {
         if (sync == null) {
-            sync = (RedisCommands) syncHandler(RedisCommands.class, RedisClusterCommands.class);
+            sync = syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
         }
         return sync;
-    }
-
-    protected Object syncHandler(Class... interfaces) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>(this, async());
-        return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }
 
     public static String string(double n) {
@@ -127,7 +148,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.password = cmd.getArgs().getStrings().get(0).toCharArray();
                 }
             });
@@ -135,7 +156,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.db = cmd.getArgs().getIntegers().get(0).intValue();
                 }
             });
@@ -143,7 +164,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(READONLY.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.readOnly = true;
                 }
             });
@@ -151,7 +172,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(READWRITE.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
+                if ("OK".equals(status)) {
                     this.readOnly = false;
                 }
             });
@@ -189,9 +210,9 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private <T> RedisCommand<K, V, T> attachOnComplete(RedisCommand<K, V, T> command, Consumer<T> consumer) {
 
-        if (command instanceof AsyncCommand) {
-            AsyncCommand<K, V, T> async = (AsyncCommand<K, V, T>) command;
-            async.thenAccept(consumer);
+        if (command instanceof CompleteableCommand) {
+            CompleteableCommand<T> completeable = (CompleteableCommand<T>) command;
+            completeable.onComplete(consumer);
         }
         return command;
     }

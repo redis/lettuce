@@ -4,6 +4,7 @@ import static com.lambdaworks.redis.protocol.CommandType.AUTH;
 import static com.lambdaworks.redis.protocol.CommandType.READONLY;
 import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -22,17 +23,18 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.channel.ChannelHandler;
 
 /**
- * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
+ * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
@@ -52,6 +54,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected RedisCodec<K, V> codec;
     protected RedisAdvancedClusterCommands<K, V> sync;
     protected RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
+    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     /**
      * Initialize a new connection.
@@ -68,6 +71,21 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
+    public RedisAdvancedClusterCommands<K, V> sync() {
+        if (sync == null) {
+            InvocationHandler h = syncInvocationHandler();
+            sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
+                    new Class[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
+        }
+
+        return sync;
+    }
+
+    public InvocationHandler syncInvocationHandler() {
+        return new ClusterFutureSyncInvocationHandler<>(this, async());
+    }
+
+    @Override
     public RedisAdvancedClusterAsyncCommands<K, V> async() {
         return getAsyncConnection();
     }
@@ -79,6 +97,18 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return async;
     }
 
+    @Override
+    public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
+        return getReactiveCommands();
+    }
+
+    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> getReactiveCommands() {
+        if (reactive == null) {
+            reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
+        }
+        return reactive;
+    }
+
     private RedisURI lookup(String nodeId) {
 
         for (RedisClusterNode partition : partitions) {
@@ -87,17 +117,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             }
         }
         return null;
-    }
-
-    @Override
-    public RedisAdvancedClusterCommands<K, V> sync() {
-        if (sync == null) {
-            ClusterFutureSyncInvocationHandler<K, V> h = new ClusterFutureSyncInvocationHandler<>(this, async());
-            sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                    new Class[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
-        }
-
-        return sync;
     }
 
     @Override
@@ -175,9 +194,9 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     private <T> RedisCommand<K, V, T> attachOnComplete(RedisCommand<K, V, T> command, Consumer<T> consumer) {
 
-        if (command instanceof AsyncCommand) {
-            AsyncCommand<K, V, T> async = (AsyncCommand<K, V, T>) command;
-            async.thenAccept(consumer);
+        if (command instanceof CompleteableCommand) {
+            CompleteableCommand<T> completeable = (CompleteableCommand<T>) command;
+            completeable.onComplete(consumer);
         }
         return command;
     }

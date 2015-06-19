@@ -54,7 +54,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         if (commandToSend instanceof ClusterCommand) {
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) commandToSend;
-            if (!clusterCommand.isDone() && clusterCommand.isMoved()) {
+            if (!clusterCommand.isCompleted() && clusterCommand.isMoved()) {
                 HostAndPort moveTarget = getMoveTarget(clusterCommand.getError());
 
                 RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(
@@ -83,7 +83,9 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             return channelWriter.write((C) commandToSend);
         }
 
-        return defaultWriter.write((C) commandToSend);
+        defaultWriter.write((C) commandToSend);
+
+        return command;
     }
 
     private HostAndPort getMoveTarget(String errorMessage) {

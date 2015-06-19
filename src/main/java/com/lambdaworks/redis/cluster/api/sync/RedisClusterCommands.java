@@ -7,7 +7,7 @@ import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.api.sync.*;
 
 /**
- * A complete synchronous and thread-safe cluster Redis API with 400+ Methods.
+ * A complete synchronous and thread-safe Redis Cluster API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.

@@ -80,6 +80,7 @@ public class CommandArgs<K, V> {
         }
 
         for (Map.Entry<K, V> entry : map.entrySet()) {
+            keys.add(entry.getKey());
             write(codec.encodeKey(entry.getKey()));
             write(codec.encodeValue(entry.getValue()));
         }

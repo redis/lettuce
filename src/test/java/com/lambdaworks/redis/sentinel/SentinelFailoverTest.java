@@ -32,7 +32,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
 
     @Before
     public void openConnection() throws Exception {
-        sentinel = sentinelClient.connectSentinelAsync();
+        sentinel = sentinelClient.connectSentinelAsync().getStatefulConnection().sync();
         sentinelRule.needMasterWithSlave(MASTER_ID, port(3), port(4));
     }
 
@@ -53,7 +53,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
         String tcpPort1 = connectUsingSentinelAndGetPort();
 
         sentinelRule.waitForConnectedSlaves(MASTER_ID);
-        sentinel.failover(MASTER_ID).get();
+        sentinel.failover(MASTER_ID);
 
         delay(seconds(5));
 

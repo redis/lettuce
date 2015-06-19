@@ -25,7 +25,6 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -36,17 +35,17 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 public class AdvancedClusterClientTest extends AbstractClusterTest {
 
-    private RedisAdvancedClusterAsyncCommands<String, String> connection;
+    private RedisAdvancedClusterAsyncCommands<String, String> commands;
 
     @Before
     public void before() throws Exception {
         ClusterSetup.setup2Master2Slaves(clusterRule);
-        connection = clusterClient.connectClusterAsync();
+        commands = clusterClient.connectClusterAsync();
     }
 
     @After
     public void after() throws Exception {
-        connection.close();
+        commands.close();
     }
 
     @Test
@@ -55,7 +54,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(clusterClient.getPartitions()).hasSize(4);
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterAsyncConnection<String, String> nodeConnection = connection.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncConnection<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
 
             String myid = nodeConnection.clusterMyId().get();
             assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
@@ -65,23 +64,19 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test(expected = RedisException.class)
     public void unknownNodeId() throws Exception {
 
-        connection.getConnection("unknown");
+        commands.getConnection("unknown");
     }
 
     @Test(expected = RedisException.class)
     public void invalidHost() throws Exception {
-        connection.getConnection("invalid-host", -1);
+        commands.getConnection("invalid-host", -1);
     }
 
     @Test
     public void partitions() throws Exception {
 
-        Partitions partitions = connection.getStatefulConnection().getPartitions();
+        Partitions partitions = commands.getStatefulConnection().getPartitions();
         assertThat(partitions).hasSize(4);
-
-        partitions.iterator().forEachRemaining(
-                redisClusterNode -> System.out.println(redisClusterNode.getNodeId() + ": " + redisClusterNode.getFlags() + " "
-                        + redisClusterNode.getUri()));
     }
 
     @Test
@@ -90,12 +85,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(clusterClient.getPartitions()).hasSize(4);
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterAsyncConnection<String, String> nodeConnection = connection.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncConnection<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
 
             nodeConnection.close();
 
-            RedisClusterAsyncConnection<String, String> nextConnection = connection.getConnection(redisClusterNode.getNodeId());
-            assertThat(connection).isNotSameAs(nextConnection);
+            RedisClusterAsyncConnection<String, String> nextConnection = commands.getConnection(redisClusterNode.getNodeId());
+            assertThat(commands).isNotSameAs(nextConnection);
         }
     }
 
@@ -106,12 +101,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             expectation.add(key);
-            connection.set(key, value);
+            commands.set(key, value);
         }
 
         List<String> result = new Vector<>();
 
-        CompletableFuture.allOf(connection.masters().commands().keys(result::add, "*").futures()).get();
+        CompletableFuture.allOf(commands.masters().commands().keys(result::add, "*").futures()).get();
 
         assertThat(result).hasSize(expectation.size());
 
@@ -123,18 +118,18 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void testNodeSelectionCount() throws Exception {
-        assertThat(connection.all().size()).isEqualTo(4);
-        assertThat(connection.slaves().size()).isEqualTo(2);
-        assertThat(connection.masters().size()).isEqualTo(2);
+        assertThat(commands.all().size()).isEqualTo(4);
+        assertThat(commands.slaves().size()).isEqualTo(2);
+        assertThat(commands.masters().size()).isEqualTo(2);
 
-        assertThat(connection.nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MYSELF)).size())
-                .isEqualTo(1);
+        assertThat(commands.nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MYSELF)).size()).isEqualTo(
+                1);
     }
 
     @Test
     public void testNodeSelection() throws Exception {
 
-        AsyncNodeSelection<String, String> onlyMe = connection.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
+        AsyncNodeSelection<String, String> onlyMe = commands.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
                 RedisClusterNode.NodeFlag.MYSELF));
 
         Map<RedisClusterNode, RedisAsyncCommands<String, String>> map = onlyMe.asMap();
@@ -150,11 +145,11 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testDynamicNodeSelection() throws Exception {
 
-        Partitions partitions = connection.getStatefulConnection().getPartitions();
+        Partitions partitions = commands.getStatefulConnection().getPartitions();
         partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(ImmutableSet.of()));
 
-        AsyncNodeSelection<String, String> selection = connection.nodes(redisClusterNode -> redisClusterNode.getFlags()
-                .contains(RedisClusterNode.NodeFlag.MYSELF), true);
+        AsyncNodeSelection<String, String> selection = commands.nodes(
+                redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF), true);
 
         assertThat(selection).hasSize(0);
         partitions.getPartition(0).setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
@@ -169,12 +164,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testStaticNodeSelection() throws Exception {
 
-        AsyncNodeSelection<String, String> selection = connection.nodes(redisClusterNode -> redisClusterNode.getFlags()
-                .contains(RedisClusterNode.NodeFlag.MYSELF), false);
+        AsyncNodeSelection<String, String> selection = commands.nodes(
+                redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF), false);
 
         assertThat(selection).hasSize(1);
 
-        connection.getStatefulConnection().getPartitions().getPartition(2)
+        commands.getStatefulConnection().getPartitions().getPartition(2)
                 .setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
 
         assertThat(selection).hasSize(1);
@@ -196,7 +191,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             assertThat(future.isCancelled()).isFalse();
         }
 
-        AsyncExecutions<String> kill = connection.masters().commands().scriptKill();
+        AsyncExecutions<String> kill = commands.masters().commands().scriptKill();
         CompletableFuture.allOf(kill.futures()).get();
 
         for (CompletionStage<String> execution : kill) {
@@ -212,12 +207,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testSlavesReadWrite() throws Exception {
 
-        AsyncNodeSelection<String, String> nodes = connection.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
+        AsyncNodeSelection<String, String> nodes = commands.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
                 RedisClusterNode.NodeFlag.SLAVE));
 
         assertThat(nodes.size()).isEqualTo(2);
 
-        connection.set(key, value).get();
+        commands.set(key, value).get();
         waitForReplication(key, port4);
 
         List<Throwable> t = Lists.newArrayList();
@@ -237,12 +232,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testSlavesWithReadOnly() throws Exception {
 
-        AsyncNodeSelection<String, String> nodes = connection.slaves(redisClusterNode -> redisClusterNode
+        AsyncNodeSelection<String, String> nodes = commands.slaves(redisClusterNode -> redisClusterNode
                 .is(RedisClusterNode.NodeFlag.SLAVE));
 
         assertThat(nodes.size()).isEqualTo(2);
 
-        connection.set(key, value).get();
+        commands.set(key, value).get();
         waitForReplication(key, port4);
 
         List<Throwable> t = Lists.newArrayList();
@@ -264,9 +259,16 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     protected void waitForReplication(String key, int port) throws Exception {
 
-        AsyncNodeSelection<String, String> selection = connection.slaves(redisClusterNode -> redisClusterNode.getUri()
-                .getPort() == port);
-        Wait.untilNotEquals(null, () -> selection.commands().get(key).futures()[0].get()).waitOrTimeout();
+        AsyncNodeSelection<String, String> selection = commands
+                .slaves(redisClusterNode -> redisClusterNode.getUri().getPort() == port);
+        Wait.untilNotEquals(null, () -> {
+            for (CompletableFuture<String> future : selection.commands().get(key).futures()) {
+                if (future.get() != null) {
+                    return future.get();
+                }
+            }
+            return null;
+        }).waitOrTimeout();
     }
 
     @Test
@@ -274,12 +276,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         Map<String, String> mset = prepareMset();
 
-        RedisFuture<String> result = connection.mset(mset);
+        RedisFuture<String> result = commands.mset(mset);
 
         assertThat(result.get()).isEqualTo("OK");
 
         for (String mykey : mset.keySet()) {
-            String s1 = connection.get(mykey).get();
+            String s1 = commands.get(mykey).get();
             assertThat(s1).isEqualTo("value-" + mykey);
         }
     }
@@ -298,12 +300,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         Map<String, String> mset = prepareMset();
 
-        RedisFuture<Boolean> result = connection.msetnx(mset);
+        RedisFuture<Boolean> result = commands.msetnx(mset);
 
         assertThat(result.get()).isTrue();
 
         for (String mykey : mset.keySet()) {
-            String s1 = connection.get(mykey).get();
+            String s1 = commands.get(mykey).get();
             assertThat(s1).isEqualTo("value-" + mykey);
         }
     }
@@ -320,7 +322,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             expectation.add("value-" + key);
         }
 
-        RedisFuture<List<String>> result = connection.mget(keys.toArray(new String[keys.size()]));
+        RedisFuture<List<String>> result = commands.mget(keys.toArray(new String[keys.size()]));
 
         assertThat(result.get()).hasSize(keys.size());
         assertThat(result.get()).isEqualTo(expectation);
@@ -337,12 +339,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             keys.add(key);
         }
 
-        RedisFuture<Long> result = connection.del(keys.toArray(new String[keys.size()]));
+        RedisFuture<Long> result = commands.del(keys.toArray(new String[keys.size()]));
 
         assertThat(result.get()).isEqualTo(25);
 
         for (String mykey : keys) {
-            String s1 = connection.get(mykey).get();
+            String s1 = commands.get(mykey).get();
             assertThat(s1).isNull();
         }
 
@@ -351,13 +353,13 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void testSync() throws Exception {
 
-        RedisAdvancedClusterCommands<String, String> sync = connection.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);
 
         RedisClusterCommands<String, String> node2Connection = sync.getConnection(host, port2);
         assertThat(node2Connection.get(key)).isEqualTo(value);
 
-        assertThat(sync.getStatefulConnection()).isSameAs(connection.getStatefulConnection());
+        assertThat(sync.getStatefulConnection()).isSameAs(commands.getStatefulConnection());
     }
 }
