@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -22,7 +23,6 @@ import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 
 public class SentinelCommandTest extends AbstractSentinelTest {
 

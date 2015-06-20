@@ -54,8 +54,15 @@ public class CreateAsyncApi {
     public CreateAsyncApi(String templateName) {
 
         String targetName = templateName.replace("Commands", "AsyncCommands");
+
         File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
-        String targetPackage = "com.lambdaworks.redis.api.async";
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "com.lambdaworks.redis.sentinel.api.async";
+        } else {
+            targetPackage = "com.lambdaworks.redis.api.async";
+        }
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), typeMutator());

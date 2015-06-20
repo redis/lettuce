@@ -12,12 +12,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisSentinelAsyncConnection;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 /**
  * An asynchronous and thread-safe API for a Redis Sentinel connection.

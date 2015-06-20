@@ -2,7 +2,6 @@ package com.lambdaworks.redis;
 
 import java.util.Set;
 
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisSetAsyncCommands;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 

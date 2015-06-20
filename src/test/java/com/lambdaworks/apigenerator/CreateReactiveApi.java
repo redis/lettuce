@@ -51,7 +51,13 @@ public class CreateReactiveApi {
 
         String targetName = templateName.replace("Commands", "ReactiveCommands");
         File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
-        String targetPackage = "com.lambdaworks.redis.api.rx";
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "com.lambdaworks.redis.sentinel.api.rx";
+        } else {
+            targetPackage = "com.lambdaworks.redis.api.rx";
+        }
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), null);

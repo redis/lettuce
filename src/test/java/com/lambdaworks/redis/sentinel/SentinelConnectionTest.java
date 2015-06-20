@@ -8,7 +8,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,7 +19,6 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 public class SentinelConnectionTest extends AbstractSentinelTest {

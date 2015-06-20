@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.github.javaparser.ast.body.MethodDeclaration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -43,7 +43,13 @@ public class CreateSyncApi {
 
         String targetName = templateName;
         File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
-        String targetPackage = "com.lambdaworks.redis.api.sync";
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "com.lambdaworks.redis.sentinel.api.sync";
+        } else {
+            targetPackage = "com.lambdaworks.redis.api.sync";
+        }
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), null);

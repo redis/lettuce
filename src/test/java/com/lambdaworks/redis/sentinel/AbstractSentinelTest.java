@@ -3,14 +3,13 @@ package com.lambdaworks.redis.sentinel;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.AbstractTest;
-import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
 
 public abstract class AbstractSentinelTest extends AbstractTest {
 

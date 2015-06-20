@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.api.rx;
+package com.lambdaworks.redis.sentinel.api.rx;
 
 import java.io.Closeable;
 import java.net.SocketAddress;

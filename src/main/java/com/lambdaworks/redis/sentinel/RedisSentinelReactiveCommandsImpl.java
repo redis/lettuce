@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
 import rx.Observable;
 
 import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.rx.RedisSentinelReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.RedisCommand;

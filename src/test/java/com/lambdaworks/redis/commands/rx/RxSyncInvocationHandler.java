@@ -7,9 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import rx.Observable;
 
 import com.google.common.collect.Lists;

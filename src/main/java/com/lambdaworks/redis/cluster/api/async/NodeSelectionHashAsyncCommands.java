@@ -256,8 +256,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
-            ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.

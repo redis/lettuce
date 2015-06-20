@@ -1,10 +1,10 @@
 package com.lambdaworks.redis.sentinel.api;
 
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.api.rx.RedisSentinelReactiveCommands;
-import com.lambdaworks.redis.api.sync.RedisSentinelCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 /**
  * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisSentinelConnection}.

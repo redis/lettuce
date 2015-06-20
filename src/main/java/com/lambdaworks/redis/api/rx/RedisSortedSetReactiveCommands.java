@@ -360,8 +360,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified score range.
      */
-    Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
-            long offset, long count);
+    Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -374,8 +373,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified score range.
      */
-    Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
-            long offset, long count);
+    Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
     /**
      * Determine the index of a member in a sorted set.
@@ -639,8 +637,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
-            long offset, long count);
+    Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -653,8 +650,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
-            long offset, long count);
+    Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.
