@@ -12,6 +12,7 @@ import org.apache.log4j.spi.LoggingEvent;
 public class CapturingLogAppender extends WriterAppender {
 
     private static StringWriter writer = new StringWriter();
+    private static boolean enabled = true;
 
     public CapturingLogAppender() {
         super();
@@ -27,6 +28,16 @@ public class CapturingLogAppender extends WriterAppender {
 
     @Override
     public synchronized void doAppend(LoggingEvent event) {
-        super.doAppend(event);
+        if (enabled) {
+            super.doAppend(event);
+        }
+    }
+
+    public static void disable() {
+        enabled = false;
+    }
+
+    public static void enable() {
+        enabled = true;
     }
 }
