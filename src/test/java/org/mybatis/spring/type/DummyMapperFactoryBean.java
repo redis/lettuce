@@ -26,6 +26,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
 
+  public DummyMapperFactoryBean() {
+    super();
+  }
+
+  public DummyMapperFactoryBean(Class<T> mapperInterface) {
+    super(mapperInterface);
+  }
+
   private static final Logger LOGGER = Logger.getLogger(DummyMapperFactoryBean.class);
 
   private static final AtomicInteger mapperInstanceCount = new AtomicInteger(0);
