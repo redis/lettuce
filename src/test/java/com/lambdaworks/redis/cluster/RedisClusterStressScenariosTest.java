@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.StatefulRedisConnectionImpl;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -52,10 +54,10 @@ public class RedisClusterStressScenariosTest {
 
     protected Logger log = Logger.getLogger(getClass());
 
-    protected RedisClusterAsyncConnection<String, String> redis1;
+    protected RedisClusterAsyncCommands<String, String> redis1;
 
-    protected RedisClusterConnection<String, String> redissync1;
-    protected RedisClusterConnection<String, String> redissync4;
+    protected RedisClusterCommands<String, String> redissync1;
+    protected RedisClusterCommands<String, String> redissync4;
 
     protected String key = "key";
     protected String value = "value";

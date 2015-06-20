@@ -171,7 +171,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         connect.sync().await();
 
         RedisChannelInitializer channelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
-        CommandHandler commandHandler = connect.channel().pipeline().get(CommandHandler.class);
+        CommandHandler<?, ?> commandHandler = connect.channel().pipeline().get(CommandHandler.class);
         try {
 
             channelInitializer.channelInitialized().get();

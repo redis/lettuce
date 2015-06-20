@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-class StaticNodeSelection<T, CMDType, K, V> extends AbstractNodeSelection<T, CMDType, K, V> {
+abstract class StaticNodeSelection<T, CMDType, K, V> extends AbstractNodeSelection<T, CMDType, K, V> {
 
     private final List<RedisClusterNode> redisClusterNodes;
 

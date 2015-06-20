@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-class DynamicNodeSelection<T, CMDType, K, V> extends AbstractNodeSelection<T, CMDType, K, V> {
+abstract class DynamicNodeSelection<T, CMDType, K, V> extends AbstractNodeSelection<T, CMDType, K, V> {
 
     private final Predicate<RedisClusterNode> selector;
 

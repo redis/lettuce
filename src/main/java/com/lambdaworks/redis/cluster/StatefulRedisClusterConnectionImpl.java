@@ -75,7 +75,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         if (sync == null) {
             InvocationHandler h = syncInvocationHandler();
             sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                    new Class[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
+                    new Class<?>[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
         }
 
         return sync;
@@ -241,12 +241,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                     Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
                     Object result = targetMethod.invoke(connection, args);
                     if (result instanceof StatefulRedisClusterConnection) {
-                        StatefulRedisClusterConnection connection = (StatefulRedisClusterConnection) result;
+                        StatefulRedisClusterConnection<K, V> connection = (StatefulRedisClusterConnection<K, V>) result;
                         return connection.sync();
                     }
 
                     if (result instanceof StatefulRedisConnection) {
-                        StatefulRedisConnection connection = (StatefulRedisConnection) result;
+                        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection<K, V>) result;
                         return connection.sync();
                     }
                 }

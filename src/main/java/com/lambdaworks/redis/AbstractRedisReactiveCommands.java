@@ -217,12 +217,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Void> debugSegfault() {
-        return (Observable<Void>) createObservable(commandBuilder::debugSegfault);
+        return createObservable(commandBuilder::debugSegfault);
     }
 
     @Override
     public Observable<Void> debugOom() {
-        return (Observable<Void>) createObservable(commandBuilder::debugOom);
+        return createObservable(commandBuilder::debugOom);
     }
 
     @Override
@@ -778,6 +778,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Observable<Void> shutdown(boolean save) {
         return (Observable) createObservable(() -> commandBuilder.shutdown(save));
     }

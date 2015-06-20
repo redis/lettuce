@@ -42,4 +42,9 @@ class DynamicAsyncNodeSelection<K, V, CMDType> extends DynamicNodeSelection<Redi
 
         return map;
     }
+
+    @Override
+    public CMDType commands() {
+        return null;
+    }
 }

@@ -42,4 +42,9 @@ class StaticAsyncNodeSelection<K, V, CMDType> extends StaticNodeSelection<RedisA
 
         return map;
     }
+
+    @Override
+    public CMDType commands() {
+        return null;
+    }
 }

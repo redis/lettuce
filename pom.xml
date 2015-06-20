@@ -338,7 +338,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <compilerArgument>-Xlint:all,-deprecation</compilerArgument>
+                    <compilerArgument>-Xlint:all,-deprecation,-unchecked</compilerArgument>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>false</showDeprecation>
                     <source>1.8</source>

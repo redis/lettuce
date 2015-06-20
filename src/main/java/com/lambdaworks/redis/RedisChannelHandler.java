@@ -104,7 +104,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
 
-        logger.debug("dispatching command {}",cmd);
+        logger.debug("dispatching command {}", cmd);
         if (clientOptions != null && !clientOptions.isAutoReconnect() && !active) {
             cmd.completeExceptionally(new RedisException(
                     "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));
@@ -205,7 +205,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         return timeout;
     }
 
-    protected <T> T syncHandler(Object asyncApi, Class... interfaces) {
+    protected <T> T syncHandler(Object asyncApi, Class<?>... interfaces) {
         FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>((StatefulConnection) this, asyncApi);
         return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }

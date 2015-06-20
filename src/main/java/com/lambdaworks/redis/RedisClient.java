@@ -300,7 +300,7 @@ public class RedisClient extends AbstractRedisClient {
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
-        StatefulRedisConnectionImpl connection = newStatefulRedisConnection(handler, codec);
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec);
         connectStateful(handler, connection, redisURI);
         return connection;
     }

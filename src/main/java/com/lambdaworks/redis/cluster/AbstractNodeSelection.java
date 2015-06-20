@@ -18,7 +18,7 @@ abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<
 
     protected StatefulRedisClusterConnection<K, V> globalConnection;
     private ClusterConnectionProvider.Intent intent;
-    protected ClusterDistributionChannelWriter writer;
+    protected ClusterDistributionChannelWriter<K, V> writer;
 
     public AbstractNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, ClusterConnectionProvider.Intent intent) {
         this.globalConnection = globalConnection;
@@ -61,34 +61,4 @@ abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<
         return null;
     }
 
-    /**
-     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
-     * 
-     * @return null
-     */
-    @Override
-    public T node(int index) {
-        return null;
-    }
-
-    /**
-     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
-     * 
-     * @return null
-     */
-    @Override
-    public Iterator<T> iterator() {
-
-        return null;
-    }
-
-    /**
-     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
-     * 
-     * @return null
-     */
-    @Override
-    public CMDType commands() {
-        return null;
-    }
 }

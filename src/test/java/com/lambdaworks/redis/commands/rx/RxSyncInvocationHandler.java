@@ -83,20 +83,20 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
         RxSyncInvocationHandler<K, V> handler = new RxSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
-                new Class[] { RedisCommands.class }, handler);
+                new Class<?>[] { RedisCommands.class }, handler);
     }
 
     public static <K, V> RedisCommands<K, V> sync(StatefulRedisClusterConnection<K, V> connection) {
 
         RxSyncInvocationHandler<K, V> handler = new RxSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
-                new Class[] { RedisCommands.class }, handler);
+                new Class<?>[] { RedisCommands.class }, handler);
     }
 
     public static <K, V> RedisSentinelCommands<K, V> sync(StatefulRedisSentinelConnection<K, V> connection) {
 
         RxSyncInvocationHandler<K, V> handler = new RxSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisSentinelCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
-                new Class[] { RedisSentinelCommands.class }, handler);
+                new Class<?>[] { RedisSentinelCommands.class }, handler);
     }
 }

@@ -39,7 +39,7 @@ public class AbstractTest {
     }
 
     public static KeyValue<String, String> kv(String key, String value) {
-        return new KeyValue<String, String>(key, value);
+        return new KeyValue<>(key, value);
     }
 
     public static ScoredValue<String> sv(double score, String value) {

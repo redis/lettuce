@@ -164,7 +164,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void sremNulls() throws Exception {
-        redis.srem(key, null);
+        redis.srem(key, new String[0]);
     }
 
     @Test

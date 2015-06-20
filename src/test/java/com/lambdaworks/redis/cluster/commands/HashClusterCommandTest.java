@@ -54,6 +54,7 @@ public class HashClusterCommandTest extends HashCommandTest {
     protected RedisCommands<String, String> connect() {
         clusterConnection = (StatefulRedisClusterConnectionImpl) redisClusterClient.connectCluster().getStatefulConnection();
         InvocationHandler h = clusterConnection.syncInvocationHandler();
-        return (RedisCommands) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { RedisCommands.class }, h);
+        return (RedisCommands<String, String>) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class[] { RedisCommands.class }, h);
     }
 }
