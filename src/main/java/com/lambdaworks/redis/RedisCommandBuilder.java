@@ -612,6 +612,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
+    public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
     public Command<K, V, Boolean> move(K key, int db) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(db);
         return createCommand(MOVE, new BooleanOutput<K, V>(codec), args);

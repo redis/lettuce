@@ -563,6 +563,10 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
         return dispatch(commandBuilder.mget(channel, keys));
     }
 
+    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+        return dispatch(commandBuilder.mget(channel, keys));
+    }
+
     @Override
     public RedisFuture<Boolean> move(K key, int db) {
         return dispatch(commandBuilder.move(key, db));

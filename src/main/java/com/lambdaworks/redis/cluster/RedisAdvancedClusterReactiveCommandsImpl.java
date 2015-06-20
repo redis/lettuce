@@ -16,6 +16,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -96,12 +97,21 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return map.compose(new FlattenTransform<>());
     }
 
-    static class FlattenTransform<T> implements Observable.Transformer<Iterable<T>, T> {
+    @Override
+    public Observable<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
-        @Override
-        public Observable<T> call(Observable<Iterable<T>> source) {
-            return source.flatMap(values -> Observable.from(values));
+        if (partitioned.size() < 2) {
+            return super.mget(channel, keys);
         }
+
+        List<Observable<Long>> observables = Lists.newArrayList();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            observables.add(super.mget(channel, entry.getValue()));
+        }
+
+        return Observable.merge(observables).reduce((accu, next) -> accu + next);
     }
 
     @Override
@@ -114,27 +124,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Observable<String> mset(Map<K, V> map) {
         return pipeliningWithMap(map, kvMap -> super.mset(kvMap), Observable::last);
-    }
-
-    private <T> Observable<T> pipeliningWithMap(Map<K, V> map, Function<Map<K, V>, Observable<T>> function,
-            Function<Observable<T>, Observable<T>> resultFunction) {
-
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
-
-        if (partitioned.size() < 2) {
-            return function.apply(map);
-        }
-
-        List<Observable<T>> observables = partitioned.values().stream().map(new Function<List<K>, Observable<T>>() {
-            @Override
-            public Observable<T> apply(List<K> ks) {
-                Map<K, V> op = Maps.newHashMap();
-                ks.forEach(k -> op.put(k, map.get(k)));
-                return function.apply(op);
-            }
-        }).collect(Collectors.toList());
-
-        return resultFunction.apply(Observable.merge(observables));
     }
 
     @Override
@@ -150,5 +139,31 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String host, int port) {
         return getStatefulConnection().getConnection(host, port).reactive();
+    }
+
+    static class FlattenTransform<T> implements Observable.Transformer<Iterable<T>, T> {
+
+        @Override
+        public Observable<T> call(Observable<Iterable<T>> source) {
+            return source.flatMap(values -> Observable.from(values));
+        }
+    }
+
+    private <T> Observable<T> pipeliningWithMap(Map<K, V> map, Function<Map<K, V>, Observable<T>> function,
+            Function<Observable<T>, Observable<T>> resultFunction) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
+
+        if (partitioned.size() < 2) {
+            return function.apply(map);
+        }
+
+        List<Observable<T>> observables = partitioned.values().stream().map(ks -> {
+            Map<K, V> op = Maps.newHashMap();
+            ks.forEach(k -> op.put(k, map.get(k)));
+            return function.apply(op);
+        }).collect(Collectors.toList());
+
+        return resultFunction.apply(Observable.merge(observables));
     }
 }

@@ -22,6 +22,7 @@ import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -100,6 +101,35 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             }
 
             return result;
+        });
+    }
+
+    @Override
+    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+
+        if (partitioned.size() < 2) {
+            return super.mget(channel, keys);
+        }
+
+        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            RedisFuture<Long> del = super.mget(channel, entry.getValue());
+            executions.put(entry.getKey(), del);
+        }
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            AtomicLong result = new AtomicLong();
+            for (RedisFuture<Long> longRedisFuture : executions.values()) {
+                Long value = execute(() -> longRedisFuture.get());
+
+                if (value != null) {
+                    result.getAndAdd(value);
+                }
+            }
+
+            return result.get();
         });
     }
 

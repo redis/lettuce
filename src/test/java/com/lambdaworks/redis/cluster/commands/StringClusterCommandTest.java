@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -86,10 +87,10 @@ public class StringClusterCommandTest extends StringCommandTest {
         setupMget();
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
-        Long count = redis.mget(streamingAdapter, "one");
+        Long count = redis.mget(streamingAdapter, "one", "two");
 
-        assertEquals(list("1"), streamingAdapter.getList());
+        assertEquals(new HashSet<>(list("1", "2")), new HashSet<String>(streamingAdapter.getList()));
 
-        assertEquals(1, count.intValue());
+        assertEquals(2, count.intValue());
     }
 }

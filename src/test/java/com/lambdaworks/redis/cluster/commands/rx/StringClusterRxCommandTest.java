@@ -77,9 +77,4 @@ public class StringClusterRxCommandTest extends StringCommandTest {
         Assert.assertEquals("2", redis.get("two"));
     }
 
-    @Test
-    @Ignore("fix me with #66")
-    public void mgetStreaming() throws Exception {
-        super.mgetStreaming();
-    }
 }

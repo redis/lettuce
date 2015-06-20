@@ -1,11 +1,10 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -14,10 +13,25 @@ import rx.Observable;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.rx.*;
+import com.lambdaworks.redis.api.rx.BaseRedisReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisHLLReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisHashReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisListReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisSetReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisSortedSetReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisStringReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisTransactionalReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.MultiOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
@@ -535,6 +549,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+        return createObservable(() -> commandBuilder.mget(channel, keys));
+    }
+
+    public Observable<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
         return createObservable(() -> commandBuilder.mget(channel, keys));
     }
 
