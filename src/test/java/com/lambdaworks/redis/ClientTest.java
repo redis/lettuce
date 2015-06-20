@@ -390,7 +390,7 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 50)
     public void interrupt() throws Exception {
         Thread.currentThread().interrupt();
         redis.blpop(0, key);

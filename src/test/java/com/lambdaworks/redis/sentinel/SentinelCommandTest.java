@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.sentinel;
 
+import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -10,12 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.lambdaworks.Delay;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
@@ -23,6 +24,7 @@ import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 public class SentinelCommandTest extends AbstractSentinelTest {
 
@@ -91,6 +93,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         RedisConnection<String, String> connection2 = client.connect();
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.quit();
+        Delay.delay(millis(50));
+
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.close();
         client.shutdown(0, 0, TimeUnit.SECONDS);
