@@ -260,17 +260,14 @@ public class KeyCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void scan() throws Exception {
-        RedisAsyncConnection<String, String> async = client.connectAsync();
-        async.set(key, value).get();
-        RedisFuture<KeyScanCursor<String>> future = async.scan();
+        redis.set(key, value);
 
-        KeyScanCursor<String> cursor = future.get();
+        KeyScanCursor<String> cursor = redis.scan();
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getKeys()).isEqualTo(list(key));
 
-        RedisFuture<KeyScanCursor<String>> future2 = async.scan(future.get(), ScanArgs.Builder.limit(10));
-        KeyScanCursor<String> cursor2 = future2.get();
+        KeyScanCursor<String> cursor2 = redis.scan(cursor, ScanArgs.Builder.limit(10));
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 

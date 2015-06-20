@@ -78,6 +78,12 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void testEcho() throws Exception {
+        String result = reactive.echo("echo").toBlocking().first();
+        assertThat(result).isEqualTo("echo");
+    }
+
+    @Test
     public void testMultiCancel() throws Exception {
 
         List<Object> result = Lists.newArrayList();

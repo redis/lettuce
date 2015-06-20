@@ -1,9 +1,11 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
 import org.junit.Before;
@@ -106,7 +108,6 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         assertThat(result).hasSize(RandomKeys.COUNT);
         assertThat(result).isEqualTo(RandomKeys.VALUES);
-
     }
 
     @Test
@@ -123,7 +124,28 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
             String s1 = sync.get(mykey);
             assertThat(s1).isNull();
         }
-
     }
 
+    @Test
+    public void readFromSlaves() throws Exception {
+
+        RedisClusterReactiveCommands<String, String> connection = commands.getConnection(host, port4);
+        connection.readOnly().toBlocking().first();
+        commands.set(key, value).toBlocking().first();
+        AdvancedClusterClientTest.waitForReplication(commands.getStatefulConnection().async(), key, port4);
+
+        AtomicBoolean error = new AtomicBoolean();
+        connection.get(key).doOnError(throwable -> error.set(true)).toBlocking().toFuture().get();
+
+        assertThat(error.get()).isFalse();
+
+        connection.readWrite().toBlocking().first();
+
+        try {
+            connection.get(key).doOnError(throwable -> error.set(true)).toBlocking().first();
+            fail("Missing exception");
+        } catch (Exception e) {
+            assertThat(error.get()).isTrue();
+        }
+    }
 }

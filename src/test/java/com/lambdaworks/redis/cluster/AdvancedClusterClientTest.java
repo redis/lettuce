@@ -258,6 +258,11 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     protected void waitForReplication(String key, int port) throws Exception {
+        waitForReplication(commands, key, port);
+    }
+
+    protected static void waitForReplication(RedisAdvancedClusterAsyncCommands<String, String> commands, String key, int port)
+            throws Exception {
 
         AsyncNodeSelection<String, String> selection = commands
                 .slaves(redisClusterNode -> redisClusterNode.getUri().getPort() == port);

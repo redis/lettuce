@@ -34,6 +34,7 @@ import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
  */
 public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
     private RedisPubSubReactiveCommands<String, String> pubsub;
+    private RedisPubSubReactiveCommands<String, String> pubsub2;
 
     private BlockingQueue<String> channels;
     private BlockingQueue<String> patterns;
@@ -47,6 +48,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Before
     public void openPubSubConnection() throws Exception {
         pubsub = client.connectPubSub().getStatefulConnection().reactive();
+        pubsub2 = client.connectPubSub().getStatefulConnection().reactive();
         pubsub.addListener(this);
         channels = new LinkedBlockingQueue<String>();
         patterns = new LinkedBlockingQueue<String>();
@@ -57,6 +59,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @After
     public void closePubSubConnection() throws Exception {
         pubsub.close();
+        pubsub2.close();
     }
 
     @Test
@@ -185,7 +188,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubChannels() throws Exception {
         pubsub.subscribe(channel).toBlocking().singleOrDefault(null);
-        List<String> result = redis.pubsubChannels();
+        List<String> result = pubsub2.pubsubChannels().toList().toBlocking().first();
         assertThat(result).contains(channel);
 
     }
@@ -194,7 +197,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void pubsubMultipleChannels() throws Exception {
         pubsub.subscribe(channel, "channel1", "channel3").toBlocking().singleOrDefault(null);
 
-        List<String> result = redis.pubsubChannels();
+        List<String> result = pubsub2.pubsubChannels().toList().toBlocking().first();
         assertThat(result).contains(channel, "channel1", "channel3");
 
     }
@@ -202,19 +205,20 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubChannelsWithArg() throws Exception {
         pubsub.subscribe(channel).subscribe();
-        Wait.untilTrue(() -> redis.pubsubChannels(pattern).contains(channel)).waitOrTimeout();
+        Wait.untilTrue(() -> pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s)).toBlocking().first() != null)
+                .waitOrTimeout();
 
-        List<String> result = redis.pubsubChannels(pattern);
-        assertThat(result).contains(channel);
+        String result = pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s)).toBlocking().first();
+        assertThat(result).isEqualToIgnoringCase(channel);
     }
 
     @Test
     public void pubsubNumsub() throws Exception {
 
         pubsub.subscribe(channel).subscribe();
-        Wait.untilEquals(1, () -> redis.pubsubNumsub(channel).size()).waitOrTimeout();
+        Wait.untilEquals(1, () -> pubsub2.pubsubNumsub(channel).toList().toBlocking().first().size()).waitOrTimeout();
 
-        Map<String, Long> result = redis.pubsubNumsub(channel);
+        Map<String, Long> result = pubsub2.pubsubNumsub(channel).toBlocking().first();
         assertThat(result).hasSize(1);
         assertThat(result.get(channel)).isEqualTo(1L);
     }
@@ -222,10 +226,12 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubNumpat() throws Exception {
 
+        Wait.untilEquals(0L, () -> pubsub2.pubsubNumpat().toBlocking().first()).waitOrTimeout();
+
         pubsub.psubscribe(pattern).subscribe();
         Wait.untilEquals(1L, () -> redis.pubsubNumpat()).waitOrTimeout();
 
-        Long result = redis.pubsubNumpat();
+        Long result = pubsub2.pubsubNumpat().toBlocking().first();
         assertThat(result.longValue()).isEqualTo(1L);
     }
 
@@ -277,7 +283,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         pubsub.subscribe(channel).toBlocking().singleOrDefault(null);
         assertThat(channels.take()).isEqualTo(channel);
 
-        redis.publish(channel, message);
+        pubsub2.publish(channel, message).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
     }
@@ -308,7 +314,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
 
-        redis.publish(channel, message);
+        pubsub2.publish(channel, message).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
     }
@@ -337,7 +343,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         assertThat((long) localCounts.take()).isEqualTo(1L);
 
-        redis.publish(channel, message);
+        pubsub2.publish(channel, message).subscribe();
         pubsub.punsubscribe(pattern).subscribe();
         pubsub.unsubscribe(channel).subscribe();
 
@@ -349,13 +355,13 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         pubsub.subscribe(channel).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
 
-        redis.publish(channel, message);
+        pubsub2.publish(channel, message).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
         pubsub.removeListener(this);
 
-        redis.publish(channel, message);
+        pubsub2.publish(channel, message).subscribe();
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();
         assertThat(messages.poll(10, TimeUnit.MILLISECONDS)).isNull();
     }
