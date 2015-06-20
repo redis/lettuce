@@ -17,6 +17,7 @@ import com.lambdaworks.redis.cluster.ClusterRule;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 
+@Ignore("run me manually, I'm long-running")
 public class BreakClusterClientTest extends BreakClientBase {
     public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7379;

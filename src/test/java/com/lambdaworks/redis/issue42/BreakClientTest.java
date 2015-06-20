@@ -7,8 +7,10 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore("run me manually, I'm long-running")
 public class BreakClientTest extends BreakClientBase {
 
     protected static RedisClient client = DefaultRedisClient.get();
