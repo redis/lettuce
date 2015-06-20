@@ -10,7 +10,7 @@ import com.lambdaworks.redis.ScriptOutputType;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 3.0
+ * @since 4.0
  */
 public interface RedisScriptingCommands<K, V> {
     /**

@@ -15,37 +15,34 @@ public interface RedisHLLReactiveCommands<K, V> {
 
     /**
      * Adds the specified elements to the specified HyperLogLog.
-     * 
+     *
      * @param key the key
-     * @param value the value
-     * @param moreValues more values
-     * 
+     * @param values the values
+     *
      * @return Long integer-reply specifically:
-     * 
+     *
      *         1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
      */
-    Observable<Long> pfadd(K key, V value, V... moreValues);
+    Observable<Long> pfadd(K key, V... values);
 
     /**
      * Merge N different HyperLogLogs into a single one.
-     * 
+     *
      * @param destkey the destination key
-     * @param sourcekey the source key
-     * @param moreSourceKeys more source keys
-     * 
+     * @param sourcekeys the source key
+     *
      * @return Long simple-string-reply The command just returns {@code OK}.
      */
-    Observable<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
+    Observable<Long> pfmerge(K destkey, K... sourcekeys);
 
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).
-     * 
-     * @param key the key
-     * @param moreKeys more keys
-     * 
+     *
+     * @param keys the keys
+     *
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The approximated number of unique elements observed via {@code PFADD}.
      */
-    Observable<Long> pfcount(K key, K... moreKeys);
+    Observable<Long> pfcount(K... keys);
 }

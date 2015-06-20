@@ -1,6 +1,53 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ADDSLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.AFTER;
+import static com.lambdaworks.redis.protocol.CommandKeyword.AND;
+import static com.lambdaworks.redis.protocol.CommandKeyword.BEFORE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.CHANNELS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.DELSLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ENCODING;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FLUSH;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FLUSHSLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FORCE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FORGET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.GETKEYSINSLOT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.GETNAME;
+import static com.lambdaworks.redis.protocol.CommandKeyword.HARD;
+import static com.lambdaworks.redis.protocol.CommandKeyword.IDLETIME;
+import static com.lambdaworks.redis.protocol.CommandKeyword.IMPORTING;
+import static com.lambdaworks.redis.protocol.CommandKeyword.KILL;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LEN;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LIST;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LOAD;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MEET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MIGRATING;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NO;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NODE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NODES;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NOSAVE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NOT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NUMPAT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NUMSUB;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ONE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.OR;
+import static com.lambdaworks.redis.protocol.CommandKeyword.PAUSE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.REFCOUNT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.REPLICATE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.RESETSTAT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.REWRITE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SEGFAULT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SETNAME;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SETSLOT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SOFT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.WITHSCORES;
+import static com.lambdaworks.redis.protocol.CommandKeyword.XOR;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.Date;
@@ -9,8 +56,45 @@ import java.util.Map;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.output.ArrayOutput;
+import com.lambdaworks.redis.output.BooleanListOutput;
+import com.lambdaworks.redis.output.BooleanOutput;
+import com.lambdaworks.redis.output.ByteArrayOutput;
+import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.output.DateOutput;
+import com.lambdaworks.redis.output.DoubleOutput;
+import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.KeyListOutput;
+import com.lambdaworks.redis.output.KeyOutput;
+import com.lambdaworks.redis.output.KeyScanOutput;
+import com.lambdaworks.redis.output.KeyScanStreamingOutput;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyStreamingOutput;
+import com.lambdaworks.redis.output.KeyValueOutput;
+import com.lambdaworks.redis.output.KeyValueScanStreamingOutput;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingOutput;
+import com.lambdaworks.redis.output.MapOutput;
+import com.lambdaworks.redis.output.MapScanOutput;
+import com.lambdaworks.redis.output.NestedMultiOutput;
+import com.lambdaworks.redis.output.ScoredValueListOutput;
+import com.lambdaworks.redis.output.ScoredValueScanOutput;
+import com.lambdaworks.redis.output.ScoredValueScanStreamingOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ScoredValueStreamingOutput;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.output.StringListOutput;
+import com.lambdaworks.redis.output.ValueListOutput;
+import com.lambdaworks.redis.output.ValueOutput;
+import com.lambdaworks.redis.output.ValueScanOutput;
+import com.lambdaworks.redis.output.ValueScanStreamingOutput;
+import com.lambdaworks.redis.output.ValueSetOutput;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingOutput;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * 
@@ -1505,12 +1589,28 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> pfadd(K key, V... values) {
+        assertNotEmpty(values, "values " + MUST_NOT_BE_NULL);
+        assertNoNullElements(values, "values " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
+        return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> pfcount(K key, K... moreKeys) {
         assertNotNull(key, "key " + MUST_NOT_BE_NULL);
         assertNotNull(moreKeys, "moreKeys " + MUST_NOT_BE_NULL);
         assertNoNullElements(moreKeys, "moreKeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(moreKeys);
+        return createCommand(PFCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> pfcount(K... keys) {
+        assertNotNull(keys, "keys " + MUST_NOT_BE_NULL);
+        assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(PFCOUNT, new IntegerOutput<K, V>(codec), args);
     }
 
@@ -1522,6 +1622,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         assertNoNullElements(moreSourceKeys, "moreSourceKeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKey(sourcekey).addKeys(moreSourceKeys);
+        return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Command<K, V, Long> pfmerge(K destkey, K... sourcekeys) {
+        assertNotNull(destkey, "destkey " + MUST_NOT_BE_NULL);
+        assertNotEmpty(sourcekeys, "sourcekeys " + MUST_NOT_BE_NULL);
+        assertNoNullElements(sourcekeys, "sourcekeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKeys(sourcekeys);
         return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
     }
 

@@ -9,4 +9,19 @@ public class HLLRxCommandTest extends HLLCommandTest {
     protected RedisCommands<String, String> connect() {
         return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());
     }
+
+    @Override
+    public void pfaddDeprecated() throws Exception {
+        // Not available on reactive connection
+    }
+
+    @Override
+    public void pfmergeDeprecated() throws Exception {
+        // Not available on reactive connection
+    }
+
+    @Override
+    public void pfcountDeprecated() throws Exception {
+        // Not available on reactive connection
+    }
 }

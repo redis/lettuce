@@ -1434,18 +1434,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> pfadd(K key, V value, V... moreValues) {
-        return createObservable(() -> commandBuilder.pfadd(key, value, moreValues));
+    public Observable<Long> pfadd(K key, V... values) {
+        return createObservable(() -> commandBuilder.pfadd(key, values));
     }
 
     @Override
-    public Observable<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
-        return createObservable(() -> commandBuilder.pfmerge(destkey, sourcekey, moreSourceKeys));
+    public Observable<Long> pfmerge(K destkey, K... sourcekeys) {
+        return createObservable(() -> commandBuilder.pfmerge(destkey, sourcekeys));
     }
 
     @Override
-    public Observable<Long> pfcount(K key, K... moreKeys) {
-        return createObservable(() -> commandBuilder.pfcount(key, moreKeys));
+    public Observable<Long> pfcount(K... keys) {
+        return createObservable(() -> commandBuilder.pfcount(keys));
     }
 
     @Override

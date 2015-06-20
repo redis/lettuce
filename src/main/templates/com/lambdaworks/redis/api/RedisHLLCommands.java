@@ -8,41 +8,39 @@ package com.lambdaworks.redis.api;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public interface RedisHLLConnection<K, V> {
+public interface RedisHLLCommands<K, V> {
+
     /**
      * Adds the specified elements to the specified HyperLogLog.
-     * 
+     *
      * @param key the key
-     * @param value the value
-     * @param moreValues more values
-     * 
+     * @param values the values
+     *
      * @return Long integer-reply specifically:
-     * 
+     *
      *         1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
      */
-    Long pfadd(K key, V value, V... moreValues);
+    Long pfadd(K key, V... values);
 
     /**
      * Merge N different HyperLogLogs into a single one.
-     * 
+     *
      * @param destkey the destination key
-     * @param sourcekey the source key
-     * @param moreSourceKeys more source keys
-     * 
+     * @param sourcekeys the source key
+     *
      * @return Long simple-string-reply The command just returns {@code OK}.
      */
-    Long pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
+    Long pfmerge(K destkey, K... sourcekeys);
 
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).
-     * 
-     * @param key the key
-     * @param moreKeys more keys
-     * 
+     *
+     * @param keys the keys
+     *
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The approximated number of unique elements observed via {@code PFADD}.
      */
-    Long pfcount(K key, K... moreKeys);
+    Long pfcount(K... keys);
 
 }

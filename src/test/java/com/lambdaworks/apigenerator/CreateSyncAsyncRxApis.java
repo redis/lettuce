@@ -7,7 +7,8 @@ import org.junit.runners.Suite;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ CreateAsyncApi.class, CreateSyncApi.class, CreateReactiveApi.class })
+@Suite.SuiteClasses({ CreateAsyncApi.class, CreateSyncApi.class, CreateReactiveApi.class,
+        CreateAsyncNodeSelectionClusterApi.class })
 public class CreateSyncAsyncRxApis {
 
 }
