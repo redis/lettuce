@@ -1,7 +1,9 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.PlainChannelInitializer.*;
+import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
+import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
+import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -18,6 +20,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.handler.ssl.SslProvider;
@@ -73,18 +76,17 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         @Override
         protected void initChannel(Channel channel) throws Exception {
-            SslContext sslContext;
 
             SSLParameters sslParams = new SSLParameters();
 
+            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(SslProvider.JDK);
             if (redisURI.isVerifyPeer()) {
-                sslContext = SslContext.newClientContext(SslProvider.JDK);
-                if (JavaRuntime.AT_LEAST_JDK_7) {
-                    sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-                }
+                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
             } else {
-                sslContext = SslContext.newClientContext(SslProvider.JDK, InsecureTrustManagerFactory.INSTANCE);
+                sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
+
+            SslContext sslContext = sslContextBuilder.build();
 
             SSLEngine sslEngine = sslContext.newEngine(channel.alloc(), redisURI.getHost(), redisURI.getPort());
             sslEngine.setSSLParameters(sslParams);
