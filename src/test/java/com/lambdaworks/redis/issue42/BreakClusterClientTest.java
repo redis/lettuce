@@ -5,6 +5,7 @@ import static com.google.code.tempusfugit.temporal.Timeout.*;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.category.SlowTests;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -17,7 +18,8 @@ import com.lambdaworks.redis.cluster.ClusterRule;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 
-@Ignore("run me manually, I'm long-running")
+@SlowTests
+@Ignore("Run me manually")
 public class BreakClusterClientTest extends BreakClientBase {
     public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7379;

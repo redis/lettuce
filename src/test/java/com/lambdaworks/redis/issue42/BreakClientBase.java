@@ -17,7 +17,7 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
  */
 public abstract class BreakClientBase {
 
-    public static int TIMEOUT = 5;
+    public static int TIMEOUT = 1;
 
     public static final String TEST_KEY = "taco";
     public volatile boolean sleep = false;
@@ -59,8 +59,6 @@ public abstract class BreakClientBase {
         } catch (RedisCommandTimeoutException expected) {
             log.info("got expected timeout");
         }
-
-        TimeUnit.SECONDS.sleep(5);
     }
 
     protected void populateTest(int loopFor, RedisHashCommands<String, String> target) {
@@ -84,10 +82,10 @@ public abstract class BreakClientBase {
         public String decodeValue(ByteBuffer bytes) {
 
             if (sleep) {
-                log.info("Sleeping for " + (TIMEOUT + 3) + " seconds in slowCodec");
+                log.info("Sleeping for " + (TIMEOUT + 2) + " seconds in slowCodec");
                 sleep = false;
                 try {
-                    TimeUnit.SECONDS.sleep(TIMEOUT + 3);
+                    TimeUnit.SECONDS.sleep(TIMEOUT + 2);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

@@ -2,6 +2,7 @@ package com.lambdaworks.redis.issue42;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.DefaultRedisClient;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -10,7 +11,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore("run me manually, I'm long-running")
+@SlowTests
+@Ignore("Run me manually")
 public class BreakClientTest extends BreakClientBase {
 
     protected static RedisClient client = DefaultRedisClient.get();

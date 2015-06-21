@@ -33,7 +33,6 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     @Before
     public void before() throws Exception {
-        ClusterSetup.setup2Master2Slaves(clusterRule);
         commands = clusterClient.connectClusterAsync().getStatefulConnection().reactive();
         sync = RxSyncInvocationHandler.sync(commands.getStatefulConnection());
     }

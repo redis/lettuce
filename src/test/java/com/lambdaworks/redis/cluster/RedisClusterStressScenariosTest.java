@@ -2,17 +2,12 @@ package com.lambdaworks.redis.cluster;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.Timeout.timeout;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -24,68 +19,71 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.lambdaworks.Wait;
+import com.lambdaworks.category.SlowTests;
+import com.lambdaworks.redis.AbstractTest;
+import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
-public class RedisClusterStressScenariosTest {
+@SlowTests
+public class RedisClusterStressScenariosTest extends AbstractTest {
 
     public static final String host = TestSettings.hostAddr();
-    public static final int port1 = 7379;
-    public static final int port2 = 7380;
-    public static final int port3 = 7381;
-    public static final int port4 = 7382;
 
     protected static RedisClient client;
     protected static RedisClusterClient clusterClient;
 
     protected Logger log = Logger.getLogger(getClass());
 
-    protected RedisClusterAsyncCommands<String, String> redis1;
+    protected RedisClusterAsyncCommands<String, String> redis5;
 
-    protected RedisClusterCommands<String, String> redissync1;
-    protected RedisClusterCommands<String, String> redissync4;
+    protected RedisClusterCommands<String, String> redissync5;
+    protected RedisClusterCommands<String, String> redissync6;
 
     protected String key = "key";
     protected String value = "value";
 
     @Rule
-    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
+    public ClusterRule clusterRule = new ClusterRule(clusterClient, AbstractClusterTest.port5, AbstractClusterTest.port6);
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client = new RedisClient(host, port1);
-
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
-
+        client = new RedisClient(host, AbstractClusterTest.port5);
+        clusterClient = new RedisClusterClient(
+                ImmutableList.of(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build()));
     }
 
     @AfterClass
     public static void shutdownClient() {
-
         client.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Before
     public void before() throws Exception {
 
-        redis1 = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
+        ClusterSetup.setupMasterWithSlave(clusterRule);
 
-        redissync1 = client.connect(RedisURI.Builder.redis(host, port1).build());
-        redissync4 = client.connect(RedisURI.Builder.redis(host, port4).build());
+        redis5 = client.connectAsync(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+
+        redissync5 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        redissync6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port6).build());
 
         WaitFor.waitOrTimeout(() -> {
             return clusterRule.isStable();
@@ -95,100 +93,36 @@ public class RedisClusterStressScenariosTest {
 
     @After
     public void after() throws Exception {
-        redis1.close();
+        redis5.close();
 
-        redissync1.close();
-        redissync4.close();
+        redissync5.close();
+        redissync6.close();
     }
 
     @Test
     public void testClusterFailover() throws Exception {
 
-        redissync4.clusterReplicate(getNodeId(redissync1));
+        log.info("Cluster node 5 is master");
 
-        RedisClusterNode redis1Node = getOwnPartition(redissync1);
-        RedisClusterNode redis4Node = getOwnPartition(redissync4);
+        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
 
-        if (redis1Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+        log.info("Cluster nodes seen from node 6:" + Layout.LINE_SEP + redissync6.clusterNodes());
 
-            log.info("Cluster node 1 is master");
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return getOwnPartition(redissync4).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
-                }
-            }, timeout(seconds(10)));
+        String failover = redissync6.clusterFailover(true);
+        assertThat(failover).isEqualTo("OK");
 
-            log.info("Cluster nodes seen from node 1:" + Layout.LINE_SEP + redissync1.clusterNodes());
+        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
 
-            RedisFuture<String> future = redis1.clusterFailover(false);
-            try {
-                future.get();
-            } catch (Exception e) {
-                assertThat(e)
-                        .hasMessage(
-                                "com.lambdaworks.redis.RedisCommandExecutionException: ERR You should send CLUSTER FAILOVER to a slave");
-            }
+        log.info("Cluster nodes seen from node 5 after clusterFailover:" + Layout.LINE_SEP + redissync5.clusterNodes());
+        log.info("Cluster nodes seen from node 6 after clusterFailover:" + Layout.LINE_SEP + redissync6.clusterNodes());
 
-            String failover = redissync4.clusterFailover(true);
-            assertThat(failover).isEqualTo("OK");
-            new ThreadSleep(seconds(2));
-            log.info("Cluster nodes seen from node 1 after clusterFailover:" + Layout.LINE_SEP + redissync1.clusterNodes());
-            log.info("Cluster nodes seen from node 4 after clusterFailover:" + Layout.LINE_SEP + redissync4.clusterNodes());
+        RedisClusterNode redis5Node = getOwnPartition(redissync5);
+        RedisClusterNode redis6Node = getOwnPartition(redissync6);
 
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return getOwnPartition(redissync1).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
-                }
-            }, timeout(seconds(10)));
-
-            redis1Node = getOwnPartition(redissync1);
-            redis4Node = getOwnPartition(redissync4);
-
-            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-        }
-
-        if (redis4Node.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
-
-            log.info("Cluster node 4 is master");
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return getOwnPartition(redissync1).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
-                }
-            }, timeout(seconds(10)));
-
-            log.info("Cluster nodes seen from node 1:" + Layout.LINE_SEP + redissync1.clusterNodes());
-            try {
-                redissync4.clusterFailover(false);
-            } catch (Exception e) {
-                assertThat(e).hasMessage("ERR You should send CLUSTER FAILOVER to a slave");
-            }
-
-            RedisFuture<String> failover = redis1.clusterFailover(true);
-            String result = failover.get();
-            assertThat(failover.getError()).isNull();
-            assertThat(result).isEqualTo("OK");
-
-            new ThreadSleep(seconds(2));
-            log.info("Cluster nodes seen from node 1 after clusterFailover:" + Layout.LINE_SEP + redissync1.clusterNodes());
-            log.info("Cluster nodes seen from node 4 after clusterFailover:" + Layout.LINE_SEP + redissync4.clusterNodes());
-
-            WaitFor.waitOrTimeout(new Condition() {
-                @Override
-                public boolean isSatisfied() {
-                    return getOwnPartition(redissync4).getFlags().contains(RedisClusterNode.NodeFlag.SLAVE);
-                }
-            }, timeout(seconds(10)));
-
-            redis1Node = getOwnPartition(redissync1);
-            redis4Node = getOwnPartition(redissync4);
-
-            assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-            assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-        }
+        assertThat(redis5Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+        assertThat(redis6Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
 
     }
 
@@ -212,7 +146,7 @@ public class RedisClusterStressScenariosTest {
         slotConnection.set("a", "b");
         slotConnection.close();
 
-        WaitFor.waitOrTimeout(() -> statefulSlotConnection.isClosed() && !statefulSlotConnection.isOpen(), timeout(seconds(2)));
+        WaitFor.waitOrTimeout(() -> !slotConnection.isOpen(), timeout(seconds(5)));
 
         assertThat(statefulSlotConnection.isClosed()).isTrue();
         assertThat(statefulSlotConnection.isOpen()).isFalse();

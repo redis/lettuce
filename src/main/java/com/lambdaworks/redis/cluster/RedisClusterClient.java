@@ -48,7 +48,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private List<RedisURI> initialUris = Lists.newArrayList();
 
-    private RedisClusterClient() {
+    protected RedisClusterClient() {
     }
 
     /**

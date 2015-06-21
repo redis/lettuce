@@ -97,10 +97,6 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
         return createObservable(() -> commandBuilder.ping());
     }
 
-    public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-        return connection.dispatch(new AsyncCommand<>(cmd));
-    }
-
     @Override
     public void close() {
         connection.close();

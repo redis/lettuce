@@ -69,7 +69,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     public void testCancelCommand() throws Exception {
 
         List<Object> result = Lists.newArrayList();
-        reactive.clientPause(10000).subscribe();
+        reactive.clientPause(2000).subscribe();
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
         Delay.delay(millis(500));
 
@@ -87,7 +87,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     public void testMultiCancel() throws Exception {
 
         List<Object> result = Lists.newArrayList();
-        reactive.clientPause(10000).subscribe();
+        reactive.clientPause(2000).subscribe();
 
         Observable<String> set = reactive.set(key, value);
         set.subscribe(new CompletionSubscriber(result));

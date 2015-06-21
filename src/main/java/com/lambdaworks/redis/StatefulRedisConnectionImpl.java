@@ -111,12 +111,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return sync;
     }
 
-    public static String string(double n) {
-        if (Double.isInfinite(n)) {
-            return (n > 0) ? "+inf" : "-inf";
-        }
-        return Double.toString(n);
-    }
 
     @Override
     public boolean isMulti() {

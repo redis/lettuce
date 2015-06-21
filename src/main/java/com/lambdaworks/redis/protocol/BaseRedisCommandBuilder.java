@@ -57,10 +57,4 @@ public class BaseRedisCommandBuilder<K, V> {
         }
     }
 
-    public static String string(double n) {
-        if (Double.isInfinite(n)) {
-            return (n > 0) ? "+inf" : "-inf";
-        }
-        return Double.toString(n);
-    }
 }

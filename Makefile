@@ -113,10 +113,10 @@ unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG1
-adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 myself,master - 0 0 1 connected 0-6999 7001-7999 12001
-d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 master - 0 1401604930675 0 connected 8000-11999
-94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 master - 0 1401604930675 2 connected 7000 12000 12002-16383
-7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 master - 1401604930675 1401604930575 3 connected
+c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 1434887920102 1434887920002 0 connected 12000-16383
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7379 myself,master - 0 0 1 connected 0-11999
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7382 slave c2043458aa5646cee429fdd5e3c18220dddf2ce5 1434887920102 1434887920002 2 connected
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7381 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 1434887920102 1434887920002 3 connected
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
@@ -135,10 +135,10 @@ unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG2
-adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 master - 1401604930525 1401604930354 1 connected 0-6999 7001-7999 12001
-d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 myself,master - 0 0 0 connected 8000-11999
-94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 master - 1401604930525 1401604930354 2 connected 7000 12000 12002-16383
-7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 master - 1401604930525 1401604930355 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7382 slave c2043458aa5646cee429fdd5e3c18220dddf2ce5 1434887920102 1434887920002 2 connected
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7379 master - 1434887920102 1434887920002 1 connected 0-11999
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7381 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 1434887920102 1434887920002 3 connected
+c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 myself,master - 0 0 0 connected 12000-16383
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
@@ -157,10 +157,10 @@ unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG3
-adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 master - 0 1401604930425 1 connected 0-6999 7001-7999 12001
-d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 master - 1401604930425 1401604930325 0 connected 8000-11999
-94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 myself,master - 0 0 2 connected 7000 12000 12002-16383
-7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 master - 1401604930425 1401604930325 3 connected
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7381 myself,slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 0 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7382 slave c2043458aa5646cee429fdd5e3c18220dddf2ce5 1434887920102 1434887920002 2 connected
+c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 1434887920102 1434887920002 0 connected 12000-16383
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7379 master - 1434887920102 1434887920002 1 connected 0-11999
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
@@ -179,10 +179,10 @@ unixsocketperm 777
 endef
 
 define REDIS_CLUSTER_CONFIG4
-adf7f86efa42d903bcd93c5bce72397fe52e91bb 127.0.0.1:7379 master - 0 1401604930688 1 connected 0-6999 7001-7999 12001
-d5b88e479928ebf3d4179717b28e81a0cac5f2b6 127.0.0.1:7380 master - 0 1401604930688 0 connected 8000-11999
-94fa000647d2d1957fe33acecaecec1017eee38e 127.0.0.1:7381 master - 1401604930687 1401604930574 2 connected 7000 12000 12002-16383
-7b88a83c90cabf372470b15548692dcd670d1b83 127.0.0.1:7382 myself,master - 0 0 3 connected
+c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 0 1434887920102 0 connected 12000-16383
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7381 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7382 myself,slave c2043458aa5646cee429fdd5e3c18220dddf2ce5 0 0 2 connected
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7379 master - 0 1434887920102 1 connected 0-11999
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
@@ -224,7 +224,7 @@ save ""
 requirepass foobared
 appendonly no
 cluster-enabled yes
-cluster-config-file work/redis-cluster-config6-7385.conf
+cluster-config-file work/redis-cluster-config7-7385.conf
 unixsocket $(ROOT_DIR)/work/socket-7384
 unixsocketperm 777
 endef
@@ -280,13 +280,13 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_CONFIG3" > work/redis-cluster-config3-7381.conf
 	echo "$$REDIS_CLUSTER_CONFIG4" > work/redis-cluster-config4-7382.conf
 
-	echo "$$REDIS_CLUSTER_NODE1_CONF" > work/redis-clusternode1-7379.conf && redis-server work/redis-clusternode1-7379.conf
-	echo "$$REDIS_CLUSTER_NODE2_CONF" > work/redis-clusternode2-7380.conf && redis-server work/redis-clusternode2-7380.conf
-	echo "$$REDIS_CLUSTER_NODE3_CONF" > work/redis-clusternode3-7381.conf && redis-server work/redis-clusternode3-7381.conf
-	echo "$$REDIS_CLUSTER_NODE4_CONF" > work/redis-clusternode4-7382.conf && redis-server work/redis-clusternode4-7382.conf
-	echo "$$REDIS_CLUSTER_NODE5_CONF" > work/redis-clusternode5-7383.conf && redis-server work/redis-clusternode5-7383.conf
-	echo "$$REDIS_CLUSTER_NODE6_CONF" > work/redis-clusternode6-7384.conf && redis-server work/redis-clusternode6-7384.conf
-	echo "$$REDIS_CLUSTER_NODE7_CONF" > work/redis-clusternode7-7385.conf && redis-server work/redis-clusternode7-7385.conf
+	echo "$$REDIS_CLUSTER_NODE1_CONF" > work/redis-cluster-node1-7379.conf && redis-server work/redis-cluster-node1-7379.conf
+	echo "$$REDIS_CLUSTER_NODE2_CONF" > work/redis-cluster-node2-7380.conf && redis-server work/redis-cluster-node2-7380.conf
+	echo "$$REDIS_CLUSTER_NODE3_CONF" > work/redis-cluster-node3-7381.conf && redis-server work/redis-cluster-node3-7381.conf
+	echo "$$REDIS_CLUSTER_NODE4_CONF" > work/redis-cluster-node4-7382.conf && redis-server work/redis-cluster-node4-7382.conf
+	echo "$$REDIS_CLUSTER_NODE5_CONF" > work/redis-cluster-node5-7383.conf && redis-server work/redis-cluster-node5-7383.conf
+	echo "$$REDIS_CLUSTER_NODE6_CONF" > work/redis-cluster-node6-7384.conf && redis-server work/redis-cluster-node6-7384.conf
+	echo "$$REDIS_CLUSTER_NODE7_CONF" > work/redis-cluster-node7-7385.conf && redis-server work/redis-cluster-node7-7385.conf
 	echo "$$STUNNEL_CONF" > work/stunnel.conf
 	which stunnel4 >/dev/null 2>&1 && stunnel4 work/stunnel.conf || stunnel work/stunnel.conf
 

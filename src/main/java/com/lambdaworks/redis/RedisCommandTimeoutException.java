@@ -12,15 +12,4 @@ public class RedisCommandTimeoutException extends RedisException {
         super("Command timed out");
     }
 
-    public RedisCommandTimeoutException(Throwable cause) {
-        super(cause);
-    }
-
-    public RedisCommandTimeoutException(String msg) {
-        super(msg);
-    }
-
-    public RedisCommandTimeoutException(String msg, Throwable e) {
-        super(msg, e);
-    }
 }

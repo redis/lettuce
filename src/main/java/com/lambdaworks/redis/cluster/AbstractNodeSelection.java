@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,16 +48,6 @@ abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<
     @Override
     public RedisClusterNode get(int index) {
         return nodes().get(index);
-    }
-
-    /**
-     * never invoked. The invocation is handled by the NodeSelectionInvocationHandler
-     * 
-     * @return null
-     */
-    @Override
-    public Map<RedisClusterNode, T> asMap() {
-        return null;
     }
 
 }

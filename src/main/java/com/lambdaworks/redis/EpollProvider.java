@@ -1,7 +1,10 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.lang.reflect.Constructor;
 import java.net.SocketAddress;
+import java.util.concurrent.Callable;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -55,27 +58,28 @@ class EpollProvider {
      */
     static void checkForEpollLibrary() {
 
-        if (domainSocketAddressClass == null || epollDomainSocketChannelClass == null) {
-            throw new IllegalStateException(
-                    "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
-        }
+        checkState(domainSocketAddressClass != null && epollDomainSocketChannelClass != null,
+                "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
     }
 
     static SocketAddress newSocketAddress(String socketPath) {
-
-        try {
+        return get(() -> {
             Constructor<SocketAddress> constructor = domainSocketAddressClass.getConstructor(String.class);
             return constructor.newInstance(socketPath);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     static EventLoopGroup newEventLoopGroup(int nThreads) {
 
-        try {
+        return get(() -> {
             Constructor<EventLoopGroup> constructor = epollEventLoopGroupClass.getConstructor(Integer.TYPE);
             return constructor.newInstance(nThreads);
+        });
+    }
+
+    private static <V> V get(Callable<V> supplier) {
+        try {
+            return supplier.call();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

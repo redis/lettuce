@@ -54,14 +54,6 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         return command.getArgs();
     }
 
-    public int getExecutions() {
-        return executions;
-    }
-
-    public int getExecutionLimit() {
-        return executionLimit;
-    }
-
     @Override
     public void encode(ByteBuf buf) {
         command.encode(buf);

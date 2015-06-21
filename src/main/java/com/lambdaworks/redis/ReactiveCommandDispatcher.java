@@ -22,6 +22,22 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
     private StatefulConnection<K, V> connection;
     private boolean dissolve;
 
+    /**
+     * 
+     * @param staticCommand static command
+     * @param connection the connection
+     * @param dissolve dissolve collections into particular elements
+     */
+    public ReactiveCommandDispatcher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve) {
+        this(() -> staticCommand, connection, dissolve);
+    }
+
+    /**
+     * 
+     * @param commandSupplier command supplier
+     * @param connection the connection
+     * @param dissolve dissolve collections into particular elements
+     */
     public ReactiveCommandDispatcher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection,
             boolean dissolve) {
         this.commandSupplier = commandSupplier;
@@ -32,10 +48,6 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
     @Override
     public void call(Subscriber<? super T> subscriber) {
-
-        if (subscriber.isUnsubscribed()) {
-            return;
-        }
 
         // Reuse the first command but then discard it.
         RedisCommand<K, V, T> command = this.command;

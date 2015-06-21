@@ -1433,13 +1433,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public String digest(V script) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA1");
-            md.update(codec.encodeValue(script));
-            return new String(Base16.encode(md.digest(), false));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RedisException("JVM does not support SHA1");
-        }
+        return LettuceStrings.digest(codec.encodeValue(script));
     }
 
     @Override
@@ -1592,8 +1586,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @SuppressWarnings("unchecked")
     public <T, R> R createDissolvingObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        return (R) Observable
-                .create(new ReactiveCommandDispatcher<>(() -> new Command<>(type, output, args), connection, true));
+        return (R) Observable.create(new ReactiveCommandDispatcher<K, V, T>(() -> new Command<>(type, output, args),
+                connection, true));
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

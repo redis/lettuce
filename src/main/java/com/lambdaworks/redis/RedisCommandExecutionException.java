@@ -16,7 +16,4 @@ public class RedisCommandExecutionException extends RedisException {
         super(msg, e);
     }
 
-    public RedisCommandExecutionException(Throwable cause) {
-        super(cause);
-    }
 }

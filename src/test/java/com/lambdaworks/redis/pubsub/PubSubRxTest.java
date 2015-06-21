@@ -82,6 +82,9 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         Delay.delay(millis(500));
         assertThat(channelMessages).hasSize(3);
 
+        ChannelMessage<String, String> channelMessage = channelMessages.take();
+        assertThat(channelMessage.getChannel()).isEqualTo(channel);
+        assertThat(channelMessage.getMessage()).isEqualTo(message);
     }
 
     @Test
@@ -113,6 +116,11 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         Wait.untilTrue(() -> patternMessages.size() == 3).waitOrTimeout();
         assertThat(patternMessages).hasSize(3);
+
+        PatternMessage<String, String> patternMessage = patternMessages.take();
+        assertThat(patternMessage.getChannel()).isEqualTo(channel);
+        assertThat(patternMessage.getMessage()).isEqualTo(message);
+        assertThat(patternMessage.getPattern()).isEqualTo(pattern);
     }
 
     @Test

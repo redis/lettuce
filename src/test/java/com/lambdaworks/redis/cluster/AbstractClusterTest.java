@@ -2,13 +2,14 @@ package com.lambdaworks.redis.cluster;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.AbstractTest;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -16,10 +17,19 @@ import org.junit.Rule;
 public class AbstractClusterTest extends AbstractTest {
 
     public static final String host = TestSettings.hostAddr();
+
+    // default test cluster 2 masters + 2 slaves
     public static final int port1 = 7379;
-    public static final int port2 = 7380;
-    public static final int port3 = 7381;
-    public static final int port4 = 7382;
+    public static final int port2 = port1 + 1;
+    public static final int port3 = port1 + 2;
+    public static final int port4 = port1 + 3;
+
+    // master+slave or master+master
+    public static final int port5 = port1 + 4;
+    public static final int port6 = port1 + 5;
+
+    // auth cluster
+    public static final int port7 = port1 + 6;
 
     protected static RedisClusterClient clusterClient;
 

@@ -46,6 +46,16 @@ public class RedisURIBuilderTest {
     }
 
     @Test
+    public void redisWithSSL() throws Exception {
+        RedisURI result = RedisURI.Builder.redis("localhost").withSsl(true).withStartTls(true).build();
+
+        assertThat(result.getSentinels()).isEmpty();
+        assertThat(result.getHost()).isEqualTo("localhost");
+        assertThat(result.isSsl()).isTrue();
+        assertThat(result.isStartTls()).isTrue();
+    }
+
+    @Test
     public void redisSslFromUrl() throws Exception {
         RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SECURE + "://:password@localhost/1");
 
@@ -65,6 +75,7 @@ public class RedisURIBuilderTest {
         assertThat(result.getPort()).isEqualTo(0);
         assertThat(result.getPassword()).isEqualTo("password".toCharArray());
         assertThat(result.getSentinelMasterId()).isEqualTo("master");
+        assertThat(result.toString()).contains("master");
 
         result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SENTINEL + "://password@host1:1,host2:3423,host3/1#master");
 
@@ -86,6 +97,21 @@ public class RedisURIBuilderTest {
         assertThat(sentinel3.getPort()).isEqualTo(RedisURI.DEFAULT_SENTINEL_PORT);
         assertThat(sentinel3.getHost()).isEqualTo("host3");
 
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void redisSentinelWithSSLNotPossible() throws Exception {
+        RedisURI.Builder.sentinel("a", 1, "master").withSsl(true);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void redisSentinelWithTLSNotPossible() throws Exception {
+        RedisURI.Builder.sentinel("a", 1, "master").withStartTls(true);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidScheme() throws Exception {
+        RedisURI.create("http://www.web.de");
     }
 
     @Test

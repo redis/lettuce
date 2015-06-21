@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
@@ -19,7 +19,11 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -158,16 +162,13 @@ public abstract class AbstractRedisClient {
             }
         }
 
-        if (connectionPoint == null || connectionPoint.getSocket() == null) {
-            return eventLoopGroups.get(NioEventLoopGroup.class);
-        }
-
         if (connectionPoint != null && connectionPoint.getSocket() != null) {
             checkForEpollLibrary();
             return eventLoopGroups.get(EpollProvider.epollEventLoopGroupClass);
         }
 
-        throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
+        return eventLoopGroups.get(NioEventLoopGroup.class);
+
     }
 
     private void checkForEpollLibrary() {
@@ -284,11 +285,6 @@ public abstract class AbstractRedisClient {
 
     protected int getChannelCount() {
         return channels.size();
-    }
-
-    protected static <K, V> Object syncHandler(RedisChannelHandler<K, V> connection, Class<?>... interfaceClasses) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(null, null);
-        return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaceClasses, h);
     }
 
     /**

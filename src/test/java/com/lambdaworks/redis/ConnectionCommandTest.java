@@ -211,11 +211,11 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void string() throws Exception {
+    public void testDoubleToString() throws Exception {
 
-        assertThat(BaseRedisCommandBuilder.string(1.1)).isEqualTo("1.1");
-        assertThat(BaseRedisCommandBuilder.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
-        assertThat(BaseRedisCommandBuilder.string(Double.NEGATIVE_INFINITY)).isEqualTo("-inf");
+        assertThat(LettuceStrings.string(1.1)).isEqualTo("1.1");
+        assertThat(LettuceStrings.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
+        assertThat(LettuceStrings.string(Double.NEGATIVE_INFINITY)).isEqualTo("-inf");
 
     }
 }

@@ -25,6 +25,7 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -39,7 +40,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     @Before
     public void before() throws Exception {
-        ClusterSetup.setup2Master2Slaves(clusterRule);
+        clusterClient.reloadPartitions();
         commands = clusterClient.connectClusterAsync();
     }
 
@@ -131,13 +132,15 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         AsyncNodeSelection<String, String> onlyMe = commands.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
                 RedisClusterNode.NodeFlag.MYSELF));
-
         Map<RedisClusterNode, RedisAsyncCommands<String, String>> map = onlyMe.asMap();
 
         assertThat(map).hasSize(1);
 
-        RedisClusterAsyncConnection<String, String> node = onlyMe.node(0);
+        RedisClusterAsyncCommands<String, String> node = onlyMe.node(0);
         assertThat(node).isNotNull();
+
+        RedisClusterNode redisClusterNode = onlyMe.get(0);
+        assertThat(redisClusterNode.getFlags()).contains(RedisClusterNode.NodeFlag.MYSELF);
 
         assertThat(onlyMe.iterator()).hasSize(1);
     }
@@ -158,7 +161,22 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         partitions.getPartition(1).setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
         assertThat(selection).hasSize(2);
 
-        clusterClient.reloadPartitions();
+    }
+
+    @Test
+    public void testNodeSelectionAsyncPing() throws Exception {
+
+        AsyncNodeSelection<String, String> onlyMe = commands.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
+                RedisClusterNode.NodeFlag.MYSELF));
+        Map<RedisClusterNode, RedisAsyncCommands<String, String>> map = onlyMe.asMap();
+
+        assertThat(map).hasSize(1);
+
+        AsyncExecutions<String> ping = onlyMe.commands().ping();
+        RedisClusterNode redisClusterNode = onlyMe.get(0);
+        CompletionStage<String> completionStage = ping.get(onlyMe.get(0));
+
+        assertThat(completionStage.toCompletableFuture().get()).isEqualTo("PONG");
     }
 
     @Test
@@ -183,7 +201,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         AsyncNodeSelection<String, String> masters = connection2.masters();
         CompletableFuture.allOf(masters.commands().configSet("lua-time-limit", "10").futures()).get();
         AsyncExecutions<Object> eval = masters.commands().eval("while true do end", STATUS, new String[0]);
-        assertThat(eval.nodes()).hasSize(2);
 
         for (CompletableFuture<Object> future : eval.futures()) {
 
@@ -202,6 +219,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         for (CompletableFuture<Object> future : eval.futures()) {
             assertThat(future.isDone()).isTrue();
         }
+
     }
 
     @Test

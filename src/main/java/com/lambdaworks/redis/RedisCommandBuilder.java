@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.LettuceStrings.string;
 import static com.lambdaworks.redis.protocol.CommandKeyword.ADDSLOTS;
 import static com.lambdaworks.redis.protocol.CommandKeyword.AFTER;
 import static com.lambdaworks.redis.protocol.CommandKeyword.AND;

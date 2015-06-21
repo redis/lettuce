@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
+import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
@@ -19,7 +20,6 @@ import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@SuppressWarnings("unchecked")
 public class ClusterCommandTest extends AbstractClusterTest {
 
     protected static RedisClient client;
@@ -47,7 +47,6 @@ public class ClusterCommandTest extends AbstractClusterTest {
     public void before() throws Exception {
 
         clusterRule.getClusterClient().reloadPartitions();
-        ClusterSetup.setup2Master2Slaves(clusterRule);
 
         redis1 = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
         redissync1 = client.connect(RedisURI.Builder.redis(host, port1).build());
@@ -111,6 +110,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterSlaves() throws Exception {
 
+        redissync1.set("b", value);
         RedisFuture<Long> replication = redis1.waitForReplication(1, 5);
         assertThat(replication.get()).isGreaterThan(0L);
     }

@@ -38,8 +38,6 @@ import com.lambdaworks.redis.protocol.AsyncCommand;
 @SuppressWarnings("unchecked")
 public class RedisClusterClientTest extends AbstractClusterTest {
 
-    public static final int port7 = 7385;
-
     protected static RedisClient client;
 
     protected RedisClusterAsyncConnection<String, String> redis1;
@@ -70,7 +68,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public void before() throws Exception {
 
         clusterRule.getClusterClient().reloadPartitions();
-        ClusterSetup.setup2Master2Slaves(clusterRule);
 
         redis1 = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
 
@@ -353,6 +350,13 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         // commands are dispatched to a different connection, therefore it works for us.
         syncConnection.set("b", "b");
 
+        syncConnection.getStatefulConnection().async().quit().get();
+
+        assertThat(ReflectionTestUtils.getField(syncConnection.getStatefulConnection(), "readOnly")).isEqualTo(Boolean.TRUE);
+
+        syncConnection.readWrite();
+
+        assertThat(ReflectionTestUtils.getField(syncConnection.getStatefulConnection(), "readOnly")).isEqualTo(Boolean.FALSE);
     }
 
 }

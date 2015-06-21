@@ -1,16 +1,14 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
-
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.ThreadSleep;
-import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -49,9 +47,8 @@ public class ClusterSetup {
         RedisClusterAsyncCommands<String, String> node2 = connection.getConnection(AbstractClusterTest.host,
                 AbstractClusterTest.port2);
         node2.clusterAddSlots(AbstractClusterTest.createSlots(12000, 16384)).get();
-        WaitFor.waitOrTimeout(() -> {
-            return clusterRule.isStable();
-        }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
+
+        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
         clusterRule.getClusterClient().reloadPartitions();
 
         connection.getConnection(AbstractClusterTest.host, AbstractClusterTest.port3).clusterReplicate(
@@ -59,17 +56,100 @@ public class ClusterSetup {
         connection.getConnection(AbstractClusterTest.host, AbstractClusterTest.port4).clusterReplicate(
                 AbstractClusterTest.clusterClient.getPartitions().getPartitionBySlot(12002).getNodeId());
 
-        WaitFor.waitOrTimeout(
+        Wait.untilEquals(
+                2L,
                 () -> {
-
                     clusterRule.getClusterClient().reloadPartitions();
 
-                    return clusterRule.getClusterClient().getPartitions().getPartitions().stream()
-                            .filter(redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.SLAVE))
-                            .count() == 2;
-                }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
+                    return partitionStream(clusterRule).filter(
+                            redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)).count();
+                }).waitOrTimeout();
 
         connection.close();
+    }
+
+    /**
+     * Setup a cluster consisting of two members (see {@link AbstractClusterTest#port5} to {@link AbstractClusterTest#port6}).
+     * Two masters (0-11999 and 12000-16383)
+     *
+     * @param clusterRule
+     * @throws InterruptedException
+     * @throws ExecutionException
+     * @throws TimeoutException
+     */
+    public static void setup2Masters(ClusterRule clusterRule) throws InterruptedException, ExecutionException, TimeoutException {
+
+        clusterRule.clusterReset();
+        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port5);
+        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port6);
+
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
+
+        RedisClusterAsyncCommands<String, String> node1 = connection.getConnection(AbstractClusterTest.host,
+                AbstractClusterTest.port5);
+        node1.clusterAddSlots(AbstractClusterTest.createSlots(0, 12000)).get();
+
+        RedisClusterAsyncCommands<String, String> node2 = connection.getConnection(AbstractClusterTest.host,
+                AbstractClusterTest.port6);
+        node2.clusterAddSlots(AbstractClusterTest.createSlots(12000, 16384)).get();
+
+        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
+
+        Wait.untilEquals(
+                2L,
+                () -> {
+                    clusterRule.getClusterClient().reloadPartitions();
+
+                    return partitionStream(clusterRule).filter(
+                            redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
+                }).waitOrTimeout();
+
+        connection.close();
+    }
+
+    /**
+     * Setup a cluster consisting of two members (see {@link AbstractClusterTest#port5} to {@link AbstractClusterTest#port6}).
+     * One master (0-16383) and one slave.
+     *
+     * @param clusterRule
+     * @throws InterruptedException
+     * @throws ExecutionException
+     * @throws TimeoutException
+     */
+    public static void setupMasterWithSlave(ClusterRule clusterRule) throws InterruptedException, ExecutionException,
+            TimeoutException {
+
+        clusterRule.clusterReset();
+        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port5);
+        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port6);
+
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
+        StatefulRedisClusterConnection<String, String> statefulConnection = connection.getStatefulConnection();
+
+        RedisClusterCommands<String, String> node1 = statefulConnection.getConnection(AbstractClusterTest.host,
+                AbstractClusterTest.port5).sync();
+        node1.clusterAddSlots(AbstractClusterTest.createSlots(0, 16384));
+
+        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
+
+        connection.getConnection(AbstractClusterTest.host, AbstractClusterTest.port6).clusterReplicate(node1.clusterMyId())
+                .get();
+
+        clusterRule.getClusterClient().reloadPartitions();
+
+        Wait.untilEquals(
+                1L,
+                () -> {
+                    clusterRule.getClusterClient().reloadPartitions();
+                    return partitionStream(clusterRule).filter(
+                            redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
+                }).waitOrTimeout();
+
+        connection.close();
+    }
+
+    protected static Stream<RedisClusterNode> partitionStream(ClusterRule clusterRule) {
+        return clusterRule.getClusterClient().getPartitions().getPartitions().stream();
     }
 
     private static boolean is2Masters2Slaves(ClusterRule clusterRule) {
