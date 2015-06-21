@@ -217,7 +217,8 @@ public class SentinelRule implements TestRule {
 
         Map<Integer, RedisCommands<String, String>> connections = Maps.newHashMap();
         for (int redisPort : redisPorts) {
-            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build()));
+            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build())
+                    .sync());
         }
 
         try {
@@ -285,7 +286,8 @@ public class SentinelRule implements TestRule {
         log.info("[Sentinel] Create a master with slaves on ports " + Arrays.toString(redisPorts));
         Map<Integer, RedisCommands<String, String>> connections = Maps.newHashMap();
         for (int redisPort : redisPorts) {
-            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build()));
+            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build())
+                    .sync());
         }
 
         for (RedisCommands<String, String> commands : connections.values()) {

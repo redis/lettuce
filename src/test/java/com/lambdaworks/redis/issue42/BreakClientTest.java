@@ -22,7 +22,7 @@ public class BreakClientTest extends BreakClientBase {
     @Before
     public void setUp() throws Exception {
         client.setDefaultTimeout(TIMEOUT, TimeUnit.SECONDS);
-        redis = client.connect(this.slowCodec);
+        redis = client.connect(this.slowCodec).sync();
         redis.flushall();
         redis.flushdb();
     }

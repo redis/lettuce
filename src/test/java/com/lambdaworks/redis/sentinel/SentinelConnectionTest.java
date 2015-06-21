@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,10 +17,14 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 public class SentinelConnectionTest extends AbstractSentinelTest {
 
+    private StatefulRedisSentinelConnection<String, String> connection;
     private RedisSentinelAsyncCommands<String, String> sentinelAsync;
 
     @BeforeClass
@@ -32,8 +34,9 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @Before
     public void openConnection() throws Exception {
-        sentinel = sentinelClient.connectSentinelAsync().getStatefulConnection().sync();
-        sentinelAsync = sentinel.getStatefulConnection().async();
+        connection = sentinelClient.connectSentinel();
+        sentinel = connection.sync();
+        sentinelAsync = connection.async();
     }
 
     @Test
@@ -106,6 +109,35 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         Delay.delay(seconds(1));
         assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
+    }
 
+    @Test
+    public void connectToOneNode() throws Exception {
+        RedisSentinelCommands<String, String> connection = sentinelClient.connectSentinel(
+                RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
+        assertThat(connection.ping()).isEqualTo("PONG");
+        connection.close();
+    }
+
+    @Test
+    public void deprecatedConnectToOneNode() throws Exception {
+        RedisSentinelAsyncCommands<String, String> connection = sentinelClient.connectSentinelAsync(RedisURI.Builder.sentinel(
+                TestSettings.host(), MASTER_ID).build());
+        assertThat(connection.ping().get()).isEqualTo("PONG");
+        connection.close();
+    }
+
+    @Test
+    public void connectWithByteCodec() throws Exception {
+        RedisSentinelCommands<byte[], byte[]> connection = sentinelClient.connectSentinel(new ByteArrayCodec()).sync();
+        assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
+        connection.close();
+    }
+
+    @Test
+    public void deprecatedConnectWithByteCodec() throws Exception {
+        RedisSentinelAsyncCommands<byte[], byte[]> connection = sentinelClient.connectSentinelAsync(new ByteArrayCodec());
+        assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
+        connection.close();
     }
 }

@@ -1,32 +1,46 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
-import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
-import org.junit.*;
-import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ClusterCommandTest extends AbstractClusterTest {
 
     protected static RedisClient client;
 
-    protected RedisClusterAsyncConnection<String, String> redis1;
+    protected StatefulRedisConnection<String, String> connection;
 
-    protected RedisClusterCommands<String, String> redissync1;
+    protected RedisClusterAsyncConnection<String, String> async;
+
+    protected RedisClusterCommands<String, String> sync;
 
     @BeforeClass
     public static void setupClient() throws Exception {
@@ -48,16 +62,15 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
         clusterRule.getClusterClient().reloadPartitions();
 
-        redis1 = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
-        redissync1 = client.connect(RedisURI.Builder.redis(host, port1).build());
+        connection = client.connect(RedisURI.Builder.redis(host, port1).build());
+        sync = connection.sync();
+        async = connection.async();
 
     }
 
     @After
     public void after() throws Exception {
-        redis1.close();
-
-        redissync1.close();
+        connection.close();
     }
 
     @Test
@@ -75,7 +88,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterInfo() throws Exception {
 
-        RedisFuture<String> future = redis1.clusterInfo();
+        RedisFuture<String> future = async.clusterInfo();
 
         String status = future.get();
 
@@ -87,7 +100,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterNodes() throws Exception {
 
-        String string = redissync1.clusterNodes();
+        String string = sync.clusterNodes();
 
         assertThat(string).contains("connected");
         assertThat(string).contains("master");
@@ -110,14 +123,14 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterSlaves() throws Exception {
 
-        redissync1.set("b", value);
-        RedisFuture<Long> replication = redis1.waitForReplication(1, 5);
+        sync.set("b", value);
+        RedisFuture<Long> replication = async.waitForReplication(1, 5);
         assertThat(replication.get()).isGreaterThan(0L);
     }
 
     @Test
     public void testAsking() throws Exception {
-        assertThat(redissync1.asking()).isEqualTo("OK");
+        assertThat(sync.asking()).isEqualTo("OK");
     }
 
     @Test
@@ -144,7 +157,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterSlots() throws Exception {
 
-        List<Object> reply = redissync1.clusterSlots();
+        List<Object> reply = sync.clusterSlots();
         assertThat(reply.size()).isGreaterThan(1);
 
         List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
@@ -169,7 +182,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
         prepareReadonlyTest(key);
 
         // assume cluster node 3 is a slave for the master 1
-        RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build());
+        RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build()).sync();
 
         assertThat(connect3.readOnly()).isEqualTo("OK");
         waitUntilValueIsVisible(key, connect3);
@@ -192,7 +205,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
         prepareReadonlyTest(key);
 
         // assume cluster node 3 is a slave for the master 1
-        RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build());
+        RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build()).sync();
 
         assertThat(connect3.readOnly()).isEqualTo("OK");
         connect3.quit();
@@ -211,9 +224,9 @@ public class ClusterCommandTest extends AbstractClusterTest {
     protected void prepareReadonlyTest(String key) throws InterruptedException, TimeoutException,
             java.util.concurrent.ExecutionException {
 
-        redis1.set(key, value);
+        async.set(key, value);
 
-        String resultB = redis1.get(key).get();
+        String resultB = async.get(key).get();
         assertThat(resultB).isEqualTo(value);
         Thread.sleep(500); // give some time to replicate
     }
@@ -227,7 +240,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
         prepareReadonlyTest(key);
 
         // assume cluster node 3 is a slave for the master 1
-        final RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build());
+        final RedisConnection<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, port3).build()).sync();
 
         try {
             connect3.get("b");
@@ -249,8 +262,8 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @Test
     public void clusterSlaves() throws Exception {
 
-        String nodeId = getNodeId(redissync1);
-        List<String> result = redissync1.clusterSlaves(nodeId);
+        String nodeId = getNodeId(sync);
+        List<String> result = sync.clusterSlaves(nodeId);
 
         assertThat(result.size()).isGreaterThan(0);
     }

@@ -290,7 +290,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
         redis.set(key, value);
         client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-        RedisConnection<String, String> connection = client.connect();
+        RedisConnection<String, String> connection = client.connect().sync();
 
         try {
             String result = connection.get(key);

@@ -40,7 +40,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     public void watch() throws Exception {
         Assertions.assertThat(redis.watch(key)).isEqualTo("OK");
 
-        RedisConnection<String, String> redis2 = client.connect();
+        RedisConnection<String, String> redis2 = client.connect().sync();
         redis2.set(key, value + "X");
         redis2.close();
 

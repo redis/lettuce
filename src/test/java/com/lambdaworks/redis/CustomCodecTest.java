@@ -21,7 +21,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 public class CustomCodecTest extends AbstractRedisClientTest {
     @Test
     public void test() throws Exception {
-        RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec());
+        RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec()).sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -29,7 +29,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
     @Test
     public void testByteCodec() throws Exception {
-        RedisConnection<byte[], byte[]> connection = client.connect(new ByteArrayCodec());
+        RedisConnection<byte[], byte[]> connection = client.connect(new ByteArrayCodec()).sync();
         String value = "üöäü+#";
         connection.set(key.getBytes(), value.getBytes());
         assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());

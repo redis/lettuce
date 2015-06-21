@@ -121,10 +121,34 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
+     * Connect to a Redis Cluster that treats keys and values as UTF-8 strings.
+     * 
+     * @return A new stateful Redis Cluster connection.
+     */
+    public StatefulRedisClusterConnection<String, String> connect() {
+        return connect(newStringStringCodec());
+    }
+
+    /**
+     * Connect to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
+     * 
+     * @param codec Use this codec to encode/decode keys and values.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return A new stateful Redis Cluster connection.
+     */
+    @SuppressWarnings("unchecked")
+    public <K, V> StatefulRedisClusterConnection<K, V> connect(RedisCodec<K, V> codec) {
+        return connectClusterImpl(codec, getSocketAddressSupplier());
+    }
+
+    /**
      * Open a new synchronous connection to the redis cluster that treats keys and values as UTF-8 strings.
      * 
      * @return A new connection.
+     * @deprecated Use {@code connect().sync()}
      */
+    @Deprecated
     public RedisAdvancedClusterCommands<String, String> connectCluster() {
         return connectCluster(newStringStringCodec());
     }
@@ -137,8 +161,10 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return A new connection.
+     * @deprecated @deprecated Use {@code connect(codec).sync()}
      */
     @SuppressWarnings("unchecked")
+    @Deprecated
     public <K, V> RedisAdvancedClusterCommands<K, V> connectCluster(RedisCodec<K, V> codec) {
         return connectClusterImpl(codec, getSocketAddressSupplier()).sync();
     }
@@ -147,7 +173,9 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Creates a connection to the redis cluster.
      * 
      * @return A new connection.
+     * @deprecated Use {@code connect().async()}
      */
+    @Deprecated
     public RedisAdvancedClusterAsyncCommands<String, String> connectClusterAsync() {
         return connectClusterImpl(newStringStringCodec(), getSocketAddressSupplier()).async();
     }
@@ -159,7 +187,9 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return A new connection.
+     * @deprecated @deprecated Use {@code connect(codec).sync()}
      */
+    @Deprecated
     public <K, V> RedisAdvancedClusterAsyncCommands<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
         return connectClusterImpl(codec, getSocketAddressSupplier()).async();
     }
@@ -195,10 +225,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         return connection;
-    }
-
-    <K, V> StatefulRedisClusterConnection<K, V> connectClusterImpl(RedisCodec<K, V> codec) {
-        return connectClusterImpl(codec, getSocketAddressSupplier());
     }
 
     /**
@@ -261,7 +287,12 @@ public class RedisClusterClient extends AbstractRedisClient {
         this.partitions = loadedPartitions;
     }
 
-    protected Partitions getPartitions() {
+    /**
+     * Retrieve the cluster view. Partitions are shared amongst all connections opened by this client instance.
+     * 
+     * @return the partitions.
+     */
+    public Partitions getPartitions() {
         if (partitions == null) {
             initializePartitions();
         }

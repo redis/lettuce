@@ -8,6 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -52,7 +54,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
     protected Logger log = Logger.getLogger(getClass());
 
-    protected RedisClusterAsyncCommands<String, String> redis5;
+    protected StatefulRedisConnection<String, String> redis5;
+    protected StatefulRedisConnection<String, String> redis6;
 
     protected RedisClusterCommands<String, String> redissync5;
     protected RedisClusterCommands<String, String> redissync6;
@@ -80,10 +83,11 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
         ClusterSetup.setupMasterWithSlave(clusterRule);
 
-        redis5 = client.connectAsync(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        redis5 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        redis6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port6).build());
 
-        redissync5 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
-        redissync6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port6).build());
+        redissync5 = redis5.sync();
+        redissync6 = redis6.sync();
 
         WaitFor.waitOrTimeout(() -> {
             return clusterRule.isStable();

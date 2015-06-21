@@ -43,7 +43,7 @@ public class MyExtendedRedisClientTest {
 
     @Test
     public void testPubsub() throws Exception {
-        RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub();
+        RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
         assertThat(connection).isInstanceOf(RedisPubSubAsyncCommandsImpl.class);
         assertThat(connection.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
         connection.set("key", "value").get();

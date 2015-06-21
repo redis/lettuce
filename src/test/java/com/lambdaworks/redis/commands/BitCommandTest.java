@@ -23,7 +23,7 @@ public class BitCommandTest extends AbstractRedisClientTest {
     }
 
     protected void connectBitString() {
-        bitstring = client.connect(new BitStringCodec());
+        bitstring = client.connect(new BitStringCodec()).sync();
     }
 
     @Override

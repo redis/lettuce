@@ -40,7 +40,10 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     protected static RedisClient client;
 
-    protected RedisClusterAsyncConnection<String, String> redis1;
+    protected StatefulRedisConnection<String, String> redis1;
+    protected StatefulRedisConnection<String, String> redis2;
+    protected StatefulRedisConnection<String, String> redis3;
+    protected StatefulRedisConnection<String, String> redis4;
 
     protected RedisClusterConnection<String, String> redissync1;
     protected RedisClusterConnection<String, String> redissync2;
@@ -69,12 +72,15 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         clusterRule.getClusterClient().reloadPartitions();
 
-        redis1 = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
+        redis1 = client.connect(RedisURI.Builder.redis(host, port1).build());
+        redis2 = client.connect(RedisURI.Builder.redis(host, port2).build());
+        redis3 = client.connect(RedisURI.Builder.redis(host, port3).build());
+        redis4 = client.connect(RedisURI.Builder.redis(host, port4).build());
 
-        redissync1 = client.connect(RedisURI.Builder.redis(host, port1).build());
-        redissync2 = client.connect(RedisURI.Builder.redis(host, port2).build());
-        redissync3 = client.connect(RedisURI.Builder.redis(host, port3).build());
-        redissync4 = client.connect(RedisURI.Builder.redis(host, port4).build());
+        redissync1 = redis1.sync();
+        redissync2 = redis2.sync();
+        redissync3 = redis3.sync();
+        redissync4 = redis4.sync();
 
         syncConnection = clusterClient.connectCluster();
     }
@@ -126,11 +132,11 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 3)
         SlotHash.getSlot("a".getBytes()); // 15495 -> Node 2
 
-        RedisFuture<String> result = redis1.set("b", "value");
+        RedisFuture<String> result = redis1.async().set("b", "value");
         assertThat(result.getError()).isEqualTo(null);
         assertThat(redissync1.set("b", "value")).isEqualTo("OK");
 
-        RedisFuture<String> resultMoved = redis1.set("a", "value");
+        RedisFuture<String> resultMoved = redis1.async().set("a", "value");
         try {
             resultMoved.get();
         } catch (Exception e) {

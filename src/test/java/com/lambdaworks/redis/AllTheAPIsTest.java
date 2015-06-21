@@ -37,58 +37,93 @@ public class AllTheAPIsTest {
 
     @Test
     public void standaloneAsync() throws Exception {
-        redisClient.connectAsync().close();
+        redisClient.connect().async().close();
     }
 
     @Test
     public void standaloneReactive() throws Exception {
-        redisClient.connectAsync().getStatefulConnection().reactive().close();
+        redisClient.connect().reactive().close();
     }
 
     @Test
     public void standaloneStateful() throws Exception {
+        redisClient.connect().close();
+    }
+
+    @Test
+    public void deprecatedStandaloneAsync() throws Exception {
+        redisClient.connectAsync().close();
+    }
+
+    @Test
+    public void deprecatedStandaloneReactive() throws Exception {
+        redisClient.connectAsync().getStatefulConnection().reactive().close();
+    }
+
+    @Test
+    public void deprecatedStandaloneStateful() throws Exception {
         redisClient.connectAsync().getStatefulConnection().close();
     }
 
     // PubSub
     @Test
     public void pubsubSync() throws Exception {
-        redisClient.connectPubSub().getStatefulConnection().sync().close();
+        redisClient.connectPubSub().close();
     }
 
     @Test
     public void pubsubAsync() throws Exception {
-        redisClient.connectPubSub().getStatefulConnection().async().close();
+        redisClient.connectPubSub().close();
     }
 
     @Test
     public void pubsubReactive() throws Exception {
-        redisClient.connectPubSub().getStatefulConnection().reactive().close();
+        redisClient.connectPubSub().close();
     }
 
     @Test
     public void pubsubStateful() throws Exception {
-        redisClient.connectPubSub().getStatefulConnection().close();
+        redisClient.connectPubSub().close();
     }
 
     // Sentinel
     @Test
     public void sentinelSync() throws Exception {
-        redisClient.connectSentinelAsync().getStatefulConnection().sync().close();
+        redisClient.connectSentinel().sync().close();
     }
 
     @Test
     public void sentinelAsync() throws Exception {
-        redisClient.connectSentinelAsync().getStatefulConnection().async().close();
+        redisClient.connectSentinel().async().close();
     }
 
     @Test
     public void sentinelReactive() throws Exception {
-        redisClient.connectSentinelAsync().getStatefulConnection().reactive().close();
+        redisClient.connectSentinel().reactive().close();
     }
 
     @Test
     public void sentinelStateful() throws Exception {
+        redisClient.connectSentinel().close();
+    }
+
+    @Test
+    public void deprecatedSentinelSync() throws Exception {
+        redisClient.connectSentinelAsync().getStatefulConnection().sync().close();
+    }
+
+    @Test
+    public void deprecatedSentinelAsync() throws Exception {
+        redisClient.connectSentinelAsync().getStatefulConnection().async().close();
+    }
+
+    @Test
+    public void deprecatedSentinelReactive() throws Exception {
+        redisClient.connectSentinelAsync().getStatefulConnection().reactive().close();
+    }
+
+    @Test
+    public void deprecatedSentinelStateful() throws Exception {
         redisClient.connectSentinelAsync().getStatefulConnection().close();
     }
 
@@ -106,21 +141,41 @@ public class AllTheAPIsTest {
     // Cluster
     @Test
     public void clusterSync() throws Exception {
-        clusterClient.connectCluster().getStatefulConnection().sync().close();
+        clusterClient.connect().sync().close();
     }
 
     @Test
     public void clusterAsync() throws Exception {
-        clusterClient.connectCluster().getStatefulConnection().async().close();
+        clusterClient.connect().async().close();
     }
 
     @Test
     public void clusterReactive() throws Exception {
-        clusterClient.connectCluster().getStatefulConnection().reactive().close();
+        clusterClient.connect().reactive().close();
     }
 
     @Test
     public void clusterStateful() throws Exception {
+        clusterClient.connect().close();
+    }
+
+    @Test
+    public void deprecatedClusterSync() throws Exception {
+        clusterClient.connectCluster().getStatefulConnection().sync().close();
+    }
+
+    @Test
+    public void deprecatedClusterAsync() throws Exception {
+        clusterClient.connectCluster().getStatefulConnection().async().close();
+    }
+
+    @Test
+    public void deprecatedClusterReactive() throws Exception {
+        clusterClient.connectCluster().getStatefulConnection().reactive().close();
+    }
+
+    @Test
+    public void deprecatedClusterStateful() throws Exception {
         clusterClient.connectCluster().getStatefulConnection().close();
     }
 
@@ -151,14 +206,18 @@ public class AllTheAPIsTest {
 
     @Test
     public void advancedClusterStateful() throws Exception {
+        clusterClient.connect().close();
+    }
+
+    @Test
+    public void deprecatedAvancedClusterStateful() throws Exception {
         clusterClient.connectCluster().getStatefulConnection().close();
     }
 
     // Cluster node selection
     @Test
     public void nodeSelectionClusterAsync() throws Exception {
-        StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connectCluster()
-                .getStatefulConnection();
+        StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect();
         AsyncNodeSelection<String, String> masters = statefulConnection.async().masters();
         statefulConnection.close();
     }

@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,8 +48,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
     @Before
     public void openPubSubConnection() throws Exception {
-        pubsub = client.connectPubSub().getStatefulConnection().reactive();
-        pubsub2 = client.connectPubSub().getStatefulConnection().reactive();
+        pubsub = client.connectPubSub().reactive();
+        pubsub2 = client.connectPubSub().reactive();
         pubsub.addListener(this);
         channels = new LinkedBlockingQueue<String>();
         patterns = new LinkedBlockingQueue<String>();
@@ -276,7 +277,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         RedisClient redisClient = new RedisClient(host, port);
 
-        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub();
+        RedisPubSubCommands<String, String> connection = redisClient.connectPubSub().sync();
 
         redisClient.shutdown(0, 0, TimeUnit.SECONDS);
 

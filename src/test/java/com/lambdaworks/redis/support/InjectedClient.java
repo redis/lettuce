@@ -6,7 +6,9 @@ import javax.inject.Inject;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -24,11 +26,11 @@ public class InjectedClient {
     @PersonDB
     public RedisClient qualifiedRedisClient;
 
-    private RedisConnection<String, String> connection;
+    private RedisCommands<String, String> connection;
 
     @PostConstruct
     public void postConstruct() {
-        connection = redisClient.connect();
+        connection = redisClient.connect().sync();
     }
 
     public void pingRedis() {

@@ -36,7 +36,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
     @Before
     public void openPubSubConnection() throws Exception {
-        pubsub = client.connectPubSub();
+        pubsub = client.connectPubSub().async();
         pubsub.addListener(this);
         channels = new LinkedBlockingQueue<String>();
         patterns = new LinkedBlockingQueue<String>();
@@ -54,7 +54,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub();
+                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
 
@@ -69,7 +69,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
-                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub();
+                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
                 connection.quit().get();
@@ -222,7 +222,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
         RedisClient redisClient = new RedisClient(host, port);
 
-        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub();
+        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub().async();
 
         redisClient.shutdown();
 

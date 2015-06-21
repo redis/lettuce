@@ -73,7 +73,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void clientKillExtended() throws Exception {
 
-        RedisConnection<String, String> connection2 = client.connect();
+        RedisConnection<String, String> connection2 = client.connect().sync();
         connection2.clientSetname("killme");
 
         Pattern p = Pattern.compile("^.*addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);

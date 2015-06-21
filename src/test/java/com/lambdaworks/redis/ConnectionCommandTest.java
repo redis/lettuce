@@ -27,7 +27,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         new WithPasswordRequired() {
             @Override
             public void run(RedisClient client) {
-                RedisConnection<String, String> connection = client.connect();
+                RedisConnection<String, String> connection = client.connect().sync();
                 try {
                     connection.ping();
                     fail("Server doesn't require authentication");
@@ -39,7 +39,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
 
                 RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
                 RedisClient redisClient = new RedisClient(redisURI);
-                RedisConnection<String, String> authConnection = redisClient.connect();
+                RedisConnection<String, String> authConnection = redisClient.connect().sync();
                 authConnection.ping();
                 authConnection.close();
                 redisClient.shutdown();
@@ -79,7 +79,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         new WithPasswordRequired() {
             @Override
             public void run(RedisClient client) {
-                RedisConnection<String, String> connection = client.connect();
+                RedisConnection<String, String> connection = client.connect().sync();
                 assertThat(connection.auth(passwd)).isEqualTo("OK");
                 assertThat(connection.set(key, value)).isEqualTo("OK");
                 connection.quit();

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class SslTest {
     public void regularSsl() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        RedisConnection<String, String> connection = redisClient.connect(redisUri);
+        RedisConnection<String, String> connection = redisClient.connect(redisUri).sync();
         connection.set("key", "value");
         assertThat(connection.get("key")).isEqualTo("value");
         connection.close();
@@ -51,7 +52,7 @@ public class SslTest {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
         redisClient.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
 
-        RedisConnection<String, String> connection = redisClient.connect(redisUri);
+        RedisConnection<String, String> connection = redisClient.connect(redisUri).sync();
         connection.set("key", "value");
         assertThat(connection.get("key")).isEqualTo("value");
 
@@ -62,7 +63,7 @@ public class SslTest {
     public void regularSslWithReconnect() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        RedisConnection<String, String> connection = redisClient.connect(redisUri);
+        RedisConnection<String, String> connection = redisClient.connect(redisUri).sync();
         connection.set("key", "value");
         connection.quit();
         assertThat(connection.get("key")).isEqualTo("value");
@@ -74,7 +75,7 @@ public class SslTest {
 
         RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
 
-        RedisConnection<String, String> connection = redisClient.connect(redisUri);
+        RedisConnection<String, String> connection = redisClient.connect(redisUri).sync();
 
     }
 
@@ -82,18 +83,18 @@ public class SslTest {
     public void pubSubSsl() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisUri);
+        RedisPubSubCommands<String, String> connection = redisClient.connectPubSub(redisUri).sync();
         connection.subscribe("c1");
         connection.subscribe("c2");
         Thread.sleep(100);
 
-        RedisPubSubAsyncCommands<String, String> connection2 = redisClient.connectPubSub(redisUri);
+        RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(redisUri).sync();
 
-        assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
+        assertThat(connection2.pubsubChannels()).contains("c1", "c2");
         connection.quit();
         Thread.sleep(200);
 
-        assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
+        assertThat(connection2.pubsubChannels()).contains("c1", "c2");
 
         connection.close();
         connection2.close();
@@ -104,12 +105,12 @@ public class SslTest {
 
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisUri);
-        connection.subscribe("c1");
-        connection.subscribe("c2");
+        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisUri).async();
+        connection.subscribe("c1").get();
+        connection.subscribe("c2").get();
         Thread.sleep(100);
 
-        RedisPubSubAsyncCommands<String, String> connection2 = redisClient.connectPubSub(redisUri);
+        RedisPubSubAsyncCommands<String, String> connection2 = redisClient.connectPubSub(redisUri).async();
         assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
 
         redisUri.setVerifyPeer(true);

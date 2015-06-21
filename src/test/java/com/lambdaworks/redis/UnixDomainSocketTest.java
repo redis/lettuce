@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.sentinel.SentinelRule;
 import org.apache.log4j.Logger;
 import org.junit.*;
@@ -42,7 +43,6 @@ public class UnixDomainSocketTest {
         sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
-
     @Test
     public void standalone_Linux_x86_64_socket() throws Exception {
 
@@ -52,9 +52,9 @@ public class UnixDomainSocketTest {
 
         RedisClient redisClient = new RedisClient(redisURI);
 
-        RedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
 
-        someRedisAction(connection);
+        someRedisAction(connection.sync());
         connection.close();
 
         redisClient.shutdown();
@@ -86,9 +86,9 @@ public class UnixDomainSocketTest {
 
         RedisClient redisClient = new RedisClient(uri);
 
-        RedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
 
-        someRedisAction(connection);
+        someRedisAction(connection.sync());
 
         connection.close();
 

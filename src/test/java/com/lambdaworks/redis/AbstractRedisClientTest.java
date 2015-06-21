@@ -25,7 +25,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     }
 
     protected RedisCommands<String, String> connect() {
-        RedisCommands<String, String> connect = client.connect();
+        RedisCommands<String, String> connect = client.connect().sync();
         return connect;
     }
 

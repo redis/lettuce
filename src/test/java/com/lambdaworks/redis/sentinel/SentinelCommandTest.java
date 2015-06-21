@@ -90,7 +90,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
         sentinelConnection.close();
 
-        RedisConnection<String, String> connection2 = client.connect();
+        RedisConnection<String, String> connection2 = client.connect().sync();
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.quit();
         Delay.delay(millis(50));
@@ -207,14 +207,14 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Test
     public void connectToRedisUsingSentinel() throws Exception {
-        RedisConnection<String, String> connect = sentinelClient.connect();
+        RedisConnection<String, String> connect = sentinelClient.connect().sync();
         connect.ping();
         connect.close();
     }
 
     @Test
     public void connectToRedisUsingSentinelWithReconnect() throws Exception {
-        RedisConnection<String, String> connect = sentinelClient.connect();
+        RedisConnection<String, String> connect = sentinelClient.connect().sync();
         connect.ping();
         connect.quit();
         connect.ping();

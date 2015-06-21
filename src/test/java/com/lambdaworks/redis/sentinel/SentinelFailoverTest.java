@@ -39,7 +39,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
     @Test
     public void connectToRedisUsingSentinel() throws Exception {
 
-        RedisCommands<String, String> connect = sentinelClient.connect();
+        RedisCommands<String, String> connect = sentinelClient.connect().sync();
         assertThat(connect.ping()).isEqualToIgnoringCase("PONG");
 
         connect.close();
@@ -65,7 +65,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
     }
 
     protected String connectUsingSentinelAndGetPort() {
-        RedisCommands<String, String> connectAfterFailover = sentinelClient.connect();
+        RedisCommands<String, String> connectAfterFailover = sentinelClient.connect().sync();
         String tcpPort2 = getTcpPort(connectAfterFailover);
         connectAfterFailover.close();
         return tcpPort2;
