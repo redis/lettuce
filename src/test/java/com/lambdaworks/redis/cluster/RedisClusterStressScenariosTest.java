@@ -84,7 +84,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         ClusterSetup.setupMasterWithSlave(clusterRule);
 
         redis5 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
-        redis6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port6).build());
+        redis6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
 
         redissync5 = redis5.sync();
         redissync6 = redis6.sync();

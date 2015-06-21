@@ -19,6 +19,8 @@ import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
+import com.lambdaworks.category.SlowTests;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
