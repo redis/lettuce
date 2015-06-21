@@ -12,7 +12,7 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 
 /**
- * Parser for node information output (CLUSTER NODES).
+ * Parser for node information output of {@code CLUSTER NODES} and {@code CLUSTER SLAVES}.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0

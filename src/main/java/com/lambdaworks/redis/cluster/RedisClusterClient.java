@@ -7,6 +7,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -33,8 +35,51 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection
- * provided they avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
+ * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection. The
+ * cluster client handles command routing based on the first key of the command and maintains a view on the cluster that is
+ * available when calling the {@link #getPartitions()} method.
+ *
+ * <p>
+ * Connections to the cluster members are opened on the first access to the cluster node and managed by the
+ * {@link StatefulRedisClusterConnection}. You should not use transactional commands on cluster connections since {@code MULTI},
+ * {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node.
+ * </p>
+ * <p>
+ * The Redis cluster client provides a {@link RedisAdvancedClusterCommands sync}, {@link RedisAdvancedClusterAsyncCommands
+ * async} and {@link com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands reactive} API.
+ * </p>
+ *
+ * <p>
+ * Connections to particular nodes can be obtained by {@link StatefulRedisClusterConnection#getConnection(String)} providing the
+ * node id or {@link StatefulRedisClusterConnection#getConnection(String, int)} by host and port.
+ * </p>
+ *
+ * <p>
+ * <a href="http://redis.io/topics/cluster-spec#multiple-keys-operations">Multiple keys operations</a> have to operate on a key
+ * that hashes to the same slot. Following commands do not need to follow that rule since they are pipelined according its hash
+ * value to multiple nodes in parallel:
+ * </p>
+ * <ul>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#del(Object[]) DEL}</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#mget(Object[]) MGET}</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#mget(ValueStreamingChannel, Object[]) MGET with streaming}</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#mset(Map) MSET}</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#msetnx(Map) MSETNX}</li>
+ * </ul>
+ *
+ * <p>
+ * Cluster commands can be issued to multiple hosts in parallel by using the
+ * {@link com.lambdaworks.redis.cluster.api.NodeSelection} API. A set of nodes is selected using a
+ * {@link java.util.function.Predicate} and commands can be issued to the node selection
+ * 
+ * <code><pre>
+   AsyncExecutions<String> ping = commands.masters().commands().ping();
+   Collection<RedisClusterNode> nodes = ping.nodes();
+   nodes.stream().forEach(redisClusterNode -> ping.get(redisClusterNode));
+ * </pre></code>
+ * </p>
+ *
+ *
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0

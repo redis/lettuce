@@ -136,7 +136,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return
+     * @return List of slaves
      */
     Observable<String> clusterSlaves(String nodeId);
 

@@ -125,7 +125,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return
+     * @return List of slaves
      */
     List<String> clusterSlaves(String nodeId);
 

@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

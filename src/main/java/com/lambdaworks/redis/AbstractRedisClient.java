@@ -3,7 +3,6 @@ package com.lambdaworks.redis;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
-import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +36,11 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
+ * Abstract class to build clients based on netty and the Redis protocol semantics.
+ *
+ * The base provides plain/SSL TCP and Unix Domain Socket connections. Connections are built and initialized by
+ * {@link ConnectionBuilder} and {@link RedisChannelInitializer}.
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */

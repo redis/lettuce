@@ -71,7 +71,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     /**
      * Update partitions and clear slot cache.
      * 
-     * @param partitions
+     * @param partitions list of new partitions
      */
     public void reload(List<RedisClusterNode> partitions) {
         this.partitions.clear();

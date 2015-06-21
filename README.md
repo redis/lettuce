@@ -4,9 +4,9 @@ lettuce - A scalable Java Redis client
 
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
-Lettuce is a scalable thread-safe Redis client providing both synchronous and
-asynchronous connections. Multiple threads may share one connection provided
-they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
+Lettuce is a scalable thread-safe Redis client providing synchronous,
+asynchronous and reactive APIs. Multiple threads may share one connection if they avoid blocking and transactional
+operations such as `BLPOP` and  `MULTI`/`EXEC`.
 Multiple connections are efficiently managed by the excellent netty NIO
 framework. Support for advanced Redis features such as Sentinel, Cluster and Redis data models
 is included.
@@ -21,7 +21,7 @@ This version of lettuce has been tested against Redis and 3.0.
 * [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
 * [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
-* multiple [Connection Interfaces](https://github.com/mp911de/lettuce/wiki/Connection-Interfaces)
+* multiple [Command Interfaces](https://github.com/mp911de/lettuce/wiki/Command-Interfaces-(4.0))
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
@@ -129,7 +129,7 @@ Pub/Sub
 -------
 
 ```java
-RedisPubSubConnection<String, String> connection = client.connectPubSub()
+RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
 connection.addListener(new RedisPubSubListener<String, String>() { ... })
 connection.subscribe("channel")
 ```

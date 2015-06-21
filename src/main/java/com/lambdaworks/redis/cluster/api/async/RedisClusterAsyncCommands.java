@@ -127,7 +127,7 @@ public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return
+     * @return List of slaves
      */
     RedisFuture<List<String>> clusterSlaves(String nodeId);
 
