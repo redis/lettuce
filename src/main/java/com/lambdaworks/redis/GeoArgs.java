@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
+ * Args for {@literal GEORADIUS} and {@literal GEORADIUSBYMEMBER} commands.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class GeoArgs {
@@ -33,23 +35,45 @@ public class GeoArgs {
         return this;
     }
 
+    /**
+     * Sort results ascending.
+     * 
+     * @return the current geo args.
+     */
     public GeoArgs asc() {
         return sort(Sort.asc);
     }
 
+    /**
+     * Sort results descending.
+     * 
+     * @return the current geo args.
+     */
     public GeoArgs desc() {
         return sort(Sort.desc);
     }
 
+    /**
+     * Sort results.
+     * 
+     * @param sort
+     * @return the current geo args.
+     */
     public GeoArgs sort(Sort sort) {
         this.sort = sort;
         return this;
     }
 
+    /**
+     * Sort order.
+     */
     public enum Sort {
         asc, desc, none;
     }
 
+    /**
+     * Supported geo unit.
+     */
     public enum Unit {
         meter, kilometer, feet, mile;
     }

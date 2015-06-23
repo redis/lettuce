@@ -18,16 +18,16 @@ public interface RedisGeoConnection<K, V> {
      * @param latitude
      * @param longitude
      * @param member
-     * @return
+     * @return Long integer-reply the number of elements that were added to the set
      */
     Long geoadd(K key, double latitude, double longitude, V member);
 
     /**
-     * Multi geo add
+     * Multi geo add.
      * 
      * @param key
      * @param latLonMember triplets of double latitude, double longitude and V member
-     * @return
+     * @return Long integer-reply the number of elements that were added to the set
      */
     Long geoadd(K key, Object... latLonMember);
 
@@ -39,7 +39,7 @@ public interface RedisGeoConnection<K, V> {
      * @param longitude
      * @param distance
      * @param unit
-     * @return
+     * @return bulk reply
      */
     Set<V> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit);
 
@@ -51,7 +51,7 @@ public interface RedisGeoConnection<K, V> {
      * @param longitude
      * @param distance
      * @param unit
-     * @return
+     * @return nested multi-bulk reply
      */
     List<Object> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
@@ -62,7 +62,7 @@ public interface RedisGeoConnection<K, V> {
      * @param member
      * @param distance
      * @param unit
-     * @return
+     * @return bulk reply
      */
     Set<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit);
 
@@ -74,7 +74,7 @@ public interface RedisGeoConnection<K, V> {
      * @param member
      * @param distance
      * @param unit
-     * @return
+     * @return nested multi-bulk reply
      */
     List<Object> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 

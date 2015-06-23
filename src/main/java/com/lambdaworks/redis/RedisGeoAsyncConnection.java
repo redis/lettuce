@@ -18,7 +18,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      * @param latitude
      * @param longitude
      * @param member
-     * @return 1 if member is new or 0 if member is updated
+     * @return Long integer-reply the number of elements that were added to the set
      */
     RedisFuture<Long> geoadd(K key, double latitude, double longitude, V member);
 
@@ -27,7 +27,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      * 
      * @param key
      * @param latLonMember triplets of double latitude, double longitude and V member
-     * @return count of members submitted
+     * @return Long integer-reply the number of elements that were added to the set
      */
     RedisFuture<Long> geoadd(K key, Object... latLonMember);
 
@@ -39,7 +39,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      * @param longitude
      * @param distance
      * @param unit
-     * @return
+     * @return bulk reply
      */
     RedisFuture<Set<V>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit);
 
@@ -51,7 +51,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      * @param longitude
      * @param distance
      * @param unit
-     * @return
+     * @return nested multi-bulk reply
      */
     RedisFuture<List<Object>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs);
@@ -63,7 +63,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      * @param member
      * @param distance
      * @param unit
-     * @return
+     * @return bulk reply
      */
     RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit);
 
@@ -75,7 +75,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      * @param member
      * @param distance
      * @param unit
-     * @return
+     * @return nested multi-bulk reply
      */
     RedisFuture<List<Object>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
