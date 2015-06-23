@@ -76,21 +76,16 @@ public class GeoCommandTest extends AbstractCommandTest {
     @Test
     public void georadiusbymember() throws Exception {
 
-        // looks like a bug in redis
-        expectedException.expect(RedisCommandExecutionException.class);
-        expectedException.expectMessage("ERR could not decode requested zset member");
-
         prepareGeo();
 
         Set<String> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.kilometer);
-        assertThat(empty).isEmpty();
+        assertThat(empty).hasSize(1).contains("Bahn");
 
         Set<String> georadiusbymember = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.kilometer);
-        assertThat(georadiusbymember).hasSize(1).contains("Weinheim");
+        assertThat(georadiusbymember).hasSize(2).contains("Bahn", "Weinheim");
     }
 
     @Test
-    @Ignore("ERR could not decode requested zset member")
     public void georadiusbymemberWithArgs() throws Exception {
 
         prepareGeo();
@@ -101,7 +96,7 @@ public class GeoCommandTest extends AbstractCommandTest {
         assertThat(empty).isNotEmpty();
 
         List<Object> georadiusbymember = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.kilometer, geoArgs);
-        assertThat(georadiusbymember).hasSize(1);
+        assertThat(georadiusbymember).hasSize(2);
 
         List<Object> response = (List) georadiusbymember.get(0);
         assertThat(response).hasSize(4);
