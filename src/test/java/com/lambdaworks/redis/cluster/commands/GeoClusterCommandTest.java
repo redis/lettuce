@@ -1,37 +1,27 @@
 package com.lambdaworks.redis.cluster.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushClusterDb;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.GeoCommandTest;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
-import com.lambdaworks.redis.ListStreamingAdapter;
+import com.lambdaworks.redis.GeoCommandTest;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
-import com.lambdaworks.redis.cluster.StatefulRedisClusterConnectionImpl;
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-import com.lambdaworks.redis.commands.StringCommandTest;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class GeoClusterCommandTest extends GeoCommandTest {
     private static RedisClusterClient redisClusterClient;
-    private StatefulRedisClusterConnectionImpl<String, String> clusterConnection;
+    private StatefulRedisClusterConnection<String, String> clusterConnection;
 
     @BeforeClass
     public static void setupClient() {
@@ -46,27 +36,14 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-
-        flushClusterDb();
-    }
-
-    protected void flushClusterDb() {
-        for (RedisClusterNode node : clusterConnection.getPartitions()) {
-            try {
-                clusterConnection.getConnection(node.getNodeId()).sync().flushall();
-                clusterConnection.getConnection(node.getNodeId()).sync().flushdb();
-            } catch (Exception e) {
-            }
-        }
+        flushClusterDb(clusterConnection);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
-        clusterConnection = (StatefulRedisClusterConnectionImpl) redisClusterClient.connectCluster().getStatefulConnection();
-        InvocationHandler h = clusterConnection.syncInvocationHandler();
-        return (RedisCommands<String, String>) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class[] { RedisCommands.class }, h);
+        clusterConnection = redisClusterClient.connectCluster().getStatefulConnection();
+        return ClusterTestUtil.redisCommandsOverCluster(clusterConnection);
     }
 
 }

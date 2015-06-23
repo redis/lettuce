@@ -1,6 +1,11 @@
 package com.lambdaworks.redis.cluster;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
+
 import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -29,5 +34,23 @@ public class ClusterTestUtil {
             }
         }
         return null;
+    }
+
+    public static void flushClusterDb(StatefulRedisClusterConnection<String, String> connection) {
+        for (RedisClusterNode node : connection.getPartitions()) {
+            try {
+                connection.getConnection(node.getNodeId()).sync().flushall();
+                connection.getConnection(node.getNodeId()).sync().flushdb();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    public static RedisCommands<String, String> redisCommandsOverCluster(
+            StatefulRedisClusterConnection<String, String> connection) {
+        StatefulRedisClusterConnectionImpl clusterConnection = (StatefulRedisClusterConnectionImpl) connection;
+        InvocationHandler h = clusterConnection.syncInvocationHandler();
+        return (RedisCommands<String, String>) Proxy.newProxyInstance(ClusterTestUtil.class.getClassLoader(),
+                new Class[] { RedisCommands.class }, h);
     }
 }

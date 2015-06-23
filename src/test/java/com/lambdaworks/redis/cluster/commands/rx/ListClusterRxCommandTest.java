@@ -11,9 +11,9 @@ import org.junit.Test;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.commands.ListCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 
@@ -37,19 +37,7 @@ public class ListClusterRxCommandTest extends ListCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-
-        flushClusterDb();
-    }
-
-    protected void flushClusterDb() {
-        for (RedisClusterNode node : clusterConnection.getPartitions()) {
-
-            try {
-                clusterConnection.getConnection(node.getNodeId()).sync().flushall();
-                clusterConnection.getConnection(node.getNodeId()).sync().flushdb();
-            } catch (Exception e) {
-            }
-        }
+        ClusterTestUtil.flushClusterDb(clusterConnection);
     }
 
     @Override

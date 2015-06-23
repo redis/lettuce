@@ -1,26 +1,23 @@
 package com.lambdaworks.redis.cluster.commands.rx;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.ListStreamingAdapter;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.commands.StringCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 
@@ -44,19 +41,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-
-        flushClusterDb();
-    }
-
-    protected void flushClusterDb() {
-        for (RedisClusterNode node : clusterConnection.getPartitions()) {
-
-            try {
-                clusterConnection.getConnection(node.getNodeId()).sync().flushall();
-                clusterConnection.getConnection(node.getNodeId()).sync().flushdb();
-            } catch (Exception e) {
-            }
-        }
+        ClusterTestUtil.flushClusterDb(clusterConnection);
     }
 
     @Override

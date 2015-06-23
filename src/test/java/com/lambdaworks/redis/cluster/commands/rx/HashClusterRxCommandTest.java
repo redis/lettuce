@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster.commands.rx;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -36,16 +37,7 @@ public class HashClusterRxCommandTest extends HashCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-
-        for (RedisClusterNode node : clusterConnection.getPartitions()) {
-
-            try {
-                clusterConnection.getConnection(node.getNodeId()).sync().flushall();
-                clusterConnection.getConnection(node.getNodeId()).sync().flushdb();
-            } catch (Exception e) {
-            }
-        }
-
+        ClusterTestUtil.flushClusterDb(clusterConnection);
     }
 
     @Override

@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.cluster.commands;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
@@ -11,9 +9,9 @@ import org.junit.BeforeClass;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
-import com.lambdaworks.redis.cluster.StatefulRedisClusterConnectionImpl;
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.HashCommandTest;
 
 /**
@@ -22,7 +20,7 @@ import com.lambdaworks.redis.commands.HashCommandTest;
 public class HashClusterCommandTest extends HashCommandTest {
 
     private static RedisClusterClient redisClusterClient;
-    private StatefulRedisClusterConnectionImpl<String, String> clusterConnection;
+    private StatefulRedisClusterConnection<String, String> clusterConnection;
 
     @BeforeClass
     public static void setupClient() {
@@ -37,24 +35,13 @@ public class HashClusterCommandTest extends HashCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-
-        for (RedisClusterNode node : clusterConnection.getPartitions()) {
-
-            try {
-                clusterConnection.getConnection(node.getNodeId()).sync().flushall();
-                clusterConnection.getConnection(node.getNodeId()).sync().flushdb();
-            } catch (Exception e) {
-            }
-        }
-
+        ClusterTestUtil.flushClusterDb(clusterConnection);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
-        clusterConnection = (StatefulRedisClusterConnectionImpl) redisClusterClient.connectCluster().getStatefulConnection();
-        InvocationHandler h = clusterConnection.syncInvocationHandler();
-        return (RedisCommands<String, String>) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class[] { RedisCommands.class }, h);
+        clusterConnection = redisClusterClient.connectCluster().getStatefulConnection();
+        return ClusterTestUtil.redisCommandsOverCluster(clusterConnection);
     }
 }
