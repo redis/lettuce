@@ -10,13 +10,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class StringCommandTest extends AbstractCommandTest {
     @Rule
@@ -63,8 +64,7 @@ public class StringCommandTest extends AbstractCommandTest {
         assertEquals(list("1", "2"), redis.mget("one", "two"));
     }
 
-    private void setupMget()
-    {
+    private void setupMget() {
         assertEquals(list((String) null), redis.mget(key));
         redis.set("one", "1");
         redis.set("two", "2");
@@ -113,7 +113,7 @@ public class StringCommandTest extends AbstractCommandTest {
         assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
 
-        assertEquals("OK", redis.set(key, value, ex(10).px(20000)));
+        assertEquals("OK", redis.set(key, value, px(20000)));
         assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 19);
 
@@ -130,11 +130,13 @@ public class StringCommandTest extends AbstractCommandTest {
         assertEquals("OK", redis.set(key, value, nx()));
         assertEquals(value, redis.get(key));
 
-        redis.del(key);
+    }
 
-        assertEquals("OK", redis.set(key, value, ex(10).px(20000).nx()));
-        assertEquals(value, redis.get(key));
-        assertTrue(redis.ttl(key) >= 19);
+    @Test
+    public void setExWithPx() throws Exception {
+        exception.expect(RedisCommandExecutionException.class);
+        exception.expectMessage("ERR syntax error");
+        redis.set(key, value, ex(10).px(20000).nx());
     }
 
     @Test(expected = RedisException.class)
