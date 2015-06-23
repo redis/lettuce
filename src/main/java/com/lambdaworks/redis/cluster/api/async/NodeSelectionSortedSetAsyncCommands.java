@@ -360,8 +360,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified score range.
      */
-    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
-            long offset, long count);
+    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -374,8 +373,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified score range.
      */
-    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
-            long offset, long count);
+    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
     /**
      * Determine the index of a member in a sorted set.
@@ -591,8 +589,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
-            long count);
+    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
@@ -605,8 +602,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
-            long count);
+    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -641,8 +637,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
-            long offset, long count);
+    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -655,8 +650,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
-            long offset, long count);
+    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.
@@ -761,8 +755,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
-            ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.

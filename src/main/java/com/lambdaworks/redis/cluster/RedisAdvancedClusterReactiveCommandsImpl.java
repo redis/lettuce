@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.redis.GeoArgs;
 import rx.Observable;
 import rx.internal.operators.OperatorConcat;
 

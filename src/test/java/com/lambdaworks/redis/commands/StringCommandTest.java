@@ -120,10 +120,6 @@ public class StringCommandTest extends AbstractRedisClientTest {
         Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
 
-        Assert.assertEquals("OK", redis.set(key, value, ex(10).px(20000)));
-        Assert.assertEquals(value, redis.get(key));
-        assertTrue(redis.ttl(key) >= 19);
-
         Assert.assertEquals("OK", redis.set(key, value, px(10000)));
         Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
@@ -132,13 +128,13 @@ public class StringCommandTest extends AbstractRedisClientTest {
         Assert.assertEquals("OK", redis.set(key, value, xx()));
         Assert.assertEquals(value, redis.get(key));
 
-
+        redis.del(key);
         assertEquals("OK", redis.set(key, value, nx()));
         assertEquals(value, redis.get(key));
 
         redis.del(key);
 
-        Assert.assertEquals("OK", redis.set(key, value, ex(10).px(20000).nx()));
+        Assert.assertEquals("OK", redis.set(key, value, px(20000).nx()));
         Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 19);
     }

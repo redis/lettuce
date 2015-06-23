@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import com.lambdaworks.redis.GeoArgs;
 import java.util.List;
 import java.util.Set;
 

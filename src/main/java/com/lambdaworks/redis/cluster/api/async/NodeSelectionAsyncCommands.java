@@ -9,6 +9,6 @@ public interface NodeSelectionAsyncCommands<K, V> extends BaseNodeSelectionAsync
         NodeSelectionHashAsyncCommands<K, V>, NodeSelectionHLLAsyncCommands<K, V>, NodeSelectionKeyAsyncCommands<K, V>,
         NodeSelectionListAsyncCommands<K, V>, NodeSelectionScriptingAsyncCommands<K, V>,
         NodeSelectionServerAsyncCommands<K, V>, NodeSelectionSetAsyncCommands<K, V>, NodeSelectionSortedSetAsyncCommands<K, V>,
-        NodeSelectionStringAsyncCommands<K, V> {
+        NodeSelectionStringAsyncCommands<K, V>, NodeSelectionGeoAsyncCommands<K, V> {
 
 }

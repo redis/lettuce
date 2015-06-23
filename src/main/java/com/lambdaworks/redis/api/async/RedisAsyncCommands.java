@@ -4,17 +4,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.BaseRedisAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisHLLAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisHashAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisListAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisSetAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisSortedSetAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisTransactionalAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 
 /**
@@ -29,7 +18,7 @@ public interface RedisAsyncCommands<K, V> extends RedisHashAsyncCommands<K, V>, 
         RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>,
-        RedisTransactionalAsyncCommands<K, V>, RedisAsyncConnection<K, V> {
+        RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisAsyncConnection<K, V> {
 
     /**
      * Set the default timeout for operations.

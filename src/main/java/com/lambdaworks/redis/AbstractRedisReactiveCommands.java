@@ -2,8 +2,6 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -11,9 +9,9 @@ import java.util.function.Supplier;
 
 import rx.Observable;
 
-import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.rx.BaseRedisReactiveCommands;
+import com.lambdaworks.redis.api.rx.RedisGeoReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisHLLReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisHashReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
@@ -49,7 +47,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
         RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
         RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>,
-        RedisTransactionalReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
+        RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
 
     protected MultiOutput<K, V> multi;
     protected RedisCommandBuilder<K, V> commandBuilder;
@@ -1569,6 +1567,53 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<V> zrangebylex(K key, String min, String max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
+    @Override
+    public Observable<Long> geoadd(K key, double latitude, double longitude, V member) {
+        return createObservable(() -> commandBuilder.geoadd(key, latitude, longitude, member));
+    }
+
+    @Override
+    public Observable<Long> geoadd(K key, Object... latLongMember) {
+        return createDissolvingObservable(() -> commandBuilder.geoadd(key, latLongMember));
+    }
+
+    @Override
+    public Observable<V> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit) {
+        return createDissolvingObservable(() -> commandBuilder.georadius(key, latitude, longitude, distance, unit.name()));
+    }
+
+    @Override
+    public Observable<Object> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+        return createDissolvingObservable(() -> commandBuilder.georadius(key, latitude, longitude, distance, unit.name(),
+                geoArgs));
+    }
+
+    @Override
+    public Observable<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+    }
+
+    @Override
+    public Observable<Object> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public Observable<Object> geoencode(double latitude, double longitude) {
+        return createDissolvingObservable(() -> commandBuilder.geoencode(latitude, longitude, null, null));
+    }
+
+    @Override
+    public Observable<Object> geoencode(double latitude, double longitude, double distance, GeoArgs.Unit unit) {
+        return createDissolvingObservable(() -> commandBuilder.geoencode(latitude, longitude, distance, unit.name()));
+    }
+
+    @Override
+    public Observable<Object> geodecode(long geohash) {
+        return createDissolvingObservable(() -> commandBuilder.geodecode(geohash));
     }
 
     protected <T> Observable<T> createObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {

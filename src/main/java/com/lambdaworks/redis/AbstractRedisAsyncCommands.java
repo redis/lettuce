@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.BaseRedisAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisGeoAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisHLLAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisHashAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
@@ -55,7 +56,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
         RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
         RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,
-        BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
+        BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
+        RedisClusterAsyncCommands<K, V> {
 
     protected MultiOutput<K, V> multi;
     protected RedisCommandBuilder<K, V> commandBuilder;

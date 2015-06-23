@@ -157,11 +157,13 @@ public interface RedisServerReactiveCommands<K, V> {
 
     /**
      * Make the server crash: Invalid pointer access.
+     * @return nothing, because the server crashes before returning.
      */
     Observable<Void> debugSegfault();
 
     /**
      * Make the server crash: Out of memory.
+     * @return nothing, because the server crashes before returning.
      */
     Observable<Void> debugOom();
 
