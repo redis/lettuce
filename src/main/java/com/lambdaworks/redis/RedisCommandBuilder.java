@@ -1,23 +1,105 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ADDSLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.AFTER;
+import static com.lambdaworks.redis.protocol.CommandKeyword.AND;
+import static com.lambdaworks.redis.protocol.CommandKeyword.BEFORE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.CHANNELS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.DELSLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ENCODING;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FLUSH;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FLUSHSLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FORCE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.FORGET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.GETKEYSINSLOT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.GETNAME;
+import static com.lambdaworks.redis.protocol.CommandKeyword.HARD;
+import static com.lambdaworks.redis.protocol.CommandKeyword.IDLETIME;
+import static com.lambdaworks.redis.protocol.CommandKeyword.IMPORTING;
+import static com.lambdaworks.redis.protocol.CommandKeyword.KILL;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LEN;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LIST;
+import static com.lambdaworks.redis.protocol.CommandKeyword.LOAD;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MEET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MIGRATING;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NO;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NODE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NODES;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NOSAVE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NOT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NUMPAT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.NUMSUB;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ONE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.OR;
+import static com.lambdaworks.redis.protocol.CommandKeyword.PAUSE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.REFCOUNT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.REPLICATE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.RESETSTAT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.REWRITE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SEGFAULT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SETNAME;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SETSLOT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SLOTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SOFT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.WITHSCORES;
+import static com.lambdaworks.redis.protocol.CommandKeyword.XOR;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.output.ArrayOutput;
+import com.lambdaworks.redis.output.BooleanListOutput;
+import com.lambdaworks.redis.output.BooleanOutput;
+import com.lambdaworks.redis.output.ByteArrayOutput;
+import com.lambdaworks.redis.output.DateOutput;
+import com.lambdaworks.redis.output.DoubleOutput;
+import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.KeyListOutput;
+import com.lambdaworks.redis.output.KeyOutput;
+import com.lambdaworks.redis.output.KeyScanOutput;
+import com.lambdaworks.redis.output.KeyScanStreamingOutput;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyStreamingOutput;
+import com.lambdaworks.redis.output.KeyValueOutput;
+import com.lambdaworks.redis.output.KeyValueScanStreamingOutput;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingOutput;
+import com.lambdaworks.redis.output.MapOutput;
+import com.lambdaworks.redis.output.MapScanOutput;
+import com.lambdaworks.redis.output.NestedMultiOutput;
+import com.lambdaworks.redis.output.ScoredValueListOutput;
+import com.lambdaworks.redis.output.ScoredValueScanOutput;
+import com.lambdaworks.redis.output.ScoredValueScanStreamingOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ScoredValueStreamingOutput;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.output.StringListOutput;
+import com.lambdaworks.redis.output.ValueListOutput;
+import com.lambdaworks.redis.output.ValueOutput;
+import com.lambdaworks.redis.output.ValueScanOutput;
+import com.lambdaworks.redis.output.ValueScanStreamingOutput;
+import com.lambdaworks.redis.output.ValueSetOutput;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingOutput;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
- * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <K>
  * @param <V>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
@@ -1638,6 +1720,78 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> geoadd(K key, double latitude, double longitude, V member) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).addValue(member);
+        return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> geoadd(K key, Object[] latLongMember) {
+
+        assertNotEmpty(latLongMember, "latLongMember " + MUST_NOT_BE_EMPTY);
+        assertNoNullElements(latLongMember, "latLongMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        assertTrue(
+                latLongMember.length % 3 == 0,
+                "latLongMember.length must be a multiple of 3 and contain a "
+                        + "sequence of latitude1, longitude1, member1, latitude2, longitude2, member2, ... latitudeN, longitudeN, memberN");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+
+        for (int i = 0; i < latLongMember.length; i += 3) {
+            args.add((Double) latLongMember[i]);
+            args.add((Double) latLongMember[i + 1]);
+            args.addValue((V) latLongMember[i + 2]);
+        }
+
+        return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Set<V>> georadius(K key, double latitude, double longitude, double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).add(distance).add(unit);
+        return createCommand(GEORADIUS, new ValueSetOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> georadius(K key, double latitude, double longitude, double distance, String unit,
+            GeoArgs geoArgs) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).add(distance).add(unit);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
+
+        return createCommand(GEORADIUS, new NestedMultiOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Set<V>> georadiusbymember(K key, V member, double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+        return createCommand(GEORADIUSBYMEMBER, new ValueSetOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> georadiusbymember(K key, V member, double distance, String unit, GeoArgs geoArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
+
+        return createCommand(GEORADIUSBYMEMBER, new NestedMultiOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> geoencode(double latitude, double longitude, Double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(latitude).add(longitude);
+
+        if (distance != null && unit != null) {
+            args.add(distance).add(unit);
+        }
+        return createCommand(GEOENCODE, new NestedMultiOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> geodecode(long geohash) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(geohash);
+
+        return createCommand(GEODECODE, new NestedMultiOutput<K, V>(codec), args);
+    }
+
     /**
      * Assert that a string is not empty, it must not be {@code null} and it must not be empty.
      *
@@ -1653,7 +1807,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that an object is not {@code null} .
-     * 
+     *
      * @param object the object to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object is {@code null}
@@ -1666,7 +1820,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that an array has elements; that is, it must not be {@code null} and must have at least one element.
-     * 
+     *
      * @param array the array to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object array is {@code null} or has no elements
@@ -1692,7 +1846,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that an array has no null elements.
-     * 
+     *
      * @param array the array to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object array contains a {@code null} element
@@ -1709,7 +1863,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that {@code value} is {@literal true}.
-     * 
+     *
      * @param value the value to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object array contains a {@code null} element

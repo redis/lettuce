@@ -13,7 +13,7 @@ import java.util.List;
 public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
-        RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V> {
+        RedisHLLAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V> {
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.

@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,8 +14,18 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
+import com.lambdaworks.redis.output.MultiOutput;
+import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.SetArgs;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -1588,6 +1598,52 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> geoadd(K key, double latitude, double longitude, V member) {
+        return dispatch(commandBuilder.geoadd(key, latitude, longitude, member));
+    }
+
+    @Override
+    public RedisFuture<Long> geoadd(K key, Object... latLongMember) {
+        return dispatch(commandBuilder.geoadd(key, latLongMember));
+    }
+
+    @Override
+    public RedisFuture<Set<V>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadius(key, latitude, longitude, distance, unit.name()));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+        return dispatch(commandBuilder.georadius(key, latitude, longitude, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> geoencode(double latitude, double longitude) {
+        return dispatch(commandBuilder.geoencode(latitude, longitude, null, null));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> geoencode(double latitude, double longitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.geoencode(latitude, longitude, distance, unit.name()));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> geodecode(long geohash) {
+        return dispatch(commandBuilder.geodecode(geohash));
     }
 
     protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
