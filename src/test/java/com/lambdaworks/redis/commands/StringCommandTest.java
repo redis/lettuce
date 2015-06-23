@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.RedisCommandExecutionException;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -114,6 +115,7 @@ public class StringCommandTest extends AbstractRedisClientTest {
         Assert.assertEquals("OK", redis.set(key, value));
         Assert.assertEquals(value, redis.get(key));
 
+        assertEquals("OK", redis.set(key, value, px(20000)));
         Assert.assertEquals("OK", redis.set(key, value, ex(10)));
         Assert.assertEquals(value, redis.get(key));
         assertTrue(redis.ttl(key) >= 9);
@@ -130,10 +132,9 @@ public class StringCommandTest extends AbstractRedisClientTest {
         Assert.assertEquals("OK", redis.set(key, value, xx()));
         Assert.assertEquals(value, redis.get(key));
 
-        redis.del(key);
 
-        Assert.assertEquals("OK", redis.set(key, value, nx()));
-        Assert.assertEquals(value, redis.get(key));
+        assertEquals("OK", redis.set(key, value, nx()));
+        assertEquals(value, redis.get(key));
 
         redis.del(key);
 
@@ -150,6 +151,13 @@ public class StringCommandTest extends AbstractRedisClientTest {
     @Test(expected = RedisException.class)
     public void setNegativePX() throws Exception {
         redis.set(key, value, px(-1000));
+    }
+
+    @Test
+    public void setExWithPx() throws Exception {
+        exception.expect(RedisCommandExecutionException.class);
+        exception.expectMessage("ERR syntax error");
+        redis.set(key, value, ex(10).px(20000).nx());
     }
 
     @Test

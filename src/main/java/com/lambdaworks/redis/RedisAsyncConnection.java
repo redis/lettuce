@@ -19,9 +19,8 @@ import com.lambdaworks.redis.api.async.RedisTransactionalAsyncCommands;
 public interface RedisAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
-        RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V>, RedisClusterAsyncConnection<K, V>,
-        RedisTransactionalAsyncCommands<K, V> {
-
+        RedisHLLAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V>,
+        RedisClusterAsyncConnection<K, V> {
     /**
      * Set the default timeout for operations.
      * 

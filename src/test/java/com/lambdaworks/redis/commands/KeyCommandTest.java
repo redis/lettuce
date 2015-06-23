@@ -186,12 +186,6 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         redis.rename(key, key + "X");
     }
 
-    @Test(expected = RedisException.class)
-    public void renameIdenticalKeys() throws Exception {
-        redis.set(key, value);
-        redis.rename(key, key);
-    }
-
     @Test
     public void renamenx() throws Exception {
         redis.set(key, value);
@@ -206,10 +200,10 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         redis.renamenx(key, key + "X");
     }
 
-    @Test(expected = RedisException.class)
+    @Test
     public void renamenxIdenticalKeys() throws Exception {
         redis.set(key, value);
-        redis.renamenx(key, key);
+        assertThat(redis.renamenx(key, key)).isFalse();
     }
 
     @Test

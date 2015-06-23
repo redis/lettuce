@@ -50,7 +50,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
         RedisKeysAsyncConnection<K, V>, RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>,
         RedisSetsAsyncConnection<K, V>, RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>,
         RedisServerAsyncConnection<K, V>, RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V>,
-        RedisClusterAsyncConnection<K, V>,
+        RedisClusterAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>,
 
         RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
         RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
@@ -1607,6 +1607,52 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> geoadd(K key, double latitude, double longitude, V member) {
+        return dispatch(commandBuilder.geoadd(key, latitude, longitude, member));
+    }
+
+    @Override
+    public RedisFuture<Long> geoadd(K key, Object... latLongMember) {
+        return dispatch(commandBuilder.geoadd(key, latLongMember));
+    }
+
+    @Override
+    public RedisFuture<Set<V>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadius(key, latitude, longitude, distance, unit.name()));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+        return dispatch(commandBuilder.georadius(key, latitude, longitude, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> geoencode(double latitude, double longitude) {
+        return dispatch(commandBuilder.geoencode(latitude, longitude, null, null));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> geoencode(double latitude, double longitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.geoencode(latitude, longitude, distance, unit.name()));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> geodecode(long geohash) {
+        return dispatch(commandBuilder.geodecode(geohash));
     }
 
     protected <T> RedisFuture<T> dispatch(CommandType type, CommandOutput<K, V, T> output) {

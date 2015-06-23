@@ -61,7 +61,6 @@ import com.lambdaworks.redis.output.ArrayOutput;
 import com.lambdaworks.redis.output.BooleanListOutput;
 import com.lambdaworks.redis.output.BooleanOutput;
 import com.lambdaworks.redis.output.ByteArrayOutput;
-import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.output.DateOutput;
 import com.lambdaworks.redis.output.DoubleOutput;
 import com.lambdaworks.redis.output.IntegerOutput;
@@ -92,16 +91,16 @@ import com.lambdaworks.redis.output.ValueScanStreamingOutput;
 import com.lambdaworks.redis.output.ValueSetOutput;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingOutput;
-import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 
 /**
- * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <K>
  * @param <V>
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
@@ -1763,6 +1762,78 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> geoadd(K key, double latitude, double longitude, V member) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).addValue(member);
+        return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> geoadd(K key, Object[] latLongMember) {
+
+        assertNotEmpty(latLongMember, "latLongMember " + MUST_NOT_BE_EMPTY);
+        assertNoNullElements(latLongMember, "latLongMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        assertTrue(
+                latLongMember.length % 3 == 0,
+                "latLongMember.length must be a multiple of 3 and contain a "
+                        + "sequence of latitude1, longitude1, member1, latitude2, longitude2, member2, ... latitudeN, longitudeN, memberN");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+
+        for (int i = 0; i < latLongMember.length; i += 3) {
+            args.add((Double) latLongMember[i]);
+            args.add((Double) latLongMember[i + 1]);
+            args.addValue((V) latLongMember[i + 2]);
+        }
+
+        return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Set<V>> georadius(K key, double latitude, double longitude, double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).add(distance).add(unit);
+        return createCommand(GEORADIUS, new ValueSetOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> georadius(K key, double latitude, double longitude, double distance, String unit,
+            GeoArgs geoArgs) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).add(distance).add(unit);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
+
+        return createCommand(GEORADIUS, new NestedMultiOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Set<V>> georadiusbymember(K key, V member, double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+        return createCommand(GEORADIUSBYMEMBER, new ValueSetOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> georadiusbymember(K key, V member, double distance, String unit, GeoArgs geoArgs) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
+
+        return createCommand(GEORADIUSBYMEMBER, new NestedMultiOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> geoencode(double latitude, double longitude, Double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(latitude).add(longitude);
+
+        if (distance != null && unit != null) {
+            args.add(distance).add(unit);
+        }
+        return createCommand(GEOENCODE, new NestedMultiOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> geodecode(long geohash) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(geohash);
+
+        return createCommand(GEODECODE, new NestedMultiOutput<K, V>(codec), args);
+    }
+
     /**
      * Assert that a string is not empty, it must not be {@code null} and it must not be empty.
      *
@@ -1778,7 +1849,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that an object is not {@code null} .
-     * 
+     *
      * @param object the object to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object is {@code null}
@@ -1791,7 +1862,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that an array has elements; that is, it must not be {@code null} and must have at least one element.
-     * 
+     *
      * @param array the array to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object array is {@code null} or has no elements
@@ -1817,7 +1888,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that an array has no null elements.
-     * 
+     *
      * @param array the array to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object array contains a {@code null} element
@@ -1834,7 +1905,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     /**
      * Assert that {@code value} is {@literal true}.
-     * 
+     *
      * @param value the value to check
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object array contains a {@code null} element
