@@ -1,16 +1,20 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
+import java.util.AbstractCollection;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import com.lambdaworks.redis.cluster.SlotHash;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public class Partitions implements Iterable<RedisClusterNode> {
+public class Partitions extends AbstractCollection<RedisClusterNode> implements Collection<RedisClusterNode> {
     private List<RedisClusterNode> partitions = Lists.newArrayList();
+    private RedisClusterNode slotCache[];
 
     /**
      * Retrieve a {@link RedisClusterNode} by it's slot number. This method does not distinguish between masters and slaves.
@@ -19,13 +23,22 @@ public class Partitions implements Iterable<RedisClusterNode> {
      * @return RedisClusterNode or {@literal null}
      */
     public RedisClusterNode getPartitionBySlot(int slot) {
+        return slotCache[slot];
+    }
+
+    /**
+     * Update the partition cache.
+     */
+    public void updateCache() {
+        if (slotCache == null) {
+            slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
+        }
 
         for (RedisClusterNode partition : partitions) {
-            if (partition.getSlots().contains(slot)) {
-                return partition;
+            for (Integer integer : partition.getSlots()) {
+                slotCache[integer.intValue()] = partition;
             }
         }
-        return null;
     }
 
     @Override
@@ -38,6 +51,7 @@ public class Partitions implements Iterable<RedisClusterNode> {
     }
 
     public void addPartition(RedisClusterNode partition) {
+        slotCache = null;
         partitions.add(partition);
     }
 
@@ -47,5 +61,25 @@ public class Partitions implements Iterable<RedisClusterNode> {
         sb.append(getClass().getSimpleName());
         sb.append(" ").append(partitions);
         return sb.toString();
+    }
+
+    @Override
+    public int size() {
+        return getPartitions().size();
+    }
+
+    public RedisClusterNode getPartition(int index) {
+        return getPartitions().get(index);
+    }
+
+    /**
+     * Update partitions and clear slot cache.
+     * 
+     * @param partitions list of new partitions
+     */
+    public void reload(List<RedisClusterNode> partitions) {
+        this.partitions.clear();
+        this.partitions.addAll(partitions);
+        updateCache();
     }
 }

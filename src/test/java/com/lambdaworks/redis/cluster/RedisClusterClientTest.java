@@ -380,6 +380,7 @@ public class RedisClusterClientTest {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
         }
+        partitions.updateCache();
 
         // appropriate cluster node
         RedisFuture<String> setB = connection.set("b", "myValue1");

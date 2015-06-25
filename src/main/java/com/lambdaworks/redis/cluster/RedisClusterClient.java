@@ -1,8 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -13,13 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -204,10 +196,12 @@ public class RedisClusterClient extends AbstractRedisClient {
     public void reloadPartitions() {
         if (partitions == null) {
             initializePartitions();
+            partitions.updateCache();
         } else {
             Partitions loadedPartitions = loadPartitions();
             this.partitions.getPartitions().clear();
             this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
+            this.partitions.reload(loadedPartitions.getPartitions());
         }
     }
 
@@ -280,8 +274,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return RedisAdvancedClusterAsyncConnectionImpl&lt;K, V&gt; instance
      */
     protected <K, V> RedisAdvancedClusterAsyncConnectionImpl<K, V> newRedisAsyncConnectionImpl(
-            RedisChannelWriter<K, V> channelWriter,
-            RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+            RedisChannelWriter<K, V> channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new RedisAdvancedClusterAsyncConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
     }
 
