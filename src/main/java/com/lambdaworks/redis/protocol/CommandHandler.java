@@ -37,8 +37,18 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private boolean connected;
     private RedisChannelHandler<K, V> redisChannelHandler;
     private final ReentrantLock writeLock = new ReentrantLock();
-    private final ReentrantLock readLock = new ReentrantLock();
     private Throwable connectionError;
+    private String logPrefix;
+
+    /**
+     * If TRACE level logging has been enabled at startup.
+     */
+    private final boolean traceEnabled;
+
+    /**
+     * If DEBUG level logging has been enabled at startup.
+     */
+    private final boolean debugEnabled;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -49,6 +59,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public CommandHandler(ClientOptions clientOptions, BlockingQueue<RedisCommand<K, V, ?>> queue) {
         this.clientOptions = clientOptions;
         this.queue = queue;
+        traceEnabled = logger.isTraceEnabled();
+        debugEnabled = logger.isDebugEnabled();
     }
 
     /**
@@ -79,29 +91,19 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf input = (ByteBuf) msg;
+        if (!input.isReadable() || input.refCnt() == 0 || buffer == null) {
+            return;
+        }
+
         try {
-            if (!input.isReadable() || input.refCnt() == 0) {
-                return;
+            buffer.writeBytes(input);
+
+            if (logger.isTraceEnabled()) {
+                logger.trace("[" + ctx.channel().remoteAddress() + "] Received: "
+                        + buffer.toString(Charset.defaultCharset()).trim());
             }
 
-            if (buffer == null) {
-                logger.warn("CommandHandler is closed, incoming response will be discarded.");
-                return;
-            }
-
-            try {
-                readLock.lock();
-                buffer.writeBytes(input);
-
-                if (logger.isTraceEnabled()) {
-                    logger.trace("[" + ctx.channel().remoteAddress() + "] Received: "
-                            + buffer.toString(Charset.defaultCharset()).trim());
-                }
-
-                decode(ctx, buffer);
-            } finally {
-                readLock.unlock();
-            }
+            decode(ctx, buffer);
 
         } catch (Exception e) {
             throw e;
@@ -138,41 +140,38 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
+        if (closed) {
+            throw new RedisException("Connection is closed");
+        }
         try {
 
-            if (closed) {
-                throw new RedisException("Connection is closed");
-            }
-
-            try {
-                writeLock.lock();
-                if (channel != null && connected) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[" + this + "] write() writeAndFlush Command " + command);
-                    }
-                    channel.writeAndFlush(command);
-                } else {
-
-                    if (connectionError != null) {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("[" + this + "] write() completing Command " + command + " due to connection error");
-                        }
-                        command.setException(connectionError);
-                        command.complete();
-                        return command;
-                    }
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[" + this + "] write() buffering Command " + command);
-                    }
-                    commandBuffer.put(command);
+            writeLock.lock();
+            if (channel != null && connected) {
+                if (debugEnabled) {
+                    logger.debug("{} write() writeAndFlush Command", logPrefix(), command);
                 }
-            } finally {
-                writeLock.unlock();
-            }
+                channel.writeAndFlush(command);
+            } else {
 
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
+                if (connectionError != null) {
+                    if (debugEnabled) {
+                        logger.debug("{} write() completing Command {} due to connection error", logPrefix(), command);
+                    }
+                    command.setException(connectionError);
+                    command.complete();
+                    return command;
+                }
+
+                if (debugEnabled) {
+                    logger.debug("{} write() buffering Command {}", logPrefix(), command);
+                }
+                commandBuffer.add(command);
+            }
+        } finally {
+            writeLock.unlock();
+            if (debugEnabled) {
+                logger.debug("{} write() done", logPrefix());
+            }
         }
 
         return command;
@@ -180,17 +179,19 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
+        logPrefix = null;
+        if (debugEnabled) {
+            logger.debug("{} channelActive()", logPrefix());
+        }
         connected = true;
         closed = false;
-        logger.debug("[" + this + "] channelActive()");
+
         try {
             executeQueuedCommands(ctx);
-            logger.debug("[" + this + "] channelActive() done");
-
         } catch (Exception e) {
-            logger.debug("[" + this + "] channelActive() ran into an exception");
-
+            if (debugEnabled) {
+                logger.debug("{} channelActive() ran into an exception", logPrefix());
+            }
             if (clientOptions.isCancelCommandsOnReconnectFailure()) {
                 reset();
             }
@@ -198,6 +199,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         super.channelActive(ctx);
+        if (debugEnabled) {
+            logger.debug("{} channelActive() done", logPrefix());
+        }
     }
 
     protected void executeQueuedCommands(ChannelHandlerContext ctx) {
@@ -213,9 +217,15 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             queue.clear();
             commandBuffer.clear();
 
+            if (debugEnabled) {
+                logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), queue.size());
+            }
             channel = ctx.channel();
 
             if (redisChannelHandler != null) {
+                if (debugEnabled) {
+                    logger.debug("{} activating channel handler", logPrefix());
+                }
                 redisChannelHandler.activated();
             }
 
@@ -226,8 +236,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         for (RedisCommand<K, V, ?> cmd : tmp) {
             if (!cmd.isCancelled()) {
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("[" + this + "] channelActive() triggering command " + cmd);
+                if (debugEnabled) {
+                    logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);
                 }
                 ctx.channel().writeAndFlush(cmd);
             }
@@ -245,26 +255,24 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
-        if (msg instanceof RedisCommand) {
-            final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
-            ByteBuf buf = ctx.alloc().heapBuffer();
-            cmd.encode(buf);
+        final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
+        ByteBuf buf = ctx.alloc().heapBuffer();
+        cmd.encode(buf);
 
-            if (logger.isTraceEnabled()) {
-                logger.trace("[" + ctx.channel().remoteAddress() + "] Sent: " + buf.toString(Charset.defaultCharset()).trim());
-            }
-
-            if (cmd.getOutput() == null) {
-                ctx.write(buf, promise);
-                cmd.complete();
-            } else {
-                queue.put(cmd);
-                ctx.write(buf, promise);
-            }
-            return;
+        if (debugEnabled) {
+            logger.debug("{} writing command {}", logPrefix(), cmd);
         }
-        super.write(ctx, msg, promise);
+        if (traceEnabled) {
+            logger.trace("{} Sent: {}", logPrefix(), buf.toString(Charset.defaultCharset()).trim());
+        }
 
+        if (cmd.getOutput() == null) {
+            ctx.write(buf, promise);
+            cmd.complete();
+        } else {
+            ctx.write(buf, promise);
+            queue.put(cmd);
+        }
     }
 
     /**
@@ -273,14 +281,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("[" + this + "] channelInactive()");
+        if (debugEnabled) {
+            logger.debug("{} channelInactive()", logPrefix());
+        }
         connected = false;
 
         if (redisChannelHandler != null) {
+            if (debugEnabled) {
+                logger.debug("{} deactivating channel handler", logPrefix());
+            }
             redisChannelHandler.deactivated();
         }
 
-        logger.debug("[" + this + "] channelInactive() done");
+        if (debugEnabled) {
+            logger.debug("{} channelInactive() done", logPrefix());
+        }
         super.channelInactive(ctx);
     }
 
@@ -320,7 +335,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void close() {
 
-        logger.debug("[" + this + "] close()");
+        if (debugEnabled) {
+            logger.debug("{} close()", logPrefix());
+        }
 
         if (closed) {
             return;
@@ -331,23 +348,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (currentChannel != null) {
             currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
             currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
-
-            try {
-                currentChannel.closeFuture().await();
-            } catch (InterruptedException e) {
-                throw new RedisException(e);
-            }
+            currentChannel.closeFuture().syncUninterruptibly();
         }
     }
 
     private void releaseBuffer() {
         if (buffer != null) {
-            try {
-                readLock.lock();
-                buffer.release();
-            } finally {
-                readLock.unlock();
-            }
+            buffer.release();
             buffer = null;
         }
     }
@@ -367,7 +374,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     @Override
     public void reset() {
-        logger.debug("[" + this + "] reset()");
+        if (debugEnabled) {
+            logger.debug("{} reset()", logPrefix());
+        }
         try {
             writeLock.lock();
             cancelCommands("Reset");
@@ -376,13 +385,24 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         if (buffer != null) {
-            try {
-                readLock.lock();
-                rsm.reset();
-                buffer.clear();
-            } finally {
-                readLock.unlock();
-            }
+            rsm.reset();
+            buffer.clear();
         }
     }
+
+    private String logPrefix() {
+        if (logPrefix != null) {
+            return logPrefix;
+        }
+        StringBuffer buffer = new StringBuffer(16);
+        buffer.append('[');
+        if (channel != null) {
+            buffer.append(channel.remoteAddress());
+        } else {
+            buffer.append("not connected");
+        }
+        buffer.append(']');
+        return logPrefix = buffer.toString();
+    }
+
 }

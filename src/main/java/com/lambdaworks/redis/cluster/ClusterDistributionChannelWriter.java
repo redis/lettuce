@@ -63,9 +63,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         }
 
-        if (channelWriter == null && args != null && !args.getKeys().isEmpty()) {
+        byte encodedKey[] = args.getEncodedKey();
+        if (channelWriter == null && args != null && encodedKey != null) {
 
-            int hash = getHash(args.getEncodedKey(0));
+            int hash = getHash(encodedKey);
             RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
                     ClusterConnectionProvider.Intent.WRITE, hash);
 

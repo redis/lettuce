@@ -3,18 +3,10 @@ package com.lambdaworks.redis.cluster;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
-import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
-import org.apache.commons.pool2.KeyedObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
-import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
-
-import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -32,27 +24,29 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
-    private KeyedObjectPool<PoolKey, RedisAsyncConnection<K, V>> partitionPool;
     private final Partitions partitions;
+    private LoadingCache<PoolKey, RedisAsyncConnectionImpl<K, V>> connections;
+    private final boolean debugEnabled;
 
-    public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, Partitions partitions,
-            RedisCodec<K, V> redisCodec) {
+    public PooledClusterConnectionProvider(final RedisClusterClient redisClusterClient, Partitions partitions,
+            final RedisCodec<K, V> redisCodec) {
         this.partitions = partitions;
-
-        GenericKeyedObjectPoolConfig config = new GenericKeyedObjectPoolConfig();
-        config.setMaxIdlePerKey(1);
-        config.setMaxTotalPerKey(1);
-        config.setTestOnBorrow(true);
-
-        partitionPool = new GenericKeyedObjectPool<PoolKey, RedisAsyncConnection<K, V>>(new KeyedConnectionFactory<K, V>(
-                redisClusterClient, redisCodec), config);
+        this.debugEnabled = logger.isDebugEnabled();
+        this.connections = CacheBuilder.newBuilder().build(new CacheLoader<PoolKey, RedisAsyncConnectionImpl<K, V>>() {
+            @Override
+            public RedisAsyncConnectionImpl<K, V> load(PoolKey key) throws Exception {
+                return redisClusterClient.connectAsyncImpl(redisCodec, key.getSocketAddress());
+            }
+        });
 
     }
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
-    public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
-        logger.debug("getConnection(" + intent + ", " + slot + ")");
+    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
+        if (debugEnabled) {
+            logger.debug("getConnection(" + intent + ", " + slot + ")");
+        }
         RedisClusterNode partition = partitions.getPartitionBySlot(slot);
         if (partition == null) {
             throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
@@ -60,75 +54,52 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         try {
             PoolKey key = new PoolKey(intent, partition.getUri());
-            RedisAsyncConnection connection = partitionPool.borrowObject(key);
-            partitionPool.returnObject(key, connection);
-            return (RedisAsyncConnectionImpl<K, V>) connection;
+            return getConnection(key);
         } catch (Exception e) {
             throw new RedisException(e);
         }
+    }
+
+    private RedisAsyncConnectionImpl<K, V> getConnection(PoolKey key) throws java.util.concurrent.ExecutionException {
+        RedisAsyncConnectionImpl<K, V> result = connections.get(key);
+        if (!result.isOpen()) {
+            connections.invalidate(key);
+            return connections.get(key);
+        }
+
+        return result;
     }
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
-    public <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
+    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
         try {
-            logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
+            if (debugEnabled) {
+                logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
+            }
             PoolKey key = new PoolKey(intent, host, port);
-            RedisAsyncConnection connection = partitionPool.borrowObject(key);
-            partitionPool.returnObject(key, connection);
-            return (RedisAsyncConnectionImpl<K, V>) connection;
+            return getConnection(key);
         } catch (Exception e) {
             throw new RedisException(e);
-        }
-    }
-
-    private static class KeyedConnectionFactory<K, V> extends BaseKeyedPooledObjectFactory<PoolKey, RedisAsyncConnection<K, V>> {
-        private final RedisClusterClient redisClusterClient;
-        private final RedisCodec<K, V> redisCodec;
-
-        private KeyedConnectionFactory(RedisClusterClient redisClusterClient, RedisCodec<K, V> redisCodec) {
-            this.redisClusterClient = redisClusterClient;
-            this.redisCodec = redisCodec;
-        }
-
-        @Override
-        public RedisAsyncConnection<K, V> create(final PoolKey key) throws Exception {
-
-            logger.debug("createConnection(" + key.getIntent() + ", " + key.getSocketAddress() + ")");
-            return redisClusterClient.connectAsyncImpl(redisCodec, key.getSocketAddress());
-        }
-
-        @Override
-        public boolean validateObject(PoolKey key, PooledObject<RedisAsyncConnection<K, V>> p) {
-            return p.getObject().isOpen();
-        }
-
-        @Override
-        public void destroyObject(PoolKey key, PooledObject<RedisAsyncConnection<K, V>> p) throws Exception {
-            p.getObject().close();
-        }
-
-        @Override
-        public PooledObject<RedisAsyncConnection<K, V>> wrap(RedisAsyncConnection<K, V> value) {
-            return new DefaultPooledObject<RedisAsyncConnection<K, V>>(value);
         }
     }
 
     @Override
     public void close() {
-        if (partitionPool != null) {
-            partitionPool.close();
+
+        if (connections != null) {
+            reset();
         }
-        partitionPool = null;
+        connections = null;
+
     }
 
     @Override
     public void reset() {
-        try {
-            partitionPool.clear();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+        for (RedisAsyncConnection<K, V> kvRedisAsyncConnection : connections.asMap().values()) {
+            kvRedisAsyncConnection.close();
         }
+        connections.invalidateAll();
     }
 
     private static class PoolKey {
