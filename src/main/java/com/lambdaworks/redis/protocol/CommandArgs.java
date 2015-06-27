@@ -27,6 +27,7 @@ public class CommandArgs<K, V> {
     private int count;
     private final List<ProtocolKeyword> keywords = new ArrayList<ProtocolKeyword>(8);
     private K firstKey;
+    private byte[] encodedFirstKey;
 
     public CommandArgs(RedisCodec<K, V> codec) {
         this.codec = codec;
@@ -46,7 +47,11 @@ public class CommandArgs<K, V> {
         if (firstKey == null) {
             firstKey = key;
         }
-        return write(codec.encodeKey(key));
+        byte[] b = codec.encodeKey(key);
+        if (encodedFirstKey == null) {
+            encodedFirstKey = b;
+        }
+        return write(b);
     }
 
     public CommandArgs<K, V> addKeys(K... keys) {
@@ -167,6 +172,7 @@ public class CommandArgs<K, V> {
     }
 
     private void write(long value) {
+
         if (value < 10) {
             buffer.put((byte) ('0' + value));
             return;
@@ -193,11 +199,7 @@ public class CommandArgs<K, V> {
     }
 
     public byte[] getEncodedKey() {
-
-        if (firstKey == null) {
-            return null;
-        }
-        return codec.encodeKey(firstKey);
+        return encodedFirstKey;
     }
 
     public List<ProtocolKeyword> getKeywords() {
