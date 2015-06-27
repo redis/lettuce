@@ -371,7 +371,8 @@ public class RedisClusterClientTest {
     @SuppressWarnings({ "rawtypes" })
     public void testClusterRedirection() throws Exception {
 
-        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+        RedisAdvancedClusterAsyncConnectionImpl<String, String> connection = (RedisAdvancedClusterAsyncConnectionImpl) clusterClient
+                .connectClusterAsync();
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
@@ -381,6 +382,7 @@ public class RedisClusterClientTest {
             }
         }
         partitions.updateCache();
+        connection.setPartitions(partitions);
 
         // appropriate cluster node
         RedisFuture<String> setB = connection.set("b", "myValue1");
@@ -445,10 +447,10 @@ public class RedisClusterClientTest {
         RedisAsyncConnectionImpl<Object, Object> backendConnection2 = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);
 
-        assertThat(backendConnection2.isOpen()).isTrue();
-        assertThat(backendConnection2.isClosed()).isFalse();
+        assertThat(backendConnection2.isOpen()).isFalse();
+        assertThat(backendConnection2.isClosed()).isTrue();
 
-        assertThat(backendConnection2).isNotSameAs(backendConnection);
+        assertThat(backendConnection2).isSameAs(backendConnection);
 
         connection.close();
 

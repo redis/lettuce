@@ -27,7 +27,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection
  * provided they avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -44,7 +44,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Initialize the client with an initial cluster URI.
-     * 
+     *
      * @param initialUri initial cluster URI
      */
     public RedisClusterClient(RedisURI initialUri) {
@@ -55,7 +55,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Initialize the client with a list of cluster URI's. All uris are tried in sequence for connecting initially to the
      * cluster. If any uri is sucessful for connection, the others are not tried anymore. The initial uri is needed to discover
      * the cluster structure for distributing the requests.
-     * 
+     *
      * @param initialUris list of initial cluster URIs
      */
     public RedisClusterClient(List<RedisURI> initialUris) {
@@ -68,7 +68,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Open a new synchronous connection to the redis cluster that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new connection.
      */
     public RedisAdvancedClusterConnection<String, String> connectCluster() {
@@ -79,7 +79,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Open a new synchronous connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
      * and values.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -94,7 +94,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Creates a connection to the redis cluster.
-     * 
+     *
      * @return A new connection.
      */
     public RedisAdvancedClusterAsyncConnection<String, String> connectClusterAsync() {
@@ -103,7 +103,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Creates a connection to the redis cluster.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -119,7 +119,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Create a connection to a redis socket address.
-     * 
+     *
      * @param socketAddress initial connect
      * @param <K> Key type.
      * @param <V> Value type.
@@ -151,7 +151,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Create a clustered connection with command distributor.
-     * 
+     *
      * @param codec the codec to use
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param <K> Key type.
