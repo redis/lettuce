@@ -4,6 +4,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.AbstractInvocationHandler;
 
@@ -19,10 +22,17 @@ class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
 
     private T connection;
     private final RedisConnectionPool<T> pool;
+    private final LoadingCache<Method, Method> methodCache;
 
-    public PooledConnectionInvocationHandler(T connection, RedisConnectionPool<T> pool) {
+    public PooledConnectionInvocationHandler(final T connection, RedisConnectionPool<T> pool) {
         this.connection = connection;
         this.pool = pool;
+        methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+            @Override
+            public Method load(Method key) throws Exception {
+                return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -42,7 +52,8 @@ class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
             return null;
         }
 
-        Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
+        Method targetMethod = methodCache.get(method);
+
         try {
             return targetMethod.invoke(connection, args);
         } catch (InvocationTargetException e) {
