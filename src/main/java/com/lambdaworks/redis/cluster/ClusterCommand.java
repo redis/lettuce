@@ -25,7 +25,6 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     private RedisChannelWriter<K, V> retry;
     private int executions;
     private int executionLimit;
-    private List<Throwable> exceptions = new ArrayList<Throwable>();
 
     ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
         this.command = command;
@@ -117,7 +116,6 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     @Override
     public boolean setException(Throwable exception) {
-        exceptions.add(exception);
         return command.setException(exception);
     }
 }
