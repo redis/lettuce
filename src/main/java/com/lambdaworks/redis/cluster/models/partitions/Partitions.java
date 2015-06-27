@@ -43,7 +43,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
 
     @Override
     public Iterator<RedisClusterNode> iterator() {
-        return Lists.newArrayList(partitions).iterator();
+        return partitions.iterator();
     }
 
     public List<RedisClusterNode> getPartitions() {

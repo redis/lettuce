@@ -74,6 +74,7 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
     }
 
     public void setPartitions(Partitions partitions) {
+        getWriter().getClusterConnectionProvider().setPartitions(partitions);
         this.partitions = partitions;
     }
 }

@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.google.common.base.Preconditions.*;
 
+import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
@@ -170,7 +171,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
         final PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(
-                this, partitions, codec);
+                this, codec);
 
         final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
                 pooledClusterConnectionProvider);
@@ -202,6 +203,15 @@ public class RedisClusterClient extends AbstractRedisClient {
             this.partitions.getPartitions().clear();
             this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
             this.partitions.reload(loadedPartitions.getPartitions());
+        }
+
+        for (Closeable c : closeableResources) {
+            if (c instanceof RedisAdvancedClusterAsyncConnectionImpl) {
+                RedisAdvancedClusterAsyncConnectionImpl<?, ?> connection = (RedisAdvancedClusterAsyncConnectionImpl<?, ?>) c;
+                if (connection.getChannelWriter() instanceof ClusterDistributionChannelWriter) {
+                    connection.setPartitions(this.partitions);
+                }
+            }
         }
     }
 
@@ -296,4 +306,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         return new Utf8StringCodec();
     }
 
+    public void setPartitions(Partitions partitions) {
+        this.partitions = partitions;
+    }
 }

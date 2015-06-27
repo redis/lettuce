@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.List;
 
@@ -41,6 +41,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         RedisCommand<K, V, T> commandToSend = command;
         CommandArgs<K, V> args = command.getArgs();
+        RedisChannelWriter<K, V> channelWriter = null;
 
         if (command instanceof Command) {
             Command<K, V, T> singleCommand = (Command<K, V, T>) command;
@@ -49,29 +50,23 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             }
         }
 
-        RedisChannelWriter<K, V> channelWriter = null;
-
         if (commandToSend instanceof ClusterCommand) {
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) commandToSend;
             if (!clusterCommand.isDone() && clusterCommand.isMoved()) {
                 HostAndPort moveTarget = getMoveTarget(clusterCommand.getError());
-
+                commandToSend.getOutput().setError((String) null);
                 RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
                         ClusterConnectionProvider.Intent.WRITE, moveTarget.getHostText(), moveTarget.getPort());
                 channelWriter = connection.getChannelWriter();
             }
-
         }
 
         byte encodedKey[] = args.getEncodedKey();
         if (channelWriter == null && args != null && encodedKey != null) {
-
             int hash = getHash(encodedKey);
             RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
                     ClusterConnectionProvider.Intent.WRITE, hash);
-
             channelWriter = connection.getChannelWriter();
-
         }
 
         if (channelWriter instanceof ClusterDistributionChannelWriter) {
@@ -79,7 +74,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             channelWriter = writer.defaultWriter;
         }
 
-        commandToSend.getOutput().setError((String) null);
         if (channelWriter != null && channelWriter != this && channelWriter != defaultWriter) {
             return channelWriter.write(commandToSend);
         }

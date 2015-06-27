@@ -2,11 +2,17 @@ package com.lambdaworks.redis.cluster;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Arrays;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.lambdaworks.redis.*;
+import com.google.common.collect.ImmutableMap;
+import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -15,7 +21,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * Connection provider with built-in pooling
+ * Connection provider with built-in connection caching.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
@@ -24,13 +30,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
-    private final Partitions partitions;
-    private LoadingCache<PoolKey, RedisAsyncConnectionImpl<K, V>> connections;
-    private final boolean debugEnabled;
 
-    public PooledClusterConnectionProvider(final RedisClusterClient redisClusterClient, Partitions partitions,
-            final RedisCodec<K, V> redisCodec) {
-        this.partitions = partitions;
+    private final LoadingCache<PoolKey, RedisAsyncConnectionImpl<K, V>> connections;
+    private final boolean debugEnabled;
+    private final RedisAsyncConnectionImpl<K, V> writers[] = new RedisAsyncConnectionImpl[SlotHash.SLOT_COUNT];
+    private Partitions partitions;
+
+    public PooledClusterConnectionProvider(final RedisClusterClient redisClusterClient, final RedisCodec<K, V> redisCodec) {
         this.debugEnabled = logger.isDebugEnabled();
         this.connections = CacheBuilder.newBuilder().build(new CacheLoader<PoolKey, RedisAsyncConnectionImpl<K, V>>() {
             @Override
@@ -38,7 +44,6 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 return redisClusterClient.connectAsyncImpl(redisCodec, key.getSocketAddress());
             }
         });
-
     }
 
     @Override
@@ -47,27 +52,26 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         if (debugEnabled) {
             logger.debug("getConnection(" + intent + ", " + slot + ")");
         }
-        RedisClusterNode partition = partitions.getPartitionBySlot(slot);
-        if (partition == null) {
-            throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
-        }
 
-        try {
-            PoolKey key = new PoolKey(intent, partition.getUri());
-            return getConnection(key);
-        } catch (Exception e) {
-            throw new RedisException(e);
+        RedisAsyncConnectionImpl<K, V> writer = writers[slot];
+        if (writer == null) {
+            RedisClusterNode partition = partitions.getPartitionBySlot(slot);
+            if (partition == null) {
+                throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
+            }
+
+            try {
+                PoolKey key = new PoolKey(intent, partition.getUri());
+                return writers[slot] = getConnection(key);
+            } catch (Exception e) {
+                throw new RedisException(e);
+            }
         }
+        return writer;
     }
 
     private RedisAsyncConnectionImpl<K, V> getConnection(PoolKey key) throws java.util.concurrent.ExecutionException {
-        RedisAsyncConnectionImpl<K, V> result = connections.get(key);
-        if (!result.isOpen()) {
-            connections.invalidate(key);
-            return connections.get(key);
-        }
-
-        return result;
+        return connections.get(key);
     }
 
     @Override
@@ -86,20 +90,20 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void close() {
-
-        if (connections != null) {
-            reset();
+        ImmutableMap<PoolKey, RedisAsyncConnectionImpl<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
+        this.connections.invalidateAll();
+        resetPartitions();
+        for (RedisAsyncConnection<K, V> kvRedisAsyncConnection : copy.values()) {
+            kvRedisAsyncConnection.close();
         }
-        connections = null;
-
     }
 
     @Override
     public void reset() {
-        for (RedisAsyncConnection<K, V> kvRedisAsyncConnection : connections.asMap().values()) {
-            kvRedisAsyncConnection.close();
+        ImmutableMap<PoolKey, RedisAsyncConnectionImpl<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
+        for (RedisAsyncConnectionImpl<K, V> kvRedisAsyncConnection : copy.values()) {
+            kvRedisAsyncConnection.reset();
         }
-        connections.invalidateAll();
     }
 
     private static class PoolKey {
@@ -167,4 +171,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
     }
 
+    @Override
+    public void setPartitions(Partitions partitions) {
+        this.partitions = partitions;
+        resetPartitions();
+    }
+
+    protected void resetPartitions() {
+        Arrays.fill(writers, null);
+    }
 }

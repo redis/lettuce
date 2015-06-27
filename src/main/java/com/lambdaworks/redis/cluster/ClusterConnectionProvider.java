@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import java.io.Closeable;
 
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
 /**
  * Connection provider for cluster operations.
@@ -41,6 +42,13 @@ interface ClusterConnectionProvider extends Closeable {
      * internal state machine gets out of sync with the connection.
      */
     void reset();
+
+    /**
+     * Update partitions.
+     * 
+     * @param partitions
+     */
+    void setPartitions(Partitions partitions);
 
     public static enum Intent {
         READ, WRITE;
