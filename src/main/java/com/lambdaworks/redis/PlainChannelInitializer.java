@@ -53,11 +53,6 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 }
 
                 @Override
-                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                    super.channelRead(ctx, msg);
-                }
-
-                @Override
                 public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
                     if (evt instanceof ConnectionEvents.Close) {
                         if (ctx.channel().isOpen()) {
