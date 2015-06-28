@@ -1720,40 +1720,40 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Long> geoadd(K key, double latitude, double longitude, V member) {
+    public Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).addValue(member);
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Long> geoadd(K key, Object[] latLongMember) {
+    public Command<K, V, Long> geoadd(K key, Object[] lngLatMember) {
 
-        assertNotEmpty(latLongMember, "latLongMember " + MUST_NOT_BE_EMPTY);
-        assertNoNullElements(latLongMember, "latLongMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        assertNotEmpty(lngLatMember, "lngLatMember " + MUST_NOT_BE_EMPTY);
+        assertNoNullElements(lngLatMember, "lngLatMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
         assertTrue(
-                latLongMember.length % 3 == 0,
-                "latLongMember.length must be a multiple of 3 and contain a "
-                        + "sequence of latitude1, longitude1, member1, latitude2, longitude2, member2, ... latitudeN, longitudeN, memberN");
+                lngLatMember.length % 3 == 0,
+                "lngLatMember.length must be a multiple of 3 and contain a "
+                        + "sequence of longitude1, latitude1, member1, longitude2, latitude2, member2, ... longitudeN, latitudeN, memberN");
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
 
-        for (int i = 0; i < latLongMember.length; i += 3) {
-            args.add((Double) latLongMember[i]);
-            args.add((Double) latLongMember[i + 1]);
-            args.addValue((V) latLongMember[i + 2]);
+        for (int i = 0; i < lngLatMember.length; i += 3) {
+            args.add((Double) lngLatMember[i]);
+            args.add((Double) lngLatMember[i + 1]);
+            args.addValue((V) lngLatMember[i + 2]);
         }
 
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Set<V>> georadius(K key, double latitude, double longitude, double distance, String unit) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).add(distance).add(unit);
+    public Command<K, V, Set<V>> georadius(K key, double longitude, double latitude, double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         return createCommand(GEORADIUS, new ValueSetOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<Object>> georadius(K key, double latitude, double longitude, double distance, String unit,
+    public Command<K, V, List<Object>> georadius(K key, double longitude, double latitude, double distance, String unit,
             GeoArgs geoArgs) {
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).add(distance).add(unit);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
 
         if (geoArgs != null) {
             geoArgs.build(args);
@@ -1777,8 +1777,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEORADIUSBYMEMBER, new NestedMultiOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<Object>> geoencode(double latitude, double longitude, Double distance, String unit) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(latitude).add(longitude);
+    public Command<K, V, List<Object>> geoencode(double longitude, double latitude, Double distance, String unit) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(longitude).add(latitude);
 
         if (distance != null && unit != null) {
             args.add(distance).add(unit);

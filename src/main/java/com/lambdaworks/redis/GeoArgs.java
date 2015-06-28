@@ -1,6 +1,7 @@
 package com.lambdaworks.redis;
 
 import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
  * Args for {@literal GEORADIUS} and {@literal GEORADIUSBYMEMBER} commands.
@@ -12,7 +13,7 @@ public class GeoArgs {
     private boolean withdistance;
     private boolean withcoordinates;
     private boolean withhash;
-    private boolean noproperties;
+    private Long count;
     private Sort sort = Sort.none;
 
     public GeoArgs withDistance() {
@@ -30,8 +31,8 @@ public class GeoArgs {
         return this;
     }
 
-    public GeoArgs noProperties() {
-        noproperties = true;
+    public GeoArgs withCount(long count) {
+        this.count = count;
         return this;
     }
 
@@ -80,23 +81,23 @@ public class GeoArgs {
 
     public <K, V> void build(CommandArgs<K, V> args) {
         if (withdistance) {
-            args.add("withdistance");
-        }
-
-        if (withcoordinates) {
-            args.add("withcoordinates");
+            args.add("withdist");
         }
 
         if (withhash) {
             args.add("withhash");
         }
 
-        if (noproperties) {
-            args.add("noproperties");
+        if (withcoordinates) {
+            args.add("withcoord");
         }
 
         if (sort != null && sort != Sort.none) {
             args.add(sort.name());
+        }
+
+        if (count != null) {
+            args.add(CommandKeyword.COUNT).add(count);
         }
 
     }
