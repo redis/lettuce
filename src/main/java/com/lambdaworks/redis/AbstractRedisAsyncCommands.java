@@ -1612,24 +1612,24 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<Long> geoadd(K key, double latitude, double longitude, V member) {
-        return dispatch(commandBuilder.geoadd(key, latitude, longitude, member));
+    public RedisFuture<Long> geoadd(K key, double longitude, double latitude, V member) {
+        return dispatch(commandBuilder.geoadd(key, longitude, latitude, member));
     }
 
     @Override
-    public RedisFuture<Long> geoadd(K key, Object... latLongMember) {
-        return dispatch(commandBuilder.geoadd(key, latLongMember));
+    public RedisFuture<Long> geoadd(K key, Object... lonLatMember) {
+        return dispatch(commandBuilder.geoadd(key, lonLatMember));
     }
 
     @Override
-    public RedisFuture<Set<V>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.georadius(key, latitude, longitude, distance, unit.name()));
+    public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
     }
 
     @Override
-    public RedisFuture<List<Object>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit,
+    public RedisFuture<List<Object>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-        return dispatch(commandBuilder.georadius(key, latitude, longitude, distance, unit.name(), geoArgs));
+        return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
     @Override
@@ -1643,13 +1643,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<List<Object>> geoencode(double latitude, double longitude) {
-        return dispatch(commandBuilder.geoencode(latitude, longitude, null, null));
+    public RedisFuture<List<Object>> geoencode(double longitude, double latitude) {
+        return dispatch(commandBuilder.geoencode(longitude, latitude, null, null));
     }
 
     @Override
-    public RedisFuture<List<Object>> geoencode(double latitude, double longitude, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.geoencode(latitude, longitude, distance, unit.name()));
+    public RedisFuture<List<Object>> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.geoencode(longitude, latitude, distance, unit.name()));
     }
 
     @Override

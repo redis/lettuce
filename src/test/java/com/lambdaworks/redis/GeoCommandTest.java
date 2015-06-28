@@ -17,19 +17,18 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test
     public void geoadd() throws Exception {
 
-        Long result = redis.geoadd(key, 40.747533, -73.9454966, "lic market");
+        Long result = redis.geoadd(key, -73.9454966, 40.747533, "lic market");
         assertThat(result).isEqualTo(1);
 
-        Long readd = redis.geoadd(key, 40.747533, -73.9454966, "lic market");
+        Long readd = redis.geoadd(key, -73.9454966, 40.747533, "lic market");
         assertThat(readd).isEqualTo(0);
     }
 
     @Test
     public void geoaddMulti() throws Exception {
 
-        Long result = redis.geoadd(key, 49.5282537, 8.6638775, "Weinheim", 48.9978127, 8.3796281, "EFS9", 49.553302, 8.665351,
+        Long result = redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302,
                 "Bahn");
-
         assertThat(result).isEqualTo(3);
     }
 
@@ -39,7 +38,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     protected void prepareGeo() {
-        redis.geoadd(key, 49.5282537, 8.6638775, "Weinheim", 48.9978127, 8.3796281, "EFS9", 49.553302, 8.665351, "Bahn");
+        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
     }
 
     @Test
@@ -47,10 +46,10 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        Set<String> georadius = redis.georadius(key, 49.5285695, 8.6582861, 1, GeoArgs.Unit.kilometer);
+        Set<String> georadius = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.kilometer);
         assertThat(georadius).hasSize(1).contains("Weinheim");
 
-        Set<String> largerGeoradius = redis.georadius(key, 49.5285695, 8.6582861, 5, GeoArgs.Unit.kilometer);
+        Set<String> largerGeoradius = redis.georadius(key, 8.6582861, 49.5285695, 5, GeoArgs.Unit.kilometer);
         assertThat(largerGeoradius).hasSize(2).contains("Weinheim").contains("Bahn");
 
     }
@@ -60,15 +59,15 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().noProperties().asc();
+        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().withCount(1).asc();
 
-        List<Object> result = redis.georadius(key, 49.5285695, 8.6582861, 1, GeoArgs.Unit.kilometer, geoArgs);
+        List<Object> result = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.kilometer, geoArgs);
         assertThat(result).hasSize(1);
 
         List<Object> response = (List) result.get(0);
         assertThat(response).hasSize(4);
 
-        result = redis.georadius(key, 49.5285695, 8.6582861, 1, GeoArgs.Unit.kilometer, null);
+        result = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.kilometer, null);
         assertThat(result).hasSize(1);
     }
 
@@ -104,7 +103,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test
     public void geoencode() throws Exception {
 
-        List<Object> geoencode = redis.geoencode(49.5282537, 8.6638775);
+        List<Object> geoencode = redis.geoencode(8.6638775, 49.5282537);
 
         assertThat(geoencode).hasSize(4);
         assertThat(geoencode.get(0)).isEqualTo(3666615932941099L);
@@ -117,7 +116,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test
     public void geoencodeWithDistance() throws Exception {
 
-        List<Object> result = redis.geoencode(49.5282537, 8.6638775, 1, GeoArgs.Unit.kilometer);
+        List<Object> result = redis.geoencode(8.6638775, 49.5282537, 1, GeoArgs.Unit.kilometer);
 
         assertThat(result).hasSize(4);
         assertThat(result.get(0)).isEqualTo(3666615929405440L);

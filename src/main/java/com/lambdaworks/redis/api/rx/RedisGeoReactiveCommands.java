@@ -1,9 +1,8 @@
 package com.lambdaworks.redis.api.rx;
 
+import com.lambdaworks.redis.GeoArgs;
 import java.util.List;
 import java.util.Set;
-
-import com.lambdaworks.redis.GeoArgs;
 import rx.Observable;
 
 /**
@@ -19,45 +18,45 @@ public interface RedisGeoReactiveCommands<K, V> {
      * Single geo add.
      * 
      * @param key
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param member
      * @return Long integer-reply the number of elements that were added to the set
      */
-    Observable<Long> geoadd(K key, double latitude, double longitude, V member);
+    Observable<Long> geoadd(K key, double longitude, double latitude, V member);
 
     /**
      * Multi geo add.
      * 
      * @param key
-     * @param latLonMember triplets of double latitude, double longitude and V member
+     * @param lngLatMember triplets of double longitude, double latitude and V member
      * @return Long integer-reply the number of elements that were added to the set
      */
-    Observable<Long> geoadd(K key, Object... latLonMember);
+    Observable<Long> geoadd(K key, Object... lngLatMember);
 
     /**
-     * Retrieve members selected by distance with the center of {@code latitude} and {@code longitude}.
+     * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
      * 
      * @param key
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param distance
      * @param unit
      * @return bulk reply
      */
-    Observable<V> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit);
+    Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit);
 
     /**
-     * Retrieve members selected by distance with the center of {@code latitude} and {@code longitude}.
+     * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
      * 
      * @param key
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param distance
      * @param unit
      * @return nested multi-bulk reply
      */
-    Observable<Object> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
+    Observable<Object> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}.
@@ -84,27 +83,27 @@ public interface RedisGeoReactiveCommands<K, V> {
 
     /**
      *
-     * Encode latitude and longitude to highest geohash accuracy.
+     * Encode {@code longitude} and {@code latitude} to highest geohash accuracy.
      *
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @return nested multi-bulk reply with 1: the 52-bit geohash integer for your latitude longitude, 2: The minimum corner of
      *         your geohash, 3: The maximum corner of your geohash, 4: The averaged center of your geohash.
      */
-    Observable<Object> geoencode(double latitude, double longitude);
+    Observable<Object> geoencode(double longitude, double latitude);
 
     /**
      *
      * Encode latitude and longitude to highest geohash accuracy.
      *
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param distance
      * @param unit
      * @return nested multi-bulk reply with 1: the 52-bit geohash integer for your latitude longitude, 2: The minimum corner of
      *         your geohash, 3: The maximum corner of your geohash, 4: The averaged center of your geohash.
      */
-    Observable<Object> geoencode(double latitude, double longitude, double distance, GeoArgs.Unit unit);
+    Observable<Object> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit);
 
     /**
      *

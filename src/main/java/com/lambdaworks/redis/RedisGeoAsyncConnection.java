@@ -4,56 +4,58 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Synchronous executed commands for Geo-Commands.
+ * Asynchronous executed commands for Geo-Commands.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
+ * @deprecated Use {@link com.lambdaworks.redis.api.async.RedisGeoAsyncCommands}
  */
+@Deprecated
 public interface RedisGeoAsyncConnection<K, V> {
 
     /**
      * Single geo add.
      * 
      * @param key
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param member
      * @return Long integer-reply the number of elements that were added to the set
      */
-    RedisFuture<Long> geoadd(K key, double latitude, double longitude, V member);
+    RedisFuture<Long> geoadd(K key, double longitude, double latitude, V member);
 
     /**
      * Multi geo add
      * 
      * @param key
-     * @param latLonMember triplets of double latitude, double longitude and V member
+     * @param lonLatMember triplets of double longitude, double latitude and V member
      * @return Long integer-reply the number of elements that were added to the set
      */
-    RedisFuture<Long> geoadd(K key, Object... latLonMember);
+    RedisFuture<Long> geoadd(K key, Object... lonLatMember);
 
     /**
-     * Retrieve members selected by distance with the center of {@code latitude} and {@code longitude}.
+     * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
      * 
      * @param key
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param distance
      * @param unit
      * @return bulk reply
      */
-    RedisFuture<Set<V>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit);
+    RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit);
 
     /**
-     * Retrieve members selected by distance with the center of {@code latitude} and {@code longitude}.
+     * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
      * 
      * @param key
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param distance
      * @param unit
      * @return
      */
-    RedisFuture<List<Object>> georadius(K key, double latitude, double longitude, double distance, GeoArgs.Unit unit,
+    RedisFuture<List<Object>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs);
 
     /**
@@ -83,25 +85,25 @@ public interface RedisGeoAsyncConnection<K, V> {
      *
      * Encode latitude and longitude to highest geohash accuracy.
      *
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @return nested multi-bulk reply with 1: the 52-bit geohash integer for your latitude longitude, 2: The minimum corner of
      *         your geohash, 3: The maximum corner of your geohash, 4: The averaged center of your geohash.
      */
-    RedisFuture<List<Object>> geoencode(double latitude, double longitude);
+    RedisFuture<List<Object>> geoencode(double longitude, double latitude);
 
     /**
      *
-     * Encode latitude and longitude to highest geohash accuracy.
+     * Encode {@code longitude} and {@code latitude} to highest geohash accuracy.
      *
-     * @param latitude
      * @param longitude
+     * @param latitude
      * @param distance
      * @param unit
      * @return nested multi-bulk reply with 1: the 52-bit geohash integer for your latitude longitude, 2: The minimum corner of
      *         your geohash, 3: The maximum corner of your geohash, 4: The averaged center of your geohash.
      */
-    RedisFuture<List<Object>> geoencode(double latitude, double longitude, double distance, GeoArgs.Unit unit);
+    RedisFuture<List<Object>> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit);
 
     /**
      *
