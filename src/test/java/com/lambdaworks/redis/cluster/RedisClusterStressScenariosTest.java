@@ -8,8 +8,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -38,7 +36,7 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
@@ -84,7 +82,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         ClusterSetup.setupMasterWithSlave(clusterRule);
 
         redis5 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
-        redis6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        redis6 = client.connect(RedisURI.Builder.redis(host, AbstractClusterTest.port6).build());
 
         redissync5 = redis5.sync();
         redissync6 = redis6.sync();
@@ -107,11 +105,11 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     public void testClusterFailover() throws Exception {
 
         log.info("Cluster node 5 is master");
+        log.info("Cluster nodes seen from node 5:" + Layout.LINE_SEP + redissync5.clusterNodes());
+        log.info("Cluster nodes seen from node 6:" + Layout.LINE_SEP + redissync6.clusterNodes());
 
         Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
         Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
-
-        log.info("Cluster nodes seen from node 6:" + Layout.LINE_SEP + redissync6.clusterNodes());
 
         String failover = redissync6.clusterFailover(true);
         assertThat(failover).isEqualTo("OK");
