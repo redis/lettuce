@@ -1602,6 +1602,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<GeoTuple> geopos(K key, V... members) {
+        return createDissolvingObservable(() -> commandBuilder.geopos(key, members));
+    }
+
+    @Override
+    public Observable<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
+        return createDissolvingObservable(() -> commandBuilder.geodist(key, from, to, unit));
+    }
+
+    @Override
     public Observable<Object> geoencode(double longitude, double latitude) {
         return createDissolvingObservable(() -> commandBuilder.geoencode(longitude, latitude, null, null));
     }
@@ -1612,7 +1622,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Object> geodecode(long geohash) {
+    public Observable<GeoTuple> geodecode(long geohash) {
         return createDissolvingObservable(() -> commandBuilder.geodecode(geohash));
     }
 

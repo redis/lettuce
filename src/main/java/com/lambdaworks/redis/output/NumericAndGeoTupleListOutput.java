@@ -8,7 +8,6 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.GeoTuple;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * A list output that creates a list with either double/long or {@link GeoTuple}'s.

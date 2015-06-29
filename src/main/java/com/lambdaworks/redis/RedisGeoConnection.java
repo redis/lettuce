@@ -3,8 +3,6 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.Set;
 
-import com.lambdaworks.redis.api.sync.RedisHashCommands;
-
 /**
  * Synchronous executed commands for Geo-Commands.
  * 
@@ -30,10 +28,10 @@ public interface RedisGeoConnection<K, V> {
      * Multi geo add.
      * 
      * @param key
-     * @param lonLatMember triplets of double longitude, double latitude and V member
+     * @param lngLatMember triplets of double longitude, double latitude and V member
      * @return Long integer-reply the number of elements that were added to the set
      */
-    Long geoadd(K key, Object... lonLatMember);
+    Long geoadd(K key, Object... lngLatMember);
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
