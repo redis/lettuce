@@ -76,7 +76,23 @@ public class GeoArgs {
      * Supported geo unit.
      */
     public enum Unit {
-        meter, kilometer, feet, mile;
+        /**
+         * meter.
+         */
+        m,
+
+        /**
+         * kilometer.
+         */
+        km,
+        /**
+         * feet.
+         */
+        ft,
+        /**
+         * mile.
+         */
+        mi;
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {

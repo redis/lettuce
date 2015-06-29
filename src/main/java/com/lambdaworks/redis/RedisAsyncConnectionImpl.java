@@ -1632,6 +1632,16 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<List<GeoTuple>> geopos(K key, V... members) {
+        return dispatch(commandBuilder.geopos(key, members));
+    }
+
+    @Override
+    public RedisFuture<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.geodist(key, from, to, unit));
+    }
+
+    @Override
     public RedisFuture<List<Object>> geoencode(double longitude, double latitude) {
         return dispatch(commandBuilder.geoencode(longitude, latitude, null, null));
     }
@@ -1642,7 +1652,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<List<Object>> geodecode(long geohash) {
+    public RedisFuture<List<GeoTuple>> geodecode(long geohash) {
         return dispatch(commandBuilder.geodecode(geohash));
     }
 
