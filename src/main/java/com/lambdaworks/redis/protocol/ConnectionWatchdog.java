@@ -109,6 +109,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      */
     public void scheduleReconnect() {
         logger.debug("scheduleReconnect()");
+
+        if (!isEventLoopGroupActive()) {
+            return;
+        }
+
         if (channel == null || !channel.isActive()) {
             if (attempts < RETRY_TIMEOUT_MAX) {
                 attempts++;
@@ -131,6 +136,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void run(Timeout timeout) throws Exception {
 
+        if (!isEventLoopGroupActive()) {
+            return;
+        }
+
         boolean shouldLog = shouldLog();
 
         InternalLogLevel infoLevel = InternalLogLevel.INFO;
@@ -152,6 +161,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     private void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws InterruptedException {
+
         logger.log(infoLevel, "Reconnecting, last destination was " + remoteAddress);
 
         if (socketAddressSupplier != null) {
@@ -185,6 +195,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             }
         }
 
+    }
+
+    private boolean isEventLoopGroupActive() {
+        if(bootstrap.group().isShutdown()|| bootstrap.group().isTerminated()|| bootstrap.group().isShuttingDown()) {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean shouldLog() {

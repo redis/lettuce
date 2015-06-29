@@ -6,7 +6,6 @@ import java.util.concurrent.Future;
 import com.google.common.util.concurrent.SettableFuture;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandHandler;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -96,13 +95,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             final ChannelHandlerContext ctx, final List<ChannelHandler> handlers) throws Exception {
         cmd.addListener(new PingResponseListener(initializedFuture, cmd, ctx), ctx.executor());
 
-        for (ChannelHandler handler : handlers) {
-            if (handler instanceof CommandHandler) {
-                CommandHandler ch = (CommandHandler) handler;
-                ch.write(ctx, cmd, ctx.newPromise());
-                ctx.flush();
-            }
-        }
+        ctx.channel().writeAndFlush(cmd);
     }
 
     static void removeIfExists(ChannelPipeline pipeline, Class<? extends ChannelHandler> handlerClass) {
