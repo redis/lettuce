@@ -3,25 +3,16 @@
 package com.lambdaworks.redis.protocol;
 
 import java.nio.charset.Charset;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.ConnectionEvents;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.*;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -186,23 +177,15 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
         final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
-        ByteBuf buf = ctx.alloc().buffer();
-        cmd.encode(buf);
-
-        if (debugEnabled) {
-            logger.debug("{} writing command {}", logPrefix(), cmd);
-            if (traceEnabled) {
-                logger.trace("{} Sent: {}", logPrefix(), buf.toString(Charset.defaultCharset()).trim());
-            }
-        }
 
         if (cmd.getOutput() == null) {
-            ctx.write(buf, promise);
             cmd.complete();
         } else {
             queue.add(cmd);
-            ctx.write(buf, promise);
         }
+
+        ctx.write(cmd, promise);
+
     }
 
     @Override
