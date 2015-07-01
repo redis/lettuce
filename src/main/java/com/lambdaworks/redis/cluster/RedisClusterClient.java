@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.google.common.base.Preconditions.*;
 
+import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
+
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -268,9 +270,21 @@ public class RedisClusterClient extends AbstractRedisClient {
     public void reloadPartitions() {
         if (partitions == null) {
             initializePartitions();
+            partitions.updateCache();
         } else {
             Partitions loadedPartitions = loadPartitions();
+            this.partitions.getPartitions().clear();
+            this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
             this.partitions.reload(loadedPartitions.getPartitions());
+        }
+
+        for (Closeable c : closeableResources) {
+            if (c instanceof StatefulRedisClusterConnectionImpl) {
+                StatefulRedisClusterConnectionImpl<?, ?> connection = (StatefulRedisClusterConnectionImpl<?, ?>) c;
+                if (connection.getChannelWriter() instanceof ClusterDistributionChannelWriter) {
+                    connection.setPartitions(this.partitions);
+                }
+            }
         }
     }
 

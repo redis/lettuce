@@ -2,19 +2,15 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static com.lambdaworks.redis.LettuceStrings.isEmpty;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.google.common.base.Preconditions.*;
+import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import java.util.ArrayDeque;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Queue;
+import java.util.concurrent.*;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -295,7 +291,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI) {
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
@@ -368,7 +364,7 @@ public class RedisClient extends AbstractRedisClient {
     private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         checkArgument(codec != null, "RedisCodec must not be null");
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, queue, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec);
@@ -452,7 +448,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinelImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
