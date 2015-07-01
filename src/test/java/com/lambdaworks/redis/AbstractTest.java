@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import org.junit.Rule;
 
 import com.lambdaworks.CapturingLogRule;
+import com.lambdaworks.LoggingTestRule;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -21,6 +22,9 @@ public class AbstractTest {
 
     @Rule
     public CapturingLogRule capturingLogRule = new CapturingLogRule();
+
+    @Rule
+    public LoggingTestRule loggingTestRule = new LoggingTestRule();
 
     protected Logger log = Logger.getLogger(getClass());
     protected String key = "key";

@@ -20,7 +20,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 @ChannelHandler.Sharable
 public class CommandEncoder extends MessageToByteEncoder<RedisCommand> {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandEncoder.class);
 
     /**
      * If TRACE level logging has been enabled at startup.
