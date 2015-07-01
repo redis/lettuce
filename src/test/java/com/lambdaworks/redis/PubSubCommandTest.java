@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis;
 
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
@@ -13,6 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.Duration;
+import com.google.code.tempusfugit.temporal.Timeout;
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
@@ -256,6 +262,13 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
 
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return pubsub.isOpen();
+            }
+        }, timeout(seconds(5)));
+
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
@@ -271,6 +284,13 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
+
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return pubsub.isOpen();
+            }
+        }, timeout(seconds(5)));
 
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);
