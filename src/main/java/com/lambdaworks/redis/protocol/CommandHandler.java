@@ -137,13 +137,30 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throw new RedisException("Connection is closed");
         }
         try {
+            /**
+             * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
+             * than without a lock and all threads are hammering towards writeAndFlush.
+             */
             writeLock.lock();
             Channel channel = this.channel;
-            if (channel != null && connected) {
+            if (channel != null && connected && channel.isActive()) {
                 if (debugEnabled) {
                     logger.debug("{} write() writeAndFlush Command {}", logPrefix(), command);
                 }
                 channel.writeAndFlush(command);
+
+                /**
+                 * this is tricky here because, the write could failed and we do not know, whether the write was sucessful or
+                 * not. Was the command written? Was it flushed already? When did it happen and did the remote process it
+                 * already?
+                 *
+                 * With listening (getting an exception) or without we do not know, when an error occurred, therefore we retry
+                 * it. On the next try, the command is either queued or sent and this way retried. No commands get lost.
+                 */
+
+                if (!channel.isActive()) {
+                    write(command);
+                }
             } else {
 
                 if (connectionError != null) {
