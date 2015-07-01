@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
@@ -16,30 +18,76 @@ public class GeoArgs {
     private Long count;
     private Sort sort = Sort.none;
 
+    /**
+     * Request distance for results.
+     * 
+     * @return {@code this}
+     */
     public GeoArgs withDistance() {
         withdistance = true;
         return this;
     }
 
+    /**
+     * Request coordinates for results.
+     * 
+     * @return {@code this}
+     */
     public GeoArgs withCoordinates() {
         withcoordinates = true;
         return this;
     }
 
+    /**
+     * Request geohash for results.
+     * 
+     * @return {@code this}
+     */
     public GeoArgs withHash() {
         withhash = true;
         return this;
     }
 
+    /**
+     * Limit results to {@code count} entries.
+     * 
+     * @param count number greater 0
+     * @return {@code this}
+     */
     public GeoArgs withCount(long count) {
+        checkArgument(count > 0, "count must be greater 0");
         this.count = count;
         return this;
     }
 
     /**
+     * 
+     * @return {@literal true} if distance is requested.
+     */
+    public boolean isWithDistance() {
+        return withdistance;
+    }
+
+    /**
+     * 
+     * @return {@literal true} if coordinates are requested.
+     */
+    public boolean isWithCoordinates() {
+        return withcoordinates;
+    }
+
+    /**
+     * 
+     * @return {@literal true} if geohash is requested.
+     */
+    public boolean isWithHash() {
+        return withhash;
+    }
+
+    /**
      * Sort results ascending.
      * 
-     * @return the current geo args.
+     * @return {@code this}
      */
     public GeoArgs asc() {
         return sort(Sort.asc);
@@ -48,7 +96,7 @@ public class GeoArgs {
     /**
      * Sort results descending.
      * 
-     * @return the current geo args.
+     * @return {@code this}
      */
     public GeoArgs desc() {
         return sort(Sort.desc);
@@ -57,10 +105,12 @@ public class GeoArgs {
     /**
      * Sort results.
      * 
-     * @param sort
-     * @return the current geo args.
+     * @param sort sort order, must not be {@literal null}
+     * @return {@code this}
      */
     public GeoArgs sort(Sort sort) {
+        checkArgument(sort != null, "sort must not be null");
+
         this.sort = sort;
         return this;
     }
@@ -69,7 +119,20 @@ public class GeoArgs {
      * Sort order.
      */
     public enum Sort {
-        asc, desc, none;
+        /**
+         * ascending.
+         */
+        asc,
+
+        /**
+         * descending.
+         */
+        desc,
+
+        /**
+         * no sort order.
+         */
+        none;
     }
 
     /**
@@ -94,6 +157,7 @@ public class GeoArgs {
          */
         mi;
     }
+
 
     public <K, V> void build(CommandArgs<K, V> args) {
         if (withdistance) {
