@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
  */
 public interface RedisConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
-        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, BaseRedisConnection<K, V>,
-        RedisClusterConnection<K, V> {
+        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, RedisGeoConnection<K, V>,
+        BaseRedisConnection<K, V>, RedisClusterConnection<K, V> {
 
     /**
      * Set the default timeout for operations.

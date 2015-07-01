@@ -64,6 +64,9 @@ public enum CommandType implements ProtocolKeyword {
 
     BITCOUNT, BITOP, GETBIT, SETBIT, BITPOS,
 
+    // Geo
+    GEOADD, GEORADIUS, GEORADIUSBYMEMBER, GEOENCODE, GEODECODE, GEOPOS, GEODIST,
+
     // Others
     TIME, WAIT,
 
