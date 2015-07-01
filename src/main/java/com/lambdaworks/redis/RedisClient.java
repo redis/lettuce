@@ -2,15 +2,19 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.LettuceStrings.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -499,11 +503,11 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
      * 
-     * @param commandHandler
-     * @param codec
-     * @param <K>
-     * @param <V>
-     * @return the new instance
+     * @param commandHandler the command handler
+     * @param codec codec
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisPubSubConnectionImpl
      */
     protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
             PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec) {
@@ -513,11 +517,11 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
      * 
-     * @param commandHandler
-     * @param codec
-     * @param <K>
-     * @param <V>
-     * @return
+     * @param commandHandler the command handler
+     * @param codec codec
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisSentinelConnectionImpl
      */
     protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
             CommandHandler<K, V> commandHandler, RedisCodec<K, V> codec) {
@@ -527,11 +531,11 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
      * 
-     * @param commandHandler
-     * @param codec
-     * @param <K>
-     * @param <V>
-     * @return the new instance
+     * @param commandHandler the command handler
+     * @param codec codec
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisConnectionImpl
      */
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(CommandHandler<K, V> commandHandler,
             RedisCodec<K, V> codec) {

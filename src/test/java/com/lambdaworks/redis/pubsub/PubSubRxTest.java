@@ -307,6 +307,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
 
+        Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
+
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
@@ -322,6 +324,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
+
+        Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
 
         pubsub2.publish(channel, message).subscribe();
         assertThat(channels.take()).isEqualTo(channel);

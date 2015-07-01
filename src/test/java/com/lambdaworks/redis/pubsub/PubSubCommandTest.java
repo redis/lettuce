@@ -12,6 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
@@ -253,6 +254,8 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
 
+        Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
+
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
@@ -268,6 +271,8 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
+
+        Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
 
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);

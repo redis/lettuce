@@ -70,7 +70,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <code><pre>
    AsyncExecutions<String> ping = commands.masters().commands().ping();
    Collection<RedisClusterNode> nodes = ping.nodes();
-   nodes.stream().forEach(redisClusterNode -> ping.get(redisClusterNode));
+   nodes.stream().forEach(redisClusterNode -&gt; ping.get(redisClusterNode));
  * </pre></code>
  * </p>
  *
