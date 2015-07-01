@@ -2,43 +2,20 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.async.BaseRedisAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisGeoAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisHLLAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisHashAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisListAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisSetAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisSortedSetAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
-import com.lambdaworks.redis.api.async.RedisTransactionalAsyncCommands;
+import com.lambdaworks.redis.api.async.*;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.CommandOutput;
-import com.lambdaworks.redis.output.KeyStreamingChannel;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.AsyncCommand;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.*;
 
 /**
  * An asynchronous and thread-safe API for a Redis connection.
@@ -1617,8 +1594,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<Long> geoadd(K key, Object... lonLatMember) {
-        return dispatch(commandBuilder.geoadd(key, lonLatMember));
+    public RedisFuture<Long> geoadd(K key, Object... lngLatMember) {
+        return dispatch(commandBuilder.geoadd(key, lngLatMember));
     }
 
     @Override

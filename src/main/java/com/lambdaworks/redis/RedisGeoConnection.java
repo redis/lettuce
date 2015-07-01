@@ -82,7 +82,7 @@ public interface RedisGeoConnection<K, V> {
 
     /**
      * Get geo coordinates for the {@code members}.
-     * 
+     *
      * @param key
      * @param members
      *

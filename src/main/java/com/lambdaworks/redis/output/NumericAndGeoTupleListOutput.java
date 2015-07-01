@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.output;
 
-import static java.lang.Double.parseDouble;
+import static java.lang.Double.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;

@@ -36,6 +36,11 @@ public class GeoArgs {
         return this;
     }
 
+    /**
+     * Sort results ascending.
+     *
+     * @return the current geo args.
+     */
     public GeoArgs asc() {
         return sort(Sort.asc);
     }
