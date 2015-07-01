@@ -162,4 +162,9 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     public boolean isCancelled() {
         return cancelled;
     }
+
+    @Override
+    public boolean isDone() {
+        return completed;
+    }
 }

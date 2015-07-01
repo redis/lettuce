@@ -68,6 +68,12 @@ public interface RedisCommand<K, V, T> {
     boolean isCancelled();
 
     /**
+     *
+     * @return true if the command is completed.
+     */
+    boolean isDone();
+
+    /**
      * Set a new output. Only possible as long as the command is not completed/cancelled.
      * 
      * @param output the new command output

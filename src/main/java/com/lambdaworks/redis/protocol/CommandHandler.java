@@ -258,7 +258,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 redisChannelHandler.activated();
             }
 
-            tmp.stream().filter(cmd -> !cmd.isCancelled()).forEach(cmd -> {
+            tmp.stream().filter(cmd -> !cmd.isCancelled() && !cmd.isDone()).forEach(cmd -> {
 
                 if (debugEnabled) {
                     logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);

@@ -88,4 +88,9 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
         sb.append(']');
         return sb.toString();
     }
+
+    @Override
+    public boolean isDone() {
+        return command.isDone();
+    }
 }

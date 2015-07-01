@@ -75,6 +75,11 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         return completed;
     }
 
+    @Override
+    public boolean isDone() {
+        return isCompleted();
+    }
+
     public String getError() {
         if (command.getOutput() != null) {
             return command.getOutput().getError();
