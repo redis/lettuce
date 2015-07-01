@@ -9,10 +9,18 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.ConnectionEvents;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -55,8 +63,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions
-     * @param queue The command queue.
+     * @param clientOptions client options for this connection
+     * @param queue The command queue
      */
     public CommandHandler(ClientOptions clientOptions, Queue<RedisCommand<K, V, ?>> queue) {
         this.clientOptions = clientOptions;
@@ -101,15 +109,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         try {
             buffer.writeBytes(input);
 
-            if (logger.isTraceEnabled()) {
-                logger.trace("[" + ctx.channel().remoteAddress() + "] Received: "
-                        + buffer.toString(Charset.defaultCharset()).trim());
+            if (traceEnabled) {
+                logger.trace("{} Received: {}", logPrefix(), buffer.toString(Charset.defaultCharset()).trim());
             }
 
             decode(ctx, buffer);
-
-        } catch (Exception e) {
-            throw e;
         } finally {
             input.release();
         }
@@ -133,14 +137,30 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throw new RedisException("Connection is closed");
         }
         try {
-
+            /**
+             * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
+             * than without a lock and all threads are hammering towards writeAndFlush.
+             */
             writeLock.lock();
-            if (channel != null && connected) {
+            Channel channel = this.channel;
+            if (channel != null && connected && channel.isActive()) {
                 if (debugEnabled) {
-                    logger.debug("{} write() writeAndFlush Command", logPrefix(), command);
+                    logger.debug("{} write() writeAndFlush Command {}", logPrefix(), command);
                 }
 
                 channel.writeAndFlush(command, channel.voidPromise());
+                /**
+                 * this is tricky here because, the write could failed and we do not know, whether the write was sucessful or
+                 * not. Was the command written? Was it flushed already? When did it happen and did the remote process it
+                 * already?
+                 *
+                 * With listening (getting an exception) or without we do not know, when an error occurred, therefore we retry
+                 * it. On the next try, the command is either queued or sent and this way retried. No commands get lost.
+                 */
+
+                if (!channel.isActive()) {
+                    write(command);
+                }
             } else {
 
                 if (connectionError != null) {
@@ -240,21 +260,24 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 redisChannelHandler.activated();
             }
 
+            for (RedisCommand<K, V, ?> cmd : tmp) {
+                if (!cmd.isCancelled()) {
+
+                    if (debugEnabled) {
+                        logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);
+                    }
+                    ctx.channel().write(cmd);
+                }
+            }
+
+            ctx.channel().flush();
+
+            tmp.clear();
+
         } finally {
             writeLock.unlock();
         }
 
-        for (RedisCommand<K, V, ?> cmd : tmp) {
-            if (!cmd.isCancelled()) {
-
-                if (debugEnabled) {
-                    logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);
-                }
-                ctx.channel().writeAndFlush(cmd);
-            }
-        }
-
-        tmp.clear();
     }
 
     /**
