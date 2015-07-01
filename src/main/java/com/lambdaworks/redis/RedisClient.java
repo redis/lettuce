@@ -7,7 +7,9 @@ import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 import com.google.common.base.Supplier;
@@ -294,7 +296,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
@@ -366,8 +368,7 @@ public class RedisClient extends AbstractRedisClient {
     protected <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         checkArgument(codec != null, "RedisCodec must not be null");
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
-
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
 
@@ -411,7 +412,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> RedisSentinelAsyncConnection<K, V> connectSentinelAsyncImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));

@@ -1,9 +1,6 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
@@ -32,6 +29,8 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     public void updateCache() {
         if (slotCache == null) {
             slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
+        } else {
+            Arrays.fill(slotCache, null);
         }
 
         for (RedisClusterNode partition : partitions) {

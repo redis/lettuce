@@ -57,7 +57,7 @@ public class SlotHash {
                 System.arraycopy(key, start + 1, finalKey, 0, finalKey.length);
             }
         }
-        return CRC16.crc16(finalKey) % 16384;
+        return CRC16.crc16(finalKey) % SLOT_COUNT;
     }
 
     private static int indexOf(byte[] haystack, byte needle) {
