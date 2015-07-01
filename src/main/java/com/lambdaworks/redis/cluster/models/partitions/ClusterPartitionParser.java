@@ -62,10 +62,12 @@ public class ClusterPartitionParser {
                 RedisClusterNode partition = parseNode(node);
                 result.addPartition(partition);
             }
+
         } catch (Exception e) {
             throw new RedisException("Cannot parse " + nodes, e);
         }
 
+        result.updateCache();
         return result;
     }
 

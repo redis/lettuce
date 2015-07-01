@@ -28,6 +28,9 @@ public class SlotHash {
      */
     public static final byte SUBKEY_END = Chars.toByteArray('}')[1];
 
+    /**
+     * Number of redis cluster slot hashes.
+     */
     public static final int SLOT_COUNT = 16384;
 
     private SlotHash() {

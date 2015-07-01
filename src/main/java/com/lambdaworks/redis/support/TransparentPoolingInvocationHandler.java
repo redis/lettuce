@@ -1,9 +1,10 @@
 package com.lambdaworks.redis.support;
 
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.RedisConnectionPool;
 import com.lambdaworks.redis.RedisException;
@@ -17,16 +18,24 @@ import com.lambdaworks.redis.RedisException;
 public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHandler {
 
     private RedisConnectionPool<T> pool;
-    private final Map<Method, Method> methodCache = new ConcurrentHashMap<Method, Method>();
+    private LoadingCache<Method, Method> methodCache;
 
     public TransparentPoolingInvocationHandler(RedisConnectionPool<T> pool) {
         this.pool = pool;
+
+        methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+            @Override
+            public Method load(Method key) throws Exception {
+                return pool.getComponentType().getMethod(key.getName(), key.getParameterTypes());
+            }
+        });
+
     }
 
     @Override
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
-        Method targetMethod = getMethod(method);
+        Method targetMethod = methodCache.get(method);
 
         if (pool == null) {
             throw new RedisException("Connection pool is closed");
@@ -45,22 +54,6 @@ public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHa
         } finally {
             pool.freeConnection(connection);
         }
-    }
-
-    /**
-     * Lookup the target method using a cache.
-     * 
-     * @param method source method
-     * @return the target method
-     * @throws NoSuchMethodException
-     */
-    private Method getMethod(Method method) throws NoSuchMethodException {
-        Method targetMethod = methodCache.get(method);
-        if (targetMethod == null) {
-            targetMethod = pool.getComponentType().getMethod(method.getName(), method.getParameterTypes());
-            methodCache.put(method, targetMethod);
-        }
-        return targetMethod;
     }
 
     public RedisConnectionPool<T> getPool() {

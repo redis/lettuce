@@ -1,15 +1,9 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.net.SocketAddress;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
@@ -30,7 +24,6 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -209,7 +202,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
 
         logger.debug("connectAsyncImpl(" + socketAddress + ")");
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
@@ -244,12 +237,12 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
-        BlockingQueue<RedisCommand<K, V, ?>> queue = new LinkedBlockingQueue<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
         final PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(
-                this, partitions, codec);
+                this, codec);
 
         final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
                 pooledClusterConnectionProvider);

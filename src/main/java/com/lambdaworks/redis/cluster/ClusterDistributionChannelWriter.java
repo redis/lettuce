@@ -10,6 +10,7 @@ import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -138,5 +139,9 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     public void reset() {
         defaultWriter.reset();
         clusterConnectionProvider.reset();
+    }
+
+    public void setPartitions(Partitions partitions) {
+        clusterConnectionProvider.setPartitions(partitions);
     }
 }

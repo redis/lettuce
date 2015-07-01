@@ -4,6 +4,7 @@ import java.io.Closeable;
 
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
 /**
  * Connection provider for cluster operations.
@@ -48,7 +49,14 @@ interface ClusterConnectionProvider extends Closeable {
      */
     void reset();
 
-    public static enum Intent {
+    /**
+     * Update partitions.
+     *
+     * @param partitions
+     */
+    void setPartitions(Partitions partitions);
+
+    enum Intent {
         READ, WRITE;
     }
 }

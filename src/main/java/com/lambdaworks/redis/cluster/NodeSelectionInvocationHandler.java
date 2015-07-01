@@ -5,9 +5,10 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.CompletionStage;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -24,8 +25,18 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     private AbstractNodeSelection<?, ?, ?, ?> selection;
     private boolean sync;
-    private Map<Method, Method> nodeSelectionMethods = new WeakHashMap<>();
-    private Map<Method, Method> connectionMethod = new WeakHashMap<>();
+    private Cache<Method, Method> nodeSelectionMethods = CacheBuilder.newBuilder().build();
+    private Cache<Method, Method> connectionMethod = CacheBuilder.newBuilder().build();
+    public final static Method NULL_MARKER_METHOD;
+
+    static {
+        try {
+            NULL_MARKER_METHOD = NodeSelectionInvocationHandler.class.getDeclaredMethod("handleInvocation", Object.class,
+                    Method.class, Object[].class);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     public NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, boolean sync) {
         this.selection = selection;
@@ -44,7 +55,6 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             if (targetMethod != null) {
 
                 Map<RedisClusterNode, CompletionStage<?>> executions = Maps.newHashMap();
-
                 for (Map.Entry<RedisClusterNode, StatefulRedisConnection<?, ?>> entry : connections.entrySet()) {
 
                     CompletionStage<?> result = (CompletionStage<?>) targetMethod.invoke(entry.getValue().async(), args);
@@ -53,8 +63,6 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
                 return new AsyncExecutionsImpl<>((Map) executions);
             }
-
-
 
             if (method.getName().equals("commands") && args.length == 0) {
                 return proxy;
@@ -67,9 +75,11 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         }
     }
 
-    private Method findMethod(Class<?> type, Method method, Map<Method, Method> cache) {
-        if (cache.containsKey(method)) {
-            return cache.get(method);
+    private Method findMethod(Class<?> type, Method method, Cache<Method, Method> cache) {
+
+        Method result = cache.getIfPresent(method);
+        if (result != null && result != NULL_MARKER_METHOD) {
+            return result;
         }
 
         for (Method typeMethod : type.getMethods()) {
@@ -78,14 +88,12 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
                 continue;
             }
 
-            synchronized (cache) {
-                cache.put(method, typeMethod);
-                return typeMethod;
-            }
+            cache.put(method, typeMethod);
+            return typeMethod;
         }
 
         // Null-marker to avoid full class method scans.
-        cache.put(method, null);
+        cache.put(method, NULL_MARKER_METHOD);
         return null;
     }
 }

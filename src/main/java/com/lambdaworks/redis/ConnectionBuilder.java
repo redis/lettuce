@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
+import com.lambdaworks.redis.protocol.CommandEncoder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
@@ -118,7 +119,7 @@ public class ConnectionBuilder {
         connection.setOptions(clientOptions);
 
         handlers.add(new ChannelGroupListener(channelGroup));
-
+        handlers.add(new CommandEncoder());
         handlers.add(commandHandler);
         handlers.add(connection);
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection));

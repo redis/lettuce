@@ -1,22 +1,16 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Duration;
@@ -26,16 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.AbstractTest;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -157,15 +142,11 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         assertThat(statefulConnection.isOpen()).isTrue();
         assertThat(statefulConnection.isClosed()).isFalse();
 
-        connection.set("a", "b");
-
-        StatefulRedisConnectionImpl<Object, Object> backendConnection2 = (StatefulRedisConnectionImpl) writer
-                .getClusterConnectionProvider().getConnection(ClusterConnectionProvider.Intent.WRITE, 3300);
-
-        assertThat(backendConnection2.isOpen()).isTrue();
-        assertThat(backendConnection2.isClosed()).isFalse();
-
-        assertThat(backendConnection2).isNotSameAs(statefulSlotConnection);
+        try {
+            connection.set("a", "b");
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("Connection is closed");
+        }
 
         connection.close();
 

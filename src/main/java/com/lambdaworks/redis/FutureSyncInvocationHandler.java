@@ -3,12 +3,12 @@ package com.lambdaworks.redis;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -23,10 +23,19 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
     private final Object asyncApi;
+    private LoadingCache<Method, Method> methodCache;
 
     public FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi) {
         this.connection = connection;
         this.asyncApi = asyncApi;
+
+        methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+            @Override
+            public Method load(Method key) throws Exception {
+                return asyncApi.getClass().getMethod(key.getName(), key.getParameterTypes());
+            }
+        });
+
     }
 
     /**
@@ -40,8 +49,7 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
         try {
 
-            Method targetMethod = asyncApi.getClass().getMethod(method.getName(), method.getParameterTypes());
-
+            Method targetMethod = methodCache.get(method);
             Object result = targetMethod.invoke(asyncApi, args);
 
             if (result instanceof RedisFuture) {
@@ -51,7 +59,6 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                         return null;
                     }
                 }
-
                 return LettuceFutures.await(command, connection.getTimeout(), connection.getTimeoutUnit());
             }
 

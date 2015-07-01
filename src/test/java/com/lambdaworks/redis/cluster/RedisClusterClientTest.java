@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.*;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -21,14 +22,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -345,6 +338,10 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             redisClusterNode.setSlots(new ArrayList<>());
         }
+        RedisChannelHandler rch = (RedisChannelHandler) syncConnection.getStatefulConnection();
+        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) rch.getChannelWriter();
+        writer.setPartitions(clusterClient.getPartitions());
+        clusterClient.getPartitions().reload(clusterClient.getPartitions().getPartitions());
 
         syncConnection.get(key);
     }

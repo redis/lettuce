@@ -18,6 +18,7 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -48,6 +49,7 @@ public abstract class AbstractRedisClient {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
 
     private static final int DEFAULT_EVENT_LOOP_THREADS;
+    public static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
 
     static {
         DEFAULT_EVENT_LOOP_THREADS = Math.max(1,
@@ -117,6 +119,9 @@ public abstract class AbstractRedisClient {
             Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
+        redisBootstrap.option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 32 * 1024);
+        redisBootstrap.option(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 8 * 1024);
+        redisBootstrap.option(ChannelOption.ALLOCATOR, BUF_ALLOCATOR);
 
         if (redisURI == null) {
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));

@@ -6,14 +6,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.AbstractInvocationHandler;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.AbstractInvocationHandler;
 
 /**
  * Connection pool for redis connections.
@@ -164,7 +168,6 @@ public class RedisConnectionPool<T> implements Closeable {
         closeEvents.addListener(listener);
     }
 
-
     /**
      * Invocation handler which takes care of connection.close(). Connections are returned to the pool on a close()-call.
      *
@@ -177,10 +180,18 @@ public class RedisConnectionPool<T> implements Closeable {
 
         private T connection;
         private final RedisConnectionPool<T> pool;
+        private final LoadingCache<Method, Method> methodCache;
 
         public PooledConnectionInvocationHandler(T connection, RedisConnectionPool<T> pool) {
             this.connection = connection;
             this.pool = pool;
+
+            methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+                @Override
+                public Method load(Method key) throws Exception {
+                    return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
+                }
+            });
         }
 
         @SuppressWarnings("unchecked")
@@ -201,7 +212,8 @@ public class RedisConnectionPool<T> implements Closeable {
                 return null;
             }
 
-            Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
+            Method targetMethod = methodCache.get(method);
+
             try {
                 return targetMethod.invoke(connection, args);
             } catch (InvocationTargetException e) {

@@ -47,7 +47,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
             if (!rsm.decode(buffer, currentOutput)) {
                 return;
             }
-            queue.take().complete();
+            queue.poll().complete();
             buffer.discardReadBytes();
             if (currentOutput instanceof PubSubOutput) {
                 ctx.fireChannelRead(currentOutput);

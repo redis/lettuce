@@ -1,9 +1,6 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
@@ -23,22 +20,29 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
      * @return RedisClusterNode or {@literal null}
      */
     public RedisClusterNode getPartitionBySlot(int slot) {
+        return slotCache[slot];
+    }
 
+    /**
+     * Update the partition cache.
+     */
+    public void updateCache() {
         if (slotCache == null) {
             slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
-            for (RedisClusterNode partition : partitions) {
-                partition.getSlots().forEach(slotHash -> {
-                    slotCache[slotHash] = partition;
-                });
-            }
+        } else {
+            Arrays.fill(slotCache, null);
         }
 
-        return slotCache[slot];
+        for (RedisClusterNode partition : partitions) {
+            for (Integer integer : partition.getSlots()) {
+                slotCache[integer.intValue()] = partition;
+            }
+        }
     }
 
     @Override
     public Iterator<RedisClusterNode> iterator() {
-        return Lists.newArrayList(partitions).iterator();
+        return partitions.iterator();
     }
 
     public List<RedisClusterNode> getPartitions() {
@@ -46,7 +50,6 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     }
 
     public void addPartition(RedisClusterNode partition) {
-
         slotCache = null;
         partitions.add(partition);
     }
@@ -76,6 +79,6 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     public void reload(List<RedisClusterNode> partitions) {
         this.partitions.clear();
         this.partitions.addAll(partitions);
-        slotCache = null;
+        updateCache();
     }
 }

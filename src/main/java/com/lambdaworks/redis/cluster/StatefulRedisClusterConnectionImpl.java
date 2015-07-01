@@ -1,8 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.protocol.CommandType.AUTH;
-import static com.lambdaworks.redis.protocol.CommandType.READONLY;
-import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -11,14 +9,11 @@ import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.AbstractInvocationHandler;
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.LettuceFutures;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -203,6 +198,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     public void setPartitions(Partitions partitions) {
         this.partitions = partitions;
+        getClusterDistributionChannelWriter().setPartitions(partitions);
     }
 
     public Partitions getPartitions() {
@@ -222,10 +218,26 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         private final StatefulConnection<K, V> connection;
         private final Object asyncApi;
+        private final LoadingCache<Method, Method> apiMethodCache;
+        private final LoadingCache<Method, Method> connectionMethodCache;
 
         public ClusterFutureSyncInvocationHandler(StatefulConnection<K, V> connection, Object asyncApi) {
             this.connection = connection;
             this.asyncApi = asyncApi;
+
+            apiMethodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+                @Override
+                public Method load(Method key) throws Exception {
+                    return asyncApi.getClass().getMethod(key.getName(), key.getParameterTypes());
+                }
+            });
+
+            connectionMethodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+                @Override
+                public Method load(Method key) throws Exception {
+                    return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
+                }
+            });
         }
 
         /**
@@ -238,7 +250,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             try {
 
                 if (method.getName().equals("getConnection") && args.length > 0) {
-                    Method targetMethod = connection.getClass().getMethod(method.getName(), method.getParameterTypes());
+                    Method targetMethod = connectionMethodCache.get(method);
                     Object result = targetMethod.invoke(connection, args);
                     if (result instanceof StatefulRedisClusterConnection) {
                         StatefulRedisClusterConnection<K, V> connection = (StatefulRedisClusterConnection<K, V>) result;
@@ -251,7 +263,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                     }
                 }
 
-                Method targetMethod = asyncApi.getClass().getMethod(method.getName(), method.getParameterTypes());
+                Method targetMethod = apiMethodCache.get(method);
 
                 Object result = targetMethod.invoke(asyncApi, args);
 
