@@ -351,9 +351,9 @@ endif
 endif
 
 endif
-	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch geo --single-branch work/redis-git && cd work/redis-git|| true
-	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull && git checkout geo || true
-	make -C work/redis-git distclean clean
+	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch unstable --single-branch work/redis-git && cd work/redis-git|| true
+	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull && git checkout unstable || true
+	make -C work/redis-git clean
 	make -C work/redis-git -j4
 
 clean:

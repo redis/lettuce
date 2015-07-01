@@ -1604,8 +1604,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<List<Object>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
-            GeoArgs geoArgs) {
+    public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
+            GeoArgs.Unit unit, GeoArgs geoArgs) {
         return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
@@ -1615,12 +1615,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<List<Object>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+    public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
         return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
     }
 
     @Override
-    public RedisFuture<List<GeoTuple>> geopos(K key, V... members) {
+    public RedisFuture<List<GeoCoordinates>> geopos(K key, V... members) {
         return dispatch(commandBuilder.geopos(key, members));
     }
 
@@ -1630,17 +1631,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<List<Object>> geoencode(double longitude, double latitude) {
+    public RedisFuture<GeoEncoded> geoencode(double longitude, double latitude) {
         return dispatch(commandBuilder.geoencode(longitude, latitude, null, null));
     }
 
     @Override
-    public RedisFuture<List<Object>> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+    public RedisFuture<GeoEncoded> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return dispatch(commandBuilder.geoencode(longitude, latitude, distance, unit.name()));
     }
 
     @Override
-    public RedisFuture<List<GeoTuple>> geodecode(long geohash) {
+    public RedisFuture<GeoEncoded> geodecode(long geohash) {
         return dispatch(commandBuilder.geodecode(geohash));
     }
 

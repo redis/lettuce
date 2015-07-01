@@ -63,7 +63,9 @@ import com.lambdaworks.redis.output.BooleanOutput;
 import com.lambdaworks.redis.output.ByteArrayOutput;
 import com.lambdaworks.redis.output.DateOutput;
 import com.lambdaworks.redis.output.DoubleOutput;
-import com.lambdaworks.redis.output.NumericAndGeoTupleListOutput;
+import com.lambdaworks.redis.output.GeoCoordinatesListOutput;
+import com.lambdaworks.redis.output.GeoEncodedOutput;
+import com.lambdaworks.redis.output.GeoWithinListOutput;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.KeyListOutput;
 import com.lambdaworks.redis.output.KeyOutput;
@@ -1793,16 +1795,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEORADIUS, new ValueSetOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<Object>> georadius(K key, double longitude, double latitude, double distance, String unit,
+    public Command<K, V, List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, String unit,
             GeoArgs geoArgs) {
 
+        assertNotNull(geoArgs, "geoArgs must not be null");
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
 
-        if (geoArgs != null) {
-            geoArgs.build(args);
-        }
+        geoArgs.build(args);
 
-        return createCommand(GEORADIUS, new NestedMultiOutput<K, V>(codec), args);
+        return createCommand(GEORADIUS, new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(),
+                geoArgs.isWithCoordinates()), args);
     }
 
     public Command<K, V, Set<V>> georadiusbymember(K key, V member, double distance, String unit) {
@@ -1810,21 +1812,21 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEORADIUSBYMEMBER, new ValueSetOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<Object>> georadiusbymember(K key, V member, double distance, String unit, GeoArgs geoArgs) {
+    public Command<K, V, List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, String unit, GeoArgs geoArgs) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+        assertNotNull(geoArgs, "geoArgs must not be null");
 
-        if (geoArgs != null) {
-            geoArgs.build(args);
-        }
-
-        return createCommand(GEORADIUSBYMEMBER, new NestedMultiOutput<K, V>(codec), args);
+        return createCommand(
+                GEORADIUSBYMEMBER,
+                new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs
+                        .isWithCoordinates()), args);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, List<GeoTuple>> geopos(K key, V[] members) {
+    public Command<K, V, List<GeoCoordinates>> geopos(K key, V[] members) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
 
-        return (Command) createCommand(GEOPOS, new NumericAndGeoTupleListOutput<K, V>(codec), args);
+        return (Command) createCommand(GEOPOS, new GeoCoordinatesListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
@@ -1839,21 +1841,21 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, List<Object>> geoencode(double longitude, double latitude, Double distance, String unit) {
+    public Command<K, V, GeoEncoded> geoencode(double longitude, double latitude, Double distance, String unit) {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(longitude).add(latitude);
 
         if (distance != null && unit != null) {
             args.add(distance).add(unit);
         }
-        return (Command) createCommand(GEOENCODE, new NumericAndGeoTupleListOutput<K, V>(codec), args);
+        return (Command) createCommand(GEOENCODE, new GeoEncodedOutput<K, V>(codec, null), args);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, List<GeoTuple>> geodecode(long geohash) {
+    public Command<K, V, GeoEncoded> geodecode(long geohash) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(geohash);
 
-        return (Command) createCommand(GEODECODE, new NumericAndGeoTupleListOutput<K, V>(codec), args);
+        return (Command) createCommand(GEODECODE, new GeoEncodedOutput<K, V>(codec, geohash), args);
     }
 
     /**

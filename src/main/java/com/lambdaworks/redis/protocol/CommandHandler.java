@@ -9,10 +9,18 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.ConnectionEvents;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -129,12 +137,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throw new RedisException("Connection is closed");
         }
         try {
-
             writeLock.lock();
             Channel channel = this.channel;
             if (channel != null && connected) {
                 if (debugEnabled) {
-                    logger.debug("{} write() writeAndFlush Command", logPrefix(), command);
+                    logger.debug("{} write() writeAndFlush Command {}", logPrefix(), command);
                 }
                 channel.writeAndFlush(command);
             } else {
@@ -234,19 +241,22 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 redisChannelHandler.activated();
             }
 
+            tmp.stream().filter(cmd -> !cmd.isCancelled()).forEach(cmd -> {
+
+                if (debugEnabled) {
+                    logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);
+                }
+                ctx.channel().write(cmd);
+            });
+
+            ctx.channel().flush();
+
+            tmp.clear();
+
         } finally {
             writeLock.unlock();
         }
 
-        tmp.stream().filter(cmd -> !cmd.isCancelled()).forEach(cmd -> {
-
-            if (debugEnabled) {
-                logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);
-            }
-            ctx.channel().writeAndFlush(cmd);
-        });
-
-        tmp.clear();
     }
 
     /**
@@ -377,6 +387,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
         this.redisChannelHandler = redisChannelHandler;
     }
+
     private String logPrefix() {
         if (logPrefix != null) {
             return logPrefix;

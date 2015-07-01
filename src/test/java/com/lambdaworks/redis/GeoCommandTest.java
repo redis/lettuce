@@ -72,10 +72,10 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<GeoTuple> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
+        List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
         assertThat(geopos.get(1)).isNull();
         assertThat(geopos.get(2)).isNotNull();
     }
@@ -85,16 +85,35 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().withCount(1).asc();
+        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().withCount(1).desc();
 
-        List<Object> result = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.km, geoArgs);
+        List<GeoWithin<String>> result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, geoArgs);
         assertThat(result).hasSize(1);
 
-        List<Object> response = (List) result.get(0);
-        assertThat(response).hasSize(4);
+        GeoWithin<String> weinheim = result.get(0);
 
-        result = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.km, null);
+        assertThat(weinheim.member).isEqualTo("Weinheim");
+        assertThat(weinheim.geohash).isEqualTo(3666615932941099L);
+
+        assertThat(weinheim.distance).isEqualTo(2.7882, offset(0.5));
+        assertThat(weinheim.coordinates.x.doubleValue()).isEqualTo(8.663875, offset(0.5));
+        assertThat(weinheim.coordinates.y.doubleValue()).isEqualTo(49.52825, offset(0.5));
+
+        result = redis.georadius(key, 8.665351, 49.553302, 1, GeoArgs.Unit.km, new GeoArgs());
         assertThat(result).hasSize(1);
+
+        GeoWithin<String> bahn = result.get(0);
+
+        assertThat(bahn.member).isEqualTo("Bahn");
+        assertThat(bahn.geohash).isNull();
+
+        assertThat(bahn.distance).isNull();
+        assertThat(bahn.coordinates).isNull();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void georadiusWithNullArgs() throws Exception {
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, null);
     }
 
     @Test
@@ -116,55 +135,63 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().desc();
 
-        List<Object> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, geoArgs);
+        List<GeoWithin<String>> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, geoArgs);
         assertThat(empty).isNotEmpty();
 
-        List<Object> georadiusbymember = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, geoArgs);
+        List<GeoWithin<String>> georadiusbymember = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, geoArgs);
         assertThat(georadiusbymember).hasSize(2);
 
-        List<Object> response = (List) georadiusbymember.get(0);
-        assertThat(response).hasSize(4);
+        GeoWithin<String> weinheim = georadiusbymember.get(0);
+        assertThat(weinheim.member).isEqualTo("Weinheim");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void georadiusbymemberWithNullArgs() throws Exception {
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, null);
     }
 
     @Test
     public void geoencode() throws Exception {
 
-        List<Object> geoencode = redis.geoencode(8.6638775, 49.5282537);
+        GeoEncoded geoencoded = redis.geoencode(8.6638775, 49.5282537);
 
-        assertThat(geoencode).hasSize(5);
-        assertThat(geoencode.get(0)).isEqualTo(3666615932941099L);
-        assertThat(geoencode.get(1)).isInstanceOf(GeoTuple.class);
-        assertThat(geoencode.get(2)).isInstanceOf(GeoTuple.class);
-        assertThat(geoencode.get(3)).isInstanceOf(GeoTuple.class);
+        assertThat(geoencoded.geohash).isEqualTo(3666615932941099L);
+        assertThat(geoencoded.min.x.doubleValue()).isEqualTo(8.6638730764389038, offset(1d));
+        assertThat(geoencoded.min.y.doubleValue()).isEqualTo(49.528251210511513, offset(1d));
+
+        assertThat(geoencoded.max.x.doubleValue()).isEqualTo(8.6638784408569336, offset(1d));
+        assertThat(geoencoded.max.y.doubleValue()).isEqualTo(49.528253745232675, offset(1d));
+
+        assertThat(geoencoded.avg.x.doubleValue()).isEqualTo(8.6638757586479187, offset(1d));
+        assertThat(geoencoded.avg.y.doubleValue()).isEqualTo(49.528252477872094, offset(1d));
 
     }
 
     @Test
     public void geoencodeWithDistance() throws Exception {
 
-        List<Object> result = redis.geoencode(8.6638775, 49.5282537, 1, GeoArgs.Unit.km);
+        GeoEncoded geoencoded = redis.geoencode(8.6638775, 49.5282537, 1, GeoArgs.Unit.km);
 
-        assertThat(result).hasSize(5);
-        assertThat(result.get(0)).isEqualTo(3666615929405440L);
-        assertThat(result.get(1)).isInstanceOf(GeoTuple.class);
-        assertThat(result.get(2)).isInstanceOf(GeoTuple.class);
-        assertThat(result.get(3)).isInstanceOf(GeoTuple.class);
+        assertThat(geoencoded.geohash).isEqualTo(3666615929405440L);
+        assertThat(geoencoded.max).isNotNull();
+        assertThat(geoencoded.min).isNotNull();
+        assertThat(geoencoded.avg).isNotNull();
     }
 
     @Test
-    public void geodecode() throws Exception {
+    public void geoencoded() throws Exception {
 
-        List<GeoTuple> result = redis.geodecode(3666615932941099L);
+        GeoEncoded geoencoded = redis.geodecode(3666615932941099L);
 
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0).getX().doubleValue()).isEqualTo(8.6638730764389038, offset(1d));
-        assertThat(result.get(0).getY().doubleValue()).isEqualTo(49.528251210511513, offset(1d));
+        assertThat(geoencoded.geohash).isEqualTo(3666615932941099L);
+        assertThat(geoencoded.min.x.doubleValue()).isEqualTo(8.6638730764389038, offset(1d));
+        assertThat(geoencoded.min.y.doubleValue()).isEqualTo(49.528251210511513, offset(1d));
 
-        assertThat(result.get(1).getX().doubleValue()).isEqualTo(8.6638784408569336, offset(1d));
-        assertThat(result.get(1).getY().doubleValue()).isEqualTo(49.528253745232675, offset(1d));
+        assertThat(geoencoded.max.x.doubleValue()).isEqualTo(8.6638784408569336, offset(1d));
+        assertThat(geoencoded.max.y.doubleValue()).isEqualTo(49.528253745232675, offset(1d));
 
-        assertThat(result.get(2).getX().doubleValue()).isEqualTo(8.6638757586479187, offset(1d));
-        assertThat(result.get(2).getY().doubleValue()).isEqualTo(49.528252477872094, offset(1d));
+        assertThat(geoencoded.avg.x.doubleValue()).isEqualTo(8.6638757586479187, offset(1d));
+        assertThat(geoencoded.avg.y.doubleValue()).isEqualTo(49.528252477872094, offset(1d));
 
     }
 }

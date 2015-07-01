@@ -1568,7 +1568,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Object> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+    public Observable<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
         return createDissolvingObservable(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(),
                 geoArgs));
@@ -1580,12 +1580,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Object> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+    public Observable<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
         return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
     }
 
     @Override
-    public Observable<GeoTuple> geopos(K key, V... members) {
+    public Observable<GeoCoordinates> geopos(K key, V... members) {
         return createDissolvingObservable(() -> commandBuilder.geopos(key, members));
     }
 
@@ -1595,17 +1595,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Object> geoencode(double longitude, double latitude) {
+    public Observable<GeoEncoded> geoencode(double longitude, double latitude) {
         return createDissolvingObservable(() -> commandBuilder.geoencode(longitude, latitude, null, null));
     }
 
     @Override
-    public Observable<Object> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+    public Observable<GeoEncoded> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return createDissolvingObservable(() -> commandBuilder.geoencode(longitude, latitude, distance, unit.name()));
     }
 
     @Override
-    public Observable<GeoTuple> geodecode(long geohash) {
+    public Observable<GeoEncoded> geodecode(long geohash) {
         return createDissolvingObservable(() -> commandBuilder.geodecode(geohash));
     }
 
