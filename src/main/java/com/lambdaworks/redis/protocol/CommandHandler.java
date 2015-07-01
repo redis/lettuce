@@ -158,7 +158,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                  * it. On the next try, the command is either queued or sent and this way retried. No commands get lost.
                  */
 
-                if (!channel.isActive()) {
+                if (!channel.isActive() && !queue.contains(command)) {
                     write(command);
                 }
             } else {
