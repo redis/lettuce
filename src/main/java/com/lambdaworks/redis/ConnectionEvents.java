@@ -52,4 +52,7 @@ public class ConnectionEvents {
     public static class Close {
     }
 
+    public static class Activated {
+    }
+
 }

@@ -2,8 +2,13 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BULK;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BYTES;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.ERROR;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.INTEGER;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.MULTI;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE;
 
 import java.nio.ByteBuffer;
 import java.util.Deque;
@@ -100,20 +105,21 @@ public class RedisStateMachine<K, V> {
                         break loop;
                     }
                     if (!QUEUED.equals(bytes)) {
-                        output.set(bytes);
+                        safeSet(output, bytes, command);
                     }
                     break;
                 case ERROR:
                     if ((bytes = readLine(buffer)) == null) {
                         break loop;
                     }
-                    output.setError(bytes);
+                    safeSetError(output, bytes, command);
                     break;
                 case INTEGER:
                     if ((end = findLineEnd(buffer)) == -1) {
                         break loop;
                     }
-                    output.set(readLong(buffer, buffer.readerIndex(), end));
+                    long integer = readLong(buffer, buffer.readerIndex(), end);
+                    safeSet(output, integer, command);
                     break;
                 case BULK:
                     if ((end = findLineEnd(buffer)) == -1) {
@@ -121,7 +127,7 @@ public class RedisStateMachine<K, V> {
                     }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
                     if (length == -1) {
-                        output.set(null);
+                        safeSet(output, null, command);
                     } else {
                         state.type = BYTES;
                         state.count = length + 2;
@@ -137,7 +143,7 @@ public class RedisStateMachine<K, V> {
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
                         state.count = length;
                         buffer.markReaderIndex();
-                        output.multi(state.count);
+                        safeMulti(output, state.count, command);
                     }
 
                     if (state.count <= 0) {
@@ -152,7 +158,7 @@ public class RedisStateMachine<K, V> {
                     if ((bytes = readBytes(buffer, state.count)) == null) {
                         break loop;
                     }
-                    output.set(bytes);
+                    safeSet(output, bytes, command);
                     break;
                 default:
                     throw new IllegalStateException("State " + state.type + " not supported");
@@ -170,6 +176,43 @@ public class RedisStateMachine<K, V> {
         }
 
         return stack.isEmpty();
+    }
+
+    protected void safeSet(CommandOutput<K, V, ?> output, long integer, RedisCommand<K, V, ?> command) {
+
+        try {
+            output.set(integer);
+        } catch (Exception e) {
+            command.setException(e);
+            command.cancel(true);
+        }
+    }
+
+    protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+        try {
+            output.set(bytes);
+        } catch (Exception e) {
+            command.setException(e);
+            command.cancel(true);
+        }
+    }
+
+    protected void safeMulti(CommandOutput<K, V, ?> output, int count, RedisCommand<K, V, ?> command) {
+        try {
+            output.multi(count);
+        } catch (Exception e) {
+            command.setException(e);
+            command.cancel(true);
+        }
+    }
+
+    protected void safeSetError(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+        try {
+            output.setError(bytes);
+        } catch (Exception e) {
+            command.setException(e);
+            command.cancel(true);
+        }
     }
 
     private int findLineEnd(ByteBuf buffer) {

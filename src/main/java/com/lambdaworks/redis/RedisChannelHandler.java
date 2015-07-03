@@ -101,13 +101,6 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
 
-        if (!active && clientOptions != null && !clientOptions.isAutoReconnect()) {
-            cmd.setException(new RedisException(
-                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));
-            cmd.complete();
-            return cmd;
-        }
-
         return channelWriter.write(cmd);
     }
 
