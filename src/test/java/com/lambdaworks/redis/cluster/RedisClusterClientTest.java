@@ -435,7 +435,7 @@ public class RedisClusterClientTest {
             public boolean isSatisfied() {
                 return backendConnection.isClosed() && !backendConnection.isOpen();
             }
-        }, timeout(seconds(2)));
+        }, timeout(seconds(5)));
         assertThat(backendConnection.isClosed()).isTrue();
         assertThat(backendConnection.isOpen()).isFalse();
 
