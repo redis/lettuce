@@ -94,7 +94,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         this.connections.invalidateAll();
         resetPartitions();
         for (RedisAsyncConnection<K, V> kvRedisAsyncConnection : copy.values()) {
-            kvRedisAsyncConnection.close();
+            if (kvRedisAsyncConnection.isOpen()) {
+                kvRedisAsyncConnection.close();
+            }
         }
     }
 
