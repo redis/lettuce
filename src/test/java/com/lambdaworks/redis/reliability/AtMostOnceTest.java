@@ -190,6 +190,8 @@ public class AtMostOnceTest extends AbstractCommandTest {
         assertThat(command.isDone()).isFalse();
         block.countDown();
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(command.isCancelled()).isTrue();
+        assertThat(command.isDone()).isTrue();
 
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
