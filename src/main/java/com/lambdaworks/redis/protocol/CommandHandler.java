@@ -235,10 +235,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         final RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
 
-        if (cmd.getOutput() == null) {
-            cmd.complete();
-        } else {
-            queue.add(cmd);
+        try {
+            if (cmd.getOutput() == null) {
+                cmd.complete();
+            } else {
+                queue.add(cmd);
+            }
+        } catch (Exception e) {
+            cmd.setException(e);
+            cmd.cancel(true);
+            promise.setFailure(e);
+            throw e;
         }
 
         ctx.write(cmd, promise);
@@ -313,11 +320,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     if (debugEnabled) {
                         logger.debug("{} channelActive() triggering command {}", logPrefix(), cmd);
                     }
-                    ctx.channel().write(cmd);
+
+                    write(cmd);
                 }
             }
-
-            ctx.channel().flush();
 
             tmp.clear();
 

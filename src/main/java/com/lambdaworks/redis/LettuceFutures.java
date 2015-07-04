@@ -18,13 +18,14 @@ public class LettuceFutures {
     }
 
     /**
-     * Wait until futures are complete or the supplied timeout is reached.
+     * Wait until futures are complete or the supplied timeout is reached. Commands are not canceled (in contrast to
+     * {@link #await(RedisCommand, long, TimeUnit)}) when the timeout expires.
      * 
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param futures Futures to wait for.
      * 
-     * @return True if all futures complete in time.
+     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
         boolean complete;
@@ -54,18 +55,39 @@ public class LettuceFutures {
     }
 
     /**
-     * Wait until futures are complete or the supplied timeout is reached.
+     * Wait until futures are complete or the supplied timeout is reached. Commands are canceled if the timeout is reached but
+     * the command is not finished.
      * 
      * @param cmd Command to wait for.
      * @param timeout Maximum time to wait for futures to complete.
-     * @param unit Unit of time for the timeout.
      * @param unit Unit of time for the timeout.
      * @param <K> Key type.
      * @param <V> Value type.
      * @param <T> Result type.
      * 
-     * @return True if all futures complete in time.
+     * @return Result of the command.
      */
+    public static <K, V, T> T awaitOrCancel(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
+        return await(cmd, timeout, unit);
+    }
+
+    /**
+     * Wait until futures are complete or the supplied timeout is reached. Commands are canceled if the timeout is reached but
+     * the command is not finished.
+     * 
+     * @param cmd Command to wait for.
+     * @param timeout Maximum time to wait for futures to complete.
+     * @param unit Unit of time for the timeout.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @param <T> Result type.
+     * @deprecated The method name does not reflect what the method is doing, therefore it is deprecated. Use
+     *             {@link #awaitOrCancel(RedisCommand, long, TimeUnit)} instead. The semantics did not change and
+     *             {@link #awaitOrCancel(RedisCommand, long, TimeUnit)} simply calls this method.
+     * 
+     * @return Result of the command.
+     */
+    @Deprecated
     public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
         if (!cmd.await(timeout, unit)) {
             cmd.cancel(true);
