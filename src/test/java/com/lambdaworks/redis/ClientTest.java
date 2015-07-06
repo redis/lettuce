@@ -2,10 +2,10 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.redis.ScriptOutputType.STATUS;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.WaitFor.*;
+import static com.lambdaworks.redis.ScriptOutputType.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -23,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
@@ -98,7 +99,7 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(connectionWatchdog).isNull();
 
         connection.quit();
-        Thread.sleep(500);
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
         try {
             connection.get(key).get();
         } catch (Exception e) {
@@ -186,10 +187,9 @@ public class ClientTest extends AbstractRedisClientTest {
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
-            Thread.sleep(500);
-            assertThat(connection.isOpen()).isFalse();
+            Wait.untilTrue(() -> connectionWatchdog.isReconnectSuspended()).waitOrTimeout();
+
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
-            assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
 
             try {
                 connection.info().get(1, TimeUnit.MINUTES);
@@ -246,9 +246,7 @@ public class ClientTest extends AbstractRedisClientTest {
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
-            Thread.sleep(100);
-
-            assertThat(connection.isOpen()).isFalse();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
             RedisFuture<String> set1 = connection.set(key, value);
             RedisFuture<String> set2 = connection.set(key, value);

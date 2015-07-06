@@ -9,6 +9,7 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.AfterClass;
@@ -65,7 +66,7 @@ public class SslTest {
 
         RedisConnection<String, String> connection = redisClient.connect(redisUri).sync();
         connection.set("key", "value");
-        connection.quit();
+        Thread.sleep(200);
         assertThat(connection.get("key")).isEqualTo("value");
         connection.close();
     }
@@ -93,6 +94,7 @@ public class SslTest {
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
         connection.quit();
         Thread.sleep(200);
+        Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
 

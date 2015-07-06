@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.Wait;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -93,7 +94,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         RedisConnection<String, String> connection2 = client.connect().sync();
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.quit();
-        Delay.delay(millis(50));
+
+        Wait.untilTrue(connection2::isOpen).waitOrTimeout();
 
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.close();

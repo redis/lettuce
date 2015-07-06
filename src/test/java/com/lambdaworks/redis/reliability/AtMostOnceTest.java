@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.Wait;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -227,6 +228,8 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         RedisCommands<String, String> connection = client.connect().sync();
         connection.quit();
 
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
         try {
             connection.incr(key);
         } catch (RedisException e) {
@@ -235,20 +238,19 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = client.connect().sync();
-        connection.quit();
+        RedisCommands<String, String> connection2 = client.connect().sync();
+        connection2.quit();
 
         try {
 
-            while (connection.isOpen()) {
-                Thread.sleep(100);
-            }
-            connection.incr(key);
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+            connection2.incr(key);
         } catch (Exception e) {
             assertThat(e).isExactlyInstanceOf(RedisException.class).hasMessageContaining("reconnect is disabled");
         }
 
-        connection.close();
+        connection2.close();
     }
 
     private Throwable getException(RedisFuture<?> command) {
