@@ -75,7 +75,7 @@ public class CommandInternalsTest {
         assertThat(command.get(0, TimeUnit.MILLISECONDS)).isEqualTo("one");
     }
 
-    @Test(expected = TimeoutException.class, timeout = 10)
+    @Test(expected = TimeoutException.class, timeout = 100)
     public void getTimeout() throws Exception {
         assertThat(command.get(2, TimeUnit.MICROSECONDS)).isNull();
     }
@@ -85,19 +85,19 @@ public class CommandInternalsTest {
         assertThat(command.await(2, TimeUnit.MICROSECONDS)).isFalse();
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 100)
     public void getInterrupted() throws Exception {
         Thread.currentThread().interrupt();
         command.get();
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 100)
     public void getInterrupted2() throws Exception {
         Thread.currentThread().interrupt();
         command.get(5, TimeUnit.MILLISECONDS);
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 100)
     public void awaitInterrupted2() throws Exception {
         Thread.currentThread().interrupt();
         command.await(5, TimeUnit.MILLISECONDS);

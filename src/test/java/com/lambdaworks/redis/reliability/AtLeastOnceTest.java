@@ -345,7 +345,7 @@ public class AtLeastOnceTest extends AbstractCommandTest {
         assertThat(verificationConnection.get("key")).isEqualTo("1");
 
         assertThat(getQueue((RedisChannelHandler) connection)).isEmpty();
-        assertThat(getCommandBuffer((RedisChannelHandler) connection)).hasSize(1);
+        assertThat(getCommandBuffer((RedisChannelHandler) connection).size()).isGreaterThan(0);
 
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
