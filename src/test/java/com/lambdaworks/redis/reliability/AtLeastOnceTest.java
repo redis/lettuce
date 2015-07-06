@@ -350,7 +350,7 @@ public class AtLeastOnceTest extends AbstractCommandTest {
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
 
-        while (!getCommandBuffer(redisChannelHandler).isEmpty()) {
+        while (!getCommandBuffer(redisChannelHandler).isEmpty() || !getQueue(redisChannelHandler).isEmpty()) {
             Thread.sleep(10);
         }
 
