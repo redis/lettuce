@@ -10,8 +10,8 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 import com.lambdaworks.redis.RedisException;
-
 import com.lambdaworks.redis.output.CommandOutput;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -101,20 +101,21 @@ public class RedisStateMachine<K, V> {
                         break loop;
                     }
                     if (!QUEUED.equals(bytes)) {
-                        output.set(bytes);
+                        safeSet(output, bytes, command);
                     }
                     break;
                 case ERROR:
                     if ((bytes = readLine(buffer)) == null) {
                         break loop;
                     }
-                    output.setError(bytes);
+                    safeSetError(output, bytes, command);
                     break;
                 case INTEGER:
                     if ((end = findLineEnd(buffer)) == -1) {
                         break loop;
                     }
-                    output.set(readLong(buffer, buffer.readerIndex(), end));
+                    long integer = readLong(buffer, buffer.readerIndex(), end);
+                    safeSet(output, integer, command);
                     break;
                 case BULK:
                     if ((end = findLineEnd(buffer)) == -1) {
@@ -122,7 +123,7 @@ public class RedisStateMachine<K, V> {
                     }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
                     if (length == -1) {
-                        output.set(null);
+                        safeSet(output, null, command);
                     } else {
                         state.type = BYTES;
                         state.count = length + 2;
@@ -138,7 +139,7 @@ public class RedisStateMachine<K, V> {
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
                         state.count = length;
                         buffer.markReaderIndex();
-                        output.multi(state.count);
+                        safeMulti(output, state.count, command);
                     }
 
                     if (state.count <= 0) {
@@ -153,7 +154,7 @@ public class RedisStateMachine<K, V> {
                     if ((bytes = readBytes(buffer, state.count)) == null) {
                         break loop;
                     }
-                    output.set(bytes);
+                    safeSet(output, bytes, command);
                     break;
                 default:
                     throw new IllegalStateException("State " + state.type + " not supported");
@@ -171,6 +172,30 @@ public class RedisStateMachine<K, V> {
         }
 
         return stack.isEmpty();
+    }
+
+    protected void safeSet(CommandOutput<K, V, ?> output, long integer, RedisCommand<K, V, ?> command) {
+        safeSet(() -> output.set(integer), command);
+    }
+
+    protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+        safeSet(() -> output.set(bytes), command);
+    }
+
+    protected void safeMulti(CommandOutput<K, V, ?> output, int count, RedisCommand<K, V, ?> command) {
+        safeSet(() -> output.multi(count), command);
+    }
+
+    protected void safeSetError(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+        safeSet(() -> output.setError(bytes), command);
+    }
+
+    protected void safeSet(Runnable runnable, RedisCommand<K, V, ?> command) {
+        try {
+            runnable.run();
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
     }
 
     private int findLineEnd(ByteBuf buffer) {

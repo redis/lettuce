@@ -9,9 +9,11 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -99,7 +101,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         this.connections.invalidateAll();
         resetPartitions();
         for (StatefulRedisConnection<K, V> kvRedisAsyncConnection : copy.values()) {
-            kvRedisAsyncConnection.close();
+            if (kvRedisAsyncConnection.isOpen()) {
+                kvRedisAsyncConnection.close();
+            }
         }
     }
 

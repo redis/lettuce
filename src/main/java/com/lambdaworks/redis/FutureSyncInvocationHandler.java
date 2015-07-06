@@ -59,11 +59,11 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                         return null;
                     }
                 }
-                return LettuceFutures.await(command, connection.getTimeout(), connection.getTimeoutUnit());
+
+                LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
+                return command.get();
             }
-
             return result;
-
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }

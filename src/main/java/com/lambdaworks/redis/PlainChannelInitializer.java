@@ -62,6 +62,12 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                             ctx.channel().close();
                         }
                     }
+
+                    if (evt instanceof ConnectionEvents.Activated) {
+                        if (!initializedFuture.isDone()) {
+                            initializedFuture.set(true);
+                        }
+                    }
                     super.userEventTriggered(ctx, evt);
                 }
 
@@ -72,9 +78,6 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                         pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                         pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                     } else {
-                        if (!initializedFuture.isDone()) {
-                            initializedFuture.set(true);
-                        }
                         super.channelActive(ctx);
                     }
                 }

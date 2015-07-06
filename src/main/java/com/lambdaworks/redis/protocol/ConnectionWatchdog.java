@@ -38,15 +38,17 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionWatchdog.class);
 
-    private ClientOptions clientOptions;
-    private Bootstrap bootstrap;
-    private Channel channel;
-    private Timer timer;
+    private final ClientOptions clientOptions;
+    private final Bootstrap bootstrap;
     private boolean listenOnChannelInactive;
     private boolean reconnectSuspended;
-    private int attempts;
+
+    private Channel channel;
+    private final Timer timer;
+
+    private final Supplier<SocketAddress> socketAddressSupplier;
     private SocketAddress remoteAddress;
-    private Supplier<SocketAddress> socketAddressSupplier;
+    private int attempts;
     private long lastReconnectionLogging = -1;
 
     /**

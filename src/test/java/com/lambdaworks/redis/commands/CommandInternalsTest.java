@@ -5,6 +5,7 @@ package com.lambdaworks.redis.commands;
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.lambdaworks.redis.RedisCommandInterruptedException;
 import org.junit.Before;
 import org.junit.Test;
 

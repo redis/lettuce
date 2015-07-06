@@ -1,3 +1,4 @@
+
 package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;

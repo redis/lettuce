@@ -129,7 +129,6 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                                     pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                                     pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                                 } else {
-                                    initializedFuture.set(true);
                                     ctx.fireChannelActive();
                                 }
                             } else {
@@ -142,6 +141,13 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                                 ctx.channel().close();
                             }
                         }
+
+                        if (evt instanceof ConnectionEvents.Activated) {
+                            if (!initializedFuture.isDone()) {
+                                initializedFuture.set(true);
+                            }
+                        }
+
                         super.userEventTriggered(ctx, evt);
                     }
 
