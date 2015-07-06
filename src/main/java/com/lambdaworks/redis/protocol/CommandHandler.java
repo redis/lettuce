@@ -1,4 +1,3 @@
-
 // Copyright (C) 2011 - Will Glozer.  All rights reserved.
 
 package com.lambdaworks.redis.protocol;
@@ -8,27 +7,13 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.ConnectionEvents;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.*;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -138,6 +123,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         while (!queue.isEmpty()) {
 
             RedisCommand<K, V, ?> command = queue.peek();
+
+            if (debugEnabled) {
+                logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
+            }
+
             if (!rsm.decode(buffer, command, command.getOutput())) {
                 return;
             }
@@ -299,7 +289,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             commandBuffer.clear();
 
             if (debugEnabled) {
-                logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), queue.size());
+                logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), tmp.size());
             }
 
             synchronized (stateLock) {
