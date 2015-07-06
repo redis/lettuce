@@ -399,12 +399,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (debugEnabled) {
+            logger.debug("{} exceptionCaught() {}", logPrefix(), cause);
+        }
         if (!queue.isEmpty()) {
             RedisCommand<K, V, ?> command = queue.poll();
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in {}", logPrefix(), command);
+            }
             command.completeExceptionally(cause);
         }
 
         if (channel == null || !channel.isActive() || !isConnected()) {
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in connectionError", logPrefix());
+            }
             connectionError = cause;
             return;
         }

@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import com.lambdaworks.redis.output.DoubleOutput;
+
 /**
  * A tuple consisting of numerical geo data points to describe geo coordinates.
  * 
@@ -39,7 +41,8 @@ public class GeoCoordinates {
 
     @Override
     public String toString() {
-        return String.format("(%f, %f)", x, y);
+
+        return String.format("(%s, %s)", x, y);
     }
 
 }
