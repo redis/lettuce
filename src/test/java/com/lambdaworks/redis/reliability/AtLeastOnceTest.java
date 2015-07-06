@@ -305,7 +305,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
 
-        while (!getCommandBuffer(getRedisChannelHandler(connection)).isEmpty()) {
+        while (!getCommandBuffer(getRedisChannelHandler(connection)).isEmpty()
+                || !getQueue(getRedisChannelHandler(connection)).isEmpty()) {
             Thread.sleep(10);
         }
 
