@@ -150,7 +150,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void message() throws Exception {
         pubsub.subscribe(channel).toBlocking().singleOrDefault(null);
         assertThat(channels.take()).isEqualTo(channel);
@@ -160,7 +160,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void pmessage() throws Exception {
         pubsub.psubscribe(pattern).toBlocking().singleOrDefault(null);
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -176,7 +176,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(messages.take()).isEqualTo("msg 2!");
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void psubscribe() throws Exception {
         Void aVoid = pubsub.psubscribe(pattern).toBlocking().singleOrDefault(null);
         assertThat(aVoid).isNull();
@@ -244,7 +244,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(result.longValue()).isEqualTo(1L);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void punsubscribe() throws Exception {
         pubsub.punsubscribe(pattern).subscribe();
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -252,14 +252,14 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void subscribe() throws Exception {
         pubsub.subscribe(channel).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void unsubscribe() throws Exception {
         pubsub.unsubscribe(channel).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
@@ -284,7 +284,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(connection.isOpen()).isFalse();
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void utf8Channel() throws Exception {
         String channel = "channelλ";
         String message = "αβγ";
@@ -332,7 +332,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void adapter() throws Exception {
         final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
 

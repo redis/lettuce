@@ -11,9 +11,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -106,25 +103,8 @@ public class ClientTest extends AbstractRedisClientTest {
         }
     }
 
-    @Test(expected = RedisConnectionException.class)
-    public void pingBeforeConnectFailsWithVeryShortTimeout() throws Exception {
-
-        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
-                .withTimeout(0, TimeUnit.NANOSECONDS).build();
-        RedisClient redisClient = new RedisClient(redisUri);
-        try {
-
-            client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-
-            client.connect(redisUri);
-        } finally {
-            redisClient.shutdown();
-
-        }
-    }
-
     /**
-     * Expect to run into invalid something exception instead of timeout.
+     * Expect to run into Invalid first byte exception instead of timeout.
      * 
      * @throws Exception
      */

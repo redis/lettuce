@@ -146,19 +146,19 @@ public class AsyncCommandInternalsTest {
         assertThat(sut.await(2, TimeUnit.MILLISECONDS)).isFalse();
     }
 
-    @Test(expected = InterruptedException.class, timeout = 10)
+    @Test(expected = InterruptedException.class, timeout = 100)
     public void getInterrupted() throws Exception {
         Thread.currentThread().interrupt();
         sut.get();
     }
 
-    @Test(expected = InterruptedException.class, timeout = 10)
+    @Test(expected = InterruptedException.class, timeout = 100)
     public void getInterrupted2() throws Exception {
         Thread.currentThread().interrupt();
         sut.get(5, TimeUnit.MILLISECONDS);
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 100)
     public void awaitInterrupted2() throws Exception {
         Thread.currentThread().interrupt();
         sut.await(5, TimeUnit.MILLISECONDS);

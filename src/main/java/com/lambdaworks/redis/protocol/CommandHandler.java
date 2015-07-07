@@ -77,8 +77,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         setState(LifecycleState.REGISTERED);
         buffer = ctx.alloc().heapBuffer();
-        rsm = new RedisStateMachine<>();
-        channel = ctx.channel();
+        rsm = new RedisStateMachine<K, V>();
+        synchronized (stateLock) {
+            channel = ctx.channel();
+        }
     }
 
     @Override

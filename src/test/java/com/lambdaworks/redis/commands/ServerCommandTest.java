@@ -20,6 +20,7 @@ import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.TestSettings;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -29,7 +30,9 @@ import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 import com.lambdaworks.redis.protocol.CommandType;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void bgrewriteaof() throws Exception {
@@ -248,7 +251,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     public void slowlog() throws Exception {
         long start = System.currentTimeMillis() / 1000;
 
-        assertThat(redis.configSet("slowlog-log-slower-than", "1")).isEqualTo("OK");
+        assertThat(redis.configSet("slowlog-log-slower-than", "0")).isEqualTo("OK");
         assertThat(redis.slowlogReset()).isEqualTo("OK");
         redis.set(key, value);
 
@@ -272,7 +275,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         assertThat(redis.slowlogGet(1)).hasSize(1);
         assertThat((long) redis.slowlogLen()).isGreaterThanOrEqualTo(4);
 
-        redis.configSet("slowlog-log-slower-than", "0");
+        redis.configSet("slowlog-log-slower-than", "10000");
     }
 
     @Test
