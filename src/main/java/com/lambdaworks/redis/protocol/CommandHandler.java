@@ -135,6 +135,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         while (!queue.isEmpty()) {
 
             RedisCommand<K, V, ?> command = queue.peek();
+
+            if (debugEnabled) {
+                logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
+            }
+
             if (!rsm.decode(buffer, command, command.getOutput())) {
                 return;
             }
@@ -184,10 +189,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     // commands are ok to stay within the queue, reconnect will retrigger them
                     channel.write(command, channel.voidPromise());
                     channel.flush();
-
-                    if (!channel.isActive() && !queue.contains(command)) {
-                        return write(command);
-                    }
                 }
             } else {
 
@@ -298,7 +299,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             commandBuffer.clear();
 
             if (debugEnabled) {
-                logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), queue.size());
+                logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), tmp.size());
             }
 
             synchronized (stateLock) {
