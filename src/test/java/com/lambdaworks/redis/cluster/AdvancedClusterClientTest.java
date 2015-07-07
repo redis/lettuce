@@ -204,10 +204,10 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         AsyncExecutions<Object> eval = masters.commands().eval("while true do end", STATUS, new String[0]);
 
         for (CompletableFuture<Object> future : eval.futures()) {
-
             assertThat(future.isDone()).isFalse();
             assertThat(future.isCancelled()).isFalse();
         }
+        Thread.sleep(200);
 
         AsyncExecutions<String> kill = commands.masters().commands().scriptKill();
         CompletableFuture.allOf(kill.futures()).get();

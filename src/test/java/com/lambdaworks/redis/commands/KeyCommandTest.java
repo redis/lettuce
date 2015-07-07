@@ -118,7 +118,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void objectIdletime() throws Exception {
         redis.set(key, value);
-        assertThat((long) redis.objectIdletime(key)).isEqualTo(0);
+        assertThat((long) redis.objectIdletime(key)).isLessThan(2);
     }
 
     @Test

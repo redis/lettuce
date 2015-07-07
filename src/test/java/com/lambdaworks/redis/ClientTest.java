@@ -36,16 +36,12 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Override
     public void openConnection() throws Exception {
-        Logger logger = LogManager.getLogger("com.lambdaworks.redis.protocol");
-        logger.setLevel(Level.ALL);
         super.openConnection();
     }
 
     @Override
     public void closeConnection() throws Exception {
         super.closeConnection();
-        Logger logger = LogManager.getLogger("com.lambdaworks.redis.protocol");
-        logger.setLevel(Level.INFO);
     }
 
     @Test(expected = RedisException.class)
