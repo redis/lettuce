@@ -24,7 +24,7 @@ public class UnixDomainSocketTest {
     private static RedisClient sentinelClient;
 
     @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
 
     protected Logger log = Logger.getLogger(getClass());
 

@@ -95,10 +95,9 @@ endef
 define REDIS_SENTINEL1
 port 26379
 daemonize yes
-sentinel monitor mymaster 127.0.0.1 6479 1
-sentinel monitor myslave 127.0.0.1 16379 1
-sentinel down-after-milliseconds mymaster 2000
-sentinel failover-timeout mymaster 120000
+sentinel monitor mymaster 127.0.0.1 6484 1
+sentinel down-after-milliseconds mymaster 100
+sentinel failover-timeout mymaster 100
 sentinel parallel-syncs mymaster 1
 pidfile work/sentinel1-26379.pid
 logfile work/sentinel1-26379.log
@@ -109,26 +108,13 @@ endef
 define REDIS_SENTINEL2
 port 26380
 daemonize yes
-sentinel monitor mymaster 127.0.0.1 6481 1
-sentinel down-after-milliseconds mymaster 2000
+sentinel monitor mymaster 127.0.0.1 6484 1
+sentinel down-after-milliseconds mymaster 100
 sentinel parallel-syncs mymaster 1
-sentinel failover-timeout mymaster 120000
+sentinel failover-timeout mymaster 100
 pidfile work/sentinel2-26380.pid
 logfile work/sentinel2-26380.log
 unixsocket $(ROOT_DIR)/work/socket-26380
-unixsocketperm 777
-endef
-
-define REDIS_SENTINEL3
-port 26381
-daemonize yes
-sentinel monitor mymasterfailover 127.0.0.1 6484 1
-sentinel down-after-milliseconds mymasterfailover 2000
-sentinel failover-timeout mymasterfailover 120000
-sentinel parallel-syncs mymasterfailover 1
-pidfile work/sentinel3-26381.pid
-logfile work/sentinel3-26381.log
-unixsocket $(ROOT_DIR)/work/socket-26381
 unixsocketperm 777
 endef
 
@@ -298,8 +284,6 @@ start: cleanup
 	echo "$$REDIS_SENTINEL1" > work/sentinel1-26379.conf && redis-server work/sentinel1-26379.conf --sentinel
 	@sleep 0.5
 	echo "$$REDIS_SENTINEL2" > work/sentinel2-26380.conf && redis-server work/sentinel2-26380.conf --sentinel
-	@sleep 0.5
-	echo "$$REDIS_SENTINEL3" > work/sentinel3-26381.conf && redis-server work/sentinel3-26381.conf --sentinel
 
 	echo "$$REDIS_CLUSTER_CONFIG1" > work/redis-cluster-config1-7379.conf
 	echo "$$REDIS_CLUSTER_CONFIG2" > work/redis-cluster-config2-7380.conf

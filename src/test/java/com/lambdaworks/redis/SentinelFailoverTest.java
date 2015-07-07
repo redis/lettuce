@@ -14,13 +14,13 @@ import com.google.code.tempusfugit.temporal.WaitFor;
 
 public class SentinelFailoverTest extends AbstractCommandTest {
 
-    public static final String MASTER_WITH_SLAVE_ID = "master_with_slave";
+    public static final String MASTER_ID = "mymaster";
 
     private static RedisClient sentinelClient;
     private RedisSentinelAsyncConnection<String, String> sentinel;
 
     @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, 26379, 26380);
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
 
     @BeforeClass
     public static void setupClient() {
@@ -35,10 +35,6 @@ public class SentinelFailoverTest extends AbstractCommandTest {
     @Before
     public void openConnection() throws Exception {
         sentinel = sentinelClient.connectSentinelAsync();
-
-        int masterPort = sentinelRule.findMaster(port(5), port(6));
-        sentinelRule.monitor(MASTER_WITH_SLAVE_ID, TestSettings.hostAddr(), masterPort, 1, true);
-
     }
 
     @After
@@ -52,7 +48,7 @@ public class SentinelFailoverTest extends AbstractCommandTest {
         WaitFor.waitOrTimeout(new Condition() {
             @Override
             public boolean isSatisfied() {
-                return sentinelRule.hasConnectedSlaves(MASTER_WITH_SLAVE_ID);
+                return sentinelRule.hasConnectedSlaves(MASTER_ID);
             }
         }, timeout(seconds(20)));
 
@@ -60,7 +56,7 @@ public class SentinelFailoverTest extends AbstractCommandTest {
         assertThat(connect.ping()).isEqualToIgnoringCase("PONG");
 
         connect.close();
-        this.sentinel.failover(MASTER_WITH_SLAVE_ID).get();
+        this.sentinel.failover(MASTER_ID).get();
 
         RedisConnection<String, String> connect2 = sentinelClient.connect();
         assertThat(connect2.ping()).isEqualToIgnoringCase("PONG");
@@ -68,6 +64,6 @@ public class SentinelFailoverTest extends AbstractCommandTest {
     }
 
     protected static RedisClient getRedisSentinelClient() {
-        return new RedisClient(RedisURI.Builder.sentinel(host, 26380, MASTER_WITH_SLAVE_ID).build());
+        return new RedisClient(RedisURI.Builder.sentinel(host, 26380, MASTER_ID).build());
     }
 }

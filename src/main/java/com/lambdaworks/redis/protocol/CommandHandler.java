@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
+import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -17,6 +18,9 @@ import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -38,6 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+    private static final WriteLogListener WRITE_LOG_LISTENER = new WriteLogListener();
 
     protected ClientOptions clientOptions;
     protected Queue<RedisCommand<K, V, ?>> queue;
@@ -187,7 +192,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
                 if (reliability == Reliability.AT_LEAST_ONCE) {
                     // commands are ok to stay within the queue, reconnect will retrigger them
-                    channel.write(command, channel.voidPromise());
+                    channel.write(command).addListener(WRITE_LOG_LISTENER);
                     channel.flush();
                 }
             } else {
@@ -527,5 +532,19 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 queue.remove(sentCommand);
             }
         }
+    }
+
+    /**
+     * A generic future listener which logs unsuccessful writes.
+     *
+     */
+    static class WriteLogListener implements GenericFutureListener<Future<Void>> {
+
+        @Override
+        public void operationComplete(Future<Void> future) throws Exception {
+            if (!future.isSuccess() && !(future.cause() instanceof ClosedChannelException))
+                logger.warn(future.cause().getMessage(), future.cause());
+        }
+
     }
 }
