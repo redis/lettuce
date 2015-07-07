@@ -87,7 +87,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         };
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void message() throws Exception {
         pubsub.subscribe(channel);
         assertThat(channels.take()).isEqualTo(channel);
@@ -97,7 +97,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void pmessage() throws Exception {
         pubsub.psubscribe(pattern).await(1, TimeUnit.MINUTES);
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -113,7 +113,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat(messages.take()).isEqualTo("msg 2!");
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void psubscribe() throws Exception {
         RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
         assertThat(psubscribe.get()).isNull();
@@ -125,7 +125,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void psubscribeWithListener() throws Exception {
         RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
         final List<Object> listener = Lists.newArrayList();
@@ -203,14 +203,14 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void subscribe() throws Exception {
         pubsub.subscribe(channel);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void unsubscribe() throws Exception {
         pubsub.unsubscribe(channel).get();
         assertThat(channels.take()).isEqualTo(channel);
@@ -238,7 +238,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat(connection.isOpen()).isFalse();
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void utf8Channel() throws Exception {
         String channel = "channelλ";
         String message = "αβγ";
@@ -297,7 +297,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void adapter() throws Exception {
         final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
 

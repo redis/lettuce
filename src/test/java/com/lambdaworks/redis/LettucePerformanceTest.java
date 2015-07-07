@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -31,6 +32,7 @@ public class LettucePerformanceTest {
      * @throws Exception
      */
     @Test
+    @Ignore("Run me manually")
     public void testPerformance() throws Exception {
 
         // TWEAK ME

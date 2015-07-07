@@ -11,13 +11,10 @@ import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.ConnectionEvents;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.*;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
 import io.netty.channel.*;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -414,17 +411,25 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (debugEnabled) {
+            logger.debug("{} exceptionCaught() {}", logPrefix(), cause);
+        }
         if (!queue.isEmpty()) {
             RedisCommand<K, V, ?> command = queue.poll();
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in {}", logPrefix(), command);
+            }
             command.setException(cause);
             command.complete();
         }
 
         if (channel == null || !channel.isActive() || !isConnected()) {
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in connectionError", logPrefix());
+            }
             connectionError = cause;
             return;
         }
-        super.exceptionCaught(ctx, cause);
     }
 
     /**

@@ -9,6 +9,7 @@ import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static com.lambdaworks.redis.ScriptOutputType.VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.After;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,6 +20,16 @@ import org.junit.runners.MethodSorters;
 public class ScriptingCommandTest extends AbstractCommandTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
+
+    @After
+    public void closeConnection() throws Exception {
+        try {
+            redis.scriptKill();
+        } catch (RedisException e) {
+
+        }
+        super.closeConnection();
+    }
 
     @Test
     public void eval() throws Exception {

@@ -2,17 +2,14 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.WaitFor.*;
-import static com.lambdaworks.redis.ScriptOutputType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
+import static com.lambdaworks.redis.ScriptOutputType.STATUS;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -20,7 +17,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
-import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
@@ -31,16 +27,12 @@ public class ClientTest extends AbstractCommandTest {
 
     @Override
     public void openConnection() throws Exception {
-        Logger logger = LogManager.getLogger("com.lambdaworks.redis.protocol");
-        logger.setLevel(Level.ALL);
         super.openConnection();
     }
 
     @Override
     public void closeConnection() throws Exception {
         super.closeConnection();
-        Logger logger = LogManager.getLogger("com.lambdaworks.redis.protocol");
-        logger.setLevel(Level.INFO);
     }
 
     @Test(expected = RedisException.class)
@@ -86,19 +78,8 @@ public class ClientTest extends AbstractCommandTest {
         }
     }
 
-    @Test(expected = RedisConnectionException.class)
-    public void pingBeforeConnectFailsWithVeryShortTimeout() throws Exception {
-
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-
-        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
-                .withTimeout(1, TimeUnit.NANOSECONDS).build();
-
-        client.connect(redisUri);
-    }
-
     /**
-     * Expect to run into invalid something exception instead of timeout.
+     * Expect to run into Invalid first byte exception instead of timeout.
      * 
      * @throws Exception
      */
@@ -225,7 +206,7 @@ public class ClientTest extends AbstractCommandTest {
 
             assertThat(connection.isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
-            connectionWatchdog.scheduleReconnect();
+            connectionWatchdog.run(null);
             Thread.sleep(500);
             assertThat(connection.isOpen()).isFalse();
 
@@ -307,7 +288,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isEqualTo(connection);
 
-        client.shutdown();
+        client.shutdown(1, 1, TimeUnit.SECONDS);
     }
 
     @Test
@@ -336,7 +317,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(removedListener.onDisconnected).isNull();
         assertThat(removedListener.onException).isNull();
 
-        client.shutdown();
+        client.shutdown(1, 1, TimeUnit.SECONDS);
 
     }
 
@@ -362,7 +343,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
-    @Test(expected = RedisCommandInterruptedException.class, timeout = 10)
+    @Test(expected = RedisCommandInterruptedException.class, timeout = 50)
     public void interrupt() throws Exception {
         Thread.currentThread().interrupt();
         redis.blpop(0, key);
