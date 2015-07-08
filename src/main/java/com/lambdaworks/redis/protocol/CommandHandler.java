@@ -490,14 +490,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (logPrefix != null) {
             return logPrefix;
         }
-        StringBuffer buffer = new StringBuffer(16);
-        buffer.append('[');
-        if (channel != null) {
-            buffer.append(channel.remoteAddress());
-        } else {
-            buffer.append("not connected");
-        }
-        buffer.append(']');
+        StringBuffer buffer = new StringBuffer(64);
+        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return logPrefix = buffer.toString();
     }
 

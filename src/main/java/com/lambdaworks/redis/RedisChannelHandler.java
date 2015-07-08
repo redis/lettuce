@@ -189,4 +189,12 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         checkArgument(clientOptions != null, "clientOptions must not be null");
         this.clientOptions = clientOptions;
     }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public TimeUnit getTimeoutUnit() {
+        return unit;
+    }
 }

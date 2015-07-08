@@ -1,28 +1,20 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.*;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -97,6 +89,19 @@ public class RedisClusterSetupTest {
         assertThat(result).isEqualTo("OK");
         waitForCluster(redis1);
 
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
+                for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
+                    if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.HANDSHAKE)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }, timeout(seconds(5)));
+
         Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
         for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
             if (!redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
@@ -118,7 +123,7 @@ public class RedisClusterSetupTest {
                 Partitions partitionsAfterMeet = ClusterPartitionParser.parse(connection.clusterNodes());
                 return partitionsAfterMeet.getPartitions().size() == 2;
             }
-        }, Timeout.timeout(Duration.seconds(5)));
+        }, timeout(seconds(5)));
     }
 
     @Test
@@ -155,7 +160,7 @@ public class RedisClusterSetupTest {
                     }
                     return condition;
                 }
-            }, Timeout.timeout(Duration.seconds(5)));
+            }, timeout(seconds(5)));
         } catch (Exception e) {
 
             RedisClusterNode ownPartition = getOwnPartition(connection);
@@ -215,7 +220,7 @@ public class RedisClusterSetupTest {
                     RedisClusterNode ownPartition = getOwnPartition(nodeConnection);
                     return ownPartition.getSlots().size() == expectedCount;
                 }
-            }, Timeout.timeout(Duration.seconds(10)));
+            }, timeout(seconds(10)));
         } catch (Exception e) {
             RedisClusterNode ownPartition = getOwnPartition(nodeConnection);
             fail("Fail on waiting for slots on " + ownPartition.getUri() + ", expected count " + expectedCount + ", actual: "

@@ -151,7 +151,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                     @Override
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                        if (cause instanceof SSLHandshakeException || cause.getCause() instanceof SSLException) {
+
+                        if (!initializedFuture.isDone()) {
                             initializedFuture.setException(cause);
                         }
                         super.exceptionCaught(ctx, cause);

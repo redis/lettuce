@@ -79,7 +79,8 @@ public class ClusterRule implements TestRule {
 
                 for (RedisClusterNode redisClusterNode : parse) {
                     if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.FAIL)
-                            || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL)) {
+                            || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL)
+                            || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.HANDSHAKE)) {
                         return false;
                     }
                 }
