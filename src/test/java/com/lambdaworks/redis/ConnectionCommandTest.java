@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
                 RedisConnection<String, String> authConnection = redisClient.connect();
                 authConnection.ping();
                 authConnection.close();
-                redisClient.shutdown();
+                FastShutdown.shutdown(redisClient);
             }
         };
     }

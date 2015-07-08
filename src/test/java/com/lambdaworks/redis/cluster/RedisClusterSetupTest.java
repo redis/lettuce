@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.*;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,11 +23,6 @@ import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -60,9 +56,9 @@ public class RedisClusterSetupTest {
 
     @AfterClass
     public static void shutdownClient() {
-        clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        client1.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        client2.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(clusterClient);
+        FastShutdown.shutdown(client1);
+        FastShutdown.shutdown(client2);
     }
 
     @Before

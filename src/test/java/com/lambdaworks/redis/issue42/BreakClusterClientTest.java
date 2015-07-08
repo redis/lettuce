@@ -5,6 +5,7 @@ import static com.google.code.tempusfugit.temporal.Timeout.*;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -38,7 +39,7 @@ public class BreakClusterClientTest extends BreakClientBase {
 
     @AfterClass
     public static void shutdownClient() {
-        clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(clusterClient);
     }
 
     @Before
@@ -60,11 +61,13 @@ public class BreakClusterClientTest extends BreakClientBase {
     }
 
     @Test
+    @Ignore
     public void testStandAlone() throws Exception {
         testSingle(clusterConnection);
     }
 
     @Test
+    @Ignore
     public void testLooping() throws Exception {
         testLoop(clusterConnection);
     }

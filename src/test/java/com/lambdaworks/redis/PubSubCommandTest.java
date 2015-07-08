@@ -233,7 +233,7 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
 
         RedisPubSubConnection<String, String> connection = redisClient.connectPubSub();
 
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
 
         assertThat(connection.isOpen()).isFalse();
     }

@@ -260,7 +260,7 @@ public class ServerCommandTest extends AbstractCommandTest {
             assertThat(redisInstance.getRole()).isEqualTo(RedisInstance.Role.MASTER);
         } finally {
             connection.close();
-            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+            FastShutdown.shutdown(redisClient);
         }
     }
 

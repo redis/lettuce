@@ -288,7 +288,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isEqualTo(connection);
 
-        client.shutdown(1, 1, TimeUnit.SECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -317,7 +317,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(removedListener.onDisconnected).isNull();
         assertThat(removedListener.onException).isNull();
 
-        client.shutdown(1, 1, TimeUnit.SECONDS);
+        FastShutdown.shutdown(client);
 
     }
 
@@ -415,7 +415,7 @@ public class ClientTest extends AbstractCommandTest {
         } catch (IllegalArgumentException e) {
             assertThat(e).hasMessageContaining("RedisURI");
         }
-        client.shutdown();
+        FastShutdown.shutdown(client);
     }
 
     @Test

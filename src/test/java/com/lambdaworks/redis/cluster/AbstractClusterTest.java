@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,7 +43,7 @@ public class AbstractClusterTest {
 
     @AfterClass
     public static void shutdownClusterClient() {
-        clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(clusterClient);
     }
 
     public static int[] createSlots(int from, int to) {

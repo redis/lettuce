@@ -29,7 +29,7 @@ public class SentinelFailoverTest extends AbstractCommandTest {
 
     @AfterClass
     public static void shutdownClient() {
-        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(sentinelClient);
     }
 
     @Before

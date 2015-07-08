@@ -2,10 +2,7 @@ package com.lambdaworks.redis.issue42;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
@@ -38,11 +35,13 @@ public class BreakClientTest extends BreakClientBase {
     }
 
     @Test
+    @Ignore
     public void testStandAlone() throws Exception {
         testSingle(redis);
     }
 
     @Test
+    @Ignore
     public void testLooping() throws Exception {
         testLoop(redis);
     }

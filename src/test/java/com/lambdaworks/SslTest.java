@@ -8,6 +8,7 @@ import java.io.File;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,7 +34,7 @@ public class SslTest {
 
     @AfterClass
     public static void afterClass() {
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
     }
 
     @Test

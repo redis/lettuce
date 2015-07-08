@@ -164,7 +164,7 @@ public class PoolConnectionTest extends AbstractCommandTest {
         redisClient.pool().close();
         assertThat(redisClient.getResourceCount()).isEqualTo(6);
 
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
 
         assertThat(redisClient.getChannelCount()).isEqualTo(0);
         assertThat(redisClient.getResourceCount()).isEqualTo(0);

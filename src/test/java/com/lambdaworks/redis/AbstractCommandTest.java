@@ -36,7 +36,7 @@ public abstract class AbstractCommandTest {
 
     @AfterClass
     public static void shutdownClient() {
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Before
@@ -88,7 +88,7 @@ public abstract class AbstractCommandTest {
                 try {
                     run(client);
                 } finally {
-                    client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+                    FastShutdown.shutdown(client);
                 }
             } finally {
 

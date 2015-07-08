@@ -43,7 +43,7 @@ public class RandomResponseServer {
 
     public void shutdown() {
         channel.close();
-        bossGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
-        workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
+        bossGroup.shutdownGracefully(100, 100, TimeUnit.MILLISECONDS);
+        workerGroup.shutdownGracefully(100, 100, TimeUnit.MILLISECONDS);
     }
 }
