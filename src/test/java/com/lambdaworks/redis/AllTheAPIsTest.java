@@ -25,7 +25,7 @@ public class AllTheAPIsTest {
     @BeforeClass
     public static void afterClass() throws Exception {
         if (clusterClient != null) {
-            clusterClient.shutdown();
+            FastShutdown.shutdown(clusterClient);
         }
     }
 

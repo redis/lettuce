@@ -1,18 +1,17 @@
 package biz.paluch.redis.extensibility;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.pubsub.RedisPubSubAsyncCommandsImpl;
-import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.pubsub.RedisPubSubAsyncCommandsImpl;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
  * Test for override/extensability of RedisClient
@@ -38,7 +37,7 @@ public class MyExtendedRedisClientTest {
 
     @AfterClass
     public static void shutdownClient() {
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Test

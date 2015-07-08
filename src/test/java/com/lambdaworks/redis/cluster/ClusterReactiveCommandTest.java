@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -44,8 +45,8 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @AfterClass
     public static void shutdownClient() {
         shutdownClusterClient();
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        clusterClient.shutdown();
+        FastShutdown.shutdown(client);
+        FastShutdown.shutdown(clusterClient);
     }
 
     @Before

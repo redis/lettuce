@@ -17,7 +17,7 @@ public class DefaultRedisClient {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+                FastShutdown.shutdown(redisClient);
             }
         });
     }

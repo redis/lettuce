@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.After;
 import org.junit.Before;
@@ -279,7 +280,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub().sync();
 
-        redisClient.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(redisClient);
 
         assertThat(connection.isOpen()).isFalse();
     }

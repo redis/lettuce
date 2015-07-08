@@ -40,7 +40,7 @@ public class UnixDomainSocketTest {
 
     @AfterClass
     public static void shutdownClient() {
-        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(sentinelClient);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class UnixDomainSocketTest {
         someRedisAction(connection.sync());
         connection.close();
 
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
     }
 
     private void linuxOnly() {
@@ -97,7 +97,7 @@ public class UnixDomainSocketTest {
         assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
         sentinelConnection.close();
 
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class UnixDomainSocketTest {
         } catch (RedisConnectionException e) {
             assertThat(e).hasMessageContaining("You cannot mix unix domain socket and IP socket URI's");
         } finally {
-            redisClient.shutdown();
+            FastShutdown.shutdown(redisClient);
         }
 
     }

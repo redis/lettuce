@@ -42,7 +42,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
                 RedisConnection<String, String> authConnection = redisClient.connect().sync();
                 authConnection.ping();
                 authConnection.close();
-                redisClient.shutdown();
+                FastShutdown.shutdown(redisClient);
             }
         };
     }

@@ -197,12 +197,12 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         this.clientOptions = clientOptions;
     }
 
-    public TimeUnit getTimeoutUnit() {
-        return unit;
-    }
-
     public long getTimeout() {
         return timeout;
+    }
+
+    public TimeUnit getTimeoutUnit() {
+        return unit;
     }
 
     protected <T> T syncHandler(Object asyncApi, Class<?>... interfaces) {

@@ -6,6 +6,7 @@ import static com.google.code.tempusfugit.temporal.Timeout.*;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.category.SlowTests;
+import com.lambdaworks.redis.FastShutdown;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -41,7 +42,7 @@ public class BreakClusterClientTest extends BreakClientBase {
 
     @AfterClass
     public static void shutdownClient() {
-        clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(clusterClient);
     }
 
     @Before

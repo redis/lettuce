@@ -232,7 +232,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
             assertThat(connection.isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
-            connectionWatchdog.scheduleReconnect();
+            connectionWatchdog.run(null);
             Thread.sleep(500);
             assertThat(connection.isOpen()).isFalse();
 
@@ -309,7 +309,7 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
         assertThat(listener.onDisconnected).isEqualTo(statefulRedisConnection);
 
-        client.shutdown();
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -338,7 +338,7 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(removedListener.onDisconnected).isNull();
         assertThat(removedListener.onException).isNull();
 
-        client.shutdown();
+        FastShutdown.shutdown(client);
 
     }
 
@@ -436,7 +436,7 @@ public class ClientTest extends AbstractRedisClientTest {
         } catch (IllegalArgumentException e) {
             assertThat(e).hasMessageContaining("RedisURI");
         }
-        client.shutdown();
+        FastShutdown.shutdown(client);
     }
 
     @Test

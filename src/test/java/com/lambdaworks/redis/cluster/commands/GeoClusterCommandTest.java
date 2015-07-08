@@ -4,6 +4,7 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushClusterDb;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,7 +31,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @AfterClass
     public static void closeClient() {
-        redisClusterClient.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(redisClusterClient);
     }
 
     @Before

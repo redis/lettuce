@@ -12,19 +12,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
 import com.lambdaworks.Delay;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisConnectionException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 public class SentinelCommandTest extends AbstractSentinelTest {
@@ -99,7 +93,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.close();
-        client.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -113,7 +107,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         } catch (RedisConnectionException e) {
         }
 
-        client.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -125,7 +119,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         assertThat(connection.ping().get()).isEqualTo("PONG");
 
         connection.close();
-        client.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -152,7 +146,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
             assertThat(objects.get(1).toString()).isEqualTo("[" + MASTER_ID + "]");
         } finally {
             connection.close();
-            redisClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+            FastShutdown.shutdown(redisClient);
         }
     }
 

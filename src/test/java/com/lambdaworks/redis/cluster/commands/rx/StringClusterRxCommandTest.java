@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,7 +36,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
 
     @AfterClass
     public static void closeClient() {
-        redisClusterClient.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(redisClusterClient);
     }
 
     @Before

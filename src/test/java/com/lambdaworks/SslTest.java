@@ -35,7 +35,7 @@ public class SslTest {
 
     @AfterClass
     public static void afterClass() {
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
     }
 
     @Test

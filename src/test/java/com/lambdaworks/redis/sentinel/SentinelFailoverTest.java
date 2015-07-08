@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.lambdaworks.redis.FastShutdown;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -61,7 +62,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
 
         String tcpPort2 = connectUsingSentinelAndGetPort();
         assertThat(tcpPort1).isNotEqualTo(tcpPort2);
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
     }
 
     protected String connectUsingSentinelAndGetPort() {

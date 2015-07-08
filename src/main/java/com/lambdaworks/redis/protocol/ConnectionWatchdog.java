@@ -3,11 +3,13 @@
 package com.lambdaworks.redis.protocol;
 
 import java.net.SocketAddress;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
+import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelInitializer;
 
 import io.netty.bootstrap.Bootstrap;
@@ -50,6 +52,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private SocketAddress remoteAddress;
     private int attempts;
     private long lastReconnectionLogging = -1;
+    private String logPrefix;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -82,7 +85,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        logger.debug("userEventTriggered(" + ctx + ", " + evt + ")");
+        logger.debug("{} userEventTriggered({}, {})", logPrefix(), ctx, evt);
         if (evt instanceof ConnectionEvents.PrepareClose) {
             ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
             setListenOnChannelInactive(false);
@@ -94,7 +97,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        logger.debug("channelActive(" + ctx + ")");
+        logger.debug("{} channelActive({})", logPrefix(), ctx);
         channel = ctx.channel();
         attempts = 0;
         remoteAddress = channel.remoteAddress();
@@ -104,10 +107,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
-        logger.debug("channelInactive(" + ctx + ")");
+        logger.debug("{} channelInactive({})", logPrefix(), ctx);
         channel = null;
         if (listenOnChannelInactive && !reconnectSuspended) {
             scheduleReconnect();
+        } else {
+            logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
+            logger.debug("");
         }
         super.channelInactive(ctx);
     }
@@ -116,9 +122,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Schedule reconnect if channel is not available/not active.
      */
     public void scheduleReconnect() {
-        logger.debug("scheduleReconnect()");
+        logger.debug("{} scheduleReconnect()", logPrefix());
 
         if (!isEventLoopGroupActive()) {
+            logger.debug("isEventLoopGroupActive() == false");
             return;
         }
 
@@ -127,9 +134,26 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 attempts++;
             }
             int timeout = 2 << attempts;
-            timer.newTimeout(this, timeout, TimeUnit.MILLISECONDS);
+            timer.newTimeout(new TimerTask() {
+                @Override
+                public void run(Timeout timeout) throws Exception {
+
+                    if (!isEventLoopGroupActive()) {
+                        logger.debug("isEventLoopGroupActive() == false");
+                        return;
+                    }
+
+                    bootstrap.group().submit(new Callable<Object>() {
+                        @Override
+                        public Object call() throws Exception {
+                            ConnectionWatchdog.this.run(null);
+                            return null;
+                        }
+                    });
+                }
+            }, timeout, TimeUnit.MILLISECONDS);
         } else {
-            logger.debug("Skipping scheduleReconnect() because I have an active channel");
+            logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
         }
     }
 
@@ -145,6 +169,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void run(Timeout timeout) throws Exception {
 
         if (!isEventLoopGroupActive()) {
+            logger.debug("isEventLoopGroupActive() == false");
             return;
         }
 
@@ -163,7 +188,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         try {
             reconnect(infoLevel, warnLevel);
         } catch (Exception e) {
-            logger.log(warnLevel, "Cannot connect: " + e.toString());
+            logger.log(warnLevel, "Cannot connect: {}", e.toString());
             scheduleReconnect();
         }
     }
@@ -184,10 +209,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         connect.sync().await();
 
         RedisChannelInitializer channelInitializer = connect.channel().pipeline().get(RedisChannelInitializer.class);
-        CommandHandler<?, ?> commandHandler = connect.channel().pipeline().get(CommandHandler.class);
-        try {
+        CommandHandler commandHandler = connect.channel().pipeline().get(CommandHandler.class);
+        RedisChannelHandler channelHandler = connect.channel().pipeline().get(RedisChannelHandler.class);
 
-            channelInitializer.channelInitialized().get();
+        try {
+            channelInitializer.channelInitialized().get(channelHandler.getTimeout(), channelHandler.getTimeoutUnit());
             logger.log(infoLevel, "Reconnected to " + remoteAddress);
         } catch (Exception e) {
 
@@ -248,4 +274,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void setReconnectSuspended(boolean reconnectSuspended) {
         this.reconnectSuspended = reconnectSuspended;
     }
+
+    private String logPrefix() {
+        if (logPrefix != null) {
+            return logPrefix;
+        }
+        StringBuffer buffer = new StringBuffer(64);
+        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
+        return logPrefix = buffer.toString();
+    }
+
 }

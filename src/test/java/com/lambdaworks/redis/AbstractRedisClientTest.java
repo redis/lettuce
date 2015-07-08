@@ -56,7 +56,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
                 try {
                     run(client);
                 } finally {
-                    client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+                    FastShutdown.shutdown(client);
                 }
             } finally {
 

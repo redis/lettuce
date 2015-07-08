@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -38,7 +39,7 @@ public class StringClusterCommandTest extends StringCommandTest {
 
     @AfterClass
     public static void closeClient() {
-        redisClusterClient.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(redisClusterClient);
     }
 
     @Before

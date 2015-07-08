@@ -57,8 +57,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @AfterClass
     public static void shutdownClient() {
         shutdownClusterClient();
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
-        clusterClient.shutdown();
+        FastShutdown.shutdown(client);
+        FastShutdown.shutdown(clusterClient);
     }
 
     @Before
@@ -263,7 +263,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             char[] password = (char[]) ReflectionTestUtils.getField(connection.getStatefulConnection(), "password");
             assertThat(new String(password)).isEqualTo("foobared");
         } finally {
-            clusterClient.shutdown();
+            FastShutdown.shutdown(clusterClient);
 
         }
     }
@@ -278,7 +278,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             List<String> time = connection.time();
             assertThat(time).hasSize(2);
         } finally {
-            clusterClient.shutdown();
+            FastShutdown.shutdown(clusterClient);
         }
     }
 

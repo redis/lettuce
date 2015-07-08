@@ -1,15 +1,13 @@
 package com.lambdaworks.redis.sentinel;
 
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.AbstractTest;
-import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
 
+import com.lambdaworks.redis.AbstractTest;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 public abstract class AbstractSentinelTest extends AbstractTest {
 
@@ -20,7 +18,7 @@ public abstract class AbstractSentinelTest extends AbstractTest {
 
     @AfterClass
     public static void shutdownClient() {
-        sentinelClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(sentinelClient);
     }
 
     @Before

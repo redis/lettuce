@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.server;
 
+import java.util.concurrent.TimeUnit;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -41,7 +43,7 @@ public class RandomResponseServer {
 
     public void shutdown() {
         channel.close();
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully(100, 100, TimeUnit.MILLISECONDS);
+        workerGroup.shutdownGracefully(100, 100, TimeUnit.MILLISECONDS);
     }
 }

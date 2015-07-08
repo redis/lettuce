@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster.commands;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.FastShutdown;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -29,7 +30,7 @@ public class HashClusterCommandTest extends HashCommandTest {
 
     @AfterClass
     public static void closeClient() {
-        redisClusterClient.shutdown(0, 0, TimeUnit.SECONDS);
+        FastShutdown.shutdown(redisClusterClient);
     }
 
     @Before

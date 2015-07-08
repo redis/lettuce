@@ -58,7 +58,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
     @AfterClass
     public static void shutdownClient() {
-        client.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(client);
     }
 
     @Before

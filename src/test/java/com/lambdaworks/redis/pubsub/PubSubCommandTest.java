@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -81,7 +82,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         };
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void message() throws Exception {
         pubsub.subscribe(channel);
         assertThat(channels.take()).isEqualTo(channel);
@@ -91,7 +92,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void pmessage() throws Exception {
         pubsub.psubscribe(pattern).await(1, TimeUnit.MINUTES);
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -107,7 +108,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(messages.take()).isEqualTo("msg 2!");
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void psubscribe() throws Exception {
         RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
         assertThat(psubscribe.get()).isNull();
@@ -119,7 +120,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void psubscribeWithListener() throws Exception {
         RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
         final List<Object> listener = Lists.newArrayList();
@@ -195,14 +196,14 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void subscribe() throws Exception {
         pubsub.subscribe(channel);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void unsubscribe() throws Exception {
         pubsub.unsubscribe(channel).get();
         assertThat(channels.take()).isEqualTo(channel);
@@ -225,12 +226,12 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
         RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub().async();
 
-        redisClient.shutdown();
+        FastShutdown.shutdown(redisClient);
 
         assertThat(connection.isOpen()).isFalse();
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void utf8Channel() throws Exception {
         String channel = "channelλ";
         String message = "αβγ";
@@ -279,7 +280,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 200)
+    @Test(timeout = 2000)
     public void adapter() throws Exception {
         final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
 

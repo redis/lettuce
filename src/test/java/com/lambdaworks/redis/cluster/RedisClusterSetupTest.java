@@ -1,25 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.DefaultRedisClient;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -51,7 +41,7 @@ public class RedisClusterSetupTest {
 
     @AfterClass
     public static void shutdownClient() {
-        clusterClient.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        FastShutdown.shutdown(clusterClient);
     }
 
     @Before
@@ -91,9 +81,20 @@ public class RedisClusterSetupTest {
 
         String result = redis1.clusterMeet(host, AbstractClusterTest.port6);
         assertThat(result).isEqualTo("OK");
-        Wait.untilEquals(2, () -> ClusterPartitionParser.parse(redis1.clusterNodes()).size()).waitOrTimeout();
         Wait.untilTrue(() -> redis1.clusterNodes().contains(redis2.clusterMyId())).waitOrTimeout();
         Wait.untilTrue(() -> redis2.clusterNodes().contains(redis1.clusterMyId())).waitOrTimeout();
+        Wait.untilTrue(() -> {
+            Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
+            if (partitions.size() != 2) {
+                return false;
+            }
+            for (RedisClusterNode redisClusterNode : partitions) {
+                if (redisClusterNode.is(RedisClusterNode.NodeFlag.HANDSHAKE)) {
+                    return false;
+                }
+            }
+            return true;
+        }).waitOrTimeout();
 
         redis1.clusterForget(redis2.clusterMyId());
 
