@@ -2,8 +2,8 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
@@ -11,20 +11,17 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.Timeout;
-import com.google.code.tempusfugit.temporal.WaitFor;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.WaitFor;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
@@ -98,6 +95,25 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
     }
 
     @Test(timeout = 2000)
+    public void pipelinedMessage() throws Exception {
+        pubsub.subscribe(channel);
+        assertThat(channels.take()).isEqualTo(channel);
+        RedisAsyncConnection<String, String> connection = client.connectAsync();
+
+        connection.setAutoFlushCommands(false);
+        connection.publish(channel, message);
+        Thread.sleep(100);
+
+        assertThat(channels).isEmpty();
+        connection.flushCommands();
+
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
+
+        connection.close();
+    }
+
+    @Test(timeout = 2000)
     public void pmessage() throws Exception {
         pubsub.psubscribe(pattern).await(1, TimeUnit.MINUTES);
         assertThat(patterns.take()).isEqualTo(pattern);
@@ -111,6 +127,24 @@ public class PubSubCommandTest extends AbstractCommandTest implements RedisPubSu
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat(channels.take()).isEqualTo("channel2");
         assertThat(messages.take()).isEqualTo("msg 2!");
+    }
+
+    @Test(timeout = 2000)
+    public void pipelinedSubscribe() throws Exception {
+
+        pubsub.setAutoFlushCommands(false);
+        pubsub.subscribe(channel);
+        Thread.sleep(100);
+        assertThat(channels).isEmpty();
+        pubsub.flushCommands();
+
+        assertThat(channels.take()).isEqualTo(channel);
+
+        redis.publish(channel, message);
+
+        assertThat(channels.take()).isEqualTo(channel);
+        assertThat(messages.take()).isEqualTo(message);
+
     }
 
     @Test(timeout = 2000)

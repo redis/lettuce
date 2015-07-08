@@ -154,4 +154,19 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable {
      */
     boolean isOpen();
 
+    /**
+     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
+     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
+     * 
+     * @param autoFlush state of autoFlush.
+     */
+    void setAutoFlushCommands(boolean autoFlush);
+
+    /**
+     * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
+     * achieve batching. No-op if channel is not connected.
+     */
+    void flushCommands();
+
 }

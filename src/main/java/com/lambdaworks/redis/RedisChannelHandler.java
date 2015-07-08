@@ -197,4 +197,12 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     public TimeUnit getTimeoutUnit() {
         return unit;
     }
+
+    public void setAutoFlushCommands(boolean autoFlush) {
+        getChannelWriter().setAutoFlushCommands(autoFlush);
+    }
+
+    public void flushCommands() {
+        getChannelWriter().flushCommands();
+    }
 }

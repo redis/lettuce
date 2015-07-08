@@ -36,12 +36,20 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private final RedisAsyncConnectionImpl<K, V> writers[] = new RedisAsyncConnectionImpl[SlotHash.SLOT_COUNT];
     private Partitions partitions;
 
+    private boolean autoFlushCommands = true;
+    private Object stateLock = new Object();
+
     public PooledClusterConnectionProvider(final RedisClusterClient redisClusterClient, final RedisCodec<K, V> redisCodec) {
         this.debugEnabled = logger.isDebugEnabled();
         this.connections = CacheBuilder.newBuilder().build(new CacheLoader<PoolKey, RedisAsyncConnectionImpl<K, V>>() {
             @Override
             public RedisAsyncConnectionImpl<K, V> load(PoolKey key) throws Exception {
-                return redisClusterClient.connectAsyncImpl(redisCodec, key.getSocketAddress());
+                RedisAsyncConnectionImpl<K, V> connection = redisClusterClient.connectAsyncImpl(redisCodec,
+                        key.getSocketAddress());
+                synchronized (stateLock) {
+                    connection.getChannelWriter().setAutoFlushCommands(autoFlushCommands);
+                }
+                return connection;
             }
         });
     }
@@ -179,7 +187,29 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         resetPartitions();
     }
 
+    @Override
+    public void setAutoFlushCommands(boolean autoFlush) {
+        synchronized (stateLock) {
+            this.autoFlushCommands = autoFlush;
+        }
+        for (RedisAsyncConnectionImpl<K, V> connection : connections.asMap().values()) {
+            connection.getChannelWriter().setAutoFlushCommands(autoFlush);
+        }
+    }
+
+    @Override
+    public void flushCommands() {
+
+        for (RedisAsyncConnectionImpl<K, V> connection : connections.asMap().values()) {
+            connection.getChannelWriter().flushCommands();
+        }
+
+    }
+
     protected void resetPartitions() {
-        Arrays.fill(writers, null);
+
+        synchronized (stateLock) {
+            Arrays.fill(writers, null);
+        }
     }
 }

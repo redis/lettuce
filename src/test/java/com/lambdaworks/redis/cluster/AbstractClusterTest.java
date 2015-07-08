@@ -26,10 +26,6 @@ public class AbstractClusterTest {
 
     protected static RedisClusterClient clusterClient;
 
-    protected Logger log = Logger.getLogger(getClass());
-
-    protected RedisClusterAsyncConnection<String, String> redis1;
-
     protected String key = "key";
     protected String value = "value";
 
@@ -44,16 +40,6 @@ public class AbstractClusterTest {
     @AfterClass
     public static void shutdownClusterClient() {
         FastShutdown.shutdown(clusterClient);
-    }
-
-    public static int[] createSlots(int from, int to) {
-        int[] result = new int[to - from];
-        int counter = 0;
-        for (int i = from; i < to; i++) {
-            result[counter++] = i;
-
-        }
-        return result;
     }
 
 }
