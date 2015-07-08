@@ -11,6 +11,12 @@ import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.Lists;
+import com.lambdaworks.redis.LettuceFutures;
+import com.lambdaworks.redis.RedisFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +36,8 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -386,4 +394,44 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         assertThat(sync.getStatefulConnection()).isSameAs(commands.getStatefulConnection());
     }
+
+    @Test
+    public void pipelining() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> verificationConnection = clusterClient.connectCluster();
+
+        // preheat the first connection
+        commands.get(key(0)).get();
+
+        int iterations = 1000;
+        commands.setAutoFlushCommands(false);
+        List<RedisFuture<?>> futures = Lists.newArrayList();
+        for (int i = 0; i < iterations; i++) {
+            futures.add(commands.set(key(i), value(i)));
+        }
+
+        for (int i = 0; i < iterations; i++) {
+            assertThat(verificationConnection.get(key(i))).as("Key " + key(i) + " must be null").isNull();
+        }
+
+        commands.flushCommands();
+        boolean result = LettuceFutures.awaitAll(5, TimeUnit.SECONDS, futures.toArray(new RedisFuture[futures.size()]));
+        assertThat(result).isTrue();
+
+        for (int i = 0; i < iterations; i++) {
+            assertThat(verificationConnection.get(key(i))).as("Key " + key(i) + " must be " + value(i)).isEqualTo(value(i));
+        }
+
+        verificationConnection.close();
+
+    }
+
+    protected String value(int i) {
+        return value + "-" + i;
+    }
+
+    protected String key(int i) {
+        return key + "-" + i;
+    }
+
 }

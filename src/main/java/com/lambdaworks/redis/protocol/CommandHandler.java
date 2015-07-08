@@ -11,10 +11,20 @@ import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.ConnectionEvents;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogger;
@@ -58,6 +68,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private RedisChannelHandler<K, V> redisChannelHandler;
     private Throwable connectionError;
     private String logPrefix;
+    private boolean autoFlushCommands = true;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -80,7 +91,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         setState(LifecycleState.REGISTERED);
-        buffer = ctx.alloc().heapBuffer();
+        buffer = ctx.alloc().directBuffer(8192 * 8);
         rsm = new RedisStateMachine<K, V>();
         synchronized (stateLock) {
             channel = ctx.channel();
@@ -175,14 +186,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 if (reliability == Reliability.AT_MOST_ONCE) {
                     // cancel on exceptions and remove from queue, because there is no housekeeping
                     channel.write(command).addListener(new AtMostOnceWriteListener(command, queue));
-                    channel.flush();
                 }
 
                 if (reliability == Reliability.AT_LEAST_ONCE) {
                     // commands are ok to stay within the queue, reconnect will retrigger them
                     channel.write(command).addListener(WRITE_LOG_LISTENER);
+                }
+
+                if (autoFlushCommands) {
                     channel.flush();
                 }
+
             } else {
 
                 if (commandBuffer.contains(command) || queue.contains(command)) {
@@ -215,6 +229,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private boolean isConnected() {
         return lifecycleState.ordinal() >= LifecycleState.CONNECTED.ordinal()
                 && lifecycleState.ordinal() <= LifecycleState.DISCONNECTED.ordinal();
+    }
+
+    @Override
+    public void flushCommands() {
+        if (channel != null && isConnected() && channel.isActive()) {
+            channel.flush();
+        }
     }
 
     /**
@@ -480,6 +501,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
         this.redisChannelHandler = redisChannelHandler;
+    }
+
+    @Override
+    public void setAutoFlushCommands(boolean autoFlush) {
+        synchronized (stateLock) {
+            this.autoFlushCommands = autoFlush;
+ }
     }
 
     private String logPrefix() {

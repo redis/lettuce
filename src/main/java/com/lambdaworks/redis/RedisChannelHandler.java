@@ -209,4 +209,12 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>((StatefulConnection) this, asyncApi);
         return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }
+
+    public void setAutoFlushCommands(boolean autoFlush) {
+        getChannelWriter().setAutoFlushCommands(autoFlush);
+    }
+
+    public void flushCommands() {
+        getChannelWriter().flushCommands();
+    }
 }

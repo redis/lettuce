@@ -160,7 +160,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
             return null;
         });
-
     }
 
     @Override
@@ -201,7 +200,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         } catch (Exception e) {
             throw new RedisException(e);
         }
-
     }
 
     @Override
@@ -253,5 +251,4 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelection.class.getClassLoader(), new Class<?>[] {
                 NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
     }
-
 }

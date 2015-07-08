@@ -131,6 +131,16 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         defaultWriter.setRedisChannelHandler(redisChannelHandler);
     }
 
+    @Override
+    public void setAutoFlushCommands(boolean autoFlush) {
+        getClusterConnectionProvider().setAutoFlushCommands(autoFlush);
+    }
+
+    @Override
+    public void flushCommands() {
+        getClusterConnectionProvider().flushCommands();
+    }
+
     public ClusterConnectionProvider getClusterConnectionProvider() {
         return clusterConnectionProvider;
     }

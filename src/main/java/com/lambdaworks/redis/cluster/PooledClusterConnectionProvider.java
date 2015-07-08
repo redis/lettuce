@@ -9,11 +9,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -37,6 +36,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private final StatefulRedisConnection<K, V> writers[] = new StatefulRedisConnection[SlotHash.SLOT_COUNT];
     private Partitions partitions;
 
+    private boolean autoFlushCommands = true;
+    private Object stateLock = new Object();
+
     public PooledClusterConnectionProvider(final RedisClusterClient redisClusterClient, final RedisCodec<K, V> redisCodec) {
         this.debugEnabled = logger.isDebugEnabled();
         this.connections = CacheBuilder.newBuilder().build(new CacheLoader<PoolKey, StatefulRedisConnection<K, V>>() {
@@ -46,6 +48,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 StatefulRedisConnection<K, V> connection = redisClusterClient.connectToNode(redisCodec, key.getSocketAddress());
                 if (key.getIntent() == Intent.READ) {
                     connection.sync().readOnly();
+                }
+
+                synchronized (stateLock) {
+                    connection.setAutoFlushCommands(autoFlushCommands);
                 }
 
                 return connection;
@@ -186,7 +192,30 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         resetPartitions();
     }
 
+    @Override
+    public void setAutoFlushCommands(boolean autoFlush) {
+        synchronized (stateLock) {
+            this.autoFlushCommands = autoFlush;
+        }
+
+        for (StatefulRedisConnection<K, V> connection : connections.asMap().values()) {
+            connection.setAutoFlushCommands(autoFlush);
+        }
+    }
+
+    @Override
+    public void flushCommands() {
+
+        for (StatefulRedisConnection<K, V> connection : connections.asMap().values()) {
+            connection.flushCommands();
+        }
+
+    }
+
     protected void resetPartitions() {
-        Arrays.fill(writers, null);
+
+        synchronized (stateLock) {
+            Arrays.fill(writers, null);
+        }
     }
 }

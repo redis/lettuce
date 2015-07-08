@@ -1684,4 +1684,14 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     public StatefulConnection<K, V> getConnection() {
         return connection;
     }
+
+    @Override
+    public void setAutoFlushCommands(boolean autoFlush) {
+        connection.setAutoFlushCommands(autoFlush);
+    }
+
+    @Override
+    public void flushCommands() {
+        connection.flushCommands();
+    }
 }

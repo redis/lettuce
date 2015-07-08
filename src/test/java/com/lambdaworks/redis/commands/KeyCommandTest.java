@@ -158,8 +158,8 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         assertThat((long) redis.pttl(key)).isEqualTo(-2);
         redis.set(key, value);
         assertThat((long) redis.pttl(key)).isEqualTo(-1);
-        redis.pexpire(key, 10);
-        assertThat(redis.pttl(key) <= 10 && redis.pttl(key) > 0).isTrue();
+        redis.pexpire(key, 50);
+        assertThat(redis.pttl(key) <= 50 && redis.pttl(key) > 0).isTrue();
     }
 
     @Test

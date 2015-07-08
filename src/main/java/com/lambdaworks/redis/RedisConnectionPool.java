@@ -176,7 +176,7 @@ public class RedisConnectionPool<T> implements Closeable {
      * @since 3.0
      */
     static class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
-        public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit", "getStatefulConnection");
+        public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit", "getStatefulConnection", "setAutoFlushCommands");
 
         private T connection;
         private final RedisConnectionPool<T> pool;
