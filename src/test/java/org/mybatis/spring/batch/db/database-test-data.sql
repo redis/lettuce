@@ -14,7 +14,11 @@
 
 --    version: $Id: db.sql 2398 2010-08-29 15:16:24Z simone.tripodi $
 
-insert into employees VALUES ( 1,  'Pocoyo' , 1000);
-insert into employees VALUES ( 2,  'Pato'   , 2000);
-insert into employees VALUES ( 3,  'Eli'    , 3000);
-insert into employees VALUES ( 4,  'Valentina'    , 4000);
+insert into employees VALUES ( 1,  'Pocoyo' , 1000, 's1');
+insert into employees VALUES ( 1,  'Pocoyo' , 1000, 's2');
+insert into employees VALUES ( 2,  'Pato'   , 2000, 's1');
+insert into employees VALUES ( 2,  'Pato'   , 2000, 's2');
+insert into employees VALUES ( 3,  'Eli'    , 3000, 's1');
+insert into employees VALUES ( 3,  'Eli'    , 3000, 's2');
+insert into employees VALUES ( 3,  'Eli'    , 3000, 's3');
+insert into employees VALUES ( 4,  'Valentina'    , 4000, 's1');

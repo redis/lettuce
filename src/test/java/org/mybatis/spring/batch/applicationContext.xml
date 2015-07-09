@@ -60,9 +60,26 @@
     </bean>
     
     <!-- item reader  -->
-    <bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+    <bean id="pagingNoNestedItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
         <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-        <property name="queryId" value="getEmployee" />
+        <property name="queryId" value="getEmployeeNoNestedPaging" />
+        <property name="pageSize" value="5"/>
+    </bean>
+
+    <bean id="pagingNestedItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <property name="queryId" value="getEmployeeNestedPaging" />
+        <property name="pageSize" value="5"/>
+    </bean>
+
+    <bean id="cursorNoNestedItemReader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <property name="queryId" value="getEmployeeNoNestedCursor" />
+    </bean>
+
+    <bean id="cursorNestedItemReader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+        <property name="queryId" value="getEmployeeNestedCursor" />
     </bean>
 
     <bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">

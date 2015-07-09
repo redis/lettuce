@@ -18,5 +18,5 @@ create table employees (
     id integer not null,
     name varchar(80) not null,
     salary integer not null,
-    constraint pk_employee primary key (id)
+    skill varchar(80) not null
 );
