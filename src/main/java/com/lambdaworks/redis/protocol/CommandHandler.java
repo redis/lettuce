@@ -507,7 +507,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void setAutoFlushCommands(boolean autoFlush) {
         synchronized (stateLock) {
             this.autoFlushCommands = autoFlush;
- }
+        }
     }
 
     private String logPrefix() {

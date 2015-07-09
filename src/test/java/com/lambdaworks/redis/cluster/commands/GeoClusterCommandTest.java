@@ -2,15 +2,13 @@ package com.lambdaworks.redis.cluster.commands;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushClusterDb;
 
-import java.util.concurrent.TimeUnit;
-
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import com.lambdaworks.redis.GeoCommandTest;
+import com.lambdaworks.redis.commands.GeoCommandTest;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;

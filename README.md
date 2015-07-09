@@ -8,7 +8,7 @@ Lettuce is a scalable thread-safe Redis client providing synchronous,
 asynchronous and reactive APIs. Multiple threads may share one connection if they avoid blocking and transactional
 operations such as `BLPOP` and  `MULTI`/`EXEC`.
 Multiple connections are efficiently managed by the excellent netty NIO
-framework. Support for advanced Redis features such as Sentinel, Cluster and Redis data models
+framework. Support for advanced Redis features such as Sentinel, Cluster, and Redis data models
 is included.
 
 This version of lettuce has been tested against Redis and 3.0.

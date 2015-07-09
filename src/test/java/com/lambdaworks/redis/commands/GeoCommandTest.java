@@ -1,4 +1,4 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.offset;
 import java.util.List;
 import java.util.Set;
 
+import com.lambdaworks.redis.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
