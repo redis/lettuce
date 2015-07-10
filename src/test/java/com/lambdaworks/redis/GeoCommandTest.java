@@ -149,48 +149,4 @@ public class GeoCommandTest extends AbstractCommandTest {
         redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, null);
     }
 
-    @Test
-    public void geoencode() throws Exception {
-
-        GeoEncoded geoencoded = redis.geoencode(8.6638775, 49.5282537);
-
-        assertThat(geoencoded.geohash).isEqualTo(3666615932941099L);
-        assertThat(geoencoded.min.x.doubleValue()).isEqualTo(8.6638730764389038, offset(1d));
-        assertThat(geoencoded.min.y.doubleValue()).isEqualTo(49.528251210511513, offset(1d));
-
-        assertThat(geoencoded.max.x.doubleValue()).isEqualTo(8.6638784408569336, offset(1d));
-        assertThat(geoencoded.max.y.doubleValue()).isEqualTo(49.528253745232675, offset(1d));
-
-        assertThat(geoencoded.avg.x.doubleValue()).isEqualTo(8.6638757586479187, offset(1d));
-        assertThat(geoencoded.avg.y.doubleValue()).isEqualTo(49.528252477872094, offset(1d));
-
-    }
-
-    @Test
-    public void geoencodeWithDistance() throws Exception {
-
-        GeoEncoded geoencoded = redis.geoencode(8.6638775, 49.5282537, 1, GeoArgs.Unit.km);
-
-        assertThat(geoencoded.geohash).isEqualTo(3666615929405440L);
-        assertThat(geoencoded.max).isNotNull();
-        assertThat(geoencoded.min).isNotNull();
-        assertThat(geoencoded.avg).isNotNull();
-    }
-
-    @Test
-    public void geoencoded() throws Exception {
-
-        GeoEncoded geoencoded = redis.geodecode(3666615932941099L);
-
-        assertThat(geoencoded.geohash).isEqualTo(3666615932941099L);
-        assertThat(geoencoded.min.x.doubleValue()).isEqualTo(8.6638730764389038, offset(1d));
-        assertThat(geoencoded.min.y.doubleValue()).isEqualTo(49.528251210511513, offset(1d));
-
-        assertThat(geoencoded.max.x.doubleValue()).isEqualTo(8.6638784408569336, offset(1d));
-        assertThat(geoencoded.max.y.doubleValue()).isEqualTo(49.528253745232675, offset(1d));
-
-        assertThat(geoencoded.avg.x.doubleValue()).isEqualTo(8.6638757586479187, offset(1d));
-        assertThat(geoencoded.avg.y.doubleValue()).isEqualTo(49.528252477872094, offset(1d));
-
-    }
 }

@@ -63,7 +63,6 @@ import com.lambdaworks.redis.output.ByteArrayOutput;
 import com.lambdaworks.redis.output.DateOutput;
 import com.lambdaworks.redis.output.DoubleOutput;
 import com.lambdaworks.redis.output.GeoCoordinatesListOutput;
-import com.lambdaworks.redis.output.GeoEncodedOutput;
 import com.lambdaworks.redis.output.GeoWithinListOutput;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.KeyListOutput;
@@ -1796,24 +1795,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         return createCommand(GEODIST, new DoubleOutput<K, V>(codec), args);
 
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, GeoEncoded> geoencode(double longitude, double latitude, Double distance, String unit) {
-
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(longitude).add(latitude);
-
-        if (distance != null && unit != null) {
-            args.add(distance).add(unit);
-        }
-        return (Command) createCommand(GEOENCODE, new GeoEncodedOutput<K, V>(codec, null), args);
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, GeoEncoded> geodecode(long geohash) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(geohash);
-
-        return (Command) createCommand(GEODECODE, new GeoEncodedOutput<K, V>(codec, geohash), args);
     }
 
     /**
