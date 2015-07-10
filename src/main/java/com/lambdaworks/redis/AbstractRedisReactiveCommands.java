@@ -1594,21 +1594,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createDissolvingObservable(() -> commandBuilder.geodist(key, from, to, unit));
     }
 
-    @Override
-    public Observable<GeoEncoded> geoencode(double longitude, double latitude) {
-        return createDissolvingObservable(() -> commandBuilder.geoencode(longitude, latitude, null, null));
-    }
-
-    @Override
-    public Observable<GeoEncoded> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return createDissolvingObservable(() -> commandBuilder.geoencode(longitude, latitude, distance, unit.name()));
-    }
-
-    @Override
-    public Observable<GeoEncoded> geodecode(long geohash) {
-        return createDissolvingObservable(() -> commandBuilder.geodecode(geohash));
-    }
-
     protected <T> Observable<T> createObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         return createObservable(() -> new Command<>(type, output, args));
     }

@@ -1630,21 +1630,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
         return dispatch(commandBuilder.geodist(key, from, to, unit));
     }
 
-    @Override
-    public RedisFuture<GeoEncoded> geoencode(double longitude, double latitude) {
-        return dispatch(commandBuilder.geoencode(longitude, latitude, null, null));
-    }
-
-    @Override
-    public RedisFuture<GeoEncoded> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.geoencode(longitude, latitude, distance, unit.name()));
-    }
-
-    @Override
-    public RedisFuture<GeoEncoded> geodecode(long geohash) {
-        return dispatch(commandBuilder.geodecode(geohash));
-    }
-
     protected <T> RedisFuture<T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
         return dispatch(type, output, null);
     }

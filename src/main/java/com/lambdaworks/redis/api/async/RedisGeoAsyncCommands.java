@@ -3,7 +3,6 @@ package com.lambdaworks.redis.api.async;
 import com.lambdaworks.redis.GeoArgs;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoWithin;
-import com.lambdaworks.redis.GeoEncoded;
 import java.util.List;
 import java.util.Set;
 import com.lambdaworks.redis.RedisFuture;
@@ -114,40 +113,4 @@ public interface RedisGeoAsyncCommands<K, V> {
      *         returned.
      */
     RedisFuture<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
-
-    /**
-     *
-     * Encode {@code longitude} and {@code latitude} to highest geohash accuracy.
-     *
-     * @param longitude the longitude coordinate according to WGS84
-     * @param latitude the latitude coordinate according to WGS84
-     * @return multi-bulk reply with 4 elements 1: the 52-bit geohash integer for your longitude/latitude, 2: The minimum corner
-     *         of your geohash {@link GeoCoordinates}, 3: The maximum corner of your geohash {@link GeoCoordinates}, 4: The
-     *         averaged center of your geohash {@link GeoCoordinates}.
-     */
-    RedisFuture<GeoEncoded> geoencode(double longitude, double latitude);
-
-    /**
-     *
-     * Encode {@code longitude} and {@code latitude} to highest geohash accuracy.
-     *
-     * @param longitude the longitude coordinate according to WGS84
-     * @param latitude the latitude coordinate according to WGS84
-     * @param distance distance for geohash accuracy
-     * @param unit the distance unit
-     * @return multi-bulk reply with four components 1: the 52-bit geohash integer for your longitude/latitude, 2: The minimum
-     *         corner of your geohash {@link GeoCoordinates}, 3: The maximum corner of your geohash {@link GeoCoordinates}, 4:
-     *         The averaged center of your geohash {@link GeoCoordinates}.
-     */
-    RedisFuture<GeoEncoded> geoencode(double longitude, double latitude, double distance, GeoArgs.Unit unit);
-
-    /**
-     *
-     * Decode geohash.
-     *
-     * @param geohash geohash containing your longitude/latitude
-     * @return a list of {@link GeoCoordinates}s (nested multi-bulk) with 3 elements 1: minimum decoded corner, 2: maximum
-     *         decoded corner, 3: averaged center of bounding box.
-     */
-    RedisFuture<GeoEncoded> geodecode(long geohash);
 }
