@@ -425,7 +425,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (debugEnabled) {
-            logger.debug("{} exceptionCaught() {}", logPrefix(), cause);
+            logger.debug("{} exceptionCaught()", logPrefix(), cause);
+            logger.debug(cause.getMessage(), cause);
         }
         if (!queue.isEmpty()) {
             RedisCommand<K, V, ?> command = queue.poll();
@@ -465,7 +466,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (currentChannel != null) {
             currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
             currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
-            currentChannel.closeFuture().syncUninterruptibly();
+            currentChannel.pipeline().close().syncUninterruptibly();
         }
     }
 

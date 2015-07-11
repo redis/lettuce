@@ -26,8 +26,9 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -58,6 +59,8 @@ public abstract class AbstractRedisClient {
     @Deprecated
     protected EventLoopGroup eventLoopGroup;
 
+    protected EventExecutorGroup genericWorkerPool;
+
     protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups;
     protected final HashedWheelTimer timer;
     protected final ChannelGroup channels;
@@ -70,7 +73,8 @@ public abstract class AbstractRedisClient {
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();
         eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();
-        channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+        genericWorkerPool = new DefaultEventExecutorGroup(DEFAULT_EVENT_LOOP_THREADS);
+        channels = new DefaultChannelGroup(genericWorkerPool.next());
         timer.start();
         unit = TimeUnit.SECONDS;
     }
@@ -127,6 +131,7 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
+        connectionBuilder.workerPool(genericWorkerPool);
 
     }
 
@@ -265,6 +270,7 @@ public abstract class AbstractRedisClient {
         List<Future<?>> closeFutures = Lists.newArrayList();
         ChannelGroupFuture closeFuture = channels.close();
 
+        closeFutures.add(genericWorkerPool.shutdownGracefully(quietPeriod, timeout, timeUnit));
         closeFutures.add(closeFuture);
 
         for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
