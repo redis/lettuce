@@ -145,6 +145,8 @@ public class ClientTest extends AbstractRedisClientTest {
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = getDefaultRedisURI();
+        redisUri.setTimeout(5);
+        redisUri.setUnit(TimeUnit.SECONDS);
 
         try {
             RedisAsyncConnection<String, String> connection = client.connectAsync(redisUri);

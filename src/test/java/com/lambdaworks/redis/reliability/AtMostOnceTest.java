@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.reliability;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -8,19 +8,30 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.lambdaworks.Wait;
+import io.netty.handler.codec.EncoderException;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -128,11 +139,8 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
                         new CommandArgs<String, String>(CODEC).addKey(key))) {
 
             @Override
-            public CommandOutput<String, String, Object> getOutput() {
-                if (true) {
-                    throw new IllegalStateException("I want to break free");
-                }
-                return super.getOutput();
+            public void encode(ByteBuf buf) {
+                throw new IllegalStateException("I want to break free");
             }
         };
 
@@ -141,7 +149,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
         assertThat(command.isDone()).isTrue();
-        assertThat(getException(command)).isInstanceOf(IllegalStateException.class);
+        assertThat(getException(command)).isInstanceOf(EncoderException.class);
 
         assertThat(connection.get(key)).isEqualTo("2");
 

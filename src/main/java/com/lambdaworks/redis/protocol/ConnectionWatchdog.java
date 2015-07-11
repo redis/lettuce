@@ -131,7 +131,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
             scheduleReconnect();
         } else {
-            logger.debug("{} Reconnect SCHEDULING disabled", logPrefix(), ctx);
+            logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
             logger.debug("");
         }
         super.channelInactive(ctx);
