@@ -120,6 +120,8 @@ public class ClientTest extends AbstractCommandTest {
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = getDefaultRedisURI();
+        redisUri.setTimeout(5);
+        redisUri.setUnit(TimeUnit.SECONDS);
 
         try {
             RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync(redisUri);

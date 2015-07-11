@@ -7,8 +7,10 @@ import java.lang.reflect.Proxy;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.lambdaworks.redis.output.StatusOutput;
+import io.netty.handler.codec.EncoderException;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -132,11 +134,8 @@ public class AtMostOnceTest extends AbstractCommandTest {
                 new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)) {
 
             @Override
-            public CommandOutput<String, String, Object> getOutput() {
-                if (true) {
-                    throw new IllegalStateException("I want to break free");
-                }
-                return super.getOutput();
+            public void encode(ByteBuf buf) {
+                throw new IllegalStateException("I want to break free");
             }
         };
 
@@ -145,7 +144,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isTrue();
         assertThat(command.isDone()).isTrue();
-        assertThat(command.getException()).isInstanceOf(IllegalStateException.class);
+        assertThat(command.getException()).isInstanceOf(EncoderException.class);
 
         assertThat(connection.get(key)).isEqualTo("2");
 

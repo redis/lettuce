@@ -124,6 +124,7 @@ public class AtLeastOnceTest extends AbstractCommandTest {
 
         RedisConnection<String, String> connection = client.connect();
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
+        RedisConnection<String, String> verificationConnection = client.connect();
 
         connection.set(key, "1");
         Command<String, String, String> working = new Command<String, String, String>(CommandType.INCR,
@@ -136,25 +137,19 @@ public class AtLeastOnceTest extends AbstractCommandTest {
                 new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)) {
 
             @Override
-            public CommandOutput<String, String, Object> getOutput() {
-                if (true) {
-                    throw new IllegalStateException("I want to break free");
-                }
-                return super.getOutput();
+            public void encode(ByteBuf buf) {
+                throw new IllegalStateException("I want to break free");
             }
         };
 
         channelWriter.write(command);
 
-        assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(command.isCancelled()).isTrue();
-        assertThat(command.isDone()).isTrue();
-        assertThat(command.getException()).isInstanceOf(IllegalStateException.class);
+        assertThat(command.isCancelled()).isFalse();
+        assertThat(command.isDone()).isFalse();
 
-        assertThat(connection.get(key)).isEqualTo("2");
+        assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(getQueue(getRedisChannelHandler(connection))).isEmpty();
-        assertThat(getCommandBuffer(getRedisChannelHandler(connection))).isEmpty();
+        assertThat(getQueue(getRedisChannelHandler(connection))).isNotEmpty();
 
         connection.close();
     }

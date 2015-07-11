@@ -28,8 +28,7 @@ public class RandomServerHandler extends ChannelInboundHandlerAdapter {
 
         ByteBuf buf = ctx.alloc().heapBuffer(response.length);
 
-        ByteBuf encoded = Base64.encode(buf.writeBytes(response));
-        buf.release();
+        ByteBuf encoded = buf.writeBytes(response);
         ctx.write(encoded);
     }
 
