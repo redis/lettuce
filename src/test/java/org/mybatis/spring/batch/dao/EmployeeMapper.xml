@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--
     Copyright 2010-2012 the original author or authors.
 
@@ -23,17 +23,44 @@
 -->
 <mapper namespace="org.mybatis.spring.batch.dao.UserDao">
 
-    <select id="getEmployee" resultType="org.mybatis.spring.batch.domain.Employee">
-        select * from employees
+    <select id="getEmployeeNoNestedPaging" resultType="org.mybatis.spring.batch.domain.Employee">
+        select distinct id,name,salary from employees limit #{_pagesize} offset #{_skiprows}
     </select>
 
-    <update id="updateEmployee" parameterType="org.mybatis.spring.batch.domain.Employee">
+    <select id="getEmployeeNestedPaging" resultMap="results">
+        select id,name,salary,skill from employees order by id limit #{_pagesize} offset #{_skiprows}
+    </select>
+
+  <select id="getEmployeeNoNestedCursor" resultType="org.mybatis.spring.batch.domain.Employee"
+    resultOrdered="true">
+        select distinct id,name,salary from employees order by id
+    </select>
+
+  <select id="getEmployeeNestedCursor" resultMap="results" resultOrdered="true">
+        select id,name,salary,skill from employees order by id
+    </select>
+
+  <resultMap id="results" type="org.mybatis.spring.batch.domain.Employee">
+    <id column="id" property="id" />
+    <result property="name" column="name" />
+    <result property="salary" column="salary" />
+    <collection property="skills" ofType="string">
+      <result column="skill" />
+    </collection>
+  </resultMap>
+
+  <update id="updateEmployee" parameterType="org.mybatis.spring.batch.domain.Employee">
         update employees set salary=#{salary} where id=#{id}
     </update>
 
-    <select id="check" resultType="int">
-        select sum(salary) from employees
+  <select id="checkSalarySum" resultType="int">
+        select sum(salary) from (select distinct id,salary from employees)
     </select>
+
+  <select id="checkEmployeeCount" resultType="int">
+        select count(distinct id)from employees
+    </select>
+
 
 
 </mapper>
