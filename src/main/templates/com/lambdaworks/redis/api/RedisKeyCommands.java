@@ -37,14 +37,12 @@ public interface RedisKeyCommands<K, V> {
     byte[] dump(K key);
 
     /**
-     * Determine if a key exists.
-     * 
-     * @param key the key
-     * @return Boolean integer-reply specifically:
-     * 
-     *         {@literal true} if the key exists. {@literal false} if the key does not exist.
+     * Determine how many keys exist.
+     *
+     * @param keys the keys
+     * @return Long integer-reply specifically: Number of existing keys
      */
-    Boolean exists(K key);
+    Long exists(K... keys);
 
     /**
      * Set a key's time to live in seconds.

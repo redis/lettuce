@@ -168,6 +168,14 @@ public interface RedisServerReactiveCommands<K, V> {
     Observable<Void> debugOom();
 
     /**
+     * Get debugging information about the internal hash-table state.
+     *
+     * @param db the database number
+     * @return String simple-string-reply
+     */
+    Observable<String> debugHtstats(int db);
+
+    /**
      * Remove all keys from all databases.
      * 
      * @return String simple-string-reply

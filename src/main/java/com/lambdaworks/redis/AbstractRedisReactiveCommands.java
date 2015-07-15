@@ -221,6 +221,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<String> debugHtstats(int db) {
+        return createObservable(() -> commandBuilder.debugHtstats(db));
+    }
+
+    @Override
     public Observable<Long> decr(K key) {
         return createObservable(() -> commandBuilder.decr(key));
     }
@@ -284,13 +289,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> exists(K... keys) {
+        return createObservable(() -> commandBuilder.exists(keys));
+    }
+
+    @Override
     public Observable<Boolean> expire(K key, long seconds) {
         return createObservable(() -> commandBuilder.expire(key, seconds));
     }
 
     @Override
     public Observable<Boolean> expireat(K key, Date timestamp) {
-
         return expireat(key, timestamp.getTime() / 1000);
     }
 

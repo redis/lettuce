@@ -49,6 +49,14 @@ public interface RedisKeyReactiveCommands<K, V> {
     Observable<Boolean> exists(K key);
 
     /**
+     * Determine how many keys exist.
+     *
+     * @param keys the keys
+     * @return Long integer-reply specifically: Number of existing keys
+     */
+    Observable<Long> exists(K... keys);
+
+    /**
      * Set a key's time to live in seconds.
      * 
      * @param key the key

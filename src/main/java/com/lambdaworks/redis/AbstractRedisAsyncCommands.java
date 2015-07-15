@@ -230,6 +230,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<String> debugHtstats(int db) {
+        return dispatch(commandBuilder.debugHtstats(db));
+    }
+
+    @Override
     public RedisFuture<Long> decr(K key) {
         return dispatch(commandBuilder.decr(key));
     }
@@ -290,6 +295,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public RedisFuture<Boolean> exists(K key) {
         return dispatch(commandBuilder.exists(key));
+    }
+
+    @Override
+    public RedisFuture<Long> exists(K... keys) {
+        return dispatch(commandBuilder.exists(keys));
     }
 
     @Override

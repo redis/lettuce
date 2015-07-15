@@ -2,35 +2,28 @@
 
 package com.lambdaworks.redis.commands;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
-import static com.lambdaworks.redis.TestSettings.host;
-import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.TestSettings;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.models.command.CommandDetail;
 import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 import com.lambdaworks.redis.protocol.CommandType;
-import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ServerCommandTest extends AbstractRedisClientTest {
@@ -171,6 +164,13 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     public void debugObject() throws Exception {
         redis.set(key, value);
         redis.debugObject(key);
+    }
+
+    @Test
+    public void debugHtstats() throws Exception {
+        redis.set(key, value);
+        String result = redis.debugHtstats(0);
+        assertThat(result).contains("table size");
     }
 
     /**

@@ -1,54 +1,7 @@
 package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.LettuceStrings.string;
-import static com.lambdaworks.redis.protocol.CommandKeyword.ADDSLOTS;
-import static com.lambdaworks.redis.protocol.CommandKeyword.AFTER;
-import static com.lambdaworks.redis.protocol.CommandKeyword.AND;
-import static com.lambdaworks.redis.protocol.CommandKeyword.BEFORE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.CHANNELS;
-import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.DELSLOTS;
-import static com.lambdaworks.redis.protocol.CommandKeyword.ENCODING;
-import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
-import static com.lambdaworks.redis.protocol.CommandKeyword.FLUSH;
-import static com.lambdaworks.redis.protocol.CommandKeyword.FLUSHSLOTS;
-import static com.lambdaworks.redis.protocol.CommandKeyword.FORCE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.FORGET;
-import static com.lambdaworks.redis.protocol.CommandKeyword.GETKEYSINSLOT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.GETNAME;
-import static com.lambdaworks.redis.protocol.CommandKeyword.HARD;
-import static com.lambdaworks.redis.protocol.CommandKeyword.IDLETIME;
-import static com.lambdaworks.redis.protocol.CommandKeyword.IMPORTING;
-import static com.lambdaworks.redis.protocol.CommandKeyword.KILL;
-import static com.lambdaworks.redis.protocol.CommandKeyword.LEN;
-import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.LIST;
-import static com.lambdaworks.redis.protocol.CommandKeyword.LOAD;
-import static com.lambdaworks.redis.protocol.CommandKeyword.MEET;
-import static com.lambdaworks.redis.protocol.CommandKeyword.MIGRATING;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NO;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NODE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NODES;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NOSAVE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NOT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NUMPAT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.NUMSUB;
-import static com.lambdaworks.redis.protocol.CommandKeyword.ONE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.OR;
-import static com.lambdaworks.redis.protocol.CommandKeyword.PAUSE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.REFCOUNT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.REPLICATE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
-import static com.lambdaworks.redis.protocol.CommandKeyword.RESETSTAT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.REWRITE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SEGFAULT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SETNAME;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SETSLOT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SLOTS;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SOFT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.WITHSCORES;
-import static com.lambdaworks.redis.protocol.CommandKeyword.XOR;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.Date;
@@ -304,6 +257,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEBUG, null, new CommandArgs<K, V>(codec).add("OOM"));
     }
 
+    public Command<K, V, String> debugHtstats(int db) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(HTSTATS).add(db);
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> decr(K key) {
         return createCommand(DECR, new IntegerOutput<K, V>(codec), key);
     }
@@ -377,6 +335,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Boolean> exists(K key) {
         return createCommand(EXISTS, new BooleanOutput<K, V>(codec), key);
+    }
+
+    public Command<K, V, Long> exists(K... keys) {
+        return createCommand(EXISTS, new IntegerOutput<K, V>(codec), new CommandArgs<K, V>(codec).addKeys(keys));
     }
 
     public Command<K, V, Boolean> expire(K key, long seconds) {
