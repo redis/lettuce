@@ -40,6 +40,14 @@ public class KeyCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void existsVariadic() throws Exception {
+        assertThat(redis.exists(key, "key2", "key3")).isEqualTo(0);
+        redis.set(key, value);
+        redis.set("key2", value);
+        assertThat(redis.exists(key, "key2", "key3")).isEqualTo(2);
+    }
+
+    @Test
     public void expire() throws Exception {
         assertThat(redis.expire(key, 10)).isFalse();
         redis.set(key, value);

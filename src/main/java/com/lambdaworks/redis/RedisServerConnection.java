@@ -163,6 +163,14 @@ public interface RedisServerConnection<K, V> {
     void debugOom();
 
     /**
+     * Get debugging information about the internal hash-table state.
+     *
+     * @param db the database number
+     * @return String simple-string-reply
+     */
+    String debugHtstats(int db);
+
+    /**
      * Remove all keys from all databases.
      * 
      * @return String simple-string-reply

@@ -38,8 +38,18 @@ public interface RedisKeysAsyncConnection<K, V> {
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
      * 
      *         {@literal true} if the key exists. {@literal false} if the key does not exist.
+     * @deprecated Use {@link #exists(Object[])} instead
      */
+    @Deprecated
     RedisFuture<Boolean> exists(K key);
+
+    /**
+     * Determine how many keys exist.
+     *
+     * @param keys the keys
+     * @return Long integer-reply specifically: Number of existing keys
+     */
+    RedisFuture<Long> exists(K... keys);
 
     /**
      * Set a key's time to live in seconds.
