@@ -1,7 +1,8 @@
-
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
+import static com.google.code.tempusfugit.temporal.Duration.*;
+import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -9,6 +10,7 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.lambdaworks.redis.*;
 import org.junit.After;
@@ -20,6 +22,11 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.Duration;
+import com.google.code.tempusfugit.temporal.ThreadSleep;
+import com.google.code.tempusfugit.temporal.WaitFor;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
@@ -76,6 +83,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         redissync3 = redis3.sync();
         redissync4 = redis4.sync();
 
+        clusterClient.reloadPartitions();
         syncConnection = clusterClient.connectCluster();
     }
 
@@ -290,7 +298,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             clusterClient.connectCluster();
             fail("Missing RedisException");
         } catch (RedisException e) {
-            assertThat(e).hasCauseInstanceOf(RedisException.class).hasRootCauseInstanceOf(ConnectException.class);
+            assertThat(e).isInstanceOf(RedisException.class);
         }
     }
 
@@ -299,7 +307,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         RedisClusterNode redis1Node = getOwnPartition(redissync2);
 
-        RedisClusterConnection<String, String> connection = syncConnection.getConnection(TestSettings.host(), port2);
+        RedisClusterConnection<String, String> connection = syncConnection.getConnection(TestSettings.hostAddr(), port2);
 
         String result = connection.clusterMyId();
         assertThat(result).isEqualTo(redis1Node.getNodeId());
@@ -313,7 +321,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         syncConnection.set("b", "c");
 
         StatefulRedisConnection<String, String> statefulRedisConnection = syncConnection.getStatefulConnection().getConnection(
-                TestSettings.host(), port2);
+                TestSettings.hostAddr(), port2);
 
         RedisClusterConnection<String, String> connection = statefulRedisConnection.sync();
 
@@ -361,6 +369,21 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         syncConnection.readWrite();
 
         assertThat(ReflectionTestUtils.getField(syncConnection.getStatefulConnection(), "readOnly")).isEqualTo(Boolean.FALSE);
+        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, 40400).build());
+        try {
+            clusterClient.connectCluster();
+            fail("Missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).isInstanceOf(RedisException.class);
+        }
+    }
+
+    @Test
+    public void getKeysInSlot() throws Exception {
+
+        redissync1.set("b", value);
+        List<String> keys = redissync1.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10);
+        assertThat(keys).isEqualTo(ImmutableList.of("b"));
     }
 
 }

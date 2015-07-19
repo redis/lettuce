@@ -213,4 +213,10 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
      */
     String readWrite();
 
+    /**
+     * Close the connection. The connection will become not usable anymore as soon as this method was called.
+     */
+    @Override
+    void close();
+
 }

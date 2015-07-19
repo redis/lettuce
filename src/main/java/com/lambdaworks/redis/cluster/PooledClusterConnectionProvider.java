@@ -3,13 +3,18 @@ package com.lambdaworks.redis.cluster;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -45,6 +50,14 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             @Override
             public StatefulRedisConnection<K, V> load(PoolKey key) throws Exception {
 
+                Set<HostAndPort> redisUris = getConnectionPointsOfAllNodes();
+                HostAndPort hostAndPort = HostAndPort.fromParts(key.host, key.port);
+
+                if (!redisUris.contains(hostAndPort)) {
+                    throw new IllegalArgumentException("Connection to " + hostAndPort
+                            + " not allowed. This connection point is not known in the cluster view");
+                }
+
                 StatefulRedisConnection<K, V> connection = redisClusterClient.connectToNode(redisCodec, key.getSocketAddress());
                 if (key.getIntent() == Intent.READ) {
                     connection.sync().readOnly();
@@ -53,7 +66,6 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 synchronized (stateLock) {
                     connection.setAutoFlushCommands(autoFlushCommands);
                 }
-
                 return connection;
             }
         });
@@ -76,6 +88,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             try {
                 PoolKey key = new PoolKey(intent, partition.getUri());
                 return writers[slot] = getConnection(key);
+            } catch (UncheckedExecutionException e) {
+                throw new RedisException(e.getCause());
             } catch (Exception e) {
                 throw new RedisException(e);
             }
@@ -96,6 +110,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             }
             PoolKey key = new PoolKey(intent, host, port);
             return getConnection(key);
+        } catch (UncheckedExecutionException e) {
+            throw new RedisException(e.getCause());
         } catch (Exception e) {
             throw new RedisException(e);
         }
@@ -193,6 +209,39 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     @Override
+    public void closeStaleConnections() {
+        logger.debug("closeStaleConnections() count before expiring: {}", getConnectionCount());
+        Map<PoolKey, StatefulRedisConnection<K, V>> map = Maps.newHashMap(connections.asMap());
+        Set<HostAndPort> redisUris = getConnectionPointsOfAllNodes();
+
+        for (PoolKey poolKey : map.keySet()) {
+            if (redisUris.contains(HostAndPort.fromParts(poolKey.host, poolKey.port))) {
+                continue;
+            }
+
+            connections.invalidate(poolKey);
+            map.get(poolKey).close();
+        }
+
+        logger.debug("closeStaleConnections() count after expiring: {}", getConnectionCount());
+    }
+
+    protected Set<HostAndPort> getConnectionPointsOfAllNodes() {
+        Set<HostAndPort> redisUris = Sets.newHashSet();
+
+        for (RedisClusterNode partition : partitions) {
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+                redisUris.add(HostAndPort.fromParts(partition.getUri().getHost(), partition.getUri().getPort()));
+            }
+
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.SLAVE)) {
+                redisUris.add(HostAndPort.fromParts(partition.getUri().getHost(), partition.getUri().getPort()));
+            }
+        }
+        return redisUris;
+    }
+
+    @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         synchronized (stateLock) {
             this.autoFlushCommands = autoFlush;
@@ -209,7 +258,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         for (StatefulRedisConnection<K, V> connection : connections.asMap().values()) {
             connection.flushCommands();
         }
+    }
 
+    protected long getConnectionCount() {
+        return connections.size();
     }
 
     protected void resetPartitions() {

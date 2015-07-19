@@ -71,6 +71,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
         redissync5 = redis5.sync();
         redissync6 = redis6.sync();
+        clusterClient.reloadPartitions();
 
         WaitFor.waitOrTimeout(() -> {
             return clusterRule.isStable();

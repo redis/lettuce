@@ -33,8 +33,12 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
     public void complete() {
         executions++;
 
-        if (executions < executionLimit && isMoved()) {
-            retry.write(this);
+        if (executions < executionLimit && (isMoved() || isAsk())) {
+            try {
+                retry.write(this);
+            } catch (Exception e) {
+                completeExceptionally(e);
+            }
             return;
         }
         super.complete();
@@ -44,6 +48,13 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
     public boolean isMoved() {
         if (command.getOutput() != null && command.getOutput().getError() != null
                 && command.getOutput().getError().startsWith(CommandKeyword.MOVED.name())) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isAsk() {
+        if (getError() != null && getError().startsWith(CommandKeyword.ASK.name())) {
             return true;
         }
         return false;
@@ -73,6 +84,10 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
 
     public boolean isCompleted() {
         return completed;
+    }
+
+    public int getExecutions() {
+        return executions;
     }
 
     @Override

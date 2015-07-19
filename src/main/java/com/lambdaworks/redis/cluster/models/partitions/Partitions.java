@@ -1,6 +1,10 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
@@ -10,12 +14,13 @@ import com.lambdaworks.redis.cluster.SlotHash;
  * @since 3.0
  */
 public class Partitions extends AbstractCollection<RedisClusterNode> implements Collection<RedisClusterNode> {
+
     private List<RedisClusterNode> partitions = Lists.newArrayList();
     private RedisClusterNode slotCache[];
 
     /**
-     * Retrieve a {@link RedisClusterNode} by it's slot number. This method does not distinguish between masters and slaves.
-     * 
+     * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
+     *
      * @param slot the slot
      * @return RedisClusterNode or {@literal null}
      */
@@ -24,9 +29,24 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     }
 
     /**
+     * Retrieve a {@link RedisClusterNode} by its node id.
+     *
+     * @param nodeId the nodeId
+     * @return RedisClusterNode or {@literal null}
+     */
+    public RedisClusterNode getPartitionByNodeId(String nodeId) {
+        for (RedisClusterNode partition : partitions) {
+            if (partition.getNodeId().equals(nodeId)) {
+                return partition;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Update the partition cache.
      */
-    public void updateCache() {
+    public synchronized void updateCache() {
         if (slotCache == null) {
             slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
         } else {
@@ -73,7 +93,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
 
     /**
      * Update partitions and clear slot cache.
-     * 
+     *
      * @param partitions list of new partitions
      */
     public void reload(List<RedisClusterNode> partitions) {

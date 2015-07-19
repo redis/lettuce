@@ -5,6 +5,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
@@ -84,6 +85,12 @@ public class ClusterSetup {
         clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port6);
 
         RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
+        Wait.untilTrue(() -> {
+
+            clusterRule.getClusterClient().reloadPartitions();
+            return clusterRule.getClusterClient().getPartitions().size() == 2;
+
+        }).waitOrTimeout();
 
         RedisClusterAsyncCommands<String, String> node1 = connection.getConnection(AbstractClusterTest.host,
                 AbstractClusterTest.port5);
@@ -126,7 +133,12 @@ public class ClusterSetup {
         RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
         StatefulRedisClusterConnection<String, String> statefulConnection = connection.getStatefulConnection();
 
-        RedisClusterCommands<String, String> node1 = statefulConnection.getConnection(AbstractClusterTest.host,
+        Wait.untilEquals(2, () -> {
+            clusterRule.getClusterClient().reloadPartitions();
+            return clusterRule.getClusterClient().getPartitions().size();
+        }).waitOrTimeout();
+
+        RedisClusterCommands<String, String> node1 = statefulConnection.getConnection(TestSettings.hostAddr(),
                 AbstractClusterTest.port5).sync();
         node1.clusterAddSlots(AbstractClusterTest.createSlots(0, 16384));
 
@@ -143,6 +155,14 @@ public class ClusterSetup {
                     clusterRule.getClusterClient().reloadPartitions();
                     return partitionStream(clusterRule).filter(
                             redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
+                }).waitOrTimeout();
+
+        Wait.untilEquals(
+                1L,
+                () -> {
+                    clusterRule.getClusterClient().reloadPartitions();
+                    return partitionStream(clusterRule).filter(
+                            redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)).count();
                 }).waitOrTimeout();
 
         connection.close();

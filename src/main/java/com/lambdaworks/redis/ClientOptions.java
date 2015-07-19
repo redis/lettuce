@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.Serializable;
 
 /**
- * Client Options to control the behavior of {@link RedisClient} and {@link com.lambdaworks.redis.cluster.RedisClusterClient}.
+ * Client Options to control the behavior of {@link RedisClient}.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
@@ -92,14 +92,14 @@ public class ClientOptions implements Serializable {
         }
     }
 
-    private ClientOptions(Builder builder) {
+    protected ClientOptions(Builder builder) {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         autoReconnect = builder.autoReconnect;
         suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
     }
 
-    private ClientOptions(ClientOptions original) {
+    protected ClientOptions(ClientOptions original) {
         this.pingBeforeActivateConnection = original.pingBeforeActivateConnection;
         this.autoReconnect = original.autoReconnect;
         this.cancelCommandsOnReconnectFailure = original.cancelCommandsOnReconnectFailure;

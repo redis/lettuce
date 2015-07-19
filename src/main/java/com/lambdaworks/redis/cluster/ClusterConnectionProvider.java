@@ -50,6 +50,11 @@ interface ClusterConnectionProvider extends Closeable {
     void reset();
 
     /**
+     * Close connections that are not in use anymore.
+     */
+    void closeStaleConnections();
+
+    /**
      * Update partitions.
      *
      * @param partitions

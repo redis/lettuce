@@ -11,7 +11,8 @@ import com.lambdaworks.redis.output.CommandOutput;
  * One element of the redis pub/sub stream. May be a message or notification of subscription details.
  * 
  * @param <K> Key type.
- * @param <V> Value type. *
+ * @param <V> Value type.
+ * @param <T> Result type.
  * @author Will Glozer
  */
 public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
@@ -60,6 +61,7 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
         handleOutput(bytes);
     }
 
+    @SuppressWarnings("unchecked")
     private void handleOutput(ByteBuffer bytes) {
         switch (type) {
             case pmessage:

@@ -1791,7 +1791,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(from, to);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(from).addValue(to);
 
         if (unit != null) {
             args.add(unit.name());

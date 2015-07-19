@@ -14,17 +14,22 @@ import java.util.concurrent.CompletionStage;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.lambdaworks.redis.LettuceFutures;
-import com.lambdaworks.redis.RedisFuture;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.LettuceFutures;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.Duration;
+import com.google.code.tempusfugit.temporal.ThreadSleep;
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
@@ -158,16 +163,18 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void testDynamicNodeSelection() throws Exception {
 
         Partitions partitions = commands.getStatefulConnection().getPartitions();
-        partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(ImmutableSet.of()));
+        partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MASTER)));
 
         AsyncNodeSelection<String, String> selection = commands.nodes(
                 redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF), true);
 
         assertThat(selection).hasSize(0);
-        partitions.getPartition(0).setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
+        partitions.getPartition(0)
+                .setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
         assertThat(selection).hasSize(1);
 
-        partitions.getPartition(1).setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF));
+        partitions.getPartition(1)
+                .setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
         assertThat(selection).hasSize(2);
 
     }
@@ -393,6 +400,61 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(node2Connection.get(key)).isEqualTo(value);
 
         assertThat(sync.getStatefulConnection()).isSameAs(commands.getStatefulConnection());
+    }
+
+    @Test
+    public void noAddr() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        try {
+
+            Partitions partitions = clusterClient.getPartitions();
+            for (RedisClusterNode partition : partitions) {
+                partition.setUri(RedisURI.create("redis://non.existent.host:1234"));
+            }
+
+            sync.set("A", "value");// 6373
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("Unable to connect to");
+        }
+        sync.close();
+    }
+
+    @Test
+    public void forbiddenHostOnRedirect() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        try {
+
+            Partitions partitions = clusterClient.getPartitions();
+            for (RedisClusterNode partition : partitions) {
+                partition.setSlots(ImmutableList.of(0));
+                if (partition.getUri().getPort() == 7380) {
+                    partition.setSlots(ImmutableList.of(6373));
+                } else {
+                    partition.setUri(RedisURI.create("redis://non.existent.host:1234"));
+                }
+            }
+
+            partitions.updateCache();
+
+            sync.set("A", "value");// 6373
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("not allowed");
+        }
+        sync.close();
+    }
+
+    @Test
+    public void getConnectionToNotAClusterMember() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        try {
+            sync.getConnection("8.8.8.8", 1234);
+        } catch (RedisException e) {
+            assertThat(e).hasRootCauseExactlyInstanceOf(IllegalArgumentException.class);
+        }
+        sync.close();
     }
 
     @Test
