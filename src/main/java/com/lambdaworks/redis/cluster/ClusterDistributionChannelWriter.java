@@ -52,12 +52,25 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         if (commandToSend instanceof ClusterCommand) {
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) commandToSend;
-            if (!clusterCommand.isDone() && clusterCommand.isMoved()) {
-                HostAndPort moveTarget = getMoveTarget(clusterCommand.getError());
-                commandToSend.getOutput().setError((String) null);
-                RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
-                        ClusterConnectionProvider.Intent.WRITE, moveTarget.getHostText(), moveTarget.getPort());
-                channelWriter = connection.getChannelWriter();
+            if (!clusterCommand.isDone()) {
+                if (clusterCommand.isMoved()) {
+                    HostAndPort moveTarget = getMoveTarget(clusterCommand.getError());
+                    commandToSend.getOutput().setError((String) null);
+                    RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
+                            ClusterConnectionProvider.Intent.WRITE, moveTarget.getHostText(), moveTarget.getPort());
+                    channelWriter = connection.getChannelWriter();
+                }
+
+                if (clusterCommand.isAsk()) {
+                    HostAndPort askTarget = getAskTarget(clusterCommand.getError());
+                    commandToSend.getOutput().setError((String) null);
+                    RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
+                            ClusterConnectionProvider.Intent.WRITE, askTarget.getHostText(), askTarget.getPort());
+                    channelWriter = connection.getChannelWriter();
+
+                    // set asking bit
+                    connection.asking();
+                }
             }
         }
 
@@ -86,6 +99,17 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         checkArgument(LettuceStrings.isNotEmpty(errorMessage), "errorMessage must not be empty");
         checkArgument(errorMessage.startsWith(CommandKeyword.MOVED.name()), "errorMessage must start with "
                 + CommandKeyword.MOVED);
+
+        List<String> movedMessageParts = Splitter.on(' ').splitToList(errorMessage);
+        checkArgument(movedMessageParts.size() >= 3, "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
+
+        return HostAndPort.fromString(movedMessageParts.get(2));
+    }
+
+    private HostAndPort getAskTarget(String errorMessage) {
+
+        checkArgument(LettuceStrings.isNotEmpty(errorMessage), "errorMessage must not be empty");
+        checkArgument(errorMessage.startsWith(CommandKeyword.ASK.name()), "errorMessage must start with " + CommandKeyword.ASK);
 
         List<String> movedMessageParts = Splitter.on(' ').splitToList(errorMessage);
         checkArgument(movedMessageParts.size() >= 3, "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");

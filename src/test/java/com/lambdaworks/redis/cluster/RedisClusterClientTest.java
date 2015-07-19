@@ -1,19 +1,25 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import java.net.ConnectException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -25,7 +31,17 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -63,7 +79,6 @@ public class RedisClusterClientTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         client = new RedisClient(host, port1);
-
         clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
 
     }
@@ -87,12 +102,12 @@ public class RedisClusterClientTest {
     @Before
     public void before() throws Exception {
 
-        redis1 = (RedisClusterAsyncConnection<String, String>) client.connectAsync(RedisURI.Builder.redis(host, port1).build());
+        redis1 = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
 
-        redissync1 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port1).build());
-        redissync2 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port2).build());
-        redissync3 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port3).build());
-        redissync4 = (RedisClusterConnection<String, String>) client.connect(RedisURI.Builder.redis(host, port4).build());
+        redissync1 = client.connect(RedisURI.Builder.redis(host, port1).build());
+        redissync2 = client.connect(RedisURI.Builder.redis(host, port2).build());
+        redissync3 = client.connect(RedisURI.Builder.redis(host, port3).build());
+        redissync4 = client.connect(RedisURI.Builder.redis(host, port4).build());
 
         WaitFor.waitOrTimeout(new Condition() {
             @Override
@@ -100,6 +115,8 @@ public class RedisClusterClientTest {
                 return clusterRule.isStable();
             }
         }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
+
+        clusterClient.reloadPartitions();
 
     }
 
@@ -268,7 +285,6 @@ public class RedisClusterClientTest {
             assertThat(redis1Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
             assertThat(redis4Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
         }
-
     }
 
     @Test
@@ -301,11 +317,7 @@ public class RedisClusterClientTest {
         RedisFuture<String> setD = connection.set("d", "myValue2");
         assertThat(setD.get()).isEqualTo("OK");
 
-        List<String> keys = connection.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
-        assertThat(keys).isEqualTo(ImmutableList.of("b"));
-
         connection.close();
-
     }
 
     @Test
@@ -567,7 +579,15 @@ public class RedisClusterClientTest {
             clusterClient.connectCluster();
             fail("Missing RedisException");
         } catch (RedisException e) {
-            assertThat(e).hasCauseInstanceOf(RedisException.class).hasRootCauseInstanceOf(ConnectException.class);
+            assertThat(e).isInstanceOf(RedisException.class);
         }
+    }
+
+    @Test
+    public void getKeysInSlot() throws Exception {
+
+        redis1.set("b", value).get();
+        List<String> keys = redis1.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
+        assertThat(keys).isEqualTo(ImmutableList.of("b"));
     }
 }

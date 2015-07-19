@@ -3,11 +3,16 @@ package com.lambdaworks.redis.cluster;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
@@ -44,6 +49,15 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         this.connections = CacheBuilder.newBuilder().build(new CacheLoader<PoolKey, RedisAsyncConnectionImpl<K, V>>() {
             @Override
             public RedisAsyncConnectionImpl<K, V> load(PoolKey key) throws Exception {
+
+                Set<HostAndPort> redisUris = getConnectionPointsOfAllNodes();
+                HostAndPort hostAndPort = HostAndPort.fromParts(key.host, key.port);
+
+                if (!redisUris.contains(hostAndPort)) {
+                    throw new IllegalArgumentException("Connection to " + hostAndPort
+                            + " not allowed. This connection point is not known in the cluster view");
+                }
+
                 RedisAsyncConnectionImpl<K, V> connection = redisClusterClient.connectAsyncImpl(redisCodec,
                         key.getSocketAddress());
                 synchronized (stateLock) {
@@ -188,6 +202,39 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     @Override
+    public void closeStaleConnections() {
+        logger.debug("closeStaleConnections() count before expiring: {}", getConnectionCount());
+        Map<PoolKey, RedisAsyncConnectionImpl<K, V>> map = Maps.newHashMap(connections.asMap());
+        Set<HostAndPort> redisUris = getConnectionPointsOfAllNodes();
+
+        for (PoolKey poolKey : map.keySet()) {
+            if (redisUris.contains(HostAndPort.fromParts(poolKey.host, poolKey.port))) {
+                continue;
+            }
+
+            connections.invalidate(poolKey);
+            map.get(poolKey).close();
+        }
+
+        logger.debug("closeStaleConnections() count after expiring: {}", getConnectionCount());
+    }
+
+    protected Set<HostAndPort> getConnectionPointsOfAllNodes() {
+        Set<HostAndPort> redisUris = Sets.newHashSet();
+
+        for (RedisClusterNode partition : partitions) {
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MASTER)) {
+                redisUris.add(HostAndPort.fromParts(partition.getUri().getHost(), partition.getUri().getPort()));
+            }
+
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.SLAVE)) {
+                redisUris.add(HostAndPort.fromParts(partition.getUri().getHost(), partition.getUri().getPort()));
+            }
+        }
+        return redisUris;
+    }
+
+    @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         synchronized (stateLock) {
             this.autoFlushCommands = autoFlush;
@@ -203,7 +250,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         for (RedisAsyncConnectionImpl<K, V> connection : connections.asMap().values()) {
             connection.getChannelWriter().flushCommands();
         }
+    }
 
+    protected long getConnectionCount() {
+        return connections.size();
     }
 
     protected void resetPartitions() {

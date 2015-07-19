@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import com.lambdaworks.redis.TestSettings;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -68,33 +69,35 @@ public class ClusterRule implements TestRule {
 
     public boolean isStable() {
 
-        RedisAsyncConnectionImpl<String, String> connection = clusterClient.connectAsyncImpl(new InetSocketAddress("localhost",
-                ports[0]));
-        try {
-            String info = connection.clusterInfo().get();
-            if (info != null && info.contains("cluster_state:ok")) {
+        for (int port : ports) {
+            RedisAsyncConnectionImpl<String, String> connection = clusterClient.connectAsyncImpl(new InetSocketAddress(
+                    TestSettings.host(), port));
+            try {
+                String info = connection.clusterInfo().get();
+                if (info != null && info.contains("cluster_state:ok")) {
 
-                String s = connection.clusterNodes().get();
-                Partitions parse = ClusterPartitionParser.parse(s);
+                    String s = connection.clusterNodes().get();
+                    Partitions parse = ClusterPartitionParser.parse(s);
 
-                for (RedisClusterNode redisClusterNode : parse) {
-                    if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.FAIL)
-                            || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL)
-                            || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.HANDSHAKE)) {
-                        return false;
+                    for (RedisClusterNode redisClusterNode : parse) {
+                        if (redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.FAIL)
+                                || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL)
+                                || redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.HANDSHAKE)) {
+                            return false;
+                        }
                     }
                 }
-
-                return true;
-
+ else {
+                    return false;
+                }
+            } catch (Exception e) {
+                // nothing to do
+            } finally {
+                connection.close();
             }
-        } catch (Exception e) {
-            // nothing to do
-        } finally {
-            connection.close();
         }
 
-        return false;
+        return true;
     }
 
     public void flushdb() {

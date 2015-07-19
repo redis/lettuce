@@ -7,9 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.lambdaworks.redis.LettuceFutures;
-import com.lambdaworks.redis.RedisFuture;
+import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,9 +16,14 @@ import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.google.common.collect.Lists;
+import com.lambdaworks.redis.LettuceFutures;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -40,6 +43,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
         }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
 
+        clusterClient.reloadPartitions();
         connection = clusterClient.connectClusterAsync();
     }
 
@@ -84,7 +88,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
             RedisClusterAsyncConnection<String, String> nextConnection = connection.getConnection(redisClusterNode.getNodeId());
             assertThat(connection).isNotSameAs(nextConnection);
-
         }
     }
 
@@ -100,6 +103,61 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             String myid = nodeConnection.clusterMyId();
             assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
         }
+    }
+
+    @Test
+    public void noAddr() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        try {
+
+            Partitions partitions = clusterClient.getPartitions();
+            for (RedisClusterNode partition : partitions) {
+                partition.setUri(RedisURI.create("redis://non.existent.host:1234"));
+            }
+
+            sync.set("A", "value");// 6373
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("Unable to connect to");
+        }
+        sync.close();
+    }
+
+    @Test
+    public void forbiddenHostOnRedirect() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        try {
+
+            Partitions partitions = clusterClient.getPartitions();
+            for (RedisClusterNode partition : partitions) {
+                partition.setSlots(ImmutableList.of(0));
+                if (partition.getUri().getPort() == 7380) {
+                    partition.setSlots(ImmutableList.of(6373));
+                } else {
+                    partition.setUri(RedisURI.create("redis://non.existent.host:1234"));
+                }
+            }
+
+            partitions.updateCache();
+
+            sync.set("A", "value");// 6373
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("not allowed");
+        }
+        sync.close();
+    }
+
+    @Test
+    public void getConnectionToNotAClusterMember() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        try {
+            sync.getConnection("8.8.8.8", 1234);
+        } catch (RedisException e) {
+            assertThat(e).hasRootCauseExactlyInstanceOf(IllegalArgumentException.class);
+        }
+        sync.close();
     }
 
     @Test
@@ -130,7 +188,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         }
 
         verificationConnection.close();
-
     }
 
     protected String value(int i) {
@@ -140,5 +197,4 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     protected String key(int i) {
         return key + "-" + i;
     }
-
 }

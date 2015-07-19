@@ -37,8 +37,9 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
         super(writer, codec, timeout, unit);
     }
 
+    @SuppressWarnings("unchecked")
     ClusterDistributionChannelWriter<K, V> getWriter() {
-        return (ClusterDistributionChannelWriter) super.getChannelWriter();
+        return (ClusterDistributionChannelWriter<K, V>) super.getChannelWriter();
     }
 
     @Override
@@ -77,4 +78,5 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
         getWriter().getClusterConnectionProvider().setPartitions(partitions);
         this.partitions = partitions;
     }
+
 }

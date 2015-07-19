@@ -18,7 +18,7 @@ import io.netty.channel.ChannelPipeline;
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-    final static RedisCommandBuilder INITIALIZING_CMD_BUILDER = new RedisCommandBuilder(new Utf8StringCodec());
+    final static RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder(new Utf8StringCodec());
 
     protected boolean pingBeforeActivate;
     private List<ChannelHandler> handlers;

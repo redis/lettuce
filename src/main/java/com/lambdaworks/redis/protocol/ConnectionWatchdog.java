@@ -123,7 +123,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         logger.debug("{} channelInactive({})", logPrefix, ctx);
         channel = null;
         if (listenOnChannelInactive && !reconnectSuspended) {
-            RedisChannelHandler channelHandler = ctx.pipeline().get(RedisChannelHandler.class);
+            RedisChannelHandler<?, ?> channelHandler = ctx.pipeline().get(RedisChannelHandler.class);
             if (channelHandler != null) {
                 timeout = channelHandler.getTimeout();
                 timeoutUnit = channelHandler.getTimeoutUnit();
@@ -246,7 +246,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             currentFuture.sync();
 
             RedisChannelInitializer channelInitializer = currentFuture.channel().pipeline().get(RedisChannelInitializer.class);
-            CommandHandler commandHandler = currentFuture.channel().pipeline().get(CommandHandler.class);
+            CommandHandler<?, ?> commandHandler = currentFuture.channel().pipeline().get(CommandHandler.class);
 
             try {
                 timeLeft -= System.nanoTime() - start;

@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+@SuppressWarnings("unchecked")
 public class SortedSetCommandTest extends AbstractCommandTest {
     @Test
     public void zadd() throws Exception {

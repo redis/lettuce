@@ -18,7 +18,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @ChannelHandler.Sharable
-public class CommandEncoder extends MessageToByteEncoder<RedisCommand> {
+public class CommandEncoder extends MessageToByteEncoder<RedisCommand<?, ?, ?>> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
 
@@ -43,14 +43,12 @@ public class CommandEncoder extends MessageToByteEncoder<RedisCommand> {
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, RedisCommand msg, ByteBuf out) throws Exception {
-
-        final RedisCommand<?, ?, ?> cmd = (RedisCommand<?, ?, ?>) msg;
+    protected void encode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> msg, ByteBuf out) throws Exception {
 
         msg.encode(out);
 
         if (debugEnabled) {
-            logger.debug("{} writing command {}", logPrefix(ctx.channel()), cmd);
+            logger.debug("{} writing command {}", logPrefix(ctx.channel()), msg);
             if (traceEnabled) {
                 logger.trace("{} Sent: {}", logPrefix(ctx.channel()), out.toString(Charset.defaultCharset()).trim());
             }

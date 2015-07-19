@@ -21,6 +21,7 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
 
+@SuppressWarnings("unchecked")
 public class ClientTest extends AbstractCommandTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();

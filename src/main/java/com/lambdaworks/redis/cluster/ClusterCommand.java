@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -41,8 +39,14 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     public void complete() {
         executions++;
 
-        if (executions < executionLimit && isMoved()) {
-            retry.write(this);
+        try {
+            if (executions < executionLimit && (isMoved() || isAsk())) {
+                retry.write(this);
+                return;
+            }
+        } catch (Exception e) {
+            setException(e);
+            command.complete();
             return;
         }
 
@@ -51,6 +55,13 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
     public boolean isMoved() {
         if (getError() != null && getError().startsWith(CommandKeyword.MOVED.name())) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isAsk() {
+        if (getError() != null && getError().startsWith(CommandKeyword.ASK.name())) {
             return true;
         }
         return false;

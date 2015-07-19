@@ -2,6 +2,8 @@ package com.lambdaworks.redis;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.CacheBuilder;
@@ -77,11 +79,23 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                     }
                 }
 
+                if (redisCommand instanceof Future<?>) {
+                    if (redisCommand.isDone()) {
+                        try {
+                            redisCommand.get();
+                        } catch (InterruptedException e) {
+                            throw e;
+                        } catch (ExecutionException e) {
+                            throw new RedisException(e.getCause());
+                        }
+                    }
+                }
+
                 return awaitedResult;
             }
 
             if (result instanceof RedisClusterAsyncConnection) {
-                return AbstractRedisClient.syncHandler((RedisChannelHandler) result, RedisConnection.class,
+                return AbstractRedisClient.syncHandler((RedisChannelHandler<?, ?>) result, RedisConnection.class,
                         RedisClusterConnection.class);
             }
 
