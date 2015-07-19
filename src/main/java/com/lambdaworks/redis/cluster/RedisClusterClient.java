@@ -92,9 +92,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
 
-    protected ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
     protected AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
 
+    private ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
     private Partitions partitions;
     private List<RedisURI> initialUris = Lists.newArrayList();
 
@@ -356,6 +356,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         return loadedPartitions;
     }
 
+    /**
+     * Check if the {@link #genericWorkerPool} is active
+     * 
+     * @return false if the worker pool is terminating, shutdown or terminated
+     */
     protected boolean isEventLoopActive() {
         if (genericWorkerPool.isShuttingDown() || genericWorkerPool.isShutdown() || genericWorkerPool.isTerminated()) {
             return false;
@@ -364,48 +369,23 @@ public class RedisClusterClient extends AbstractRedisClient {
         return true;
     }
 
-    /**
-     * Construct a new {@link StatefulRedisConnectionImpl}. Can be overridden in order to construct a subclass of
-     * {@link StatefulRedisConnectionImpl}. These connections are the "inner" connections used by the
-     * {@link ClusterDistributionChannelWriter}.
-     *
-     * @param channelWriter the channel writer
-     * @param codec the codec to use
-     * @param timeout Timeout value
-     * @param unit Timeout unit
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return RedisAsyncConnectionImpl&lt;K, V&gt; instance
-     */
-    protected <K, V> StatefulRedisConnectionImpl<K, V> newRedisAsyncConnectionImpl(RedisChannelWriter<K, V> channelWriter,
-            RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new StatefulRedisConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
-    }
-
-    /**
-     * Construct a new {@link StatefulRedisConnectionImpl}. Can be overridden in order to construct a subclass of
-     * {@link StatefulRedisConnectionImpl}
-     *
-     * @param channelWriter the channel writer
-     * @param codec the codec to use
-     * @param timeout Timeout value
-     * @param unit Timeout unit
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return RedisAdvancedClusterAsyncConnectionImpl&lt;K, V&gt; instance
-     */
-    protected <K, V> StatefulRedisConnectionImpl<K, V> newRedisAdvancedClusterAsyncConnectionImpl(
-            RedisChannelWriter<K, V> channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new StatefulRedisConnectionImpl<K, V>(channelWriter, codec, timeout, unit);
-    }
-
     protected RedisURI getFirstUri() {
         checkState(!initialUris.isEmpty(), "initialUris must not be empty");
         return initialUris.get(0);
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier() {
-        return () -> getFirstUri().getResolvedAddress();
+        return () -> {
+            if (partitions != null) {
+                for (RedisClusterNode partition : partitions) {
+                    if (partition.getUri() != null && partition.getUri().getResolvedAddress() != null) {
+                        return partition.getUri().getResolvedAddress();
+                    }
+                }
+            }
+
+            return getFirstUri().getResolvedAddress();
+        };
     }
 
     protected Utf8StringCodec newStringStringCodec() {

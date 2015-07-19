@@ -90,21 +90,21 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
         RedisFuture<String> future = async.clusterInfo();
 
-        String status = future.get();
+        String result = future.get();
 
-        assertThat(status).contains("cluster_known_nodes:");
-        assertThat(status).contains("cluster_slots_fail:0");
-        assertThat(status).contains("cluster_state:");
+        assertThat(result).contains("cluster_known_nodes:");
+        assertThat(result).contains("cluster_slots_fail:0");
+        assertThat(result).contains("cluster_state:");
     }
 
     @Test
     public void testClusterNodes() throws Exception {
 
-        String string = sync.clusterNodes();
+        String result = sync.clusterNodes();
 
-        assertThat(string).contains("connected");
-        assertThat(string).contains("master");
-        assertThat(string).contains("myself");
+        assertThat(result).contains("connected");
+        assertThat(result).contains("master");
+        assertThat(result).contains("myself");
     }
 
     @Test

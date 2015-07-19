@@ -44,7 +44,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     }
 
     /**
-     * Update the partition cache.
+     * Update the partition cache. Updates are necessary after the partition details have changed.
      */
     public synchronized void updateCache() {
         if (slotCache == null) {
@@ -92,7 +92,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     }
 
     /**
-     * Update partitions and clear slot cache.
+     * Update partitions and rebuild slot cache.
      *
      * @param partitions list of new partitions
      */
