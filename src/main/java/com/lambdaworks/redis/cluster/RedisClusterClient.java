@@ -44,11 +44,12 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
 
-    protected Partitions partitions;
-    protected List<RedisURI> initialUris = Lists.newArrayList();
-    protected ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
 
     protected AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
+
+    private ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
+    private Partitions partitions;
+    private List<RedisURI> initialUris = Lists.newArrayList();
 
     private RedisClusterClient() {
         setOptions(new ClusterClientOptions.Builder().build());
@@ -288,6 +289,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         return loadedPartitions;
     }
 
+    /**
+     * Check if the {@link #genericWorkerPool} is active
+     *
+     * @return false if the worker pool is terminating, shutdown or terminated
+     */
     protected boolean isEventLoopActive() {
         if (genericWorkerPool.isShuttingDown() || genericWorkerPool.isShutdown() || genericWorkerPool.isTerminated()) {
             return false;

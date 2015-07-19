@@ -15,7 +15,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     private RedisClusterNode slotCache[];
 
     /**
-     * Retrieve a {@link RedisClusterNode} by it's slot number. This method does not distinguish between masters and slaves.
+     * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
      *
      * @param slot the slot
      * @return RedisClusterNode or {@literal null}
@@ -24,6 +24,12 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
         return slotCache[slot];
     }
 
+    /**
+     * Retrieve a {@link RedisClusterNode} by its node id.
+     *
+     * @param nodeId the nodeId
+     * @return RedisClusterNode or {@literal null}
+     */
     public RedisClusterNode getPartitionByNodeId(String nodeId) {
         for (RedisClusterNode partition : partitions) {
             if (partition.getNodeId().equals(nodeId)) {
@@ -34,7 +40,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     }
 
     /**
-     * Update the partition cache.
+     * Update the partition cache. Updates are necessary after the partition details have changed.
      */
     public synchronized void updateCache() {
         if (slotCache == null) {
@@ -82,7 +88,7 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
     }
 
     /**
-     * Update partitions and clear slot cache.
+     * Update partitions and rebuild slot cache.
      *
      * @param partitions list of new partitions
      */
