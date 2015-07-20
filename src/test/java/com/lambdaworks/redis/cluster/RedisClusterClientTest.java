@@ -160,9 +160,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         RedisFuture<String> setD = connection.set("d", "myValue2");
         assertThat(setD.get()).isEqualTo("OK");
 
-        List<String> keys = connection.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
-        assertThat(keys).isEqualTo(ImmutableList.of("b"));
-
         connection.close();
 
     }
