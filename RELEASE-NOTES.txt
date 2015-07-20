@@ -1,67 +1,132 @@
-              lettuce 3.2.Final RELEASE NOTES
+              lettuce 3.3 RELEASE NOTES
 
-This release features Unix domain sockets on linux-x86_64 systems. Local connections to a Redis
-instance are now possible without the use of the network. A second feature with a huge impact is client options.
-Client options allow to control behavior on a fine-grained base. It is now possible to turn off auto-reconnect,
-validate the connection with a PING before activating the connection for client usage and many more.
+lettuce 3.3 introduces a variety of changes: It features changes to cluster support, new GEO commands for the upcoming
+Redis 3.2 release and allows batching, an extension to pipelining. The documentation within the lettuce wiki was totally
+overhauled. Meet the very new wiki at https://github.com/mp911de/lettuce/wiki
 
-We tested lettuce using YourKit for performance. Subtracting all IO, the most time is spent on constructing the return
-futures and command objects. The async API can issue about 300Kops/sec whereas the sync API performs
-about 13Kops/sec (GET's, PING's) on a single thread.
-Sync performance depends on the Redis performance (tested on a Mac, 2,7 GHz Intel Core i7).
-
-lettuce provides now also base functionality for building clients using the Redis protocol.
-An example is spinach (https://github.com/mp911de/spinach).
-
-lettuce is built with Java 8 but can be used with Java 6, 7 and 8. Java 6 and 7 support will be
-dropped with lettuce 4.0. The new lettuce-testcontainer project ensures until then.
-You can find the build results at https://travis-ci.org/mp911de/lettuce-testcontainer
-
-If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
+The test stability issue, flaky tests, was addressed by running infinite testing jobs. The issue of some tests was
+missing synchronization and relying too much on timing. But the real life teaches us, not to rely on time,
+rather on hard facts whether a cluster node is available or a command is really written.
+The tests are improved and fail less often.
 
 
-Unix Domain Sockets
+Cluster improvements
 -----
-Unix Domain Sockets are inter-process communication channels on POSIX compliant systems. They allow to exchange data
-between processes on the same host operating system. When using Redis, which is usually a network service,
-Unix Domain Sockets are usable only if connecting locally to a single instance. Redis Sentinel and Redis Cluster,
-maintain tables of remote or local nodes and act therefore as registry. Unix Domain Sockets are not beneficial with
-Redis Sentinel and Redis Cluster.
-Using RedisClusterClient with Unix Domain Sockets would connect to the local node using a socket and then open
-TCP connection to all the other hosts. A good example is connecting locally to a standalone or a single cluster node
-to gain performance.
+lettuce's cluster support is enhanced by a couple of features. Users can obtain connection to the particular
+cluster nodes by specifying the nodeId or host and port. The new methods are available on two new interfaces:
 
-Unix Domain Socket connections are currently only available to Linux x86_64 systems with a minimum netty version of
-4.0.26.Final. You can, however, port the native library to your system. The netty guys would appreciate.
+ * RedisAdvancedClusterConnection
+ * RedisAdvancedClusterAsyncConnection
 
-See https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets
+Example code:
+
+    RedisAdvancedClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+    RedisClusterAsyncConnection<String, String> nodeConnection = connection.getConnection("adf7f86efa42d903bcd93c5bce72397fe52e91bb");
+
+    ...
+
+    RedisClusterAsyncConnection<String, String> nodeConnection = connection.getConnection("localhost", 7379);
+
+
+You are free to operate on these connections. The connections are bound to the nodes and do not update in case a slot
+is moved to a different node or the node id is handled by a different host. Do not close the connections. Otherwise,
+unpredictable behavior will occur. Keep also in mind, that the node connections are used by the cluster connection itself
+to perform cluster operations: If you block one connection all other users of the cluster connection might be affected.
+
+The cluster client handles now ASK redirecting the same way as MOVED redirection works. It's transparent for the client.
+Dispatching the commands between the particular cluster connections was optimized and the performance was improved.
+
+Another cluster-related item is the cluster topology view refreshing. Reloading the partitions was possible
+since lettuce 3.0. Version 3.3 enabled the reloading on a regular basis in the background.
+You're able to enable the refresh job (disabled by default) and specify the interval (defaults to 60 seconds).
+The refresh is enabled by using ClusterClientOptions.
+
+Example code:
+
+    clusterClient.setOptions(new ClusterClientOptions.Builder()
+                                     .refreshClusterView(true)
+                                     .refreshPeriod(5, TimeUnit.SECONDS)
+                                     .build());
+
+    RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
+
+
+Pipelining
+-----
+Lettuce works in its async mode since the very beginning in a pipelining mode described
+in http://redis.io/topics/pipelining. What is different now? lettuce performs a flush after each command invocation
+on the transport. This is fine for the most use cases, but flushing can become expensive and a limiting factor
+when you're bulk loading or you need batching. The async connections allow you to disable the auto-flush behavior
+and flush the queued commands at the moment you want to send them over the transport:
+
+Example code:
+
+    RedisAsyncConnection<String, String> connection = client.connectAsync();
+    connection.setAutoFlushCommands(false);
+
+    connection.set("key", "value");
+    connection.set("key2", "value2");
+
+    connection.flushCommands();
+
+    connection.setAutoFlushCommands(true);
+
+
+Why on the async connections only? The async connections return already a handle to the result, the sync API does not.
+Adding another API would require to duplicate all interfaces and cause the code to be much more complex.
+Pipelining/Batching can improve your throughput.
+
+Read more: https://github.com/mp911de/lettuce/wiki/Pipelining-and-command-flushing
+
+Codecs
+-----
+lettuce 3.3 uses a dedicated String codec instance for each String connection (Standalone) instead of sharing
+one String codec for all connections. Cluster connections share a String codec between the internal connections.
+
+A new ByteArrayCodec ships with lettuce 3.3 that allows byte array connections without the need to create an own codec.
+
+Command execution reliability
+-----
+A new doc describes Command execution reliability in the context of lettuce and reconnects. In general, lettuce supports
+at-least-once and at-most-once semantics. The mode of operations is bound to the auto-reconnect flag in the client options.
+
+If auto-reconnect is enabled, at-least-once semantics applies, at-most-once if auto-reconnect is disabled.
+
+At-least-once and at-most-once are not new to lettuce. The documentation just explains how these semantics apply to lettuce.
+
+Read more: https://github.com/mp911de/lettuce/wiki/Command-execution-reliability
 
 Enhancements
 -----
-* Provide an option to connect to Redis via Unix Domain Sockets #52
-* Add new cluster command MYID #53 (Thanks to @taer)
-* Expose futures of re-subscription on reconnect #62 (Thanks to @kichik)
-* Ping before connect #61 (Thanks to @kichik)
-* Introduce ClientOptions to control specific behavior #58
-* Enhance stability when reconnecting #56
-* Extract and use interfaces for improved extensibility
-* Upgrade netty to 4.0.28.Final
+* Provide access to cluster connection using the advanced cluster API #71
+* Cluster connection failover when cluster topology changes #97
+* Pipelining for lettuce (or: flush after n commands) #92
+* Decouple ConnectionWatchdog reconnect from timer thread #100
+* Improve performance in 3.3 #90
+* Add checks for arguments #69
+* Use dedicated string codecs on String connections and add ByteArrayCodec #70
+* Tests for command reliability docs #98
+
+Commands
+-----
+* Adopt variadic EXISTS and DEBUG HTSTATS #103
+* Support geo commands in lettuce 3.3 #86
+* Support NX|XX|CH|INCR options in ZADD #74
 
 Fixes
 -----
-* RedisPubSubConnectionImpl.activated does not call super.activated() #55
-* RedisPubSubConnectionImpl.activated() deadlock #57
-* Fix zrevrangebyscoreWithScores signature bug #65
-* Handle absence of optional epoll library in a reasonable way bug #64
+* Synchronization/cross thread visibility of variables #94
 
 Other
 ------
-* Inspect lettuce using YourKit #54
+* Rework of the wiki
 
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested continuously against Redis 3.0.
 
-For complete information on lettuce see the websites:
+If you need any support, meet lettuce at
 
-* http://github.com/mp911de/lettuce
-* http://redis.paluch.biz.
+* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users or lettuce-redis-client-users@googlegroups.com
+* Join the chat at https://gitter.im/mp911de/lettuce
+* Github Issues: https://github.com/mp911de/lettuce/issues
+* Wiki: https://github.com/mp911de/lettuce/wiki
