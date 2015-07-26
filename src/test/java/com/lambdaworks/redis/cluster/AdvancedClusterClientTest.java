@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +15,7 @@ import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.LettuceFutures;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
@@ -62,6 +62,18 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
             String myid = nodeConnection.clusterMyId().get();
             assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
+        }
+    }
+
+    @Test
+    public void differentConnections() throws Exception {
+
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+            RedisClusterAsyncConnection<String, String> nodeId = connection.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncConnection<String, String> hostAndPort = connection.getConnection(redisClusterNode.getUri()
+                    .getHost(), redisClusterNode.getUri().getPort());
+
+            assertThat(nodeId).isNotSameAs(hostAndPort);
         }
     }
 

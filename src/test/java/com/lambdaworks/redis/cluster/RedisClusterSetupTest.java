@@ -40,7 +40,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class RedisClusterSetupTest {
     public static final String host = TestSettings.hostAddr();
     public static final int port1 = 7383;
@@ -355,21 +355,18 @@ public class RedisClusterSetupTest {
     }
 
     private void suspendAutoReconnect(RedisClusterAsyncConnection<String, String> connection) {
-        ClusterNodeCommandHandler channelWriter = (ClusterNodeCommandHandler) ((RedisChannelHandler) connection)
+        ClusterNodeCommandHandler<?, ?> channelWriter = (ClusterNodeCommandHandler<?, ?>) ((RedisChannelHandler<?, ?>) connection)
                 .getChannelWriter();
         channelWriter.prepareClose();
     }
 
     protected void shiftAllSlotsToNode1() throws InterruptedException, TimeoutException {
-        for (int i = 12000; i < 16384; i += 4) {
-            redis2.clusterDelSlots(i, i + 1, i + 2, i + 3);
-            redis1.clusterDelSlots(i, i + 1, i + 2, i + 3);
-        }
+        redis1.clusterDelSlots(RedisClusterClientTest.createSlots(12000, 16384));
+        redis2.clusterDelSlots(RedisClusterClientTest.createSlots(12000, 16384));
+
         waitForSlots(redis2, 0);
 
-        for (int i = 12000; i < 16384; i += 4) {
-            redis1.clusterAddSlots(i, i + 1, i + 2, i + 3);
-        }
+        redis1.clusterAddSlots(RedisClusterClientTest.createSlots(12000, 16384));
         waitForSlots(redis1, 16384);
 
         WaitFor.waitOrTimeout(new Condition() {
@@ -389,7 +386,7 @@ public class RedisClusterSetupTest {
 
         setup2Masters();
 
-        PooledClusterConnectionProvider clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        PooledClusterConnectionProvider<?, ?> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -474,12 +471,12 @@ public class RedisClusterSetupTest {
 
     }
 
-    protected PooledClusterConnectionProvider getPooledClusterConnectionProvider(
+    protected PooledClusterConnectionProvider<?, ?> getPooledClusterConnectionProvider(
             RedisAdvancedClusterAsyncConnection clusterAsyncConnection) {
 
-        RedisAdvancedClusterAsyncConnectionImpl clusterConnection = (RedisAdvancedClusterAsyncConnectionImpl) clusterAsyncConnection;
-        ClusterDistributionChannelWriter writer = clusterConnection.getWriter();
-        return (PooledClusterConnectionProvider) writer.getClusterConnectionProvider();
+        RedisAdvancedClusterAsyncConnectionImpl<?, ?> clusterConnection = (RedisAdvancedClusterAsyncConnectionImpl<?, ?>) clusterAsyncConnection;
+        ClusterDistributionChannelWriter<?, ?> writer = clusterConnection.getWriter();
+        return (PooledClusterConnectionProvider<?, ?>) writer.getClusterConnectionProvider();
     }
 
     private void assertExecuted(RedisFuture<String> set, int execCount) throws Exception {

@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import java.io.Closeable;
 
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
 /**
@@ -13,29 +14,37 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
  */
 interface ClusterConnectionProvider extends Closeable {
     /**
-     * Provide a connection for the intent and cluster slot.
+     * Provide a connection for the intent and cluster slot. The underlying connection is bound to the nodeId. If the slot
+     * responsibility changes, the connection will not point to the updated nodeId.
      * 
-     * @param intent
-     * @param slot
+     * @param intent Connection intent {@literal READ} or {@literal WRITE}
+     * @param slot the slot-hash of the key, see {@link SlotHash}
      * @return a valid connection which handles the slot.
+     * @throws RedisException if no host is handling the slot
      */
     <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot);
 
     /**
-     * Provide a connection for the intent and host/port.
+     * Provide a connection for the intent and host/port. The connection can survive cluster topology updates. The connection *
+     * will be closed if the node identified by {@code host} and {@code port} is no longer part of the cluster.
      * 
-     * @param intent
-     * @param host
-     * @param port
+     * @param intent Connection intent {@literal READ} or {@literal WRITE}
+     * @param host the host
+     * @param port the port
      * @return a valid connection to the given host.
+     * @throws RedisException if the host is not part of the cluster
      */
     <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port);
 
     /**
-     * Provide a connection for the intent and nodeId.
+     * Provide a connection for the intent and nodeId. The connection can survive cluster topology updates. The connection will
+     * be closed if the node identified by {@code nodeId} is no longer part of the cluster.
+     * 
      *
-     * @param intent
+     * @param intent Connection intent {@literal READ} or {@literal WRITE}
+     * @param nodeId the nodeId of the cluster node
      * @return a valid connection to the given nodeId.
+     * @throws RedisException if the {@code nodeId} is not part of the cluster
      */
     <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String nodeId);
 
@@ -52,7 +61,7 @@ interface ClusterConnectionProvider extends Closeable {
     void reset();
 
     /**
-     * Close connections that are not in use anymore.
+     * Close connections that are not in use anymore/not part of the cluster.
      */
     void closeStaleConnections();
 

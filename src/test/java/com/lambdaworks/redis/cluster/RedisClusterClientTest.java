@@ -83,7 +83,7 @@ public class RedisClusterClientTest {
 
     }
 
-    private static int[] createSlots(int from, int to) {
+    public static int[] createSlots(int from, int to) {
         int[] result = new int[to - from];
         int counter = 0;
         for (int i = from; i < to; i++) {

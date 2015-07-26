@@ -36,6 +36,7 @@ import io.netty.channel.Channel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.07.15 13:40
  */
+@SuppressWarnings("unchecked")
 public class AtLeastOnceTest extends AbstractCommandTest {
 
     protected final Utf8StringCodec CODEC = new Utf8StringCodec();

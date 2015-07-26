@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
+@SuppressWarnings("rawtypes")
 public class PipeliningTest extends AbstractCommandTest {
 
     @Test

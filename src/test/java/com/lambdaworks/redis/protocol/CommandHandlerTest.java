@@ -57,9 +57,9 @@ public class CommandHandlerTest {
         when(context.channel()).thenReturn(channel);
         when(channel.pipeline()).thenReturn(pipeline);
         when(channel.eventLoop()).thenReturn(eventLoop);
-        when(eventLoop.submit(any(Runnable.class))).thenAnswer(new Answer<Future>() {
+        when(eventLoop.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
             @Override
-            public Future answer(InvocationOnMock invocation) throws Throwable {
+            public Future<?> answer(InvocationOnMock invocation) throws Throwable {
                 Runnable r = (Runnable) invocation.getArguments()[0];
                 r.run();
                 return null;

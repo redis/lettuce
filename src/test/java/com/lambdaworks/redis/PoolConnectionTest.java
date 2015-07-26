@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
 
+@SuppressWarnings("unchecked")
 public class PoolConnectionTest extends AbstractCommandTest {
 
     @Test
@@ -57,22 +58,22 @@ public class PoolConnectionTest extends AbstractCommandTest {
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
         RedisConnection<String, String> c1 = pool.allocateConnection();
         c1.close();
-        RedisConnection actualConnection1 = assertConnectionStillThere(c1);
+        RedisConnection<?, ?> actualConnection1 = assertConnectionStillThere(c1);
 
         RedisConnection<String, String> c2 = pool.allocateConnection();
         assertThat(c2).isSameAs(c1);
 
-        RedisConnection actualConnection2 = assertConnectionStillThere(c2);
+        RedisConnection<?, ?> actualConnection2 = assertConnectionStillThere(c2);
         assertThat(actualConnection1).isSameAs(actualConnection2);
     }
 
-    private RedisConnection assertConnectionStillThere(RedisConnection<String, String> c1) {
+    private RedisConnection<?, ?> assertConnectionStillThere(RedisConnection<String, String> c1) {
         //unwrap code from RedisConnectionPool destroyObject
         if (Proxy.isProxyClass(c1.getClass())) {
-            PooledConnectionInvocationHandler<RedisConnection> invocationHandler = (PooledConnectionInvocationHandler<RedisConnection>) Proxy
+            PooledConnectionInvocationHandler<RedisConnection<?, ?>> invocationHandler = (PooledConnectionInvocationHandler<RedisConnection<?, ?>>) Proxy
                     .getInvocationHandler(c1);
 
-            RedisConnection connection = invocationHandler.getConnection();
+            RedisConnection<?, ?> connection = invocationHandler.getConnection();
             assertThat(connection).isNotNull();
             return connection;
         }

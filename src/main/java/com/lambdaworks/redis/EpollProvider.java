@@ -38,6 +38,7 @@ class EpollProvider {
      * @param <T> Expected return type for casting.
      * @return instance of {@literal className} or null
      */
+    @SuppressWarnings("unchecked")
     private static <T> Class<T> getClass(String className) {
         try {
             return (Class) JavaRuntime.forName(className);

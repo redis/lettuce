@@ -1688,6 +1688,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
     }
 
+    @SuppressWarnings("unchecked")
     public Command<K, V, Long> geoadd(K key, Object[] lngLatMember) {
 
         assertNotEmpty(lngLatMember, "lngLatMember " + MUST_NOT_BE_EMPTY);

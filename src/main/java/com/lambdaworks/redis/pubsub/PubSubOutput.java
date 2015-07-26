@@ -61,7 +61,7 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
         handleOutput(bytes);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "fallthrough" })
     private void handleOutput(ByteBuffer bytes) {
         switch (type) {
             case pmessage:

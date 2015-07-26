@@ -184,6 +184,8 @@ public class RedisClusterClient extends AbstractRedisClient {
             initializePartitions();
         }
 
+        activateTopologyRefreshIfNeeded();
+
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
@@ -279,6 +281,12 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         }
 
+        activateTopologyRefreshIfNeeded();
+
+        return loadedPartitions;
+    }
+
+    private void activateTopologyRefreshIfNeeded() {
         if (getOptions() instanceof ClusterClientOptions) {
             ClusterClientOptions options = (ClusterClientOptions) getOptions();
             if (options.isRefreshClusterView()) {
@@ -292,8 +300,6 @@ public class RedisClusterClient extends AbstractRedisClient {
                 }
             }
         }
-
-        return loadedPartitions;
     }
 
     /**
@@ -402,6 +408,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }, function);
     }
 
+    @SuppressWarnings("unchecked")
     protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Predicate<T> function) {
         for (Closeable c : closeableResources) {
             if (selector.apply(c)) {
@@ -426,12 +433,15 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         @Override
         public void run() {
+            logger.debug("ClusterTopologyRefreshTask.run()");
             if (isEventLoopActive() && getOptions() instanceof ClusterClientOptions) {
                 ClusterClientOptions options = (ClusterClientOptions) getOptions();
                 if (!options.isRefreshClusterView()) {
+                    logger.debug("ClusterTopologyRefreshTask is disabled");
                     return;
                 }
             } else {
+                logger.debug("ClusterTopologyRefreshTask is disabled");
                 return;
             }
 
@@ -445,6 +455,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 }
             }
 
+            logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
             Map<RedisURI, Partitions> partitions = refresh.loadViews(seed);
             List<Partitions> values = Lists.newArrayList(partitions.values());
             if (!values.isEmpty() && refresh.isChanged(getPartitions(), values.get(0))) {

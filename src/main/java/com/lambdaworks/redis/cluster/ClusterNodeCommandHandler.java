@@ -1,9 +1,11 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
@@ -16,6 +18,10 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
+ * Command handler for node connections within the Redis Cluster context. This handler can requeue commands if it is
+ * disconnected and closed but has commands in the queue. If the handler was connected it would retry commands using the
+ * {@literal MOVED} or {@literal ASK} redirection.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @ChannelHandler.Sharable
@@ -65,7 +71,8 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
         if (clusterChannelWriter != null) {
             if (isAutoReconnect() && !CHANNEL_OPEN_STATES.contains(getState())) {
-                for (RedisCommand<K, V, ?> queuedCommand : queue) {
+                Collection<RedisCommand<K, V, ?>> commands = shiftCommands(queue);
+                for (RedisCommand<K, V, ?> queuedCommand : commands) {
                     try {
                         clusterChannelWriter.write(queuedCommand);
                     } catch (RedisException e) {
@@ -73,11 +80,10 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
                         queuedCommand.complete();
                     }
                 }
-
-                queue.clear();
             }
 
-            for (RedisCommand<K, V, ?> queuedCommand : commandBuffer) {
+            Collection<RedisCommand<K, V, ?>> commands = shiftCommands(commandBuffer);
+            for (RedisCommand<K, V, ?> queuedCommand : commands) {
                 try {
                     clusterChannelWriter.write(queuedCommand);
                 } catch (RedisException e) {
@@ -85,23 +91,28 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
                     queuedCommand.complete();
                 }
             }
-
-            commandBuffer.clear();
         }
 
         super.close();
     }
 
+    /**
+     * Retrieve commands within a lock to prevent concurrent modification
+     */
+    private Collection<RedisCommand<K, V, ?>> shiftCommands(Collection<RedisCommand<K, V, ?>> source) {
+        try {
+            writeLock.lock();
+            try {
+                return Lists.newArrayList(source);
+            } finally {
+                source.clear();
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
     public boolean isAutoReconnect() {
         return clientOptions.isAutoReconnect();
     }
-
-    public boolean isQueueEmpty() {
-        if (queue.isEmpty() && commandBuffer.isEmpty()) {
-            return true;
-        }
-
-        return false;
-    }
-
 }

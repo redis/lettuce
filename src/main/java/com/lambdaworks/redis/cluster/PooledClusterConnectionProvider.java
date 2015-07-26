@@ -14,6 +14,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -34,6 +35,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
+@SuppressWarnings({ "unchecked", "rawtypes" })
 class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
 
@@ -54,7 +56,6 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     @Override
-    @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
     public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
         if (debugEnabled) {
             logger.debug("getConnection(" + intent + ", " + slot + ")");
@@ -76,6 +77,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             try {
                 ConnectionKey key = new ConnectionKey(intent, partition.getNodeId());
                 return writers[slot] = connections.get(key);
+            } catch (UncheckedExecutionException e) {
+                throw new RedisException(e.getCause());
             } catch (Exception e) {
                 throw new RedisException(e);
             }
@@ -114,6 +117,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
             ConnectionKey key = new ConnectionKey(intent, host, port);
             return connections.get(key);
+        } catch (UncheckedExecutionException e) {
+            throw new RedisException(e.getCause());
         } catch (Exception e) {
             throw new RedisException(e);
         }

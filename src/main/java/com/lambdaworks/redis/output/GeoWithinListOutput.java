@@ -37,6 +37,7 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void set(long integer) {
         if (member == null) {
             member = (V) (Long) integer;

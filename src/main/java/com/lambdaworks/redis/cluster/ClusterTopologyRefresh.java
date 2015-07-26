@@ -126,12 +126,14 @@ class ClusterTopologyRefresh {
 
             long startWait = System.nanoTime();
             RedisFuture<String> future = entry.getValue();
-            if (!future.await(timeoutLeft, TimeUnit.NANOSECONDS)) {
-                break;
-            }
-            waitTime += System.nanoTime() - startWait;
 
             try {
+
+                if (!future.await(timeoutLeft, TimeUnit.NANOSECONDS)) {
+                    break;
+                }
+                waitTime += System.nanoTime() - startWait;
+
                 String raw = future.get();
                 Partitions partitions = ClusterPartitionParser.parse(raw);
 
@@ -209,6 +211,9 @@ class ClusterTopologyRefresh {
         return null;
     }
 
+    /**
+     * Compare {@link RedisURI} based on their host and port representation.
+     */
     static class RedisUriComparator implements Comparator<RedisURI> {
 
         public final static RedisUriComparator INSTANCE = new RedisUriComparator();
