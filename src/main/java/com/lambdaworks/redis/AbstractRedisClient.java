@@ -68,7 +68,7 @@ public abstract class AbstractRedisClient {
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = Sets.newConcurrentHashSet();
-    protected ClientOptions clientOptions = new ClientOptions.Builder().build();
+    protected volatile ClientOptions clientOptions = new ClientOptions.Builder().build();
 
     protected AbstractRedisClient() {
         timer = new HashedWheelTimer();

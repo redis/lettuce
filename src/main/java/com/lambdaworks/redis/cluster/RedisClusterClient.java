@@ -3,11 +3,13 @@ package com.lambdaworks.redis.cluster;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisUriComparator.INSTANCE;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -352,7 +354,9 @@ public class RedisClusterClient extends AbstractRedisClient {
             @Override
             public SocketAddress get() {
                 if (partitions != null) {
-                    for (RedisClusterNode partition : partitions) {
+                    List<RedisClusterNode> ordered = getOrderedPartitions(partitions);
+
+                    for (RedisClusterNode partition : ordered) {
                         if (partition.getUri() != null && partition.getUri().getResolvedAddress() != null) {
                             return partition.getUri().getResolvedAddress();
                         }
@@ -362,6 +366,17 @@ public class RedisClusterClient extends AbstractRedisClient {
                 return getFirstUri().getResolvedAddress();
             }
         };
+    }
+
+    private List<RedisClusterNode> getOrderedPartitions(Iterable<RedisClusterNode> clusterNodes) {
+        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        Collections.sort(ordered, new Comparator<RedisClusterNode>() {
+            @Override
+            public int compare(RedisClusterNode o1, RedisClusterNode o2) {
+                return INSTANCE.compare(o1.getUri(), o2.getUri());
+            }
+        });
+        return ordered;
     }
 
     protected Utf8StringCodec newStringStringCodec() {
@@ -425,7 +440,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 seed = RedisClusterClient.this.initialUris;
             } else {
                 seed = Lists.newArrayList();
-                for (RedisClusterNode partition : partitions) {
+                for (RedisClusterNode partition : getOrderedPartitions(partitions)) {
                     seed.add(partition.getUri());
                 }
             }

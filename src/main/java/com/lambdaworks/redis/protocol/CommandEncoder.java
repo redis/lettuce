@@ -20,7 +20,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 @ChannelHandler.Sharable
 public class CommandEncoder extends MessageToByteEncoder<RedisCommand<?, ?, ?>> {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandEncoder.class);
 
     /**
      * If TRACE level logging has been enabled at startup.
@@ -56,14 +56,8 @@ public class CommandEncoder extends MessageToByteEncoder<RedisCommand<?, ?, ?>> 
     }
 
     private String logPrefix(Channel channel) {
-        StringBuffer buffer = new StringBuffer(16);
-        buffer.append('[');
-        if (channel != null) {
-            buffer.append(channel.remoteAddress());
-        } else {
-            buffer.append("not connected");
-        }
-        buffer.append(']');
+        StringBuffer buffer = new StringBuffer(64);
+        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return buffer.toString();
     }
 

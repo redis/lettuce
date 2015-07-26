@@ -129,4 +129,14 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     public boolean setException(Throwable exception) {
         return command.setException(exception);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [command=").append(command);
+        sb.append(", executions=").append(executions);
+        sb.append(']');
+        return sb.toString();
+    }
 }

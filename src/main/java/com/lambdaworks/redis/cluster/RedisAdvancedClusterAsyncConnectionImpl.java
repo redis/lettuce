@@ -44,12 +44,11 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
 
     @Override
     public RedisClusterAsyncConnection<K, V> getConnection(String nodeId) {
-        RedisURI redisURI = lookup(nodeId);
-        if (redisURI == null) {
-            throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
-        }
 
-        return getConnection(redisURI.getHost(), redisURI.getPort());
+        RedisAsyncConnectionImpl<K, V> connection = getWriter().getClusterConnectionProvider().getConnection(
+                ClusterConnectionProvider.Intent.WRITE, nodeId);
+
+        return connection;
     }
 
     private RedisURI lookup(String nodeId) {
@@ -64,10 +63,6 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
 
     @Override
     public RedisClusterAsyncConnection<K, V> getConnection(String host, int port) {
-        // there is currently no check whether the node belongs to the cluster or not.
-        // A check against the partition table could be done, but this reflects only a particular
-        // point of view. What if the cluster is multi-homed, proxied, natted...?
-
         RedisAsyncConnectionImpl<K, V> connection = getWriter().getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, host, port);
 

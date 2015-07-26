@@ -83,7 +83,19 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return writer;
     }
 
+    @Override
+    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String nodeId) {
+        if (debugEnabled) {
+            logger.debug("getConnection(" + intent + ", " + nodeId + ")");
+        }
 
+        try {
+            ConnectionKey key = new ConnectionKey(intent, nodeId);
+            return connections.get(key);
+        } catch (Exception e) {
+            throw new RedisException(e);
+        }
+    }
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
@@ -327,7 +339,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         @Override
         public int hashCode() {
-            int result = intent != null ? intent.hashCode() : 0;
+            int result = intent != null ? intent.name().hashCode() : 0;
             result = 31 * result + (nodeId != null ? nodeId.hashCode() : 0);
             result = 31 * result + (host != null ? host.hashCode() : 0);
             result = 31 * result + port;

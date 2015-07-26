@@ -32,6 +32,14 @@ interface ClusterConnectionProvider extends Closeable {
     <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port);
 
     /**
+     * Provide a connection for the intent and nodeId.
+     *
+     * @param intent
+     * @return a valid connection to the given nodeId.
+     */
+    <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String nodeId);
+
+    /**
      * Close the connections and free all resources.
      */
     @Override
