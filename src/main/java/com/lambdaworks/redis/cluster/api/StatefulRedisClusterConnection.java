@@ -3,8 +3,6 @@ package com.lambdaworks.redis.cluster.api;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
-import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -44,13 +42,16 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     RedisAdvancedClusterReactiveCommands<K, V> reactive();
 
     /**
-     * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list.
+     * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. This
+     * connection is bound to the node id. Once the cluster topology view is updated, the connection will try to reconnect the
+     * to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the node with the
+     * specified {@code nodeId} is no longer part of the cluster.
      *
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link com.lambdaworks.redis.cluster.models.partitions.Partitions}.
+     * 
      *
-     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster
-     * nodes.
+     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
      * @param nodeId the node Id
      * @return a connection to the requested cluster node
@@ -59,12 +60,15 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     StatefulRedisConnection<K, V> getConnection(String nodeId);
 
     /**
-     * Retrieve a connection to the specified cluster node using the nodeId. Do not close the connections. Otherwise,
-     * unpredictable behavior will occur. The node must be part of the cluster and host/port are validated (exact check) against
-     * the current topology view in {@link com.lambdaworks.redis.cluster.models.partitions.Partitions}.
+     * Retrieve a connection to the specified cluster node using the nodeId. This connection is bound to a host and port.
+     * Updates to the cluster topology view can close the connection once the host, identified by {@code host} and {@code port},
+     * are no longer part of the cluster.
      *
-     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster
-     * nodes.
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. The node must be part of the cluster and
+     * host/port are validated (exact check) against the current topology view in
+     * {@link com.lambdaworks.redis.cluster.models.partitions.Partitions}.
+     *
+     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
      * @param host the host
      * @param port the port

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -200,28 +199,37 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectClusterImpl(codec, getSocketAddressSupplier()).async();
     }
 
-    protected StatefulRedisConnection<String, String> connectToNode(SocketAddress socketAddress) {
-        return connectToNode(newStringStringCodec(), socketAddress);
+    protected StatefulRedisConnection<String, String> connectToNode(final SocketAddress socketAddress) {
+        return connectToNode(newStringStringCodec(), socketAddress.toString(), null, new Supplier<SocketAddress>() {
+            @Override
+            public SocketAddress get() {
+                return socketAddress;
+            }
+        });
     }
 
     /**
      * Create a connection to a redis socket address.
+     *
+     * @param codec Use this codec to encode/decode keys and values.
+     * @param nodeId the nodeId
+     * @param clusterWriter global cluster writer
+     * @param socketAddressSupplier supplier for the socket address
      * 
-     * @param socketAddress initial connect
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection
      */
-    <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
+    <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
+            RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
 
-        logger.debug("connectAsyncImpl(" + socketAddress + ")");
-        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
+        logger.debug("connectNode(" + nodeId + ")");
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
-
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, queue, clusterWriter);
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
 
-        connectAsyncImpl(handler, connection, () -> socketAddress);
+        connectAsyncImpl(handler, connection, socketAddressSupplier);
 
         connection.registerCloseables(closeableResources, connection);
 
@@ -254,12 +262,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
-        final PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(
-                this, codec);
+        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler);
+        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
+                clusterWriter, codec);
 
-        final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
-                pooledClusterConnectionProvider);
-        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter, codec,
+        clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
+
+        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl(clusterWriter, codec,
                 timeout, unit);
 
         connection.setPartitions(partitions);
@@ -392,6 +401,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         return new Utf8StringCodec();
     }
 
+    /**
+     * Sets the new cluster topology. The partitions are not applied to existing connections.
+     * 
+     * @param partitions partitions object
+     */
     public void setPartitions(Partitions partitions) {
         this.partitions = partitions;
     }
