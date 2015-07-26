@@ -158,9 +158,6 @@ public class ClientTest extends AbstractRedisClientTest {
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
 
-            connection.set(key, value);
-
-            Thread.sleep(100);
             redisUri.setPort(TestSettings.nonexistentPort());
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 

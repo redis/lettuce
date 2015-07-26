@@ -188,7 +188,7 @@ endef
 define REDIS_CLUSTER_NODE5_CONF
 daemonize yes
 port 7383
-cluster-node-timeout 5000
+cluster-node-timeout 50
 pidfile work/redis-cluster-node5-7383.pid
 logfile work/redis-cluster-node5-7383.log
 save ""
@@ -202,7 +202,7 @@ endef
 define REDIS_CLUSTER_NODE6_CONF
 daemonize yes
 port 7384
-cluster-node-timeout 5000
+cluster-node-timeout 50
 pidfile work/redis-cluster-node6-7384.pid
 logfile work/redis-cluster-node6-7384.log
 save ""
@@ -216,7 +216,7 @@ endef
 define REDIS_CLUSTER_NODE7_CONF
 daemonize yes
 port 7385
-cluster-node-timeout 5000
+cluster-node-timeout 50
 pidfile work/redis-cluster-node7-7385.pid
 logfile work/redis-cluster-node7-7385.log
 save ""

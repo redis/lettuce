@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -112,8 +113,8 @@ class ClusterTopologyRefresh {
         return nodeSpecificViews;
     }
 
-    private Map<RedisURI, Partitions> getNodeSpecificViews(Map<RedisURI, RedisFuture<String>> rawViews) {
-        Map<RedisURI, Partitions> nodeSpecificViews = Maps.newHashMap();
+    protected Map<RedisURI, Partitions> getNodeSpecificViews(Map<RedisURI, RedisFuture<String>> rawViews) {
+        Map<RedisURI, Partitions> nodeSpecificViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
         long timeout = client.getFirstUri().getUnit().toNanos(client.getFirstUri().getTimeout());
         long waitTime = 0;
         for (Map.Entry<RedisURI, RedisFuture<String>> entry : rawViews.entrySet()) {
@@ -157,7 +158,7 @@ class ClusterTopologyRefresh {
      * Async request of views.
      */
     private Map<RedisURI, RedisFuture<String>> requestViews(Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
-        Map<RedisURI, RedisFuture<String>> rawViews = Maps.newHashMap();
+        Map<RedisURI, RedisFuture<String>> rawViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
             rawViews.put(entry.getKey(), entry.getValue().async().clusterNodes());
         }
@@ -174,7 +175,7 @@ class ClusterTopologyRefresh {
      * Open connections where an address can be resolved.
      */
     private Map<RedisURI, StatefulRedisConnection<String, String>> getConnections(Collection<RedisURI> seed) {
-        Map<RedisURI, StatefulRedisConnection<String, String>> connections = Maps.newHashMap();
+        Map<RedisURI, StatefulRedisConnection<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
 
         for (RedisURI redisURI : seed) {
             if (redisURI.getResolvedAddress() == null) {
@@ -208,4 +209,29 @@ class ClusterTopologyRefresh {
 
         return null;
     }
+
+    /**
+     * Compare {@link RedisURI} based on their host and port representation.
+     */
+    static class RedisUriComparator implements Comparator<RedisURI> {
+
+        public final static RedisUriComparator INSTANCE = new RedisUriComparator();
+
+        @Override
+        public int compare(RedisURI o1, RedisURI o2) {
+            String h1 = "";
+            String h2 = "";
+
+            if (o1 != null) {
+                h1 = o1.getHost() + ":" + o1.getPort();
+            }
+
+            if (o2 != null) {
+                h2 = o2.getHost() + ":" + o2.getPort();
+            }
+
+            return h1.compareToIgnoreCase(h2);
+        }
+    }
+
 }

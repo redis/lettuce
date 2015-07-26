@@ -3,16 +3,22 @@ package com.lambdaworks.redis.cluster;
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-
-import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -20,19 +26,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.LettuceFutures;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.ThreadSleep;
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
@@ -41,8 +38,6 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -110,13 +105,55 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
+    public void differentConnections() throws Exception {
+
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+            RedisClusterAsyncConnection<String, String> nodeId = commands.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncConnection<String, String> hostAndPort = commands.getConnection(redisClusterNode.getUri()
+                    .getHost(), redisClusterNode.getUri().getPort());
+
+            assertThat(nodeId).isNotSameAs(hostAndPort);
+        }
+
+        StatefulRedisClusterConnection<String, String> statefulConnection = commands.getStatefulConnection();
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+
+            StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
+            StatefulRedisConnection<String, String> hostAndPort = statefulConnection.getConnection(redisClusterNode.getUri()
+                    .getHost(), redisClusterNode.getUri().getPort());
+
+            assertThat(nodeId).isNotSameAs(hostAndPort);
+        }
+
+        RedisAdvancedClusterCommands<String, String> sync = statefulConnection.sync();
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+
+            RedisClusterCommands<String, String> nodeId = sync.getConnection(redisClusterNode.getNodeId());
+            RedisClusterCommands<String, String> hostAndPort = sync.getConnection(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
+
+            assertThat(nodeId).isNotSameAs(hostAndPort);
+        }
+
+        RedisAdvancedClusterReactiveCommands<String, String> rx = statefulConnection.reactive();
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+
+            RedisClusterReactiveCommands<String, String> nodeId = rx.getConnection(redisClusterNode.getNodeId());
+            RedisClusterReactiveCommands<String, String> hostAndPort = rx.getConnection(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
+
+            assertThat(nodeId).isNotSameAs(hostAndPort);
+        }
+    }
+
+    @Test
     public void testMultiNodeOperations() throws Exception {
 
         List<String> expectation = Lists.newArrayList();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             expectation.add(key);
-            commands.set(key, value);
+            commands.set(key, value).get();
         }
 
         List<String> result = new Vector<>();

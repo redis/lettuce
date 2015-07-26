@@ -56,14 +56,8 @@ public class CommandEncoder extends MessageToByteEncoder<RedisCommand<?, ?, ?>> 
     }
 
     private String logPrefix(Channel channel) {
-        StringBuffer buffer = new StringBuffer(16);
-        buffer.append('[');
-        if (channel != null) {
-            buffer.append(channel.remoteAddress());
-        } else {
-            buffer.append("not connected");
-        }
-        buffer.append(']');
+        StringBuffer buffer = new StringBuffer(64);
+        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return buffer.toString();
     }
 

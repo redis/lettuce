@@ -121,15 +121,14 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
         }
 
-        return getConnection(redisURI.getHost(), redisURI.getPort());
+        StatefulRedisConnection<K, V> connection = getClusterDistributionChannelWriter().getClusterConnectionProvider()
+                .getConnection(ClusterConnectionProvider.Intent.WRITE, nodeId);
+
+        return connection;
     }
 
     @Override
     public StatefulRedisConnection<K, V> getConnection(String host, int port) {
-
-        // there is currently no check whether the node belongs to the cluster or not.
-        // A check against the partition table could be done, but this reflects only a particular
-        // point of view. What if the cluster is multi-homed, proxied, natted...?
 
         StatefulRedisConnection<K, V> connection = getClusterDistributionChannelWriter().getClusterConnectionProvider()
                 .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);

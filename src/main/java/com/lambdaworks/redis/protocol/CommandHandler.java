@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
@@ -49,6 +48,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
+    protected final ReentrantLock writeLock = new ReentrantLock();
 
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private Object stateLock = new Object();
@@ -63,7 +63,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     private final boolean debugEnabled;
 
-    private final ReentrantLock writeLock = new ReentrantLock();
     private final Reliability reliability;
     private RedisChannelHandler<K, V> redisChannelHandler;
     private Throwable connectionError;
@@ -227,8 +226,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     private boolean isConnected() {
-        return lifecycleState.ordinal() >= LifecycleState.CONNECTED.ordinal()
-                && lifecycleState.ordinal() <= LifecycleState.DISCONNECTED.ordinal();
+        synchronized (lifecycleState) {
+            return lifecycleState.ordinal() >= LifecycleState.CONNECTED.ordinal()
+                    && lifecycleState.ordinal() <= LifecycleState.DISCONNECTED.ordinal();
+        }
     }
 
     @Override

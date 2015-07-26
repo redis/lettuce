@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisUriComparator.INSTANCE;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
@@ -257,6 +258,8 @@ public class RedisClusterClient extends AbstractRedisClient {
             initializePartitions();
         }
 
+        activateTopologyRefreshIfNeeded();
+
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
@@ -348,6 +351,12 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         }
 
+        activateTopologyRefreshIfNeeded();
+
+        return loadedPartitions;
+    }
+
+    private void activateTopologyRefreshIfNeeded() {
         if (getOptions() instanceof ClusterClientOptions) {
             ClusterClientOptions options = (ClusterClientOptions) getOptions();
             if (options.isRefreshClusterView()) {
@@ -361,8 +370,6 @@ public class RedisClusterClient extends AbstractRedisClient {
                 }
             }
         }
-
-        return loadedPartitions;
     }
 
     /**
@@ -384,17 +391,28 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier() {
-        return () -> {
-            if (partitions != null) {
-                for (RedisClusterNode partition : partitions) {
-                    if (partition.getUri() != null && partition.getUri().getResolvedAddress() != null) {
-                        return partition.getUri().getResolvedAddress();
+        return new Supplier<SocketAddress>() {
+            @Override
+            public SocketAddress get() {
+                if (partitions != null) {
+                    List<RedisClusterNode> ordered = getOrderedPartitions(partitions);
+
+                    for (RedisClusterNode partition : ordered) {
+                        if (partition.getUri() != null && partition.getUri().getResolvedAddress() != null) {
+                            return partition.getUri().getResolvedAddress();
+                        }
                     }
                 }
-            }
 
-            return getFirstUri().getResolvedAddress();
+                return getFirstUri().getResolvedAddress();
+            }
         };
+    }
+
+    private List<RedisClusterNode> getOrderedPartitions(Iterable<RedisClusterNode> clusterNodes) {
+        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        Collections.sort(ordered, (o1, o2) -> INSTANCE.compare(o1.getUri(), o2.getUri()));
+        return ordered;
     }
 
     protected Utf8StringCodec newStringStringCodec() {
@@ -438,12 +456,15 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         @Override
         public void run() {
+            logger.debug("ClusterTopologyRefreshTask.run()");
             if (isEventLoopActive() && getOptions() instanceof ClusterClientOptions) {
                 ClusterClientOptions options = (ClusterClientOptions) getOptions();
                 if (!options.isRefreshClusterView()) {
+                    logger.debug("ClusterTopologyRefreshTask is disabled");
                     return;
                 }
             } else {
+                logger.debug("ClusterTopologyRefreshTask is disabled");
                 return;
             }
 
@@ -452,11 +473,12 @@ public class RedisClusterClient extends AbstractRedisClient {
                 seed = RedisClusterClient.this.initialUris;
             } else {
                 seed = Lists.newArrayList();
-                for (RedisClusterNode partition : partitions) {
+                for (RedisClusterNode partition : getOrderedPartitions(partitions)) {
                     seed.add(partition.getUri());
                 }
             }
 
+            logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
             Map<RedisURI, Partitions> partitions = refresh.loadViews(seed);
             List<Partitions> values = Lists.newArrayList(partitions.values());
             if (!values.isEmpty() && refresh.isChanged(getPartitions(), values.get(0))) {

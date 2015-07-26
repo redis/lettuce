@@ -94,11 +94,11 @@ public class ClusterSetup {
 
         RedisClusterAsyncCommands<String, String> node1 = connection.getConnection(AbstractClusterTest.host,
                 AbstractClusterTest.port5);
-        node1.clusterAddSlots(AbstractClusterTest.createSlots(0, 12000)).get();
+        node1.clusterAddSlots(AbstractClusterTest.createSlots(0, 12000));
 
         RedisClusterAsyncCommands<String, String> node2 = connection.getConnection(AbstractClusterTest.host,
                 AbstractClusterTest.port6);
-        node2.clusterAddSlots(AbstractClusterTest.createSlots(12000, 16384)).get();
+        node2.clusterAddSlots(AbstractClusterTest.createSlots(12000, 16384));
 
         Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
 

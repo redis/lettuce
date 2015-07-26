@@ -24,7 +24,7 @@ public class AbstractTest {
     public CapturingLogRule capturingLogRule = new CapturingLogRule();
 
     @Rule
-    public LoggingTestRule loggingTestRule = new LoggingTestRule();
+    public LoggingTestRule loggingTestRule = new LoggingTestRule(false);
 
     protected Logger log = Logger.getLogger(getClass());
     protected String key = "key";

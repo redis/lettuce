@@ -13,20 +13,23 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
  * @since 3.0
  */
 interface ClusterConnectionProvider extends Closeable {
+
     /**
-     * Provide a connection for the intent and cluster slot.
+     * Provide a connection for the intent and cluster slot. The underlying connection is bound to the nodeId. If the slot
+     * responsibility changes, the connection will not point to the updated nodeId.
      * 
      * @param intent {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#READ} or
      *        {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#WRITE} {@literal READ} connections will be
      *        provided in {@literal READONLY} mode
-     * @param slot hash slot
+     * @param slot the slot-hash of the key, see {@link SlotHash}
      * @return a valid connection which handles the slot.
      * @throws RedisException if no know node can be found for the slot
      */
     <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, int slot);
 
     /**
-     * Provide a connection for the intent and host/port.
+     * Provide a connection for the intent and host/port. The connection can survive cluster topology updates. The connection *
+     * will be closed if the node identified by {@code host} and {@code port} is no longer part of the cluster.
      * 
      * @param intent {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#READ} or
      *        {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#WRITE} {@literal READ} connections will be
@@ -34,8 +37,21 @@ interface ClusterConnectionProvider extends Closeable {
      * @param host host of the node
      * @param port port of the node
      * @return a valid connection to the given host.
+     * @throws RedisException if the host is not part of the cluster
      */
     <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port);
+
+    /**
+     * Provide a connection for the intent and nodeId. The connection can survive cluster topology updates. The connection will
+     * be closed if the node identified by {@code nodeId} is no longer part of the cluster.
+     * 
+     *
+     * @param intent Connection intent {@literal READ} or {@literal WRITE}
+     * @param nodeId the nodeId of the cluster node
+     * @return a valid connection to the given nodeId.
+     * @throws RedisException if the {@code nodeId} is not part of the cluster
+     */
+    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String nodeId);
 
     /**
      * Close the connections and free all resources.
@@ -50,14 +66,14 @@ interface ClusterConnectionProvider extends Closeable {
     void reset();
 
     /**
-     * Close connections that are not in use anymore.
+     * Close connections that are not in use anymore/not part of the cluster.
      */
     void closeStaleConnections();
 
     /**
      * Update partitions.
      *
-     * @param partitions
+     * @param partitions the new partitions
      */
     void setPartitions(Partitions partitions);
 

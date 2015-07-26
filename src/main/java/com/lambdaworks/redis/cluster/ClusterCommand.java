@@ -101,4 +101,14 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [command=").append(command);
+        sb.append(", executions=").append(executions);
+        sb.append(']');
+        return sb.toString();
+    }
 }

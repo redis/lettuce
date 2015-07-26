@@ -1,9 +1,11 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
@@ -65,7 +67,8 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
         if (clusterChannelWriter != null) {
             if (isAutoReconnect() && !CHANNEL_OPEN_STATES.contains(getState())) {
-                for (RedisCommand<K, V, ?> queuedCommand : queue) {
+                Collection<RedisCommand<K, V, ?>> commands = shiftCommands(queue);
+                for (RedisCommand<K, V, ?> queuedCommand : commands) {
                     try {
                         clusterChannelWriter.write(queuedCommand);
                     } catch (RedisException e) {
@@ -73,22 +76,35 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
                         queuedCommand.complete();
                     }
                 }
-
-                queue.clear();
             }
 
-            for (RedisCommand<K, V, ?> queuedCommand : commandBuffer) {
+            Collection<RedisCommand<K, V, ?>> commands = shiftCommands(commandBuffer);
+            for (RedisCommand<K, V, ?> queuedCommand : commands) {
                 try {
                     clusterChannelWriter.write(queuedCommand);
                 } catch (RedisException e) {
                     queuedCommand.completeExceptionally(e);
                 }
             }
-
-            commandBuffer.clear();
         }
 
         super.close();
+    }
+
+    /**
+     * Retrieve commands within a lock to prevent concurrent modification
+     */
+    private Collection<RedisCommand<K, V, ?>> shiftCommands(Collection<RedisCommand<K, V, ?>> source) {
+        try {
+            writeLock.lock();
+            try {
+                return Lists.newArrayList(source);
+            } finally {
+                source.clear();
+            }
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     public boolean isAutoReconnect() {
