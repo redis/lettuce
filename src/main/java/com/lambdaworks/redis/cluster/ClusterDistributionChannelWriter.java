@@ -10,6 +10,7 @@ import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
@@ -30,10 +31,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     private boolean closed = false;
     private int executionLimit = 5;
 
-    public ClusterDistributionChannelWriter(RedisChannelWriter<K, V> defaultWriter,
-            ClusterConnectionProvider clusterConnectionProvider) {
+    public ClusterDistributionChannelWriter(RedisChannelWriter<K, V> defaultWriter) {
         this.defaultWriter = defaultWriter;
-        this.clusterConnectionProvider = clusterConnectionProvider;
     }
 
     @Override
@@ -165,5 +164,9 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     public void reset() {
         defaultWriter.reset();
         clusterConnectionProvider.reset();
+    }
+
+    public void setClusterConnectionProvider(ClusterConnectionProvider clusterConnectionProvider) {
+        this.clusterConnectionProvider = clusterConnectionProvider;
     }
 }

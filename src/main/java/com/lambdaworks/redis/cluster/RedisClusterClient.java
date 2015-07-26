@@ -44,7 +44,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
 
-
     protected AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
 
     private ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
@@ -126,32 +125,37 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
     }
 
-    protected RedisAsyncConnectionImpl<String, String> connectAsyncImpl(SocketAddress socketAddress) {
-        return connectAsyncImpl(newStringStringCodec(), socketAddress);
-    }
-
-    /**
-     * Create a connection to a redis socket address.
-     *
-     * @param socketAddress initial connect
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return a new connection
-     */
-    <K, V> RedisAsyncConnectionImpl<K, V> connectAsyncImpl(RedisCodec<K, V> codec, final SocketAddress socketAddress) {
-
-        logger.debug("connectAsyncImpl(" + socketAddress + ")");
-        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
-
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
-        RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
-
-        connectAsyncImpl(handler, connection, new Supplier<SocketAddress>() {
+    protected RedisAsyncConnectionImpl<String, String> connectAsyncImpl(final SocketAddress socketAddress) {
+        return connectNode(newStringStringCodec(), socketAddress.toString(), null, new Supplier<SocketAddress>() {
             @Override
             public SocketAddress get() {
                 return socketAddress;
             }
         });
+    }
+
+    /**
+     * Create a connection to a redis socket address.
+     *
+     * @param codec Use this codec to encode/decode keys and values.
+     * @param nodeId the nodeId
+     * @param clusterWriter global cluster writer
+     * @param socketAddressSupplier supplier for the socket address
+     * 
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection
+     */
+    <K, V> RedisAsyncConnectionImpl<K, V> connectNode(RedisCodec<K, V> codec, String nodeId,
+            RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
+
+        logger.debug("connectNode(" + nodeId + ")");
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
+
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, queue, clusterWriter);
+        RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
+
+        connectAsyncImpl(handler, connection, socketAddressSupplier);
 
         connection.registerCloseables(closeableResources, connection);
 
@@ -183,11 +187,12 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
 
-        final PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(
-                this, codec);
+        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler);
+        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
+                clusterWriter, codec);
 
-        final ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler,
-                pooledClusterConnectionProvider);
+        clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
+
         RedisAdvancedClusterAsyncConnectionImpl<K, V> connection = newRedisAdvancedClusterAsyncConnectionImpl(clusterWriter,
                 codec, timeout, unit);
 
@@ -363,6 +368,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         return new Utf8StringCodec();
     }
 
+    /**
+     * Sets the new cluster topology. The partitions are not applied to existing connections.
+     * 
+     * @param partitions partitions object
+     */
     public void setPartitions(Partitions partitions) {
         this.partitions = partitions;
     }

@@ -48,10 +48,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected Queue<RedisCommand<K, V, ?>> commandBuffer = new ArrayDeque<RedisCommand<K, V, ?>>();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
+    protected Channel channel;
 
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private Object stateLock = new Object();
-    private Channel channel;
 
     /**
      * If TRACE level logging has been enabled at startup.
@@ -392,6 +392,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
+    protected LifecycleState getState() {
+        return lifecycleState;
+    }
+
     private void cancelCommands(String message) {
         int size = 0;
         if (queue != null) {
@@ -512,10 +516,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void setAutoFlushCommands(boolean autoFlush) {
         synchronized (stateLock) {
             this.autoFlushCommands = autoFlush;
- }
+        }
     }
 
-    private String logPrefix() {
+    protected String logPrefix() {
         if (logPrefix != null) {
             return logPrefix;
         }
@@ -524,9 +528,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return logPrefix = buffer.toString();
     }
 
-    @VisibleForTesting
-    enum LifecycleState {
-
+    public enum LifecycleState {
         NOT_CONNECTED, REGISTERED, CONNECTED, ACTIVATING, ACTIVE, DISCONNECTED, DEACTIVATING, DEACTIVATED, CLOSED,
     }
 
