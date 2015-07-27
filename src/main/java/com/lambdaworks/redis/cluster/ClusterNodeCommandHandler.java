@@ -18,6 +18,10 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
+ * Command handler for node connections within the Redis Cluster context. This handler can requeue commands if it is
+ * disconnected and closed but has commands in the queue. If the handler was connected it would retry commands using the
+ * {@literal MOVED} or {@literal ASK} redirection.
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @ChannelHandler.Sharable

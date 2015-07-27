@@ -113,7 +113,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Initialize the client with a list of cluster URI's. All uris are tried in sequence for connecting initially to the
-     * cluster. If any uri is sucessful for connection, the others are not tried anymore. The initial uri is needed to discover
+     * cluster. If any uri is successful for connection, the others are not tried anymore. The initial uri is needed to discover
      * the cluster structure for distributing the requests.
      *
      * @param initialUris list of initial cluster URIs
