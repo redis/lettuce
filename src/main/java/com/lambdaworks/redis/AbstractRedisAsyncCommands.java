@@ -1529,6 +1529,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<Long> clusterCountKeysInSlot(int slot) {
+        return dispatch(commandBuilder.clusterCountKeysInSlot(slot));
+    }
+
+    @Override
     public RedisFuture<List<Object>> clusterSlots() {
         return dispatch(commandBuilder.clusterSlots());
     }

@@ -1492,6 +1492,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> clusterCountKeysInSlot(int slot) {
+       return createObservable(() -> commandBuilder.clusterCountKeysInSlot(slot));
+    }
+
+    @Override
     public Observable<Object> clusterSlots() {
         return createDissolvingObservable(commandBuilder::clusterSlots);
     }

@@ -383,4 +383,15 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(keys).isEqualTo(ImmutableList.of("b"));
     }
 
+    @Test
+    public void countKeysInSlot() throws Exception {
+
+        redissync1.set("b", value);
+        Long result = redissync1.clusterCountKeysInSlot(SlotHash.getSlot("b".getBytes()));
+        assertThat(result).isEqualTo(1L);
+
+        result = redissync1.clusterCountKeysInSlot(SlotHash.getSlot("ZZZ".getBytes()));
+        assertThat(result).isEqualTo(0L);
+    }
+
 }

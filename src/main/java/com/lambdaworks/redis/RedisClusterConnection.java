@@ -125,7 +125,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return List of slaves
+     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as {@link #clusterNodes()} but one line per slave.
      */
     List<String> clusterSlaves(String nodeId);
 
@@ -137,6 +137,14 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
      * @return List&lt;K&gt; array-reply list of keys
      */
     List<K> clusterGetKeysInSlot(int slot, int count);
+
+    /**
+     * Returns the number of keys in the specified Redis Cluster hash {@code slot}.
+     *
+     * @param slot the slot
+     * @return Integer reply: The number of keys in the specified hash slot, or an error if the hash slot is invalid.
+     */
+    Long clusterCountKeysInSlot(int slot);
 
     /**
      * Get array of cluster slots to node mappings.

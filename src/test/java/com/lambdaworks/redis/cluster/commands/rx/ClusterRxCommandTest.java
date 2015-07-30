@@ -67,7 +67,6 @@ public class ClusterRxCommandTest extends AbstractClusterTest {
 
         connection = client.connect(RedisURI.Builder.redis(host, port1).build());
         rx = connection.reactive();
-
     }
 
     @After
@@ -133,6 +132,25 @@ public class ClusterRxCommandTest extends AbstractClusterTest {
         List<String> result = rx.clusterSlaves(nodeId).toList().toBlocking().first();
 
         assertThat(result.size()).isGreaterThan(0);
+    }
+
+    @Test
+    public void getKeysInSlot() throws Exception {
+
+        connection.sync().set("b", value);
+        List<String> keys = rx.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).toList().toBlocking().first();
+        assertThat(keys).isEqualTo(ImmutableList.of("b"));
+    }
+
+    @Test
+    public void countKeysInSlot() throws Exception {
+
+        connection.sync().set("b", value);
+        Long result = rx.clusterCountKeysInSlot(SlotHash.getSlot("b".getBytes())).toBlocking().first();
+        assertThat(result).isEqualTo(1L);
+
+        result = rx.clusterCountKeysInSlot(SlotHash.getSlot("ZZZ".getBytes())).toBlocking().first();
+        assertThat(result).isEqualTo(0L);
     }
 
 }
