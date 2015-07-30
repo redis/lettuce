@@ -176,6 +176,7 @@ Commands
 * Adopt variadic EXISTS and DEBUG HTSTATS #103
 * Support geo commands in lettuce 3.3 #86
 * Support NX|XX|CH|INCR options in ZADD #74
+* Add support for COUNTKEYSINSLOT #107
 
 Fixes
 -----

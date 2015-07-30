@@ -585,9 +585,18 @@ public class RedisClusterClientTest {
 
     @Test
     public void getKeysInSlot() throws Exception {
-
         redis1.set("b", value).get();
         List<String> keys = redis1.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
         assertThat(keys).isEqualTo(ImmutableList.of("b"));
+    }
+
+    @Test
+    public void countKeysInSlot() throws Exception {
+        redis1.set("b", value).get();
+        Long result = redis1.clusterCountKeysInSlot(SlotHash.getSlot("b".getBytes())).get();
+        assertThat(result).isEqualTo(1L);
+
+        result = redis1.clusterCountKeysInSlot(SlotHash.getSlot("ZZZ".getBytes())).get();
+        assertThat(result).isEqualTo(0L);
     }
 }
