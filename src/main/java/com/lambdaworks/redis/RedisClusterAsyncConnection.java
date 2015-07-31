@@ -139,7 +139,9 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
     RedisFuture<List<Object>> clusterSlots();
 
     /**
-     *
+     * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to actually send the
+     * command to the target instance. See the Redis Cluster specification for more information.
+     * 
      * @return String simple-string-reply
      */
     RedisFuture<String> asking();

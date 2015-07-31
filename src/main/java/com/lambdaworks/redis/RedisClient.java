@@ -227,7 +227,7 @@ public class RedisClient extends AbstractRedisClient {
      * Open a new synchronous connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
      * and values.
      * 
-     * @param codec Use this codec to encode/decode keys and values, must note be {@literal null}
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type.
      * @param <V> Value type.
      * @return A new connection.
@@ -255,9 +255,17 @@ public class RedisClient extends AbstractRedisClient {
         checkArgument(redisURI != null && isNotEmpty(redisURI.getHost()), "A valid RedisURI with a host is needed");
     }
 
-    @SuppressWarnings({ "rawtypes" })
-    private <K, V> RedisConnection connect(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return (RedisConnection) syncHandler(connectAsync(codec, redisURI), RedisConnection.class, RedisClusterConnection.class);
+    /**
+     * Open a new synchronous connection to the supplied {@link RedisURI} and the supplied {@link RedisCodec codec} to
+     * encode/decode keys.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @return A new connection.
+     */
+    public <K, V> RedisConnection connect(RedisCodec<K, V> codec, RedisURI redisURI) {
+        return (RedisConnection<K, V>) syncHandler((RedisChannelHandler<K, V>) connectAsync(codec, redisURI),
+                RedisConnection.class, RedisClusterConnection.class);
     }
 
     /**
@@ -295,7 +303,18 @@ public class RedisClient extends AbstractRedisClient {
         return connectAsync(newStringStringCodec(), redisURI);
     }
 
-    private <K, V> RedisAsyncConnectionImpl<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+    /**
+     * Open a new asynchronous connection to the supplied {@link RedisURI} and the supplied {@link RedisCodec codec} to
+     * encode/decode keys.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @return A new connection.
+     */
+    public <K, V> RedisAsyncConnection<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+        checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(redisURI != null, "RedisURI must not be null");
+
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
@@ -365,9 +384,19 @@ public class RedisClient extends AbstractRedisClient {
         return connectPubSub(codec, redisURI);
     }
 
-    protected <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
+    /**
+     * Open a new pub/sub connection to the supplied {@link RedisURI} and the supplied {@link RedisCodec codec} to encode/decode
+     * keys.
+     * 
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * 
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @return A new connection.
+     */
+    public <K, V> RedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(redisURI != null, "RedisURI must not be null");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
