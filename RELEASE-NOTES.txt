@@ -170,6 +170,8 @@ Enhancements
 * Add checks for arguments #69
 * Use dedicated string codecs on String connections and add ByteArrayCodec #70
 * Tests for command reliability docs #98
+* Expose RedisClient.connect(RedisCodec, RedisURI) and RedisClient.connectAsync(RedisCodec, RedisURI) #108
+* Add close stale connections and strict cluster member check flags to ClusterClientOptions #109
 
 Commands
 -----
