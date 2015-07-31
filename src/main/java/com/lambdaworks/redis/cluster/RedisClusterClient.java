@@ -122,8 +122,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         this.initialUris = initialUris;
         checkNotNull(initialUris, "initialUris must not be null");
         checkArgument(!initialUris.isEmpty(), "initialUris must not be empty");
-
         setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
+        setOptions(new ClusterClientOptions.Builder().build());
     }
 
     /**
@@ -442,11 +442,18 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Set the {@link ClusterClientOptions} for the client.
-     *
-     * @param clientOptions
+     * 
+     * @param clientOptions client options for the client and connections that are created after setting the options
      */
     public void setOptions(ClusterClientOptions clientOptions) {
         super.setOptions(clientOptions);
+    }
+
+    ClusterClientOptions getClusterClientOptions() {
+        if (getOptions() instanceof ClusterClientOptions) {
+            return (ClusterClientOptions) getOptions();
+        }
+        return null;
     }
 
     private class ClusterTopologyRefreshTask implements Runnable {
@@ -457,9 +464,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         @Override
         public void run() {
             logger.debug("ClusterTopologyRefreshTask.run()");
-            if (isEventLoopActive() && getOptions() instanceof ClusterClientOptions) {
-                ClusterClientOptions options = (ClusterClientOptions) getOptions();
-                if (!options.isRefreshClusterView()) {
+            if (isEventLoopActive() && getClusterClientOptions() != null) {
+                if (!getClusterClientOptions().isRefreshClusterView()) {
                     logger.debug("ClusterTopologyRefreshTask is disabled");
                     return;
                 }
@@ -486,7 +492,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getPartitions().reload(values.get(0).getPartitions());
                 updatePartitionsInConnections();
 
-                if (isEventLoopActive()) {
+                if (isEventLoopActive() && expireStaleConnections()) {
                     genericWorkerPool.submit(new CloseStaleConnectionsTask());
                 }
 
@@ -497,12 +503,18 @@ public class RedisClusterClient extends AbstractRedisClient {
     private class CloseStaleConnectionsTask implements Runnable {
         @Override
         public void run() {
-            forEachClusterConnection(input -> {
-                ClusterDistributionChannelWriter<?, ?> writer = (ClusterDistributionChannelWriter<?, ?>) input
-                        .getChannelWriter();
-                writer.getClusterConnectionProvider().closeStaleConnections();
-            });
+            if (isEventLoopActive() && expireStaleConnections()) {
 
+                forEachClusterConnection(input -> {
+                    ClusterDistributionChannelWriter<?, ?> writer = (ClusterDistributionChannelWriter<?, ?>) input
+                            .getChannelWriter();
+                    writer.getClusterConnectionProvider().closeStaleConnections();
+                });
+            }
         }
+    }
+
+    boolean expireStaleConnections() {
+        return getClusterClientOptions() == null || getClusterClientOptions().isCloseStaleConnections();
     }
 }

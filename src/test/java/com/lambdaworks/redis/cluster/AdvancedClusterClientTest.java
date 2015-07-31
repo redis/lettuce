@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -483,14 +484,23 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void getConnectionToNotAClusterMember() throws Exception {
+    public void getConnectionToNotAClusterMemberForbidden() throws Exception {
 
         RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
         try {
-            sync.getConnection("8.8.8.8", 1234);
+            sync.getConnection(TestSettings.host(), TestSettings.port());
         } catch (RedisException e) {
             assertThat(e).hasRootCauseExactlyInstanceOf(IllegalArgumentException.class);
         }
+        sync.close();
+    }
+
+    @Test
+    public void getConnectionToNotAClusterMemberAllowed() throws Exception {
+
+        clusterClient.setOptions(new ClusterClientOptions.Builder().validateClusterNodeMembership(false).build());
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        sync.getConnection(TestSettings.host(), TestSettings.port());
         sync.close();
     }
 
