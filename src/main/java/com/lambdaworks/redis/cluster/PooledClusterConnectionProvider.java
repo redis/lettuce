@@ -15,11 +15,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -43,6 +39,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private final LoadingCache<ConnectionKey, RedisAsyncConnectionImpl<K, V>> connections;
     private final boolean debugEnabled;
     private final RedisAsyncConnectionImpl<K, V> writers[] = new RedisAsyncConnectionImpl[SlotHash.SLOT_COUNT];
+    private final RedisClusterClient redisClusterClient;
     private Partitions partitions;
 
     private boolean autoFlushCommands = true;
@@ -50,6 +47,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter<K, V> clusterWriter,
             RedisCodec<K, V> redisCodec) {
+        this.redisClusterClient = redisClusterClient;
         this.debugEnabled = logger.isDebugEnabled();
         this.connections = CacheBuilder.newBuilder().build(
                 new ConnectionFactory<K, V>(redisClusterClient, redisCodec, clusterWriter));
@@ -108,11 +106,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
             }
 
-            RedisClusterNode redisClusterNode = getPartition(host, port);
+            if (validateClusterNodeMembership()) {
+                RedisClusterNode redisClusterNode = getPartition(host, port);
 
-            if (redisClusterNode == null) {
-                HostAndPort hostAndPort = HostAndPort.fromParts(host, port);
-                throw invalidConnectionPoint(hostAndPort.toString());
+                if (redisClusterNode == null) {
+                    HostAndPort hostAndPort = HostAndPort.fromParts(host, port);
+                    throw invalidConnectionPoint(hostAndPort.toString());
+                }
             }
 
             ConnectionKey key = new ConnectionKey(intent, host, port);
@@ -181,10 +181,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         resetWriterCache();
 
-        for (ConnectionKey key : staleConnections) {
-            RedisAsyncConnectionImpl<K, V> connection = connections.getIfPresent(key);
-            connection.close();
-            connections.invalidate(key);
+        if (redisClusterClient.expireStaleConnections()) {
+            closeStaleConnections();
         }
     }
 
@@ -352,6 +350,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
     }
 
+    private boolean validateClusterNodeMembership() {
+        return redisClusterClient.getClusterClientOptions() == null
+                || redisClusterClient.getClusterClientOptions().isValidateClusterNodeMembership();
+    }
+
     private class ConnectionFactory<K, V> extends CacheLoader<ConnectionKey, RedisAsyncConnectionImpl<K, V>> {
 
         private final RedisClusterClient redisClusterClient;
@@ -380,8 +383,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             }
 
             if (key.host != null) {
-                if (getPartition(key.host, key.port) == null) {
-                    throw invalidConnectionPoint(key.host + ":" + key.port);
+
+                if (validateClusterNodeMembership()) {
+                    if (getPartition(key.host, key.port) == null) {
+                        throw invalidConnectionPoint(key.host + ":" + key.port);
+                    }
                 }
 
                 // Host and port connections do not provide command recovery due to cluster reconfiguration
@@ -394,5 +400,6 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             }
             return connection;
         }
+
     }
 }

@@ -1,30 +1,18 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisUriComparator.INSTANCE;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -420,10 +408,17 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Set the {@link ClusterClientOptions} for the client.
      * 
-     * @param clientOptions
+     * @param clientOptions client options for the client and connections that are created after setting the options
      */
     public void setOptions(ClusterClientOptions clientOptions) {
         super.setOptions(clientOptions);
+    }
+
+    ClusterClientOptions getClusterClientOptions() {
+        if (getOptions() instanceof ClusterClientOptions) {
+            return (ClusterClientOptions) getOptions();
+        }
+        return null;
     }
 
     private class ClusterTopologyRefreshTask implements Runnable {
@@ -434,9 +429,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         @Override
         public void run() {
             logger.debug("ClusterTopologyRefreshTask.run()");
-            if (isEventLoopActive() && getOptions() instanceof ClusterClientOptions) {
-                ClusterClientOptions options = (ClusterClientOptions) getOptions();
-                if (!options.isRefreshClusterView()) {
+            if (isEventLoopActive() && getClusterClientOptions() != null) {
+                if (!getClusterClientOptions().isRefreshClusterView()) {
                     logger.debug("ClusterTopologyRefreshTask is disabled");
                     return;
                 }
@@ -463,7 +457,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getPartitions().reload(values.get(0).getPartitions());
                 updatePartitionsInConnections();
 
-                if (isEventLoopActive()) {
+                if (isEventLoopActive() && expireStaleConnections()) {
                     genericWorkerPool.submit(new CloseStaleConnectionsTask());
                 }
 
@@ -474,17 +468,23 @@ public class RedisClusterClient extends AbstractRedisClient {
     private class CloseStaleConnectionsTask implements Runnable {
         @Override
         public void run() {
-            forEachClusterConnection(new Predicate<RedisAdvancedClusterAsyncConnectionImpl<?, ?>>() {
-                @Override
-                public boolean apply(RedisAdvancedClusterAsyncConnectionImpl<?, ?> input) {
+            if (isEventLoopActive() && expireStaleConnections()) {
 
-                    ClusterDistributionChannelWriter<?, ?> writer = (ClusterDistributionChannelWriter<?, ?>) input
-                            .getChannelWriter();
-                    writer.getClusterConnectionProvider().closeStaleConnections();
-                    return true;
-                }
-            });
+                forEachClusterConnection(new Predicate<RedisAdvancedClusterAsyncConnectionImpl<?, ?>>() {
+                    @Override
+                    public boolean apply(RedisAdvancedClusterAsyncConnectionImpl<?, ?> input) {
 
+                        ClusterDistributionChannelWriter<?, ?> writer = (ClusterDistributionChannelWriter<?, ?>) input
+                                .getChannelWriter();
+                        writer.getClusterConnectionProvider().closeStaleConnections();
+                        return true;
+                    }
+                });
+            }
         }
+    }
+
+    boolean expireStaleConnections() {
+        return getClusterClientOptions() == null ||  getClusterClientOptions().isCloseStaleConnections();
     }
 }

@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,12 +18,6 @@ import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.LettuceFutures;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
@@ -161,14 +156,24 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void getConnectionToNotAClusterMember() throws Exception {
+    public void getConnectionToNotAClusterMemberForbidden() throws Exception {
 
         RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
         try {
-            sync.getConnection("8.8.8.8", 1234);
+            sync.getConnection(TestSettings.host(), TestSettings.port());
         } catch (RedisException e) {
             assertThat(e).hasRootCauseExactlyInstanceOf(IllegalArgumentException.class);
         }
+        sync.close();
+    }
+
+
+    @Test
+    public void getConnectionToNotAClusterMemberAllowed() throws Exception {
+
+        clusterClient.setOptions(new ClusterClientOptions.Builder().validateClusterNodeMembership(false).build());
+        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        sync.getConnection(TestSettings.host(), TestSettings.port());
         sync.close();
     }
 

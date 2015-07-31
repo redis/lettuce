@@ -420,6 +420,43 @@ public class RedisClusterSetupTest {
     }
 
     @Test
+    public void doNotExpireStaleNodeIdConnections() throws Exception {
+
+        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).closeStaleConnections(false).refreshPeriod(1, TimeUnit.SECONDS)
+                .build());
+        RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
+
+        setup2Masters();
+
+        PooledClusterConnectionProvider<?, ?> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+
+        assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
+
+        assertRoutedExecution(clusterConnection);
+
+        assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(2);
+
+        Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
+        for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
+            if (!redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                redis1.clusterForget(redisClusterNode.getNodeId());
+            }
+        }
+
+        partitions = ClusterPartitionParser.parse(redis2.clusterNodes());
+        for (RedisClusterNode redisClusterNode : partitions.getPartitions()) {
+            if (!redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                redis2.clusterForget(redisClusterNode.getNodeId());
+            }
+        }
+
+        Thread.sleep(2000);
+
+        assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(2);
+
+    }
+
+    @Test
     public void expireStaleHostAndPortConnections() throws Exception {
 
         clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
