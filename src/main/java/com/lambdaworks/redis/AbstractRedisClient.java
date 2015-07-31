@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
 import java.lang.reflect.Proxy;
@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -34,6 +35,16 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
+ * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
+ * class creates the netty {@link EventLoopGroup}s for NIO ({@link NioEventLoopGroup}) and EPoll (
+ * {@link io.netty.channel.epoll.EpollEventLoopGroup}) with a default of {@code Runtime.getRuntime().availableProcessors() * 4}
+ * threads. Reuse the instance as much as possible since the {@link EventLoopGroup} instances are expensive and can consume a
+ * huge part of your resources, if you create multiple instances.
+ * <p>
+ * You can set the number of threads per {@link NioEventLoopGroup} by setting the {@code io.netty.eventLoopThreads} system
+ * property to a reasonable number of threads.
+ * </p>
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -339,7 +350,7 @@ public abstract class AbstractRedisClient {
     /**
      * Set the {@link ClientOptions} for the client.
      * 
-     * @param clientOptions
+     * @param clientOptions client options for the client and connections that are created after setting the options
      */
     public void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");

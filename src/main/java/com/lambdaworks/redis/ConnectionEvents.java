@@ -40,18 +40,26 @@ public class ConnectionEvents {
         listeners.remove(listener);
     }
 
+    /**
+     * Internal event before a channel is closed.
+     */
     public static class PrepareClose {
         private SettableFuture<Boolean> prepareCloseFuture = SettableFuture.create();
 
         public SettableFuture<Boolean> getPrepareCloseFuture() {
             return prepareCloseFuture;
         }
-
     }
 
+    /**
+     * Internal event when a channel is closed.
+     */
     public static class Close {
     }
 
+    /**
+     * Internal event when a channel is activated.
+     */
     public static class Activated {
     }
 

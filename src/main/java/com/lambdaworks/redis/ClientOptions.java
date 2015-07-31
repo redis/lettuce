@@ -17,7 +17,7 @@ public class ClientOptions implements Serializable {
     /**
      * Create a copy of {@literal options}
      * 
-     * @param options
+     * @param options the original
      * @return A new instance of {@link ClientOptions} containing the values of {@literal options}
      */
     public static ClientOptions copyOf(ClientOptions options) {

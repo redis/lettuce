@@ -1,7 +1,8 @@
 package com.lambdaworks.redis;
 
 import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.LettuceStrings.*;
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -16,8 +17,36 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HostAndPort;
 
 /**
- * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide as well the database, password and
- * timeouts within the RedisURI. Either build your self the object
+ * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, password and
+ * timeouts within the RedisURI.
+ * 
+ * You have following possibilities to create a {@link RedisURI}:
+ * 
+ * <ul>
+ * <li>Use an URI:
+ * <p>
+ * {@code RedisURI.create("redis://localhost/")}
+ * </p>
+ * See {@link #create(String)} for more options</li>
+ * <li>Use an the Builder:
+ * <p>
+ * {@code RedisURI.Builder.redis("localhost", 6379).auth("password").database(1).build() }
+ * </p>
+ * See {@link com.lambdaworks.redis.RedisURI.Builder#redis(String)} and
+ * {@link com.lambdaworks.redis.RedisURI.Builder#sentinel(String)} for more options.</li>
+ * <li>Construct your own instance:
+ * <p>
+ * {@code new RedisURI("localhost", 6379, 60, TimeUnit.SECONDS)}
+ * </p>
+ * or
+ * <p>
+ * <code>RedisURI uri = new RedisURI();
+ uri.setHost("localhost")</code>
+ * </p>
+ * </li>
+ * </ul>
+ * 
+ * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
@@ -343,6 +372,40 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         sb.append(']');
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof RedisURI))
+            return false;
+
+        RedisURI redisURI = (RedisURI) o;
+
+        if (port != redisURI.port)
+            return false;
+        if (database != redisURI.database)
+            return false;
+        if (host != null ? !host.equals(redisURI.host) : redisURI.host != null)
+            return false;
+        if (socket != null ? !socket.equals(redisURI.socket) : redisURI.socket != null)
+            return false;
+        if (sentinelMasterId != null ? !sentinelMasterId.equals(redisURI.sentinelMasterId) : redisURI.sentinelMasterId != null)
+            return false;
+        return !(sentinels != null ? !sentinels.equals(redisURI.sentinels) : redisURI.sentinels != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = host != null ? host.hashCode() : 0;
+        result = 31 * result + (socket != null ? socket.hashCode() : 0);
+        result = 31 * result + (sentinelMasterId != null ? sentinelMasterId.hashCode() : 0);
+        result = 31 * result + port;
+        result = 31 * result + database;
+        result = 31 * result + (sentinels != null ? sentinels.hashCode() : 0);
+        return result;
     }
 
     /**
