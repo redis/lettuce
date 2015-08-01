@@ -11,6 +11,9 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.Future;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.DefaultChannelPromise;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +50,9 @@ public class CommandHandlerTest {
     private Channel channel;
 
     @Mock
+    private ByteBufAllocator byteBufAllocator;
+
+    @Mock
     private ChannelPipeline pipeline;
 
     @Mock
@@ -55,6 +61,7 @@ public class CommandHandlerTest {
     @Before
     public void before() throws Exception {
         when(context.channel()).thenReturn(channel);
+        when(context.alloc()).thenReturn(byteBufAllocator);
         when(channel.pipeline()).thenReturn(pipeline);
         when(channel.eventLoop()).thenReturn(eventLoop);
         when(eventLoop.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
@@ -65,11 +72,25 @@ public class CommandHandlerTest {
                 return null;
             }
         });
+
+        when(channel.write(any())).thenAnswer(new Answer<ChannelPromise>() {
+            @Override
+            public ChannelPromise answer(InvocationOnMock invocation) throws Throwable {
+                return new DefaultChannelPromise(channel);
+            }
+        });
+
+        when(channel.writeAndFlush(any())).thenAnswer(new Answer<ChannelPromise>() {
+            @Override
+            public ChannelPromise answer(InvocationOnMock invocation) throws Throwable {
+                return new DefaultChannelPromise(channel);
+            }
+        });
     }
 
     @Test
     public void testChannelActive() throws Exception {
-        sut.setState(CommandHandler.LifecycleState.REGISTERED);
+        sut.channelRegistered(context);
 
         sut.channelActive(context);
 

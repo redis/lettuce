@@ -366,6 +366,30 @@ public class RedisClusterSetupTest {
 
         waitForSlots(redis2, 0);
 
+        final RedisClusterNode redis2Partition = getOwnPartition(redis2);
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
+                RedisClusterNode partition = partitions.getPartitionByNodeId(redis2Partition.getNodeId());
+
+                if (!partition.getSlots().isEmpty()) {
+                    removeRemaining(partition);
+                }
+
+                return partition.getSlots().size() == 0;
+            }
+
+            private void removeRemaining(RedisClusterNode partition) {
+                try {
+                    int[] ints = toIntArray(partition.getSlots());
+                    redis1.clusterDelSlots(ints);
+                } catch (Exception e) {
+
+                }
+            }
+        }, timeout(seconds(10)));
+
         redis1.clusterAddSlots(RedisClusterClientTest.createSlots(12000, 16384));
         waitForSlots(redis1, 16384);
 
@@ -375,6 +399,14 @@ public class RedisClusterSetupTest {
                 return clusterRule.isStable();
             }
         }, timeout(seconds(6)));
+    }
+
+    private int[] toIntArray(List<Integer> source) {
+        int[] result = new int[source.size()];
+        for (int i = 0; i < source.size(); i++) {
+            result[i] = source.get(i);
+        }
+        return result;
     }
 
     @Test
@@ -422,8 +454,8 @@ public class RedisClusterSetupTest {
     @Test
     public void doNotExpireStaleNodeIdConnections() throws Exception {
 
-        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).closeStaleConnections(false).refreshPeriod(1, TimeUnit.SECONDS)
-                .build());
+        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).closeStaleConnections(false)
+                .refreshPeriod(1, TimeUnit.SECONDS).build());
         RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
 
         setup2Masters();
