@@ -43,7 +43,7 @@ public class RedisClient extends AbstractRedisClient {
     private final RedisURI redisURI;
 
     /**
-     * Creates a uri-less RedisClient. You can connect to different redis servers but you must supply a {@link RedisURI} on
+     * Creates a uri-less RedisClient. You can connect to different Redis servers but you must supply a {@link RedisURI} on
      * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
      */
     public RedisClient() {
@@ -112,8 +112,8 @@ public class RedisClient extends AbstractRedisClient {
      * @param codec the codec to use
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
      */
     @SuppressWarnings("unchecked")
@@ -181,8 +181,8 @@ public class RedisClient extends AbstractRedisClient {
      * @param codec the codec to use
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
      */
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
@@ -212,49 +212,54 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Connect to a Redis server that treats keys and values as UTF-8 strings.
+     * Open a connection to a Redis server that treats keys and values as UTF-8 strings.
      * 
      * @return A new stateful Redis connection.
      */
-    @SuppressWarnings({ "unchecked" })
     public StatefulRedisConnection<String, String> connect() {
         return connect(newStringStringCodec());
     }
 
     /**
-     * Connect to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
+     * Open a connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
      * 
      * @param codec Use this codec to encode/decode keys and values, must note be {@literal null}
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return A new stateful Redis connection.
      */
-    @SuppressWarnings("unchecked")
     public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        checkArgument(codec != null, "RedisCodec must not be null");
         return connect(codec, this.redisURI);
     }
 
     /**
-     * Connect to a Redis server with the supplied {@link RedisURI} that treats keys and values as UTF-8 strings.
+     * Open a connection to a Redis server with the supplied {@link RedisURI} that treats keys and values as UTF-8 strings.
      *
-     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @return A new connection.
      */
-    @SuppressWarnings({ "unchecked" })
     public StatefulRedisConnection<String, String> connect(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
         return connect(newStringStringCodec(), redisURI);
     }
 
-    @SuppressWarnings({ "rawtypes" })
-    private <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec, RedisURI redisURI) {
+    /**
+     * Open a connection to a Redis server with the supplied {@link RedisURI} and the supplied {@link RedisCodec codec} to
+     * encode/decode keys.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection.
+     */
+    public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec, RedisURI redisURI) {
         return connectStandalone(codec, redisURI);
     }
 
     /**
-     * Open a new asynchronous connection to the redis server that treats keys and values as UTF-8 strings.
+     * Open a new asynchronous connection to the Redis server that treats keys and values as UTF-8 strings.
      * 
      * @return A new connection.
      * @deprecated Use {@code connect().async()}
@@ -265,12 +270,12 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new asynchronous connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
+     * Open a new asynchronous connection to the Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
      * and values.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return A new connection.
      * @deprecated Use {@code connect(codec).async()}
      */
@@ -284,7 +289,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to the supplied {@link RedisURI} that treats keys and values as UTF-8 strings.
      *
-     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @return A new connection.
      * @deprecated Use {@code connect(redisURI).async()}
      */
@@ -294,10 +299,27 @@ public class RedisClient extends AbstractRedisClient {
         return connect(newStringStringCodec(), redisURI).async();
     }
 
+    /**
+     * Open a new asynchronous connection to the supplied {@link RedisURI} and the supplied {@link RedisCodec codec} to
+     * encode/decode keys.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
+     * @return A new connection. * @deprecated Use {@code connect(redisURI).async()}
+     */
+    @Deprecated
+    public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+        checkValidRedisURI(redisURI);
+        return connect(codec, redisURI).async();
+    }
+
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI) {
+        checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(redisURI != null, "RedisURI must not be null");
+
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
+        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, queue);
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec);
         connectStateful(handler, connection, redisURI);
@@ -332,7 +354,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new pub/sub connection to the redis server that treats keys and values as UTF-8 strings.
+     * Open a new pub/sub connection to the Redis server that treats keys and values as UTF-8 strings.
      *
      * @return A new stateful pub/sub connection
      */
@@ -341,9 +363,10 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new pub/sub connection to the supplied {@link RedisURI} that treats keys and values as UTF-8 strings.
+     * Open a new pub/sub connection to the Redis server using the supplied {@link RedisURI} that treats keys and values as
+     * UTF-8 strings.
      *
-     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @return A new stateful pub/sub connection
      */
     public StatefulRedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
@@ -352,12 +375,12 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new pub/sub connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and
-     * values.
+     * Open a new pub/sub connection to the Redis server using the supplied {@link RedisURI} and use the supplied
+     * {@link RedisCodec codec} to encode/decode keys and values.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return A new stateful pub/sub connection
      */
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
@@ -365,12 +388,23 @@ public class RedisClient extends AbstractRedisClient {
         return connectPubSub(codec, redisURI);
     }
 
-    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
+    /**
+     * Open a new pub/sub connection to the Redis server using the supplied {@link RedisURI} and use the supplied
+     * {@link RedisCodec codec} to encode/decode keys and values.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection.
+     */
+    public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(redisURI != null, "RedisURI must not be null");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, queue, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec);
 
         connectStateful(handler, connection, redisURI);
@@ -379,7 +413,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Connect to a Redis Sentinel. You must supply a valid RedisURI containing one or more sentinels.
+     * Open a connection to a Redis Sentinel that treats keys and values as UTF-8 strings.
      * 
      * @return A new stateful Redis Sentinel connection
      */
@@ -388,23 +422,24 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * CConnect to a Redis Sentinel. You must supply a valid RedisURI containing one or more sentinels.
+     * Open a connection to a Redis Sentinel that treats keys and use the supplied {@link RedisCodec codec} to encode/decode
+     * keys and values. The client {@link RedisURI} must contain one or more sentinels.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return A new stateful Redis Sentinel connection
      */
     public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        checkArgument(codec != null, "RedisCodec must not be null");
         return connectSentinelImpl(codec, redisURI);
     }
 
     /**
-     * Connect to a Redis Sentinel. You must supply a valid RedisURI containing a redis host or one or more sentinels.
+     * Open a connection to a Redis Sentinel using the supplied {@link RedisURI} that treats keys and values as UTF-8 strings.
+     * The client {@link RedisURI} must contain one or more sentinels.
      *
-     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @return A new connection.
      */
     public StatefulRedisSentinelConnection<String, String> connectSentinel(RedisURI redisURI) {
@@ -412,7 +447,22 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates an asynchronous connection to Redis Sentinel. You must supply a valid RedisURI containing one or more sentinels.
+     * Open a connection to a Redis Sentinel using the supplied {@link RedisURI} and use the supplied {@link RedisCodec codec}
+     * to encode/decode keys and values. The client {@link RedisURI} must contain one or more sentinels.
+     *
+     * @param codec the Redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection.
+     */
+    public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI) {
+        return connectSentinelImpl(codec, redisURI);
+    }
+
+    /**
+     * Creates an asynchronous connection to Redis Sentinel that treats keys and values as UTF-8 strings. You must supply a
+     * valid RedisURI containing one or more sentinels.
      * 
      * @return a new connection.
      * @deprecated Use {@code connectSentinel().async()}
@@ -423,11 +473,12 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates an asynchronous connection to Redis Sentinel. You must supply a valid RedisURI containing one or more sentinels.
+     * Creates an asynchronous connection to Redis Sentinela nd use the supplied {@link RedisCodec codec} to encode/decode keys
+     * and values. You must supply a valid RedisURI containing one or more sentinels.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type
+     * @param <V> Value type
      * @return a new connection.
      * @deprecated Use {@code connectSentinel(codec).async()}
      */
@@ -439,10 +490,10 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates an asynchronous connection to Redis Sentinel. You must supply a valid RedisURI containing a redis host or one or
-     * more sentinels.
+     * Creates an asynchronous connection to Redis Sentinel using the supplied {@link RedisURI} that treats keys and values as
+     * UTF-8 strings. You must supply a valid RedisURI containing a redis host or one or more sentinels.
      *
-     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @return A new connection.
      * @deprecated Use {@code connectSentinel(redisURI).async()}
      */
@@ -451,13 +502,33 @@ public class RedisClient extends AbstractRedisClient {
         return connectSentinelImpl(newStringStringCodec(), redisURI).async();
     }
 
+    /**
+     * Creates an asynchronous connection to Redis Sentinel using the supplied {@link RedisURI} and use the supplied
+     * {@link RedisCodec codec} to encode/decode keys and values. You must supply a valid RedisURI containing a redis host or
+     * one or more sentinels.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection.
+     * @deprecated Use {@code connectSentinel(codec, redisURI).async()}
+     */
+    @Deprecated
+    public <K, V> RedisSentinelAsyncCommands<K, V> connectSentinelAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+        return connectSentinelImpl(codec, redisURI).async();
+    }
+
     private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinelImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
+        checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(redisURI != null, "RedisURI must not be null");
+
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(clientOptions, queue);
+        final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, queue);
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(commandHandler, codec);
 
