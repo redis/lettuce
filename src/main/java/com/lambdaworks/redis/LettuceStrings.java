@@ -6,6 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import com.lambdaworks.codec.Base16;
 
 /**
+ * Helper for {@link String} checks.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */

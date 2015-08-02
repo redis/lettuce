@@ -61,7 +61,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public String auth(String password) {
         AsyncCommand<K, V, String> cmd = authAsync(password);
-        String status = LettuceFutures.await(cmd, connection.getTimeout(), connection.getTimeoutUnit());
+        String status = LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
         return status;
     }
 
@@ -760,7 +760,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
 
     public String select(int db) {
         AsyncCommand<K, V, String> cmd = selectAsync(db);
-        String status = LettuceFutures.await(cmd, connection.getTimeout(), connection.getTimeoutUnit());
+        String status = LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
         return status;
     }
 

@@ -273,7 +273,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                             return null;
                         }
                     }
-                    return LettuceFutures.await(command, connection.getTimeout(), connection.getTimeoutUnit());
+                    return LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
                 }
 
                 return result;

@@ -39,5 +39,4 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     public CompletableFuture<T>[] futures() {
         return executions.values().toArray(new CompletableFuture[executions.size()]);
     }
-
 }

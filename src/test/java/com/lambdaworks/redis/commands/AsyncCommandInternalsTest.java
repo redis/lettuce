@@ -66,13 +66,13 @@ public class AsyncCommandInternalsTest {
 
     @Test(expected = RedisCommandTimeoutException.class)
     public void awaitNotCompleted() throws Exception {
-        LettuceFutures.await(sut, 0, TimeUnit.NANOSECONDS);
+        LettuceFutures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS);
     }
 
     @Test(expected = RedisException.class)
     public void awaitWithExecutionException() throws Exception {
         sut.completeExceptionally(new RedisException("error"));
-        LettuceFutures.await(sut, 1, TimeUnit.SECONDS);
+        LettuceFutures.awaitOrCancel(sut, 1, TimeUnit.SECONDS);
     }
 
     @Test(expected = RedisException.class)

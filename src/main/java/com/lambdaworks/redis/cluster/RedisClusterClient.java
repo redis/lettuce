@@ -83,6 +83,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </pre></code>
  * </p>
  *
+ * {@link RedisClusterClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that
+ * consist of up to {@code Number of CPU's * 4} threads. Reuse this instance as much as possible.
+ *
  *
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -127,9 +130,9 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Connect to a Redis Cluster that treats keys and values as UTF-8 strings.
+     * Connect to a Redis Cluster and treat keys and values as UTF-8 strings.
      * 
-     * @return A new stateful Redis Cluster connection.
+     * @return A new stateful Redis Cluster connection
      */
     public StatefulRedisClusterConnection<String, String> connect() {
         return connect(newStringStringCodec());
@@ -138,10 +141,10 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Connect to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
      * 
-     * @param codec Use this codec to encode/decode keys and values.
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return A new stateful Redis Cluster connection.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new stateful Redis Cluster connection
      */
     @SuppressWarnings("unchecked")
     public <K, V> StatefulRedisClusterConnection<K, V> connect(RedisCodec<K, V> codec) {
@@ -149,9 +152,9 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new synchronous connection to the redis cluster that treats keys and values as UTF-8 strings.
+     * Open a new synchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
      * 
-     * @return A new connection.
+     * @return A new connection
      * @deprecated Use {@code connect().sync()}
      */
     @Deprecated
@@ -160,13 +163,13 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new synchronous connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values.
-     * 
-     * @param codec Use this codec to encode/decode keys and values.
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return A new connection.
+     * Open a new synchronous connection to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and
+     * values.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
      * @deprecated @deprecated Use {@code connect(codec).sync()}
      */
     @SuppressWarnings("unchecked")
@@ -176,9 +179,9 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates a connection to the redis cluster.
-     * 
-     * @return A new connection.
+     * Open a new asynchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
+     *
+     * @return A new connection
      * @deprecated Use {@code connect().async()}
      */
     @Deprecated
@@ -187,13 +190,14 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates a connection to the redis cluster.
-     * 
-     * @param codec Use this codec to encode/decode keys and values.
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return A new connection.
-     * @deprecated @deprecated Use {@code connect(codec).sync()}
+     * Open a new asynchronous connection to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys
+     * and values.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     * @deprecated @deprecated Use {@code connect(codec).async()}
      */
     @Deprecated
     public <K, V> RedisAdvancedClusterAsyncCommands<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
@@ -212,17 +216,20 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a connection to a redis socket address.
      *
-     * @param codec Use this codec to encode/decode keys and values.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param nodeId the nodeId
      * @param clusterWriter global cluster writer
      * @param socketAddressSupplier supplier for the socket address
      * 
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return a new connection
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
      */
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
             RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
+
+        checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(socketAddressSupplier != null, "SocketAddressSupplirt must not be null");
 
         logger.debug("connectNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
@@ -245,11 +252,11 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a clustered connection with command distributor.
      * 
-     * @param codec the codec to use
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param socketAddressSupplier address supplier for initial connect and re-connect
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @return a new connection
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
      */
     <K, V> StatefulRedisClusterConnectionImpl<K, V> connectClusterImpl(RedisCodec<K, V> codec,
             final Supplier<SocketAddress> socketAddressSupplier) {
@@ -257,6 +264,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (partitions == null) {
             initializePartitions();
         }
+
+        checkArgument(codec != null, "RedisCodec must not be null");
+        checkArgument(socketAddressSupplier != null, "SocketAddressSupplier must not be null");
 
         activateTopologyRefreshIfNeeded();
 
@@ -271,7 +281,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
-        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl(clusterWriter, codec,
+        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter, codec,
                 timeout, unit);
 
         connection.setPartitions(partitions);

@@ -27,6 +27,8 @@ import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
+ * Connection builder for SSL connections. This class is part of the internal API.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class SslConnectionBuilder extends ConnectionBuilder {

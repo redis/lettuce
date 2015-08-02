@@ -156,13 +156,11 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Make the server crash: Invalid pointer access.
-     * @return nothing, because the server crashes before returning.
      */
     void debugSegfault();
 
     /**
      * Make the server crash: Out of memory.
-     * @return nothing, because the server crashes before returning.
      */
     void debugOom();
 

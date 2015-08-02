@@ -65,8 +65,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true.
      * 
-     * @param clientOptions client options for this connection
+     * @param clientOptions client options for the current connection
      * @param bootstrap Configuration for new channels.
+     * @param reconnectWorkers executor group for reconnect tasks.
      * @param timer Timer used for delayed reconnect.
      */
     public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, EventExecutorGroup reconnectWorkers, Timer timer) {
@@ -77,9 +78,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
      *
-     * @param clientOptions client options for this connection
+     * @param clientOptions client options for the current connection
      * @param bootstrap Configuration for new channels.
      * @param timer Timer used for delayed reconnect.
+     * @param reconnectWorkers executor group for reconnect tasks.
      * @param socketAddressSupplier the socket address suplier for gaining an address to reconnect to
      */
     public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
@@ -292,7 +294,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     /**
      * @deprecated use {@link #setListenOnChannelInactive(boolean)}
-     * @param reconnect true, if reconnect is activated
+     * @param reconnect {@literal true} if reconnect is active
      */
     @Deprecated
     public void setReconnect(boolean reconnect) {

@@ -1,6 +1,8 @@
 package com.lambdaworks.redis;
 
 /**
+ * Utility to determine which Java runtime is used.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class JavaRuntime {
