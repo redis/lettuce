@@ -1,18 +1,30 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisUriComparator.INSTANCE;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.AbstractRedisClient;
+import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisClusterConnection;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -24,8 +36,11 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection
- * provided they avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
+ * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection if they
+ * avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
+ * 
+ * {@link RedisClusterClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that
+ * consist of up to {@code Number of CPU's * 4} threads. Reuse this instance as much as possible.
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
@@ -69,18 +84,17 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Open a new synchronous connection to the redis cluster that treats keys and values as UTF-8 strings.
+     * Open a new synchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
      *
      * @return A new connection.
      */
     public RedisAdvancedClusterConnection<String, String> connectCluster() {
-
         return connectCluster(newStringStringCodec());
     }
 
     /**
-     * Open a new synchronous connection to the redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values.
+     * Open a new synchronous connection to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and
+     * values.
      *
      * @param codec Use this codec to encode/decode keys and values.
      * @param <K> Key type.
@@ -89,13 +103,12 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     public <K, V> RedisAdvancedClusterConnection<K, V> connectCluster(RedisCodec<K, V> codec) {
-
         return (RedisAdvancedClusterConnection<K, V>) syncHandler(connectClusterAsyncImpl(codec),
                 RedisAdvancedClusterConnection.class, RedisClusterConnection.class);
     }
 
     /**
-     * Creates a connection to the redis cluster.
+     * Open a new asynchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
      *
      * @return A new connection.
      */
@@ -104,7 +117,8 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates a connection to the redis cluster.
+     * Open a new asynchronous connection to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys
+     * and values.
      *
      * @param codec Use this codec to encode/decode keys and values.
      * @param <K> Key type.
@@ -485,6 +499,6 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     boolean expireStaleConnections() {
-        return getClusterClientOptions() == null ||  getClusterClientOptions().isCloseStaleConnections();
+        return getClusterClientOptions() == null || getClusterClientOptions().isCloseStaleConnections();
     }
 }
