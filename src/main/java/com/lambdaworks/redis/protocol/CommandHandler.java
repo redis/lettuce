@@ -293,7 +293,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private void queueCommand(ChannelPromise promise, RedisCommand<K, V, ?> cmd) throws Exception {
         if (cmd.isCancelled()) {
-            System.out.println("cancelled");
             return;
         }
 
