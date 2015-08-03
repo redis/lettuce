@@ -500,7 +500,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (currentChannel != null) {
             currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
             currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
-            currentChannel.pipeline().close().syncUninterruptibly();
+
+            ChannelFuture close = currentChannel.pipeline().close();
+            if (currentChannel.isOpen()) {
+                close.syncUninterruptibly();
+            }
         }
     }
 
