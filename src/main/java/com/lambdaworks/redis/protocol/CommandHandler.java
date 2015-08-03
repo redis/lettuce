@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
@@ -163,6 +165,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
+
+        checkArgument(command != null, "command must not be null");
 
         if (lifecycleState == LifecycleState.CLOSED) {
             throw new RedisException("Connection is closed");

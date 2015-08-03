@@ -41,6 +41,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     @SuppressWarnings("unchecked")
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
+        checkArgument(command != null, "command must not be null");
+
         if (closed) {
             throw new RedisException("Connection is closed");
         }
