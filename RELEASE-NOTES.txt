@@ -1,30 +1,64 @@
               lettuce 4.0.Beta1 RELEASE NOTES
 
-This release is a major release that introduces numerous changes. lettuce coupled API and connection very tight together,
-like other clients, too. The connection and the different API's are now decoupled. All connections are backed now by stateful
-connection and the API, as you know it from `RedisConnection` or `RedisAsyncConnection`, just operates on the connection. This
-is also the reason, why all `...Connection` and `...AsyncConnection` interfaces are deprecated and replaced by new `...Commands`
-interfaces. To sum it up, a lot changed under the hood, read more in new segregated command interfaces about the new interfaces.
+This release is a major release that introduces numerous changes like stateful connections,
+the reactive API and many more. Lettuce 4.0 includes all features from lettuce 3.3.
 
-The cluster API was extended to run a command on multiple nodes and invocation to multi-key commands del, mget, mset and msetnx
-perform automatic pipelining if the keys belong to different slots/masters.
+This release contains some breaking changes. You may want to consult the
+wiki at https://github.com/mp911de/lettuce/wiki/Migration-from-3.x-to-4.x
+to check the migration guide.
 
-A couple of changes are breaking changes, and you need most likely to adopt your code to use lettuce 4.0.
-lettuce dropped Java 6 and 7 support and requires Java 8 to run. A couple API's changed, like the renaming of RedisPubSubConnection to RedisPubSubAsyncConnection. RedisPubSubConnection is now a synchronous API.
+The all `Redis...Connection` and `Redis...AsyncConnection` interfaces are deprecated and replaced by new `...Commands`
+interfaces.
 
-lettuce 4.0 is needs Java 8 and cannot be used with Java 6 or 7.
+The cluster API was extended to run a command on multiple nodes and invocation
+to multi-key commands DEL, MGET, MSET and MSETNX perform automatic pipelining
+if the keys belong to different slots/masters.
 
-If you need any support, meet lettuce at https://gitter.im/mp911de/lettuce
+A couple of changes are breaking changes, and you need most likely to adopt
+your code to use lettuce 4.0. lettuce 4.0 dropped Java 6 and 7 support and
+requires Java 8 to run.
 
+lettuce 4.0 needs Java 8 and cannot be used with Java 6 or 7.
+
+If you need any support, meet lettuce at:
+
+* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users
+* Gitter: https://gitter.im/mp911de/lettuce
+* Github Issues: https://github.com/mp911de/lettuce/issues
+
+
+Reactive API
+-----
+Lettuce provides since its genesis two API's: Sync and async.
+Now comes a third one: Reactive.
+The reactive API uses rx-java and every command on the reactive API returns an Observable.
+
+```java
+StatefulRedisConnection<String, String> connection = client.connect();
+RedisReactiveCommands<String, String> reactive = stateful.reactive();
+
+Observable<String> observable = reactiveApi.keys("*");
+observable.subscribe();
+
+// more sophisticated
+
+reactive.keys("*").flatMap(reactive::del).subscribe();
+```
+
+The command is only executed on a subscription to the Observable.
+Commands returning a collection, such as Lists or Sets,
+return Observables that provide the element type.
+The reactive API covers the same commands as the synchronous/asynchronous API's.
+
+Read more: https://github.com/mp911de/lettuce/wiki/Reactive-API-(4.0)
 
 Rearchitecting the API
 -----
-Lettuce provides right from the start two API's: Sync and async. Now comes a third one: Reactive. Behind the scenes, all commands are
-executed using netty and it does not really matter, from which API you come. But the connection resources (sockets, events)
-were bound to a particular API. If one wanted to use sync calls for a certain scenario, he had to create another connection to redis.
-
+Before 4.0, connection resources (sockets, events) were bound to the particular API.
+If one wanted to use a different API, he had to create another connection to Redis.
 This coupling is loosed now. By calling `connect()` you will no longer get a synchronous connection, you will get a `StatefulRedisConnection`
-with the access to the sync, async and reactive interface.
+with the access to the synchronous, asynchronous and reactive API.
+All commands are executed using netty and it does not matter, from which API you come.
 
 3.x code:
 ```java
@@ -34,28 +68,35 @@ RedisConnection connection = client.connect();
 4.x code:
 ```java
 StatefulRedisConnection stateful = client.connect();
+
+RedisCommands commands = stateful.sync();
+
+// still working
 RedisConnection connection = stateful.sync();
 ```
 
-The other `connect` methods like `connectAsync` and `connectSentinelAsync` will remain unchanged.
+The other `connect` methods like `connectAsync` and `connectSentinelAsync` are
+deprecated but remain unchanged.
 
-Affected `connect` methods are:
+Breaking changes in `connect` methods are:
 
 * `RedisClient.connect` (provides a `StatefulRedisConnection`)
 * `RedisClient.connectPubSub` (provides a `StatefulRedisPubSubConnection`)
-* `RedisClusterClient.connect` (provides a `StatefulRedisClusterConnection`)
+* `RedisClusterClient.connectCluster` (provides a `StatefulRedisClusterConnection`)
 
-New connect methods:
+New `connect` methods:
 
 * `RedisClient.connectSentinel` (provides a `StatefulRedisSentinelConnection`)
 
 New segregated command interfaces
 -----
-Starting with reactive API's, another 13 interfaces will be provided with lettuce. This increases the count of
-types within the `com.lambdaworks.redis` package and the package gets messier again. In combination with the stateful connection
-the original `...Connection` or `...AsyncConnection` interfaces no longer reflect the real purpose. New `Commands` interfaces provide
-the same functionality and are located in `api.sync` and `api.async` packages (respective `cluster.api.sync`, `cluster.api.async` and so on
-for the Redis Cluster client and PubSub).
+Starting with reactive API's, another 13 interfaces will be provided with lettuce.
+This change increases the count of types within the `com.lambdaworks.redis`
+package and the package gets messier again. In combination with the stateful connection
+the original `...Connection` or `...AsyncConnection` interfaces no longer
+reflect the real purpose. New `Commands` interfaces provide the same
+functionality and are located in `api.sync` and `api.async` packages
+(respective `cluster.api.sync`, `cluster.api.async` and so on for the Redis Cluster client and PubSub).
 
 The following interfaces are deprecated and substituted by new `...Commands` interfaces:
 
@@ -85,73 +126,8 @@ The following interfaces are deprecated and substituted by new `...Commands` int
 * BaseRedisConnection
 * BaseRedisAsyncConnection
 
-
-### Migration Matrix sync API:
-
-3.x package: `com.lambdaworks.redis`
-4.x package: `com.lambdaworks.redis.api.sync`
-
-
-New command interfaces:
-
-* RedisCommands
-* RedisClusterCommands
-* BaseRedisComands
-* RedisHashCommands
-* RedisHLLCommands
-* RedisKeyCommands
-* RedisListCommands
-* RedisScriptingCommands
-* RedisServerCommands
-* RedisSetCommands
-* RedisSortedSetCommands
-* RedisStringsCommands
-* RedisTransactionalCommands
-* RedisPubSubCommands
-
-### Migration Matrix async API:
-
-3.x package: `com.lambdaworks.redis`
-4.x package: `com.lambdaworks.redis.api.async`
-
-
-New command interfaces:
-
-* RedisAsyncCommands
-* RedisClusterAsyncCommands
-* BaseRedisAsyncCommands
-* RedisHashAsyncCommands
-* RedisHLLAsyncCommands
-* RedisKeyAsyncCommands
-* RedisListAsyncCommands
-* RedisScriptingAsyncCommands
-* RedisSentinelAsyncCommands
-* RedisServerAsyncCommands
-* RedisSetAsyncCommands
-* RedisSortedSetAsyncCommands
-* RedisStringAsyncCommands
-* RedisTransactionalAsyncCommands
-* RedisPubSubAsyncCommands
-
-
-### New interfaces providing observable commands:
-
-4.x package: `com.lambdaworks.redis.api.rx`
-
-New interfaces:
-
-* BaseRedisRxConnection
-* RedisHashesRxConnection
-* RedisHLLRxConnection
-* RedisKeysRxConnection
-* RedisListsRxConnection
-* RedisScriptingRxConnection
-* RedisSentinelRxConnection
-* RedisServerRxConnection
-* RedisSetsRxConnection
-* RedisSortedSetsRxConnection
-* RedisStringsRxConnection
-* RedisTransactionalRxConnection
+See https://github.com/mp911de/lettuce/wiki/Migration-from-3.x-to-4.x#optional-changes
+for the migration matrix.
 
 ## New API's
 
@@ -167,10 +143,10 @@ New interfaces:
 * Moved `CommandOutput` from `com.lambdaworks.redis.protocol` to  `com.lambdaworks.redis.output`
 * Moved `SetArgs` from `com.lambdaworks.redis.protocol` to `com.lambdaworks.redis`
 * All connections are `AutoCloseable` so you can handle connections using try-with-resources.
-* `RedisFuture`s are based on `CompleteableFuture` and throw now any occured exception when accessing the value using `get()`.
+* `RedisFuture`s are based on `CompleteableFuture` and throw now any occurred exception when accessing the value using `get()`.
 Exceptions are passed down the `CompletionStage`s.
 
-Advanced cluster API
+Advanced Cluster API
 -----
 The advanced cluster API allows to select nodes and run commands on the node selection:
 
@@ -185,12 +161,12 @@ the result (CompletionStage) is available though AsyncExecutions.
 
 Enhancements
 -----
-* Advanced cluster API (async) #78
+* Advanced Cluster API (async) #78
 * Improve HLL command interface #77
 * Move segregated API interfaces to own packages  #76
-* Provide a stateful redis connection and decouple sync/async API from connection resources enhancement #75
+* Provide a stateful Redis connection and decouple sync/async API from connection resources #75
 * Reactive support #68
-* Pipelining for certain cluster commands enhancement #66
+* Pipelining for certain cluster commands #66
 * Drop support for Java 6 and Java 7 #50
 * Migrate RedisFuture to CompletionStage #48
 
@@ -202,7 +178,7 @@ Other
 ------
 
 
-lettuce requires a minimum of Java 8 to build and run. It is tested continuously against Redis 3.0.
+lettuce requires a minimum of Java 8 to build and run. It is tested continuously against the latest Redis source-build.
 
 For complete information on lettuce see the websites:
 
