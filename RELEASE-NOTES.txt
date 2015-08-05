@@ -28,7 +28,7 @@ If you need any support, meet lettuce at:
 
 
 Reactive API
------
+------------
 Lettuce provides since its genesis two API's: Sync and async.
 Now comes a third one: Reactive.
 The reactive API uses rx-java and every command on the reactive API returns an Observable.
@@ -89,7 +89,7 @@ New `connect` methods:
 * `RedisClient.connectSentinel` (provides a `StatefulRedisSentinelConnection`)
 
 New segregated command interfaces
------
+---------------------------------
 Starting with reactive API's, another 13 interfaces will be provided with lettuce.
 This change increases the count of types within the `com.lambdaworks.redis`
 package and the package gets messier again. In combination with the stateful connection
@@ -146,21 +146,49 @@ for the migration matrix.
 * `RedisFuture`s are based on `CompleteableFuture` and throw now any occurred exception when accessing the value using `get()`.
 Exceptions are passed down the `CompletionStage`s.
 
-Advanced Cluster API
------
+
+Cross-slot command execution
+----------------------------
+Regular Redis Cluster commands are limited to single-slot keys, basically either single key
+commands or multi-key commands that share the same hash slot of their keys.
+
+The cross slot limitation can be mitigated by using the advanced cluster API for some
+multi-key commands. Commands that operate on keys with different slots are decomposed into multiple commands.
+The single commands are fired in a fork/join fashion. The commands are issued concurrently to avoid
+synchronous chaining. Results are synchronized before the command is completed (from a user perspective).
+
+Following commands are supported for cross-slot command execution:
+
+* DEL: Delete the KEYs from the affected cluster. Returns the number of keys that were removed
+* MGET: Get the values of all given KEYs. Returns the values in the order of the keys.
+* MSET: Set multiple key/value pairs for all given KEYs. Returns always OK.
+* Cross-slot command execution is available on the following APIs:
+
+* RedisAdvancedClusterCommands
+* RedisAdvancedClusterAsyncCommands
+* RedisAdvancedClusterReactiveCommands
+
+
+Node Selection API/Execution of commands on multiple cluster nodes
+------------------------------------------------------------------
 The advanced cluster API allows to select nodes and run commands on the node selection:
 
-AsyncNodeSelection<String, String> nodes = connection.slaves();
+```java
+RedisAdvancedClusterAsyncCommands<String, String> async = clusterClient.connect().async();
+AsyncNodeSelection<String, String> slaves = connection.slaves();
 
-AsyncExecutions<List<String>> executions = nodes.commands().keys("*");
-executions.forEach(cs -> cs.thenAccept(keys -> System.out.println(keys)));
+AsyncExecutions<List<String>> executions = slaves.commands().keys("*");
+executions.forEach(result -> result.thenAccept(keys -> System.out.println(keys)));
+```
 
-This API is currently only available for async commands. Commands are dispatched to the nodes within the selection,
-the result (CompletionStage) is available though AsyncExecutions.
+Commands are dispatched to the nodes within the selection, the result (CompletionStage) is available through AsyncExecutions.
+This API is currently only available for async commands and a technical preview so your feedback is highly appreciated.
+
+Read more: https://github.com/mp911de/lettuce/wiki/Redis-Cluster-(4.0)
 
 
 Enhancements
------
+------------
 * Advanced Cluster API (async) #78
 * Improve HLL command interface #77
 * Move segregated API interfaces to own packages  #76
