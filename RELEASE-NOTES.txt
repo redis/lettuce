@@ -1,12 +1,14 @@
-              lettuce 3.3 RELEASE NOTES
+              lettuce 3.3.Beta1 RELEASE NOTES
 
 lettuce 3.3 introduces a variety of changes: It features changes to cluster support,
 new GEO commands for the upcoming Redis 3.2 release and allows batching, an extension
-to pipelining. The documentation within the lettuce wiki was overhauled.
+to pipelining.
+
+The documentation within the lettuce wiki was overhauled.
 Meet the very new wiki at https://github.com/mp911de/lettuce/wiki
 
-The test stability issue, was addressed by running infinite testing jobs.
-Instabilities were causes due to missing synchronization and relying too much on timing.
+The test stability issue was addressed by running infinite testing jobs.
+Instabilities were caused due to missing synchronization and relying too much on timing.
 However, the real life teaches us, not to rely on time, rather on hard facts whether
 a cluster node is available, or a command is written out to the transport.
 The tests are improved and fail less often.
@@ -15,7 +17,7 @@ The tests are improved and fail less often.
 Redis Cluster: Node connections
 -------------------------------
 lettuce's cluster support is enhanced by a couple of features. Users can obtain
-connection to the particular cluster nodes by specifying either the nodeId or
+a connection to the particular cluster nodes by specifying either the nodeId or
 host and port. The new methods are available on two new interfaces:
 
  * RedisAdvancedClusterConnection
@@ -23,19 +25,21 @@ host and port. The new methods are available on two new interfaces:
 
 Example code:
 
-    RedisAdvancedClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
-    RedisClusterAsyncConnection<String, String> nodeConnection = connection
-                               .getConnection("adf7f86efa42d903bcd93c5bce72397fe52e91bb");
+```java
+RedisAdvancedClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+RedisClusterAsyncConnection<String, String> nodeConnection = connection
+                           .getConnection("adf7f86efa42d903bcd93c5bce72397fe52e91bb");
 
-    ...
+...
 
-    RedisClusterAsyncConnection<String, String> nodeConnection = connection.getConnection("localhost", 7379);
+RedisClusterAsyncConnection<String, String> nodeConnection = connection.getConnection("localhost", 7379);
+```
 
 You are free to operate on these connections. Connections can be bound to specific
 hosts or nodeId's. Connections bound to a nodeId will always stick to the nodeId,
 even if the nodeId is handled by a different host. Requests to unknown nodeId's
 or host/ports that are not part of the cluster are rejected.
-Do not close the connections. Otherwise, unpredictable behavior will occur. 
+Do not close the connections. Otherwise, unpredictable behavior will occur.
 Keep also in mind, that the node connections are used by the cluster connection
 itself to perform cluster operations: If you block one connection all other users
 of the cluster connection might be affected.
@@ -55,13 +59,14 @@ interval (defaults to 60 seconds). The refresh is enabled by using ClusterClient
 
 Example code:
 
-    clusterClient.setOptions(new ClusterClientOptions.Builder()
-                                     .refreshClusterView(true)
-                                     .refreshPeriod(5, TimeUnit.SECONDS)
-                                     .build());
+```java
+clusterClient.setOptions(new ClusterClientOptions.Builder()
+                                 .refreshClusterView(true)
+                                 .refreshPeriod(5, TimeUnit.SECONDS)
+                                 .build());
 
-    RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
-
+RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
+```
 
 Pipelining
 ----------
@@ -74,16 +79,17 @@ and flush the queued commands at the moment you want to send them over the trans
 
 Example code:
 
-    RedisAsyncConnection<String, String> connection = client.connectAsync();
-    connection.setAutoFlushCommands(false);
+```java
+RedisAsyncConnection<String, String> connection = client.connectAsync();
+connection.setAutoFlushCommands(false);
 
-    connection.set("key", "value");
-    connection.set("key2", "value2");
+connection.set("key", "value");
+connection.set("key2", "value2");
 
-    connection.flushCommands();
+connection.flushCommands();
 
-    connection.setAutoFlushCommands(true);
-
+connection.setAutoFlushCommands(true);
+```
 
 Why on the async connections only? The async connections return already a handle
 to the result, the sync API does not. Adding another API would require to
@@ -99,7 +105,7 @@ lettuce 3.3 uses a dedicated String codec instance for each String connection
 (Standalone) instead of sharing one String codec for all connections.
 Cluster connections share a String codec between the internal connections.
 
-A new ByteArrayCodec ships with lettuce 3.3 that allows byte array connections
+A new `ByteArrayCodec` ships with lettuce 3.3 that allows byte array connections
 without the need to create an own codec.
 
 Geo commands
@@ -107,45 +113,46 @@ Geo commands
 This release supports the Geo-commands of the upcoming Redis 3.2 release.
 The Geo-API allows to maintain a set (backed by a Redis sorted set) of Geo
 points described by WGS84 coordinates. You can add and query set members
-using the new Geo-API. You can remove members using ZREM
+using the new Geo-API. You can remove members using `ZREM`
 until https://github.com/antirez/redis/issues/2674 is resolved.
 
 The implementation for the Geo-API within lettuce differs from the other API's.
-The response structures of GEORADIUS depend on the command input. The strong typing
-within Java would only allow a List<Object> which contains sub-lists of Strings
-and numbers. So List<Object> is not very convenient to operate. The Geo-API
+The response structures of `GEORADIUS` depend on the command input. The strong typing
+within Java would only allow a `List<Object>` which contains sub-lists of Strings
+and numbers. So `List<Object>` is not very convenient to operate. The Geo-API
 features GeoCoordinates and GeoWithin types that allow direct access to
 the response values such as distance or the coordinate points.
 
 Example code:
 
-    redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim",
-                      8.3796281, 48.9978127, "Office tower",
-                      8.665351, 49.553302, "Train station");
+```java
+redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim",
+                  8.3796281, 48.9978127, "Office tower",
+                  8.665351, 49.553302, "Train station");
 
-    Set<String> georadius = redis.georadius(key, 8.6582861, 49.5285695,
-                                                   5, GeoArgs.Unit.km);
+Set<String> georadius = redis.georadius(key, 8.6582861, 49.5285695,
+                                               5, GeoArgs.Unit.km);
 
-    // georadius contains "Weinheim" and "Train station"
+// georadius contains "Weinheim" and "Train station"
 
-    Double distance = redis.geodist(key, "Weinheim", "Train station", GeoArgs.Unit.km);
+Double distance = redis.geodist(key, "Weinheim", "Train station", GeoArgs.Unit.km);
 
-    // distance ≈ 2.78km
+// distance ≈ 2.78km
 
-    GeoArgs geoArgs = new GeoArgs().withHash()
-                                   .withCoordinates()
-                                   .withDistance()
-                                   .withCount(1)
-                                   .desc();
+GeoArgs geoArgs = new GeoArgs().withHash()
+                               .withCoordinates()
+                               .withDistance()
+                               .withCount(1)
+                               .desc();
 
-    List<GeoWithin<String>> georadiusWithArgs = redis.georadius(key,
-                                                            8.665351, 49.553302,
-                                                            5, GeoArgs.Unit.km,
-                                                            geoArgs);
+List<GeoWithin<String>> georadiusWithArgs = redis.georadius(key,
+                                                        8.665351, 49.553302,
+                                                        5, GeoArgs.Unit.km,
+                                                        geoArgs);
 
-    // georadiusWithArgs contains "Weinheim" and "Train station"
-    // ordered descending by distance and containing distance/coordinates
-
+// georadiusWithArgs contains "Weinheim" and "Train station"
+// ordered descending by distance and containing distance/coordinates
+```
 
 Command execution reliability
 -----------------------------
