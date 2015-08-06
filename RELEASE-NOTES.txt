@@ -193,6 +193,7 @@ Updated dependencies
 * rxjava 1.0.13 (new)
 * Google Guava 17.0 -> 18.0
 * netty 4.0.28.Final 4.0.30.Final
+* commons-pool2 2.2 -> 2.4.2
 
 
 Enhancements
