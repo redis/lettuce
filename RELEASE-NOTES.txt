@@ -1,4 +1,4 @@
-              lettuce 4.0.Beta1 RELEASE NOTES
+lettuce 4.0.Beta1 RELEASE NOTES
 
 This release is a major release that introduces numerous changes like stateful connections,
 the reactive API and many more. Lettuce 4.0 includes all features from lettuce 3.3.
@@ -7,7 +7,7 @@ This release contains some breaking changes. You may want to consult the
 wiki at https://github.com/mp911de/lettuce/wiki/Migration-from-3.x-to-4.x
 to check the migration guide.
 
-The all `Redis...Connection` and `Redis...AsyncConnection` interfaces are deprecated and replaced by new `...Commands`
+All `Redis...Connection` and `Redis...AsyncConnection` interfaces are deprecated and replaced by new `...Commands`
 interfaces.
 
 The cluster API was extended to run a command on multiple nodes and invocation
@@ -162,7 +162,8 @@ Following commands are supported for cross-slot command execution:
 * DEL: Delete the KEYs from the affected cluster. Returns the number of keys that were removed
 * MGET: Get the values of all given KEYs. Returns the values in the order of the keys.
 * MSET: Set multiple key/value pairs for all given KEYs. Returns always OK.
-* Cross-slot command execution is available on the following APIs:
+
+Cross-slot command execution is available on the following APIs:
 
 * RedisAdvancedClusterCommands
 * RedisAdvancedClusterAsyncCommands
@@ -185,6 +186,13 @@ Commands are dispatched to the nodes within the selection, the result (Completio
 This API is currently only available for async commands and a technical preview so your feedback is highly appreciated.
 
 Read more: https://github.com/mp911de/lettuce/wiki/Redis-Cluster-(4.0)
+
+
+Updated dependencies
+--------------------
+* rxjava 1.0.13 (new)
+* Google Guava 17.0 -> 18.0
+* netty 4.0.28.Final 4.0.30.Final
 
 
 Enhancements
@@ -211,4 +219,4 @@ lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 For complete information on lettuce see the websites:
 
 * http://github.com/mp911de/lettuce
-* http://redis.paluch.biz.
+* http://redis.paluch.biz
