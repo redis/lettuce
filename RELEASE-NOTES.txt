@@ -5,18 +5,18 @@ new GEO commands for the upcoming Redis 3.2 release and allows batching, an exte
 to pipelining. The documentation within the lettuce wiki was overhauled.
 Meet the very new wiki at https://github.com/mp911de/lettuce/wiki
 
-The test stability issue, flakey tests, was addressed by running infinite testing jobs.
-The issue of some tests was missing synchronization and relying too much on timing.
+The test stability issue, was addressed by running infinite testing jobs.
+Instabilities were causes due to missing synchronization and relying too much on timing.
 However, the real life teaches us, not to rely on time, rather on hard facts whether
 a cluster node is available, or a command is written out to the transport.
 The tests are improved and fail less often.
 
 
-Cluster improvements
------
+Redis Cluster: Node connections
+-------------------------------
 lettuce's cluster support is enhanced by a couple of features. Users can obtain
-connection to the particular cluster nodes by specifying the nodeId or host and port.
-The new methods are available on two new interfaces:
+connection to the particular cluster nodes by specifying either the nodeId or
+host and port. The new methods are available on two new interfaces:
 
  * RedisAdvancedClusterConnection
  * RedisAdvancedClusterAsyncConnection
@@ -44,6 +44,8 @@ The cluster client handles now ASK redirecting the same way as MOVED redirection
 It is transparent for the client. Dispatching the commands between the particular
 cluster connections was optimized, and the performance was improved.
 
+Cluster topology view refreshing
+--------------------------------
 Another cluster-related item is the cluster topology view refreshing.
 Reloading the partitions was possible since lettuce 3.0. Version 3.3 enabled the
 reloading on a regular basis in the background. The background update will close
@@ -62,11 +64,10 @@ Example code:
 
 
 Pipelining
------
-Lettuce works in its async mode since the very beginning in a pipelining mode
-described in http://redis.io/topics/pipelining. What is different now? lettuce
-performs a flush after each command invocation on the transport.
-This is fine for the most use cases, but flushing can become expensive
+----------
+Lettuce operates using pipelining described in http://redis.io/topics/pipelining.
+What is different now? lettuce performs a flush after each command invocation
+on the transport. This is fine for the most use cases, but flushing can become expensive
 and a limiting factor when you are bulk loading, or you need batching.
 The async connections allow you to disable the auto-flush behavior
 and flush the queued commands at the moment you want to send them over the transport:
@@ -87,12 +88,13 @@ Example code:
 Why on the async connections only? The async connections return already a handle
 to the result, the sync API does not. Adding another API would require to
 duplicate all interfaces and cause the code to be much more complex.
-Pipelining/Batching can improve your throughput.
+Pipelining/Batching can improve your throughput. Pipelining also works with
+Redis Cluster and is disabled on pooled connections.
 
 Read more: https://github.com/mp911de/lettuce/wiki/Pipelining-and-command-flushing
 
 Codecs
------
+------
 lettuce 3.3 uses a dedicated String codec instance for each String connection
 (Standalone) instead of sharing one String codec for all connections.
 Cluster connections share a String codec between the internal connections.
@@ -101,11 +103,12 @@ A new ByteArrayCodec ships with lettuce 3.3 that allows byte array connections
 without the need to create an own codec.
 
 Geo commands
------
-This release supports the upcoming Geo-commands of Redis 3.2. The Geo-API allows
-to maintain a set (backed by a Redis sorted set) of Geo points described by WGS84
-coordinates. You can add and query set members using the new Geo-API. You can remove
-members using ZREM until https://github.com/antirez/redis/issues/2674 is resolved.
+------------
+This release supports the Geo-commands of the upcoming Redis 3.2 release.
+The Geo-API allows to maintain a set (backed by a Redis sorted set) of Geo
+points described by WGS84 coordinates. You can add and query set members
+using the new Geo-API. You can remove members using ZREM
+until https://github.com/antirez/redis/issues/2674 is resolved.
 
 The implementation for the Geo-API within lettuce differs from the other API's.
 The response structures of GEORADIUS depend on the command input. The strong typing
@@ -145,7 +148,7 @@ Example code:
 
 
 Command execution reliability
------
+-----------------------------
 A new doc describes Command execution reliability in the context of lettuce and
 reconnects. In general, lettuce supports at-least-once and at-most-once semantics.
 The mode of operations is bound to the auto-reconnect flag in the client options.
