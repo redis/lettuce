@@ -113,14 +113,18 @@ Geo commands
 This release supports the Geo-commands of the upcoming Redis 3.2 release.
 The Geo-API allows to maintain a set (backed by a Redis sorted set) of Geo
 points described by WGS84 coordinates. You can add and query set members
-using the new Geo-API. You can remove members using `ZREM`
+using the new Geo-API. Use `ZREM` to remove members from the Geo set
 until https://github.com/antirez/redis/issues/2674 is resolved.
 
-The implementation for the Geo-API within lettuce differs from the other API's.
-The response structures of `GEORADIUS` depend on the command input. The strong typing
-within Java would only allow a `List<Object>` which contains sub-lists of Strings
-and numbers. So `List<Object>` is not very convenient to operate. The Geo-API
-features GeoCoordinates and GeoWithin types that allow direct access to
+The design of the Geo-API within lettuce, differs from other APIs in lettuce.
+The response structures of `GEORADIUS` depend on the command input, and there
+are other languages that fit better into the Redis response structure patterns.
+The static type checking within Java would only allow a `List<Object>` (or `Object`)
+which contains nested Lists and Maps carrying the data. You would have to cast
+the elements to maps or lists and access then again the nested elements.
+Working with Lists and Maps in Java is less convenient compared to JavaScript or Ruby.
+
+The Geo-API features `GeoCoordinates` and `GeoWithin` types that allow direct access to
 the response values such as distance or the coordinate points.
 
 Example code:
