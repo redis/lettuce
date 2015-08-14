@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -13,8 +15,11 @@
     <packaging>jar</packaging>
 
     <name>lettuce</name>
-    <url>http://github.com/mp911de/lettuce</url>
-    <description>Java redis client. This is a fork of lettuce from https://github.com/wg/lettuce</description>
+    <url>http://github.com/mp911de/lettuce/wiki</url>
+    <description>Advanced and thread-safe Java Redis client for synchronous, asynchronous, and
+        reactive usage. Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs
+        and much more.
+    </description>
 
     <licenses>
         <license>

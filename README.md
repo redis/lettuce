@@ -1,27 +1,25 @@
-lettuce - A scalable Java Redis client
-======================================
-
+lettuce - Advanced and thread-safe Java Redis client
+====================================================
 
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
-Lettuce is a scalable thread-safe Redis client providing synchronous,
-asynchronous and reactive APIs. Multiple threads may share one connection if they avoid blocking and transactional
+Lettuce is a scalable thread-safe Redis client suited for synchronous,
+asynchronous and reactive usage. Multiple threads may share one connection if they avoid blocking and transactional
 operations such as `BLPOP` and  `MULTI`/`EXEC`.
-Multiple connections are efficiently managed by the excellent netty NIO
-framework. Support for advanced Redis features such as Sentinel, Cluster, and Redis data models
-is included.
+lettuce is built with [netty](https://github.com/netty/netty).
+Supports advanced Redis features such as Sentinel, Cluster, Pipelining and Redis data models.
 
 This version of lettuce has been tested against Redis and 3.0.
 
-* Works with Java 6, 7 and 8
-* synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
+* [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and  [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
 * [SSL](https://github.com/mp911de/lettuce/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets) connections
 * [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
-* [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
+* [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) integration
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/mp911de/lettuce/wiki/Command-Interfaces-(4.0))
+* Requires Java 8
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
@@ -97,9 +95,9 @@ Basic Usage
 -----------
 
 ```java
-  RedisClient client = new RedisClient("localhost")
-  RedisStringsConnection<String, String> connection = client.connect()
-  String value = connection.get("key")
+RedisClient client = new RedisClient("localhost")
+RedisStringsConnection<String, String> connection = client.connect()
+String value = connection.get("key")
 ```
 
 Each Redis command is implemented by one or more methods with names identical
@@ -107,7 +105,7 @@ to the lowercase Redis command name. Complex commands with multiple modifiers
 that change the result type include the CamelCased modifier as part of the
 command name, e.g. zrangebyscore and zrangebyscoreWithScores.
 
-See https://github.com/mp911de/lettuce/wiki/Basic-usage  for further details.
+See [Basic usage](https://github.com/mp911de/lettuce/wiki/Basic-usage) for further details.
 
 Asynchronous Connections
 ------------------------
@@ -123,7 +121,7 @@ set.get() == "OK"
 get.get() == "value"
 ```
 
-See https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections for further details.
+See [Asynchronous API](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) for further details.
 
 Pub/Sub
 -------
