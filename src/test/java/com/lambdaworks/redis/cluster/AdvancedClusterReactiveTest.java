@@ -9,16 +9,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import rx.Observable;
+import rx.exceptions.CompositeException;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.RandomKeys;
+import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
@@ -28,13 +32,16 @@ import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
  */
 public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
+    public static final String KEY_ON_NODE_1 = "a";
+    public static final String KEY_ON_NODE_2 = "b";
+
     private RedisAdvancedClusterReactiveCommands<String, String> commands;
-    private RedisCommands<String, String> sync;
+    private RedisCommands<String, String> syncCommands;
 
     @Before
     public void before() throws Exception {
         commands = clusterClient.connectClusterAsync().getStatefulConnection().reactive();
-        sync = RxSyncInvocationHandler.sync(commands.getStatefulConnection());
+        syncCommands = RxSyncInvocationHandler.sync(commands.getStatefulConnection());
     }
 
     @After
@@ -76,7 +83,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         assertThat(result).hasSize(1).contains("OK");
 
         for (String mykey : RandomKeys.KEYS) {
-            String s1 = sync.get(mykey);
+            String s1 = syncCommands.get(mykey);
             assertThat(s1).isEqualTo(RandomKeys.MAP.get(mykey));
         }
     }
@@ -89,7 +96,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         assertThat(result).hasSize(1).contains(true);
 
         for (String mykey : RandomKeys.KEYS) {
-            String s1 = sync.get(mykey);
+            String s1 = syncCommands.get(mykey);
             assertThat(s1).isEqualTo(RandomKeys.MAP.get(mykey));
         }
     }
@@ -110,19 +117,129 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     }
 
     @Test
+    public void mgetCrossSlotStreaming() throws Exception {
+
+        msetCrossSlot();
+
+        ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
+
+        Observable<Long> observable = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long count = getSingle(observable);
+
+        assertThat(result.getList()).hasSize(RandomKeys.COUNT);
+        assertThat(count).isEqualTo(RandomKeys.COUNT);
+    }
+
+    @Test
     public void delCrossSlot() throws Exception {
 
         msetCrossSlot();
 
-        Observable<List<Long>> observable = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT])).toList();
-        List<Long> result = observable.toBlocking().first();
+        Observable<Long> observable = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long result = getSingle(observable);
 
-        assertThat(result).hasSize(1).contains((long) RandomKeys.COUNT);
+        assertThat(result).isEqualTo(RandomKeys.COUNT);
 
         for (String mykey : RandomKeys.KEYS) {
-            String s1 = sync.get(mykey);
+            String s1 = syncCommands.get(mykey);
             assertThat(s1).isNull();
         }
+    }
+
+    @Test
+    public void clientSetname() throws Exception {
+
+        String name = "test-cluster-client";
+
+        assertThat(clusterClient.getPartitions().size()).isGreaterThan(0);
+
+        getSingle(commands.clientSetname(name));
+
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+            RedisClusterCommands<String, String> nodeConnection = commands.getStatefulConnection().sync()
+                    .getConnection(redisClusterNode.getNodeId());
+            assertThat(nodeConnection.clientList()).contains(name);
+        }
+    }
+
+    @Test(expected = CompositeException.class)
+    public void clientSetnameRunOnError() throws Exception {
+        getSingle(commands.clientSetname("not allowed"));
+    }
+
+    @Test
+    public void dbSize() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        Long dbsize = getSingle(commands.dbsize());
+        assertThat(dbsize).isEqualTo(2);
+    }
+
+    @Test
+    public void flushall() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(getSingle(commands.flushall())).isEqualTo("OK");
+
+        Long dbsize = syncCommands.dbsize();
+        assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
+    public void flushdb() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(getSingle(commands.flushdb())).isEqualTo("OK");
+
+        Long dbsize = syncCommands.dbsize();
+        assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
+    public void keys() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        List<String> result = commands.keys("*").toList().toBlocking().single();
+
+        assertThat(result).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
+    }
+
+    @Test
+    public void keysStreaming() throws Exception {
+
+        writeKeysToTwoNodes();
+        ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
+
+        assertThat(getSingle(commands.keys(result, "*"))).isEqualTo(2);
+        assertThat(result.getList()).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
+    }
+
+    @Test
+    public void randomKey() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(getSingle(commands.randomkey())).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2);
+    }
+
+    @Test
+    public void scriptFlush() throws Exception {
+        assertThat(getSingle(commands.scriptFlush())).isEqualTo("OK");
+    }
+
+    @Test
+    public void scriptKill() throws Exception {
+        assertThat(getSingle(commands.scriptKill())).isEqualTo("OK");
+    }
+
+    @Test
+    @Ignore("Run me manually, I will shutdown all your cluster nodes so you need to restart the Redis Cluster after this test")
+    public void shutdown() throws Exception {
+        commands.shutdown(true).subscribe();
     }
 
     @Test
@@ -146,5 +263,14 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         } catch (Exception e) {
             assertThat(error.get()).isTrue();
         }
+    }
+
+    private <T> T getSingle(Observable<T> observable) {
+        return observable.toBlocking().single();
+    }
+
+    private void writeKeysToTwoNodes() {
+        syncCommands.set(KEY_ON_NODE_1, value);
+        syncCommands.set(KEY_ON_NODE_2, value);
     }
 }

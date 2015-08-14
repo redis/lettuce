@@ -456,6 +456,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             clusterConnection.getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
+            clusterConnection.getConnection(redisClusterNode.getNodeId());
         }
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(4);

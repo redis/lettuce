@@ -1,28 +1,38 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
+
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Random;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lambdaworks.redis.AbstractRedisAsyncCommands;
-import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
 import com.lambdaworks.redis.cluster.api.NodeSelection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.NodeSelectionAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -32,6 +42,8 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  */
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncConnection<K, V>, RedisAdvancedClusterAsyncCommands<K, V> {
+
+    private Random random = new Random();
 
     /**
      * Initialize a new connection.
@@ -59,18 +71,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             executions.put(entry.getKey(), del);
         }
 
-        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            AtomicLong result = new AtomicLong();
-            for (RedisFuture<Long> longRedisFuture : executions.values()) {
-                Long value = execute(() -> longRedisFuture.get());
-
-                if (value != null) {
-                    result.getAndAdd(value);
-                }
-            }
-
-            return result.get();
-        });
+        return MultiNodeExecution.aggregateAsync(executions);
     }
 
     @Override
@@ -90,6 +91,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             executions.put(entry.getKey(), mget);
         }
 
+        // restore order of key
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             List<V> result = Lists.newArrayList();
             for (K opKey : keys) {
@@ -97,7 +99,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
                 int position = partitioned.get(slot).indexOf(opKey);
                 RedisFuture<List<V>> listRedisFuture = executions.get(slot);
-                result.add(execute(() -> listRedisFuture.get().get(position)));
+                result.add(MultiNodeExecution.execute(() -> listRedisFuture.get().get(position)));
             }
 
             return result;
@@ -119,18 +121,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             executions.put(entry.getKey(), del);
         }
 
-        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            AtomicLong result = new AtomicLong();
-            for (RedisFuture<Long> longRedisFuture : executions.values()) {
-                Long value = execute(() -> longRedisFuture.get());
-
-                if (value != null) {
-                    result.getAndAdd(value);
-                }
-            }
-
-            return result.get();
-        });
+        return MultiNodeExecution.aggregateAsync(executions);
     }
 
     @Override
@@ -153,13 +144,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             executions.put(entry.getKey(), mset);
         }
 
-        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            for (RedisFuture<String> listRedisFuture : executions.values()) {
-                return execute(() -> listRedisFuture.get());
-            }
-
-            return null;
-        });
+        return MultiNodeExecution.firstOfAsync(executions);
     }
 
     @Override
@@ -184,7 +169,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
-                Boolean b = execute(() -> listRedisFuture.get());
+                Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
                 if (b != null && b) {
                     return true;
                 }
@@ -194,12 +179,137 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         });
     }
 
-    private <T> T execute(Callable<T> function) {
-        try {
-            return function.call();
-        } catch (Exception e) {
-            throw new RedisException(e);
+    @Override
+    public RedisFuture<String> clientSetname(K name) {
+
+        Map<String, RedisFuture<String>> executions = Maps.newHashMap();
+        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
+            RedisClusterAsyncCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
+            if (byNodeId.isOpen()) {
+                executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.clientSetname(name));
+            }
+
+            RedisClusterAsyncCommands<K, V> byHost = getConnection(redisClusterNode.getUri().getHost(), redisClusterNode
+                    .getUri().getPort());
+            if (byHost.isOpen()) {
+                executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.clientSetname(name));
+            }
         }
+
+        return MultiNodeExecution.firstOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<Long> dbsize() {
+        Map<String, RedisFuture<Long>> executions = executeOnMasters(RedisServerAsyncCommands::dbsize);
+        return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<String> flushall() {
+        Map<String, RedisFuture<String>> executions = executeOnMasters(RedisServerAsyncCommands::flushall);
+        return MultiNodeExecution.firstOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<String> flushdb() {
+        Map<String, RedisFuture<String>> executions = executeOnMasters(RedisServerAsyncCommands::flushdb);
+        return MultiNodeExecution.firstOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<String> scriptFlush() {
+        Map<String, RedisFuture<String>> executions = executeOnNodes(RedisScriptingAsyncCommands::scriptFlush,
+                redisClusterNode -> true);
+        return MultiNodeExecution.firstOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<String> scriptKill() {
+        Map<String, RedisFuture<String>> executions = executeOnNodes(RedisScriptingAsyncCommands::scriptFlush,
+                redisClusterNode -> true);
+        return MultiNodeExecution.alwaysOkOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<V> randomkey() {
+
+        Partitions partitions = getStatefulConnection().getPartitions();
+        int index = random.nextInt(partitions.size());
+
+        RedisClusterAsyncCommands<K, V> connection = getConnection(partitions.getPartition(index).getNodeId());
+        return connection.randomkey();
+    }
+
+    @Override
+    public RedisFuture<List<K>> keys(K pattern) {
+        Map<String, RedisFuture<List<K>>> executions = executeOnMasters(commands -> commands.keys(pattern));
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            List<K> result = Lists.newArrayList();
+            for (RedisFuture<List<K>> future : executions.values()) {
+                result.addAll(MultiNodeExecution.execute(() -> future.get()));
+            }
+            return result;
+        });
+    }
+
+    @Override
+    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        Map<String, RedisFuture<Long>> executions = executeOnMasters(commands -> commands.keys(channel, pattern));
+        return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    @Override
+    public void shutdown(boolean save) {
+
+        executeOnNodes(commands -> {
+            commands.shutdown(save);
+
+            Command<K, V, Long> command = new Command<>(CommandType.SHUTDOWN, new IntegerOutput<>(codec), null);
+            AsyncCommand<K, V, Long> async = new AsyncCommand<K, V, Long>(command);
+            async.complete();
+            return async;
+        }, redisClusterNode -> true);
+    }
+
+    /**
+     * Run a command on all available masters,
+     * 
+     * @param function function producing the command
+     * @param <T> result type
+     * @return map of a key (counter) and commands.
+     */
+    protected <T> Map<String, RedisFuture<T>> executeOnMasters(
+            Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function) {
+        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
+    }
+
+    /**
+     * Run a command on all available nodes that match {@code filter}.
+     * 
+     * @param function function producing the command
+     * @param filter filter function for the node selection
+     * @param <T> result type
+     * @return map of a key (counter) and commands.
+     */
+    protected <T> Map<String, RedisFuture<T>> executeOnNodes(
+            Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function, Function<RedisClusterNode, Boolean> filter) {
+        Map<String, RedisFuture<T>> executions = Maps.newHashMap();
+
+        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
+
+            if (!filter.apply(redisClusterNode)) {
+                continue;
+            }
+
+            RedisURI uri = redisClusterNode.getUri();
+            RedisClusterAsyncCommands<K, V> connection = getConnection(uri.getHost(), uri.getPort());
+            if (connection.isOpen()) {
+                executions.put(redisClusterNode.getNodeId(), function.apply(connection));
+            }
+        }
+        return executions;
     }
 
     @Override

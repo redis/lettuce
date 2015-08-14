@@ -1,7 +1,10 @@
 package com.lambdaworks.redis.cluster.api.rx;
 
+import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
 import rx.Observable;
 
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -75,5 +78,79 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     Observable<Boolean> msetnx(Map<K, V> map);
+
+    /**
+     * Set the current connection name on all cluster nodes with pipelining.
+     *
+     * @param name the client name
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     */
+    Observable<String> clientSetname(K name);
+
+    /**
+     * Remove all keys from all databases on all cluster masters with pipelining.
+     *
+     * @return String simple-string-reply
+     */
+    Observable<String> flushall();
+
+    /**
+     * Remove all keys from the current database on all cluster masters with pipelining.
+     *
+     * @return String simple-string-reply
+     */
+    Observable<String> flushdb();
+
+    /**
+     * Return the number of keys in the selected database on all cluster masters.
+     *
+     * @return Long integer-reply
+     */
+    Observable<Long> dbsize();
+
+    /**
+     * Find all keys matching the given pattern on all cluster masters.
+     *
+     * @param pattern the pattern type: patternkey (pattern)
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     */
+    Observable<K> keys(K pattern);
+
+    /**
+     * Find all keys matching the given pattern on all cluster masters.
+     *
+     * @param channel the channel
+     * @param pattern the pattern
+     * @return Long array-reply list of keys matching {@code pattern}.
+     */
+    Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+
+    /**
+     * Return a random key from the keyspace on a random master.
+     *
+     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     */
+    Observable<V> randomkey();
+
+    /**
+     * Remove all the scripts from the script cache on all cluster nodes.
+     *
+     * @return String simple-string-reply
+     */
+    Observable<String> scriptFlush();
+
+    /**
+     * Kill the script currently in execution on all cluster nodes. This call does not fail even if no scripts are running.
+     *
+     * @return String simple-string-reply, always {@literal OK}.
+     */
+    Observable<String> scriptKill();
+
+    /**
+     * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
+     *
+     * @param save {@literal true} force save operation
+     */
+    Observable<Void> shutdown(boolean save);
 
 }

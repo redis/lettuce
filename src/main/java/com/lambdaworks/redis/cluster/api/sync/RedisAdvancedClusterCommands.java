@@ -6,6 +6,7 @@ import java.util.Map;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
 
 /**
  * Advanced synchronous and thread-safe Redis Cluster API.
@@ -60,7 +61,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
      * 
-     * @param map the null
+     * @param map the map
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
     String mset(Map<K, V> map);
@@ -75,5 +76,79 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     Boolean msetnx(Map<K, V> map);
+
+    /**
+     * Set the current connection name on all known cluster nodes with pipelining.
+     *
+     * @param name the client name
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     */
+    String clientSetname(K name);
+
+    /**
+     * Remove all keys from all databases on all cluster masters with pipelining.
+     *
+     * @return String simple-string-reply
+     */
+    String flushall();
+
+    /**
+     * Remove all keys from the current database on all cluster masters with pipelining.
+     *
+     * @return String simple-string-reply
+     */
+    String flushdb();
+
+    /**
+     * Return the number of keys in the selected database on all cluster masters.
+     *
+     * @return Long integer-reply
+     */
+    Long dbsize();
+
+    /**
+     * Find all keys matching the given pattern on all cluster masters.
+     *
+     * @param pattern the pattern type: patternkey (pattern)
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     */
+    List<K> keys(K pattern);
+
+    /**
+     * Find all keys matching the given pattern on all cluster masters.
+     *
+     * @param channel the channel
+     * @param pattern the pattern
+     * @return Long array-reply list of keys matching {@code pattern}.
+     */
+    Long keys(KeyStreamingChannel<K> channel, K pattern);
+
+    /**
+     * Return a random key from the keyspace on a random master.
+     *
+     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     */
+    V randomkey();
+
+    /**
+     * Remove all the scripts from the script cache on all cluster nodes.
+     *
+     * @return String simple-string-reply
+     */
+    String scriptFlush();
+
+    /**
+     * Kill the script currently in execution on all cluster nodes. This call does not fail even if no scripts are running.
+     *
+     * @return String simple-string-reply, always {@literal OK}.
+     */
+    String scriptKill();
+
+    /**
+     * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
+     * 
+     * @param save {@literal true} force save operation
+     */
+    void shutdown(boolean save);
 
 }

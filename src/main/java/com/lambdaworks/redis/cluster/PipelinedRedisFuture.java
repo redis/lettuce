@@ -17,7 +17,7 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
 
     private CountDownLatch latch = new CountDownLatch(1);
 
-    public PipelinedRedisFuture(Map<Integer, ? extends RedisFuture<?>> executions,
+    public PipelinedRedisFuture(Map<?, ? extends RedisFuture<?>> executions,
             Function<PipelinedRedisFuture<V>, V> converter) {
 
         CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[executions.size()]))

@@ -78,7 +78,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             }
 
             try {
-                ConnectionKey key = new ConnectionKey(intent, partition.getNodeId());
+                // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different host
+                // because the nodeId is handled by a different host.
+                RedisURI uri = partition.getUri();
+                ConnectionKey key = new ConnectionKey(intent, uri.getHost(), uri.getPort());
                 return writers[slot] = connections.get(key);
             } catch (UncheckedExecutionException e) {
                 throw new RedisException(e.getCause());
@@ -88,8 +91,6 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
         return writer;
     }
-
-
 
     @Override
     public StatefulRedisConnection<K, V> getConnection(Intent intent, String nodeId) {

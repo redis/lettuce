@@ -9,16 +9,12 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -26,16 +22,16 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lambdaworks.Wait;
-import com.lambdaworks.redis.LettuceFutures;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -46,12 +42,18 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 public class AdvancedClusterClientTest extends AbstractClusterTest {
 
+    public static final String KEY_ON_NODE_1 = "a";
+    public static final String KEY_ON_NODE_2 = "b";
     private RedisAdvancedClusterAsyncCommands<String, String> commands;
+    private RedisAdvancedClusterCommands<String, String> syncCommands;
+    private StatefulRedisClusterConnection<String, String> clusterConnection;
 
     @Before
     public void before() throws Exception {
         clusterClient.reloadPartitions();
-        commands = clusterClient.connectClusterAsync();
+        clusterConnection = clusterClient.connect();
+        commands = clusterConnection.async();
+        syncCommands = clusterConnection.sync();
     }
 
     @After
@@ -273,7 +275,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         for (CompletableFuture<Object> future : eval.futures()) {
             assertThat(future.isDone()).isTrue();
         }
-
     }
 
     @Test
@@ -403,7 +404,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         assertThat(result.get()).hasSize(keys.size());
         assertThat(result.get()).isEqualTo(expectation);
-
     }
 
     @Test
@@ -424,7 +424,106 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             String s1 = commands.get(mykey).get();
             assertThat(s1).isNull();
         }
+    }
 
+    @Test
+    public void clientSetname() throws Exception {
+
+        String name = "test-cluster-client";
+
+        assertThat(clusterClient.getPartitions().size()).isGreaterThan(0);
+
+        syncCommands.clientSetname(name);
+
+        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+            RedisClusterCommands<String, String> nodeConnection = commands.getStatefulConnection().sync()
+                    .getConnection(redisClusterNode.getNodeId());
+            assertThat(nodeConnection.clientList()).contains(name);
+        }
+    }
+
+    @Test(expected = RedisCommandExecutionException.class)
+    public void clientSetnameRunOnError() throws Exception {
+        syncCommands.clientSetname("not allowed");
+    }
+
+    @Test
+    public void dbSize() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        RedisClusterCommands<String, String> nodeConnection1 = clusterConnection.getConnection(host, port1).sync();
+        RedisClusterCommands<String, String> nodeConnection2 = clusterConnection.getConnection(host, port2).sync();
+
+        assertThat(nodeConnection1.dbsize()).isEqualTo(1);
+        assertThat(nodeConnection2.dbsize()).isEqualTo(1);
+
+        Long dbsize = syncCommands.dbsize();
+        assertThat(dbsize).isEqualTo(2);
+    }
+
+    @Test
+    public void flushall() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(syncCommands.flushall()).isEqualTo("OK");
+
+        Long dbsize = syncCommands.dbsize();
+        assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
+    public void flushdb() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(syncCommands.flushdb()).isEqualTo("OK");
+
+        Long dbsize = syncCommands.dbsize();
+        assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
+    public void keys() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(syncCommands.keys("*")).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
+    }
+
+    @Test
+    public void keysStreaming() throws Exception {
+
+        writeKeysToTwoNodes();
+        ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
+
+        assertThat(syncCommands.keys(result, "*")).isEqualTo(2);
+        assertThat(result.getList()).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
+    }
+
+    @Test
+    public void randomKey() throws Exception {
+
+        writeKeysToTwoNodes();
+
+        assertThat(syncCommands.randomkey()).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2);
+    }
+
+    @Test
+    public void scriptFlush() throws Exception {
+        assertThat(syncCommands.scriptFlush()).isEqualTo("OK");
+    }
+
+    @Test
+    public void scriptKill() throws Exception {
+        assertThat(syncCommands.scriptKill()).isEqualTo("OK");
+    }
+
+    @Test
+    @Ignore("Run me manually, I will shutdown all your cluster nodes so you need to restart the Redis Cluster after this test")
+    public void shutdown() throws Exception {
+        syncCommands.shutdown(true);
     }
 
     @Test
@@ -541,6 +640,11 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     protected String key(int i) {
         return key + "-" + i;
+    }
+
+    private void writeKeysToTwoNodes() {
+        syncCommands.set(KEY_ON_NODE_1, value);
+        syncCommands.set(KEY_ON_NODE_2, value);
     }
 
 }
