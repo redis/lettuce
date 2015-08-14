@@ -1,13 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -94,6 +96,17 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
     public void setPartitions(Partitions partitions) {
         getWriter().getClusterConnectionProvider().setPartitions(partitions);
         this.partitions = partitions;
+    }
+
+    @Override
+    public void setReadFrom(ReadFrom readFrom) {
+        checkArgument(readFrom != null, "readFrom must not be null");
+        getWriter().setReadFrom(readFrom);
+    }
+
+    @Override
+    public ReadFrom getReadFrom() {
+        return getWriter().getReadFrom();
     }
 
 }

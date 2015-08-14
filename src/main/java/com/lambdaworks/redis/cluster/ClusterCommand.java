@@ -10,6 +10,7 @@ import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
 
@@ -138,5 +139,10 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         sb.append(", executions=").append(executions);
         sb.append(']');
         return sb.toString();
+    }
+
+    @Override
+    public ProtocolKeyword getType() {
+        return command.getType();
     }
 }

@@ -32,6 +32,12 @@ public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<
     CommandArgs<K, V> getArgs();
 
     /**
+     *
+     * @return the redis command type like {@literal SADD}, {@literal HMSET}, {@literal QUIT}.
+     */
+    ProtocolKeyword getType();
+
+    /**
      * Encode the command.
      * 
      * @param buf byte buffer to operate on.
