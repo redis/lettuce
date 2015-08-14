@@ -1,11 +1,12 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -51,13 +52,34 @@ public class RedisAdvancedClusterAsyncConnectionImpl<K, V> extends RedisAsyncCon
         return connection;
     }
 
-    private RedisURI lookup(String nodeId) {
+    @Override
+    public RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count) {
+        RedisClusterAsyncConnection<K, V> connectionBySlot = findConnectionBySlot(slot);
 
-        for (RedisClusterNode partition : partitions) {
-            if (partition.getNodeId().equals(nodeId)) {
-                return partition.getUri();
-            }
+        if (connectionBySlot != null) {
+            return connectionBySlot.clusterGetKeysInSlot(slot, count);
         }
+
+        return super.clusterGetKeysInSlot(slot, count);
+    }
+
+    @Override
+    public RedisFuture<Long> clusterCountKeysInSlot(int slot) {
+        RedisClusterAsyncConnection<K, V> connectionBySlot = findConnectionBySlot(slot);
+
+        if (connectionBySlot != null) {
+            return connectionBySlot.clusterCountKeysInSlot(slot);
+        }
+
+        return super.clusterCountKeysInSlot(slot);
+    }
+
+    private RedisClusterAsyncConnection<K, V> findConnectionBySlot(int slot) {
+        RedisClusterNode node = partitions.getPartitionBySlot(slot);
+        if (node != null) {
+            return getConnection(node.getUri().getHost(), node.getUri().getPort());
+        }
+
         return null;
     }
 

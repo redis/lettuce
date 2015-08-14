@@ -1,15 +1,11 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.FastShutdown;
-import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 
 import com.google.common.collect.ImmutableList;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 
@@ -25,6 +21,12 @@ public class AbstractClusterTest {
     public static final int port4 = 7382;
 
     protected static RedisClusterClient clusterClient;
+
+    public static final int SLOT_A = SlotHash.getSlot("a".getBytes());
+    public static final int SLOT_B = SlotHash.getSlot("b".getBytes());
+
+    public static final String KEY_A = "a";
+    public static final String KEY_B = "b";
 
     protected String key = "key";
     protected String value = "value";

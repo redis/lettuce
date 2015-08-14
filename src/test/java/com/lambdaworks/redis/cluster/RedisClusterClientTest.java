@@ -7,7 +7,6 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-import java.net.ConnectException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -41,7 +40,6 @@ import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -50,16 +48,9 @@ import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
-public class RedisClusterClientTest {
-
-    public static final String host = TestSettings.hostAddr();
-    public static final int port1 = 7379;
-    public static final int port2 = 7380;
-    public static final int port3 = 7381;
-    public static final int port4 = 7382;
+public class RedisClusterClientTest extends AbstractClusterTest {
 
     protected static RedisClient client;
-    protected static RedisClusterClient clusterClient;
 
     protected Logger log = Logger.getLogger(getClass());
 
@@ -69,9 +60,6 @@ public class RedisClusterClientTest {
     protected RedisClusterConnection<String, String> redissync2;
     protected RedisClusterConnection<String, String> redissync3;
     protected RedisClusterConnection<String, String> redissync4;
-
-    protected String key = "key";
-    protected String value = "value";
 
     @Rule
     public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
@@ -95,7 +83,6 @@ public class RedisClusterClientTest {
 
     @AfterClass
     public static void shutdownClient() {
-
         FastShutdown.shutdown(client);
     }
 
@@ -290,14 +277,14 @@ public class RedisClusterClientTest {
     @Test
     public void testClusteredOperations() throws Exception {
 
-        SlotHash.getSlot("b".getBytes()); // 3300 -> Node 1 and Slave (Node 4)
-        SlotHash.getSlot("a".getBytes()); // 15495 -> Node 3
+        SlotHash.getSlot(KEY_B.getBytes()); // 3300 -> Node 1 and Slave (Node 4)
+        SlotHash.getSlot(KEY_A.getBytes()); // 15495 -> Node 3
 
-        RedisFuture<String> result = redis1.set("b", "value");
+        RedisFuture<String> result = redis1.set(KEY_B, "value");
         assertThat(result.getError()).isEqualTo(null);
-        assertThat(redissync3.set("a", "value")).isEqualTo("OK");
+        assertThat(redissync3.set(KEY_A, "value")).isEqualTo("OK");
 
-        RedisFuture<String> resultMoved = redis1.set("a", "value");
+        RedisFuture<String> resultMoved = redis1.set(KEY_A, "value");
         resultMoved.get();
         assertThat(resultMoved.getError()).contains("MOVED 15495");
         assertThat(resultMoved.get()).isEqualTo(null);
@@ -305,13 +292,13 @@ public class RedisClusterClientTest {
         clusterClient.reloadPartitions();
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
-        RedisFuture<String> setA = connection.set("a", "myValue1");
+        RedisFuture<String> setA = connection.set(KEY_A, "myValue1");
         setA.get();
 
         assertThat(setA.getError()).isNull();
         assertThat(setA.get()).isEqualTo("OK");
 
-        RedisFuture<String> setB = connection.set("b", "myValue2");
+        RedisFuture<String> setB = connection.set(KEY_B, "myValue2");
         assertThat(setB.get()).isEqualTo("OK");
 
         RedisFuture<String> setD = connection.set("d", "myValue2");
@@ -326,13 +313,13 @@ public class RedisClusterClientTest {
         clusterClient.reloadPartitions();
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
-        RedisFuture<String> setA = connection.set("a", "myValue1");
+        RedisFuture<String> setA = connection.set(KEY_A, "myValue1");
         setA.get();
 
         assertThat(setA.getError()).isNull();
         assertThat(setA.get()).isEqualTo("OK");
 
-        RedisFuture<String> setB = connection.set("b", "myValue2");
+        RedisFuture<String> setB = connection.set(KEY_B, "myValue2");
         assertThat(setB.get()).isEqualTo("OK");
 
         RedisFuture<String> setD = connection.set("d", "myValue2");
@@ -341,13 +328,13 @@ public class RedisClusterClientTest {
         RedisChannelHandler<String, String> rch = (RedisChannelHandler<String, String>) connection;
         rch.reset();
 
-        setA = connection.set("a", "myValue1");
+        setA = connection.set(KEY_A, "myValue1");
         setA.get();
 
         assertThat(setA.getError()).isNull();
         assertThat(setA.get()).isEqualTo("OK");
 
-        setB = connection.set("b", "myValue2");
+        setB = connection.set(KEY_B, "myValue2");
         assertThat(setB.get()).isEqualTo("OK");
 
         setD = connection.set("d", "myValue2");
@@ -397,7 +384,7 @@ public class RedisClusterClientTest {
         connection.setPartitions(partitions);
 
         // appropriate cluster node
-        RedisFuture<String> setB = connection.set("b", "myValue1");
+        RedisFuture<String> setB = connection.set(KEY_B, "myValue1");
 
         assertThat(setB instanceof ClusterCommand).isTrue();
 
@@ -409,7 +396,7 @@ public class RedisClusterClientTest {
         assertThat(clusterCommandB.isMoved()).isFalse();
 
         // gets redirection to node 3
-        RedisFuture<String> setA = connection.set("a", "myValue1");
+        RedisFuture<String> setA = connection.set(KEY_A, "myValue1");
 
         assertThat(setA instanceof ClusterCommand).isTrue();
 
@@ -431,7 +418,7 @@ public class RedisClusterClientTest {
         RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl<String, String>) clusterClient
                 .connectClusterAsync();
 
-        connection.set("a", "b");
+        connection.set(KEY_A, KEY_B);
 
         ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) connection
                 .getChannelWriter();
@@ -439,7 +426,7 @@ public class RedisClusterClientTest {
         final RedisAsyncConnectionImpl<Object, Object> backendConnection = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);
 
-        backendConnection.set("a", "b");
+        backendConnection.set(KEY_A, KEY_B);
         backendConnection.close();
 
         WaitFor.waitOrTimeout(new Condition() {
@@ -454,7 +441,7 @@ public class RedisClusterClientTest {
         assertThat(connection.isOpen()).isTrue();
         assertThat(connection.isClosed()).isFalse();
 
-        connection.set("a", "b");
+        connection.set(KEY_A, KEY_B);
 
         RedisAsyncConnectionImpl<Object, Object> backendConnection2 = writer.getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, 3300);
@@ -475,8 +462,8 @@ public class RedisClusterClientTest {
 
         List<RedisFuture<?>> futures = Lists.newArrayList();
         for (int i = 0; i < 100; i++) {
-            futures.add(connection.set("a" + i, "myValue1" + i));
-            futures.add(connection.set("b" + i, "myValue2" + i));
+            futures.add(connection.set(KEY_A + i, "myValue1" + i));
+            futures.add(connection.set(KEY_B + i, "myValue2" + i));
             futures.add(connection.set("d" + i, "myValue3" + i));
         }
 
@@ -485,8 +472,8 @@ public class RedisClusterClientTest {
         }
 
         for (int i = 0; i < 100; i++) {
-            RedisFuture<String> setA = connection.get("a" + i);
-            RedisFuture<String> setB = connection.get("b" + i);
+            RedisFuture<String> setA = connection.get(KEY_A + i);
+            RedisFuture<String> setB = connection.get(KEY_B + i);
             RedisFuture<String> setD = connection.get("d" + i);
 
             setA.get();
@@ -511,15 +498,15 @@ public class RedisClusterClientTest {
         RedisClusterConnection<String, String> connection = clusterClient.connectCluster();
 
         for (int i = 0; i < 100; i++) {
-            connection.set("a" + i, "myValue1" + i);
-            connection.set("b" + i, "myValue2" + i);
+            connection.set(KEY_A + i, "myValue1" + i);
+            connection.set(KEY_B + i, "myValue2" + i);
             connection.set("d" + i, "myValue3" + i);
         }
 
         for (int i = 0; i < 100; i++) {
 
-            assertThat(connection.get("a" + i)).isEqualTo("myValue1" + i);
-            assertThat(connection.get("b" + i)).isEqualTo("myValue2" + i);
+            assertThat(connection.get(KEY_A + i)).isEqualTo("myValue1" + i);
+            assertThat(connection.get(KEY_B + i)).isEqualTo("myValue2" + i);
             assertThat(connection.get("d" + i)).isEqualTo("myValue3" + i);
         }
 
@@ -531,9 +518,9 @@ public class RedisClusterClientTest {
 
         setNode4SlaveOfNode1();
 
-        redis1.set("b", value);
+        redis1.set(KEY_B, value);
 
-        String resultB = redis1.get("b").get();
+        String resultB = redis1.get(KEY_B).get();
         assertThat(resultB).isEqualTo(value);
         Thread.sleep(500); // give some time to replicate
 
@@ -541,7 +528,7 @@ public class RedisClusterClientTest {
         final RedisConnection<String, String> connect4 = client.connect(RedisURI.Builder.redis(host, port4).build());
 
         try {
-            connect4.get("b");
+            connect4.get(KEY_B);
         } catch (Exception e) {
             assertThat(e).hasMessageContaining("MOVED");
         }
@@ -552,20 +539,20 @@ public class RedisClusterClientTest {
         WaitFor.waitOrTimeout(new Condition() {
             @Override
             public boolean isSatisfied() {
-                return connect4.get("b") != null;
+                return connect4.get(KEY_B) != null;
             }
         }, timeout(seconds(5)));
 
-        String resultBViewedBySlave = connect4.get("b");
+        String resultBViewedBySlave = connect4.get(KEY_B);
         assertThat(resultBViewedBySlave).isEqualTo(value);
         connect4.quit();
 
-        resultBViewedBySlave = connect4.get("b");
+        resultBViewedBySlave = connect4.get(KEY_B);
         assertThat(resultBViewedBySlave).isEqualTo(value);
 
         connect4.readWrite();
         try {
-            connect4.get("b");
+            connect4.get(KEY_B);
         } catch (Exception e) {
             assertThat(e).hasMessageContaining("MOVED");
         }
@@ -585,18 +572,39 @@ public class RedisClusterClientTest {
 
     @Test
     public void getKeysInSlot() throws Exception {
-        redis1.set("b", value).get();
-        List<String> keys = redis1.clusterGetKeysInSlot(SlotHash.getSlot("b".getBytes()), 10).get();
-        assertThat(keys).isEqualTo(ImmutableList.of("b"));
+
+        RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster();
+        connection.set(KEY_A, value);
+        connection.set(KEY_B, value);
+
+        List<String> keysA = connection.clusterGetKeysInSlot(SLOT_A, 10);
+        assertThat(keysA).isEqualTo(ImmutableList.of(KEY_A));
+
+        List<String> keysB = connection.clusterGetKeysInSlot(SLOT_B, 10);
+        assertThat(keysB).isEqualTo(ImmutableList.of(KEY_B));
+
+        connection.close();
+
     }
 
     @Test
     public void countKeysInSlot() throws Exception {
-        redis1.set("b", value).get();
-        Long result = redis1.clusterCountKeysInSlot(SlotHash.getSlot("b".getBytes())).get();
+        RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster();
+        connection.set(KEY_A, value);
+        connection.set(KEY_B, value);
+
+        Long result = connection.clusterCountKeysInSlot(SLOT_A);
         assertThat(result).isEqualTo(1L);
 
-        result = redis1.clusterCountKeysInSlot(SlotHash.getSlot("ZZZ".getBytes())).get();
+        result = connection.clusterCountKeysInSlot(SLOT_B);
+        assertThat(result).isEqualTo(1L);
+
+        int slotZZZ = SlotHash.getSlot("ZZZ".getBytes());
+        result = connection.clusterCountKeysInSlot(slotZZZ);
+
         assertThat(result).isEqualTo(0L);
+
+        connection.close();
+
     }
 }
