@@ -138,6 +138,28 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Observable<K> clusterGetKeysInSlot(int slot, int count) {
+        RedisClusterReactiveCommands<K, V> connectionBySlot = fincConnectionBySlot(slot);
+
+        if (connectionBySlot != null) {
+            return connectionBySlot.clusterGetKeysInSlot(slot, count);
+        }
+
+        return super.clusterGetKeysInSlot(slot, count);
+    }
+
+    @Override
+    public Observable<Long> clusterCountKeysInSlot(int slot) {
+        RedisClusterReactiveCommands<K, V> connectionBySlot = fincConnectionBySlot(slot);
+
+        if (connectionBySlot != null) {
+            return connectionBySlot.clusterCountKeysInSlot(slot);
+        }
+
+        return super.clusterCountKeysInSlot(slot);
+    }
+
+    @Override
     public Observable<String> clientSetname(K name) {
         List<Observable<String>> observables = Lists.newArrayList();
 
@@ -255,6 +277,15 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             }
         }
         return executions;
+    }
+
+    private RedisClusterReactiveCommands<K, V> fincConnectionBySlot(int slot) {
+        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
+        if (node != null) {
+            return getConnection(node.getUri().getHost(), node.getUri().getPort());
+        }
+
+        return null;
     }
 
     @Override

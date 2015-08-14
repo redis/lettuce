@@ -57,7 +57,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> del(K... keys) {
-
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
         if (partitioned.size() < 2) {
@@ -76,7 +75,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<List<V>> mget(K... keys) {
-
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
         if (partitioned.size() < 2) {
@@ -126,7 +124,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<String> mset(Map<K, V> map) {
-
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
@@ -149,7 +146,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Boolean> msetnx(Map<K, V> map) {
-
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
@@ -181,22 +177,44 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<String> clientSetname(K name) {
-
         Map<String, RedisFuture<String>> executions = Maps.newHashMap();
+
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
             RedisClusterAsyncCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
             if (byNodeId.isOpen()) {
                 executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.clientSetname(name));
             }
 
-            RedisClusterAsyncCommands<K, V> byHost = getConnection(redisClusterNode.getUri().getHost(), redisClusterNode
-                    .getUri().getPort());
+            RedisURI uri = redisClusterNode.getUri();
+            RedisClusterAsyncCommands<K, V> byHost = getConnection(uri.getHost(), uri.getPort());
             if (byHost.isOpen()) {
                 executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.clientSetname(name));
             }
         }
 
         return MultiNodeExecution.firstOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count) {
+        RedisClusterAsyncCommands<K, V> connectionBySlot = fincConnectionBySlot(slot);
+
+        if (connectionBySlot != null) {
+            return connectionBySlot.clusterGetKeysInSlot(slot, count);
+        }
+
+        return super.clusterGetKeysInSlot(slot, count);
+    }
+
+    @Override
+    public RedisFuture<Long> clusterCountKeysInSlot(int slot) {
+        RedisClusterAsyncCommands<K, V> connectionBySlot = fincConnectionBySlot(slot);
+
+        if (connectionBySlot != null) {
+            return connectionBySlot.clusterCountKeysInSlot(slot);
+        }
+
+        return super.clusterCountKeysInSlot(slot);
     }
 
     @Override
@@ -310,6 +328,15 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             }
         }
         return executions;
+    }
+
+    private RedisClusterAsyncCommands<K, V> fincConnectionBySlot(int slot) {
+        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
+        if (node != null) {
+            return getConnection(node.getUri().getHost(), node.getUri().getPort());
+        }
+
+        return null;
     }
 
     @Override
