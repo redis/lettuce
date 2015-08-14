@@ -6,16 +6,18 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
+import com.lambdaworks.redis.models.role.RedisInstance;
+import com.lambdaworks.redis.models.role.RedisNodeDescription;
 import com.lambdaworks.redis.RedisURI;
 
 /**
- * Representation of a redis cluster node.
+ * Representation of a Redis Cluster node.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
 @SuppressWarnings("serial")
-public class RedisClusterNode implements Serializable {
+public class RedisClusterNode implements Serializable, RedisNodeDescription {
     private RedisURI uri;
     private String nodeId;
 
@@ -188,7 +190,13 @@ public class RedisClusterNode implements Serializable {
         return getSlots().contains(slot);
     }
 
+    @Override
+    public Role getRole() {
+        return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
+    }
+
     public enum NodeFlag {
         NOFLAGS, MYSELF, SLAVE, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
+
 }

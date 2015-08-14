@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import java.io.Closeable;
 
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -91,6 +92,21 @@ interface ClusterConnectionProvider extends Closeable {
      * achieve batching. No-op if channel is not connected.
      */
     void flushCommands();
+
+    /**
+     * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
+     * documentation for {@link ReadFrom} for more information.
+     * 
+     * @param readFrom the read from setting, must not be {@literal null}
+     */
+    void setReadFrom(ReadFrom readFrom);
+
+    /**
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * 
+     * @return the read from setting
+     */
+    ReadFrom getReadFrom();
 
     enum Intent {
         READ, WRITE;

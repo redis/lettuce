@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.AUTH;
+import static com.lambdaworks.redis.protocol.CommandType.READONLY;
+import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -13,7 +15,14 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.AbstractInvocationHandler;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.AbstractRedisClient;
+import com.lambdaworks.redis.LettuceFutures;
+import com.lambdaworks.redis.ReadFrom;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -202,6 +211,20 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     public Partitions getPartitions() {
         return partitions;
+    }
+
+    @Override
+    public void setReadFrom(ReadFrom readFrom) {
+        if (readFrom == null) {
+            throw new IllegalArgumentException("readFrom must not be null");
+        }
+        getClusterDistributionChannelWriter().setReadFrom(readFrom);
+    }
+
+    @Override
+    public ReadFrom getReadFrom() {
+        return getClusterDistributionChannelWriter().getReadFrom();
+
     }
 
     /**

@@ -26,8 +26,10 @@ import com.lambdaworks.redis.AbstractTest;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.DefaultRedisClient;
 import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
@@ -35,6 +37,7 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -224,6 +227,8 @@ public class RedisClusterSetupTest extends AbstractTest {
         }).waitOrTimeout();
 
         assertRoutedExecution(clusterConnection);
+
+        clusterConnection.close();
     }
 
     @Test
@@ -276,6 +281,8 @@ public class RedisClusterSetupTest extends AbstractTest {
         }, timeout(seconds(6)));
 
         assertRoutedExecution(clusterConnection);
+
+        clusterConnection.close();
 
     }
 
@@ -393,6 +400,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(1);
+        clusterConnection.close();
 
     }
 
@@ -436,6 +444,8 @@ public class RedisClusterSetupTest extends AbstractTest {
         Thread.sleep(2000);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(2);
+
+        clusterConnection.close();
 
     }
 
@@ -490,6 +500,39 @@ public class RedisClusterSetupTest extends AbstractTest {
             }
         }, timeout(seconds(6)));
 
+        clusterConnection.close();
+    }
+
+    @Test
+    public void readFromSlaveTest() throws Exception {
+
+        ClusterSetup.setup2Masters(clusterRule);
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        clusterConnection.getStatefulConnection().setReadFrom(ReadFrom.SLAVE);
+
+        clusterConnection.set(key, value).get();
+
+        try {
+            clusterConnection.get(key);
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("Cannot determine a partition to read for slot");
+        }
+
+        clusterConnection.close();
+    }
+
+    @Test
+    public void readFromNearestTest() throws Exception {
+
+        ClusterSetup.setup2Masters(clusterRule);
+        RedisAdvancedClusterCommands<String, String> clusterConnection = clusterClient.connect().sync();
+        clusterConnection.getStatefulConnection().setReadFrom(ReadFrom.NEAREST);
+
+        clusterConnection.set(key, value);
+
+        assertThat(clusterConnection.get(key)).isEqualTo(value);
+
+        clusterConnection.close();
     }
 
     protected PooledClusterConnectionProvider getPooledClusterConnectionProvider(

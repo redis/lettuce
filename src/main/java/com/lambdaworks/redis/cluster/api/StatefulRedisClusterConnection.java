@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster.api;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -76,6 +77,21 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      */
     StatefulRedisConnection<K, V> getConnection(String host, int port);
+
+    /**
+     * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
+     * documentation for {@link ReadFrom} for more information.
+     * 
+     * @param readFrom the read from setting, must not be {@literal null}
+     */
+    void setReadFrom(ReadFrom readFrom);
+
+    /**
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * 
+     * @return the read from setting
+     */
+    ReadFrom getReadFrom();
 
     /**
      *

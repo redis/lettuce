@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.ReadFrom;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,6 +31,8 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -88,6 +91,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
+        sync.close();
         redis1.close();
 
         redissync1.close();
@@ -429,4 +433,18 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         }
     }
 
+    @Test
+    public void testReadFrom() throws Exception {
+        StatefulRedisClusterConnection<String, String> statefulConnection = sync.getStatefulConnection();
+
+        assertThat(statefulConnection.getReadFrom()).isEqualTo(ReadFrom.MASTER);
+
+        statefulConnection.setReadFrom(ReadFrom.NEAREST);
+        assertThat(statefulConnection.getReadFrom()).isEqualTo(ReadFrom.NEAREST);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testReadFromNull() throws Exception {
+        sync.getStatefulConnection().setReadFrom(null);
+    }
 }
