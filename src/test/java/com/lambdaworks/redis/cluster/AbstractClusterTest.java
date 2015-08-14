@@ -19,6 +19,10 @@ public class AbstractClusterTest extends AbstractTest {
 
     public static final String host = TestSettings.hostAddr();
 
+    public static final int SLOT_A = SlotHash.getSlot("a".getBytes());
+    public static final int SLOT_B = SlotHash.getSlot("b".getBytes());
+
+
     // default test cluster 2 masters + 2 slaves
     public static final int port1 = 7379;
     public static final int port2 = port1 + 1;
@@ -31,6 +35,8 @@ public class AbstractClusterTest extends AbstractTest {
 
     // auth cluster
     public static final int port7 = port1 + 6;
+    public static final String KEY_A = "a";
+    public static final String KEY_B = "b";
 
     protected static RedisClusterClient clusterClient;
 

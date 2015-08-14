@@ -56,7 +56,6 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
 
         async = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
         reactive = async.getStatefulConnection().reactive();
-
     }
 
     @After
@@ -115,6 +114,13 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
         List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
         assertThat(parse).hasSize(2);
 
+        ClusterSlotRange clusterSlotRange = parse.get(0);
+        assertThat(clusterSlotRange.getFrom()).isEqualTo(0);
+        assertThat(clusterSlotRange.getTo()).isEqualTo(11999);
+
+        assertThat(clusterSlotRange.getMaster()).isNotNull();
+        assertThat(clusterSlotRange.getSlaves()).isNotNull();
+        assertThat(clusterSlotRange.toString()).contains(ClusterSlotRange.class.getSimpleName());
     }
 
     @Test
