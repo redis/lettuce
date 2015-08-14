@@ -162,7 +162,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         }
     }
 
-    @Test(expected = CompositeException.class)
+    @Test(expected = Exception.class)
     public void clientSetnameRunOnError() throws Exception {
         getSingle(commands.clientSetname("not allowed"));
     }

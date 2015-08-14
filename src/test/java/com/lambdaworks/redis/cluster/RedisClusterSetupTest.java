@@ -239,7 +239,8 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         RedisClusterNode partition1 = getOwnPartition(redis1);
         RedisClusterNode partition2 = getOwnPartition(redis2);
-        RedisClusterAsyncCommands<String, String> node2Connection = clusterConnection.getConnection(partition2.getNodeId());
+        RedisClusterAsyncCommands<String, String> node2Connection = clusterConnection.getConnection(partition2.getUri()
+                .getHost(), partition2.getUri().getPort());
 
         shiftAllSlotsToNode1();
 

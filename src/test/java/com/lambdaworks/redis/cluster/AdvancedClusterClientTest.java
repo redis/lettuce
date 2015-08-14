@@ -540,7 +540,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void noAddr() throws Exception {
+    public void routeCommandTonoAddrPartition() throws Exception {
 
         RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
         try {
@@ -558,7 +558,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
-    public void forbiddenHostOnRedirect() throws Exception {
+    public void routeCommandToForbiddenHostOnRedirect() throws Exception {
 
         RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
         try {

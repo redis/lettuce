@@ -389,8 +389,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                     throw invalidConnectionPoint("node id " + key.nodeId);
                 }
 
-                // NodeId connections provide command recovery due to cluster reconfiguration
-                connection = redisClusterClient.connectToNode(redisCodec, key.nodeId, clusterWriter,
+                // NodeId connections do not provide command recovery due to cluster reconfiguration
+                connection = redisClusterClient.connectToNode(redisCodec, key.nodeId, null,
                         getSocketAddressSupplier(key));
             }
 
@@ -402,8 +402,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                     }
                 }
 
-                // Host and port connections do not provide command recovery due to cluster reconfiguration
-                connection = redisClusterClient.connectToNode(redisCodec, key.host + ":" + key.port, null,
+                // Host and port connections provide command recovery due to cluster reconfiguration
+                connection = redisClusterClient.connectToNode(redisCodec, key.host + ":" + key.port, clusterWriter,
                         getSocketAddressSupplier(key));
             }
 
