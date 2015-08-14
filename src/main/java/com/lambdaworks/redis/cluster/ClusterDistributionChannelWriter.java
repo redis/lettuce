@@ -7,6 +7,7 @@ import java.util.List;
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -14,6 +15,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
@@ -75,11 +77,12 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             }
         }
 
-        byte encodedKey[] = args.getEncodedKey();
-        if (channelWriter == null && args != null && encodedKey != null) {
-            int hash = getHash(encodedKey);
-            RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
-                    ClusterConnectionProvider.Intent.WRITE, hash);
+        if (channelWriter == null && args != null && args.getEncodedKey() != null) {
+            int hash = getHash(args.getEncodedKey());
+
+            ClusterConnectionProvider.Intent intent = getIntent(command.getType());
+
+            RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(intent, hash);
             channelWriter = connection.getChannelWriter();
         }
 
@@ -93,6 +96,16 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         }
 
         return defaultWriter.write(commandToSend);
+    }
+
+    private ClusterConnectionProvider.Intent getIntent(ProtocolKeyword type) {
+        for (ProtocolKeyword readOnlyCommand : ReadOnlyCommands.READ_ONLY_COMMANDS) {
+            if (readOnlyCommand == type) {
+                return ClusterConnectionProvider.Intent.READ;
+            }
+        }
+
+        return ClusterConnectionProvider.Intent.WRITE;
     }
 
     private HostAndPort getMoveTarget(String errorMessage) {
@@ -170,5 +183,28 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
     public void setClusterConnectionProvider(ClusterConnectionProvider clusterConnectionProvider) {
         this.clusterConnectionProvider = clusterConnectionProvider;
+    }
+
+    public void setPartitions(Partitions partitions) {
+        clusterConnectionProvider.setPartitions(partitions);
+    }
+
+    /**
+     * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
+     * documentation for {@link ReadFrom} for more information.
+     *
+     * @param readFrom the read from setting, must not be {@literal null}
+     */
+    public void setReadFrom(ReadFrom readFrom) {
+        clusterConnectionProvider.setReadFrom(readFrom);
+    }
+
+    /**
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * 
+     * @return the read from setting
+     */
+    public ReadFrom getReadFrom() {
+        return clusterConnectionProvider.getReadFrom();
     }
 }

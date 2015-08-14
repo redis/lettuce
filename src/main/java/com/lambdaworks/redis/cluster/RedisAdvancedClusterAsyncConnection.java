@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
 import com.lambdaworks.redis.RedisException;
 
@@ -47,4 +48,19 @@ public interface RedisAdvancedClusterAsyncConnection<K, V> extends RedisClusterA
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      */
     RedisClusterAsyncConnection<K, V> getConnection(String host, int port);
+
+    /**
+     * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
+     * documentation for {@link ReadFrom} for more information.
+     * 
+     * @param readFrom the read from setting, must not be {@literal null}
+     */
+    void setReadFrom(ReadFrom readFrom);
+
+    /**
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * 
+     * @return the read from setting or {@literal null}
+     */
+    ReadFrom getReadFrom();
 }

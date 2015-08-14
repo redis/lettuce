@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
+import com.lambdaworks.redis.ReadFrom;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -630,5 +631,25 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         } catch (RedisException e) {
             assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
         }
+    }
+
+    @Test
+    public void testReadFrom() throws Exception {
+
+        RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster();
+        assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.MASTER);
+
+        connection.setReadFrom(ReadFrom.NEAREST);
+        assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.NEAREST);
+        connection.close();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testReadFromNull() throws Exception {
+        RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster();
+
+        connection.setReadFrom(null);
+
+        connection.close();
     }
 }

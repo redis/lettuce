@@ -21,6 +21,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.AbstractRedisClient;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.RedisException;
@@ -202,6 +203,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisAdvancedClusterAsyncConnectionImpl<K, V> connection = newRedisAdvancedClusterAsyncConnectionImpl(clusterWriter,
                 codec, timeout, unit);
 
+        connection.setReadFrom(ReadFrom.MASTER);
+
         connection.setPartitions(partitions);
         connectAsyncImpl(handler, connection, socketAddressSupplier);
 
@@ -212,7 +215,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         return connection;
-
     }
 
     /**
@@ -262,7 +264,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Retrieve partitions.
+     * Retrieve partitions. Nodes within {@link Partitions} are ordered by latency. Lower latency nodes come first.
      * 
      * @return Partitions
      */

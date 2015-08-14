@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import com.lambdaworks.redis.TestSettings;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -14,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -86,8 +86,7 @@ public class ClusterRule implements TestRule {
                             return false;
                         }
                     }
-                }
- else {
+                } else {
                     return false;
                 }
             } catch (Exception e) {
@@ -121,5 +120,15 @@ public class ClusterRule implements TestRule {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public void meet(String host, int port) {
+        for (RedisAsyncConnectionImpl<?, ?> redisAsyncConnection : connectionCache.values()) {
+            redisAsyncConnection.clusterMeet(host, port);
+        }
+    }
+
+    public RedisClusterClient getClusterClient() {
+        return clusterClient;
     }
 }

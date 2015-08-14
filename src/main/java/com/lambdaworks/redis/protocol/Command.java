@@ -262,4 +262,8 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         return true;
     }
 
+    @Override
+    public ProtocolKeyword getType() {
+        return type;
+    }
 }
