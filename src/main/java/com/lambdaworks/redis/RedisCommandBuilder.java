@@ -1626,6 +1626,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> clusterCountFailureReports(String nodeId) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("COUNT-FAILURE-REPORTS").add(nodeId);
+        return createCommand(CLUSTER, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> clusterKeyslot(K key) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KEYSLOT).addKey(key);
+        return createCommand(CLUSTER, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterSaveconfig() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SAVECONFIG);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clusterSetConfigEpoch(long configEpoch) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("SET-CONFIG-EPOCH").add(configEpoch);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, List<Object>> clusterSlots() {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLOTS);
         return createCommand(CLUSTER, new ArrayOutput<K, V>(codec), args);
