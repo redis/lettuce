@@ -366,6 +366,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         if (sentinelMasterId != null) {
+            sb.append("sentinels=").append(getSentinels());
             sb.append(", sentinelMasterId=").append(sentinelMasterId);
         }
 
