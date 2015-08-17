@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.redis.RedisFuture;
 import rx.Observable;
 import rx.internal.operators.OperatorConcat;
 

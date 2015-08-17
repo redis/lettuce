@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -17,10 +18,12 @@ import rx.Observable;
 import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -100,6 +103,32 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
         int slotZZZ = SlotHash.getSlot("ZZZ".getBytes());
         result = getSingle(rx.clusterCountKeysInSlot(slotZZZ));
         assertThat(result).isEqualTo(0L);
+    }
+
+    @Test
+    public void testClusterCountFailureReports() throws Exception {
+        RedisClusterNode ownPartition = getOwnPartition(sync);
+        assertThat(getSingle(rx.clusterCountFailureReports(ownPartition.getNodeId()))).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    public void testClusterKeyslot() throws Exception {
+        assertThat(getSingle(rx.clusterKeyslot(KEY_A))).isEqualTo(SLOT_A);
+        assertThat(SlotHash.getSlot(KEY_A)).isEqualTo(SLOT_A);
+    }
+
+    @Test
+    public void testClusterSaveconfig() throws Exception {
+        assertThat(getSingle(rx.clusterSaveconfig())).isEqualTo("OK");
+    }
+
+    @Test
+    public void testClusterSetConfigEpoch() throws Exception {
+        try {
+            getSingle(rx.clusterSetConfigEpoch(1L));
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
+        }
     }
 
     private <T> T getSingle(Observable<T> observable) {

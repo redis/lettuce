@@ -197,7 +197,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<List<K>> clusterGetKeysInSlot(int slot, int count) {
-        RedisClusterAsyncCommands<K, V> connectionBySlot = fincConnectionBySlot(slot);
+        RedisClusterAsyncCommands<K, V> connectionBySlot = findConnectionBySlot(slot);
 
         if (connectionBySlot != null) {
             return connectionBySlot.clusterGetKeysInSlot(slot, count);
@@ -208,7 +208,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> clusterCountKeysInSlot(int slot) {
-        RedisClusterAsyncCommands<K, V> connectionBySlot = fincConnectionBySlot(slot);
+        RedisClusterAsyncCommands<K, V> connectionBySlot = findConnectionBySlot(slot);
 
         if (connectionBySlot != null) {
             return connectionBySlot.clusterCountKeysInSlot(slot);
@@ -330,7 +330,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return executions;
     }
 
-    private RedisClusterAsyncCommands<K, V> fincConnectionBySlot(int slot) {
+    private RedisClusterAsyncCommands<K, V> findConnectionBySlot(int slot) {
         RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
         if (node != null) {
             return getConnection(node.getUri().getHost(), node.getUri().getPort());

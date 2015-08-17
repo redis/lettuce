@@ -7,7 +7,6 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,6 +30,7 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.protocol.AsyncCommand;
@@ -52,7 +52,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     protected RedisClusterConnection<String, String> redissync4;
 
     protected RedisAdvancedClusterCommands<String, String> sync;
-
 
     @BeforeClass
     public static void setupClient() throws Exception {
@@ -383,6 +382,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         List<String> keysB = sync.clusterGetKeysInSlot(SLOT_B, 10);
         assertThat(keysB).isEqualTo(ImmutableList.of(KEY_B));
+
     }
 
     @Test
@@ -400,6 +400,33 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         int slotZZZ = SlotHash.getSlot("ZZZ".getBytes());
         result = sync.clusterCountKeysInSlot(slotZZZ);
         assertThat(result).isEqualTo(0L);
+
+    }
+
+    @Test
+    public void testClusterCountFailureReports() throws Exception {
+        RedisClusterNode ownPartition = getOwnPartition(redissync1);
+        assertThat(redissync1.clusterCountFailureReports(ownPartition.getNodeId())).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    public void testClusterKeyslot() throws Exception {
+        assertThat(redissync1.clusterKeyslot(KEY_A)).isEqualTo(SLOT_A);
+        assertThat(SlotHash.getSlot(KEY_A)).isEqualTo(SLOT_A);
+    }
+
+    @Test
+    public void testClusterSaveconfig() throws Exception {
+        assertThat(redissync1.clusterSaveconfig()).isEqualTo("OK");
+    }
+
+    @Test
+    public void testClusterSetConfigEpoch() throws Exception {
+        try {
+            redissync1.clusterSetConfigEpoch(1L);
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
+        }
     }
 
 }

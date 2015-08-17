@@ -149,6 +149,45 @@ public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<
     RedisFuture<Long> clusterCountKeysInSlot(int slot);
 
     /**
+     * Returns the number of failure reports for the specified node. Failure reports are the way Redis Cluster uses in order to
+     * promote a {@literal PFAIL} state, that means a node is not reachable, to a {@literal FAIL} state, that means that the
+     * majority of masters in the cluster agreed within a window of time that the node is not reachable.
+     *
+     * @param nodeId the node id
+     * @return Integer reply: The number of active failure reports for the node.
+     */
+    RedisFuture<Long> clusterCountFailureReports(String nodeId);
+
+    /**
+     * Returns an integer identifying the hash slot the specified key hashes to. This command is mainly useful for debugging and
+     * testing, since it exposes via an API the underlying Redis implementation of the hashing algorithm. Basically the same as
+     * {@link com.lambdaworks.redis.cluster.SlotHash#getSlot(byte[])}. If not, call Houston and report that we've got a problem.
+     *
+     * @param key the key.
+     * @return Integer reply: The hash slot number.
+     */
+    RedisFuture<Long> clusterKeyslot(K key);
+
+    /**
+     * Forces a node to save the nodes.conf configuration on disk.
+     *
+     * @return String simple-string-reply: {@code OK} or an error if the operation fails.
+     */
+    RedisFuture<String> clusterSaveconfig();
+
+    /**
+     * This command sets a specific config epoch in a fresh node. It only works when:
+     * <ul>
+     * <li>The nodes table of the node is empty.</li>
+     * <li>The node current config epoch is zero.</li>
+     * </ul>
+     *
+     * @param configEpoch the config epoch
+     * @return String simple-string-reply: {@code OK} or an error if the operation fails.
+     */
+    RedisFuture<String> clusterSetConfigEpoch(long configEpoch);
+
+    /**
      * Get array of cluster slots to node mappings.
      * 
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
@@ -156,6 +195,8 @@ public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<
     RedisFuture<List<Object>> clusterSlots();
 
     /**
+     * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
+     * actually send the command to the target instance. See the Redis Cluster specification for more information.
      *
      * @return String simple-string-reply
      */
