@@ -1551,6 +1551,26 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> clusterCountFailureReports(String nodeId) {
+        return dispatch(commandBuilder.clusterCountFailureReports(nodeId));
+    }
+
+    @Override
+    public RedisFuture<Long> clusterKeyslot(K key) {
+        return dispatch(commandBuilder.clusterKeyslot(key));
+    }
+
+    @Override
+    public RedisFuture<String> clusterSaveconfig() {
+        return dispatch(commandBuilder.clusterSaveconfig());
+    }
+
+    @Override
+    public RedisFuture<String> clusterSetConfigEpoch(long configEpoch) {
+        return dispatch(commandBuilder.clusterSetConfigEpoch(configEpoch));
+    }
+
+    @Override
     public RedisFuture<List<Object>> clusterSlots() {
         return dispatch(commandBuilder.clusterSlots());
     }

@@ -584,7 +584,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(keysB).isEqualTo(ImmutableList.of(KEY_B));
 
         connection.close();
-
     }
 
     @Test
@@ -605,6 +604,31 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(result).isEqualTo(0L);
 
         connection.close();
+    }
 
+    @Test
+    public void testClusterCountFailureReports() throws Exception {
+        RedisClusterNode ownPartition = getOwnPartition(redissync1);
+        assertThat(redissync1.clusterCountFailureReports(ownPartition.getNodeId())).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    public void testClusterKeyslot() throws Exception {
+        assertThat(redissync1.clusterKeyslot(KEY_A)).isEqualTo(SLOT_A);
+        assertThat(SlotHash.getSlot(KEY_A)).isEqualTo(SLOT_A);
+    }
+
+    @Test
+    public void testClusterSaveconfig() throws Exception {
+        assertThat(redissync1.clusterSaveconfig()).isEqualTo("OK");
+    }
+
+    @Test
+    public void testClusterSetConfigEpoch() throws Exception {
+        try {
+            redissync1.clusterSetConfigEpoch(1L);
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
+        }
     }
 }
