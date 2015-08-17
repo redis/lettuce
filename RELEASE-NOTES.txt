@@ -193,6 +193,7 @@ Commands
 * Support geo commands in lettuce 3.3 #86
 * Support NX|XX|CH|INCR options in ZADD #74
 * Add support for COUNTKEYSINSLOT #107
+* Add support for HSTRLEN #117
 
 Fixes
 -----

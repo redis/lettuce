@@ -114,6 +114,13 @@ public class HashCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void hstrlen() throws Exception {
+        assertThat((long) redis.hstrlen(key, "one")).isEqualTo(0);
+        redis.hset(key, "one", value);
+        assertThat((long) redis.hstrlen(key, "one")).isEqualTo(value.length());
+    }
+
+    @Test
     public void hmget() throws Exception {
         setupHmget();
         List<String> values = redis.hmget(key, "one", "two");
