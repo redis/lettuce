@@ -149,50 +149,6 @@ public interface RedisHashAsyncCommands<K, V> {
     RedisFuture<String> hmset(K key, Map<K, V> map);
 
     /**
-     * Set the string value of a hash field.
-     * 
-     * @param key the key
-     * @param field the field type: key
-     * @param value the value
-     * @return Boolean integer-reply specifically:
-     * 
-     *         {@literal true} if {@code field} is a new field in the hash and {@code value} was set. {@literal false} if
-     *         {@code field} already exists in the hash and the value was updated.
-     */
-    RedisFuture<Boolean> hset(K key, K field, V value);
-
-    /**
-     * Set the value of a hash field, only if the field does not exist.
-     * 
-     * @param key the key
-     * @param field the field type: key
-     * @param value the value
-     * @return Boolean integer-reply specifically:
-     * 
-     *         {@code 1} if {@code field} is a new field in the hash and {@code value} was set. {@code 0} if {@code field}
-     *         already exists in the hash and no operation was performed.
-     */
-    RedisFuture<Boolean> hsetnx(K key, K field, V value);
-
-    /**
-     * Get all the values in a hash.
-     * 
-     * @param key the key
-     * @return List&lt;V&gt; array-reply list of values in the hash, or an empty list when {@code key} does not exist.
-     */
-    RedisFuture<List<V>> hvals(K key);
-
-    /**
-     * Stream over all the values in a hash.
-     * 
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * 
-     * @return Long count of the keys.
-     */
-    RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
-
-    /**
      * Incrementally iterate hash fields and associated values.
      * 
      * @param key the key
@@ -267,4 +223,57 @@ public interface RedisHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
+
+    /**
+     * Set the string value of a hash field.
+     *
+     * @param key the key
+     * @param field the field type: key
+     * @param value the value
+     * @return Boolean integer-reply specifically:
+     *
+     *         {@literal true} if {@code field} is a new field in the hash and {@code value} was set. {@literal false} if
+     *         {@code field} already exists in the hash and the value was updated.
+     */
+    RedisFuture<Boolean> hset(K key, K field, V value);
+
+    /**
+     * Set the value of a hash field, only if the field does not exist.
+     *
+     * @param key the key
+     * @param field the field type: key
+     * @param value the value
+     * @return Boolean integer-reply specifically:
+     *
+     *         {@code 1} if {@code field} is a new field in the hash and {@code value} was set. {@code 0} if {@code field}
+     *         already exists in the hash and no operation was performed.
+     */
+    RedisFuture<Boolean> hsetnx(K key, K field, V value);
+
+    /**
+     * Get the string length of the field value in a hash.
+     *
+     * @param key the key
+     * @return Long integer-reply the string length of the {@code field} value, or {@code 0} when {@code field} is not present
+     *         in the hash or {@code key} does not exist at all.
+     */
+    RedisFuture<Long> hstrlen(K key, K field);
+
+    /**
+     * Get all the values in a hash.
+     *
+     * @param key the key
+     * @return List&lt;V&gt; array-reply list of values in the hash, or an empty list when {@code key} does not exist.
+     */
+    RedisFuture<List<V>> hvals(K key);
+
+    /**
+     * Stream over all the values in a hash.
+     *
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     *
+     * @return Long count of the keys.
+     */
+    RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
 }

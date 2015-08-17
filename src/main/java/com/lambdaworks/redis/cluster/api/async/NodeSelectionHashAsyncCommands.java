@@ -120,6 +120,15 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
     AsyncExecutions<Long> hlen(K key);
 
     /**
+     * Get the string length of the field value in a hash.
+     *
+     * @param key the key
+     * @return Long integer-reply the string length of the {@code field} value, or {@code 0} when {@code field} is not present
+     *         in the hash or {@code key} does not exist at all.
+     */
+    AsyncExecutions<Long> hstrlen(K key, K field);
+
+    /**
      * Get the values of all the given hash fields.
      * 
      * @param key the key

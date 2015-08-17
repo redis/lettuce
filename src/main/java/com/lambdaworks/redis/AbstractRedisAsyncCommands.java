@@ -404,6 +404,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<Long> hstrlen(K key, K field) {
+        return dispatch(commandBuilder.hstrlen(key, field));
+    }
+
+    @Override
     public RedisFuture<List<V>> hmget(K key, K... fields) {
         return dispatch(commandBuilder.hmget(key, fields));
     }

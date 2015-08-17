@@ -394,6 +394,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> hstrlen(K key, K field) {
+        return createObservable(() -> commandBuilder.hstrlen(key, field));
+    }
+
+    @Override
     public Observable<V> hmget(K key, K... fields) {
         return createDissolvingObservable(() -> commandBuilder.hmget(key, fields));
     }

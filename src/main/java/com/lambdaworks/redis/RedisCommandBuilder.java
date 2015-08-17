@@ -424,6 +424,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HLEN, new IntegerOutput<K, V>(codec), key);
     }
 
+    public Command<K, V, Long> hstrlen(K key, K field) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKey(field);
+        return createCommand(HSTRLEN, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, List<V>> hmget(K key, K... fields) {
         assertNotEmpty(fields, "fields " + MUST_NOT_BE_EMPTY);
 
