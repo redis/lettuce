@@ -6,9 +6,11 @@ import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
@@ -56,6 +59,44 @@ public class ClientTest extends AbstractCommandTest {
 
     }
 
+    @Test
+    public void requestQueueSize() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().requestQueueSize(10).build());
+
+        final RedisAsyncConnectionImpl<String, String> connection = (RedisAsyncConnectionImpl) client.connectAsync();
+
+        Channel channel = (Channel) ReflectionTestUtils.getField(connection.getChannelWriter(), "channel");
+        ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+        connectionWatchdog.setListenOnChannelInactive(false);
+        connection.quit();
+        waitUntilDisconnected(connection);
+
+        for (int i = 0; i < 10; i++) {
+            connection.ping();
+        }
+
+        try {
+            connection.ping();
+            fail("missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("Request queue size exceeded");
+        }
+
+        connection.close();
+    }
+
+    protected void waitUntilDisconnected(final RedisAsyncConnectionImpl<String, String> connection)
+            throws InterruptedException, TimeoutException {
+        Thread.sleep(200);
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return !connection.isOpen();
+            }
+        }, Timeout.timeout(seconds(5)));
+    }
+
     @Test(timeout = 10000)
     public void disconnectedConnectionWithoutReconnect() throws Exception {
 
@@ -68,7 +109,7 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(connectionWatchdog).isNull();
 
         connection.quit();
-        Thread.sleep(500);
+        waitUntilDisconnected(connection);
         try {
             connection.get(key).get();
         } catch (Exception e) {
@@ -140,6 +181,8 @@ public class ClientTest extends AbstractCommandTest {
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
+            waitUntilDisconnected(connection);
+
             Thread.sleep(500);
             assertThat(connection.isOpen()).isFalse();
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
@@ -197,7 +240,7 @@ public class ClientTest extends AbstractCommandTest {
             ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
-            Thread.sleep(100);
+            waitUntilDisconnected(connection);
 
             assertThat(connection.isOpen()).isFalse();
 

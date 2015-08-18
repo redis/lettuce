@@ -3,7 +3,7 @@
 package com.lambdaworks.redis;
 
 /**
- * Exception thrown when redis returns an error message, or when the client fails for any reason.
+ * Exception thrown when Redis returns an error message, or when the client fails for any reason.
  * 
  * @author Will Glozer
  */
