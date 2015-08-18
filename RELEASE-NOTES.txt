@@ -206,6 +206,7 @@ Enhancements
 * Pipelining for certain cluster commands #66
 * Drop support for Java 6 and Java 7 #50
 * Migrate RedisFuture to CompletionStage #48
+* Allow limiting the request queue size #115
 
 
 Fixes

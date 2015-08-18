@@ -2,10 +2,11 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.WaitFor.*;
-import static com.lambdaworks.redis.ScriptOutputType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
+import static com.lambdaworks.redis.ScriptOutputType.STATUS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -77,6 +78,35 @@ public class ClientTest extends AbstractRedisClientTest {
 
         assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
 
+    }
+
+    @Test
+    public void requestQueueSize() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().requestQueueSize(10).build());
+
+        final RedisAsyncConnection<String, String> connection = (RedisAsyncConnection) client.connectAsync();
+        RedisChannelHandler<String, String> channelHandler = getStatefulConnection(connection);
+
+        Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
+        ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
+        connectionWatchdog.setListenOnChannelInactive(false);
+        connection.quit();
+
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+        for (int i = 0; i < 10; i++) {
+            connection.ping();
+        }
+
+        try {
+            connection.ping();
+            fail("missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("Request queue size exceeded");
+        }
+
+        connection.close();
     }
 
     @Test(timeout = 10000)

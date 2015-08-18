@@ -172,6 +172,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throw new RedisException("Connection is closed");
         }
 
+        if (commandBuffer.size() + queue.size() >= clientOptions.getRequestQueueSize()) {
+            throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
+                    + ". Commands are not accepted until the queue size drops.");
+        }
+
         if ((channel == null || !isConnected()) && !clientOptions.isAutoReconnect()) {
             command.completeExceptionally(new RedisException(
                     "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));

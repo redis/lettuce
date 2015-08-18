@@ -15,6 +15,7 @@ public class ClientOptions implements Serializable {
     private final boolean autoReconnect;
     private final boolean cancelCommandsOnReconnectFailure;
     private final boolean suspendReconnectOnProtocolFailure;
+    private final int requestQueueSize;
 
     /**
      * Create a copy of {@literal options}
@@ -37,6 +38,7 @@ public class ClientOptions implements Serializable {
         private boolean autoReconnect = true;
         private boolean cancelCommandsOnReconnectFailure = false;
         private boolean suspendReconnectOnProtocolFailure = false;
+        private int requestQueueSize = Integer.MAX_VALUE;
 
         /**
          * Sets the {@literal PING} before activate connection flag.
@@ -83,7 +85,22 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Create a new instance of {@link ClientOptions}
+         * Set the per-connection request queue size. The command invocation will lead to a {@link RedisException} if the queue
+         * size is exceeded. Setting the {@code requestQueueSize} to a lower value will lead earlier to exceptions during
+         * overload or while the connection is in a disconnected state. A higher value means hitting the boundary will take
+         * longer to occur, but more requests will potentially be queued up and more heap space is used. Defaults to
+         * {@link Integer#MAX_VALUE}.
+         *
+         * @param requestQueueSize the queue size.
+         * @return {@code this}
+         */
+        public Builder requestQueueSize(int requestQueueSize) {
+            this.requestQueueSize = requestQueueSize;
+            return this;
+        }
+
+        /**
+         * Create a new instance of {@link ClientOptions}.
          * 
          * @return new instance of {@link ClientOptions}
          */
@@ -97,6 +114,7 @@ public class ClientOptions implements Serializable {
         cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         autoReconnect = builder.autoReconnect;
         suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
+        requestQueueSize = builder.requestQueueSize;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -104,6 +122,7 @@ public class ClientOptions implements Serializable {
         this.autoReconnect = original.autoReconnect;
         this.cancelCommandsOnReconnectFailure = original.cancelCommandsOnReconnectFailure;
         this.suspendReconnectOnProtocolFailure = original.suspendReconnectOnProtocolFailure;
+        this.requestQueueSize = original.requestQueueSize;
     }
 
     protected ClientOptions() {
@@ -111,6 +130,7 @@ public class ClientOptions implements Serializable {
         autoReconnect = true;
         cancelCommandsOnReconnectFailure = false;
         suspendReconnectOnProtocolFailure = false;
+        requestQueueSize = Integer.MAX_VALUE;
     }
 
     /**
@@ -155,5 +175,16 @@ public class ClientOptions implements Serializable {
      */
     public boolean isSuspendReconnectOnProtocolFailure() {
         return suspendReconnectOnProtocolFailure;
+    }
+
+    /**
+     * Request queue size for a connection. This value applies per connection. The command invocation will throw a
+     * {@link RedisException} if the queue size is exceeded and a new command is requested. Defaults to
+     * {@link Integer#MAX_VALUE}.
+     * 
+     * @return the request queue size.
+     */
+    public int getRequestQueueSize() {
+        return requestQueueSize;
     }
 }
