@@ -124,7 +124,7 @@ public class ClientTest extends AbstractRedisClientTest {
         connection.quit();
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
         try {
-            connection.get(key).get();
+            connection.get(key);
         } catch (Exception e) {
             assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining(
                     "Connection is in a disconnected state and reconnect is disabled");

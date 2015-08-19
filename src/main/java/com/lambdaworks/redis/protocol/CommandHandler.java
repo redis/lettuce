@@ -178,9 +178,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         if ((channel == null || !isConnected()) && !clientOptions.isAutoReconnect()) {
-            command.completeExceptionally(new RedisException(
-                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));
-            return command;
+            throw new RedisException(
+                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted.");
         }
 
         try {
