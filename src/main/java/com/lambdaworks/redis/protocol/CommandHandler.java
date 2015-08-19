@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
@@ -164,6 +166,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
+        checkArgument(command != null, "command must not be null");
+
         if (lifecycleState == LifecycleState.CLOSED) {
             throw new RedisException("Connection is closed");
         }
@@ -174,10 +178,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         if ((channel == null || !isConnected()) && !clientOptions.isAutoReconnect()) {
-            command.setException(new RedisException(
-                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));
-            command.complete();
-            return command;
+            throw new RedisException(
+                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted.");
         }
 
         try {

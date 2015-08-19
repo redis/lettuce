@@ -38,6 +38,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     @Override
     public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
+        checkArgument(command != null, "command must not be null");
+
         RedisCommand<K, V, T> commandToSend = command;
         CommandArgs<K, V> args = command.getArgs();
         RedisChannelWriter<K, V> channelWriter = null;

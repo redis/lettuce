@@ -111,9 +111,9 @@ public class ClientTest extends AbstractCommandTest {
         connection.quit();
         waitUntilDisconnected(connection);
         try {
-            connection.get(key).get();
-        } catch (Exception e) {
-            assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining(
+            connection.get(key);
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining(
                     "Connection is in a disconnected state and reconnect is disabled");
         } finally {
             connection.close();
