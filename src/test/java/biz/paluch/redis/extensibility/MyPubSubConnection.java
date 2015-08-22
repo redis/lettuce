@@ -2,6 +2,7 @@ package biz.paluch.redis.extensibility;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -19,7 +20,7 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 @SuppressWarnings("unchecked")
 public class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> {
 
-    private Set<K> interceptedChannels = Sets.newHashSet();
+    private AtomicInteger subscriptions = new AtomicInteger();
 
     /**
      * Initialize a new connection.
@@ -37,7 +38,7 @@ public class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<
     public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
 
         if (cmd.getType() == CommandType.SUBSCRIBE) {
-            interceptedChannels.addAll(cmd.getArgs().getKeys());
+            subscriptions.incrementAndGet();
         }
 
         return super.dispatch(cmd);

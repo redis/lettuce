@@ -76,7 +76,6 @@ public class CommandInternalsTest {
         sut = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec));
         sut.getArgs().add(MyKeywords.DUMMY);
         assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
-        assertThat(sut.getArgs().getKeywords()).contains(MyKeywords.DUMMY);
     }
 
     @Test(expected = IllegalStateException.class)

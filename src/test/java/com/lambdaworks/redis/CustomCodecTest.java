@@ -38,7 +38,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
         assertThat(keys).contains(key.getBytes());
     }
 
-    public class SerializedObjectCodec extends RedisCodec<String, Object> {
+    public class SerializedObjectCodec implements RedisCodec<String, Object> {
         private Charset charset = Charset.forName("UTF-8");
 
         @Override
@@ -59,17 +59,17 @@ public class CustomCodecTest extends AbstractRedisClientTest {
         }
 
         @Override
-        public byte[] encodeKey(String key) {
-            return charset.encode(key).array();
+        public ByteBuffer encodeKey(String key) {
+            return charset.encode(key);
         }
 
         @Override
-        public byte[] encodeValue(Object value) {
+        public ByteBuffer encodeValue(Object value) {
             try {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 ObjectOutputStream os = new ObjectOutputStream(bytes);
                 os.writeObject(value);
-                return bytes.toByteArray();
+                return ByteBuffer.wrap(bytes.toByteArray());
             } catch (IOException e) {
                 return null;
             }

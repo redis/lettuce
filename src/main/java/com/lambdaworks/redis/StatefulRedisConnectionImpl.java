@@ -111,7 +111,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return sync;
     }
 
-
     @Override
     public boolean isMulti() {
         return multi != null;
@@ -142,16 +141,16 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if ("OK".equals(status)) {
-                    this.password = cmd.getArgs().getStrings().get(0).toCharArray();
+                if ("OK".equals(status) && cmd.getArgs().getFirstString() != null) {
+                    this.password = cmd.getArgs().getFirstString().toCharArray();
                 }
             });
         }
 
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
-                if ("OK".equals(status)) {
-                    this.db = cmd.getArgs().getIntegers().get(0).intValue();
+                if ("OK".equals(status) && cmd.getArgs().getFirstInteger() != null) {
+                    this.db = cmd.getArgs().getFirstInteger().intValue();
                 }
             });
         }

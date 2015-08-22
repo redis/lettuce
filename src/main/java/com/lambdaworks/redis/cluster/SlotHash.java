@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -54,14 +55,29 @@ public class SlotHash {
      * @return slot
      */
     public static final int getSlot(byte[] key) {
-        byte[] finalKey = key;
-        int start = indexOf(key, SUBKEY_START);
+        return getSlot(ByteBuffer.wrap(key));
+    }
+
+    /**
+     * Calculate the slot from the given key.
+     *
+     * @param key the key
+     * @return slot
+     */
+    public static final int getSlot(ByteBuffer key) {
+
+        byte[] input = new byte[key.remaining()];
+        key.duplicate().get(input);
+
+        byte[] finalKey = input;
+
+        int start = indexOf(input, SUBKEY_START);
         if (start != -1) {
-            int end = indexOf(key, start + 1, SUBKEY_END);
+            int end = indexOf(input, start + 1, SUBKEY_END);
             if (end != -1 && end != start + 1) {
 
                 finalKey = new byte[end - (start + 1)];
-                System.arraycopy(key, start + 1, finalKey, 0, finalKey.length);
+                System.arraycopy(input, start + 1, finalKey, 0, finalKey.length);
             }
         }
         return CRC16.crc16(finalKey) % SLOT_COUNT;

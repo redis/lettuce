@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -61,6 +62,16 @@ public class LettuceStrings {
      * @return the Base16 encoded SHA1 value
      */
     public static String digest(byte[] script) {
+        return digest(ByteBuffer.wrap(script));
+    }
+
+    /**
+     * Create SHA1 digest from Lua script.
+     * 
+     * @param script the script
+     * @return the Base16 encoded SHA1 value
+     */
+    public static String digest(ByteBuffer script) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA1");
             md.update(script);

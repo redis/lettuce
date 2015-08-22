@@ -23,6 +23,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         redis.set(key + "1", value);
         redis.set(key + "2", value);
 
+
         assertThat(redis.del(key + "1", key + "2")).isEqualTo(2);
     }
 

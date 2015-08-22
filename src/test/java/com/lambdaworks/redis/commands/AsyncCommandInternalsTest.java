@@ -125,7 +125,6 @@ public class AsyncCommandInternalsTest {
                 codec)));
         sut.getArgs().add(MyKeywords.DUMMY);
         assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
-        assertThat(sut.getArgs().getKeywords()).contains(MyKeywords.DUMMY);
     }
 
     @Test
