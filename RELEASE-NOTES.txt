@@ -199,6 +199,7 @@ Fixes
 -----
 * Synchronization/cross thread visibility of variables #94
 * Check channel state before calling Channel.close.syncUninterruptibly #113
+* Stop the HashedWheelTimer before shutting down EventLoopGroups #123
 
 Other
 ------

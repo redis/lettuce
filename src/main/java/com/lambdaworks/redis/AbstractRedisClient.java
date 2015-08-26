@@ -254,6 +254,8 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
+        timer.stop();
+
         while (!closeableResources.isEmpty()) {
             Closeable closeableResource = closeableResources.iterator().next();
             try {
@@ -296,8 +298,6 @@ public abstract class AbstractRedisClient {
                 throw new RedisException(e);
             }
         }
-
-        timer.stop();
     }
 
     protected int getResourceCount() {
