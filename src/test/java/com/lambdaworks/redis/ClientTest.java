@@ -153,7 +153,7 @@ public class ClientTest extends AbstractCommandTest {
      * 
      * @throws Exception
      */
-    @Test(timeout = 10000)
+    @Test(timeout = 120000)
     public void pingBeforeConnectFailOnReconnect() throws Exception {
 
         client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true)
