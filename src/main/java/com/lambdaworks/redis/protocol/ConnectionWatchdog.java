@@ -97,12 +97,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         logger.debug("{} userEventTriggered({}, {})", logPrefix(), ctx, evt);
         if (evt instanceof ConnectionEvents.PrepareClose) {
+
+            ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
+            setListenOnChannelInactive(false);
+            setReconnectSuspended(true);
+            prepareClose.getPrepareCloseFuture().set(true);
+
             if (currentFuture != null && !currentFuture.isDone()) {
                 currentFuture.cancel(true);
             }
-            ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
-            setListenOnChannelInactive(false);
-            prepareClose.getPrepareCloseFuture().set(true);
         }
         super.userEventTriggered(ctx, evt);
     }
@@ -213,7 +216,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             return;
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot connect: {}", e.toString());
-            scheduleReconnect();
+            if (!isReconnectSuspended()) {
+                scheduleReconnect();
+            }
         }
     }
 
