@@ -81,7 +81,10 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
                 RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
-                connection.quit().get();
+                connection.quit();
+                Wait.untilTrue(() -> {
+                    return !connection.isOpen();
+                });
 
                 connection.subscribe(channel);
                 assertThat(channels.take()).isEqualTo(channel);
