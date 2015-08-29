@@ -223,6 +223,7 @@ public class AtLeastOnceTest extends AbstractCommandTest {
         block.countDown();
         assertThat(command.await(2, TimeUnit.SECONDS)).isFalse();
 
+        connectionWatchdog.setReconnectSuspended(false);
         connectionWatchdog.scheduleReconnect();
 
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
