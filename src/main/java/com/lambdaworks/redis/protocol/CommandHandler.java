@@ -338,12 +338,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         super.channelActive(ctx);
-        channel.eventLoop().submit(new Runnable() {
-            @Override
-            public void run() {
-                channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Activated());
-            }
-        });
+        if (channel != null) {
+            channel.eventLoop().submit(new Runnable() {
+                @Override
+                public void run() {
+                    channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Activated());
+                }
+            });
+        }
 
         if (debugEnabled) {
             logger.debug("{} channelActive() done", logPrefix());

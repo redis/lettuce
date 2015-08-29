@@ -246,10 +246,24 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             RedisChannelInitializer channelInitializer = currentFuture.channel().pipeline().get(RedisChannelInitializer.class);
             CommandHandler<?, ?> commandHandler = currentFuture.channel().pipeline().get(CommandHandler.class);
 
+            if (channelInitializer == null) {
+                logger.warn("Reconnection attempt without a RedisChannelInitializer in the channel pipeline");
+                closeChannel();
+                return;
+            }
+
+            if (commandHandler == null) {
+                logger.warn("Reconnection attempt without a CommandHandler in the channel pipeline");
+                closeChannel();
+                return;
+            }
+
             try {
                 timeLeft -= System.nanoTime() - start;
                 channelInitializer.channelInitialized().get(Math.max(0, timeLeft), TimeUnit.NANOSECONDS);
                 logger.log(infoLevel, "Reconnected to " + remoteAddress);
+            } catch (TimeoutException e) {
+                channelInitializer.channelInitialized().cancel(true);
             } catch (Exception e) {
                 if (clientOptions.isCancelCommandsOnReconnectFailure()) {
                     commandHandler.reset();
@@ -265,6 +279,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             }
         } finally {
             currentFuture = null;
+        }
+    }
+
+    private void closeChannel() {
+        if (channel != null && channel.isOpen()) {
+            channel.close();
         }
     }
 
