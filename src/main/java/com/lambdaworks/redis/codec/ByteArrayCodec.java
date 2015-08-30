@@ -10,6 +10,8 @@ import java.nio.ByteBuffer;
  */
 public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
 
+    public final static ByteArrayCodec INSTANCE = new ByteArrayCodec();
+
     @Override
     public byte[] decodeKey(ByteBuffer bytes) {
         return getBytes(bytes);
@@ -35,4 +37,5 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
         buffer.get(b);
         return b;
     }
+
 }

@@ -13,18 +13,47 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import org.junit.Test;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 public class CustomCodecTest extends AbstractRedisClientTest {
+
     @Test
     public void test() throws Exception {
-        RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec()).sync();
+
+        RedisCommands<String, Object> connection = client.connect(new SerializedObjectCodec()).sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.close();
+    }
+
+    @Test
+    public void testDeflateCompressedJavaSerializer() throws Exception {
+        RedisCommands<String, Object> connection = client.connect(
+                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE)).sync();
+        List<String> list = list("one", "two");
+        connection.set(key, list);
+        assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.close();
+    }
+
+    @Test
+    public void testGzipompressedJavaSerializer() throws Exception {
+        RedisCommands<String, Object> connection = client.connect(
+                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP)).sync();
+        List<String> list = list("one", "two");
+        connection.set(key, list);
+        assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.close();
     }
 
     @Test
