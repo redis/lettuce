@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.lambdaworks.redis.cluster.SlotHash.getSlot;
 
 import java.util.List;
 
@@ -81,7 +82,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         }
 
         if (channelWriter == null && args != null && args.getFirstEncodedKey() != null) {
-            int hash = getHash(args.getEncodedKey(0));
+            int hash = getSlot(args.getFirstEncodedKey());
             ClusterConnectionProvider.Intent intent = getIntent(command.getType());
 
             RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(intent,
