@@ -5,16 +5,17 @@ package com.lambdaworks.redis.codec;
 import java.nio.ByteBuffer;
 
 /**
- * A RedisCodec encodes keys and values sent to redis, and decodes keys and values in the command output.
+ * A {@link RedisCodec} encodes keys and values sent to Redis, and decodes keys and values in the command output.
  *
- * The methods will be called by multiple threads and must be thread-safe.
+ * The methods are called by multiple threads and must be thread-safe.
  *
  * @param <K> Key type.
  * @param <V> Value type.
  *
  * @author Will Glozer
+ * @author Mark Paluch
  */
-public abstract class RedisCodec<K, V> {
+public interface RedisCodec<K, V> {
     /**
      * Decode the key output by redis.
      *
@@ -22,7 +23,7 @@ public abstract class RedisCodec<K, V> {
      *
      * @return The decoded key.
      */
-    public abstract K decodeKey(ByteBuffer bytes);
+    K decodeKey(ByteBuffer bytes);
 
     /**
      * Decode the value output by redis.
@@ -31,7 +32,7 @@ public abstract class RedisCodec<K, V> {
      *
      * @return The decoded value.
      */
-    public abstract V decodeValue(ByteBuffer bytes);
+    V decodeValue(ByteBuffer bytes);
 
     /**
      * Encode the key for output to redis.
@@ -40,7 +41,7 @@ public abstract class RedisCodec<K, V> {
      *
      * @return The encoded key.
      */
-    public abstract byte[] encodeKey(K key);
+    ByteBuffer encodeKey(K key);
 
     /**
      * Encode the value for output to redis.
@@ -49,5 +50,6 @@ public abstract class RedisCodec<K, V> {
      *
      * @return The encoded value.
      */
-    public abstract byte[] encodeValue(V value);
+    ByteBuffer encodeValue(V value);
+
 }

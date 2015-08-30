@@ -3,9 +3,12 @@ package com.lambdaworks.redis;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.rx.*;

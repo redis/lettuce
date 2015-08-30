@@ -16,10 +16,14 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * 
  * @author Will Glozer
  */
-public class Utf8StringCodec extends RedisCodec<String, String> {
+public class Utf8StringCodec implements RedisCodec<String, String> {
+
+    private final static byte[] EMPTY = new byte[0];
+
     private Charset charset;
     private CharsetDecoder decoder;
     private CharBuffer chars;
+
 
     /**
      * Initialize a new instance that encodes and decodes strings using the UTF-8 charset;
@@ -41,12 +45,12 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
     }
 
     @Override
-    public byte[] encodeKey(String key) {
+    public ByteBuffer encodeKey(String key) {
         return encode(key);
     }
 
     @Override
-    public byte[] encodeValue(String value) {
+    public ByteBuffer encodeValue(String value) {
         return encode(value);
     }
 
@@ -63,11 +67,11 @@ public class Utf8StringCodec extends RedisCodec<String, String> {
         return chars.flip().toString();
     }
 
-    private byte[] encode(String string) {
-
+    private ByteBuffer encode(String string) {
         if (string == null) {
-            return new byte[0];
+            return ByteBuffer.wrap(EMPTY);
         }
-        return string.getBytes(charset);
+
+        return charset.encode(string);
     }
 }

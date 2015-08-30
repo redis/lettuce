@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
  */
-public class ByteArrayCodec extends RedisCodec<byte[], byte[]> {
+public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
 
     @Override
     public byte[] decodeKey(ByteBuffer bytes) {
@@ -21,13 +21,13 @@ public class ByteArrayCodec extends RedisCodec<byte[], byte[]> {
     }
 
     @Override
-    public byte[] encodeKey(byte[] key) {
-        return key;
+    public ByteBuffer encodeKey(byte[] key) {
+        return ByteBuffer.wrap(key);
     }
 
     @Override
-    public byte[] encodeValue(byte[] value) {
-        return value;
+    public ByteBuffer encodeValue(byte[] value) {
+        return ByteBuffer.wrap(value);
     }
 
     private static byte[] getBytes(ByteBuffer buffer) {

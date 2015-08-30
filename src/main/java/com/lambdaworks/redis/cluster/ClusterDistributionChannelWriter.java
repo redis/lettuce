@@ -80,7 +80,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             }
         }
 
-        if (channelWriter == null && args != null && !args.getKeys().isEmpty()) {
+        if (channelWriter == null && args != null && args.getFirstEncodedKey() != null) {
             int hash = getHash(args.getEncodedKey(0));
             ClusterConnectionProvider.Intent intent = getIntent(command.getType());
 
@@ -136,10 +136,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         checkArgument(movedMessageParts.size() >= 3, "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
 
         return HostAndPort.fromString(movedMessageParts.get(2));
-    }
-
-    protected int getHash(byte[] encodedKey) {
-        return SlotHash.getSlot(encodedKey);
     }
 
     @Override

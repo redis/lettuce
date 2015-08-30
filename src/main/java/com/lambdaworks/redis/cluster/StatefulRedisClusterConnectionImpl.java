@@ -170,8 +170,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK")) {
-                    this.password = cmd.getArgs().getStrings().get(0).toCharArray();
+                if (status.equals("OK") && cmd.getArgs().getFirstString() != null) {
+                    this.password = cmd.getArgs().getFirstString().toCharArray();
                 }
             });
         }

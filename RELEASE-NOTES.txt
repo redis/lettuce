@@ -169,7 +169,6 @@ Cross-slot command execution is available on the following APIs:
 * RedisAdvancedClusterAsyncCommands
 * RedisAdvancedClusterReactiveCommands
 
-
 Node Selection API/Execution of commands on multiple cluster nodes
 ------------------------------------------------------------------
 The advanced cluster API allows to select nodes and run commands on the node selection:
@@ -207,6 +206,7 @@ Enhancements
 * Drop support for Java 6 and Java 7 #50
 * Migrate RedisFuture to CompletionStage #48
 * Allow limiting the request queue size #115
+* Improve Codec API #118
 * Allow to read from master/slave/nearest node when using Redis Cluster #114
 
 
