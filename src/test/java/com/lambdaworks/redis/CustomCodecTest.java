@@ -4,18 +4,15 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.junit.Test;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 public class CustomCodecTest extends AbstractCommandTest {
@@ -25,6 +22,30 @@ public class CustomCodecTest extends AbstractCommandTest {
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.close();
+    }
+
+    @Test
+    public void testDeflateCompressedJavaSerializer() throws Exception {
+        RedisConnection<String, Object> connection = client.connect(CompressionCodec.valueCompressor(
+                new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE));
+        List<String> list = list("one", "two");
+        connection.set(key, list);
+        assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.close();
+    }
+
+    @Test
+    public void testGzipompressedJavaSerializer() throws Exception {
+        RedisConnection<String, Object> connection = client.connect(CompressionCodec.valueCompressor(
+                new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP));
+        List<String> list = list("one", "two");
+        connection.set(key, list);
+        assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.close();
     }
 
     @Test
