@@ -54,7 +54,7 @@
             <includes>
                 <include>LICENSE</include>
                 <include>README.md</include>
-                <include>RELEASE-NOTES.txt</include>
+                <include>RELEASE-NOTES.md</include>
             </includes>
         </fileSet>
     </fileSets>
