@@ -40,6 +40,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
+@SuppressWarnings("rawtypes")
 public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     public static final String KEY_ON_NODE_1 = "a";

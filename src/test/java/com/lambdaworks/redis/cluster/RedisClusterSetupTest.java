@@ -10,29 +10,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.Lists;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.AbstractTest;
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.DefaultRedisClient;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -47,7 +32,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked" })
 @SlowTests
 public class RedisClusterSetupTest extends AbstractTest {
 
@@ -316,7 +301,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     }
 
     private void suspendAutoReconnect(StatefulConnection<String, String> connection) {
-        ClusterNodeCommandHandler channelWriter = (ClusterNodeCommandHandler) ((RedisChannelHandler) connection)
+        ClusterNodeCommandHandler<String, String> channelWriter = (ClusterNodeCommandHandler<String, String>) ((RedisChannelHandler<String, String>) connection)
                 .getChannelWriter();
         channelWriter.prepareClose();
     }
@@ -375,7 +360,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         ClusterSetup.setup2Masters(clusterRule);
 
-        PooledClusterConnectionProvider clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -415,11 +400,11 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).closeStaleConnections(false)
                 .refreshPeriod(1, TimeUnit.SECONDS).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         ClusterSetup.setup2Masters(clusterRule);
 
-        PooledClusterConnectionProvider<?, ?> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -458,7 +443,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         ClusterSetup.setup2Masters(clusterRule);
 
-        final PooledClusterConnectionProvider clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        final PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -535,12 +520,17 @@ public class RedisClusterSetupTest extends AbstractTest {
         clusterConnection.close();
     }
 
-    protected PooledClusterConnectionProvider getPooledClusterConnectionProvider(
-            RedisAdvancedClusterAsyncConnection clusterAsyncConnection) {
+    protected PooledClusterConnectionProvider<String, String> getPooledClusterConnectionProvider(
+            RedisAdvancedClusterAsyncCommands<String, String> clusterAsyncConnection) {
 
-        RedisChannelHandler<?, ?> channelHandler = (RedisChannelHandler<?, ?>) clusterAsyncConnection.getStatefulConnection();
+        RedisChannelHandler<String, String> channelHandler = getChannelHandler(clusterAsyncConnection);
         ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) channelHandler.getChannelWriter();
-        return (PooledClusterConnectionProvider) writer.getClusterConnectionProvider();
+        return (PooledClusterConnectionProvider<String, String>) writer.getClusterConnectionProvider();
+    }
+
+    private RedisChannelHandler<String, String> getChannelHandler(
+            RedisAdvancedClusterAsyncCommands<String, String> clusterAsyncConnection) {
+        return (RedisChannelHandler<String, String>) clusterAsyncConnection.getStatefulConnection();
     }
 
     private void assertExecuted(RedisFuture<String> set) throws Exception {

@@ -18,7 +18,7 @@ public class PipelinedRedisFutureTest {
 
         String other = "other";
 
-        sut = new PipelinedRedisFuture(Maps.newHashMap(), o -> other);
+        sut = new PipelinedRedisFuture<>(Maps.newHashMap(), o -> other);
 
         sut.complete("");
         assertThat(sut.get()).isEqualTo(other);
@@ -31,7 +31,7 @@ public class PipelinedRedisFutureTest {
 
         String other = "other";
 
-        sut = new PipelinedRedisFuture(Maps.newHashMap(), o -> other);
+        sut = new PipelinedRedisFuture<>(Maps.newHashMap(), o -> other);
 
         sut.completeExceptionally(new Exception());
         assertThat(sut.get()).isEqualTo(other);

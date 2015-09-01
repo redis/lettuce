@@ -7,6 +7,7 @@ import static org.assertj.core.api.StrictAssertions.fail;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.RedisCommandTimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -154,8 +155,8 @@ public class NodeSelectionSyncTest extends AbstractClusterTest {
         try {
             eval = masters.commands().eval("while true do end", STATUS, new String[0]);
             fail("missing exception");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (RedisCommandTimeoutException e) {
+            assertThat(e).hasMessageContaining("Command timed out for node(s)");
         }
 
         Executions<String> kill = commands.masters().commands().scriptKill();

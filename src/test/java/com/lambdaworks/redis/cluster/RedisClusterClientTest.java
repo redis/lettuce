@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.ReadFrom;
+import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -49,10 +51,10 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     protected StatefulRedisConnection<String, String> redis3;
     protected StatefulRedisConnection<String, String> redis4;
 
-    protected RedisClusterConnection<String, String> redissync1;
-    protected RedisClusterConnection<String, String> redissync2;
-    protected RedisClusterConnection<String, String> redissync3;
-    protected RedisClusterConnection<String, String> redissync4;
+    protected RedisClusterCommands<String, String> redissync1;
+    protected RedisClusterCommands<String, String> redissync2;
+    protected RedisClusterCommands<String, String> redissync3;
+    protected RedisClusterCommands<String, String> redissync4;
 
     protected RedisAdvancedClusterCommands<String, String> sync;
 
@@ -190,7 +192,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @SuppressWarnings({ "rawtypes" })
     public void testClusterCommandRedirection() throws Exception {
 
-        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
 
         // Command on node within the default connection
         assertThat(connection.set(KEY_B, value).get()).isEqualTo("OK");
@@ -204,7 +206,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @SuppressWarnings({ "rawtypes" })
     public void testClusterRedirection() throws Exception {
 
-        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
@@ -238,7 +240,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test(expected = RedisException.class)
     public void closeConnection() throws Exception {
 
-        try (RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster()) {
+        try (RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync()) {
 
             List<String> time = connection.time();
             assertThat(time).hasSize(2);
@@ -278,7 +280,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), port7).build());
 
-        try (RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster()) {
+        try (RedisClusterCommands<String, String> connection = clusterClient.connectCluster()) {
 
             List<String> time = connection.time();
             assertThat(time).hasSize(2);
@@ -304,7 +306,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         RedisClusterNode redis1Node = getOwnPartition(redissync2);
 
-        RedisClusterConnection<String, String> connection = sync.getConnection(TestSettings.hostAddr(), port2);
+        RedisClusterCommands<String, String> connection = sync.getConnection(TestSettings.hostAddr(), port2);
 
         String result = connection.clusterMyId();
         assertThat(result).isEqualTo(redis1Node.getNodeId());
@@ -320,7 +322,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         StatefulRedisConnection<String, String> statefulRedisConnection = sync.getStatefulConnection().getConnection(
                 TestSettings.hostAddr(), port2);
 
-        RedisClusterConnection<String, String> connection = statefulRedisConnection.sync();
+        RedisClusterCommands<String, String> connection = statefulRedisConnection.sync();
 
         assertThat(connection.get(KEY_A)).isEqualTo(value);
         try {
@@ -333,7 +335,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void testStatefulConnection() throws Exception {
-        RedisAdvancedClusterAsyncConnection<String, String> async = sync.getStatefulConnection().async();
+        RedisAdvancedClusterAsyncCommands<String, String> async = sync.getStatefulConnection().async();
 
         assertThat(async.ping().get()).isEqualTo("PONG");
     }
@@ -345,7 +347,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             redisClusterNode.setSlots(new ArrayList<>());
         }
         RedisChannelHandler rch = (RedisChannelHandler) sync.getStatefulConnection();
-        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) rch.getChannelWriter();
+        ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) rch
+                .getChannelWriter();
         writer.setPartitions(clusterClient.getPartitions());
         clusterClient.getPartitions().reload(clusterClient.getPartitions().getPartitions());
 

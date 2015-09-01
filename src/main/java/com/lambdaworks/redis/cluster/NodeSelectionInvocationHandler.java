@@ -66,6 +66,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         try {
@@ -93,7 +94,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
                         throw e;
                     }
 
-                    return new SyncExecutionsImpl((Map) executions);
+                    return new SyncExecutionsImpl(executions);
 
                 }
                 return new AsyncExecutionsImpl<>((Map) executions);
@@ -155,7 +156,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             }
         });
         String description = getNodeDescription(notFinished);
-        return new RedisCommandTimeoutException("Command timed out for nodes: " + description);
+        return new RedisCommandTimeoutException("Command timed out for node(s): " + description);
     }
 
     private RedisCommandExecutionException createExecutionException(Map<RedisClusterNode, CompletionStage<?>> executions) {
