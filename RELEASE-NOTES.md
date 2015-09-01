@@ -1,4 +1,4 @@
-              lettuce 3.3.Final RELEASE NOTES
+# lettuce 3.3.Final RELEASE NOTES
 
 lettuce 3.3 introduces a variety of changes: It features changes to cluster support,
 new Geo commands for the upcoming Redis 3.2 release and allows batching, an extension
