@@ -6,6 +6,7 @@ import rx.Observable;
 import rx.Subscriber;
 
 import com.lambdaworks.redis.RedisReactiveCommandsImpl;
+import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.rx.ChannelMessage;
@@ -102,27 +103,24 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Observable<Void> psubscribe(K... patterns) {
-        return (Observable<Void>) createObservable(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
+    public Observable<Success> psubscribe(K... patterns) {
+
+        return getSuccessObservable(createObservable(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Observable<Void> punsubscribe(K... patterns) {
-        return (Observable<Void>) createObservable(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
+    public Observable<Success> punsubscribe(K... patterns) {
+        return getSuccessObservable(createObservable(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Observable<Void> subscribe(K... channels) {
-        return (Observable<Void>) createObservable(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
+    public Observable<Success> subscribe(K... channels) {
+        return getSuccessObservable(createObservable(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Observable<Void> unsubscribe(K... channels) {
-        return (Observable<Void>) createObservable(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
+    public Observable<Success> unsubscribe(K... channels) {
+        return getSuccessObservable(createObservable(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
     }
 
     private CommandArgs<K, V> args(K... keys) {

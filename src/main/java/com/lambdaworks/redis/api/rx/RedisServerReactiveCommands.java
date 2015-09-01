@@ -159,13 +159,13 @@ public interface RedisServerReactiveCommands<K, V> {
      * Make the server crash: Invalid pointer access.
      * @return nothing, because the server crashes before returning.
      */
-    Observable<Void> debugSegfault();
+    Observable<Success> debugSegfault();
 
     /**
      * Make the server crash: Out of memory.
      * @return nothing, because the server crashes before returning.
      */
-    Observable<Void> debugOom();
+    Observable<Success> debugOom();
 
     /**
      * Get debugging information about the internal hash-table state.
@@ -222,9 +222,9 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      * 
      * @param save {@literal true} force save operation
-     * @return void observable
+     * @return Success
      */
-    Observable<Void> shutdown(boolean save);
+    Observable<Success> shutdown(boolean save);
 
     /**
      * Make the server a slave of another instance, or promote it as master.

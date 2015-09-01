@@ -20,6 +20,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import rx.Observable;
+import rx.Subscriber;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -214,13 +215,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Void> debugSegfault() {
-        return createObservable(commandBuilder::debugSegfault);
+    public Observable<Success> debugSegfault() {
+        return Observable.just(Success.Success).doOnCompleted(commandBuilder::debugSegfault);
     }
 
     @Override
-    public Observable<Void> debugOom() {
-        return createObservable(commandBuilder::debugOom);
+    public Observable<Success> debugOom() {
+        return Observable.just(Success.Success).doOnCompleted(commandBuilder::debugOom);
     }
 
     @Override
@@ -286,7 +287,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return (Observable<T>) createObservable(() -> commandBuilder.evalsha(digest, type, keys, values));
     }
 
-    @Override
     public Observable<Boolean> exists(K key) {
         return createObservable(() -> commandBuilder.exists(key));
     }
@@ -794,9 +794,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Observable<Void> shutdown(boolean save) {
-        return (Observable) createObservable(() -> commandBuilder.shutdown(save));
+    public Observable<Success> shutdown(boolean save) {
+        return getSuccessObservable(createObservable(() -> commandBuilder.shutdown(save)));
     }
 
     @Override
@@ -1653,6 +1652,38 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public <T, R> R createDissolvingObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         return (R) Observable.create(new ReactiveCommandDispatcher<K, V, T>(() -> new Command<>(type, output, args),
                 connection, true));
+    }
+
+    /**
+     * Emits just {@link Success#Success} or the {@link Throwable} after the inner observable is completed.
+     * @param observable inner observable
+     * @param <T> used for type inference
+     * @return Success observable
+     */
+    protected <T> Observable<Success> getSuccessObservable(final Observable<T> observable) {
+        return Observable.create(new Observable.OnSubscribe<Success>() {
+            @Override
+            public void call(Subscriber<? super Success> subscriber) {
+
+                observable.subscribe(new Subscriber<Object>() {
+                    @Override
+                    public void onCompleted() {
+                        subscriber.onNext(Success.Success);
+                        subscriber.onCompleted();
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        subscriber.onError(throwable);
+                    }
+
+                    @Override
+                    public void onNext(Object k) {
+
+                    }
+                });
+            }
+        });
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

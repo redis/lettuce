@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import rx.Observable;
 
@@ -151,6 +152,6 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *
      * @param save {@literal true} force save operation
      */
-    Observable<Void> shutdown(boolean save);
+    Observable<Success> shutdown(boolean save);
 
 }

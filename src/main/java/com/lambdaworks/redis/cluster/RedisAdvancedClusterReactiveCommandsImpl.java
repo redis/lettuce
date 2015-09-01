@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.api.rx.Success;
 import rx.Observable;
 import rx.internal.operators.OperatorConcat;
 
@@ -235,8 +236,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<Void> shutdown(boolean save) {
-        Map<String, Observable<Void>> observables = executeOnNodes(commands -> commands.shutdown(save),
+    public Observable<Success> shutdown(boolean save) {
+        Map<String, Observable<Success>> observables = executeOnNodes(commands -> commands.shutdown(save),
                 redisClusterNode -> true);
         return Observable.merge(observables.values()).onErrorReturn(throwable -> null).last();
     }

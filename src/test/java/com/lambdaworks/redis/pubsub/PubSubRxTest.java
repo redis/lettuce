@@ -11,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.After;
 import org.junit.Before;
@@ -179,8 +180,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
     @Test(timeout = 2000)
     public void psubscribe() throws Exception {
-        Void aVoid = pubsub.psubscribe(pattern).toBlocking().singleOrDefault(null);
-        assertThat(aVoid).isNull();
+        Success sucess = pubsub.psubscribe(pattern).toBlocking().single();
+        assertThat(sucess).isEqualTo(Success.Success);
 
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);

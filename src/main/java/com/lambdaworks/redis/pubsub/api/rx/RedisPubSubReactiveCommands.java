@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.pubsub.api.rx;
 
+import com.lambdaworks.redis.api.rx.Success;
 import rx.Observable;
 
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
@@ -50,33 +51,33 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      * Listen for messages published to channels matching the given patterns.
      * 
      * @param patterns the patterns
-     * @return Observable&lt;Void&gt; Observable for {@code psubscribe} command
+     * @return Observable&lt;Success&gt; Observable for {@code psubscribe} command
      */
-    Observable<Void> psubscribe(K... patterns);
+    Observable<Success> psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
      * 
      * @param patterns the patterns
-     * @return Observable&lt;Void&gt; Observable for {@code punsubscribe} command
+     * @return Observable&lt;Success&gt; Observable for {@code punsubscribe} command
      */
-    Observable<Void> punsubscribe(K... patterns);
+    Observable<Success> punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
      * 
      * @param channels the channels
-     * @return Observable&lt;Void&gt; Observable for {@code subscribe} command
+     * @return Observable&lt;Success&gt; Observable for {@code subscribe} command
      */
-    Observable<Void> subscribe(K... channels);
+    Observable<Success> subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
      * 
      * @param channels the channels
-     * @return Observable&lt;Void&gt; Observable for {@code unsubscribe} command.
+     * @return Observable&lt;Success&gt; Observable for {@code unsubscribe} command.
      */
-    Observable<Void> unsubscribe(K... channels);
+    Observable<Success> unsubscribe(K... channels);
 
     /**
      * @return the underlying connection.

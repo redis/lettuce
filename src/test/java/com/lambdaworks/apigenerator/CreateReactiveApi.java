@@ -89,7 +89,7 @@ public class CreateReactiveApi {
 
             String typeAsString = method.getType().toStringWithoutComments().trim();
             if (typeAsString.equals("void")) {
-                typeAsString = "Void";
+                typeAsString = "Success";
             }
 
             if (typeAsString.startsWith("List<")) {
