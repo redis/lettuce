@@ -6,14 +6,21 @@ import java.util.stream.Collectors;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.api.NodeSelection;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
+ * Abstract base class to support node selections. A node selection represents a set of Redis Cluster nodes and allows command
+ * execution on the selected cluster nodes.
+ * 
+ * @param <API> API type.
+ * @param <CMD> Command command interface type to invoke multi-node operations.
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<T, CMDType> {
+abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSupport<API, CMD> {
 
     protected StatefulRedisClusterConnection<K, V> globalConnection;
     private ClusterConnectionProvider.Intent intent;
@@ -46,7 +53,7 @@ abstract class AbstractNodeSelection<T, CMDType, K, V> implements NodeSelection<
     }
 
     @Override
-    public RedisClusterNode get(int index) {
+    public RedisClusterNode node(int index) {
         return nodes().get(index);
     }
 

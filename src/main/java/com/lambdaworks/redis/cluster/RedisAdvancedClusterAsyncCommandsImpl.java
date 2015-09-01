@@ -18,7 +18,7 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
-import com.lambdaworks.redis.cluster.api.NodeSelection;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.NodeSelectionAsyncCommands;
@@ -373,19 +373,18 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     protected AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, ClusterConnectionProvider.Intent intent,
             boolean dynamic) {
 
-        NodeSelection<RedisAsyncCommands<K, V>, ?> selection;
+        NodeSelectionSupport<RedisAsyncCommands<K, V>, ?> selection;
 
         if (dynamic) {
-            selection = new DynamicAsyncNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate,
+            selection = new DynamicAsyncNodeSelection<>(getStatefulConnection(), predicate,
                     intent);
         } else {
-            selection = new StaticAsyncNodeSelection<>((StatefulRedisClusterConnection<K, V>) getConnection(), predicate,
+            selection = new StaticAsyncNodeSelection<>(getStatefulConnection(), predicate,
                     intent);
         }
 
-        NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
-                false);
-        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelection.class.getClassLoader(), new Class<?>[] {
+        NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection);
+        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
                 NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
     }
 }

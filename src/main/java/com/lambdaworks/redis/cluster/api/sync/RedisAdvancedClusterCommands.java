@@ -2,10 +2,12 @@ package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
-import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 
 /**
@@ -39,6 +41,72 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return the underlying connection.
      */
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
+
+    /**
+     * Select all masters.
+     *
+     * @return API with synchronous executed commands on a selection of master cluster nodes.
+     */
+    default NodeSelection<K, V> masters() {
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
+    }
+
+    /**
+     * Select all slaves.
+     *
+     * @return API with synchronous executed commands on a selection of slave cluster nodes.
+     */
+    default NodeSelection<K, V> slaves() {
+        return readonly(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+    }
+
+    /**
+     * Select all slaves.
+     *
+     * @param predicate Predicate to filter nodes
+     * @return API with synchronous executed commands on a selection of slave cluster nodes.
+     */
+    default NodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
+        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+    }
+
+    /**
+     * Select all known cluster nodes.
+     *
+     * @return API with synchronous executed commands on a selection of all cluster nodes.
+     */
+    default NodeSelection<K, V> all() {
+        return nodes(redisClusterNode -> true);
+    }
+
+    /**
+     * Select slave nodes by a predicate and keeps a static selection. Slave connections operate in {@literal READONLY} mode.
+     * The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
+     *
+     * @param predicate Predicate to filter nodes
+     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     */
+    NodeSelection<K, V> readonly(Predicate<RedisClusterNode> predicate);
+
+    /**
+     * Select nodes by a predicate and keeps a static selection. The set of nodes within the {@link NodeSelectionSupport} does
+     * not change when the cluster view changes.
+     *
+     * @param predicate Predicate to filter nodes
+     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     */
+    NodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
+
+    /**
+     * Select nodes by a predicate
+     *
+     * @param predicate Predicate to filter nodes
+     * @param dynamic Defines, whether the set of nodes within the {@link NodeSelectionSupport} can change when the cluster view
+     *        changes.
+     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     */
+    NodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic);
 
     /**
      * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.

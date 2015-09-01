@@ -248,7 +248,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         RedisClusterReactiveCommands<String, String> connection = commands.getConnection(host, port4);
         connection.readOnly().toBlocking().first();
         commands.set(key, value).toBlocking().first();
-        AdvancedClusterClientTest.waitForReplication(commands.getStatefulConnection().async(), key, port4);
+        NodeSelectionAsyncTest.waitForReplication(commands.getStatefulConnection().async(), key, port4);
 
         AtomicBoolean error = new AtomicBoolean();
         connection.get(key).doOnError(throwable -> error.set(true)).toBlocking().toFuture().get();

@@ -12,23 +12,25 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
+ * @param <CMD> Command command interface type to invoke multi-node operations.
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-class DynamicAsyncNodeSelection<K, V, CMDType> extends DynamicNodeSelection<RedisAsyncCommands<K, V>, CMDType, K, V> {
+class DynamicAsyncNodeSelection<CMD, K, V> extends DynamicNodeSelection<RedisAsyncCommands<K, V>, CMD, K, V> {
 
     public DynamicAsyncNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection,
             Predicate<RedisClusterNode> selector, ClusterConnectionProvider.Intent intent) {
         super(globalConnection, selector, intent);
     }
 
-    @Override
     public Iterator<RedisAsyncCommands<K, V>> iterator() {
         List<RedisClusterNode> list = ImmutableList.copyOf(nodes());
         return list.stream().map(node -> getConnection(node).async()).iterator();
     }
 
     @Override
-    public RedisAsyncCommands<K, V> node(int index) {
+    public RedisAsyncCommands<K, V> commands(int index) {
         return statefulMap().get(nodes().get(index)).async();
     }
 
@@ -43,8 +45,9 @@ class DynamicAsyncNodeSelection<K, V, CMDType> extends DynamicNodeSelection<Redi
         return map;
     }
 
+    // This method is never called, the value is supplied by AOP magic.
     @Override
-    public CMDType commands() {
+    public CMD commands() {
         return null;
     }
 }

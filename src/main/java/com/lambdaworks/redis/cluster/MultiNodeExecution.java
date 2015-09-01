@@ -1,13 +1,22 @@
 package com.lambdaworks.redis.cluster;
 
+import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.sync.NodeSelection;
+import com.lambdaworks.redis.cluster.api.sync.NodeSelectionCommands;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Utility to perform and synchronize command executions on multiple cluster nodes.

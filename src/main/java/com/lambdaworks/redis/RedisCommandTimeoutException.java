@@ -12,4 +12,7 @@ public class RedisCommandTimeoutException extends RedisException {
         super("Command timed out");
     }
 
+    public RedisCommandTimeoutException(String msg) {
+        super(msg);
+    }
 }

@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
-import com.lambdaworks.redis.cluster.api.NodeSelection;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
@@ -78,7 +78,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Select all known cluster nodes.
      *
-     * @return API with asynchronous executed commands on a selection of all luster nodes.
+     * @return API with asynchronous executed commands on a selection of all cluster nodes.
      */
     default AsyncNodeSelection<K, V> all() {
         return nodes(redisClusterNode -> true);
@@ -86,19 +86,19 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
 
     /**
      * Select slave nodes by a predicate and keeps a static selection. Slave connections operate in {@literal READONLY} mode.
-     * The set of nodes within the {@link NodeSelection} does not change when the cluster view changes.
+     * The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
      *
      * @param predicate Predicate to filter nodes
-     * @return a {@linkplain NodeSelectionAsyncCommands} matching {@code predicate}
+     * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
      */
     AsyncNodeSelection<K, V> readonly(Predicate<RedisClusterNode> predicate);
 
     /**
-     * Select nodes by a predicate and keeps a static selection. The set of nodes within the {@link NodeSelection} does not
-     * change when the cluster view changes.
+     * Select nodes by a predicate and keeps a static selection. The set of nodes within the {@link NodeSelectionSupport} does
+     * not change when the cluster view changes.
      *
      * @param predicate Predicate to filter nodes
-     * @return a {@linkplain NodeSelectionAsyncCommands} matching {@code predicate}
+     * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
      */
     AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
 
@@ -106,9 +106,9 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Select nodes by a predicate
      *
      * @param predicate Predicate to filter nodes
-     * @param dynamic Defines, whether the set of nodes within the {@link NodeSelection} can change when the cluster view
+     * @param dynamic Defines, whether the set of nodes within the {@link NodeSelectionSupport} can change when the cluster view
      *        changes.
-     * @return a {@linkplain NodeSelection} matching {@code predicate}
+     * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
      */
     AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic);
 

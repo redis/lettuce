@@ -25,6 +25,7 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -73,9 +74,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </ul>
  *
  * <p>
- * Cluster commands can be issued to multiple hosts in parallel by using the
- * {@link com.lambdaworks.redis.cluster.api.NodeSelection} API. A set of nodes is selected using a
- * {@link java.util.function.Predicate} and commands can be issued to the node selection
+ * Cluster commands can be issued to multiple hosts in parallel by using the {@link NodeSelectionSupport} API. A set of nodes is
+ * selected using a {@link java.util.function.Predicate} and commands can be issued to the node selection
  * 
  * <code><pre>
    AsyncExecutions<String> ping = commands.masters().commands().ping();

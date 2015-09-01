@@ -1,7 +1,9 @@
 package com.lambdaworks.redis.cluster.api.async;
 
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
+
 /**
- * Asynchronous and thread-safe Redis API to execute commands on a {@link com.lambdaworks.redis.cluster.api.NodeSelection}.
+ * Asynchronous and thread-safe Redis API to execute commands on a {@link NodeSelectionSupport}.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */

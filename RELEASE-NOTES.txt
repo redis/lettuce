@@ -171,18 +171,37 @@ Cross-slot command execution is available on the following APIs:
 
 Node Selection API/Execution of commands on multiple cluster nodes
 ------------------------------------------------------------------
-The advanced cluster API allows to select nodes and run commands on the node selection:
+The advanced cluster API allows to select nodes and run commands on the node selection. This API is subject
+to incompatible changes in a future release. The API is exempt from any compatibility guarantees made
+by lettuce. The current state implies nothing about the quality or performance of the API in question,
+only the fact that it is not "API-frozen.". All commands are sent concurrently to the Redis nodes, meaning you do
+not have to wait until the commands have finished to trigger the next command. That behavior is independent of the
+API you're using. The Node Selection API is available from the synchronous and asynchronous
+command interfaces:
+
+**Asynchronous**
 
 ```java
 RedisAdvancedClusterAsyncCommands<String, String> async = clusterClient.connect().async();
 AsyncNodeSelection<String, String> slaves = connection.slaves();
 
 AsyncExecutions<List<String>> executions = slaves.commands().keys("*");
-executions.forEach(result -> result.thenAccept(keys -> System.out.println(keys)));
+executions.stream().forEach(result -> result.thenAccept(keys -> System.out.println(keys)));
 ```
 
-Commands are dispatched to the nodes within the selection, the result (CompletionStage) is available through AsyncExecutions.
-This API is currently only available for async commands and a technical preview so your feedback is highly appreciated.
+**Synchronous**
+
+```java
+RedisAdvancedClusterCommands<String, String> async = clusterClient.connect().sync();
+NodeSelection<String, String> slaves = connection.slaves();
+
+Executions<List<String>> executions = slaves.commands().keys("*");
+executions.stream().forEach(value -> System.out.println(value));
+```
+
+Commands are dispatched to the nodes within the selection, the result (CompletionStage or the value) is available
+from the `AsyncExecutions`/`Executions` result holders.
+This API is a technical preview, so your feedback is highly appreciated.
 
 Read more: https://github.com/mp911de/lettuce/wiki/Redis-Cluster-(4.0)
 
@@ -198,6 +217,7 @@ Updated dependencies
 Enhancements
 ------------
 * Advanced Cluster API (async) #78
+* Implement synchronous multi-node execution API enhancement #129
 * Improve HLL command interface #77
 * Move segregated API interfaces to own packages  #76
 * Provide a stateful Redis connection and decouple sync/async API from connection resources #75

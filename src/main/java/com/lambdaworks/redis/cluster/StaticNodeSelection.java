@@ -8,9 +8,15 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
+ * Static selection of nodes.
+ * 
+ * @param <API> API type.
+ * @param <CMD> Command command interface type to invoke multi-node operations.
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-abstract class StaticNodeSelection<T, CMDType, K, V> extends AbstractNodeSelection<T, CMDType, K, V> {
+abstract class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD, K, V> {
 
     private final List<RedisClusterNode> redisClusterNodes;
 
