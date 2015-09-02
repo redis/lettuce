@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis.protocol;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
@@ -27,13 +29,24 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     protected boolean completed = false;
 
     /**
+     * Create a new command with the supplied type.
+     *
+     * @param type Command type, must not be {@literal null}.
+     * @param output Command output, can be {@literal null}.
+     */
+    public Command(ProtocolKeyword type, CommandOutput<K, V, T> output) {
+        this(type, output, null);
+    }
+
+    /**
      * Create a new command with the supplied type and args.
      *
-     * @param type Command type.
-     * @param output Command output.
-     * @param args Command args, if any.
+     * @param type Command type, must not be {@literal null}.
+     * @param output Command output, can be {@literal null}.
+     * @param args Command args, can be {@literal null}
      */
     public Command(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+        checkArgument(type != null, "Command type must not be null");
         this.type = type;
         this.output = output;
         this.args = args;

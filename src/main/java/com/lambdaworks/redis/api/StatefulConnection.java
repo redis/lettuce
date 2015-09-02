@@ -35,9 +35,10 @@ public interface StatefulConnection<K, V> extends AutoCloseable {
 
     /**
      * Dispatch a command. Write a command on the channel. The command may be changed/wrapped during write and the written
-     * instance is returned after the call.
+     * instance is returned after the call. This command does not wait until the command completes and does not guarantee
+     * whether the command is executed successfully.
      *
-     * @param command the redis command
+     * @param command the Redis command
      * @param <T> result type
      * @param <C> command type
      * @return the written redis command

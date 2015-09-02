@@ -205,6 +205,29 @@ This API is a technical preview, so your feedback is highly appreciated.
 
 Read more: https://github.com/mp911de/lettuce/wiki/Redis-Cluster-(4.0)
 
+Custom commands
+---------------
+Lettuce covers nearly all Redis commands. Redis development is an ongoing process,
+and some commands are not covered by lettuce meaning there are use cases that
+require invocation of custom commands or custom outputs.
+lettuce 4.x allows you to trigger own commands. That API is used by lettuce itself
+to dispatch commands and requires some knowledge of how commands are constructed
+and dispatched within lettuce.
+
+```java
+StatefulRedisConnection<String, String> connection = redis.getStatefulConnection();
+
+RedisCommand<String, String, String> command = new Command<>(CommandType.PING,
+                                        new StatusOutput<>(new Utf8StringCodec()));
+
+AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
+connection.dispatch(async);
+
+// async instanceof CompletableFuture == true
+```
+
+Read more: https://github.com/mp911de/lettuce/wiki/Custom-commands%2C-outputs-and-command-mechanics
+
 
 Updated dependencies
 --------------------
@@ -228,7 +251,7 @@ Enhancements
 * Allow limiting the request queue size #115
 * Improve Codec API #118
 * Allow to read from master/slave/nearest node when using Redis Cluster #114
-
+* Documentation of custom commands #122
 
 Fixes
 -----

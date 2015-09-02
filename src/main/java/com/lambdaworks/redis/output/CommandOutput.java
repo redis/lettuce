@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis.output;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -23,10 +25,11 @@ public abstract class CommandOutput<K, V, T> {
     /**
      * Initialize a new instance that encodes and decodes keys and values using the supplied codec.
      * 
-     * @param codec Codec used to encode/decode keys and values.
+     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
      * @param output Initial value of output.
      */
     public CommandOutput(RedisCodec<K, V> codec, T output) {
+        checkArgument(codec != null, "RedisCodec must not be null");
         this.codec = codec;
         this.output = output;
     }

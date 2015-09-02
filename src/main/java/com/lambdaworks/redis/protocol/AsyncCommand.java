@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.protocol;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +29,13 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     protected RedisCommand<K, V, T> command;
     protected CountDownLatch latch = new CountDownLatch(1);
 
+    /**
+     * 
+     * @param command the command, must not be {@literal null}.
+     * 
+     */
     public AsyncCommand(RedisCommand<K, V, T> command) {
+        checkArgument(command != null, "RedisCommand must not be null");
         this.command = command;
     }
 

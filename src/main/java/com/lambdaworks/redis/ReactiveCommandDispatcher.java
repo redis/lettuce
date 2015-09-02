@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -24,8 +26,8 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
     /**
      * 
-     * @param staticCommand static command
-     * @param connection the connection
+     * @param staticCommand static command, must not be {@literal null}
+     * @param connection the connection, must not be {@literal null}
      * @param dissolve dissolve collections into particular elements
      */
     public ReactiveCommandDispatcher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve) {
@@ -34,12 +36,14 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
     /**
      * 
-     * @param commandSupplier command supplier
-     * @param connection the connection
+     * @param commandSupplier command supplier, must not be {@literal null}
+     * @param connection the connection, must not be {@literal null}
      * @param dissolve dissolve collections into particular elements
      */
     public ReactiveCommandDispatcher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection,
             boolean dissolve) {
+        checkArgument(commandSupplier != null, "CommandSupplier must not be null");
+        checkArgument(connection != null, "StatefulConnection must not be null");
         this.commandSupplier = commandSupplier;
         this.connection = connection;
         this.dissolve = dissolve;

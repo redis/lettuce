@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis.protocol;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Math.max;
 
 import java.nio.BufferOverflowException;
@@ -28,12 +29,17 @@ public class CommandArgs<K, V> {
     private Long firstInteger;
     private String firstString;
 
+    /**
+     *
+     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     */
     public CommandArgs(RedisCodec<K, V> codec) {
+        checkArgument(codec != null, "RedisCodec must not be null");
         this.codec = codec;
         this.buffer = ByteBuffer.allocate(32);
     }
 
-    public ByteBuffer buffer() {
+    ByteBuffer buffer() {
         buffer.flip();
         return buffer;
     }
