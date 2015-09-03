@@ -13,8 +13,10 @@
     <packaging>jar</packaging>
 
     <name>lettuce</name>
-    <url>http://github.com/mp911de/lettuce</url>
-    <description>Java redis client. This is a fork of lettuce from https://github.com/wg/lettuce</description>
+    <url>http://github.com/mp911de/lettuce/wiki</url>
+    <description>Advanced and thread-safe Java Redis client for synchronous and asynchronous usage.
+        Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs, and much more.
+    </description>
 
     <licenses>
         <license>
