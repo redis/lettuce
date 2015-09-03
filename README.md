@@ -1,13 +1,13 @@
-lettuce - Advanced and thread-safe Java Redis client
+lettuce - Java Redis client
 ====================================================
 
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
-Lettuce is a scalable thread-safe Redis client suited for synchronous,
+Lettuce is a scalable thread-safe Redis client for synchronous,
 asynchronous and reactive usage. Multiple threads may share one connection if they avoid blocking and transactional
 operations such as `BLPOP` and  `MULTI`/`EXEC`.
 lettuce is built with [netty](https://github.com/netty/netty).
-Supports advanced Redis features such as Sentinel, Cluster, Pipelining and Redis data models.
+Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Reconnect and Redis data models.
 
 This version of lettuce has been tested against Redis and 3.0.
 
@@ -23,7 +23,6 @@ This version of lettuce has been tested against Redis and 3.0.
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
-I'm developing and maintaining actively the fork of https://github/wg/lettuce
 
 Communication
 ---------------

@@ -1,7 +1,16 @@
-lettuce 4.0.Beta1 RELEASE NOTES
+# lettuce 4.0.Beta2 RELEASE NOTES
 
 This release is a major release that introduces numerous changes like stateful connections,
 the reactive API and many more. Lettuce 4.0 includes all features from lettuce 3.3.
+
+**Highlights of lettuce 4.0.Beta2**
+
+* Reactive API
+* Stateful connections
+* Cross-slot command execution
+* Node Selection API/Execution of commands on multiple cluster nodes
+* ReadFrom Settings/Redis Cluster slave reads
+* Custom commands
 
 This release contains some breaking changes. You may want to consult the
 wiki at https://github.com/mp911de/lettuce/wiki/Migration-from-3.x-to-4.x
@@ -56,7 +65,8 @@ Rearchitecting the API
 -----
 Before 4.0, connection resources (sockets, events) were bound to the particular API.
 If one wanted to use a different API, he had to create another connection to Redis.
-This coupling is loosed now. By calling `connect()` you will no longer get a synchronous connection, you will get a `StatefulRedisConnection`
+This coupling is loosed now. By calling `connect()` you will no longer get a synchronous connection, 
+you will get a `StatefulRedisConnection`
 with the access to the synchronous, asynchronous and reactive API.
 All commands are executed using netty and it does not matter, from which API you come.
 
@@ -205,6 +215,27 @@ This API is a technical preview, so your feedback is highly appreciated.
 
 Read more: https://github.com/mp911de/lettuce/wiki/Redis-Cluster-(4.0)
 
+
+ReadFrom Settings/Redis Cluster slave reads
+-------------------------------------------
+The `ReadFrom` setting describes how lettuce routes read operations to the members of a Redis Cluster.
+
+By default, lettuce routes its read operations to the master node. Reading from the master returns the most recent 
+version of the data because write operations are issued to the single master node. Reading from 
+masters guarantees strong consistency.
+
+The `ReadFrom` setting can be set to one of the following presets:
+
+* `MASTER` Default mode. Read from the current master node.
+* `MASTER_PREFERRED` Read from the master, but if it is unavailable, read from slave nodes.
+* `SLAVE` Read from slave nodes.
+* `NEAREST` Read from any node of the cluster with the lowest latency.
+
+Custom read settings can be implemented by extending the `com.lambdaworks.redis.ReadFrom` class.
+
+Read more: https://github.com/mp911de/lettuce/wiki/ReadFrom-Settings
+
+
 Custom commands
 ---------------
 Lettuce covers nearly all Redis commands. Redis development is an ongoing process,
@@ -228,10 +259,32 @@ connection.dispatch(async);
 
 Read more: https://github.com/mp911de/lettuce/wiki/Custom-commands%2C-outputs-and-command-mechanics
 
+Codec API improvements
+----------------------
+The RedisCodec API was aligned to a consistent interchange type and migrated to an interface.
+The RedisCodec interface accepts and returns `ByteBuffer` for data interchange. A `ByteBuffer is not `
+opinionated about the source of the underlying bytes and such it does not require users to duplicate existing
+data as it was enforced by a `byte[]`. Lettuce provides `UTF-8` and `byte[]` codecs and allows users to
+create and use their own codecs. XML, JSON and Java-serialization are good examples for codecs.
+
+This release also brings a value compressor which allows you to compress values using GZIP or Deflate
+compressions. Value compression is transparent and can be used with any codec. 
+ 
+```java
+RedisCommands<String, Object> connection = client.connect(
+                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP)).sync(); 
+
+RedisCommands<String, String> connection = client.connect(
+                CompressionCodec.valueCompressor(new Utf8StringCodec(), CompressionCodec.CompressionType.DEFLATE)).sync(); 
+```
+
+
+Read more: https://github.com/mp911de/lettuce/wiki/Codecs-%284.x%29
+
 
 Updated dependencies
 --------------------
-* rxjava 1.0.13 (new)
+* rxjava 1.0.14 (new)
 * Google Guava 17.0 -> 18.0
 * netty 4.0.28.Final 4.0.30.Final
 * commons-pool2 2.2 -> 2.4.2
@@ -239,26 +292,36 @@ Updated dependencies
 
 Enhancements
 ------------
-* Advanced Cluster API (async) #78
-* Implement synchronous multi-node execution API enhancement #129
-* Improve HLL command interface #77
-* Move segregated API interfaces to own packages  #76
-* Provide a stateful Redis connection and decouple sync/async API from connection resources #75
-* Reactive support #68
-* Pipelining for certain cluster commands #66
-* Drop support for Java 6 and Java 7 #50
 * Migrate RedisFuture to CompletionStage #48
+* Drop support for Java 6 and Java 7 #50
+* Pipelining for certain cluster commands #66
+* Reactive support #68
+* Provide a stateful Redis connection and decouple sync/async API from connection resources #75
+* Move segregated API interfaces to own packages #76
+* Improve HLL command interface #77
+* Advanced Cluster API (async) #78
+* Provide a sync API for Redis Sentinel #79
+* Remove Java 6/7 parts of JavaRuntime and use netty's SslContextBuilder #85
+* Support geo commands in lettuce 4.0 #87
+* Run certain commands from the advanced cluster connection on multiple hosts #106
 * Allow limiting the request queue size #115
 * Improve Codec API #118
 * Allow to read from master/slave/nearest node when using Redis Cluster #114
 * Documentation of custom commands #122
+* Implement a CompressionCodec for GZIP and Deflate compression #127
+* Implement synchronous multi-node execution API #129
 
 Fixes
 -----
+* CI: Build ran into OutOfMemoryError: Java heap space #84
+* Use Sucess instead of Void in the reactive API #128
 
 Other
 ------
+* Documentation for 4.0 #83
+* Improve performance in 4.0 #91
 * Update Dependencies for lettuce 4.0 #116
+* Documentation of custom commands #122
 
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously against the latest Redis source-build.
