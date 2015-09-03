@@ -184,7 +184,7 @@ Node Selection API/Execution of commands on multiple cluster nodes
 The advanced cluster API allows to select nodes and run commands on the node selection. This API is subject
 to incompatible changes in a future release. The API is exempt from any compatibility guarantees made
 by lettuce. The current state implies nothing about the quality or performance of the API in question,
-only the fact that it is not "API-frozen.". All commands are sent concurrently to the Redis nodes, meaning you do
+only the fact that it is not "API-frozen". All commands are sent concurrently to the Redis nodes, meaning you do
 not have to wait until the commands have finished to trigger the next command. That behavior is independent of the
 API you're using. The Node Selection API is available from the synchronous and asynchronous
 command interfaces:
@@ -262,7 +262,7 @@ Read more: https://github.com/mp911de/lettuce/wiki/Custom-commands%2C-outputs-an
 Codec API improvements
 ----------------------
 The RedisCodec API was aligned to a consistent interchange type and migrated to an interface.
-The RedisCodec interface accepts and returns `ByteBuffer` for data interchange. A `ByteBuffer is not `
+The RedisCodec interface accepts and returns `ByteBuffer` for data interchange. A `ByteBuffer` is not 
 opinionated about the source of the underlying bytes and such it does not require users to duplicate existing
 data as it was enforced by a `byte[]`. Lettuce provides `UTF-8` and `byte[]` codecs and allows users to
 create and use their own codecs. XML, JSON and Java-serialization are good examples for codecs.
