@@ -150,8 +150,16 @@ public class RedisURI implements Serializable, ConnectionPoint {
             String password = userInfo;
             if (password.startsWith(":")) {
                 password = password.substring(1);
+            } else {
+
+                int index = password.indexOf(':');
+                if (index > 0) {
+                    password = password.substring(index + 1);
+                }
             }
-            builder.withPassword(password);
+            if (password != null && !password.equals("")) {
+                builder.withPassword(password);
+            }
         }
 
         if (isNotEmpty(uri.getPath()) && builder.redisURI.getSocket() == null) {
