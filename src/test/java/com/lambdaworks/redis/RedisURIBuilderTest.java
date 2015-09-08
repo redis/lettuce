@@ -46,6 +46,22 @@ public class RedisURIBuilderTest {
     }
 
     @Test
+    public void redisFromUrlNoPassword() throws Exception {
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        assertThat(redisURI.getPassword()).isNull();
+
+        redisURI = RedisURI.create("redis://h:@localhost.com:14589");
+        assertThat(redisURI.getPassword()).isNull();
+
+    }
+
+    @Test
+    public void redisFromUrlPassword() throws Exception {
+        RedisURI redisURI = RedisURI.create("redis://h:password@localhost.com:14589");
+        assertThat(redisURI.getPassword()).isEqualTo("password".toCharArray());
+    }
+
+    @Test
     public void redisSslFromUrl() throws Exception {
         RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SECURE + "://:password@localhost/1");
 
@@ -129,4 +145,5 @@ public class RedisURIBuilderTest {
         assertThat(result.getPort()).isEqualTo(0);
         assertThat(result.isSsl()).isFalse();
     }
+
 }
