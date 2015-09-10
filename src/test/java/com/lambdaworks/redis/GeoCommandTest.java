@@ -39,7 +39,8 @@ public class GeoCommandTest extends AbstractCommandTest {
     }
 
     protected void prepareGeo() {
-        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
+        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim");
+        redis.geoadd(key, 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
     }
 
     @Test

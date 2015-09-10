@@ -1714,7 +1714,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(latitude).add(longitude).addValue(member);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).addValue(member);
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
     }
 
