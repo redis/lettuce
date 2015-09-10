@@ -289,7 +289,6 @@ Updated dependencies
 * netty 4.0.28.Final 4.0.30.Final
 * commons-pool2 2.2 -> 2.4.2
 
-
 Enhancements
 ------------
 * Migrate RedisFuture to CompletionStage #48
@@ -315,6 +314,8 @@ Fixes
 -----
 * CI: Build ran into OutOfMemoryError: Java heap space #84
 * Use Sucess instead of Void in the reactive API #128
+* GEOADD passes long/lat parameters in the wrong order to Redis #134 (thanks to @IdanFridman)
+* Strip username from URI userinfo when creating a RedisURI with a username #131 (thanks to @jsiebens)
 
 Other
 ------
