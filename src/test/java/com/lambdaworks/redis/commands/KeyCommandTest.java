@@ -3,14 +3,16 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.*;
 
-import com.lambdaworks.redis.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.google.common.collect.Maps;
+import com.lambdaworks.redis.*;
 
 public class KeyCommandTest extends AbstractRedisClientTest {
     @Rule
@@ -70,7 +72,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void keys() throws Exception {
         assertThat(redis.keys("*")).isEqualTo(list());
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         map.put("three", "3");
@@ -86,7 +88,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
         assertThat(redis.keys("*")).isEqualTo(list());
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         map.put("three", "3");

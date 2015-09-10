@@ -2,17 +2,12 @@ package com.lambdaworks.redis.cluster.commands.rx;
 
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import org.junit.*;
+
+import com.google.common.collect.Maps;
 import com.lambdaworks.redis.FastShutdown;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -54,7 +49,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     @Test
     public void msetnx() throws Exception {
         redis.set("one", "1");
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         assertTrue(redis.msetnx(map));

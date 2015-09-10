@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
-import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.collect.Maps;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 
@@ -16,7 +16,7 @@ import com.lambdaworks.redis.output.KeyValueStreamingChannel;
  */
 public class KeyValueStreamingAdapter<K, V> implements KeyValueStreamingChannel<K, V> {
 
-    private final Map<K, V> map = new HashMap<K, V>();
+    private final Map<K, V> map = Maps.newLinkedHashMap();
 
     @Override
     public void onKeyValue(K key, V value) {

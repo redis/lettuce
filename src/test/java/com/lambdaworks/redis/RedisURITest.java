@@ -2,13 +2,13 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -48,7 +48,7 @@ public class RedisURITest {
         RedisURI redisURI1 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
 
-        Map<RedisURI, String> map = new HashMap<>();
+        Map<RedisURI, String> map = Maps.newLinkedHashMap();
         map.put(redisURI1, "something");
 
         assertThat(map.get(redisURI2)).isEqualTo("something");

@@ -309,6 +309,7 @@ Enhancements
 * Documentation of custom commands #122
 * Implement a CompressionCodec for GZIP and Deflate compression #127
 * Implement synchronous multi-node execution API #129
+* Use LinkedHashMap instead of HashMap for Map outputs #133 (thanks to @longkerdandy)
 
 Fixes
 -----

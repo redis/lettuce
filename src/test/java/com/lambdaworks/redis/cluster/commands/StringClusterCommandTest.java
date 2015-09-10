@@ -3,26 +3,20 @@ package com.lambdaworks.redis.cluster.commands;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import org.junit.*;
+
+import com.google.common.collect.Maps;
 import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
-import com.lambdaworks.redis.cluster.StatefulRedisClusterConnectionImpl;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.StringCommandTest;
 
 /**
@@ -58,7 +52,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     @Test
     public void msetnx() throws Exception {
         redis.set("one", "1");
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         assertTrue(redis.msetnx(map));

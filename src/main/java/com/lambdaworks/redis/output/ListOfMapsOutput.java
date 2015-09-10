@@ -4,10 +4,10 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Maps;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
@@ -41,7 +41,7 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
 
             if (nested.get().size() == expectedSize) {
                 counts.remove(0);
-                output.add(new HashMap<K, V>(nested.get()));
+                output.add(Maps.newLinkedHashMap(nested.get()));
                 nested.get().clear();
             }
         }
