@@ -222,7 +222,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
                 .build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
-        clusterClient.setOptions(new ClientOptions.Builder().build());
+        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(false).build());
         ClusterSetup.setup2Masters(clusterRule);
 
         assertRoutedExecution(clusterConnection);

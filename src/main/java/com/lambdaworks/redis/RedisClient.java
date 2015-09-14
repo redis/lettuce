@@ -2,15 +2,19 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.LettuceStrings.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -681,4 +685,14 @@ public class RedisClient extends AbstractRedisClient {
         checkArgument(redisURI != null && isNotEmpty(redisURI.getHost()), "A valid RedisURI with a host is needed");
     }
 
+    /**
+     * Set the {@link ClientOptions} for the client.
+     *
+     * @param clientOptions the new client options
+     * @throws IllegalArgumentException if {@literal clientOptions} is null
+     */
+    @Override
+    public void setOptions(ClientOptions clientOptions) {
+        super.setOptions(clientOptions);
+    }
 }

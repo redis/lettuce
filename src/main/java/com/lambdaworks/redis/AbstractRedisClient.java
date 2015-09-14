@@ -19,11 +19,7 @@ import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -342,7 +338,7 @@ public abstract class AbstractRedisClient {
      * @param clientOptions the new client options
      * @throws IllegalArgumentException if {@literal clientOptions} is null
      */
-    public void setOptions(ClientOptions clientOptions) {
+    protected void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
         this.clientOptions = clientOptions;
     }
