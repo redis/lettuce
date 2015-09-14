@@ -43,10 +43,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 3.0
  */
 public abstract class AbstractRedisClient {
+
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
+    protected static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
 
     private static final int DEFAULT_EVENT_LOOP_THREADS;
-    public static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
 
     static {
         DEFAULT_EVENT_LOOP_THREADS = Math.max(1,
@@ -56,12 +57,6 @@ public abstract class AbstractRedisClient {
             logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);
         }
     }
-
-    /**
-     * @deprecated use map eventLoopGroups instead.
-     */
-    @Deprecated
-    protected EventLoopGroup eventLoopGroup;
 
     protected EventExecutorGroup genericWorkerPool;
 
@@ -156,11 +151,7 @@ public abstract class AbstractRedisClient {
         if ((connectionPoint == null || connectionPoint.getSocket() == null)
                 && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
 
-            if (eventLoopGroup == null) {
-                eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
-            }
-
-            eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
+            eventLoopGroups.put(NioEventLoopGroup.class, new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS));
         }
 
         if (connectionPoint != null && connectionPoint.getSocket() != null) {
