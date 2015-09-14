@@ -24,6 +24,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
+import com.lambdaworks.redis.resource.ClientResources;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -38,11 +39,20 @@ public class RedisClient extends AbstractRedisClient {
 
     private final RedisURI redisURI;
 
+    protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
+        super(clientResources);
+        this.redisURI = redisURI;
+    }
+
     /**
      * Creates a uri-less RedisClient. You can connect to different Redis servers but you must supply a {@link RedisURI} on
      * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
+     * 
+     * @deprecated Use the factory method {@link #create()}
      */
+    @Deprecated
     public RedisClient() {
+        super(null);
         redisURI = null;
         setDefaultTimeout(60, TimeUnit.MINUTES);
     }
@@ -51,7 +61,9 @@ public class RedisClient extends AbstractRedisClient {
      * Create a new client that connects to the supplied host on the default port.
      * 
      * @param host Server hostname.
+     * @deprecated Use the factory method {@link #create(String)}
      */
+    @Deprecated
     public RedisClient(String host) {
         this(host, RedisURI.DEFAULT_REDIS_PORT);
     }
@@ -62,7 +74,9 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @param host Server hostname.
      * @param port Server port.
+     * @deprecated Use the factory method {@link #create(RedisURI)}
      */
+    @Deprecated
     public RedisClient(String host, int port) {
         this(RedisURI.Builder.redis(host, port).build());
     }
@@ -72,11 +86,65 @@ public class RedisClient extends AbstractRedisClient {
      * {@link #setDefaultTimeout timeout} after 60 seconds.
      * 
      * @param redisURI Redis URI.
+     * @deprecated Use the factory method {@link #create(RedisURI)}
      */
+    @Deprecated
     public RedisClient(RedisURI redisURI) {
         super();
         this.redisURI = redisURI;
         setDefaultTimeout(redisURI.getTimeout(), redisURI.getUnit());
+    }
+
+    /**
+     * Creates a uri-less RedisClient with default {@link ClientResources}. You can connect to different Redis servers but you
+     * must supply a {@link RedisURI} on connecting. Methods without having a {@link RedisURI} will fail with a
+     * {@link java.lang.IllegalStateException}.
+     */
+    public static RedisClient create() {
+        return new RedisClient(null, null);
+    }
+
+    /**
+     * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
+     * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
+     */
+    public static RedisClient create(RedisURI redisURI) {
+        return new RedisClient(null, redisURI);
+    }
+
+    /**
+     * Create a new client that connects to the supplied uri with default {@link ClientResources}. You can connect to different
+     * Redis servers but you must supply a {@link RedisURI} on connecting.
+     */
+    public static RedisClient create(String uri) {
+        return new RedisClient(null, RedisURI.create(uri));
+    }
+
+    /**
+     * Creates a uri-less RedisClient with shared {@link ClientResources}. You need to shut down the {@link ClientResources}
+     * upon shutting down your application. You can connect to different Redis servers but you must supply a {@link RedisURI} on
+     * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
+     */
+    public static RedisClient create(ClientResources clientResources) {
+        return new RedisClient(clientResources, null);
+    }
+
+    /**
+     * Create a new client that connects to the supplied {@link RedisURI uri} with shared {@link ClientResources}. You need to
+     * shut down the {@link ClientResources} upon shutting down your application.You can connect to different Redis servers but
+     * you must supply a {@link RedisURI} on connecting.
+     */
+    public static RedisClient create(ClientResources clientResources, RedisURI redisURI) {
+        return new RedisClient(clientResources, redisURI);
+    }
+
+    /**
+     * Create a new client that connects to the supplied uri with shared {@link ClientResources}.You need to shut down the
+     * {@link ClientResources} upon shutting down your application. You can connect to different Redis servers but you must
+     * supply a {@link RedisURI} on connecting.
+     */
+    public static RedisClient create(ClientResources clientResources, String uri) {
+        return new RedisClient(clientResources, RedisURI.create(uri));
     }
 
     /**

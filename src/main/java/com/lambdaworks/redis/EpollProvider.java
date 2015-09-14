@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.lang.reflect.Constructor;
 import java.net.SocketAddress;
+import java.util.concurrent.ThreadFactory;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -10,11 +11,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Wraps and provides Epoll classes. This is to protect the user from {@link ClassNotFoundException}'s caused by the absence of
- * the {@literal netty-transport-native-epoll} library during runtime.
+ * the {@literal netty-transport-native-epoll} library during runtime. Internal API.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-class EpollProvider {
+public class EpollProvider {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(EpollProvider.class);
 
@@ -72,11 +73,12 @@ class EpollProvider {
         }
     }
 
-    static EventLoopGroup newEventLoopGroup(int nThreads) {
+    public static EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 
         try {
-            Constructor<EventLoopGroup> constructor = epollEventLoopGroupClass.getConstructor(Integer.TYPE);
-            return constructor.newInstance(nThreads);
+            Constructor<EventLoopGroup> constructor = epollEventLoopGroupClass
+                    .getConstructor(Integer.TYPE, ThreadFactory.class);
+            return constructor.newInstance(nThreads, threadFactory);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

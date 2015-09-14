@@ -17,6 +17,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DefaultClientResources;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -27,10 +29,8 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -50,44 +50,57 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public abstract class AbstractRedisClient {
 
+    protected static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
-
-    private static final int DEFAULT_EVENT_LOOP_THREADS;
-    public static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
-
-    static {
-        DEFAULT_EVENT_LOOP_THREADS = Math.max(1,
-                SystemPropertyUtil.getInt("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 4));
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);
-        }
-    }
 
     /**
      * @deprecated use map eventLoopGroups instead.
      */
     @Deprecated
     protected EventLoopGroup eventLoopGroup;
-
     protected EventExecutorGroup genericWorkerPool;
 
-    protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups;
+    protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();;
     protected final HashedWheelTimer timer;
     protected final ChannelGroup channels;
+    protected final ClientResources res;
     protected long timeout = 60;
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = Sets.newConcurrentHashSet();
+
     protected volatile ClientOptions clientOptions = new ClientOptions.Builder().build();
 
+    private final boolean sharedResources;
+
+    /**
+     * @deprecated use {@link #AbstractRedisClient(ClientResources)}
+     */
+    @Deprecated
     protected AbstractRedisClient() {
-        timer = new HashedWheelTimer();
-        eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();
-        genericWorkerPool = new DefaultEventExecutorGroup(DEFAULT_EVENT_LOOP_THREADS);
-        channels = new DefaultChannelGroup(genericWorkerPool.next());
-        timer.start();
+        this(null);
+    }
+
+    /**
+     * Create a new instance with client resources.
+     * 
+     * @param clientResources the client resources. If {@literal null}, the client will create a new dedicated instance of
+     *        client resources and keep track of them.
+     */
+    protected AbstractRedisClient(ClientResources clientResources) {
+        if (clientResources == null) {
+            sharedResources = false;
+            res = DefaultClientResources.create();
+        } else {
+            sharedResources = true;
+            res = clientResources;
+        }
+
         unit = TimeUnit.SECONDS;
+
+        genericWorkerPool = res.eventExecutorGroup();
+        channels = new DefaultChannelGroup(genericWorkerPool.next());
+        timer = new HashedWheelTimer();
     }
 
     /**
@@ -164,7 +177,7 @@ public abstract class AbstractRedisClient {
                 && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
 
             if (eventLoopGroup == null) {
-                eventLoopGroup = new NioEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
+                eventLoopGroup = res.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
             }
 
             eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
@@ -174,7 +187,7 @@ public abstract class AbstractRedisClient {
             checkForEpollLibrary();
 
             if (!eventLoopGroups.containsKey(EpollProvider.epollEventLoopGroupClass)) {
-                EventLoopGroup epl = EpollProvider.newEventLoopGroup(DEFAULT_EVENT_LOOP_THREADS);
+                EventLoopGroup epl = res.eventLoopGroupProvider().allocate(EpollProvider.epollEventLoopGroupClass);
                 eventLoopGroups.put(EpollProvider.epollEventLoopGroupClass, epl);
             }
         }
@@ -266,29 +279,39 @@ public abstract class AbstractRedisClient {
             closeableResources.remove(closeableResource);
         }
 
-        for (Channel c : channels) {
-            ChannelPipeline pipeline = c.pipeline();
+        List<Future<?>> closeFutures = Lists.newArrayList();
 
-            CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
-            if (commandHandler != null && !commandHandler.isClosed()) {
-                commandHandler.close();
-            }
-
-            PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
-            if (psCommandHandler != null && !psCommandHandler.isClosed()) {
-                psCommandHandler.close();
-            }
+        if (genericWorkerPool != null) {
+            closeFutures.add(res.eventLoopGroupProvider().release(genericWorkerPool, quietPeriod, timeout, timeUnit));
         }
 
-        List<Future<?>> closeFutures = Lists.newArrayList();
-        ChannelGroupFuture closeFuture = channels.close();
+        if (channels != null) {
+            for (Channel c : channels) {
+                ChannelPipeline pipeline = c.pipeline();
 
-        closeFutures.add(genericWorkerPool.shutdownGracefully(quietPeriod, timeout, timeUnit));
-        closeFutures.add(closeFuture);
+                CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
+                if (commandHandler != null && !commandHandler.isClosed()) {
+                    commandHandler.close();
+                }
 
-        for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
-            Future<?> groupCloseFuture = eventExecutors.shutdownGracefully(quietPeriod, timeout, timeUnit);
-            closeFutures.add(groupCloseFuture);
+                PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
+                if (psCommandHandler != null && !psCommandHandler.isClosed()) {
+                    psCommandHandler.close();
+                }
+            }
+
+            ChannelGroupFuture closeFuture = channels.close();
+            closeFutures.add(closeFuture);
+        }
+
+        if (!sharedResources) {
+            res.shutdown(quietPeriod, timeout, timeUnit);
+        } else {
+            for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
+                Future<?> groupCloseFuture = res.eventLoopGroupProvider().release(eventExecutors, quietPeriod, timeout,
+                        timeUnit);
+                closeFutures.add(groupCloseFuture);
+            }
         }
 
         for (Future<?> future : closeFutures) {
@@ -305,6 +328,9 @@ public abstract class AbstractRedisClient {
     }
 
     protected int getChannelCount() {
+        if (channels == null) {
+            return 0;
+        }
         return channels.size();
     }
 
