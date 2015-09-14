@@ -14,6 +14,15 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.lambdaworks.redis.resource.DefaultClientResources;
+import com.lambdaworks.redis.resource.DefaultEventLoopGroupProvider;
+import com.lambdaworks.redis.resource.EventLoopGroupProvider;
+
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.Promise;
+
 public abstract class AbstractCommandTest {
     public static final String host = TestSettings.host();
     public static final int port = TestSettings.port();
@@ -25,13 +34,38 @@ public abstract class AbstractCommandTest {
     protected String key = "key";
     protected String value = "value";
 
+    protected static EventLoopGroupProvider keepAlive = new DefaultEventLoopGroupProvider(10) {
+        @Override
+        public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
+            DefaultPromise<Boolean> result = new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE);
+            result.setSuccess(true);
+
+            return result;
+        }
+    };
+
+    protected static DefaultClientResources resources = new DefaultClientResources.Builder().eventLoopGroupProvider(keepAlive)
+            .build();
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    resources.shutdown().get(10, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
     @BeforeClass
     public static void setupClient() {
         client = getRedisClient();
     }
 
     protected static RedisClient getRedisClient() {
-        return new RedisClient(host, port);
+        return RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
     }
 
     @AfterClass
