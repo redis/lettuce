@@ -8,15 +8,17 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
- * Factory Bean for RedisClient instances. Needs either a URI or a RedisURI as input. URI Format:
+ * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input. URI Format:
  * {@code
- *     redis://host[:port][/databaseNumber]
+ *     redis://[password@]host[:port]
  * }
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
 public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<RedisClusterClient> {
+
+    // todo: support for client resources
 
     @Override
     public void afterPropertiesSet() throws Exception {

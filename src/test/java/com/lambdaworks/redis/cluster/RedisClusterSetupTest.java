@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.resource.ClientResources;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -56,6 +58,7 @@ public class RedisClusterSetupTest {
 
     private RedisClusterConnection<String, String> redis1;
     private RedisClusterConnection<String, String> redis2;
+    private ClientResources clientResources = TestClientResources.create();
 
     @Rule
     public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2);

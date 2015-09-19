@@ -9,7 +9,7 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class RedisClientTest extends AbstractCommandTest {
+public class RedisClientConnectionTest extends AbstractCommandTest {
 
     /*
      * Pool/Sync
