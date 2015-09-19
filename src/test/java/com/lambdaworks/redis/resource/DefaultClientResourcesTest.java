@@ -33,7 +33,6 @@ public class DefaultClientResourcesTest {
 
         Future<Boolean> shutdown = sut.eventLoopGroupProvider().shutdown(0, 0, TimeUnit.SECONDS);
         assertThat(shutdown.get()).isTrue();
-
     }
 
     @Test
@@ -47,7 +46,6 @@ public class DefaultClientResourcesTest {
 
         assertThat(eventExecutors.iterator()).hasSize(4);
         assertThat(eventLoopGroup.executorCount()).isEqualTo(4);
-
         assertThat(sut.ioThreadPoolSize()).isEqualTo(4);
 
         assertThat(sut.shutdown().get()).isTrue();
@@ -69,5 +67,21 @@ public class DefaultClientResourcesTest {
 
         verifyZeroInteractions(executorMock);
         verifyZeroInteractions(groupProviderMock);
+    }
+
+    @Test
+    public void testSmallPoolSize() throws Exception {
+
+        DefaultClientResources sut = new DefaultClientResources.Builder().ioThreadPoolSize(1).computationThreadPoolSize(1)
+                .build();
+
+        EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
+        NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+
+        assertThat(eventExecutors.iterator()).hasSize(3);
+        assertThat(eventLoopGroup.executorCount()).isEqualTo(3);
+        assertThat(sut.ioThreadPoolSize()).isEqualTo(3);
+
+        assertThat(sut.shutdown().get()).isTrue();
     }
 }
