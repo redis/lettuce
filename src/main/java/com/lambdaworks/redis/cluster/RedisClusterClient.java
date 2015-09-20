@@ -9,6 +9,7 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -17,6 +18,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.AbstractRedisClient;
 import com.lambdaworks.redis.ReadFrom;
@@ -100,7 +103,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
     private Partitions partitions;
-    private List<RedisURI> initialUris = Lists.newArrayList();
+    private Iterable<RedisURI> initialUris = ImmutableSet.of();
 
     protected RedisClusterClient() {
         setOptions(new ClusterClientOptions.Builder().build());
@@ -110,9 +113,11 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Initialize the client with an initial cluster URI.
      *
      * @param initialUri initial cluster URI
+     * @deprecated Use {@link #create(RedisURI)}
      */
+    @Deprecated
     public RedisClusterClient(RedisURI initialUri) {
-        this(Collections.singletonList(checkNotNull(initialUri, "RedisURI (initial uri) must not be null")));
+        this(ImmutableList.of(checkNotNull(initialUri, "RedisURI (initial uri) must not be null")));
     }
 
     /**
@@ -120,14 +125,51 @@ public class RedisClusterClient extends AbstractRedisClient {
      * cluster. If any uri is successful for connection, the others are not tried anymore. The initial uri is needed to discover
      * the cluster structure for distributing the requests.
      *
-     * @param initialUris list of initial cluster URIs
+     * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@literal null} and not empty.
+     * @deprecated Use {@link #create(Iterable)}
      */
-    public RedisClusterClient(List<RedisURI> initialUris) {
-        this.initialUris = initialUris;
-        checkNotNull(initialUris, "initialUris must not be null");
-        checkArgument(!initialUris.isEmpty(), "initialUris must not be empty");
+    @Deprecated
+    public RedisClusterClient(List<RedisURI> redisURIs) {
+        this.initialUris = redisURIs;
+        assertNotEmpty(redisURIs);
         setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
         setOptions(new ClusterClientOptions.Builder().build());
+    }
+
+    /**
+     * Create a new client that connects to the supplied {@link RedisURI uri}. You can connect to different Redis servers but
+     * you must supply a {@link RedisURI} on connecting.
+     *
+     * @param redisURI the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
+     */
+    public static RedisClusterClient create(RedisURI redisURI) {
+        assertNotNull(redisURI);
+        return create(ImmutableList.of(redisURI));
+    }
+
+    /**
+     * Create a new client that connects to the supplied iterable of {@link RedisURI uris}. You can connect to different Redis
+     * servers but you must supply a {@link RedisURI} on connecting.
+     *
+     * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
+     * @return a new instance of {@link RedisClusterClient}
+     */
+    public static RedisClusterClient create(Iterable<RedisURI> redisURIs) {
+        assertNotEmpty(redisURIs);
+        return new RedisClusterClient(Lists.newArrayList(redisURIs));
+    }
+
+    /**
+     * Create a new client that connects to the supplied uri. You can connect to different Redis servers but you must supply a
+     * {@link RedisURI} on connecting.
+     *
+     * @param uri the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
+     */
+    public static RedisClusterClient create(String uri) {
+        checkArgument(uri != null, "uri must not be null");
+        return create(RedisURI.create(uri));
     }
 
     /**
@@ -229,8 +271,10 @@ public class RedisClusterClient extends AbstractRedisClient {
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
             RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
 
-        checkArgument(codec != null, "RedisCodec must not be null");
-        checkArgument(socketAddressSupplier != null, "SocketAddressSupplirt must not be null");
+        assertNotNull(codec);
+        assertNotEmpty(initialUris);
+
+        checkArgument(socketAddressSupplier != null, "SocketAddressSupplier must not be null");
 
         logger.debug("connectNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
@@ -242,8 +286,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connection.registerCloseables(closeableResources, connection);
 
-        RedisURI redisURI = initialUris.get(0);
-        if (initialUris.get(0).getPassword() != null && redisURI.getPassword().length != 0) {
+        RedisURI redisURI = initialUris.iterator().next();
+        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
             connection.async().auth(new String(redisURI.getPassword()));
         }
 
@@ -265,9 +309,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (partitions == null) {
             initializePartitions();
         }
-
-        checkArgument(codec != null, "RedisCodec must not be null");
-        checkArgument(socketAddressSupplier != null, "SocketAddressSupplier must not be null");
 
         activateTopologyRefreshIfNeeded();
 
@@ -399,8 +440,9 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     protected RedisURI getFirstUri() {
-        checkState(!initialUris.isEmpty(), "initialUris must not be empty");
-        return initialUris.get(0);
+        assertNotEmpty(initialUris);
+        Iterator<RedisURI> iterator = initialUris.iterator();
+        return iterator.next();
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier() {
@@ -487,14 +529,15 @@ public class RedisClusterClient extends AbstractRedisClient {
                 return;
             }
 
-            List<RedisURI> seed;
+            Iterable<RedisURI> seed;
             if (partitions == null || partitions.size() == 0) {
                 seed = RedisClusterClient.this.initialUris;
             } else {
-                seed = Lists.newArrayList();
+                List<RedisURI> uris = Lists.newArrayList();
                 for (RedisClusterNode partition : getOrderedPartitions(partitions)) {
-                    seed.add(partition.getUri());
+                    uris.add(partition.getUri());
                 }
+                seed = uris;
             }
 
             logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
@@ -529,5 +572,18 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     boolean expireStaleConnections() {
         return getClusterClientOptions() == null || getClusterClientOptions().isCloseStaleConnections();
+    }
+
+    private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
+        checkArgument(codec != null, "RedisCodec must not be null");
+    }
+
+    private static void assertNotEmpty(Iterable<RedisURI> redisURIs) {
+        checkArgument(redisURIs != null, "RedisURIs must not be null");
+        checkArgument(redisURIs.iterator().hasNext(), "RedisURIs must not be empty");
+    }
+
+    private static void assertNotNull(RedisURI redisURI) {
+        checkArgument(redisURI != null, "RedisURI must not be null");
     }
 }

@@ -11,12 +11,17 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
+ * Factory Bean for {@link RedisClusterClient} instances. Requires a {@link RedisURI}. URI Format:
+ * {@code
+ *     redis://[password@]host[:port]
+ * }
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
 class RedisClusterClientCdiBean extends AbstractCdiBean<RedisClusterClient> {
 
-    public RedisClusterClientCdiBean(BeanManager beanManager, Set<Annotation> qualifiers, Bean<RedisURI> redisURIBean,
+    public RedisClusterClientCdiBean(Bean<RedisURI> redisURIBean, BeanManager beanManager, Set<Annotation> qualifiers,
             String name) {
         super(redisURIBean, beanManager, qualifiers, name);
     }
@@ -32,7 +37,7 @@ class RedisClusterClientCdiBean extends AbstractCdiBean<RedisClusterClient> {
         CreationalContext<RedisURI> uriCreationalContext = beanManager.createCreationalContext(redisURIBean);
         RedisURI redisURI = (RedisURI) beanManager.getReference(redisURIBean, RedisURI.class, uriCreationalContext);
 
-        return new RedisClusterClient(redisURI);
+        return RedisClusterClient.create(redisURI);
     }
 
     @Override

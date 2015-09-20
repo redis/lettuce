@@ -32,7 +32,7 @@ import io.netty.handler.codec.DecoderException;
  */
 public class SslTest extends AbstractTest {
     public static final String KEYSTORE = "work/keystore.jks";
-    public static RedisClient redisClient = new RedisClient();
+    public static RedisClient redisClient = RedisClient.create();
 
     @Before
     public void before() throws Exception {

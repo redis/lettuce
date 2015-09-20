@@ -7,7 +7,7 @@ public class LettuceGeoDemo {
 
     public static void main(String[] args) {
 
-        RedisClient redisClient = new RedisClient("localhost", 6379);
+        RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
         RedisConnection<String, String> redis = (RedisConnection<String, String>) redisClient.connect();
         String key = "my-geo-set";
 

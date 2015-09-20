@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public class FastShutdown {
 
     /**
-     * Shut down the redis client with a timeout of 10ms.
+     * Shut down a {@link AbstractRedisClient} with a timeout of 10ms.
      * 
      * @param redisClient
      */

@@ -7,8 +7,8 @@ import org.springframework.beans.factory.config.AbstractFactoryBean;
 import com.lambdaworks.redis.RedisURI;
 
 /**
- * Adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of redis client
- * factories via Spring configuration.
+ * Adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
+ * {@link com.lambdaworks.redis.RedisClient} factories via Spring configuration.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
@@ -33,6 +33,12 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
         return uri;
     }
 
+    /**
+     * Set the URI for connecting Redis. The URI follows the URI conventions. See {@link RedisURI} for URL schemes. Either the
+     * URI of the RedisURI must be set in order to connect to Redis.
+     *
+     * @param uri the URI
+     */
     public void setUri(URI uri) {
         this.uri = uri;
     }
@@ -41,6 +47,12 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
         return redisURI;
     }
 
+    /**
+     * Set the RedisURI for connecting Redis. See {@link RedisURI} for URL schemes. Either the URI of the RedisURI must be set
+     * in order to connect to Redis.
+     *
+     * @param redisURI the RedisURI
+     */
     public void setRedisURI(RedisURI redisURI) {
         this.redisURI = redisURI;
     }
@@ -49,6 +61,12 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
         return new String(password);
     }
 
+    /**
+     * Sets the password to use for a Redis connection. If the password is set, it has higher precedence than the password
+     * provided within the URI meaning the password from the URI is replaced by this one.
+     *
+     * @param password the password
+     */
     public void setPassword(String password) {
 
         if (password == null) {
@@ -56,5 +74,10 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
         } else {
             this.password = password.toCharArray();
         }
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
     }
 }

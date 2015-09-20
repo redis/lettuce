@@ -326,8 +326,7 @@ public abstract class AbstractRedisClient {
     /**
      * Set the {@link ClientOptions} for the client.
      * 
-     * @param clientOptions the new client options
-     * @throws IllegalArgumentException if {@literal clientOptions} is null
+     * @param clientOptions client options for the client and connections that are created after setting the options
      */
     protected void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");

@@ -11,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.After;
@@ -277,7 +278,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubCloseOnClientShutdown() throws Exception {
 
-        RedisClient redisClient = new RedisClient(host, port);
+        RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis(host, port).build());
 
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub().sync();
 

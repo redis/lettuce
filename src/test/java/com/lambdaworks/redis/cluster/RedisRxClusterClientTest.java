@@ -38,9 +38,8 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        client = new RedisClient(host, port1);
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
-
+        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

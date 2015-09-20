@@ -13,7 +13,7 @@ public class DefaultRedisClient {
     private RedisClient redisClient;
 
     public DefaultRedisClient() {
-        redisClient = new RedisClient(TestSettings.host(), TestSettings.port());
+        redisClient = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {

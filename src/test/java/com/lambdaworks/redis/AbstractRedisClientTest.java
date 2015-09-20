@@ -21,7 +21,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     }
 
     protected static RedisClient newRedisClient() {
-        return new RedisClient(host, port);
+        return RedisClient.create(RedisURI.Builder.redis(host, port).build());
     }
 
     protected RedisCommands<String, String> connect() {

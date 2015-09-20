@@ -308,7 +308,8 @@ public class ClientTest extends AbstractRedisClientTest {
 
         final TestConnectionListener listener = new TestConnectionListener();
 
-        RedisClient client = new RedisClient(host, port);
+        RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+
         client.addListener(listener);
 
         assertThat(listener.onConnected).isNull();
@@ -347,7 +348,7 @@ public class ClientTest extends AbstractRedisClientTest {
         final TestConnectionListener removedListener = new TestConnectionListener();
         final TestConnectionListener retainedListener = new TestConnectionListener();
 
-        RedisClient client = new RedisClient(host, port);
+        RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
         client.addListener(removedListener);
         client.addListener(retainedListener);
         client.removeListener(removedListener);

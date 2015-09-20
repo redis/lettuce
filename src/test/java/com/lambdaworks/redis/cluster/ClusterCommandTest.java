@@ -6,7 +6,6 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
@@ -19,8 +18,7 @@ import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
-import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisClusterAsyncConnection;
@@ -46,8 +44,8 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client = new RedisClient(host, port1);
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
 
     }
 

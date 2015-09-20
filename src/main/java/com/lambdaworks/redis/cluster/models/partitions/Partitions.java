@@ -10,6 +10,26 @@ import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
 
 /**
+ * Cluster topology view. An instance of {@link Partitions} provides access to the partitions of a Redis Cluster. A partition is
+ * represented by a Redis Cluster node that has a {@link RedisClusterNode#getNodeId() nodeId} and
+ * {@link RedisClusterNode#getUri() connection point details}.
+ * <p>
+ * Partitions can be looked up by {@code nodeId} or {@code slot} (masters only). A nodeId can be migrated to a different host.
+ * Partitions are cached to ensure a cheap lookup by {@code slot}. Users of {@link Partitions} are required to call
+ * {@link #updateCache()} after topology changes occur.
+ * </p>
+ *
+ * Topology changes are:
+ *
+ * <ul>
+ * <li>Changes in {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}/
+ * {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#SLAVE} state</li>
+ * <li>Newly added or removed nodes to/from the Redis Cluster</li>
+ * <li>Changes in {@link RedisClusterNode#getSlots()} responsibility</li>
+ * <li>Changes to the {@link RedisClusterNode#getSlaveOf() slave replication source} (the master of a slave)</li>
+ * <li>Changes to the {@link RedisClusterNode#getUri()} () connection point}</li>
+ * </ul>
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */

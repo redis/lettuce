@@ -44,6 +44,7 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
 
         if (msg instanceof RedisCommand) {

@@ -269,7 +269,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     @Test
     public void pubsubCloseOnClientShutdown() throws Exception {
 
-        RedisClient redisClient = new RedisClient(host, port);
+        RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis(host, port).build());
 
         RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub().async();
 

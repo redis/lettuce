@@ -10,10 +10,13 @@ import java.util.Set;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
-import javax.enterprise.inject.spi.*;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessBean;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -24,7 +27,36 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A portable CDI extension which registers beans for lettuce. If there are no RedisURIs there are also no registrations for
- * RedisClients.
+ * {@link RedisClient RedisClients}. The extension allows to create {@link RedisClient} and {@link RedisClusterClient}
+ * instances. Client instances are provided under the same qualifiers as the {@link RedisURI}.
+ *
+ * <p>
+ * <strong>Example:</strong>
+ * </p>
+ *
+ * <pre>
+ * <code>
+ *  public class Producers {
+ *     &commat;Produces
+ *     public RedisURI redisURI() {
+ *         return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
+ *     }
+ *    }
+ * </code>
+ * </pre>
+ *
+ *
+ * <pre>
+ *  <code>
+ *   public class Consumer {
+ *      &commat;Inject
+ *      private RedisClient client;
+ * 
+ *      &commat;Inject
+ *      private RedisClusterClient clusterClient;
+ * }
+ *  </code>
+ * </pre>
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
@@ -49,8 +81,12 @@ public class LettuceCdiExtension implements Extension {
     <T> void processBean(@Observes ProcessBean<T> processBean) {
         Bean<T> bean = processBean.getBean();
         for (Type type : bean.getTypes()) {
+            if (!(type instanceof Class<?>)) {
+                continue;
+            }
+
             // Check if the bean is an RedisURI.
-            if (type instanceof Class<?> && RedisURI.class.isAssignableFrom((Class<?>) type)) {
+            if (RedisURI.class.isAssignableFrom((Class<?>) type)) {
                 Set<Annotation> qualifiers = new HashSet<Annotation>(bean.getQualifiers());
                 if (bean.isAlternative() || !redisUris.containsKey(qualifiers)) {
                     LOGGER.debug(String.format("Discovered '%s' with qualifiers %s.", RedisURI.class.getName(), qualifiers));
@@ -77,29 +113,24 @@ public class LettuceCdiExtension implements Extension {
 
             String clientBeanName = RedisClient.class.getSimpleName();
             String clusterClientBeanName = RedisClusterClient.class.getSimpleName();
-            if (!contains(qualifiers, Default.class)) {
+            if (!contains(qualifiers)) {
                 clientBeanName += counter;
                 clusterClientBeanName += counter;
                 counter++;
             }
 
-            RedisClientCdiBean clientBean = new RedisClientCdiBean(beanManager, qualifiers, redisUri, clientBeanName);
+            RedisClientCdiBean clientBean = new RedisClientCdiBean(redisUri, beanManager, qualifiers, clientBeanName);
             register(afterBeanDiscovery, qualifiers, clientBean);
 
-            RedisClusterClientCdiBean clusterClientBean = new RedisClusterClientCdiBean(beanManager, qualifiers, redisUri,
+            RedisClusterClientCdiBean clusterClientBean = new RedisClusterClientCdiBean(redisUri, beanManager, qualifiers,
                     clusterClientBeanName);
             register(afterBeanDiscovery, qualifiers, clusterClientBean);
 
         }
     }
 
-    private boolean contains(Set<Annotation> qualifiers, Class<Default> defaultClass) {
-        Optional<Annotation> result = Iterables.tryFind(qualifiers, new Predicate<Annotation>() {
-            @Override
-            public boolean apply(Annotation input) {
-                return input instanceof Default;
-            }
-        });
+    private boolean contains(Set<Annotation> qualifiers) {
+        Optional<Annotation> result = Iterables.tryFind(qualifiers, input -> input instanceof Default);
         return result.isPresent();
     }
 

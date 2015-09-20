@@ -6,12 +6,14 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
-import com.lambdaworks.redis.models.role.RedisInstance;
-import com.lambdaworks.redis.models.role.RedisNodeDescription;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
- * Representation of a Redis Cluster node.
+ * Representation of a Redis Cluster node. A {@link RedisClusterNode} is identified by its {@code nodeId}. A
+ * {@link RedisClusterNode} can be a {@link #getRole() responsible master} for zero to
+ * {@link com.lambdaworks.redis.cluster.SlotHash#SLOT_COUNT 16384} slots, a slave of one {@link #getSlaveOf() master} of carry
+ * different {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag flags}.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
@@ -47,6 +49,12 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.flags = flags;
     }
 
+    /**
+     * Create a new instance of {@link RedisClusterNode} by passing the {@code nodeId}
+     * 
+     * @param nodeId the nodeId
+     * @return a new instance of {@link RedisClusterNode}
+     */
     public static RedisClusterNode of(String nodeId) {
         RedisClusterNode redisClusterNode = new RedisClusterNode();
         redisClusterNode.setNodeId(nodeId);
@@ -57,6 +65,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return uri;
     }
 
+    /**
+     * Sets thhe connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
+     * 
+     * @param uri the {@link RedisURI}, must not be {@literal null}
+     */
     public void setUri(RedisURI uri) {
         checkArgument(uri != null, "uri must not be null");
         this.uri = uri;
@@ -66,6 +79,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return nodeId;
     }
 
+    /**
+     * Sets {@code nodeId}.
+     * 
+     * @param nodeId the {@code nodeId}
+     */
     public void setNodeId(String nodeId) {
         checkArgument(nodeId != null, "nodeId must not be null");
         this.nodeId = nodeId;
@@ -75,6 +93,12 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return connected;
     }
 
+    /**
+     * Sets the {@code connected} flag. The {@code connected} flag describes whether the node which provided details about the
+     * node is connected to the particular {@link RedisClusterNode}.
+     * 
+     * @param connected the {@code connected} flag
+     */
     public void setConnected(boolean connected) {
         this.connected = connected;
     }
@@ -83,6 +107,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return slaveOf;
     }
 
+    /**
+     * Sets the replication source.
+     * 
+     * @param slaveOf the replication source, can be {@literal null}
+     */
     public void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
     }
@@ -91,6 +120,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return pingSentTimestamp;
     }
 
+    /**
+     * Sets the last {@code pingSentTimestamp}.
+     * 
+     * @param pingSentTimestamp the last {@code pingSentTimestamp}
+     */
     public void setPingSentTimestamp(long pingSentTimestamp) {
         this.pingSentTimestamp = pingSentTimestamp;
     }
@@ -99,6 +133,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return pongReceivedTimestamp;
     }
 
+    /**
+     * Sets the last {@code pongReceivedTimestamp}.
+     * 
+     * @param pongReceivedTimestamp the last {@code pongReceivedTimestamp}
+     */
     public void setPongReceivedTimestamp(long pongReceivedTimestamp) {
         this.pongReceivedTimestamp = pongReceivedTimestamp;
     }
@@ -107,6 +146,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return configEpoch;
     }
 
+    /**
+     * Sets the {@code configEpoch}.
+     * 
+     * @param configEpoch the {@code configEpoch}
+     */
     public void setConfigEpoch(long configEpoch) {
         this.configEpoch = configEpoch;
     }
@@ -115,6 +159,13 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return slots;
     }
 
+    /**
+     * Sets the list of slots for which this {@link RedisClusterNode} is the
+     * {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}. The list is empty if this node
+     * is not a master or the node is not responsible for any slots at all.
+     * 
+     * @param slots list of slots, must not be {@literal null} but may be empty
+     */
     public void setSlots(List<Integer> slots) {
         checkArgument(slots != null, "slots must not be null");
 
@@ -125,6 +176,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return flags;
     }
 
+    /**
+     * Set of {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag node flags}.
+     * 
+     * @param flags the set of node flags.
+     */
     public void setFlags(Set<NodeFlag> flags) {
         this.flags = flags;
     }
@@ -190,11 +246,20 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return getSlots().contains(slot);
     }
 
+    /**
+     * Returns the {@link com.lambdaworks.redis.models.role.RedisInstance.Role} of the Redis Cluster node based on the
+     * {@link #getFlags() flags}.
+     * 
+     * @return the Redis Cluster node role
+     */
     @Override
     public Role getRole() {
         return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
     }
 
+    /**
+     * Redis Cluster node flags.
+     */
     public enum NodeFlag {
         NOFLAGS, MYSELF, SLAVE, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }

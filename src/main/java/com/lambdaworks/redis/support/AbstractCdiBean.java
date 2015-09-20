@@ -21,9 +21,9 @@ import com.lambdaworks.redis.RedisURI;
  */
 abstract class AbstractCdiBean<T> implements Bean<T> {
 
+    protected final Bean<RedisURI> redisURIBean;
     protected final BeanManager beanManager;
     protected final Set<Annotation> qualifiers;
-    protected final Bean<RedisURI> redisURIBean;
     protected final String name;
 
     public AbstractCdiBean(Bean<RedisURI> redisURIBean, BeanManager beanManager, Set<Annotation> qualifiers, String name) {

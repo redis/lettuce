@@ -4,9 +4,7 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.FastShutdown;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -18,6 +16,7 @@ import org.junit.runners.MethodSorters;
 import rx.Observable;
 
 import com.google.common.collect.ImmutableList;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
@@ -37,8 +36,8 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        client = new RedisClient(host, port1);
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
 
     }
 

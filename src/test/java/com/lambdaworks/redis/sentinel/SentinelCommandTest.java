@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -133,8 +134,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void role() throws Exception {
 
-        RedisClient redisClient = new RedisClient("localhost", 26380);
-        RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
+        RedisAsyncCommands<String, String> connection = sentinelClient.connect(RedisURI.Builder.redis(host, 26380).build())
+                .async();
         try {
 
             RedisFuture<List<Object>> role = connection.role();
@@ -146,7 +147,6 @@ public class SentinelCommandTest extends AbstractSentinelTest {
             assertThat(objects.get(1).toString()).isEqualTo("[" + MASTER_ID + "]");
         } finally {
             connection.close();
-            FastShutdown.shutdown(redisClient);
         }
     }
 

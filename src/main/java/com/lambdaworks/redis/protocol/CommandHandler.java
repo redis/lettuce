@@ -252,7 +252,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void flushCommands() {
         if (channel != null && isConnected()) {
             Queue<RedisCommand<?, ?, ?>> queuedCommands;
@@ -587,7 +587,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         private final Collection<RedisCommand<?, ?, ?>> sentCommands;
         private final Queue<?> queue;
 
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({ "unchecked", "rawtypes" })
         public AtMostOnceWriteListener(RedisCommand<?, ?, ?> sentCommand, Queue<?> queue) {
             this.sentCommands = (Collection) ImmutableList.of(sentCommand);
             this.queue = queue;

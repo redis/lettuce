@@ -115,7 +115,7 @@ class ClusterTopologyRefresh {
      * @param seed collection of {@link RedisURI}s
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
-    public Map<RedisURI, Partitions> loadViews(Collection<RedisURI> seed) {
+    public Map<RedisURI, Partitions> loadViews(Iterable<RedisURI> seed) {
 
         Map<RedisURI, StatefulRedisConnection<String, String>> connections = getConnections(seed);
         Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = requestViews(connections);
@@ -181,6 +181,7 @@ class ClusterTopologyRefresh {
     /*
      * Async request of views.
      */
+    @SuppressWarnings("unchecked")
     private Map<RedisURI, TimedAsyncCommand<String, String, String>> requestViews(
             Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
         Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
@@ -209,7 +210,7 @@ class ClusterTopologyRefresh {
     /*
      * Open connections where an address can be resolved.
      */
-    private Map<RedisURI, StatefulRedisConnection<String, String>> getConnections(Collection<RedisURI> seed) {
+    private Map<RedisURI, StatefulRedisConnection<String, String>> getConnections(Iterable<RedisURI> seed) {
         Map<RedisURI, StatefulRedisConnection<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
 
         for (RedisURI redisURI : seed) {
