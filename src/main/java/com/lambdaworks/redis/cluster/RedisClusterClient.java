@@ -44,7 +44,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * cluster client handles command routing based on the first key of the command and maintains a view on the cluster that is
  * available when calling the {@link #getPartitions()} method.
  * 
- *
  * <p>
  * Connections to particular nodes can be obtained by {@link RedisAdvancedClusterConnection#getConnection(String)} providing the
  * node id or {@link RedisAdvancedClusterConnection#getConnection(String, int)} by host and port.

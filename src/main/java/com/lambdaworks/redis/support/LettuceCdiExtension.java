@@ -43,7 +43,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *  public class Producers {
  *     &commat;Produces
  *     public RedisURI redisURI() {
- *         return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
+ *         return RedisURI.Builder.redis("localhost", 6379).build();
  *     }
  *     
  *     &commat;Produces
@@ -54,6 +54,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *     public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
  *         clientResources.shutdown().get();
  *     }
+ * }
  * </code>
  * </pre>
  * 

@@ -12,7 +12,8 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
- * Factory Bean for {@link RedisClusterClient} instances. Requires a {@link RedisURI}. URI Format:
+ * Factory Bean for {@link RedisClusterClient} instances. Requires a {@link RedisURI} and allows
+ * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format:
  * {@code
  *     redis://[password@]host[:port]
  * }
