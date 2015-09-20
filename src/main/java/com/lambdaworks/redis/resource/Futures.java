@@ -13,7 +13,7 @@ import io.netty.util.concurrent.*;
  * Utility class to support netty's future handling.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.09.15 09:31
+ * @since 3.4
  */
 class Futures {
 
@@ -27,7 +27,7 @@ class Futures {
     static Promise<Boolean> toBooleanPromise(Future<?> future) {
         final DefaultPromise<Boolean> result = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
 
-        future.addListener((GenericFutureListener) new GenericFutureListener<Future<Object>>() {
+        future.addListener(new GenericFutureListener<Future<Object>>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
 

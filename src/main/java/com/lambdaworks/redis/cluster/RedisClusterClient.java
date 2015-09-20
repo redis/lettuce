@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.AbstractRedisClient;
 import com.lambdaworks.redis.ReadFrom;
@@ -39,11 +40,17 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection if they
- * avoid blocking and transactional operations such as BLPOP and MULTI/EXEC.
+ * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection. The
+ * cluster client handles command routing based on the first key of the command and maintains a view on the cluster that is
+ * available when calling the {@link #getPartitions()} method.
  * 
- * {@link RedisClusterClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that
- * consist of up to {@code Number of CPU's * 4} threads. Reuse this instance as much as possible.
+ *
+ * <p>
+ * Connections to particular nodes can be obtained by {@link RedisAdvancedClusterConnection#getConnection(String)} providing the
+ * node id or {@link RedisAdvancedClusterConnection#getConnection(String, int)} by host and port.
+ * </p>
+ *
+ * {@link RedisClusterClient} is an expensive resource. Reuse this instance or the {@link ClientResources} as much as possible.
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
@@ -56,7 +63,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
     private Partitions partitions;
-    private Iterable<RedisURI> initialUris = Collections.EMPTY_SET;
+    private Iterable<RedisURI> initialUris = ImmutableSet.of();
 
     private RedisClusterClient() {
         setOptions(new ClusterClientOptions.Builder().build());
@@ -110,6 +117,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
      * 
      * @param redisURI the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(RedisURI redisURI) {
         assertNotNull(redisURI);
@@ -121,6 +129,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
      * 
      * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
+     * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(Iterable<RedisURI> redisURIs) {
         assertNotEmpty(redisURIs);
@@ -132,6 +141,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Redis servers but you must supply a {@link RedisURI} on connecting.
      * 
      * @param uri the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(String uri) {
         checkArgument(uri != null, "uri must not be null");
@@ -145,6 +155,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * 
      * @param clientResources the client resources, must not be {@literal null}
      * @param redisURI the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(ClientResources clientResources, RedisURI redisURI) {
         assertNotNull(clientResources);
@@ -159,6 +170,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * 
      * @param clientResources the client resources, must not be {@literal null}
      * @param uri the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(ClientResources clientResources, String uri) {
         assertNotNull(clientResources);
@@ -173,6 +185,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * 
      * @param clientResources the client resources, must not be {@literal null}
      * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
+     * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
         assertNotNull(clientResources);

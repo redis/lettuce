@@ -9,10 +9,19 @@ import io.netty.util.concurrent.Future;
  * Client Configuration. The client configuration provides heavy-weight resources such as thread pools. {@link ClientResources}
  * can be shared across different client instances. Shared instances are not shut down by the client, only dedicated instances
  * are shut down.
- *
+ * <p>
  * This interface defines the contract. See the {@link DefaultClientResources} class for the default implementation.
- *
+ * </p>
+ * <p>
  * The {@link ClientResources} instance is stateful. You have to shutdown the instance if you're no longer using it.
+ * </p>
+ *
+ * {@link ClientResources} provide:
+ * <ul>
+ * <li>An instance of {@link EventLoopGroupProvider} to obtain particular {@link io.netty.channel.EventLoopGroup
+ * EventLoopGroups}</li>
+ * <li>An instance of {@link EventExecutorGroup} for performing internal computation tasks</li>
+ * </ul>
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.4

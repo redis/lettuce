@@ -30,6 +30,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
     /**
      * Initialize a new instance.
      * 
+     * @param clientOptions client options for the connection
      * @param queue Command queue.
      * @param codec Codec.
      */

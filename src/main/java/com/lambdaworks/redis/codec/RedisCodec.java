@@ -5,9 +5,9 @@ package com.lambdaworks.redis.codec;
 import java.nio.ByteBuffer;
 
 /**
- * A RedisCodec encodes keys and values sent to redis, and decodes keys and values in the command output.
+ * A {@link RedisCodec} encodes keys and values sent to Redis, and decodes keys and values in the command output.
  *
- * The methods will be called by multiple threads and must be thread-safe.
+ * The methods are called by multiple threads and must be thread-safe.
  *
  * @param <K> Key type.
  * @param <V> Value type.

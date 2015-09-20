@@ -35,8 +35,8 @@ public abstract class ReadFrom {
     /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.
      * 
-     * @param nodes
-     * @return List of {@link RedisNodeDescription}s that are suitable for reading
+     * @param nodes set of nodes that are suitable for reading
+     * @return List of {@link RedisNodeDescription}s that are selected for reading
      */
     public abstract List<RedisNodeDescription> select(Nodes nodes);
 
@@ -47,7 +47,7 @@ public abstract class ReadFrom {
      * @return the {@link ReadFrom} preset
      * @throws IllegalArgumentException if {@code name} is empty, {@literal null} or the {@link ReadFrom} preset is unknown.
      */
-    public final static ReadFrom valueOf(String name) {
+    public static ReadFrom valueOf(String name) {
         if (LettuceStrings.isEmpty(name)) {
             throw new IllegalArgumentException("name must not be empty");
         }

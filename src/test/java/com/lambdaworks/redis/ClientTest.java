@@ -301,7 +301,7 @@ public class ClientTest extends AbstractCommandTest {
 
         final TestConnectionListener listener = new TestConnectionListener();
 
-        RedisClient client = new RedisClient(host, port);
+        RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
         client.addListener(listener);
 
         assertThat(listener.onConnected).isNull();
@@ -343,7 +343,7 @@ public class ClientTest extends AbstractCommandTest {
         final TestConnectionListener removedListener = new TestConnectionListener();
         final TestConnectionListener retainedListener = new TestConnectionListener();
 
-        RedisClient client = new RedisClient(host, port);
+        RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
         client.addListener(removedListener);
         client.addListener(retainedListener);
         client.removeListener(removedListener);
@@ -437,7 +437,7 @@ public class ClientTest extends AbstractCommandTest {
     @Test
     public void emptyClient() throws Exception {
 
-        RedisClient client = new RedisClient();
+        RedisClient client = RedisClient.create();
         try {
             client.connect();
         } catch (IllegalStateException e) {

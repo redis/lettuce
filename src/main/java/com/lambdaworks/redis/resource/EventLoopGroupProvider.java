@@ -10,13 +10,15 @@ import io.netty.util.concurrent.Future;
  * Provider for {@link EventExecutorGroup EventLoopGroups and EventExecutorGroups}. A event loop group is a heavy-weight
  * instance holding and providing {@link Thread} instances. Multiple instances can be created but are expensive. Keeping too
  * many instances open can exhaust the number of open files.
- *
+ * <p>
  * Usually, the default settings are sufficient. However, customizing might be useful for some special cases where multiple
  * RedisClient or RedisClusterClient instances are needed that share one or more event loop groups.
- *
+ * </p>
+ * <p>
  * The {@link EventLoopGroupProvider} allows to allocate and release instances implementing {@link EventExecutorGroup}. The
  * {@link EventExecutorGroup} instances must not be terminated or shutdown by the user. Resources are managed by the particular
  * {@link EventLoopGroupProvider}.
+ * </p>
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.4
@@ -25,7 +27,7 @@ public interface EventLoopGroupProvider {
 
     /**
      * Retrieve a {@link EventLoopGroup} for the type {@code type}. Do not terminate or shutdown the instance. Call the
-     * {@link #release(EventLoopGroup, long, long, TimeUnit)} method to free the resources.
+     * {@link #shutdown(long, long, TimeUnit)} method to free the resources.
      *
      * @param type type of the event loop group, must not be {@literal null}
      * @param <T> type parameter
@@ -58,6 +60,7 @@ public interface EventLoopGroupProvider {
      *
      * @param quietPeriod the quiet period
      * @param timeout the timeout
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      * @return a close future to synchronize the called for shutting down.
      */
     Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit);

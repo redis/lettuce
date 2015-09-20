@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.collect.Maps;
 import com.lambdaworks.redis.EpollProvider;
 
+import com.lambdaworks.redis.output.BooleanListOutput;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.*;
@@ -19,7 +20,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Default implementation which manages one event loop group instance per type.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 14.09.15 10:40
+ * @since 3.4
  */
 public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
@@ -30,6 +31,11 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     private volatile boolean shutdownCalled = false;
 
+    /**
+     * Creates a new instance of {@link DefaultEventLoopGroupProvider}.
+     * 
+     * @param numberOfThreads number of threads (pool size)
+     */
     public DefaultEventLoopGroupProvider(int numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
     }
@@ -41,6 +47,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends EventLoopGroup> T getOrCreate(Class<T> type) {
 
         if (shutdownCalled) {
@@ -63,6 +70,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * </ul>
      * 
      * @param type the type
+     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
      * @param <T> type parameter
      * @return a new instance of a {@link EventExecutorGroup}
      * @throws IllegalArgumentException if the {@code type} is not supported.
@@ -88,7 +96,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         Class<?> key = getKey(eventLoopGroup);
 
         if (key == null && eventLoopGroup.isShuttingDown()) {
-            DefaultPromise<Boolean> promise = new DefaultPromise(GlobalEventExecutor.INSTANCE);
+            DefaultPromise<Boolean> promise = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
             promise.setSuccess(true);
             return promise;
         }
@@ -98,9 +106,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         }
 
         Future<?> shutdownFuture = eventLoopGroup.shutdownGracefully(quietPeriod, timeout, unit);
-        Promise<Boolean> booleanFuture = toBooleanPromise(shutdownFuture);
-
-        return booleanFuture;
+        return toBooleanPromise(shutdownFuture);
     }
 
     private Class<?> getKey(EventExecutorGroup eventLoopGroup) {
@@ -122,6 +128,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
         shutdownCalled = true;
 
