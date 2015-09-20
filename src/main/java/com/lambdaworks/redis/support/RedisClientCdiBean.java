@@ -9,6 +9,7 @@ import javax.enterprise.inject.spi.BeanManager;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.resource.ClientResources;
 
 /**
  * Factory Bean for {@link RedisClient} instances. Requires a {@link RedisURI}.. URI Formats:
@@ -25,10 +26,9 @@ import com.lambdaworks.redis.RedisURI;
  */
 class RedisClientCdiBean extends AbstractCdiBean<RedisClient> {
 
-    // todo: support for client resources
-
-    RedisClientCdiBean(BeanManager beanManager, Set<Annotation> qualifiers, Bean<RedisURI> redisURIBean, String name) {
-        super(redisURIBean, beanManager, qualifiers, name);
+    RedisClientCdiBean(Bean<RedisURI> redisURIBean, Bean<ClientResources> clientResourcesBean, BeanManager beanManager,
+            Set<Annotation> qualifiers, String name) {
+        super(redisURIBean, clientResourcesBean, beanManager, qualifiers, name);
     }
 
     @Override
@@ -41,6 +41,12 @@ class RedisClientCdiBean extends AbstractCdiBean<RedisClient> {
 
         CreationalContext<RedisURI> uriCreationalContext = beanManager.createCreationalContext(redisURIBean);
         RedisURI redisURI = (RedisURI) beanManager.getReference(redisURIBean, RedisURI.class, uriCreationalContext);
+
+        if (clientResourcesBean != null) {
+            ClientResources clientResources = (ClientResources) beanManager.getReference(clientResourcesBean,
+                    ClientResources.class, uriCreationalContext);
+            return RedisClient.create(clientResources, redisURI);
+        }
 
         return RedisClient.create(redisURI);
     }

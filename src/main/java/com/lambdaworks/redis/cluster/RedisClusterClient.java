@@ -66,7 +66,9 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Initialize the client with an initial cluster URI.
      *
      * @param initialUri initial cluster URI
+     * @deprecated Use {@link #create(RedisURI)}
      */
+    @Deprecated
     public RedisClusterClient(RedisURI initialUri) {
         this(ImmutableList.of(checkNotNull(initialUri, "RedisURI (initial uri) must not be null")));
     }
@@ -77,7 +79,9 @@ public class RedisClusterClient extends AbstractRedisClient {
      * the cluster structure for distributing the requests.
      *
      * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@literal null} and not empty.
+     * @deprecated Use {@link #create(Iterable)}
      */
+    @Deprecated
     public RedisClusterClient(List<RedisURI> redisURIs) {
         this(null, redisURIs);
     }

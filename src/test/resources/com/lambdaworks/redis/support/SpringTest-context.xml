@@ -4,6 +4,8 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="TestSettings" class="com.lambdaworks.redis.TestSettings"></bean>
+    <bean id="ClientResources"
+          class="com.lambdaworks.redis.support.ClientResourcesFactoryBean"></bean>
 
     <bean id="MasterUri" class="com.lambdaworks.redis.RedisURI">
         <property name="host" value="#{TestSettings.host()}"/>
@@ -12,10 +14,12 @@
 
     <bean id="RedisClient1" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
         <property name="redisURI" ref="MasterUri"/>
+        <property name="clientResources" ref="ClientResources"/>
     </bean>
 
     <bean id="RedisClient2" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
         <property name="uri" value="redis://#{TestSettings.host()}:#{TestSettings.port()}/0"/>
+        <property name="clientResources" ref="ClientResources"/>
     </bean>
 
     <bean id="RedisClient3" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
@@ -24,6 +28,7 @@
 
     <bean id="RedisClusterClient1" class="com.lambdaworks.redis.support.RedisClusterClientFactoryBean">
         <property name="redisURI" ref="MasterUri"/>
+        <property name="clientResources" ref="ClientResources"/>
     </bean>
 
     <bean id="RedisClusterClient2" class="com.lambdaworks.redis.support.RedisClusterClientFactoryBean">

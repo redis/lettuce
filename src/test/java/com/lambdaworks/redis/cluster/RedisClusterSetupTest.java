@@ -58,16 +58,17 @@ public class RedisClusterSetupTest {
 
     private RedisClusterConnection<String, String> redis1;
     private RedisClusterConnection<String, String> redis2;
-    private ClientResources clientResources = TestClientResources.create();
+
+    public static ClientResources clientResources = TestClientResources.create();
 
     @Rule
     public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2);
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, port1).build());
-        client1 = new RedisClient(host, port1);
-        client2 = new RedisClient(host, port2);
+        clusterClient = RedisClusterClient.create(clientResources, RedisURI.Builder.redis(host, port1).build());
+        client1 = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port1).build());
+        client2 = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port2).build());
     }
 
     @AfterClass

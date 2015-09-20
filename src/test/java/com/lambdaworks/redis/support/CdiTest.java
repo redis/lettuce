@@ -1,8 +1,9 @@
 package com.lambdaworks.redis.support;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
 import org.apache.webbeans.cditest.CdiTestContainer;
@@ -14,6 +15,8 @@ import org.junit.Test;
 import com.lambdaworks.redis.AbstractCommandTest;
 import com.lambdaworks.redis.RedisConnectionStateListener;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DefaultClientResources;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -36,6 +39,16 @@ public class CdiTest {
         return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
     }
 
+    @Produces
+    @PersonDB
+    public ClientResources clientResources() {
+        return DefaultClientResources.create();
+    }
+
+    public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
+        clientResources.shutdown().get();
+    }
+
     @PersonDB
     @Produces
     public RedisURI redisURIQualified() {
@@ -49,11 +62,17 @@ public class CdiTest {
         assertThat(injectedClient.redisClient).isNotNull();
         assertThat(injectedClient.redisClusterClient).isNotNull();
 
+        assertThat(injectedClient.qualifiedRedisClient).isNotNull();
+        assertThat(injectedClient.qualifiedRedisClusterClient).isNotNull();
+
         RedisConnectionStateListener mock = mock(RedisConnectionStateListener.class);
 
         // do some interaction to force the container a creation of the repositories.
         injectedClient.redisClient.addListener(mock);
         injectedClient.redisClusterClient.addListener(mock);
+
+        injectedClient.qualifiedRedisClient.addListener(mock);
+        injectedClient.qualifiedRedisClusterClient.addListener(mock);
 
         injectedClient.pingRedis();
     }
