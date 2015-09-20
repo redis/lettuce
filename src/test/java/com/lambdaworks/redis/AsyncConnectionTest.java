@@ -115,7 +115,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
 
         RedisFuture<String> set = connection.set(key, value);
         set.get();
-        assertThat(set.get()).isNull();
+        assertThat(set.get()).isEqualTo("OK");
 
         set.addListener(listener, executor);
 
