@@ -2,7 +2,6 @@ package com.lambdaworks.redis.support;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -10,21 +9,66 @@ import java.util.Set;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
-import javax.enterprise.inject.spi.*;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessBean;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A portable CDI extension which registers beans for lettuce. If there are no RedisURIs there are also no registrations for
- * RedisClients.
+ * {@link RedisClient RedisClients}. The extension allows to create {@link RedisClient} and {@link RedisClusterClient}
+ * instances. Client instances are provided under the same qualifiers as the {@link RedisURI}. {@link ClientResources} can be
+ * shared across multiple client instances (Standalone, Cluster) by providing a {@link ClientResources} bean with the same
+ * qualifiers as the {@link RedisURI}.
+ * 
+ * <p>
+ * <strong>Example:</strong>
+ * </p>
+ * 
+ * <pre>
+ * <code>
+ *  public class Producers {
+ *     @Produces
+ *     public RedisURI redisURI() {
+ *         return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
+ *     }
+ *     
+ *     @Produces
+ *     public ClientResources clientResources() {
+ *         return DefaultClientResources.create()
+ *     }
+ *     
+ *     public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
+ *         clientResources.shutdown().get();
+ *     }
+ * </code>
+ * </pre>
+ * 
+ *
+ * <pre>
+ *  <code>
+ *   public class Consumer {
+ *      @Inject
+ *      private RedisClient client;
+ *      
+ *      @Inject
+ *      private RedisClusterClient clusterClient;
+ * }     
+ *  </code>
+ * </pre>
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
@@ -32,7 +76,8 @@ public class LettuceCdiExtension implements Extension {
 
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(LettuceCdiExtension.class);
 
-    private final Map<Set<Annotation>, Bean<RedisURI>> redisUris = new HashMap<Set<Annotation>, Bean<RedisURI>>();
+    private final Map<Set<Annotation>, Bean<RedisURI>> redisUris = Maps.newConcurrentMap();
+    private final Map<Set<Annotation>, Bean<ClientResources>> clientResources = Maps.newConcurrentMap();
 
     public LettuceCdiExtension() {
         LOGGER.info("Activating CDI extension for lettuce.");
@@ -49,12 +94,25 @@ public class LettuceCdiExtension implements Extension {
     <T> void processBean(@Observes ProcessBean<T> processBean) {
         Bean<T> bean = processBean.getBean();
         for (Type type : bean.getTypes()) {
+            if (!(type instanceof Class<?>)) {
+                continue;
+            }
+
             // Check if the bean is an RedisURI.
-            if (type instanceof Class<?> && RedisURI.class.isAssignableFrom((Class<?>) type)) {
+            if (RedisURI.class.isAssignableFrom((Class<?>) type)) {
                 Set<Annotation> qualifiers = new HashSet<Annotation>(bean.getQualifiers());
                 if (bean.isAlternative() || !redisUris.containsKey(qualifiers)) {
                     LOGGER.debug(String.format("Discovered '%s' with qualifiers %s.", RedisURI.class.getName(), qualifiers));
                     redisUris.put(qualifiers, (Bean<RedisURI>) bean);
+                }
+            }
+
+            if (ClientResources.class.isAssignableFrom((Class<?>) type)) {
+                Set<Annotation> qualifiers = new HashSet<Annotation>(bean.getQualifiers());
+                if (bean.isAlternative() || !clientResources.containsKey(qualifiers)) {
+                    LOGGER.debug(String.format("Discovered '%s' with qualifiers %s.", ClientResources.class.getName(),
+                            qualifiers));
+                    clientResources.put(qualifiers, (Bean<ClientResources>) bean);
                 }
             }
         }
@@ -83,11 +141,14 @@ public class LettuceCdiExtension implements Extension {
                 counter++;
             }
 
-            RedisClientCdiBean clientBean = new RedisClientCdiBean(beanManager, qualifiers, redisUri, clientBeanName);
+            Bean<ClientResources> clientResources = this.clientResources.get(qualifiers);
+
+            RedisClientCdiBean clientBean = new RedisClientCdiBean(redisUri, clientResources, beanManager, qualifiers,
+                    clientBeanName);
             register(afterBeanDiscovery, qualifiers, clientBean);
 
-            RedisClusterClientCdiBean clusterClientBean = new RedisClusterClientCdiBean(beanManager, qualifiers, redisUri,
-                    clusterClientBeanName);
+            RedisClusterClientCdiBean clusterClientBean = new RedisClusterClientCdiBean(redisUri, clientResources, beanManager,
+                    qualifiers, clusterClientBeanName);
             register(afterBeanDiscovery, qualifiers, clusterClientBean);
 
         }

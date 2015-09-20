@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.resource.ClientResources;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -34,9 +36,11 @@ public class AbstractClusterTest {
     @Rule
     public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
 
+    protected static ClientResources resources = TestClientResources.create();
+
     @BeforeClass
     public static void setupClusterClient() throws Exception {
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(resources, ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

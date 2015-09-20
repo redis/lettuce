@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.support;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.net.URI;
@@ -8,17 +9,16 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
- * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input. URI Format:
- * {@code
+ * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input and allows
+ * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format: {@code
  *     redis://[password@]host[:port]
  * }
  * 
+ * @see ClientResourcesFactoryBean
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
 public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<RedisClusterClient> {
-
-    // todo: support for client resources
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -26,13 +26,10 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
         if (getRedisURI() == null) {
             URI uri = getUri();
 
-            if (uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL)) {
-                throw new IllegalArgumentException("Sentinel mode not supported when using RedisClusterClient");
-            }
-
-            if (!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS)) {
-                throw new IllegalArgumentException("Only plain connections allowed when using RedisClusterClient");
-            }
+            checkArgument(!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL),
+                    "Sentinel mode not supported when using RedisClusterClient");
+            checkArgument(uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS),
+                    "Only plain connections allowed when using RedisClusterClient");
 
             RedisURI redisURI = RedisURI.create(uri);
             if (isNotEmpty(getPassword())) {
@@ -57,6 +54,10 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
 
     @Override
     protected RedisClusterClient createInstance() throws Exception {
-        return new RedisClusterClient(getRedisURI());
+
+        if (getClientResources() != null) {
+            return RedisClusterClient.create(getClientResources(), getRedisURI());
+        }
+        return RedisClusterClient.create(getRedisURI());
     }
 }
