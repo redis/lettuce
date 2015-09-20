@@ -156,6 +156,28 @@ for the migration matrix.
 * `RedisFuture`s are based on `CompleteableFuture` and throw now any occurred exception when accessing the value using `get()`.
 Exceptions are passed down the `CompletionStage`s.
 
+Client factory methods
+----------------------
+`RedisClient` and `RedisClusterClient` provide factory methods (`create`) to 
+create new instances. This is, to get flexibility by reducing the number of constructors
+and in preparation for reusable `ClientResources` which will be added with lettuce 4.1.
+
+The constructors of `RedisClient` and `RedisClusterClient` are deprecated and will
+be removed in future versions.
+
+```java
+RedisClient client = RedisClient.create();
+
+RedisClient client = RedisClient.create("redis://localhost/");
+
+RedisClient client = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
+
+
+RedisClusterClient client = RedisClusterClient.create("redis://localhost/");
+
+RedisClusterClient client = RedisClusterClient.create(RedisURI.Builder.redis("localhost", 6379).build());
+```
+
 
 Cross-slot command execution
 ----------------------------
@@ -310,6 +332,7 @@ Enhancements
 * Implement a CompressionCodec for GZIP and Deflate compression #127
 * Implement synchronous multi-node execution API #129
 * Use LinkedHashMap instead of HashMap for Map outputs #133 (thanks to @longkerdandy)
+* Implement client factory methods (RedisClient.create, RedisClusterClient.create) #136
 
 Fixes
 -----
