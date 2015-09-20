@@ -136,6 +136,7 @@ public class RedisClient extends AbstractRedisClient {
      * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
      *
      * @param clientResources the client resources, must not be {@literal null}
+     * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(ClientResources clientResources) {
         assertNotNull(clientResources);
@@ -165,6 +166,7 @@ public class RedisClient extends AbstractRedisClient {
      * 
      * @param clientResources the client resources, must not be {@literal null}
      * @param redisURI the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(ClientResources clientResources, RedisURI redisURI) {
         assertNotNull(clientResources);
@@ -329,6 +331,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return A new connection
      */
+    @SuppressWarnings("unchecked")
     public <K, V> RedisConnection<K, V> connect(RedisCodec<K, V> codec) {
         checkForRedisURI();
         return connect(codec, this.redisURI);
@@ -341,13 +344,10 @@ public class RedisClient extends AbstractRedisClient {
      * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @return A new connection
      */
+    @SuppressWarnings("unchecked")
     public RedisConnection<String, String> connect(RedisURI redisURI) {
         checkValidRedisURI(redisURI);
         return connect(newStringStringCodec(), redisURI);
-    }
-
-    private void checkValidRedisURI(RedisURI redisURI) {
-        checkArgument(redisURI != null && isNotEmpty(redisURI.getHost()), "A valid RedisURI with a host is needed");
     }
 
     /**
@@ -360,7 +360,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return A new connection
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public <K, V> RedisConnection connect(RedisCodec<K, V> codec, RedisURI redisURI) {
         return (RedisConnection<K, V>) syncHandler((RedisChannelHandler<K, V>) connectAsync(codec, redisURI),
                 RedisConnection.class, RedisClusterConnection.class);
@@ -724,6 +724,10 @@ public class RedisClient extends AbstractRedisClient {
         } finally {
             connection.close();
         }
+    }
+
+    private void checkValidRedisURI(RedisURI redisURI) {
+        checkArgument(redisURI != null && isNotEmpty(redisURI.getHost()), "A valid RedisURI with a host is needed");
     }
 
     protected Utf8StringCodec newStringStringCodec() {

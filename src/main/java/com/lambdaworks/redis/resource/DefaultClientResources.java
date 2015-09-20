@@ -6,15 +6,30 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 
-import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.Promise;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default instance of the client resources.
- *
+ * <p>
  * The {@link DefaultClientResources} instance is stateful, you have to shutdown the instance if you're no longer using it.
+ * </p>
+ * {@link DefaultClientResources} allow to configure:
+ * <ul>
+ * <li>the {@code ioThreadPoolSize}, alternatively</li>
+ * <li>a {@code eventLoopGroupProvider} which is a provided instance of {@link EventLoopGroupProvider}. Higher precedence than
+ * {@code ioThreadPoolSize}.</li>
+ * <li>computationThreadPoolSize</li>
+ * <li>a {@code eventExecutorGroup} which is a provided instance of {@link EventExecutorGroup}. Higher precedence than
+ * {@code computationThreadPoolSize}.</li>
+ * </ul>
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.4
@@ -187,6 +202,7 @@ public class DefaultClientResources implements ClientResources {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      * @return eventually the success/failure of the shutdown without errors.
      */
+    @SuppressWarnings("unchecked")
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         shutdownCalled = true;

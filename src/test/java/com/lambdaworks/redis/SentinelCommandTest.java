@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
-import static com.lambdaworks.redis.TestSettings.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -11,9 +11,12 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
@@ -29,7 +32,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        client = RedisClient.create(resources, RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
@@ -85,7 +88,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void sentinelConnectWith() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID)
+        RedisClient client = RedisClient.create(resources, RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID)
                 .withSentinel(TestSettings.host()).build());
 
         RedisSentinelAsyncConnection<String, String> sentinelConnection = client.connectSentinelAsync();
@@ -111,7 +114,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void sentinelConnectWrongMaster() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent")
+        RedisClient client = RedisClient.create(resources, RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent")
                 .withSentinel(TestSettings.host()).build());
         try {
             client.connect();
@@ -125,7 +128,8 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void sentinelConnect() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
+                .build());
 
         RedisSentinelAsyncConnection<String, String> connection = client.connectSentinelAsync();
         assertThat(connection.ping().get()).isEqualTo("PONG");
@@ -145,8 +149,7 @@ public class SentinelCommandTest extends AbstractCommandTest {
     @Test
     public void role() throws Exception {
 
-        RedisClient redisClient = new RedisClient("localhost", 26380);
-        RedisAsyncConnection<String, String> connection = redisClient.connectAsync();
+        RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host, 26379).build());
         try {
 
             RedisFuture<List<Object>> role = connection.role();
@@ -158,7 +161,6 @@ public class SentinelCommandTest extends AbstractCommandTest {
             assertThat(objects.get(1).toString()).isEqualTo("[" + MASTER_ID + "]");
         } finally {
             connection.close();
-            FastShutdown.shutdown(redisClient);
         }
     }
 
