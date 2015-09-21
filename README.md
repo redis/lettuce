@@ -11,7 +11,7 @@ Multiple connections are efficiently managed by the excellent netty NIO
 framework. Support for advanced Redis features such as Sentinel, Cluster and Redis data models
 is included.
 
-This version of lettuce has been tested against Redis and 3.0.
+This version of lettuce has been tested against Redis 3.0.
 
 * Works with Java 6, 7 and 8
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
