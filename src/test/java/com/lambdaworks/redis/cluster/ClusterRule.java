@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -50,9 +51,7 @@ public class ClusterRule implements TestRule {
                     futures.add(connection.flushall());
                 }
 
-                for (Future<?> future : futures) {
-                    future.get();
-                }
+                await(futures);
             }
         };
 
@@ -65,6 +64,13 @@ public class ClusterRule implements TestRule {
 
             }
         };
+    }
+
+    private void await(List<Future<?>> futures) throws InterruptedException, java.util.concurrent.ExecutionException,
+            java.util.concurrent.TimeoutException {
+        for (Future<?> future : futures) {
+            future.get(10, TimeUnit.SECONDS);
+        }
     }
 
     public boolean isStable() {
@@ -102,7 +108,7 @@ public class ClusterRule implements TestRule {
     public void flushdb() {
         try {
             for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
-                connection.flushdb().get();
+                connection.flushdb().get(10, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -113,9 +119,9 @@ public class ClusterRule implements TestRule {
         try {
 
             for (RedisAsyncConnectionImpl<?, ?> connection : connectionCache.values()) {
-                connection.clusterReset(false).get();
-                connection.clusterReset(true).get();
-                connection.clusterFlushslots().get();
+                connection.clusterReset(false).get(10, TimeUnit.SECONDS);
+                connection.clusterReset(true).get(10, TimeUnit.SECONDS);
+                connection.clusterFlushslots().get(10, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -123,9 +129,19 @@ public class ClusterRule implements TestRule {
     }
 
     public void meet(String host, int port) {
+
+        List<Future<?>> futures = Lists.newArrayList();
         for (RedisAsyncConnectionImpl<?, ?> redisAsyncConnection : connectionCache.values()) {
-            redisAsyncConnection.clusterMeet(host, port);
+            futures.add(redisAsyncConnection.clusterMeet(host, port));
         }
+
+        for (Future<?> future : futures) {
+            try {
+                future.get(10, TimeUnit.SECONDS);
+            } catch (Exception ignore) {
+            }
+        }
+
     }
 
     public RedisClusterClient getClusterClient() {
