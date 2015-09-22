@@ -2,18 +2,12 @@ package com.lambdaworks.redis.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.Future;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelPromise;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,18 +21,17 @@ import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.resource.ClientResources;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoop;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommandHandlerTest {
 
     private Queue<RedisCommand<String, String, ?>> q = new ArrayDeque<RedisCommand<String, String, ?>>(10);
 
-    private CommandHandler<String, String> sut = new CommandHandler<String, String>(new ClientOptions.Builder().build(), q);
+    private CommandHandler<String, String> sut;
 
     private Command<String, String, String> command = new Command<String, String, String>(CommandType.APPEND,
             new StatusOutput<String, String>(new Utf8StringCodec()), null);
@@ -57,6 +50,9 @@ public class CommandHandlerTest {
 
     @Mock
     private EventLoop eventLoop;
+
+    @Mock
+    private ClientResources clientResources;
 
     @Before
     public void before() throws Exception {
@@ -86,6 +82,8 @@ public class CommandHandlerTest {
                 return new DefaultChannelPromise(channel);
             }
         });
+
+        sut = new CommandHandler<String, String>(ClientOptions.create(), clientResources, q);
     }
 
     @Test

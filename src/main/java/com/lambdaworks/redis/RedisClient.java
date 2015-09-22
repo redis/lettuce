@@ -417,7 +417,7 @@ public class RedisClient extends AbstractRedisClient {
 
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, res, queue);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         connectAsync(handler, connection, redisURI);
@@ -500,7 +500,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(redisURI);
 
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, res, queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
 
         connectAsync(handler, connection, redisURI);
@@ -568,7 +568,7 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(clientOptions, queue);
+        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(clientOptions, res, queue);
         final RedisSentinelAsyncConnectionImpl<K, V> connection = newRedisSentinelAsyncConnectionImpl(commandHandler, codec,
                 timeout, unit);
 
@@ -694,6 +694,15 @@ public class RedisClient extends AbstractRedisClient {
                 }
             }
         };
+    }
+
+    /**
+     * Returns the {@link ClientResources} which are used with that client.
+     *
+     * @return the {@link ClientResources} for this client
+     */
+    public ClientResources getResources() {
+        return res;
     }
 
     protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,

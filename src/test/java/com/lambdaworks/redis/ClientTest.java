@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.event.RedisEvent;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -23,6 +24,7 @@ import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
+import rx.functions.Action1;
 
 @SuppressWarnings("unchecked")
 public class ClientTest extends AbstractCommandTest {
