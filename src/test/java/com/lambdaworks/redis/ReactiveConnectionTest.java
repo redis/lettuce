@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.Wait;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -41,10 +43,10 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void doNotFireCommandUntilObservation() throws Exception {
         Observable<String> set = reactive.set(key, value);
-        Delay.delay(seconds(1));
+        Delay.delay(millis(200));
         assertThat(redis.get(key)).isNull();
         set.subscribe();
-        Delay.delay(seconds(1));
+        Wait.untilEquals(value, () -> redis.get(key));
 
         assertThat(redis.get(key)).isEqualTo(value);
     }
@@ -107,7 +109,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         incr.subscribe();
         incr.subscribe();
 
-        Delay.delay(millis(500));
+        Wait.untilEquals("4", () -> redis.get(key));
 
         assertThat(redis.get(key)).isEqualTo("4");
     }

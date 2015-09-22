@@ -53,7 +53,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void clientPause() throws Exception {
-        assertThat(redis.clientPause(1000)).isEqualTo("OK");
+        assertThat(redis.clientPause(10)).isEqualTo("OK");
     }
 
     @Test

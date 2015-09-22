@@ -353,14 +353,10 @@ public class ClientTest extends AbstractRedisClientTest {
         client.addListener(retainedListener);
         client.removeListener(removedListener);
 
-        RedisAsyncConnection<String, String> connection = client.connectAsync();
-        waitOrTimeout(new Condition() {
+        // that's the sut call
+        client.connectAsync();
 
-            @Override
-            public boolean isSatisfied() {
-                return retainedListener.onConnected != null;
-            }
-        }, Timeout.timeout(seconds(2)));
+        waitOrTimeout(() -> retainedListener.onConnected != null, Timeout.timeout(seconds(2)));
 
         assertThat(retainedListener.onConnected).isNotNull();
 
