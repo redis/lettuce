@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 
+import com.lambdaworks.redis.event.DefaultEventBus;
+import com.lambdaworks.redis.event.EventBus;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -59,6 +61,7 @@ public class DefaultClientResources implements ClientResources {
     private final EventLoopGroupProvider eventLoopGroupProvider;
     private final boolean sharedEventExecutor;
     private final EventExecutorGroup eventExecutorGroup;
+    private final EventBus eventBus;
 
     private volatile boolean shutdownCalled = false;
 
@@ -98,6 +101,12 @@ public class DefaultClientResources implements ClientResources {
             eventExecutorGroup = builder.eventExecutorGroup;
         }
 
+        if (builder.eventBus == null) {
+            eventBus = new DefaultEventBus(new RxJavaEventExecutorGroupScheduler(eventExecutorGroup));
+        } else {
+            eventBus = builder.eventBus;
+        }
+
     }
 
     /**
@@ -109,6 +118,7 @@ public class DefaultClientResources implements ClientResources {
         private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
         private EventExecutorGroup eventExecutorGroup;
         private EventLoopGroupProvider eventLoopGroupProvider;
+        private EventBus eventBus;
 
         public Builder() {
         }
@@ -162,6 +172,17 @@ public class DefaultClientResources implements ClientResources {
          */
         public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
             this.eventExecutorGroup = eventExecutorGroup;
+            return this;
+        }
+
+        /**
+         * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
+         *
+         * @param eventBus the event bus
+         * @return this
+         */
+        public Builder eventBus(EventBus eventBus) {
+            this.eventBus = eventBus;
             return this;
         }
 
@@ -261,6 +282,11 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public int computationThreadPoolSize() {
         return Lists.newArrayList(eventExecutorGroup.iterator()).size();
+    }
+
+    @Override
+    public EventBus eventBus() {
+        return eventBus;
     }
 
     /**

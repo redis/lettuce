@@ -2,6 +2,7 @@ package com.lambdaworks.redis.resource;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.event.EventBus;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
@@ -78,5 +79,12 @@ public interface ClientResources {
      * @return the pool size (number of threads to use).
      */
     int computationThreadPoolSize();
+
+    /**
+     * Returns the event bus used to publish events.
+     * 
+     * @return the event bus
+     */
+    EventBus eventBus();
 
 }
