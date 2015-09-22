@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.resource;
 
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -7,6 +9,13 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+
+import rx.observers.TestSubscriber;
+
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.RedisEvent;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -26,7 +35,10 @@ public class DefaultClientResourcesTest {
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
         NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
 
-        assertThat(sut.shutdown().get()).isTrue();
+        eventExecutors.next().submit(mock(Runnable.class));
+        eventLoopGroup.next().submit(mock(Runnable.class));
+
+        assertThat(sut.shutdown(0, 0, TimeUnit.SECONDS).get()).isTrue();
 
         assertThat(eventExecutors.isTerminated()).isTrue();
         assertThat(eventLoopGroup.isTerminated()).isTrue();
@@ -48,7 +60,7 @@ public class DefaultClientResourcesTest {
         assertThat(eventLoopGroup.executorCount()).isEqualTo(4);
         assertThat(sut.ioThreadPoolSize()).isEqualTo(4);
 
-        assertThat(sut.shutdown().get()).isTrue();
+        assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 
     @Test
@@ -56,12 +68,14 @@ public class DefaultClientResourcesTest {
 
         EventExecutorGroup executorMock = mock(EventExecutorGroup.class);
         EventLoopGroupProvider groupProviderMock = mock(EventLoopGroupProvider.class);
+        EventBus eventBusMock = mock(EventBus.class);
 
         DefaultClientResources sut = new DefaultClientResources.Builder().eventExecutorGroup(executorMock)
-                .eventLoopGroupProvider(groupProviderMock).build();
+                .eventLoopGroupProvider(groupProviderMock).eventBus(eventBusMock).build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
+        assertThat(sut.eventBus()).isSameAs(eventBusMock);
 
         assertThat(sut.shutdown().get()).isTrue();
 
@@ -82,6 +96,31 @@ public class DefaultClientResourcesTest {
         assertThat(eventLoopGroup.executorCount()).isEqualTo(3);
         assertThat(sut.ioThreadPoolSize()).isEqualTo(3);
 
-        assertThat(sut.shutdown().get()).isTrue();
+        assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
+    }
+
+    @Test
+    public void testEventBus() throws Exception {
+
+        DefaultClientResources sut = DefaultClientResources.create();
+
+        EventBus eventBus = sut.eventBus();
+
+        final TestSubscriber<RedisEvent> subject = new TestSubscriber<RedisEvent>();
+
+        eventBus.get().subscribe(subject);
+
+        RedisEvent event = mock(RedisEvent.class);
+        eventBus.publish(event);
+
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return !subject.getOnNextEvents().isEmpty();
+            }
+        }, timeout(seconds(2)));
+
+        assertThat(subject.getOnNextEvents()).contains(event);
+        assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 }

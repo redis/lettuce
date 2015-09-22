@@ -77,7 +77,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      */
     public static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads) {
         if (DefaultEventExecutorGroup.class.equals(type)) {
-            return new DefaultEventExecutorGroup(numberOfThreads);
+            return new DefaultEventExecutorGroup(numberOfThreads, new DefaultThreadFactory("lettuce-eventExecutorLoop", true));
         }
 
         if (NioEventLoopGroup.class.equals(type)) {
