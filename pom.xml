@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -14,7 +16,9 @@
 
     <name>lettuce</name>
     <url>http://github.com/mp911de/lettuce</url>
-    <description>Java redis client. This is a fork of lettuce from https://github.com/wg/lettuce</description>
+    <description>Java redis client. This is a fork of lettuce from
+        https://github.com/wg/lettuce
+    </description>
 
     <licenses>
         <license>
@@ -58,7 +62,8 @@
 
     <scm>
         <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
-        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
+        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git
+        </developerConnection>
         <url>http://github.com/mp911de/lettuce</url>
         <tag>HEAD</tag>
     </scm>
@@ -113,6 +118,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <version>2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.latencyutils</groupId>
+            <artifactId>LatencyUtils</artifactId>
+            <version>2.0.2</version>
         </dependency>
 
         <!-- Spring/CDI -->
@@ -244,9 +255,12 @@
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
-                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <finalName>
+                                        ${project.artifactId}-${project.version}
+                                    </finalName>
                                     <descriptors>
-                                        <descriptor>src/assembly/src.xml</descriptor>
+                                        <descriptor>src/assembly/src.xml
+                                        </descriptor>
                                     </descriptors>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                     <attach>false</attach>
@@ -255,9 +269,12 @@
                             <execution>
                                 <id>bin</id>
                                 <configuration>
-                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <finalName>
+                                        ${project.artifactId}-${project.version}
+                                    </finalName>
                                     <descriptors>
-                                        <descriptor>src/assembly/bin.xml</descriptor>
+                                        <descriptor>src/assembly/bin.xml
+                                        </descriptor>
                                     </descriptors>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                     <attach>false</attach>
@@ -299,7 +316,9 @@
                                 <configuration>
                                     <fileSets>
                                         <fileSet>
-                                            <directory>${project.build.directory}</directory>
+                                            <directory>
+                                                ${project.build.directory}
+                                            </directory>
                                             <includes>
                                                 <include>*.gz</include>
                                                 <include>*.zip</include>
@@ -347,10 +366,15 @@
                     <level>public</level>
                     <links>
                         <link>http://netty.io/4.0/api/</link>
-                        <link>http://commons.apache.org/proper/commons-pool/api-2.2/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
+                        <link>
+                            http://commons.apache.org/proper/commons-pool/api-2.2/
+                        </link>
+                        <link>
+                            http://docs.guava-libraries.googlecode.com/git/javadoc/
+                        </link>
                     </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html</additionalparam>
+                    <additionalparam>-Xdoclint:all -Xdoclint:-html
+                    </additionalparam>
                 </configuration>
             </plugin>
 
@@ -460,7 +484,9 @@
                     <content>${project.build.directory}/site</content>
                     <skipCheckin>${github.site.upload.skip}</skipCheckin>
                     <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
+                    <pubScmUrl>
+                        scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git
+                    </pubScmUrl>
                 </configuration>
             </plugin>
 
@@ -479,13 +505,20 @@
                                 <filter>
                                     <artifact>com.google.guava:guava</artifact>
                                     <excludes>
-                                        <exclude>com/google/common/cache/**</exclude>
-                                        <exclude>com/google/common/escape/**</exclude>
-                                        <exclude>com/google/common/eventbus/**</exclude>
-                                        <exclude>com/google/common/hash/**</exclude>
-                                        <exclude>com/google/common/html/**</exclude>
-                                        <exclude>com/google/common/math/**</exclude>
-                                        <exclude>com/google/common/xml/**</exclude>
+                                        <exclude>com/google/common/cache/**
+                                        </exclude>
+                                        <exclude>com/google/common/escape/**
+                                        </exclude>
+                                        <exclude>com/google/common/eventbus/**
+                                        </exclude>
+                                        <exclude>com/google/common/hash/**
+                                        </exclude>
+                                        <exclude>com/google/common/html/**
+                                        </exclude>
+                                        <exclude>com/google/common/math/**
+                                        </exclude>
+                                        <exclude>com/google/common/xml/**
+                                        </exclude>
                                     </excludes>
                                 </filter>
                             </filters>
@@ -493,21 +526,25 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.google</pattern>
-                                    <shadedPattern>com.lambdaworks.com.google</shadedPattern>
+                                    <shadedPattern>com.lambdaworks.com.google
+                                    </shadedPattern>
                                 </relocation>
 
                                 <relocation>
                                     <pattern>org.apache</pattern>
-                                    <shadedPattern>com.lambdaworks.org.apache</shadedPattern>
+                                    <shadedPattern>com.lambdaworks.org.apache
+                                    </shadedPattern>
                                 </relocation>
 
                                 <relocation>
                                     <pattern>io.netty</pattern>
-                                    <shadedPattern>com.lambdaworks.io.netty</shadedPattern>
+                                    <shadedPattern>com.lambdaworks.io.netty
+                                    </shadedPattern>
                                 </relocation>
                             </relocations>
                             <minimizeJar>false</minimizeJar>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedArtifactAttached>true
+                            </shadedArtifactAttached>
                         </configuration>
                     </execution>
                 </executions>
@@ -525,8 +562,12 @@
                     <level>public</level>
                     <links>
                         <link>http://netty.io/4.0/api/</link>
-                        <link>http://commons.apache.org/proper/commons-pool/api-2.2/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
+                        <link>
+                            http://commons.apache.org/proper/commons-pool/api-2.2/
+                        </link>
+                        <link>
+                            http://docs.guava-libraries.googlecode.com/git/javadoc/
+                        </link>
                     </links>
                 </configuration>
             </plugin>

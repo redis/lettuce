@@ -26,6 +26,15 @@ public class ClientOptions implements Serializable {
     }
 
     /**
+     * Create a new instance of {@link ClientOptions} with default settings.
+     * 
+     * @return a new instance of {@link ClientOptions} with default settings
+     */
+    public static ClientOptions create() {
+        return new Builder().build();
+    }
+
+    /**
      * Builder for {@link ClientOptions}.
      */
     public static class Builder {

@@ -12,6 +12,7 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.logging.InternalLogger;
@@ -37,12 +38,13 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
      * Initialize a new instance that handles commands from the supplied queue.
      * 
      * @param clientOptions client options for this connection
+     * @param clientResources client resources for this connection
      * @param queue The command queue
      * @param clusterChannelWriter top-most channel writer.
      */
-    public ClusterNodeCommandHandler(ClientOptions clientOptions, Queue<RedisCommand<K, V, ?>> queue,
-            RedisChannelWriter<K, V> clusterChannelWriter) {
-        super(clientOptions, queue);
+    public ClusterNodeCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
+            Queue<RedisCommand<K, V, ?>> queue, RedisChannelWriter<K, V> clusterChannelWriter) {
+        super(clientOptions, clientResources, queue);
         this.clusterChannelWriter = clusterChannelWriter;
     }
 

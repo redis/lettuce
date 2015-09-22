@@ -380,7 +380,6 @@ public abstract class AbstractRedisClient {
      */
     public void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
-
         this.clientOptions = clientOptions;
     }
 }

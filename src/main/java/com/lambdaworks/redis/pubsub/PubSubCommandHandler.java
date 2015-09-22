@@ -10,6 +10,7 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
+import com.lambdaworks.redis.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,11 +32,13 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
      * Initialize a new instance.
      * 
      * @param clientOptions client options for the connection
+     * @param clientResources client resources for this connection
      * @param queue Command queue.
      * @param codec Codec.
      */
-    public PubSubCommandHandler(ClientOptions clientOptions, Queue<RedisCommand<K, V, ?>> queue, RedisCodec<K, V> codec) {
-        super(clientOptions, queue);
+    public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
+            Queue<RedisCommand<K, V, ?>> queue, RedisCodec<K, V> codec) {
+        super(clientOptions, clientResources, queue);
         this.codec = codec;
         this.output = new PubSubOutput<K, V, V>(codec);
     }
