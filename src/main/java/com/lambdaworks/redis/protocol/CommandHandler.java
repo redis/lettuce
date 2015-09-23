@@ -7,16 +7,31 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.lambdaworks.redis.*;
+import com.google.common.collect.MapMaker;
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.ConnectionEvents;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -60,7 +75,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private String logPrefix;
     private boolean autoFlushCommands = true;
     private final Object stateLock = new Object();
-    private final Queue<SentReceived> sentTimes = new ArrayDeque<SentReceived>();
+    private final Map<RedisCommand<K, V, ?>, SentReceived> sentTimes = new MapMaker().concurrencyLevel(4).weakKeys().makeMap();
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -138,14 +153,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         while (!queue.isEmpty()) {
 
             RedisCommand<K, V, ?> command = queue.peek();
-            SentReceived sentReceived = sentTimes.peek();
-            assert sentReceived.command == command;
+            SentReceived sentReceived = sentTimes.get(command);
 
             if (debugEnabled) {
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
 
-            if (sentReceived.firstResponse == -1) {
+            if (sentReceived != null && sentReceived.firstResponse == -1) {
                 sentReceived.firstResponse = nanoTime();
             }
 
@@ -154,7 +168,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             command = queue.poll();
-            sentTimes.poll();
+            sentTimes.remove(command);
             recordLatency(command, sentReceived);
 
             command.complete();
@@ -166,9 +180,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     private void recordLatency(RedisCommand<K, V, ?> command, SentReceived sentReceived) {
-        long firstResponseLatency = nanoTime() - sentReceived.firstResponse;
-        long completionLatency = nanoTime() - sentReceived.sent;
-        if (channel != null && remote() != null) {
+        if (sentReceived != null && channel != null && remote() != null
+                && clientResources.commandLatencyCollector().isEnabled()) {
+            long firstResponseLatency = nanoTime() - sentReceived.firstResponse;
+            long completionLatency = nanoTime() - sentReceived.sent;
             clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), command.getType(),
                     firstResponseLatency, completionLatency);
         }
@@ -332,7 +347,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 // fire&forget commands are excluded from metrics
                 cmd.complete();
             } else {
-                sentTimes.offer(new SentReceived(cmd, nanoTime()));
+                sentTimes.put(cmd, new SentReceived(nanoTime()));
                 queue.add(cmd);
             }
         } catch (Exception e) {
@@ -503,10 +518,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             logger.debug("{} exceptionCaught()", logPrefix(), cause);
             logger.debug(cause.getMessage(), cause);
         }
+
         if (!queue.isEmpty()) {
             RedisCommand<K, V, ?> command = queue.poll();
-            sentTimes.poll();
-
+            sentTimes.remove(command);
             if (debugEnabled) {
                 logger.debug("{} Storing exception in {}", logPrefix(), command);
             }
@@ -617,19 +632,20 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         AT_MOST_ONCE, AT_LEAST_ONCE;
     }
 
-    private static class AtMostOnceWriteListener implements ChannelFutureListener {
+    private static class AtMostOnceWriteListener<K, V, T> implements ChannelFutureListener {
 
-        private final Collection<RedisCommand<?, ?, ?>> sentCommands;
+        private final Collection<RedisCommand<K, V, T>> sentCommands;
         private final Queue<?> queue;
-        private final Queue<SentReceived> sentTimes;
+        private final Map<RedisCommand<K, V, T>, SentReceived> sentTimes;
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
-        public AtMostOnceWriteListener(RedisCommand<?, ?, ?> sentCommand, Queue<?> queue, Queue<SentReceived> sentTimes) {
+        public AtMostOnceWriteListener(RedisCommand<K, V, T> sentCommand, Queue<?> queue,
+                Map<RedisCommand<K, V, T>, SentReceived> sentTimes) {
             this((Collection) ImmutableList.of(sentCommand), queue, sentTimes);
         }
 
-        public AtMostOnceWriteListener(Collection<RedisCommand<?, ?, ?>> sentCommand, Queue<?> queue,
-                Queue<SentReceived> sentTimes) {
+        public AtMostOnceWriteListener(Collection<RedisCommand<K, V, T>> sentCommand, Queue<?> queue,
+                Map<RedisCommand<K, V, T>, SentReceived> sentTimes) {
             this.sentCommands = sentCommand;
             this.queue = queue;
             this.sentTimes = sentTimes;
@@ -639,21 +655,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         public void operationComplete(ChannelFuture future) throws Exception {
             future.await();
             if (future.cause() != null) {
-                List<SentReceived> toRemove = Lists.newArrayListWithCapacity(sentCommands.size());
 
                 for (RedisCommand<?, ?, ?> sentCommand : sentCommands) {
                     sentCommand.setException(future.cause());
                     sentCommand.cancel(true);
-
-                    for (SentReceived sentTime : sentTimes) {
-                        if (sentTime.command == sentCommand) {
-                            toRemove.add(sentTime);
-                        }
-                    }
                 }
 
                 queue.removeAll(sentCommands);
-                sentTimes.removeAll(toRemove);
+
+                for (RedisCommand<K, V, T> sentCommand : sentCommands) {
+                    sentTimes.remove(sentCommand);
+                }
             }
         }
     }
@@ -672,12 +684,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     static class SentReceived {
 
-        final RedisCommand<?, ?, ?> command;
         final long sent;
         long firstResponse = -1;
 
-        public SentReceived(RedisCommand<?, ?, ?> command, long sent) {
-            this.command = command;
+        public SentReceived(long sent) {
             this.sent = sent;
         }
     }
