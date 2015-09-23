@@ -53,7 +53,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     private Iterable<RedisURI> initialUris = ImmutableSet.of();
 
     private RedisClusterClient() {
-        setOptions(new ClusterClientOptions.Builder().build());
+        setOptions(ClusterClientOptions.create());
     }
 
     /**

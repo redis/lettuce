@@ -151,18 +151,18 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     }
 
     /**
-     * Create a new {@link DefaultCommandLatencyCollectorOptions} using default settings.
+     * Create a new {@link DefaultCommandLatencyCollectorOptions} instance using default settings.
      * 
-     * @return a new instance of a default {@link DefaultCommandLatencyCollectorOptions} instance
+     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} instance using default settings
      */
     public static DefaultCommandLatencyCollectorOptions create() {
         return new Builder().build();
     }
 
     /**
-     * Create a disabled {@link DefaultCommandLatencyCollectorOptions} using default settings.
+     * Create a {@link DefaultCommandLatencyCollectorOptions} instance with disabled event emission.
      * 
-     * @return a new instance of a default {@link DefaultCommandLatencyCollectorOptions} instance with disabled event emission
+     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} with disabled event emission
      */
     public static DefaultCommandLatencyCollectorOptions disabled() {
         return DISABLED;
