@@ -58,6 +58,8 @@ public class ClientMetricsTest extends AbstractCommandTest {
         CommandLatencyEvent event = subscriber.getOnNextEvents().get(0);
 
         assertThat(event.getLatencies()).hasSize(2);
+        assertThat(event.toString()).contains("local:any ->");
+        assertThat(event.toString()).contains("commandType=GET");
     }
 
     private void generateTestData() {

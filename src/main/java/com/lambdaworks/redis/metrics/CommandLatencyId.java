@@ -99,16 +99,16 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
             return -1;
         }
 
-        int remoteResult = local.toString().compareTo(o.local.toString());
-
+        int remoteResult = remote.toString().compareTo(o.remote.toString());
         if (remoteResult != 0) {
             return remoteResult;
         }
-        int localResult = local.toString().compareTo(o.local.toString());
 
+        int localResult = local.toString().compareTo(o.local.toString());
         if (localResult != 0) {
             return localResult;
         }
+
         return commandType.toString().compareTo(o.commandType.toString());
     }
 

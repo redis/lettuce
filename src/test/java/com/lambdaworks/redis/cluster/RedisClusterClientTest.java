@@ -7,12 +7,16 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.base.Optional;
+import com.lambdaworks.redis.metrics.CommandLatencyId;
+import com.lambdaworks.redis.metrics.CommandMetrics;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
-import com.lambdaworks.redis.ReadFrom;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -32,6 +36,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisClient;
@@ -46,6 +51,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
+import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -380,6 +386,9 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
+ else {
+                partition.setSlots(new ArrayList<Integer>());
+            }
         }
         partitions.updateCache();
         connection.setPartitions(partitions);
@@ -410,7 +419,35 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(clusterCommandA.isMoved()).isFalse();
 
         connection.close();
+    }
 
+    @Test
+    public void testClusterLatencyMetrics() throws Exception {
+
+        CommandLatencyCollector commandLatencyCollector = clusterClient.getResources().commandLatencyCollector();
+        commandLatencyCollector.retrieveMetrics();
+        testClusterRedirection();
+
+        Map<CommandLatencyId, CommandMetrics> metrics = commandLatencyCollector.retrieveMetrics();
+        CommandLatencyId node1 = findId(metrics, port1);
+        CommandLatencyId node3 = findId(metrics, port3);
+
+        CommandMetrics node1Metrics = metrics.get(node1);
+        assertThat(node1Metrics.getCount()).isEqualTo(2); // the direct and the redirected one
+
+        CommandMetrics node3Metrics = metrics.get(node3); // the redirected one
+        assertThat(node3Metrics.getCount()).isEqualTo(1);
+    }
+
+    protected CommandLatencyId findId(Map<CommandLatencyId, CommandMetrics> metrics, final int port) {
+        Optional<CommandLatencyId> optional = Iterables.tryFind(metrics.keySet(), new Predicate<CommandLatencyId>() {
+            @Override
+            public boolean apply(CommandLatencyId input) {
+                return input.getRemote().toString().contains(":" + port);
+            }
+        });
+
+        return optional.orNull();
     }
 
     @Test

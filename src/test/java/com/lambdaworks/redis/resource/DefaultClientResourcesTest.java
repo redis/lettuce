@@ -135,4 +135,5 @@ public class DefaultClientResourcesTest {
         assertThat(subject.getOnNextEvents()).contains(event);
         assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
     }
+
 }
