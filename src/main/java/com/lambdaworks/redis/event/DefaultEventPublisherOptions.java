@@ -39,7 +39,7 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
 
         /**
          * Sets the emit interval and the interval unit. Event emission will be disabled if the {@code eventEmitInterval} is set
-         * to 0} . Defaults to 10} {@link TimeUnit#MINUTES}. See {@link DefaultEventPublisherOptions#DEFAULT_EMIT_INTERVAL}
+         * to 0}. Defaults to 10} {@link TimeUnit#MINUTES}. See {@link DefaultEventPublisherOptions#DEFAULT_EMIT_INTERVAL}
          * {@link DefaultEventPublisherOptions#DEFAULT_EMIT_INTERVAL_UNIT}.
          *
          * @param eventEmitInterval the event interval, must be greater or equal to 0}

@@ -374,7 +374,7 @@ public class DefaultClientResources implements ClientResources {
     /**
      * Create a new {@link DefaultClientResources} using default settings.
      * 
-     * @return a new instance of a default client resources instance.
+     * @return a new instance of a default client resources.
      */
     public static DefaultClientResources create() {
         return new Builder().build();
