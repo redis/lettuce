@@ -11,17 +11,16 @@ import rx.Observable;
 public interface EventBus {
 
     /**
-     * Subscribe to the event bus and {@link RedisEvent}s. The {@link Observable} drops events on backpressure to avoid
-     * contention.
+     * Subscribe to the event bus and {@link Event}s. The {@link Observable} drops events on backpressure to avoid contention.
      *
      * @return the observable to obtain events.
      */
-    Observable<RedisEvent> get();
+    Observable<Event> get();
 
     /**
-     * Publish a {@link RedisEvent} to the bus.
+     * Publish a {@link Event} to the bus.
      *
      * @param event the event to publish
      */
-    void publish(RedisEvent event);
+    void publish(Event event);
 }

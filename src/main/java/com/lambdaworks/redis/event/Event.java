@@ -7,5 +7,5 @@ package com.lambdaworks.redis.event;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.4
  */
-public interface RedisEvent {
+public interface Event {
 }

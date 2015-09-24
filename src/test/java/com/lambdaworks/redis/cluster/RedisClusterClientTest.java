@@ -443,7 +443,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Optional<CommandLatencyId> optional = Iterables.tryFind(metrics.keySet(), new Predicate<CommandLatencyId>() {
             @Override
             public boolean apply(CommandLatencyId input) {
-                return input.getRemote().toString().contains(":" + port);
+                return input.remoteAddress().toString().contains(":" + port);
             }
         });
 

@@ -13,21 +13,21 @@ import rx.subjects.Subject;
  */
 public class DefaultEventBus implements EventBus {
 
-    private final Subject<RedisEvent, RedisEvent> bus;
+    private final Subject<Event, Event> bus;
     private final Scheduler scheduler;
 
     public DefaultEventBus(Scheduler scheduler) {
-        this.bus = PublishSubject.<RedisEvent> create().toSerialized();
+        this.bus = PublishSubject.<Event> create().toSerialized();
         this.scheduler = scheduler;
     }
 
     @Override
-    public Observable<RedisEvent> get() {
+    public Observable<Event> get() {
         return bus.onBackpressureDrop().observeOn(scheduler);
     }
 
     @Override
-    public void publish(RedisEvent event) {
+    public void publish(Event event) {
         if (bus.hasObservers()) {
             bus.onNext(event);
         }

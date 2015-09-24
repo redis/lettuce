@@ -1,5 +1,7 @@
-package com.lambdaworks.redis.event;
+package com.lambdaworks.redis.event.metrics;
 
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 
 import io.netty.util.concurrent.EventExecutorGroup;

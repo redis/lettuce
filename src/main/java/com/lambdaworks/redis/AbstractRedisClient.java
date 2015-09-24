@@ -63,7 +63,7 @@ public abstract class AbstractRedisClient {
     protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();;
     protected final HashedWheelTimer timer;
     protected final ChannelGroup channels;
-    protected final ClientResources res;
+    protected final ClientResources clientResources;
     protected long timeout = 60;
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
@@ -90,15 +90,15 @@ public abstract class AbstractRedisClient {
     protected AbstractRedisClient(ClientResources clientResources) {
         if (clientResources == null) {
             sharedResources = false;
-            res = DefaultClientResources.create();
+            this.clientResources = DefaultClientResources.create();
         } else {
             sharedResources = true;
-            res = clientResources;
+            this.clientResources = clientResources;
         }
 
         unit = TimeUnit.SECONDS;
 
-        genericWorkerPool = res.eventExecutorGroup();
+        genericWorkerPool = this.clientResources.eventExecutorGroup();
         channels = new DefaultChannelGroup(genericWorkerPool.next());
         timer = new HashedWheelTimer();
     }
@@ -121,6 +121,7 @@ public abstract class AbstractRedisClient {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, null);
         channelType(connectionBuilder, null);
         return (T) initializeChannel(connectionBuilder);
@@ -177,7 +178,7 @@ public abstract class AbstractRedisClient {
                 && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
 
             if (eventLoopGroup == null) {
-                eventLoopGroup = res.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+                eventLoopGroup = clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
             }
 
             eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
@@ -187,7 +188,7 @@ public abstract class AbstractRedisClient {
             checkForEpollLibrary();
 
             if (!eventLoopGroups.containsKey(EpollProvider.epollEventLoopGroupClass)) {
-                EventLoopGroup epl = res.eventLoopGroupProvider().allocate(EpollProvider.epollEventLoopGroupClass);
+                EventLoopGroup epl = clientResources.eventLoopGroupProvider().allocate(EpollProvider.epollEventLoopGroupClass);
                 eventLoopGroups.put(EpollProvider.epollEventLoopGroupClass, epl);
             }
         }
@@ -282,7 +283,8 @@ public abstract class AbstractRedisClient {
         List<Future<?>> closeFutures = Lists.newArrayList();
 
         if (genericWorkerPool != null) {
-            closeFutures.add(res.eventLoopGroupProvider().release(genericWorkerPool, quietPeriod, timeout, timeUnit));
+            closeFutures.add(clientResources.eventLoopGroupProvider()
+                    .release(genericWorkerPool, quietPeriod, timeout, timeUnit));
         }
 
         if (channels != null) {
@@ -305,10 +307,11 @@ public abstract class AbstractRedisClient {
         }
 
         if (!sharedResources) {
-            res.shutdown(quietPeriod, timeout, timeUnit);
+            clientResources.shutdown(quietPeriod, timeout, timeUnit);
         } else {
             for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
-                Future<?> groupCloseFuture = res.eventLoopGroupProvider().release(eventExecutors, quietPeriod, timeout,
+                Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
+                        timeout,
                         timeUnit);
                 closeFutures.add(groupCloseFuture);
             }

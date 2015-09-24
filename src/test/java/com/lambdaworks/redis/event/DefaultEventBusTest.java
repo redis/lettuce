@@ -20,20 +20,20 @@ import rx.schedulers.TestScheduler;
 public class DefaultEventBusTest {
 
     @Mock
-    private RedisEvent redisEvent;
+    private Event event;
 
     @Test
     public void publishToSubscriber() throws Exception {
         TestScheduler testScheduler = Schedulers.test();
         EventBus sut = new DefaultEventBus(testScheduler);
 
-        TestSubscriber<RedisEvent> subscriber = new TestSubscriber<RedisEvent>();
+        TestSubscriber<Event> subscriber = new TestSubscriber<Event>();
         sut.get().subscribe(subscriber);
 
-        sut.publish(redisEvent);
+        sut.publish(event);
 
         testScheduler.advanceTimeBy(1, TimeUnit.SECONDS);
 
-        assertThat(subscriber.getOnNextEvents()).hasSize(1).contains(redisEvent);
+        assertThat(subscriber.getOnNextEvents()).hasSize(1).contains(event);
     }
 }

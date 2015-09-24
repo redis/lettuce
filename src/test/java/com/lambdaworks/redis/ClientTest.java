@@ -8,23 +8,31 @@ import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.event.RedisEvent;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import rx.Subscription;
+import rx.observers.TestSubscriber;
+
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.redis.event.Event;
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.connection.ConnectedEvent;
+import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
+import com.lambdaworks.redis.event.connection.ConnectionDeactivatedEvent;
+import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.server.RandomResponseServer;
 import io.netty.channel.Channel;
-import rx.functions.Action1;
 
 @SuppressWarnings("unchecked")
 public class ClientTest extends AbstractCommandTest {
@@ -115,8 +123,7 @@ public class ClientTest extends AbstractCommandTest {
         try {
             connection.get(key);
         } catch (RedisException e) {
-            assertThat(e).hasMessageContaining(
-                    "Connection is in a disconnected state and reconnect is disabled");
+            assertThat(e).hasMessageContaining("Connection is in a disconnected state and reconnect is disabled");
         } finally {
             connection.close();
         }
@@ -494,6 +501,41 @@ public class ClientTest extends AbstractCommandTest {
         assertThat(redis.scriptKill()).isEqualTo("OK");
 
         async.close();
+    }
+
+    @Test
+    public void clientEvents() throws Exception {
+
+        RedisClient myClient = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
+
+        EventBus eventBus = client.getResources().eventBus();
+        final TestSubscriber<Event> eventTestSubscriber = new TestSubscriber<Event>();
+
+        Subscription subscribe = eventBus.get().subscribe(eventTestSubscriber);
+
+        RedisAsyncConnection<String, String> async = client.connectAsync();
+        async.set(key, value).get();
+        async.close();
+
+        WaitFor.waitOrTimeout(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return eventTestSubscriber.getOnNextEvents().size() >= 4;
+            }
+
+        }, Timeout.timeout(seconds(5)));
+
+        subscribe.unsubscribe();
+        List<Event> events = eventTestSubscriber.getOnNextEvents();
+        assertThat(events).hasSize(4);
+
+        assertThat(events.get(0)).isInstanceOf(ConnectedEvent.class);
+        assertThat(events.get(1)).isInstanceOf(ConnectionActivatedEvent.class);
+        assertThat(events.get(2)).isInstanceOf(DisconnectedEvent.class);
+        assertThat(events.get(3)).isInstanceOf(ConnectionDeactivatedEvent.class);
+
+        myClient.shutdown();
+
     }
 
 }

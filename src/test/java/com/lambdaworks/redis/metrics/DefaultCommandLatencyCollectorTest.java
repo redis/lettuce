@@ -40,7 +40,7 @@ public class DefaultCommandLatencyCollectorTest {
 
         Map.Entry<CommandLatencyId, CommandMetrics> entry = latencies.entrySet().iterator().next();
 
-        assertThat(entry.getKey().getCommandType()).isSameAs(CommandType.BGSAVE);
+        assertThat(entry.getKey().commandType()).isSameAs(CommandType.BGSAVE);
 
         CommandMetrics metrics = entry.getValue();
 

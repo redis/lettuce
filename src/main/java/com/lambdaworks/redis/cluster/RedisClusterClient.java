@@ -255,7 +255,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, res, queue, clusterWriter);
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, clientResources, queue,
+                clusterWriter);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, socketAddressSupplier);
@@ -290,7 +291,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, res, queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
 
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
@@ -507,7 +508,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return the {@link ClientResources} for this client
      */
     public ClientResources getResources() {
-        return res;
+        return clientResources;
     }
 
     protected void forEachClusterConnection(Predicate<RedisAdvancedClusterAsyncConnectionImpl<?, ?>> function) {
