@@ -13,10 +13,10 @@ import rx.observers.TestSubscriber;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.event.CommandLatencyEvent;
+import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
 import com.lambdaworks.redis.event.EventBus;
-import com.lambdaworks.redis.event.MetricEventPublisher;
-import com.lambdaworks.redis.event.RedisEvent;
+import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
+import com.lambdaworks.redis.event.Event;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -32,9 +32,9 @@ public class ClientMetricsTest extends AbstractCommandTest {
         publisher.emitMetricsEvent();
 
         final TestSubscriber<CommandLatencyEvent> subscriber = new TestSubscriber<CommandLatencyEvent>();
-        Subscription subscription = eventBus.get().filter(new Func1<RedisEvent, Boolean>() {
+        Subscription subscription = eventBus.get().filter(new Func1<Event, Boolean>() {
             @Override
-            public Boolean call(RedisEvent redisEvent) {
+            public Boolean call(Event redisEvent) {
 
                 return redisEvent instanceof CommandLatencyEvent;
             }

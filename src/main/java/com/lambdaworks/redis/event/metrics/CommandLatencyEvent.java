@@ -1,8 +1,8 @@
-package com.lambdaworks.redis.event;
+package com.lambdaworks.redis.event.metrics;
 
 import java.util.Map;
 
-import com.lambdaworks.redis.event.RedisEvent;
+import com.lambdaworks.redis.event.Event;
 import com.lambdaworks.redis.metrics.CommandLatencyId;
 import com.lambdaworks.redis.metrics.CommandMetrics;
 
@@ -11,7 +11,7 @@ import com.lambdaworks.redis.metrics.CommandMetrics;
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class CommandLatencyEvent implements RedisEvent {
+public class CommandLatencyEvent implements Event {
 
     private Map<CommandLatencyId, CommandMetrics> latencies;
 
@@ -22,7 +22,7 @@ public class CommandLatencyEvent implements RedisEvent {
     /**
      * Returns the latencies mapped between {@link CommandLatencyId connection/command} and the {@link CommandMetrics metrics}.
      * 
-     * @return
+     * @return the latency map.
      */
     public Map<CommandLatencyId, CommandMetrics> getLatencies() {
         return latencies;

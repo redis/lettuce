@@ -20,7 +20,7 @@ public class CommandLatencyIdTest {
 
     @Test
     public void testValues() throws Exception {
-        assertThat(sut.getLocal()).isEqualTo(LocalAddress.ANY);
-        assertThat(sut.getRemote()).isEqualTo(new LocalAddress("me"));
+        assertThat(sut.localAddress()).isEqualTo(LocalAddress.ANY);
+        assertThat(sut.remoteAddress()).isEqualTo(new LocalAddress("me"));
     }
 }

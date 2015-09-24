@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.event.*;
+import com.lambdaworks.redis.event.metrics.DefaultCommandLatencyEventPublisher;
+import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;

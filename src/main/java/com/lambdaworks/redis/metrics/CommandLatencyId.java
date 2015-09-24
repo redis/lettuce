@@ -15,30 +15,30 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  */
 public class CommandLatencyId implements Serializable, Comparable<CommandLatencyId> {
 
-    private final SocketAddress local;
-    private final SocketAddress remote;
+    private final SocketAddress localAddress;
+    private final SocketAddress remoteAddress;
     private final ProtocolKeyword commandType;
 
-    protected CommandLatencyId(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {
-        checkArgument(local != null, "local must not be null");
-        checkArgument(remote != null, "remote must not be null");
+    protected CommandLatencyId(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
+        checkArgument(localAddress != null, "localAddress must not be null");
+        checkArgument(remoteAddress != null, "remoteAddress must not be null");
         checkArgument(commandType != null, "commandType must not be null");
 
-        this.local = local;
-        this.remote = remote;
+        this.localAddress = localAddress;
+        this.remoteAddress = remoteAddress;
         this.commandType = commandType;
     }
 
     /**
      * Create a new instance of {@link CommandLatencyId}.
      * 
-     * @param local the local address
-     * @param remote the remote address
+     * @param localAddress the local address
+     * @param remoteAddress the remote address
      * @param commandType the command type
      * @return a new instance of {@link CommandLatencyId}
      */
-    public static CommandLatencyId create(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {
-        return new CommandLatencyId(local, remote, commandType);
+    public static CommandLatencyId create(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
+        return new CommandLatencyId(localAddress, remoteAddress, commandType);
     }
 
     /**
@@ -46,8 +46,8 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
      * 
      * @return the local address
      */
-    public SocketAddress getLocal() {
-        return local;
+    public SocketAddress localAddress() {
+        return localAddress;
     }
 
     /**
@@ -55,8 +55,8 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
      * 
      * @return the remote address
      */
-    public SocketAddress getRemote() {
-        return remote;
+    public SocketAddress remoteAddress() {
+        return remoteAddress;
     }
 
     /**
@@ -64,7 +64,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
      * 
      * @return the command type
      */
-    public ProtocolKeyword getCommandType() {
+    public ProtocolKeyword commandType() {
         return commandType;
     }
 
@@ -77,17 +77,17 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
 
         CommandLatencyId that = (CommandLatencyId) o;
 
-        if (!local.equals(that.local))
+        if (!localAddress.equals(that.localAddress))
             return false;
-        if (!remote.equals(that.remote))
+        if (!remoteAddress.equals(that.remoteAddress))
             return false;
         return commandType.equals(that.commandType);
     }
 
     @Override
     public int hashCode() {
-        int result = local.hashCode();
-        result = 31 * result + remote.hashCode();
+        int result = localAddress.hashCode();
+        result = 31 * result + remoteAddress.hashCode();
         result = 31 * result + commandType.hashCode();
         return result;
     }
@@ -99,12 +99,12 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
             return -1;
         }
 
-        int remoteResult = remote.toString().compareTo(o.remote.toString());
+        int remoteResult = remoteAddress.toString().compareTo(o.remoteAddress.toString());
         if (remoteResult != 0) {
             return remoteResult;
         }
 
-        int localResult = local.toString().compareTo(o.local.toString());
+        int localResult = localAddress.toString().compareTo(o.localAddress.toString());
         if (localResult != 0) {
             return localResult;
         }
@@ -115,8 +115,8 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
-        sb.append("[").append(local);
-        sb.append(" -> ").append(remote);
+        sb.append("[").append(localAddress);
+        sb.append(" -> ").append(remoteAddress);
         sb.append(", commandType=").append(commandType);
         sb.append(']');
         return sb.toString();

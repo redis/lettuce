@@ -1,7 +1,9 @@
-package com.lambdaworks.redis.event;
+package com.lambdaworks.redis.event.metrics;
+
+import com.lambdaworks.redis.event.Event;
 
 /**
- * Event publisher which publishes metrics by the use of {@link RedisEvent events}.
+ * Event publisher which publishes metrics by the use of {@link Event events}.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.4

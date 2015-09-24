@@ -14,7 +14,7 @@ import rx.observers.TestSubscriber;
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.event.EventBus;
-import com.lambdaworks.redis.event.RedisEvent;
+import com.lambdaworks.redis.event.Event;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 
@@ -118,11 +118,11 @@ public class DefaultClientResourcesTest {
 
         EventBus eventBus = sut.eventBus();
 
-        final TestSubscriber<RedisEvent> subject = new TestSubscriber<RedisEvent>();
+        final TestSubscriber<Event> subject = new TestSubscriber<Event>();
 
         eventBus.get().subscribe(subject);
 
-        RedisEvent event = mock(RedisEvent.class);
+        Event event = mock(Event.class);
         eventBus.publish(event);
 
         WaitFor.waitOrTimeout(new Condition() {

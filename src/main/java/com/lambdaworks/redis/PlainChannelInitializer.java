@@ -5,12 +5,19 @@ import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.connection.ConnectedEvent;
+import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
+import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.protocol.Command;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+
+import static com.lambdaworks.redis.ConnectionEventTrigger.local;
+import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -23,11 +30,13 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
     protected boolean pingBeforeActivate;
     protected SettableFuture<Boolean> initializedFuture = SettableFuture.create();
-    private List<ChannelHandler> handlers;
+    private final List<ChannelHandler> handlers;
+    private final EventBus eventBus;
 
-    public PlainChannelInitializer(boolean pingBeforeActivateConnection, List<ChannelHandler> handlers) {
+    public PlainChannelInitializer(boolean pingBeforeActivateConnection, List<ChannelHandler> handlers, EventBus eventBus) {
         this.pingBeforeActivate = pingBeforeActivateConnection;
         this.handlers = handlers;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -46,6 +55,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
                 @Override
                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                    eventBus.publish(new DisconnectedEvent(local(ctx), remote(ctx)));
                     initializedFuture = SettableFuture.create();
                     pingCommand = null;
                     super.channelInactive(ctx);
@@ -62,6 +72,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                     if (evt instanceof ConnectionEvents.Activated) {
                         if (!initializedFuture.isDone()) {
                             initializedFuture.set(true);
+                            eventBus.publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
                         }
                     }
                     super.userEventTriggered(ctx, evt);
@@ -69,7 +80,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
                 @Override
                 public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-
+                    eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
                     if (pingBeforeActivate) {
                         pingCommand = INITIALIZING_CMD_BUILDER.ping();
                         pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);

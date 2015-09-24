@@ -417,7 +417,7 @@ public class RedisClient extends AbstractRedisClient {
 
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, res, queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         connectAsync(handler, connection, redisURI);
@@ -437,6 +437,7 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
         initializeChannel(connectionBuilder);
@@ -500,7 +501,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(redisURI);
 
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, res, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, clientResources, queue, codec);
         RedisPubSubConnectionImpl<K, V> connection = newRedisPubSubConnectionImpl(handler, codec, timeout, unit);
 
         connectAsync(handler, connection, redisURI);
@@ -567,8 +568,9 @@ public class RedisClient extends AbstractRedisClient {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
+        connectionBuilder.clientResources(clientResources);
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(clientOptions, res, queue);
+        final CommandHandler<K, V> commandHandler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
         final RedisSentinelAsyncConnectionImpl<K, V> connection = newRedisSentinelAsyncConnectionImpl(commandHandler, codec,
                 timeout, unit);
 
@@ -702,7 +704,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return the {@link ClientResources} for this client
      */
     public ClientResources getResources() {
-        return res;
+        return clientResources;
     }
 
     protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,
