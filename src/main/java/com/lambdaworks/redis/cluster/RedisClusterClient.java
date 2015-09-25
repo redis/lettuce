@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.cluster.event.ClusterTopologyChangedEvent;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -325,6 +326,13 @@ public class RedisClusterClient extends AbstractRedisClient {
             partitions.updateCache();
         } else {
             Partitions loadedPartitions = loadPartitions();
+            if (ClusterTopologyRefresh.isChanged(getPartitions(), loadedPartitions)) {
+                List<RedisClusterNode> before = ImmutableList.copyOf(getPartitions());
+                List<RedisClusterNode> after = ImmutableList.copyOf(loadedPartitions);
+
+                getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
+            }
+
             this.partitions.getPartitions().clear();
             this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
             this.partitions.reload(loadedPartitions.getPartitions());
@@ -578,15 +586,20 @@ public class RedisClusterClient extends AbstractRedisClient {
             logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
             Map<RedisURI, Partitions> partitions = refresh.loadViews(seed);
             List<Partitions> values = Lists.newArrayList(partitions.values());
-            if (!values.isEmpty() && refresh.isChanged(getPartitions(), values.get(0))) {
+            if (!values.isEmpty() && ClusterTopologyRefresh.isChanged(getPartitions(), values.get(0))) {
                 logger.debug("Using a new cluster topology");
+
+                List<RedisClusterNode> before = ImmutableList.copyOf(getPartitions());
+                List<RedisClusterNode> after = ImmutableList.copyOf(values.get(0).getPartitions());
+
+                getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
+
                 getPartitions().reload(values.get(0).getPartitions());
                 updatePartitionsInConnections();
 
                 if (isEventLoopActive() && expireStaleConnections()) {
                     genericWorkerPool.submit(new CloseStaleConnectionsTask());
                 }
-
             }
         }
     }

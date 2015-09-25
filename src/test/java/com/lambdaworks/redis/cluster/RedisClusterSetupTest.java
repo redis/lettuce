@@ -12,32 +12,24 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.TestClientResources;
-import com.lambdaworks.redis.resource.ClientResources;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
+
+import rx.Subscription;
+import rx.functions.Func1;
+import rx.observers.TestSubscriber;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.cluster.event.ClusterTopologyChangedEvent;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.event.Event;
+import com.lambdaworks.redis.resource.ClientResources;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -271,6 +263,7 @@ public class RedisClusterSetupTest {
 
         clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
                 .build());
+
         RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
 
         setup2Masters();
@@ -290,6 +283,39 @@ public class RedisClusterSetupTest {
         waitUntilPartition1HasAllSlots();
 
         assertRoutedExecution(clusterConnection);
+    }
+
+    @Test
+    public void changeTopologyEvents() throws Exception {
+
+        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
+                .build());
+        TestSubscriber<ClusterTopologyChangedEvent> subscriber = new TestSubscriber<ClusterTopologyChangedEvent>();
+        Subscription subscription = clusterClient.getResources().eventBus().get().filter(new Func1<Event, Boolean>() {
+            @Override
+            public Boolean call(Event event) {
+                return event instanceof ClusterTopologyChangedEvent;
+            }
+        }).cast(ClusterTopologyChangedEvent.class).subscribe(subscriber);
+
+        RedisAdvancedClusterAsyncConnection<String, String> clusterConnection = clusterClient.connectClusterAsync();
+
+        setup2Masters();
+        assertRoutedExecution(clusterConnection);
+        shiftAllSlotsToNode1();
+        waitUntilPartition1HasAllSlots();
+        assertRoutedExecution(clusterConnection);
+
+        List<ClusterTopologyChangedEvent> topologyChangedEvents = subscriber.getOnNextEvents();
+        assertThat(topologyChangedEvents.size()).isGreaterThan(0);
+
+        ClusterTopologyChangedEvent event = topologyChangedEvents.get(0);
+        assertThat(event.before().size()).isGreaterThan(0);
+        assertThat(event.after().size()).isGreaterThan(0);
+
+        assertThat(event.toString()).contains("before=" + event.before().size());
+
+        subscription.unsubscribe();
     }
 
     @Test
