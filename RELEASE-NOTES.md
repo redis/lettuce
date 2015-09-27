@@ -6,7 +6,7 @@ Fixes
 -----
 * GEOADD passes long/lat parameters in the wrong order to Redis #134 (thanks to @IdanFridman)
 * Strip username from URI userinfo when creating a RedisURI with a username #131 (thanks to @jsiebens)
-
+* GeoArgs not evaluated when calling georadiusbymember(...) #142 (thanks to @codeparity)
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested
 continuously against Redis 3.0 and the unstable branch

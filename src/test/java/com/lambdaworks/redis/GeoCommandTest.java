@@ -143,6 +143,8 @@ public class GeoCommandTest extends AbstractCommandTest {
 
         GeoWithin<String> weinheim = georadiusbymember.get(0);
         assertThat(weinheim.member).isEqualTo("Weinheim");
+        assertThat(weinheim.distance).isNotNull();
+        assertThat(weinheim.coordinates).isNotNull();
     }
 
     @Test(expected = IllegalArgumentException.class)
