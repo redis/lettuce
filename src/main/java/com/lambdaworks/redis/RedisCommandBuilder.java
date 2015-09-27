@@ -1791,7 +1791,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         assertNotNull(geoArgs, "geoArgs must not be null");
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
-
         geoArgs.build(args);
 
         return createCommand(GEORADIUS, new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(),
@@ -1804,8 +1803,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, String unit, GeoArgs geoArgs) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
         assertNotNull(geoArgs, "geoArgs must not be null");
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+        geoArgs.build(args);
 
         return createCommand(
                 GEORADIUSBYMEMBER,
@@ -1828,7 +1828,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(GEODIST, new DoubleOutput<K, V>(codec), args);
-
     }
 
     /**
