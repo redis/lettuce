@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.Future;
@@ -35,6 +36,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommandHandlerTest {
@@ -101,7 +103,16 @@ public class CommandHandlerTest {
 
         sut.channelActive(context);
         sut.exceptionCaught(context, new Exception());
-        verify(context).fireExceptionCaught(any(Exception.class));
+    }
+
+    @Test
+    public void testIOExceptionChannelActive() throws Exception {
+        sut.setState(CommandHandler.LifecycleState.ACTIVE);
+
+        when(channel.isActive()).thenReturn(true);
+
+        sut.channelActive(context);
+        sut.exceptionCaught(context, new IOException("Connection timed out"));
     }
 
     @Test
@@ -125,7 +136,7 @@ public class CommandHandlerTest {
         assertThat(q).isEmpty();
         command.get();
 
-        verify(context).fireExceptionCaught(any(Exception.class));
+        assertThat(ReflectionTestUtils.getField(command, "exception")).isNotNull();
     }
 
     @Test(expected = RedisException.class)
