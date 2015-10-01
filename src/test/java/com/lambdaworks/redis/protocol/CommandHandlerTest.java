@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.Future;
@@ -104,7 +105,16 @@ public class CommandHandlerTest {
 
         sut.channelActive(context);
         sut.exceptionCaught(context, new Exception());
-        verify(context).fireExceptionCaught(any(Exception.class));
+    }
+
+    @Test
+    public void testIOExceptionChannelActive() throws Exception {
+        sut.setState(CommandHandler.LifecycleState.ACTIVE);
+
+        when(channel.isActive()).thenReturn(true);
+
+        sut.channelActive(context);
+        sut.exceptionCaught(context, new IOException("Connection timed out"));
     }
 
     @Test
@@ -127,8 +137,6 @@ public class CommandHandlerTest {
 
         assertThat(q).isEmpty();
         assertThat(command.getException()).isNotNull();
-
-        verify(context).fireExceptionCaught(any(Exception.class));
     }
 
     @Test(expected = RedisException.class)

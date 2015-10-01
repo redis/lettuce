@@ -4,6 +4,7 @@ package com.lambdaworks.redis.protocol;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
@@ -13,9 +14,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
@@ -35,6 +38,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -50,6 +54,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
     private static final WriteLogListener WRITE_LOG_LISTENER = new WriteLogListener();
+
+    /**
+     * When we encounter an unexpected IOException we look for these {@link Throwable#getMessage() messages} (because we have no
+     * better way to distinguish) and log them at DEBUG rather than WARN, since they are generally caused by unclean client
+     * disconnects rather than an actual problem.
+     */
+    private static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = ImmutableSet.of("Connection reset by peer",
+            "Broken pipe", "Connection timed out");
 
     protected final ClientOptions clientOptions;
     protected final ClientResources clientResources;
@@ -514,10 +526,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (debugEnabled) {
-            logger.debug("{} exceptionCaught()", logPrefix(), cause);
-            logger.debug(cause.getMessage(), cause);
-        }
+
+        InternalLogLevel logLevel = InternalLogLevel.WARN;
 
         if (!queue.isEmpty()) {
             RedisCommand<K, V, ?> command = queue.poll();
@@ -525,6 +535,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (debugEnabled) {
                 logger.debug("{} Storing exception in {}", logPrefix(), command);
             }
+            logLevel = InternalLogLevel.DEBUG;
             command.setException(cause);
             command.complete();
         }
@@ -533,10 +544,18 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (debugEnabled) {
                 logger.debug("{} Storing exception in connectionError", logPrefix());
             }
+            logLevel = InternalLogLevel.DEBUG;
             connectionError = cause;
-            return;
         }
-        super.exceptionCaught(ctx, cause);
+
+        if (cause instanceof IOException && logLevel.ordinal() > InternalLogLevel.INFO.ordinal()) {
+            logLevel = InternalLogLevel.INFO;
+            if (SUPPRESS_IO_EXCEPTION_MESSAGES.contains(cause.getMessage())) {
+                logLevel = InternalLogLevel.DEBUG;
+            }
+        }
+
+        logger.log(logLevel, "{} Unexpected exception during request: {}", logPrefix, cause.toString(), cause);
     }
 
     /**
@@ -675,10 +694,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      *
      */
     static class WriteLogListener implements GenericFutureListener<Future<Void>> {
+
         @Override
         public void operationComplete(Future<Void> future) throws Exception {
-            if (!future.isSuccess() && !(future.cause() instanceof ClosedChannelException))
-                logger.warn(future.cause().getMessage(), future.cause());
+            Throwable cause = future.cause();
+            if (!future.isSuccess() && !(cause instanceof ClosedChannelException)) {
+
+                String message = "Unexpected exception during request: {}";
+                InternalLogLevel logLevel = InternalLogLevel.WARN;
+
+                if (cause instanceof IOException && SUPPRESS_IO_EXCEPTION_MESSAGES.contains(cause.getMessage())) {
+                    logLevel = InternalLogLevel.DEBUG;
+                }
+
+                logger.log(logLevel, message, cause.toString(), cause);
+            }
         }
     }
 
