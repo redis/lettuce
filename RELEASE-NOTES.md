@@ -1,9 +1,9 @@
-# lettuce 4.0.Beta2 RELEASE NOTES
+# lettuce 4.0.Final RELEASE NOTES
 
 This release is a major release that introduces numerous changes like stateful connections,
 the reactive API and many more. Lettuce 4.0 includes all features from lettuce 3.3.
 
-**Highlights of lettuce 4.0.Beta2**
+**Highlights of lettuce 4.0.Final**
 
 * Reactive API
 * Stateful connections
@@ -340,6 +340,8 @@ Fixes
 * Use Sucess instead of Void in the reactive API #128
 * GEOADD passes long/lat parameters in the wrong order to Redis #134 (thanks to @IdanFridman)
 * Strip username from URI userinfo when creating a RedisURI with a username #131 (thanks to @jsiebens)
+* GeoArgs not evaluated when calling georadiusbymember(...) #142
+* Guava's CacheBuilder missing in shaded jar #143
 
 Other
 ------
@@ -347,6 +349,7 @@ Other
 * Improve performance in 4.0 #91
 * Update Dependencies for lettuce 4.0 #116
 * Documentation of custom commands #122
+* Client-specific client options and reduce visibility of AbstractClient.setOptions #135
 
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously against the latest Redis source-build.
