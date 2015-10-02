@@ -505,7 +505,6 @@
                                 <filter>
                                     <artifact>com.google.guava:guava</artifact>
                                     <excludes>
-                                        <exclude>com/google/common/cache/**</exclude>
                                         <exclude>com/google/common/escape/**</exclude>
                                         <exclude>com/google/common/eventbus/**</exclude>
                                         <exclude>com/google/common/hash/**</exclude>
