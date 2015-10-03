@@ -41,12 +41,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <pre>
  * <code>
  *  public class Producers {
- *     &commat;Produces
+ *     &#64;Produces
  *     public RedisURI redisURI() {
  *         return RedisURI.Builder.redis("localhost", 6379).build();
  *     }
  *     
- *     &commat;Produces
+ *     &#64;Produces
  *     public ClientResources clientResources() {
  *         return DefaultClientResources.create()
  *     }
@@ -62,10 +62,10 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <pre>
  *  <code>
  *   public class Consumer {
- *      &commat;Inject
+ *      &#64;Inject
  *      private RedisClient client;
  *      
- *      &commat;Inject
+ *      &#64;Inject
  *      private RedisClusterClient clusterClient;
  * }     
  *  </code>
