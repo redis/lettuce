@@ -425,7 +425,15 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
       }
     }
-
+    
+    if (this.databaseIdProvider != null) {//fix #64 set databaseId before parse mapper xmls
+      try {
+        configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
+      } catch (SQLException e) {
+        throw new NestedIOException("Failed getting a databaseId", e);
+      }
+    }
+    
     if (xmlConfigBuilder != null) {
       try {
         xmlConfigBuilder.parse();
@@ -445,14 +453,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     configuration.setEnvironment(new Environment(this.environment, this.transactionFactory, this.dataSource));
-
-    if (this.databaseIdProvider != null) {
-      try {
-        configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
-      } catch (SQLException e) {
-        throw new NestedIOException("Failed getting a databaseId", e);
-      }
-    }
 
     if (!isEmpty(this.mapperLocations)) {
       for (Resource mapperLocation : this.mapperLocations) {
