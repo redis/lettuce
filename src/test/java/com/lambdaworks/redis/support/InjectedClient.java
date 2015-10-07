@@ -5,10 +5,8 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
-import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -25,6 +23,10 @@ public class InjectedClient {
     @Inject
     @PersonDB
     public RedisClient qualifiedRedisClient;
+
+    @Inject
+    @PersonDB
+    public RedisClusterClient qualifiedRedisClusterClient;
 
     private RedisCommands<String, String> connection;
 

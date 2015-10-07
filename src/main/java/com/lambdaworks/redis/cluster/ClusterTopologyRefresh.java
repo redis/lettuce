@@ -52,7 +52,7 @@ class ClusterTopologyRefresh {
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
-    public boolean isChanged(Partitions o1, Partitions o2) {
+    public static boolean isChanged(Partitions o1, Partitions o2) {
 
         if (o1.size() != o2.size()) {
             return true;
@@ -74,7 +74,7 @@ class ClusterTopologyRefresh {
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
-    protected boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
+    protected static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
 
         if (o2 == null) {
             return false;
@@ -95,7 +95,7 @@ class ClusterTopologyRefresh {
         return true;
     }
 
-    private boolean sameFlags(RedisClusterNode base, RedisClusterNode other, RedisClusterNode.NodeFlag flag) {
+    private static boolean sameFlags(RedisClusterNode base, RedisClusterNode other, RedisClusterNode.NodeFlag flag) {
         if (base.getFlags().contains(flag)) {
             if (!other.getFlags().contains(flag)) {
                 return false;

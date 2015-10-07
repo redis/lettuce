@@ -11,7 +11,7 @@ public class ClientOptionsTest {
 
     @Test
     public void testNew() throws Exception {
-        checkAssertions(new ClientOptions());
+        checkAssertions(ClientOptions.create());
     }
 
     @Test

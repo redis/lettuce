@@ -6,15 +6,17 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 
 /**
- * Factory Bean for {@link RedisClient} instances. Needs either a {@link java.net.URI} or a {@link RedisURI} as input. URI
- * Formats: {@code
+ * Factory Bean for {@link RedisClient} instances. Needs either a {@link java.net.URI} or a {@link RedisURI} as input and allows
+ * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Formats:
+ * {@code
  *     redis-sentinel://host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId
  * }
  *
  * {@code
  *     redis://host[:port][/databaseNumber]
  * }
- * 
+ *
+ * @see ClientResourcesFactoryBean
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -48,6 +50,9 @@ public class RedisClientFactoryBean extends LettuceFactoryBeanSupport<RedisClien
     @Override
     protected RedisClient createInstance() throws Exception {
 
+        if (getClientResources() != null) {
+            return RedisClient.create(getClientResources(), getRedisURI());
+        }
         return RedisClient.create(getRedisURI());
     }
 }

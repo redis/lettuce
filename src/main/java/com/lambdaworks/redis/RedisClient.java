@@ -27,6 +27,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
+import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
@@ -44,6 +45,11 @@ public class RedisClient extends AbstractRedisClient {
 
     private final RedisURI redisURI;
 
+    protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
+        super(clientResources);
+        this.redisURI = redisURI;
+    }
+
     /**
      * Creates a uri-less RedisClient. You can connect to different Redis servers but you must supply a {@link RedisURI} on
      * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
@@ -52,6 +58,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisClient() {
+        super(null);
         redisURI = null;
         setDefaultTimeout(60, TimeUnit.MINUTES);
     }
@@ -95,37 +102,82 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates a uri-less RedisClient. You can connect to different Redis servers but you must supply a {@link RedisURI} on
-     * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
+     * Creates a uri-less RedisClient with default {@link ClientResources}. You can connect to different Redis servers but you
+     * must supply a {@link RedisURI} on connecting. Methods without having a {@link RedisURI} will fail with a
+     * {@link java.lang.IllegalStateException}.
      *
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create() {
-        return new RedisClient();
+        return new RedisClient(null, null);
     }
 
     /**
-     * Create a new client that connects to the supplied {@link RedisURI uri}. You can connect to different Redis servers but
-     * you must supply a {@link RedisURI} on connecting.
+     * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
+     * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
      *
      * @param redisURI the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(RedisURI redisURI) {
         assertNotNull(redisURI);
-        return new RedisClient(redisURI);
+        return new RedisClient(null, redisURI);
     }
 
     /**
-     * Create a new client that connects to the supplied uri. You can connect to different Redis servers but you must supply a
-     * {@link RedisURI} on connecting.
+     * Create a new client that connects to the supplied uri with default {@link ClientResources}. You can connect to different
+     * Redis servers but you must supply a {@link RedisURI} on connecting.
      *
      * @param uri the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(String uri) {
         checkArgument(uri != null, "uri must not be null");
-        return new RedisClient(RedisURI.create(uri));
+        return new RedisClient(null, RedisURI.create(uri));
+    }
+
+    /**
+     * Creates a uri-less RedisClient with shared {@link ClientResources}. You need to shut down the {@link ClientResources}
+     * upon shutting down your application. You can connect to different Redis servers but you must supply a {@link RedisURI} on
+     * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
+     *
+     * @param clientResources the client resources, must not be {@literal null}
+     * @return a new instance of {@link RedisClient}
+     */
+    public static RedisClient create(ClientResources clientResources) {
+        assertNotNull(clientResources);
+        return new RedisClient(clientResources, null);
+    }
+
+    /**
+     * Create a new client that connects to the supplied uri with shared {@link ClientResources}.You need to shut down the
+     * {@link ClientResources} upon shutting down your application. You can connect to different Redis servers but you must
+     * supply a {@link RedisURI} on connecting.
+     *
+     * @param clientResources the client resources, must not be {@literal null}
+     * @param uri the Redis URI, must not be {@literal null}
+     *
+     * @return a new instance of {@link RedisClient}
+     */
+    public static RedisClient create(ClientResources clientResources, String uri) {
+        assertNotNull(clientResources);
+        checkArgument(uri != null, "uri must not be null");
+        return create(clientResources, RedisURI.create(uri));
+    }
+
+    /**
+     * Create a new client that connects to the supplied {@link RedisURI uri} with shared {@link ClientResources}. You need to
+     * shut down the {@link ClientResources} upon shutting down your application.You can connect to different Redis servers but
+     * you must supply a {@link RedisURI} on connecting.
+     *
+     * @param clientResources the client resources, must not be {@literal null}
+     * @param redisURI the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClient}
+     */
+    public static RedisClient create(ClientResources clientResources, RedisURI redisURI) {
+        assertNotNull(clientResources);
+        assertNotNull(redisURI);
+        return new RedisClient(clientResources, redisURI);
     }
 
     /**
@@ -232,8 +284,9 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
             int maxActive) {
-
         checkForRedisURI();
+        checkArgument(codec != null, "RedisCodec must not be null");
+
         long maxWait = makeTimeout();
         RedisConnectionPool<RedisAsyncCommands<K, V>> pool = new RedisConnectionPool<>(
                 new RedisConnectionPool.RedisConnectionProvider<RedisAsyncCommands<K, V>>() {
@@ -366,7 +419,7 @@ public class RedisClient extends AbstractRedisClient {
 
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, queue);
+        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec);
         connectStateful(handler, connection, redisURI);
@@ -386,6 +439,7 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
         initializeChannel(connectionBuilder);
@@ -451,7 +505,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(redisURI);
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec);
 
         connectStateful(handler, connection, redisURI);
@@ -573,8 +627,9 @@ public class RedisClient extends AbstractRedisClient {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
+        connectionBuilder.clientResources(clientResources);
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, queue);
+        final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, clientResources, queue);
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(commandHandler, codec);
 
@@ -690,6 +745,15 @@ public class RedisClient extends AbstractRedisClient {
         };
     }
 
+    /**
+     * Returns the {@link ClientResources} which are used with that client.
+     *
+     * @return the {@link ClientResources} for this client
+     */
+    public ClientResources getResources() {
+        return clientResources;
+    }
+
     protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,
             ExecutionException {
         SocketAddress redisAddress;
@@ -734,6 +798,10 @@ public class RedisClient extends AbstractRedisClient {
 
     private static void assertNotNull(RedisURI redisURI) {
         checkArgument(redisURI != null, "RedisURI must not be null");
+    }
+
+    private static void assertNotNull(ClientResources clientResources) {
+        checkArgument(clientResources != null, "ClientResources must not be null");
     }
 
     /**

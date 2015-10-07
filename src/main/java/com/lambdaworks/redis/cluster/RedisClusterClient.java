@@ -32,6 +32,7 @@ import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
+import com.lambdaworks.redis.cluster.event.ClusterTopologyChangedEvent;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -40,6 +41,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
+import com.lambdaworks.redis.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -87,8 +89,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </pre></code>
  * </p>
  *
- * {@link RedisClusterClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that
- * consist of up to {@code Number of CPU's * 4} threads. Reuse this instance as much as possible.
+ * {@link RedisClusterClient} is an expensive resource. Reuse this instance or the {@link ClientResources} as much as possible.
  *
  *
  * 
@@ -105,8 +106,8 @@ public class RedisClusterClient extends AbstractRedisClient {
     private Partitions partitions;
     private Iterable<RedisURI> initialUris = ImmutableSet.of();
 
-    protected RedisClusterClient() {
-        setOptions(new ClusterClientOptions.Builder().build());
+    private RedisClusterClient() {
+        setOptions(ClusterClientOptions.create());
     }
 
     /**
@@ -130,15 +131,31 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisClusterClient(List<RedisURI> redisURIs) {
-        this.initialUris = redisURIs;
+        this(null, redisURIs);
+    }
+
+    /**
+     * Initialize the client with a list of cluster URI's. All uris are tried in sequence for connecting initially to the
+     * cluster. If any uri is successful for connection, the others are not tried anymore. The initial uri is needed to discover
+     * the cluster structure for distributing the requests.
+     *
+     * @param clientResources the client resources. If {@literal null}, the client will create a new dedicated instance of
+     *        client resources and keep track of them.
+     * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@literal null} and not empty.
+     */
+    protected RedisClusterClient(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
+        super(clientResources);
         assertNotEmpty(redisURIs);
+
+        this.initialUris = redisURIs;
+
         setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
         setOptions(new ClusterClientOptions.Builder().build());
     }
 
     /**
-     * Create a new client that connects to the supplied {@link RedisURI uri}. You can connect to different Redis servers but
-     * you must supply a {@link RedisURI} on connecting.
+     * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
+     * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
      *
      * @param redisURI the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClusterClient}
@@ -149,20 +166,20 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Create a new client that connects to the supplied iterable of {@link RedisURI uris}. You can connect to different Redis
-     * servers but you must supply a {@link RedisURI} on connecting.
+     * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
+     * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
      *
      * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
      * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(Iterable<RedisURI> redisURIs) {
         assertNotEmpty(redisURIs);
-        return new RedisClusterClient(Lists.newArrayList(redisURIs));
+        return new RedisClusterClient(null, redisURIs);
     }
 
     /**
-     * Create a new client that connects to the supplied uri. You can connect to different Redis servers but you must supply a
-     * {@link RedisURI} on connecting.
+     * Create a new client that connects to the supplied uri with default {@link ClientResources}. You can connect to different
+     * Redis servers but you must supply a {@link RedisURI} on connecting.
      *
      * @param uri the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClusterClient}
@@ -170,6 +187,51 @@ public class RedisClusterClient extends AbstractRedisClient {
     public static RedisClusterClient create(String uri) {
         checkArgument(uri != null, "uri must not be null");
         return create(RedisURI.create(uri));
+    }
+
+    /**
+     * Create a new client that connects to the supplied {@link RedisURI uri} with shared {@link ClientResources}. You need to
+     * shut down the {@link ClientResources} upon shutting down your application.You can connect to different Redis servers but
+     * you must supply a {@link RedisURI} on connecting.
+     *
+     * @param clientResources the client resources, must not be {@literal null}
+     * @param redisURI the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
+     */
+    public static RedisClusterClient create(ClientResources clientResources, RedisURI redisURI) {
+        assertNotNull(clientResources);
+        assertNotNull(redisURI);
+        return create(clientResources, ImmutableList.of(redisURI));
+    }
+
+    /**
+     * Create a new client that connects to the supplied uri with shared {@link ClientResources}.You need to shut down the
+     * {@link ClientResources} upon shutting down your application. You can connect to different Redis servers but you must
+     * supply a {@link RedisURI} on connecting.
+     *
+     * @param clientResources the client resources, must not be {@literal null}
+     * @param uri the Redis URI, must not be {@literal null}
+     * @return a new instance of {@link RedisClusterClient}
+     */
+    public static RedisClusterClient create(ClientResources clientResources, String uri) {
+        assertNotNull(clientResources);
+        checkArgument(uri != null, "uri must not be null");
+        return create(clientResources, RedisURI.create(uri));
+    }
+
+    /**
+     * Create a new client that connects to the supplied {@link RedisURI uri} with shared {@link ClientResources}. You need to
+     * shut down the {@link ClientResources} upon shutting down your application.You can connect to different Redis servers but
+     * you must supply a {@link RedisURI} on connecting.
+     *
+     * @param clientResources the client resources, must not be {@literal null}
+     * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
+     * @return a new instance of {@link RedisClusterClient}
+     */
+    public static RedisClusterClient create(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
+        assertNotNull(clientResources);
+        assertNotEmpty(redisURIs);
+        return new RedisClusterClient(clientResources, redisURIs);
     }
 
     /**
@@ -279,7 +341,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, queue, clusterWriter);
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(), queue,
+                clusterWriter);
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
 
         connectAsyncImpl(handler, connection, socketAddressSupplier);
@@ -301,7 +364,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param <K> Key type
      * @param <V> Value type
-     * @return A new connection
+     * @return a new connection
      */
     <K, V> StatefulRedisClusterConnectionImpl<K, V> connectClusterImpl(RedisCodec<K, V> codec,
             final Supplier<SocketAddress> socketAddressSupplier) {
@@ -315,7 +378,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, queue);
+        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
 
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(handler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
@@ -350,6 +413,13 @@ public class RedisClusterClient extends AbstractRedisClient {
             partitions.updateCache();
         } else {
             Partitions loadedPartitions = loadPartitions();
+            if (ClusterTopologyRefresh.isChanged(getPartitions(), loadedPartitions)) {
+                List<RedisClusterNode> before = ImmutableList.copyOf(getPartitions());
+                List<RedisClusterNode> after = ImmutableList.copyOf(loadedPartitions);
+
+                getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
+            }
+
             this.partitions.getPartitions().clear();
             this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
             this.partitions.reload(loadedPartitions.getPartitions());
@@ -483,6 +553,15 @@ public class RedisClusterClient extends AbstractRedisClient {
         this.partitions = partitions;
     }
 
+    /**
+     * Returns the {@link ClientResources} which are used with that client.
+     *
+     * @return the {@link ClientResources} for this client
+     */
+    public ClientResources getResources() {
+        return clientResources;
+    }
+
     protected void forEachClusterConnection(Consumer<StatefulRedisClusterConnectionImpl<?, ?>> function) {
         forEachCloseable(input -> input instanceof StatefulRedisClusterConnectionImpl, function);
     }
@@ -543,15 +622,20 @@ public class RedisClusterClient extends AbstractRedisClient {
             logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
             Map<RedisURI, Partitions> partitions = refresh.loadViews(seed);
             List<Partitions> values = Lists.newArrayList(partitions.values());
-            if (!values.isEmpty() && refresh.isChanged(getPartitions(), values.get(0))) {
+            if (!values.isEmpty() && ClusterTopologyRefresh.isChanged(getPartitions(), values.get(0))) {
                 logger.debug("Using a new cluster topology");
+
+                List<RedisClusterNode> before = ImmutableList.copyOf(getPartitions());
+                List<RedisClusterNode> after = ImmutableList.copyOf(values.get(0).getPartitions());
+
+                getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
+
                 getPartitions().reload(values.get(0).getPartitions());
                 updatePartitionsInConnections();
 
                 if (isEventLoopActive() && expireStaleConnections()) {
                     genericWorkerPool.submit(new CloseStaleConnectionsTask());
                 }
-
             }
         }
     }
@@ -585,5 +669,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static void assertNotNull(RedisURI redisURI) {
         checkArgument(redisURI != null, "RedisURI must not be null");
+    }
+
+    private static void assertNotNull(ClientResources clientResources) {
+        checkArgument(clientResources != null, "ClientResources must not be null");
     }
 }

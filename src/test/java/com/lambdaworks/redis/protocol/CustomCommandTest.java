@@ -1,7 +1,9 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import org.junit.Test;
 
 import rx.Observable;

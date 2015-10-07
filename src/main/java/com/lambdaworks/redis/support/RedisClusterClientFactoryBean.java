@@ -9,11 +9,12 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
- * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input. URI Format:
- * {@code
+ * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input and allows
+ * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format: {@code
  *     redis://[password@]host[:port]
  * }
  * 
+ * @see ClientResourcesFactoryBean
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -54,6 +55,9 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
     @Override
     protected RedisClusterClient createInstance() throws Exception {
 
+        if (getClientResources() != null) {
+            return RedisClusterClient.create(getClientResources(), getRedisURI());
+        }
         return RedisClusterClient.create(getRedisURI());
     }
 }

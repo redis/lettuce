@@ -11,12 +11,10 @@ import com.google.common.collect.Lists;
 import com.lambdaworks.redis.protocol.CommandEncoder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -40,6 +38,7 @@ public class ConnectionBuilder {
     private EventExecutorGroup workerPool;
     private long timeout;
     private TimeUnit timeUnit;
+    private ClientResources clientResources;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -109,10 +108,16 @@ public class ConnectionBuilder {
         return this;
     }
 
+    public ConnectionBuilder clientResources(ClientResources clientResources) {
+        this.clientResources = clientResources;
+        return this;
+    }
+
     protected List<ChannelHandler> buildHandlers() {
         checkState(channelGroup != null, "channelGroup must be set");
         checkState(connectionEvents != null, "connectionEvents must be set");
         checkState(connection != null, "connection must be set");
+        checkState(clientResources != null, "clientResources must be set");
 
         List<ChannelHandler> handlers = Lists.newArrayList();
         if (clientOptions.isAutoReconnect()) {
@@ -133,14 +138,15 @@ public class ConnectionBuilder {
         handlers.add(new CommandEncoder());
         handlers.add(commandHandler);
         handlers.add(connection);
-        handlers.add(new ConnectionEventTrigger(connectionEvents, connection));
+        handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
 
         return handlers;
 
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), buildHandlers());
+        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), buildHandlers(),
+                clientResources.eventBus());
     }
 
     public RedisChannelHandler<?, ?> connection() {
@@ -159,31 +165,8 @@ public class ConnectionBuilder {
         return clientOptions;
     }
 
-    /**
-     * A netty {@link ChannelHandler} responsible for monitoring the channel and adding/removing the channel from/to the
-     * ChannelGroup.
-     *
-     * @author Will Glozer
-     */
-    @ChannelHandler.Sharable
-    private static class ChannelGroupListener extends ChannelInboundHandlerAdapter {
-
-        private ChannelGroup channels;
-
-        public ChannelGroupListener(ChannelGroup channels) {
-            this.channels = channels;
-        }
-
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            channels.add(ctx.channel());
-            super.channelActive(ctx);
-        }
-
-        @Override
-        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            channels.remove(ctx.channel());
-            super.channelInactive(ctx);
-        }
+    public ClientResources clientResources() {
+        return clientResources;
     }
+
 }

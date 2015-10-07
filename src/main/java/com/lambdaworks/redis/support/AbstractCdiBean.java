@@ -14,6 +14,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 
 import com.google.common.collect.ImmutableSet;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.resource.ClientResources;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -22,12 +23,15 @@ import com.lambdaworks.redis.RedisURI;
 abstract class AbstractCdiBean<T> implements Bean<T> {
 
     protected final Bean<RedisURI> redisURIBean;
+    protected final Bean<ClientResources> clientResourcesBean;
     protected final BeanManager beanManager;
     protected final Set<Annotation> qualifiers;
     protected final String name;
 
-    public AbstractCdiBean(Bean<RedisURI> redisURIBean, BeanManager beanManager, Set<Annotation> qualifiers, String name) {
+    public AbstractCdiBean(Bean<RedisURI> redisURIBean, Bean<ClientResources> clientResourcesBean, BeanManager beanManager,
+            Set<Annotation> qualifiers, String name) {
         this.redisURIBean = redisURIBean;
+        this.clientResourcesBean = clientResourcesBean;
         this.beanManager = beanManager;
         this.qualifiers = qualifiers;
         this.name = name;

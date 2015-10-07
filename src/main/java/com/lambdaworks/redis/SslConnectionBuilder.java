@@ -1,6 +1,8 @@
 package com.lambdaworks.redis;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.lambdaworks.redis.ConnectionEventTrigger.local;
+import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
 import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
 import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
@@ -14,9 +16,14 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLParameters;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.connection.ConnectedEvent;
+import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
+import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslContext;
@@ -56,7 +63,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         final List<ChannelHandler> channelHandlers = buildHandlers();
 
-        return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), channelHandlers, redisURI);
+        return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), channelHandlers, redisURI,
+                clientResources().eventBus());
     }
 
     /**
@@ -65,15 +73,18 @@ public class SslConnectionBuilder extends ConnectionBuilder {
      */
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-        private boolean pingBeforeActivate;
-        private List<ChannelHandler> handlers;
+        private final boolean pingBeforeActivate;
+        private final List<ChannelHandler> handlers;
+        private final RedisURI redisURI;
+        private final EventBus eventBus;
         private SettableFuture<Boolean> initializedFuture = SettableFuture.create();
-        private RedisURI redisURI;
 
-        public SslChannelInitializer(boolean pingBeforeActivate, List<ChannelHandler> handlers, RedisURI redisURI) {
+        public SslChannelInitializer(boolean pingBeforeActivate, List<ChannelHandler> handlers, RedisURI redisURI,
+                EventBus eventBus) {
             this.pingBeforeActivate = pingBeforeActivate;
             this.handlers = handlers;
             this.redisURI = redisURI;
+            this.eventBus = eventBus;
         }
 
         @Override
@@ -94,6 +105,24 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             sslEngine.setSSLParameters(sslParams);
 
             removeIfExists(channel.pipeline(), SslHandler.class);
+
+            if (channel.pipeline().get("first") == null) {
+                channel.pipeline().addFirst("first", new ChannelDuplexHandler() {
+
+                    @Override
+                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                        eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
+                        super.channelActive(ctx);
+                    }
+
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        eventBus.publish(new DisconnectedEvent(local(ctx), remote(ctx)));
+                        super.channelInactive(ctx);
+                    }
+                });
+            }
+
             SslHandler sslHandler = new SslHandler(sslEngine, redisURI.isStartTls());
             channel.pipeline().addLast(sslHandler);
 
@@ -147,6 +176,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                         if (evt instanceof ConnectionEvents.Activated) {
                             if (!initializedFuture.isDone()) {
                                 initializedFuture.set(true);
+                                eventBus.publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
                             }
                         }
 

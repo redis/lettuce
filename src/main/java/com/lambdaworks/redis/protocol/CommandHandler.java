@@ -4,22 +4,26 @@ package com.lambdaworks.redis.protocol;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.MapMaker;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 
+import com.lambdaworks.redis.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -28,6 +32,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.local.LocalAddress;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogger;
@@ -47,43 +52,45 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private static final WriteLogListener WRITE_LOG_LISTENER = new WriteLogListener();
 
     protected ClientOptions clientOptions;
-    protected Queue<RedisCommand<K, V, ?>> queue;
+    protected final ClientResources clientResources;
+    protected final Queue<RedisCommand<K, V, ?>> queue;
+    protected final ReentrantLock writeLock = new ReentrantLock();
 
     // all access to the commandBuffer is synchronized
     protected Queue<RedisCommand<K, V, ?>> commandBuffer = newCommandBuffer();
-
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
-    protected final ReentrantLock writeLock = new ReentrantLock();
 
-    private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
-    private Object stateLock = new Object();
-
-    /**
-     * If TRACE level logging has been enabled at startup.
-     */
+    // If TRACE level logging has been enabled at startup.
     private final boolean traceEnabled;
 
-    /**
-     * If DEBUG level logging has been enabled at startup.
-     */
+    // If DEBUG level logging has been enabled at startup.
     private final boolean debugEnabled;
-
     private final Reliability reliability;
+
+    private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private RedisChannelHandler<K, V> redisChannelHandler;
     private Throwable connectionError;
     private String logPrefix;
     private boolean autoFlushCommands = true;
+    private final Object stateLock = new Object();
+    private final Map<RedisCommand<K, V, ?>, SentReceived> sentTimes = new MapMaker().concurrencyLevel(4).weakKeys().makeMap();
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection
-     * @param queue The command queue
+     * @param clientOptions client options for this connection, must not be {@literal null}
+     * @param clientResources client resources for this connection, must not be {@literal null}
+     * @param queue The command queue, must not be {@literal null}
      */
-    public CommandHandler(ClientOptions clientOptions, Queue<RedisCommand<K, V, ?>> queue) {
+    public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Queue<RedisCommand<K, V, ?>> queue) {
+        checkArgument(clientOptions != null, "clientOptions must not be null");
+        checkArgument(clientResources != null, "clientResources must not be null");
+        checkArgument(queue != null, "queue must not be null");
+
         this.clientOptions = clientOptions;
+        this.clientResources = clientResources;
         this.queue = queue;
         this.traceEnabled = logger.isTraceEnabled();
         this.debugEnabled = logger.isDebugEnabled();
@@ -146,9 +153,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         while (!queue.isEmpty()) {
 
             RedisCommand<K, V, ?> command = queue.peek();
+            SentReceived sentReceived = sentTimes.get(command);
 
             if (debugEnabled) {
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
+            }
+
+            if (sentReceived != null && sentReceived.firstResponse == -1) {
+                sentReceived.firstResponse = nanoTime();
             }
 
             if (!rsm.decode(buffer, command, command.getOutput())) {
@@ -156,11 +168,36 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             command = queue.poll();
+            sentTimes.remove(command);
+            recordLatency(command, sentReceived);
+
             command.complete();
+
             if (buffer != null && buffer.refCnt() != 0) {
                 buffer.discardReadBytes();
             }
         }
+    }
+
+    private void recordLatency(RedisCommand<K, V, ?> command, SentReceived sentReceived) {
+        if (sentReceived != null && channel != null && remote() != null
+                && clientResources.commandLatencyCollector().isEnabled()) {
+            long firstResponseLatency = nanoTime() - sentReceived.firstResponse;
+            long completionLatency = nanoTime() - sentReceived.sent;
+            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), command.getType(),
+                    firstResponseLatency, completionLatency);
+        }
+    }
+
+    private SocketAddress remote() {
+        return channel.remoteAddress();
+    }
+
+    private SocketAddress local() {
+        if (channel.localAddress() != null) {
+            return channel.localAddress();
+        }
+        return LocalAddress.ANY;
     }
 
     @Override
@@ -199,7 +236,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
                     if (reliability == Reliability.AT_MOST_ONCE) {
                         // cancel on exceptions and remove from queue, because there is no housekeeping
-                        channel.writeAndFlush(command).addListener(new AtMostOnceWriteListener(command, queue));
+                        channel.writeAndFlush(command).addListener(new AtMostOnceWriteListener(command, queue, sentTimes));
                     }
 
                     if (reliability == Reliability.AT_LEAST_ONCE) {
@@ -266,7 +303,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             if (reliability == Reliability.AT_MOST_ONCE) {
                 // cancel on exceptions and remove from queue, because there is no housekeeping
-                channel.writeAndFlush(queuedCommands).addListener(new AtMostOnceWriteListener(queuedCommands, this.queue));
+                channel.writeAndFlush(queuedCommands).addListener(
+                        new AtMostOnceWriteListener(queuedCommands, this.queue, sentTimes));
             }
 
             if (reliability == Reliability.AT_LEAST_ONCE) {
@@ -306,8 +344,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         try {
             if (cmd.getOutput() == null) {
+
+                // fire&forget commands are excluded from metrics
                 cmd.complete();
             } else {
+                sentTimes.put(cmd, new SentReceived(nanoTime()));
                 queue.add(cmd);
             }
         } catch (Exception e) {
@@ -315,6 +356,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             promise.setFailure(e);
             throw e;
         }
+    }
+
+    private long nanoTime() {
+        return System.nanoTime();
     }
 
     @Override
@@ -363,6 +408,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             tmp.addAll(queue);
 
             queue.clear();
+            sentTimes.clear();
             commandBuffer = tmp;
 
             if (debugEnabled) {
@@ -456,6 +502,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             toCancel.addAll(commandBuffer);
             commandBuffer.clear();
         }
+        sentTimes.clear();
 
         for (RedisCommand<K, V, ?> cmd : toCancel) {
             if (cmd.getOutput() != null) {
@@ -582,30 +629,39 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         AT_MOST_ONCE, AT_LEAST_ONCE;
     }
 
-    private static class AtMostOnceWriteListener implements ChannelFutureListener {
+    private static class AtMostOnceWriteListener<K, V, T> implements ChannelFutureListener {
 
-        private final Collection<RedisCommand<?, ?, ?>> sentCommands;
+        private final Collection<RedisCommand<K, V, T>> sentCommands;
         private final Queue<?> queue;
+        private final Map<RedisCommand<K, V, T>, SentReceived> sentTimes;
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
-        public AtMostOnceWriteListener(RedisCommand<?, ?, ?> sentCommand, Queue<?> queue) {
-            this.sentCommands = (Collection) ImmutableList.of(sentCommand);
-            this.queue = queue;
+        public AtMostOnceWriteListener(RedisCommand<K, V, T> sentCommand, Queue<?> queue,
+                Map<RedisCommand<K, V, T>, SentReceived> sentTimes) {
+            this((Collection) ImmutableList.of(sentCommand), queue, sentTimes);
         }
 
-        public AtMostOnceWriteListener(Collection<RedisCommand<?, ?, ?>> sentCommand, Queue<?> queue) {
+        public AtMostOnceWriteListener(Collection<RedisCommand<K, V, T>> sentCommand, Queue<?> queue,
+                Map<RedisCommand<K, V, T>, SentReceived> sentTimes) {
             this.sentCommands = sentCommand;
             this.queue = queue;
+            this.sentTimes = sentTimes;
         }
 
         @Override
         public void operationComplete(ChannelFuture future) throws Exception {
             future.await();
             if (future.cause() != null) {
+
                 for (RedisCommand<?, ?, ?> sentCommand : sentCommands) {
                     sentCommand.completeExceptionally(future.cause());
                 }
+
                 queue.removeAll(sentCommands);
+
+                for (RedisCommand<K, V, T> sentCommand : sentCommands) {
+                    sentTimes.remove(sentCommand);
+                }
             }
         }
     }
@@ -621,5 +677,15 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 logger.warn(future.cause().getMessage(), future.cause());
         }
 
+    }
+
+    static class SentReceived {
+
+        final long sent;
+        long firstResponse = -1;
+
+        public SentReceived(long sent) {
+            this.sent = sent;
+        }
     }
 }

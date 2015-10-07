@@ -514,7 +514,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                     }
                 }
 
-                // Host and port connections provide command recovery due to cluster reconfiguration
+                // Host and port connections do provide command recovery due to cluster reconfiguration
                 connection = redisClusterClient.connectToNode(redisCodec, key.host + ":" + key.port, clusterWriter,
                         getSocketAddressSupplier(key));
             }

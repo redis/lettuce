@@ -10,47 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.ArrayOutput;
-import com.lambdaworks.redis.output.BooleanListOutput;
-import com.lambdaworks.redis.output.BooleanOutput;
-import com.lambdaworks.redis.output.ByteArrayOutput;
-import com.lambdaworks.redis.output.DateOutput;
-import com.lambdaworks.redis.output.DoubleOutput;
-import com.lambdaworks.redis.output.GeoCoordinatesListOutput;
-import com.lambdaworks.redis.output.GeoWithinListOutput;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.KeyListOutput;
-import com.lambdaworks.redis.output.KeyOutput;
-import com.lambdaworks.redis.output.KeyScanOutput;
-import com.lambdaworks.redis.output.KeyScanStreamingOutput;
-import com.lambdaworks.redis.output.KeyStreamingChannel;
-import com.lambdaworks.redis.output.KeyStreamingOutput;
-import com.lambdaworks.redis.output.KeyValueOutput;
-import com.lambdaworks.redis.output.KeyValueScanStreamingOutput;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.KeyValueStreamingOutput;
-import com.lambdaworks.redis.output.MapOutput;
-import com.lambdaworks.redis.output.MapScanOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.ScoredValueListOutput;
-import com.lambdaworks.redis.output.ScoredValueScanOutput;
-import com.lambdaworks.redis.output.ScoredValueScanStreamingOutput;
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-import com.lambdaworks.redis.output.ScoredValueStreamingOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.StringListOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
-import com.lambdaworks.redis.output.ValueOutput;
-import com.lambdaworks.redis.output.ValueScanOutput;
-import com.lambdaworks.redis.output.ValueScanStreamingOutput;
-import com.lambdaworks.redis.output.ValueSetOutput;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingOutput;
+import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.output.CommandOutput;
-import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 
 /**
  * @param <K>
@@ -1911,5 +1875,4 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             throw new IllegalArgumentException(message);
         }
     }
-
 }

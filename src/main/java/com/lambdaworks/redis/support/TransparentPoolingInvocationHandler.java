@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.support;
 
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -18,18 +20,15 @@ import com.lambdaworks.redis.RedisException;
 public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHandler {
 
     private RedisConnectionPool<T> pool;
-    private LoadingCache<Method, Method> methodCache;
+    private final LoadingCache<Method, Method> methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
+        @Override
+        public Method load(Method key) throws Exception {
+            return pool.getComponentType().getMethod(key.getName(), key.getParameterTypes());
+        }
+    });
 
     public TransparentPoolingInvocationHandler(RedisConnectionPool<T> pool) {
         this.pool = pool;
-
-        methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
-            @Override
-            public Method load(Method key) throws Exception {
-                return pool.getComponentType().getMethod(key.getName(), key.getParameterTypes());
-            }
-        });
-
     }
 
     @Override
@@ -49,7 +48,6 @@ public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHa
 
         T connection = pool.allocateConnection();
         try {
-
             return targetMethod.invoke(connection, args);
         } finally {
             pool.freeConnection(connection);

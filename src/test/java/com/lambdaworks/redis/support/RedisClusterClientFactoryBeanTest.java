@@ -1,13 +1,11 @@
 package com.lambdaworks.redis.support;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.net.URI;
 
-import org.junit.After;
 import org.junit.Test;
 
-import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 
 /**
@@ -38,8 +36,6 @@ public class RedisClusterClientFactoryBeanTest {
         sut.afterPropertiesSet();
         assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
         assertThat(sut.getRedisURI().getPassword()).isEqualTo("password".toCharArray());
-
-        FastShutdown.shutdown(sut.getObject());
     }
 
     @Test
@@ -51,7 +47,5 @@ public class RedisClusterClientFactoryBeanTest {
         sut.afterPropertiesSet();
         assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
         assertThat(sut.getRedisURI().getPassword()).isEqualTo("thepassword".toCharArray());
-
-        FastShutdown.shutdown(sut.getObject());
     }
 }

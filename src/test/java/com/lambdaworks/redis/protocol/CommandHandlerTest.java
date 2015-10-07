@@ -12,6 +12,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.Future;
 
+import com.lambdaworks.redis.resource.ClientResources;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelPromise;
@@ -40,7 +41,7 @@ public class CommandHandlerTest {
 
     private Queue<RedisCommand<String, String, ?>> q = new ArrayDeque<>(10);
 
-    private CommandHandler<String, String> sut = new CommandHandler<>(new ClientOptions.Builder().build(), q);
+    private CommandHandler<String, String> sut;
 
     private Command<String, String, String> command = new Command<>(CommandType.APPEND,
             new StatusOutput<String, String>(new Utf8StringCodec()), null);
@@ -60,6 +61,9 @@ public class CommandHandlerTest {
     @Mock
     private EventLoop eventLoop;
 
+    @Mock
+    private ClientResources clientResources;
+
     @Before
     public void before() throws Exception {
         when(context.channel()).thenReturn(channel);
@@ -75,6 +79,8 @@ public class CommandHandlerTest {
         when(channel.write(any())).thenAnswer(invocation -> new DefaultChannelPromise(channel));
 
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> new DefaultChannelPromise(channel));
+
+        sut = new CommandHandler<String, String>(ClientOptions.create(), clientResources, q);
     }
 
     @Test
