@@ -1,14 +1,17 @@
-# lettuce 3.3.1.Final RELEASE NOTES
+# lettuce 3.4 RELEASE NOTES
 
-lettuce 3.3.1.Final is a maintenance release that fixes several problems reported
-by the community.
+Enhancements
+------------
+* Adjust logging when running into Exceptions (exceptionCaught()) #140
+* Implement an EventBus system to publish events and metrics #124 (Thanks to @pulse00)
+* ClientResources for 4.1 enhancement #137
+* Provide a reusable client configuration for ThreadPools and other expensive resources #110
 
 Fixes
 -----
-* GEOADD passes long/lat parameters in the wrong order to Redis #134 (thanks to @IdanFridman)
-* Strip username from URI userinfo when creating a RedisURI with a username #131 (thanks to @jsiebens)
-* GeoArgs not evaluated when calling georadiusbymember(...) #142 (thanks to @codeparity)
-* Guava's CacheBuilder missing in shaded jar #143
+
+Other
+------
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested
 continuously against Redis 3.0 and the unstable branch
