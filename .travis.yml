@@ -1,16 +1,15 @@
 language: java
+sudo: false
+
 jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
   - openjdk6
-after_success:
-  - "git clone -b travis `git config --get remote.origin.url` target/travis"
-  - "mvn deploy --settings target/travis/settings.xml"
 
-branches:
-  except:
-    - travis
+after_success:
+  - chmod -R 777 ./travis/after_success.sh
+  - ./travis/after_success.sh
 
 env:
   global:
