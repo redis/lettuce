@@ -42,6 +42,7 @@ public class User {
     this.name = name;
   }
 
+  @Override
   public String toString() {
     StringBuilder buf = new StringBuilder(30);
     buf.append("{");

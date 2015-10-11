@@ -92,7 +92,7 @@
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <name>Mybatis Guice GitHub Pages</name>
+      <name>Mybatis GitHub Pages</name>
       <url>git:ssh://git@github.com/mybatis/spring.git?gh-pages#</url>
     </site>
   </distributionManagement>
@@ -103,7 +103,7 @@
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <spring.version>3.2.14.RELEASE</spring.version>
+    <spring.version>4.2.1.RELEASE</spring.version>
   </properties>
 
   <dependencies>
