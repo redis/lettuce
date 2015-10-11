@@ -46,6 +46,7 @@ final class ExecutorInterceptor implements Interceptor {
 
   private boolean closed;
 
+  @Override
   public Object intercept(Invocation invocation) throws Throwable {
     if ("commit".equals(invocation.getMethod().getName())) {
       ++this.commitCount;
@@ -58,10 +59,12 @@ final class ExecutorInterceptor implements Interceptor {
     return invocation.proceed();
   }
 
+  @Override
   public Object plugin(Object target) {
     return Plugin.wrap(target, this);
   }
 
+  @Override
   public void setProperties(Properties properties) {
     // do nothing
   }

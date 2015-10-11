@@ -48,6 +48,7 @@ public class AsyncAfterCompletionHelper {
       this.target = target;
     }
 
+    @Override
     public Object invoke(final Object proxy, final Method method,
         final Object[] args) throws Throwable {
       if ("afterCompletion".equals(method.getName())) {

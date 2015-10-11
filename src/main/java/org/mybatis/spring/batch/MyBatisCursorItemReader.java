@@ -20,7 +20,6 @@ import static org.springframework.util.ClassUtils.getShortName;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.cursor.Cursor;
@@ -82,6 +81,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
    *
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
    */
+  @Override
   public void afterPropertiesSet() throws Exception {
     notNull(sqlSessionFactory);
     notNull(queryId);

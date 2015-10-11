@@ -272,6 +272,7 @@ public final class MapperScannerConfigurerTest {
   
   public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {
 
+    @Override
     public String generateBeanName(BeanDefinition beanDefinition, BeanDefinitionRegistry definitionRegistry) {
       return beanDefinition.getBeanClassName();
     }
