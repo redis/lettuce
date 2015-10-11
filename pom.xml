@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Copyright 2010-2015 the original author or authors.
 
@@ -20,7 +20,8 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>25</version>
+    <version>26-SNAPSHOT</version>
+    <relativePath />
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
@@ -102,7 +103,7 @@
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <spring.version>3.2.13.RELEASE</spring.version>
+    <spring.version>3.2.14.RELEASE</spring.version>
   </properties>
 
   <dependencies>
@@ -130,7 +131,7 @@
     <dependency>
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
-      <version>3.0.4.RELEASE</version>
+      <version>3.0.5.RELEASE</version>
       <scope>provided</scope>
     </dependency>
 
@@ -153,7 +154,7 @@
     <dependency>
       <groupId>ognl</groupId>
       <artifactId>ognl</artifactId>
-      <version>3.0.11</version>
+      <version>3.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -188,7 +189,7 @@
     <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
-      <version>2.3.2</version>
+      <version>2.3.3</version>
       <scope>test</scope>
     </dependency>
 
