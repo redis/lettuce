@@ -178,11 +178,25 @@ public interface RedisServerConnection<K, V> {
     String flushall();
 
     /**
+     * Remove all keys asynchronously from all databases.
+     *
+     * @return String simple-string-reply
+     */
+    String flushallAsync();
+
+    /**
      * Remove all keys from the current database.
      * 
      * @return String simple-string-reply
      */
     String flushdb();
+
+    /**
+     * Remove all keys asynchronously from the current database.
+     *
+     * @return String simple-string-reply
+     */
+    String flushdbAsync();
 
     /**
      * Get information and statistics about the server.

@@ -21,8 +21,16 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertThat((long) redis.del(key)).isEqualTo(1);
         redis.set(key + "1", value);
         redis.set(key + "2", value);
-
         assertThat(redis.del(key + "1", key + "2")).isEqualTo(2);
+    }
+
+    @Test
+    public void unlink() throws Exception {
+        redis.set(key, value);
+        assertThat((long) redis.unlink(key)).isEqualTo(1);
+        redis.set(key + "1", value);
+        redis.set(key + "2", value);
+        assertThat(redis.unlink(key + "1", key + "2")).isEqualTo(2);
     }
 
     @Test

@@ -261,6 +261,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> unlink(K... keys) {
+        return dispatch(commandBuilder.unlink(keys));
+    }
+
+    @Override
     public RedisFuture<String> discard() {
         if (multi != null) {
             multi.cancel();
@@ -345,8 +350,18 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<String> flushallAsync() {
+        return dispatch(commandBuilder.flushallAsync());
+    }
+
+    @Override
     public RedisFuture<String> flushdb() {
         return dispatch(commandBuilder.flushdb());
+    }
+
+    @Override
+    public RedisFuture<String> flushdbAsync() {
+        return dispatch(commandBuilder.flushdbAsync());
     }
 
     @Override
