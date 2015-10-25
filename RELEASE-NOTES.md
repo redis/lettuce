@@ -11,6 +11,7 @@ Enhancements
 
 Fixes
 -----
+* Do not cache InetSocketAddress/SocketAddress in RedisURI #144
 
 Other
 ------

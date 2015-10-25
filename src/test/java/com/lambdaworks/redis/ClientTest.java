@@ -189,7 +189,6 @@ public class ClientTest extends AbstractRedisClientTest {
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
 
             redisUri.setPort(TestSettings.nonexistentPort());
-            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
             Wait.untilTrue(() -> connectionWatchdog.isReconnectSuspended()).waitOrTimeout();
@@ -248,7 +247,6 @@ public class ClientTest extends AbstractRedisClientTest {
 
             connectionWatchdog.setReconnectSuspended(true);
             redisUri.setPort(TestSettings.nonexistentPort());
-            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
             Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();

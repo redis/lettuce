@@ -80,7 +80,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private long timeout = 60;
     private TimeUnit unit = TimeUnit.SECONDS;
     private final List<RedisURI> sentinels = new ArrayList<RedisURI>();
-    private transient SocketAddress resolvedAddress;
 
     /**
      * Default empty constructor.
@@ -339,22 +338,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return the resolved {@link SocketAddress} based either on host/port or the socket.
      */
     public SocketAddress getResolvedAddress() {
-        if (resolvedAddress == null) {
-            resolveAddress();
-        }
-
-        return resolvedAddress;
-    }
-
-    /**
-     * Resolve the address.
-     */
-    private void resolveAddress() {
         if (getSocket() != null) {
-            resolvedAddress = EpollProvider.newSocketAddress(getSocket());
-        } else {
-            resolvedAddress = new InetSocketAddress(host, port);
+            return EpollProvider.newSocketAddress(getSocket());
         }
+
+        return new InetSocketAddress(host, port);
     }
 
     @Override
