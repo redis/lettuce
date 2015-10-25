@@ -148,12 +148,11 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
     AsyncExecutions<Long> dbsize();
 
     /**
-     * Get debugging information about a key.
-     * 
-     * @param key the key
+     * Crash and recover
+     * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
-    AsyncExecutions<String> debugObject(K key);
+    AsyncExecutions<String> debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
@@ -162,6 +161,36 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @return String simple-string-reply
      */
     AsyncExecutions<String> debugHtstats(int db);
+
+    /**
+     * Get debugging information about a key.
+     * 
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    AsyncExecutions<String> debugObject(K key);
+
+    /**
+     * Save RDB, clear the database and reload RDB.
+     *
+     * @return String simple-string-reply The commands returns OK on success.
+     */
+    AsyncExecutions<String> debugReload();
+
+    /**
+     * Restart the server gracefully.
+     * @param delay optional delay in milliseconds
+     * @return String simple-string-reply
+     */
+    AsyncExecutions<String> debugRestart(Long delay);
+
+    /**
+     * Get debugging information about the internal SDS length.
+     *
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    AsyncExecutions<String> debugSdslen(K key);
 
     /**
      * Remove all keys from all databases.

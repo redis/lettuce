@@ -148,24 +148,11 @@ public interface RedisServerReactiveCommands<K, V> {
     Observable<Long> dbsize();
 
     /**
-     * Get debugging information about a key.
-     * 
-     * @param key the key
+     * Crash and recover
+     * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
-    Observable<String> debugObject(K key);
-
-    /**
-     * Make the server crash: Invalid pointer access.
-     * @return nothing, because the server crashes before returning.
-     */
-    Observable<Success> debugSegfault();
-
-    /**
-     * Make the server crash: Out of memory.
-     * @return nothing, because the server crashes before returning.
-     */
-    Observable<Success> debugOom();
+    Observable<String> debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
@@ -174,6 +161,50 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply
      */
     Observable<String> debugHtstats(int db);
+
+    /**
+     * Get debugging information about a key.
+     * 
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    Observable<String> debugObject(K key);
+
+    /**
+     * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
+     */
+    Observable<Success> debugOom();
+
+    /**
+     * Make the server crash: Invalid pointer access.
+     * 
+     * @return nothing, because the server crashes before returning.
+     */
+    Observable<Success> debugSegfault();
+
+    /**
+     * Save RDB, clear the database and reload RDB.
+     *
+     * @return String simple-string-reply The commands returns OK on success.
+     */
+    Observable<String> debugReload();
+
+    /**
+     * Restart the server gracefully.
+     * @param delay optional delay in milliseconds
+     * @return String simple-string-reply
+     */
+    Observable<String> debugRestart(Long delay);
+
+    /**
+     * Get debugging information about the internal SDS length.
+     *
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    Observable<String> debugSdslen(K key);
 
     /**
      * Remove all keys from all databases.
@@ -222,7 +253,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      * 
      * @param save {@literal true} force save operation
-     * @return Success
      */
     Observable<Success> shutdown(boolean save);
 

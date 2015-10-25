@@ -161,9 +161,12 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void debugObject() throws Exception {
-        redis.set(key, value);
-        redis.debugObject(key);
+    public void debugCrashAndRecover() throws Exception {
+        try {
+            assertThat(redis.debugCrashAndRecover(1L)).isNotNull();
+        } catch (Exception e) {
+            assertThat(e).hasMessageContaining("ERR failed to restart the server");
+        }
     }
 
     @Test
@@ -171,6 +174,33 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         redis.set(key, value);
         String result = redis.debugHtstats(0);
         assertThat(result).contains("table size");
+    }
+
+    @Test
+    public void debugObject() throws Exception {
+        redis.set(key, value);
+        redis.debugObject(key);
+    }
+
+    @Test
+    public void debugReload() throws Exception {
+        assertThat(redis.debugReload()).isEqualTo("OK");
+    }
+
+    @Test
+    public void debugRestart() throws Exception {
+        try {
+            assertThat(redis.debugRestart(1L)).isNotNull();
+        } catch (Exception e) {
+            assertThat(e).hasMessageContaining("ERR failed to restart the server");
+        }
+    }
+
+    @Test
+    public void debugSdslen() throws Exception {
+        redis.set(key, value);
+        String result = redis.debugSdslen(key);
+        assertThat(result).contains("key_sds_len");
     }
 
     /**

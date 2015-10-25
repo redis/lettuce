@@ -210,13 +210,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> debugObject(K key) {
-        return createObservable(() -> commandBuilder.debugObject(key));
+    public Observable<String> debugCrashAndRecover(Long delay) {
+        return createObservable(() -> (commandBuilder.debugCrashAndRecover(delay)));
     }
 
     @Override
-    public Observable<Success> debugSegfault() {
-        return Observable.just(Success.Success).doOnCompleted(commandBuilder::debugSegfault);
+    public Observable<String> debugHtstats(int db) {
+        return createObservable(() -> commandBuilder.debugHtstats(db));
+    }
+
+    @Override
+    public Observable<String> debugObject(K key) {
+        return createObservable(() -> commandBuilder.debugObject(key));
     }
 
     @Override
@@ -225,8 +230,23 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> debugHtstats(int db) {
-        return createObservable(() -> commandBuilder.debugHtstats(db));
+    public Observable<String> debugReload() {
+        return createObservable(() -> (commandBuilder.debugReload()));
+    }
+
+    @Override
+    public Observable<String> debugRestart(Long delay) {
+        return createObservable(() -> (commandBuilder.debugRestart(delay)));
+    }
+
+    @Override
+    public Observable<String> debugSdslen(K key) {
+        return createObservable(() -> (commandBuilder.debugSdslen(key)));
+    }
+
+    @Override
+    public Observable<Success> debugSegfault() {
+        return Observable.just(Success.Success).doOnCompleted(commandBuilder::debugSegfault);
     }
 
     @Override
@@ -302,13 +322,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Boolean> expireat(K key, Date timestamp) {
-        return expireat(key, timestamp.getTime() / 1000);
+    public Observable<Boolean> expireat(K key, long timestamp) {
+        return createObservable(() -> commandBuilder.expireat(key, timestamp));
     }
 
     @Override
-    public Observable<Boolean> expireat(K key, long timestamp) {
-        return createObservable(() -> commandBuilder.expireat(key, timestamp));
+    public Observable<Boolean> expireat(K key, Date timestamp) {
+        return expireat(key, timestamp.getTime() / 1000);
     }
 
     @Override
@@ -1500,7 +1520,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Long> clusterCountKeysInSlot(int slot) {
-       return createObservable(() -> commandBuilder.clusterCountKeysInSlot(slot));
+        return createObservable(() -> commandBuilder.clusterCountKeysInSlot(slot));
     }
 
     @Override
@@ -1656,6 +1676,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     /**
      * Emits just {@link Success#Success} or the {@link Throwable} after the inner observable is completed.
+     * 
      * @param observable inner observable
      * @param <T> used for type inference
      * @return Success observable

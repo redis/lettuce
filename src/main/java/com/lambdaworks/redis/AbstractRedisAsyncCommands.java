@@ -215,13 +215,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<String> debugObject(K key) {
-        return dispatch(commandBuilder.debugObject(key));
+    public RedisFuture<String> debugCrashAndRecover(Long delay) {
+        return dispatch(commandBuilder.debugCrashAndRecover(delay));
     }
 
     @Override
-    public void debugSegfault() {
-        dispatch(commandBuilder.debugSegfault());
+    public RedisFuture<String> debugHtstats(int db) {
+        return dispatch(commandBuilder.debugHtstats(db));
+    }
+
+    @Override
+    public RedisFuture<String> debugObject(K key) {
+        return dispatch(commandBuilder.debugObject(key));
     }
 
     @Override
@@ -230,8 +235,23 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<String> debugHtstats(int db) {
-        return dispatch(commandBuilder.debugHtstats(db));
+    public RedisFuture<String> debugReload() {
+        return dispatch(commandBuilder.debugReload());
+    }
+
+    @Override
+    public RedisFuture<String> debugRestart(Long delay) {
+        return dispatch(commandBuilder.debugRestart(delay));
+    }
+
+    @Override
+    public RedisFuture<String> debugSdslen(K key) {
+        return dispatch(commandBuilder.debugSdslen(key));
+    }
+
+    @Override
+    public void debugSegfault() {
+        dispatch(commandBuilder.debugSegfault());
     }
 
     @Override
@@ -309,7 +329,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
 
     @Override
     public RedisFuture<Boolean> expireat(K key, Date timestamp) {
-
         return expireat(key, timestamp.getTime() / 1000);
     }
 

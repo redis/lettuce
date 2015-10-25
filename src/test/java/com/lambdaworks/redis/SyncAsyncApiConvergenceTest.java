@@ -11,6 +11,8 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -25,13 +27,13 @@ public class SyncAsyncApiConvergenceTest {
     private Method method;
 
     @SuppressWarnings("rawtypes")
-    private Class<RedisAsyncConnection> asyncClass = RedisAsyncConnection.class;
+    private Class<RedisAsyncCommands> asyncClass = RedisAsyncCommands.class;
 
     @Parameterized.Parameters(name = "Method {0}/{1}")
     public static List<Object[]> parameters() {
 
         List<Object[]> result = new ArrayList<Object[]>();
-        Method[] methods = RedisConnection.class.getMethods();
+        Method[] methods = RedisCommands.class.getMethods();
         for (Method method : methods) {
             result.add(new Object[] { method.getName(), method });
         }

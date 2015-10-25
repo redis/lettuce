@@ -207,14 +207,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DBSIZE, new IntegerOutput<K, V>(codec));
     }
 
+    public Command<K, V, String> debugCrashAndRecover(Long delay) {
+         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("CRASH-AND-RECOVER");
+        if(delay != null) {
+            args.add(delay);
+        }
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec),args );
+    }
+
     public Command<K, V, String> debugObject(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(OBJECT).addKey(key);
         return createCommand(DEBUG, new StatusOutput<K, V>(codec), args);
-    }
-
-    public Command<K, V, Void> debugSegfault() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SEGFAULT);
-        return createCommand(DEBUG, null, args);
     }
 
     public Command<K, V, Void> debugOom() {
@@ -224,6 +227,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> debugHtstats(int db) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(HTSTATS).add(db);
         return createCommand(DEBUG, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> debugReload() {
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec), new CommandArgs<K, V>(codec).add(RELOAD));
+    }
+
+    public Command<K, V, String> debugRestart(Long delay) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESTART);
+        if(delay != null) {
+            args.add(delay);
+        }
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec),args );
+    }
+
+    public Command<K, V, String> debugSdslen(K key) {
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec), new CommandArgs<K, V>(codec).add("SDSLEN").addKey(key));
+    }
+
+    public Command<K, V, Void> debugSegfault() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SEGFAULT);
+        return createCommand(DEBUG, null, args);
     }
 
     public Command<K, V, Long> decr(K key) {

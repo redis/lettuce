@@ -148,22 +148,11 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<Long> dbsize();
 
     /**
-     * Get debugging information about a key.
-     * 
-     * @param key the key
+     * Crash and recover
+     * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
-    RedisFuture<String> debugObject(K key);
-
-    /**
-     * Make the server crash: Invalid pointer access.
-     */
-    void debugSegfault();
-
-    /**
-     * Make the server crash: Out of memory.
-     */
-    void debugOom();
+    RedisFuture<String> debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
@@ -172,6 +161,50 @@ public interface RedisServerAsyncCommands<K, V> {
      * @return String simple-string-reply
      */
     RedisFuture<String> debugHtstats(int db);
+
+    /**
+     * Get debugging information about a key.
+     * 
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> debugObject(K key);
+
+    /**
+     * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
+     */
+    void debugOom();
+
+    /**
+     * Make the server crash: Invalid pointer access.
+     * 
+     * @return nothing, because the server crashes before returning.
+     */
+    void debugSegfault();
+
+    /**
+     * Save RDB, clear the database and reload RDB.
+     *
+     * @return String simple-string-reply The commands returns OK on success.
+     */
+    RedisFuture<String> debugReload();
+
+    /**
+     * Restart the server gracefully.
+     * @param delay optional delay in milliseconds
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> debugRestart(Long delay);
+
+    /**
+     * Get debugging information about the internal SDS length.
+     *
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> debugSdslen(K key);
 
     /**
      * Remove all keys from all databases.
