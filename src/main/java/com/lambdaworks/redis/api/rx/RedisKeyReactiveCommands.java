@@ -23,12 +23,20 @@ import rx.Observable;
 public interface RedisKeyReactiveCommands<K, V> {
 
     /**
-     * Delete a key.
-     * 
-     * @param keys the key
+     * Delete one or more keys.
+     *
+     * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
      */
     Observable<Long> del(K... keys);
+
+    /**
+     * Unlink one or more keys (non blocking DEL).
+     *
+     * @param keys the keys
+     * @return Long integer-reply The number of keys that were removed.
+     */
+    Observable<Long> unlink(K... keys);
 
     /**
      * Return a serialized version of the value stored at the specified key.
@@ -37,16 +45,6 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @return byte[] bulk-string-reply the serialized value.
      */
     Observable<byte[]> dump(K key);
-
-    /**
-     * Determine if a key exists.
-     * 
-     * @param key the key
-     * @return Boolean integer-reply specifically:
-     * 
-     *         {@literal true} if the key exists. {@literal false} if the key does not exist.
-     */
-    Observable<Boolean> exists(K key);
 
     /**
      * Determine how many keys exist.

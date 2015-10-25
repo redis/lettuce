@@ -69,6 +69,24 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Observable<Long> unlink(K... keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+
+        if (partitioned.size() < 2) {
+            return super.unlink(keys);
+        }
+
+        List<Observable<Long>> observables = Lists.newArrayList();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            observables.add(super.unlink(entry.getValue()));
+        }
+
+        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
     public Observable<V> mget(K... keys) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));

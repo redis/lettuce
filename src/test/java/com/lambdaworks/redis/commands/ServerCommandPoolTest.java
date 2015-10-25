@@ -30,4 +30,10 @@ public class ServerCommandPoolTest extends ServerCommandTest {
     public void flushdb() throws Exception {
         super.flushdb();
     }
+
+    @Test(expected = UnsupportedOperationException.class)
+    @Override
+    public void flushdbAsync() throws Exception {
+        super.flushdbAsync();
+    }
 }

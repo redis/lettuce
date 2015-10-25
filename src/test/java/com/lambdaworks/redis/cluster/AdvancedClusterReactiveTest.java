@@ -147,6 +147,22 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     }
 
     @Test
+    public void unlinkCrossSlot() throws Exception {
+
+        msetCrossSlot();
+
+        Observable<Long> observable = commands.unlink(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long result = getSingle(observable);
+
+        assertThat(result).isEqualTo(RandomKeys.COUNT);
+
+        for (String mykey : RandomKeys.KEYS) {
+            String s1 = syncCommands.get(mykey);
+            assertThat(s1).isNull();
+        }
+    }
+
+    @Test
     public void clientSetname() throws Exception {
 
         String name = "test-cluster-client";

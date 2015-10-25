@@ -17,13 +17,22 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  */
 @Deprecated
 public interface RedisKeysAsyncConnection<K, V> {
+
     /**
-     * Delete a key.
+     * Delete one or more keys.
      *
-     * @param keys the key
+     * @param keys the keys
      * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
      */
     RedisFuture<Long> del(K... keys);
+
+    /**
+     * Unlink one or more keys (non blocking DEL).
+     *
+     * @param keys the keys
+     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
+     */
+    RedisFuture<Long> unlink(K... keys);
 
     /**
      * Return a serialized version of the value stored at the specified key.

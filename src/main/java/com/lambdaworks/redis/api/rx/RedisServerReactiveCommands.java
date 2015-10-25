@@ -179,7 +179,7 @@ public interface RedisServerReactiveCommands<K, V> {
 
     /**
      * Make the server crash: Invalid pointer access.
-     * 
+     *
      * @return nothing, because the server crashes before returning.
      */
     Observable<Success> debugSegfault();
@@ -214,11 +214,25 @@ public interface RedisServerReactiveCommands<K, V> {
     Observable<String> flushall();
 
     /**
+     * Remove all keys asynchronously from all databases.
+     *
+     * @return String simple-string-reply
+     */
+    Observable<String> flushallAsync();
+
+    /**
      * Remove all keys from the current database.
      * 
      * @return String simple-string-reply
      */
     Observable<String> flushdb();
+
+    /**
+     * Remove all keys asynchronously from the current database.
+     *
+     * @return String simple-string-reply
+     */
+    Observable<String> flushdbAsync();
 
     /**
      * Get information and statistics about the server.

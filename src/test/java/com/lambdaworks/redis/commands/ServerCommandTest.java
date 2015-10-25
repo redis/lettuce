@@ -216,11 +216,29 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void flushallAsync() throws Exception {
+        redis.set(key, value);
+        assertThat(redis.flushallAsync()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
+    }
+
+    @Test
     public void flushdb() throws Exception {
         redis.set(key, value);
         redis.select(1);
         redis.set(key, value + "X");
         assertThat(redis.flushdb()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
+        redis.select(0);
+        assertThat(redis.get(key)).isEqualTo(value);
+    }
+
+    @Test
+    public void flushdbAsync() throws Exception {
+        redis.set(key, value);
+        redis.select(1);
+        redis.set(key, value + "X");
+        assertThat(redis.flushdbAsync()).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
         redis.select(0);
         assertThat(redis.get(key)).isEqualTo(value);

@@ -113,12 +113,20 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic);
 
     /**
-     * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     * Delete one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
      * 
-     * @param keys the key
+     * @param keys the keys
      * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
      */
     RedisFuture<Long> del(K... keys);
+
+    /**
+     * Unlink one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
+     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
+     */
+    RedisFuture<Long> unlink(K... keys);
 
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular

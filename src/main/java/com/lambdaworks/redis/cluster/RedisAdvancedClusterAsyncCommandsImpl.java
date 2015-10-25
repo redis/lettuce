@@ -74,6 +74,24 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<Long> unlink(K... keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+
+        if (partitioned.size() < 2) {
+            return super.unlink(keys);
+        }
+
+        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            RedisFuture<Long> unlink = super.unlink(entry.getValue());
+            executions.put(entry.getKey(), unlink);
+        }
+
+        return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    @Override
     public RedisFuture<List<V>> mget(K... keys) {
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 

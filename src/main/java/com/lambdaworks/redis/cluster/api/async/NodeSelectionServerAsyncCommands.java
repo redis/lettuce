@@ -200,11 +200,25 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
     AsyncExecutions<String> flushall();
 
     /**
+     * Remove all keys asynchronously from all databases.
+     *
+     * @return String simple-string-reply
+     */
+    AsyncExecutions<String> flushallAsync();
+
+    /**
      * Remove all keys from the current database.
      * 
      * @return String simple-string-reply
      */
     AsyncExecutions<String> flushdb();
+
+    /**
+     * Remove all keys asynchronously from the current database.
+     *
+     * @return String simple-string-reply
+     */
+    AsyncExecutions<String> flushdbAsync();
 
     /**
      * Get information and statistics about the server.

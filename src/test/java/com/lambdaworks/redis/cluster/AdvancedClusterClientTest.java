@@ -210,12 +210,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void delCrossSlot() throws Exception {
 
-        msetCrossSlot();
-        List<String> keys = Lists.newArrayList();
-        for (char c = 'a'; c < 'z'; c++) {
-            String key = new String(new char[] { c, c, c });
-            keys.add(key);
-        }
+        List<String> keys = prepareKeys();
 
         RedisFuture<Long> result = commands.del(keys.toArray(new String[keys.size()]));
 
@@ -225,6 +220,31 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             String s1 = commands.get(mykey).get();
             assertThat(s1).isNull();
         }
+    }
+
+    @Test
+    public void unlinkCrossSlot() throws Exception {
+
+        List<String> keys = prepareKeys();
+
+        RedisFuture<Long> result = commands.unlink(keys.toArray(new String[keys.size()]));
+
+        assertThat(result.get()).isEqualTo(25);
+
+        for (String mykey : keys) {
+            String s1 = commands.get(mykey).get();
+            assertThat(s1).isNull();
+        }
+    }
+
+    protected List<String> prepareKeys() throws Exception {
+        msetCrossSlot();
+        List<String> keys = Lists.newArrayList();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            keys.add(key);
+        }
+        return keys;
     }
 
     @Test

@@ -271,6 +271,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> unlink(K... keys) {
+        assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(UNLINK, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> unlink(Iterable<K> keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(UNLINK, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> discard() {
         return createCommand(DISCARD, new StatusOutput<K, V>(codec));
     }
@@ -343,8 +355,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHALL, new StatusOutput<K, V>(codec));
     }
 
+    public Command<K, V, String> flushallAsync() {
+        return createCommand(FLUSHALL, new StatusOutput<K, V>(codec), new CommandArgs<K, V>(codec).add(ASYNC));
+    }
+
     public Command<K, V, String> flushdb() {
         return createCommand(FLUSHDB, new StatusOutput<K, V>(codec));
+    }
+
+    public Command<K, V, String> flushdbAsync() {
+        return createCommand(FLUSHDB, new StatusOutput<K, V>(codec), new CommandArgs<K, V>(codec).add(ASYNC));
     }
 
     public Command<K, V, V> get(K key) {

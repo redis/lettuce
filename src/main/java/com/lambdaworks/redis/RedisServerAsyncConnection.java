@@ -182,11 +182,25 @@ public interface RedisServerAsyncConnection<K, V> {
     RedisFuture<String> flushall();
 
     /**
+     * Remove all keys asynchronously from all databases.
+     *
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> flushallAsync();
+
+    /**
      * Remove all keys from the current database.
      * 
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> flushdb();
+
+    /**
+     * Remove all keys asynchronously from the current database.
+     *
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> flushdbAsync();
 
     /**
      * Get information and statistics about the server.

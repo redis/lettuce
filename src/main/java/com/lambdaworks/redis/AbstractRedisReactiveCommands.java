@@ -269,6 +269,15 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> unlink(K... keys) {
+        return createObservable(() -> commandBuilder.unlink(keys));
+    }
+
+    public Observable<Long> unlink(Iterable<K> keys) {
+        return createObservable(() -> commandBuilder.unlink(keys));
+    }
+
+    @Override
     public Observable<String> discard() {
         return createObservable(commandBuilder::discard);
     }
@@ -342,8 +351,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<String> flushallAsync() {
+        return createObservable(commandBuilder::flushallAsync);
+    }
+
+    @Override
     public Observable<String> flushdb() {
         return createObservable(commandBuilder::flushdb);
+    }
+
+    @Override
+    public Observable<String> flushdbAsync() {
+        return createObservable(commandBuilder::flushdbAsync);
     }
 
     @Override

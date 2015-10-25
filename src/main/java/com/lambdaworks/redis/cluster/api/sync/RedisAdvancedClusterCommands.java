@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -109,12 +110,20 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     NodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic);
 
     /**
-     * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
-     * 
-     * @param keys the key
+     * Delete one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
      */
     Long del(K... keys);
+
+    /**
+     * Unlink one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
+     * @return Long integer-reply The number of keys that were removed.
+     */
+    Long unlink(K... keys);
 
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
