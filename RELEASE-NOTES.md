@@ -10,12 +10,13 @@ Enhancements
 
 Fixes
 -----
+* Do not cache InetSocketAddress/SocketAddress in RedisURI #144
 
 Other
 ------
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested
-continuously against Redis 3.0 and the unstable branch
+continuously against Redis 3.0 and the unstable branch.
 
 If you need any support, meet lettuce at
 

@@ -187,7 +187,6 @@ public class ClientTest extends AbstractCommandTest {
 
             Thread.sleep(100);
             redisUri.setPort(TestSettings.port(500));
-            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
             waitUntilDisconnected(connection);
@@ -246,7 +245,6 @@ public class ClientTest extends AbstractCommandTest {
 
             connectionWatchdog.setReconnectSuspended(true);
             redisUri.setPort(TestSettings.port(500));
-            ReflectionTestUtils.setField(redisUri, "resolvedAddress", null);
 
             connection.quit();
             waitUntilDisconnected(connection);
