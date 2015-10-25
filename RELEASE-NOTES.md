@@ -6,6 +6,8 @@ Enhancements
 * Implement an EventBus system to publish events and metrics #124 (Thanks to @pulse00)
 * ClientResources for 4.1 enhancement #137
 * Provide a reusable client configuration for ThreadPools and other expensive resources #110
+* Support FLUSHALL [ASYNC]/FLUSHDB [ASYNC]/UNLINK commands #146
+* Support DEBUG RESTART/CRASH-AND-RECOVER [delay] commands #145
 
 Fixes
 -----
