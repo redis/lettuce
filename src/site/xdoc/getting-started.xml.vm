@@ -38,7 +38,7 @@
       <p>
         To use the MyBatis-Spring module, you just need to include the
         <code>
-          mybatis-spring-x.x.x.jar
+          mybatis-spring-${project.version}.jar
         </code>
         file and its dependencies in the classpath.
       </p>
@@ -51,7 +51,7 @@
 <dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
-  <version>x.x.x</version>
+  <version>${project.version}</version>
 </dependency>]]></source>
     </subsection>
 
