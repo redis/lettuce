@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
 
   <name>mybatis-spring</name>
-  <description>An easy-to-use Spring3 bridge for MyBatis sql mapping framework.</description>
+  <description>An easy-to-use Spring bridge for MyBatis sql mapping framework.</description>
   <url>http://www.mybatis.org/spring/</url>
 
   <contributors>
