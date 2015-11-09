@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>26-SNAPSHOT</version>
+    <version>26</version>
     <relativePath />
   </parent>
 
@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
 
   <name>mybatis-spring</name>
-  <description>An easy-to-use Spring3 bridge for MyBatis sql mapping framework.</description>
+  <description>An easy-to-use Spring bridge for MyBatis sql mapping framework.</description>
   <url>http://www.mybatis.org/spring/</url>
 
   <contributors>
@@ -70,7 +70,7 @@
     </contributor>
 
     <contributor>
-      <name>Tomáš Piňos</name>
+      <name>Tom&#225;&#353; Pi&#328;os</name>
       <email>tomas.pinos@gmail.com</email>
     </contributor>
   </contributors>
@@ -161,7 +161,7 @@
     <dependency>
       <groupId>cglib</groupId>
       <artifactId>cglib</artifactId>
-      <version>3.1</version>
+      <version>3.2.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -175,7 +175,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>3.0.1</version>
+      <version>3.0.2</version>
       <scope>test</scope>
     </dependency>
 
