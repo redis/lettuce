@@ -97,7 +97,7 @@ Basic Usage
 -----------
 
 ```java
-  RedisClient client = RedisClient.create("redis://localhost")
+  RedisClient client = new RedisClient("localhost");
   RedisStringsConnection<String, String> connection = client.connect()
   String value = connection.get("key")
 ```
