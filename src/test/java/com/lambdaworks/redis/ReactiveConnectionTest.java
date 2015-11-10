@@ -1,13 +1,11 @@
 package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.millis;
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.Wait;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,6 +17,7 @@ import rx.Subscriber;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.Delay;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
@@ -112,6 +111,27 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         Wait.untilEquals("4", () -> redis.get(key));
 
         assertThat(redis.get(key)).isEqualTo("4");
+    }
+
+    @Test
+    public void transactional() throws Exception {
+
+        final CountDownLatch sync = new CountDownLatch(1);
+
+        RedisReactiveCommands<String, String> reactive = client.connect().reactive();
+
+        reactive.multi().subscribe(multiResponse -> {
+            reactive.set(key, "1").subscribe();
+            reactive.incr(key).subscribe(getResponse -> {
+                sync.countDown();
+            });
+            reactive.exec().subscribe();
+        });
+
+        sync.await();
+
+        String result = redis.get(key);
+        assertThat(result).isEqualTo("2");
     }
 
     private static class CompletionSubscriber extends Subscriber<Object> {
