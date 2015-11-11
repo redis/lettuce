@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis.masterslave;
 
 import java.util.Set;
 

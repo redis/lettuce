@@ -761,7 +761,7 @@ public class RedisClient extends AbstractRedisClient {
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
             logger.debug("Connecting to Redis using Sentinels " + redisURI.getSentinels() + ", MasterId "
                     + redisURI.getSentinelMasterId());
-            redisAddress = lookupRedis(redisURI.getSentinelMasterId());
+            redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {
                 throw new RedisConnectionException("Cannot provide redisAddress using sentinel for masterId "
@@ -774,11 +774,11 @@ public class RedisClient extends AbstractRedisClient {
         return redisAddress;
     }
 
-    private SocketAddress lookupRedis(String sentinelMasterId) throws InterruptedException, TimeoutException,
+    private SocketAddress lookupRedis(RedisURI sentinelUri) throws InterruptedException, TimeoutException,
             ExecutionException {
-        RedisSentinelAsyncCommands<String, String> connection = connectSentinel().async();
+        RedisSentinelAsyncCommands<String, String> connection = connectSentinel(sentinelUri).async();
         try {
-            return connection.getMasterAddrByName(sentinelMasterId).get(timeout, unit);
+            return connection.getMasterAddrByName(sentinelUri.getSentinelMasterId()).get(timeout, unit);
         } finally {
             connection.close();
         }
