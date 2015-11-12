@@ -87,7 +87,8 @@ public class RedisURITest {
         assertThat(redisURI3.hashCode()).isNotEqualTo(redisURI2.hashCode());
     }
 
-    @Test public void timeoutParsingTest() {
+    @Test
+    public void timeoutParsingTest() throws Exception {
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5000", 5000, TimeUnit.MILLISECONDS);
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5000ms", 5000, TimeUnit.MILLISECONDS);
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5s", 5, TimeUnit.SECONDS);
@@ -103,7 +104,16 @@ public class RedisURITest {
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout(), defaultUri.getUnit());
     }
 
-    @Test public void timeoutParsingWithJunkParamTest() {
+    @Test
+    public void queryStringDecodingTest() throws Exception {
+        String timeout = "%74%69%6D%65%6F%75%74";
+        String eq = "%3d";
+        String s = "%73";
+        checkUriTimeout("redis://auth@localhost:1234/5?" + timeout + eq + "5" + s, 5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void timeoutParsingWithJunkParamTest() throws Exception {
         RedisURI redisURI1 = RedisURI.create("redis-sentinel://auth@localhost:1234/5?timeout=5s;junkparam=#master-instance");
         assertThat(redisURI1.getTimeout()).isEqualTo(5);
         assertThat(redisURI1.getUnit()).isEqualTo(TimeUnit.SECONDS);
