@@ -222,7 +222,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // no-op, leave defaults
             }
         } else {
-            long timeoutValue = Long.parseLong(timeoutString, 0, numbersEnd, 10);
+            String timeoutValueString = timeoutString.substring(0, numbersEnd);
+            long timeoutValue = Long.parseLong(timeoutValueString);
             builder.withTimeout(timeoutValue, TimeUnit.MILLISECONDS);
 
             String suffix = timeoutString.substring(numbersEnd);
