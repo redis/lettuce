@@ -11,6 +11,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +59,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final String URI_SCHEME_REDIS = "redis";
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
     public static final String URI_SCHEME_REDIS_SOCKET = "redis-socket";
+    public static final String TIMEOUT_PARAMETER_NAME = "timeout";
 
     /**
      * The default sentinel port.
@@ -170,8 +172,65 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
 
+        if (isNotEmpty(uri.getQuery())) {
+            StringTokenizer st = new StringTokenizer(uri.getQuery(), "&;");
+            while (st.hasMoreTokens()) {
+                String queryParam = st.nextToken().toLowerCase();
+                if (queryParam.startsWith(TIMEOUT_PARAMETER_NAME)) {
+                    parseTimeout(builder, queryParam);
+                }
+            }
+        }
+
         return builder.build();
 
+    }
+
+    private static void parseTimeout(Builder builder, String queryParam) {
+        int index = queryParam.indexOf('=');
+        if (index < 0) {
+            return;
+        }
+
+        String timeoutString = queryParam.substring(index + 1);
+
+        int numbersEnd = 0;
+        while (numbersEnd < timeoutString.length() && Character.isDigit(timeoutString.charAt(numbersEnd))) {
+            numbersEnd++;
+        }
+
+        if (numbersEnd == 0) {
+            if (timeoutString.startsWith("-")) {
+                builder.withTimeout(0, TimeUnit.MILLISECONDS);
+            } else {
+                // no-op, leave defaults
+            }
+        } else {
+            long timeoutValue = Long.parseLong(timeoutString, 0, numbersEnd, 10);
+            builder.withTimeout(timeoutValue, TimeUnit.MILLISECONDS);
+
+            String suffix = timeoutString.substring(numbersEnd);
+            TimeUnit timeoutUnit;
+            if ("ns".equals(suffix)) {
+                timeoutUnit = TimeUnit.NANOSECONDS;
+            } else if ("us".equals(suffix)) {
+                timeoutUnit = TimeUnit.MICROSECONDS;
+            } else if ("ms".equals(suffix)) {
+                timeoutUnit = TimeUnit.MILLISECONDS;
+            } else if ("s".equals(suffix)) {
+                timeoutUnit = TimeUnit.SECONDS;
+            } else if ("m".equals(suffix)) {
+                timeoutUnit = TimeUnit.MINUTES;
+            } else if ("h".equals(suffix)) {
+                timeoutUnit = TimeUnit.HOURS;
+            } else if ("d".equals(suffix)) {
+                timeoutUnit = TimeUnit.DAYS;
+            } else {
+                timeoutUnit = TimeUnit.MILLISECONDS;
+            }
+
+            builder.withTimeout(timeoutValue, timeoutUnit);
+        }
     }
 
     private static Builder configureStandalone(URI uri) {
