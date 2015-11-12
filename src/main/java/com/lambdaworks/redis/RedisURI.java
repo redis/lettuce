@@ -9,8 +9,12 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +62,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final String URI_SCHEME_REDIS = "redis";
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
     public static final String URI_SCHEME_REDIS_SOCKET = "redis-socket";
+    public static final String TIMEOUT_PARAMETER_NAME = "timeout";
+    public static final Map<String, TimeUnit> TIME_UNIT_MAP;
+
+    static {
+        Map<String, TimeUnit> unitMap = new HashMap<String, TimeUnit>();
+        unitMap.put("ns", TimeUnit.NANOSECONDS);
+        unitMap.put("us", TimeUnit.MICROSECONDS);
+        unitMap.put("ms", TimeUnit.MILLISECONDS);
+        unitMap.put("s", TimeUnit.SECONDS);
+        unitMap.put("m", TimeUnit.MINUTES);
+        unitMap.put("h", TimeUnit.HOURS);
+        unitMap.put("d", TimeUnit.DAYS);
+        TIME_UNIT_MAP = Collections.unmodifiableMap(unitMap);
+    }
 
     /**
      * The default sentinel port.
@@ -170,8 +188,52 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
 
+        if (isNotEmpty(uri.getQuery())) {
+            StringTokenizer st = new StringTokenizer(uri.getQuery(), "&;");
+            while (st.hasMoreTokens()) {
+                String queryParam = st.nextToken().toLowerCase();
+                if (queryParam.startsWith(TIMEOUT_PARAMETER_NAME)) {
+                    parseTimeout(builder, queryParam);
+                }
+            }
+        }
+
         return builder.build();
 
+    }
+
+    private static void parseTimeout(Builder builder, String queryParam) {
+        int index = queryParam.indexOf('=');
+        if (index < 0) {
+            return;
+        }
+
+        String timeoutString = queryParam.substring(index + 1);
+
+        int numbersEnd = 0;
+        while (numbersEnd < timeoutString.length() && Character.isDigit(timeoutString.charAt(numbersEnd))) {
+            numbersEnd++;
+        }
+
+        if (numbersEnd == 0) {
+            if (timeoutString.startsWith("-")) {
+                builder.withTimeout(0, TimeUnit.MILLISECONDS);
+            } else {
+                // no-op, leave defaults
+            }
+        } else {
+            String timeoutValueString = timeoutString.substring(0, numbersEnd);
+            long timeoutValue = Long.parseLong(timeoutValueString);
+            builder.withTimeout(timeoutValue, TimeUnit.MILLISECONDS);
+
+            String suffix = timeoutString.substring(numbersEnd);
+            TimeUnit timeoutUnit = TIME_UNIT_MAP.get(suffix);
+            if (timeoutUnit == null) {
+                timeoutUnit = TimeUnit.MILLISECONDS;
+            }
+
+            builder.withTimeout(timeoutValue, timeoutUnit);
+        }
     }
 
     private static Builder configureStandalone(URI uri) {
