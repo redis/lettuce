@@ -16,6 +16,7 @@ import com.lambdaworks.redis.RedisURI;
  *     redis://host[:port][/databaseNumber]
  * }
  *
+ * @see RedisURI
  * @see ClientResourcesFactoryBean
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0

@@ -360,7 +360,7 @@
                         <link>http://commons.apache.org/proper/commons-pool/api-2.2/</link>
                         <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
                     </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html</additionalparam>
+                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax</additionalparam>
                 </configuration>
             </plugin>
 

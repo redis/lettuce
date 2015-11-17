@@ -12,8 +12,8 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
- * Factory Bean for {@link RedisClient} instances. Requires a {@link RedisURI} and allows
- * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Formats:
+ * Factory Bean for {@link RedisClient} instances. Requires a {@link RedisURI} and allows to reuse
+ * {@link com.lambdaworks.redis.resource.ClientResources}. URI Formats:
  * {@code
  *     redis-sentinel://host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId
  * }
@@ -21,7 +21,8 @@ import com.lambdaworks.redis.resource.ClientResources;
  * {@code
  *     redis://host[:port][/databaseNumber]
  * }
- * 
+ *
+ * @see RedisURI
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
