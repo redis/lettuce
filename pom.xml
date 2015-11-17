@@ -55,7 +55,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <github.site.upload.skip>true</github.site.upload.skip>
-        <lettuce-release-version>3.2.Final</lettuce-release-version>
+        <lettuce-release-version>3.3.1.Final</lettuce-release-version>
         <netty-version>4.0.30.Final</netty-version>
     </properties>
 
@@ -63,7 +63,7 @@
         <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
         <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
         <url>http://github.com/mp911de/lettuce</url>
-        <tag>4.0</tag>
+        <tag>4.1</tag>
     </scm>
 
     <prerequisites>
@@ -374,7 +374,7 @@
                         <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
                         <link>http://reactivex.io/RxJava/javadoc/</link>
                     </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html</additionalparam>
+                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax</additionalparam>
                     <tags>
                         <tag>
                             <name>generated</name>

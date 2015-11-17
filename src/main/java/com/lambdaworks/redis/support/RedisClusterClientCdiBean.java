@@ -16,7 +16,8 @@ import com.lambdaworks.redis.resource.ClientResources;
  * {@link com.lambdaworks.redis.resource.ClientResources}. URI Format: {@code
  *     redis://[password@]host[:port]
  * }
- * 
+ *
+ * @see RedisURI
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
