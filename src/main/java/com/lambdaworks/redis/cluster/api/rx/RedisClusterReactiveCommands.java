@@ -1,22 +1,11 @@
 package com.lambdaworks.redis.cluster.api.rx;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisFuture;
 import rx.Observable;
 
-import com.lambdaworks.redis.api.rx.BaseRedisReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisHLLReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisHashReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisListReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisSetReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisSortedSetReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisStringReactiveCommands;
+import com.lambdaworks.redis.api.rx.*;
 
 /**
  * A complete reactive and thread-safe cluster Redis API with 400+ Methods.
@@ -29,7 +18,7 @@ import com.lambdaworks.redis.api.rx.RedisStringReactiveCommands;
 public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
         RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V> {
+        RedisHLLReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations.
@@ -137,7 +126,8 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as {@link #clusterNodes()} but one line per slave.
+     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as
+     *         {@link #clusterNodes()} but one line per slave.
      */
     Observable<String> clusterSlaves(String nodeId);
 

@@ -19,7 +19,8 @@ import com.lambdaworks.redis.api.async.*;
 public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
         RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
-        RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisClusterAsyncConnection<K, V> {
+        RedisHLLAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>,
+        RedisClusterAsyncConnection<K, V> {
 
     /**
      * Set the default timeout for operations.
@@ -127,7 +128,8 @@ public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as {@link #clusterNodes()} but one line per slave.
+     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as
+     *         {@link #clusterNodes()} but one line per slave.
      */
     RedisFuture<List<String>> clusterSlaves(String nodeId);
 
