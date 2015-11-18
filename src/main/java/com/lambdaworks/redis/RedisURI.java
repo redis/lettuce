@@ -35,23 +35,24 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * <ul>
  * <li>Use an URI:
  * <p>
- * {@code RedisURI.create("redis://localhost/")}
+ * {@code RedisURI.create("redis://localhost/");}
  * </p>
  * See {@link #create(String)} for more options</li>
- * <li>Use an the Builder:
+ * <li>Use the Builder:
  * <p>
- * {@code RedisURI.Builder.redis("localhost", 6379).auth("password").database(1).build() }
+ * {@code RedisURI.Builder.redis("localhost", 6379).auth("password").database(1).build(); }
  * </p>
  * See {@link com.lambdaworks.redis.RedisURI.Builder#redis(String)} and
  * {@link com.lambdaworks.redis.RedisURI.Builder#sentinel(String)} for more options.</li>
  * <li>Construct your own instance:
  * <p>
- * {@code new RedisURI("localhost", 6379, 60, TimeUnit.SECONDS)}
+ * {@code new RedisURI("localhost", 6379, 60, TimeUnit.SECONDS);}
  * </p>
  * or
  * <p>
- * <code>RedisURI uri = new RedisURI();
- uri.setHost("localhost")</code>
+ *     {@code RedisURI uri = new RedisURI();
+ *     uri.setHost("localhost");
+ *     }
  * </p>
  * </li>
  * </ul>
@@ -60,24 +61,24 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  *
  * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
  * </b><i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout[d|h|m|s|ms|us|ns]</i>][<i>&database=database</i>]] </blockquote>
+ * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&database=database</i>]] </blockquote>
  *
- * <b>Redis Standalone (SSL)</b> <blockquote> <i>redis-ssl</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
+ * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
  * </b><i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout[d|h|m|s|ms|us|ns]</i>][<i>&database=database</i>]] </blockquote>
+ * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&database=database</i>]] </blockquote>
  *
  * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://}
- * </b>[<i>password@</i>]<i>path</i>[<b>{@code ?}</b> [<i>timeout=timeout[d|h|m|s|ms|us|ns]</i>][<i>&database=database</i>]]
+ * </b>[<i>password@</i>]<i>path</i>[<b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>]]
  * </blockquote>
  *
  * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :}
- * </b><i>port1</i>][<i>host2</i> [<b>{@code :}</b><i>port2</i>]][<i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /}
+ * </b><i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /}
  * </b><i>database</i>][<b>{@code ?}
- * </b>[<i>timeout=timeout[d|h|m|s|ms|us|ns]</i>[<i>&sentinelMasterId=sentinelMasterId</i>][<i>&database=database</i>]]
+ * </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>]]
  * </blockquote>
  *
  * <p>
- * <b>Schemes units</b>
+ * <b>Schemes</b>
  * </p>
  * <ul>
  * <li><b>redis</b> Redis Standalone</li>
