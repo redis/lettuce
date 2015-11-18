@@ -4,15 +4,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.api.sync.RedisHLLCommands;
-import com.lambdaworks.redis.api.sync.RedisHashCommands;
-import com.lambdaworks.redis.api.sync.RedisKeyCommands;
-import com.lambdaworks.redis.api.sync.RedisListCommands;
-import com.lambdaworks.redis.api.sync.RedisScriptingCommands;
-import com.lambdaworks.redis.api.sync.RedisServerCommands;
-import com.lambdaworks.redis.api.sync.RedisSetCommands;
-import com.lambdaworks.redis.api.sync.RedisSortedSetCommands;
-import com.lambdaworks.redis.api.sync.RedisStringCommands;
+import com.lambdaworks.redis.api.sync.*;
 
 /**
  * A complete synchronous and thread-safe Redis Cluster API with 400+ Methods.
@@ -24,7 +16,7 @@ import com.lambdaworks.redis.api.sync.RedisStringCommands;
  */
 public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCommands<K, V>, RedisStringCommands<K, V>,
         RedisListCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisScriptingCommands<K, V>,
-        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, AutoCloseable, RedisClusterConnection<K, V> {
+        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, RedisGeoCommands<K, V>, AutoCloseable, RedisClusterConnection<K, V> {
 
     /**
      * Set the default timeout for operations.
