@@ -12,46 +12,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.base.Optional;
-import com.lambdaworks.redis.metrics.CommandLatencyId;
-import com.lambdaworks.redis.metrics.CommandMetrics;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
+import com.lambdaworks.redis.metrics.CommandLatencyId;
+import com.lambdaworks.redis.metrics.CommandMetrics;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -385,8 +369,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             partition.setSlots(Lists.<Integer> newArrayList());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
-            }
- else {
+            } else {
                 partition.setSlots(new ArrayList<Integer>());
             }
         }
