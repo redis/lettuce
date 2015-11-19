@@ -84,7 +84,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
                 connection.quit();
                 Wait.untilTrue(() -> {
                     return !connection.isOpen();
-                });
+                }).waitOrTimeout();
 
                 connection.subscribe(channel);
                 assertThat(channels.take()).isEqualTo(channel);

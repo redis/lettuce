@@ -6,6 +6,7 @@ import java.lang.reflect.Proxy;
 import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -16,7 +17,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 public class ClusterTestUtil {
 
-    public static String getNodeId(RedisClusterConnection<String, String> connection) {
+    public static String getNodeId(RedisClusterCommands<String, String> connection) {
         RedisClusterNode ownPartition = getOwnPartition(connection);
         if (ownPartition != null) {
             return ownPartition.getNodeId();
@@ -25,7 +26,7 @@ public class ClusterTestUtil {
         return null;
     }
 
-    public static RedisClusterNode getOwnPartition(RedisClusterConnection<String, String> connection) {
+    public static RedisClusterNode getOwnPartition(RedisClusterCommands<String, String> connection) {
         Partitions partitions = ClusterPartitionParser.parse(connection.clusterNodes());
 
         for (RedisClusterNode partition : partitions) {

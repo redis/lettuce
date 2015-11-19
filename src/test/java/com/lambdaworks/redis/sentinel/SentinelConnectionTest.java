@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.lambdaworks.Wait;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -97,7 +98,9 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.sync().close();
-        Delay.delay(seconds(1));
+
+        Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
+
         assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
     }
@@ -106,7 +109,9 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     public void testAsyncClose() throws Exception {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.async().close();
-        Delay.delay(seconds(1));
+
+        Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
+
         assertThat(sentinel.isOpen()).isFalse();
         assertThat(statefulConnection.isOpen()).isFalse();
     }

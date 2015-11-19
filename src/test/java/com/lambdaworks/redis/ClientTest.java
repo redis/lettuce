@@ -8,10 +8,12 @@ import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -471,15 +473,16 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Test(timeout = 20000)
     public void reset() throws Exception {
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisAsyncCommands<String, String> async = connection.async();
 
-        RedisAsyncCommandsImpl<String, String> async = (RedisAsyncCommandsImpl<String, String>) client.connectAsync();
-
-        async.set(key, value).get();
+        connection.sync().set(key, value);
         async.reset();
-        async.set(key, value).get();
+        connection.sync().set(key, value);
+        connection.sync().flushall();
 
-        RedisFuture<Object> eval = async.eval("while true do end", STATUS, new String[0]);
-        Thread.sleep(200);
+        RedisFuture<KeyValue<String, String>> eval = async.blpop(2, key);
+        Thread.sleep(100);
         assertThat(eval.isDone()).isFalse();
         assertThat(eval.isCancelled()).isFalse();
 
@@ -488,9 +491,7 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(eval.isCancelled()).isTrue();
         assertThat(eval.isDone()).isTrue();
 
-        assertThat(redis.scriptKill()).isEqualTo("OK");
-
-        async.close();
+        connection.close();
     }
 
     <K, V> StatefulRedisConnectionImpl<K, V> getStatefulConnection(RedisAsyncConnection<K, V> redisAsyncConnection) {

@@ -2,11 +2,7 @@
 
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.ScriptOutputType.BOOLEAN;
-import static com.lambdaworks.redis.ScriptOutputType.INTEGER;
-import static com.lambdaworks.redis.ScriptOutputType.MULTI;
-import static com.lambdaworks.redis.ScriptOutputType.STATUS;
-import static com.lambdaworks.redis.ScriptOutputType.VALUE;
+import static com.lambdaworks.redis.ScriptOutputType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -18,6 +14,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
 
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisException;
@@ -30,11 +27,15 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     @After
     public void tearDown() throws Exception {
 
-        try {
-            redis.scriptKill();
-        } catch (RedisException e) {
+        Wait.untilNoException(() -> {
+            try {
+                redis.scriptKill();
+            } catch (RedisException e) {
+                // ignore
+            }
+            redis.ping();
+        });
 
-        }
     }
 
     @Test

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -45,7 +46,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         Delay.delay(millis(200));
         assertThat(redis.get(key)).isNull();
         set.subscribe();
-        Wait.untilEquals(value, () -> redis.get(key));
+        Wait.untilEquals(value, () -> redis.get(key)).waitOrTimeout();
 
         assertThat(redis.get(key)).isEqualTo(value);
     }
@@ -70,9 +71,9 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     public void testCancelCommand() throws Exception {
 
         List<Object> result = Lists.newArrayList();
-        reactive.clientPause(2000).subscribe();
+        reactive.clientPause(1000).subscribe();
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
-        Delay.delay(millis(500));
+        Delay.delay(millis(100));
 
         reactive.reset();
         assertThat(result).hasSize(1).contains("completed");
@@ -88,14 +89,14 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     public void testMultiCancel() throws Exception {
 
         List<Object> result = Lists.newArrayList();
-        reactive.clientPause(2000).subscribe();
+        reactive.clientPause(1000).subscribe();
 
         Observable<String> set = reactive.set(key, value);
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
 
-        Delay.delay(millis(500));
+        Delay.delay(millis(100));
         reactive.reset();
         assertThat(result).hasSize(3).contains("completed");
     }
@@ -128,7 +129,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
             reactive.exec().subscribe();
         });
 
-        sync.await();
+        sync.await(5, TimeUnit.SECONDS);
 
         String result = redis.get(key);
         assertThat(result).isEqualTo("2");

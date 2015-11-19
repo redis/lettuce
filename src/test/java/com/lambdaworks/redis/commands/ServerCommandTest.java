@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -327,6 +328,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    @Ignore("Run me manually, I eat up 5 seconds.")
     public void sync() throws Exception {
         assertThat(redis.sync().startsWith("REDIS")).isTrue();
     }

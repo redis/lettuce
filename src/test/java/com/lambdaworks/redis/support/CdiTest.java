@@ -7,6 +7,7 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.FastShutdown;
 import org.apache.webbeans.cditest.CdiTestContainer;
 import org.apache.webbeans.cditest.CdiTestContainerLoader;
 import org.junit.AfterClass;
@@ -46,7 +47,7 @@ public class CdiTest {
     }
 
     public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
-        clientResources.shutdown().get();
+        FastShutdown.shutdown(clientResources);
     }
 
     @PersonDB

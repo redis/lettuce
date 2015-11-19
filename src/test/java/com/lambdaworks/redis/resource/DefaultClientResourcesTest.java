@@ -68,7 +68,7 @@ public class DefaultClientResourcesTest {
         assertThat(sut.commandLatencyCollector()).isNotNull();
         assertThat(sut.commandLatencyCollector().isEnabled()).isFalse();
 
-        assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
+        assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 
     @Test
@@ -108,7 +108,7 @@ public class DefaultClientResourcesTest {
         assertThat(eventLoopGroup.executorCount()).isEqualTo(3);
         assertThat(sut.ioThreadPoolSize()).isEqualTo(3);
 
-        assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
+        assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 
     @Test
@@ -133,7 +133,7 @@ public class DefaultClientResourcesTest {
         }, timeout(seconds(2)));
 
         assertThat(subject.getOnNextEvents()).contains(event);
-        assertThat(sut.shutdown(10, 10, TimeUnit.MILLISECONDS).get()).isTrue();
+        assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 
 }

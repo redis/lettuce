@@ -2,34 +2,25 @@ package com.lambdaworks.redis.cluster;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
-
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
+
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -72,13 +63,21 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             logger.debug("getConnection(" + intent + ", " + slot + ")");
         }
 
-        if (intent == Intent.READ && readFrom != null) {
-            return getReadConnection(slot);
+        try {
+            if (intent == Intent.READ && readFrom != null) {
+                return getReadConnection(slot);
+            }
+            return getWriteConnection(slot);
+        } catch (RedisException e) {
+            throw e;
+        } catch (UncheckedExecutionException | ExecutionException e) {
+            throw new RedisException(e.getCause());
+        } catch (RuntimeException e) {
+            throw new RedisException(e);
         }
-        return getWriteConnection(slot);
     }
 
-    protected StatefulRedisConnection<K, V> getWriteConnection(int slot) {
+    protected StatefulRedisConnection<K, V> getWriteConnection(int slot) throws ExecutionException {
         StatefulRedisConnection<K, V> writer;// avoid races when reconfiguring partitions.
         synchronized (stateLock) {
             writer = writers[slot];
@@ -90,22 +89,17 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
             }
 
-            try {
-                // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
-                // host because the nodeId can be handled by a different host.
-                RedisURI uri = partition.getUri();
-                ConnectionKey key = new ConnectionKey(Intent.WRITE, uri.getHost(), uri.getPort());
-                return writers[slot] = connections.get(key);
-            } catch (UncheckedExecutionException e) {
-                throw new RedisException(e.getCause());
-            } catch (Exception e) {
-                throw new RedisException(e);
-            }
+            // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
+            // host because the nodeId can be handled by a different host.
+            RedisURI uri = partition.getUri();
+            ConnectionKey key = new ConnectionKey(Intent.WRITE, uri.getHost(), uri.getPort());
+            return writers[slot] = connections.get(key);
+
         }
         return writer;
     }
 
-    protected StatefulRedisConnection<K, V> getReadConnection(int slot) {
+    protected StatefulRedisConnection<K, V> getReadConnection(int slot) throws ExecutionException {
         StatefulRedisConnection<K, V> readerCandidates[];// avoid races when reconfiguring partitions.
         synchronized (stateLock) {
             readerCandidates = readers[slot];
@@ -152,29 +146,24 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return readerCandidates[0];
     }
 
-    private StatefulRedisConnection<K, V>[] getReadFromConnections(List<RedisNodeDescription> selection) {
+    private StatefulRedisConnection<K, V>[] getReadFromConnections(List<RedisNodeDescription> selection)
+            throws ExecutionException {
         StatefulRedisConnection<K, V>[] readerCandidates;
-        try {
-            // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
-            // host because the nodeId can be handled by a different host.
+        // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
+        // host because the nodeId can be handled by a different host.
 
-            readerCandidates = new StatefulRedisConnection[selection.size()];
+        readerCandidates = new StatefulRedisConnection[selection.size()];
 
-            for (int i = 0; i < selection.size(); i++) {
-                RedisNodeDescription redisClusterNode = selection.get(i);
+        for (int i = 0; i < selection.size(); i++) {
+            RedisNodeDescription redisClusterNode = selection.get(i);
 
-                RedisURI uri = redisClusterNode.getUri();
-                ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
-                        : Intent.READ, uri.getHost(), uri.getPort());
+            RedisURI uri = redisClusterNode.getUri();
+            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
+                    : Intent.READ, uri.getHost(), uri.getPort());
 
-                readerCandidates[i] = connections.get(key);
-            }
-
-        } catch (UncheckedExecutionException e) {
-            throw new RedisException(e.getCause());
-        } catch (Exception e) {
-            throw new RedisException(e);
+            readerCandidates[i] = connections.get(key);
         }
+
         return readerCandidates;
     }
 
@@ -198,8 +187,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         try {
             ConnectionKey key = new ConnectionKey(intent, nodeId);
             return connections.get(key);
-        } catch (Exception e) {
-            throw new RedisException(e);
+        } catch (UncheckedExecutionException | ExecutionException e) {
+            throw new RedisException(e.getCause());
         }
     }
 
@@ -222,9 +211,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
             ConnectionKey key = new ConnectionKey(intent, host, port);
             return connections.get(key);
-        } catch (UncheckedExecutionException e) {
+        } catch (RedisException e) {
+            throw e;
+        } catch (UncheckedExecutionException | ExecutionException e) {
             throw new RedisException(e.getCause());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new RedisException(e);
         }
     }
@@ -253,10 +244,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void reset() {
-        ImmutableMap<ConnectionKey, StatefulRedisConnection<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
-        for (StatefulRedisConnection<K, V> kvRedisAsyncConnection : copy.values()) {
-            kvRedisAsyncConnection.reset();
-        }
+        allConnections().forEach(StatefulRedisConnection::reset);
     }
 
     /**
@@ -349,16 +337,16 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             this.autoFlushCommands = autoFlush;
         }
 
-        for (StatefulRedisConnection<K, V> connection : connections.asMap().values()) {
-            connection.setAutoFlushCommands(autoFlush);
-        }
+        allConnections().forEach(connection -> connection.setAutoFlushCommands(autoFlush));
+    }
+
+    protected Collection<StatefulRedisConnection<K, V>> allConnections() {
+        return ImmutableList.copyOf(connections.asMap().values());
     }
 
     @Override
     public void flushCommands() {
-        for (StatefulRedisConnection<K, V> connection : connections.asMap().values()) {
-            connection.flushCommands();
-        }
+        allConnections().forEach(StatefulConnection::flushCommands);
     }
 
     @Override
@@ -402,16 +390,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier(final ConnectionKey connectionKey) {
-        return new Supplier<SocketAddress>() {
-            @Override
-            public SocketAddress get() {
-
-                if (connectionKey.nodeId != null) {
-                    return getSocketAddress(connectionKey.nodeId);
-                }
-                return new InetSocketAddress(connectionKey.host, connectionKey.port);
+        return () -> {
+            if (connectionKey.nodeId != null) {
+                return getSocketAddress(connectionKey.nodeId);
             }
-
+            return new InetSocketAddress(connectionKey.host, connectionKey.port);
         };
     }
 

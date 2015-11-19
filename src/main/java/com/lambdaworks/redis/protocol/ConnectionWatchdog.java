@@ -28,6 +28,8 @@ import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
  * 
@@ -63,29 +65,21 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
-     * {@link Channel} when disconnected, while reconnect is true.
-     * 
-     * @param clientOptions client options for the current connection
-     * @param bootstrap Configuration for new channels.
-     * @param reconnectWorkers executor group for reconnect tasks.
-     * @param timer Timer used for delayed reconnect.
-     */
-    public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, EventExecutorGroup reconnectWorkers, Timer timer) {
-        this(clientOptions, bootstrap, timer, reconnectWorkers, null);
-    }
-
-    /**
-     * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
      *
-     * @param clientOptions client options for the current connection
-     * @param bootstrap Configuration for new channels.
-     * @param timer Timer used for delayed reconnect.
-     * @param reconnectWorkers executor group for reconnect tasks.
-     * @param socketAddressSupplier the socket address suplier for gaining an address to reconnect to
+     * @param clientOptions client options for the current connection, must not be {@literal null}
+     * @param bootstrap Configuration for new channels, must not be {@literal null}
+     * @param timer Timer used for delayed reconnect, must not be {@literal null}
+     * @param reconnectWorkers executor group for reconnect tasks, must not be {@literal null}
+     * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@literal null}
      */
     public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Supplier<SocketAddress> socketAddressSupplier) {
+        checkArgument(clientOptions != null, "ClientOptions must not be null");
+        checkArgument(bootstrap != null, "Bootstrap must not be null");
+        checkArgument(timer != null, "Timer must not be null");
+        checkArgument(reconnectWorkers != null, "reconnectWorkers must not be null");
+
         this.clientOptions = clientOptions;
         this.bootstrap = bootstrap;
         this.timer = timer;
@@ -163,11 +157,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
                     if (!isEventLoopGroupActive()) {
                         logger.debug("isEventLoopGroupActive() == false");
-                        return;
-                    }
-
-                    if (reconnectWorkers != null) {
-                        ConnectionWatchdog.this.run(timeout);
                         return;
                     }
 
@@ -294,12 +283,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     private boolean isEventLoopGroupActive() {
-        if (bootstrap.group().isShutdown() || bootstrap.group().isTerminated() || bootstrap.group().isShuttingDown()) {
+        if (!isEventLoopGroupActive(bootstrap.group()) || !isEventLoopGroupActive(reconnectWorkers)) {
             return false;
         }
 
-        if (reconnectWorkers != null
-                && (reconnectWorkers.isShutdown() || reconnectWorkers.isTerminated() || reconnectWorkers.isShuttingDown())) {
+        return true;
+    }
+
+    private boolean isEventLoopGroupActive(EventExecutorGroup executorService){
+      if (executorService.isShutdown() || executorService.isTerminated() || executorService.isShuttingDown()) {
             return false;
         }
 
@@ -317,15 +309,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         return true;
     }
 
-    /**
-     * @deprecated use {@link #setListenOnChannelInactive(boolean)}
-     * @param reconnect {@literal true} if reconnect is active
-     */
-    @Deprecated
-    public void setReconnect(boolean reconnect) {
-        setListenOnChannelInactive(reconnect);
-    }
-
     public void setListenOnChannelInactive(boolean listenOnChannelInactive) {
         this.listenOnChannelInactive = listenOnChannelInactive;
     }
@@ -339,7 +322,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     public void setReconnectSuspended(boolean reconnectSuspended) {
-
         this.reconnectSuspended = reconnectSuspended;
     }
 
@@ -351,5 +333,4 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return logPrefix = buffer.toString();
     }
-
 }

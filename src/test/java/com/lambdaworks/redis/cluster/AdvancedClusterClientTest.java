@@ -1,15 +1,9 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -18,18 +12,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import com.lambdaworks.redis.cluster.api.async.AsyncExecutions;
-import com.lambdaworks.redis.cluster.api.async.AsyncNodeSelection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -151,16 +140,27 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
+    public void msetRegular() throws Exception {
+
+        Map<String, String> mset = ImmutableMap.of(key, value);
+
+        String result = syncCommands.mset(mset);
+
+        assertThat(result).isEqualTo("OK");
+        assertThat(syncCommands.get(key)).isEqualTo(value);
+    }
+
+    @Test
     public void msetCrossSlot() throws Exception {
 
         Map<String, String> mset = prepareMset();
 
-        RedisFuture<String> result = commands.mset(mset);
+        String result = syncCommands.mset(mset);
 
-        assertThat(result.get()).isEqualTo("OK");
+        assertThat(result).isEqualTo("OK");
 
         for (String mykey : mset.keySet()) {
-            String s1 = commands.get(mykey).get();
+            String s1 = syncCommands.get(mykey);
             assertThat(s1).isEqualTo("value-" + mykey);
         }
     }
@@ -190,6 +190,15 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
+    public void mgetRegular() throws Exception {
+
+        msetRegular();
+        List<String> result = syncCommands.mget(key);
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
     public void mgetCrossSlot() throws Exception {
 
         msetCrossSlot();
@@ -201,10 +210,20 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             expectation.add("value-" + key);
         }
 
-        RedisFuture<List<String>> result = commands.mget(keys.toArray(new String[keys.size()]));
+        List<String> result = syncCommands.mget(keys.toArray(new String[keys.size()]));
 
-        assertThat(result.get()).hasSize(keys.size());
-        assertThat(result.get()).isEqualTo(expectation);
+        assertThat(result).hasSize(keys.size());
+        assertThat(result).isEqualTo(expectation);
+    }
+
+    @Test
+    public void delRegular() throws Exception {
+
+        msetRegular();
+        Long result = syncCommands.unlink(key);
+
+        assertThat(result).isEqualTo(1);
+        assertThat(commands.get(key).get()).isNull();
     }
 
     @Test
@@ -212,14 +231,24 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         List<String> keys = prepareKeys();
 
-        RedisFuture<Long> result = commands.del(keys.toArray(new String[keys.size()]));
+        Long result = syncCommands.del(keys.toArray(new String[keys.size()]));
 
-        assertThat(result.get()).isEqualTo(25);
+        assertThat(result).isEqualTo(25);
 
         for (String mykey : keys) {
-            String s1 = commands.get(mykey).get();
+            String s1 = syncCommands.get(mykey);
             assertThat(s1).isNull();
         }
+    }
+
+    @Test
+    public void unlinkRegular() throws Exception {
+
+        msetRegular();
+        Long result = syncCommands.unlink(key);
+
+        assertThat(result).isEqualTo(1);
+        assertThat(syncCommands.get(key)).isNull();
     }
 
     @Test
@@ -227,12 +256,12 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         List<String> keys = prepareKeys();
 
-        RedisFuture<Long> result = commands.unlink(keys.toArray(new String[keys.size()]));
+        Long result = syncCommands.unlink(keys.toArray(new String[keys.size()]));
 
-        assertThat(result.get()).isEqualTo(25);
+        assertThat(result).isEqualTo(25);
 
         for (String mykey : keys) {
-            String s1 = commands.get(mykey).get();
+            String s1 = syncCommands.get(mykey);
             assertThat(s1).isNull();
         }
     }
@@ -363,7 +392,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void routeCommandTonoAddrPartition() throws Exception {
 
-        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        RedisClusterCommands<String, String> sync = clusterClient.connect().sync();
         try {
 
             Partitions partitions = clusterClient.getPartitions();
@@ -381,7 +410,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void routeCommandToForbiddenHostOnRedirect() throws Exception {
 
-        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        RedisClusterCommands<String, String> sync = clusterClient.connect().sync();
         try {
 
             Partitions partitions = clusterClient.getPartitions();
@@ -419,15 +448,15 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void getConnectionToNotAClusterMemberAllowed() throws Exception {
 
         clusterClient.setOptions(new ClusterClientOptions.Builder().validateClusterNodeMembership(false).build());
-        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
-        sync.getConnection(TestSettings.host(), TestSettings.port());
-        sync.close();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        connection.getConnection(TestSettings.host(), TestSettings.port());
+        connection.close();
     }
 
     @Test
     public void pipelining() throws Exception {
 
-        RedisAdvancedClusterConnection<String, String> verificationConnection = clusterClient.connectCluster();
+        RedisClusterCommands<String, String> verificationConnection = clusterClient.connect().sync();
 
         // preheat the first connection
         commands.get(key(0)).get();

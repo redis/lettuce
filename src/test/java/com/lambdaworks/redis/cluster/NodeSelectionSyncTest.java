@@ -160,7 +160,6 @@ public class NodeSelectionSyncTest extends AbstractClusterTest {
         }
 
         Executions<String> kill = commands.masters().commands().scriptKill();
-
     }
 
     @Test

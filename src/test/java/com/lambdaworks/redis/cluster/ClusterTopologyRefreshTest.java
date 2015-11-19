@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.cluster.ClusterTopologyRefresh.isChanged;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -43,7 +44,7 @@ public class ClusterTopologyRefreshTest {
     public void isChangedSamePartitions() throws Exception {
         Partitions partitions1 = ClusterPartitionParser.parse(NODES);
         Partitions partitions2 = ClusterPartitionParser.parse(NODES);
-        assertThat(sut.isChanged(partitions1, partitions2)).isFalse();
+        assertThat(isChanged(partitions1, partitions2)).isFalse();
     }
 
     @Test
@@ -57,7 +58,7 @@ public class ClusterTopologyRefreshTest {
         assertThat(nodes1).isNotEqualTo(nodes2);
         Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
         Partitions partitions2 = ClusterPartitionParser.parse(nodes2);
-        assertThat(sut.isChanged(partitions1, partitions2)).isFalse();
+        assertThat(isChanged(partitions1, partitions2)).isFalse();
     }
 
     @Test
@@ -70,7 +71,7 @@ public class ClusterTopologyRefreshTest {
 
         Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
         Partitions partitions2 = ClusterPartitionParser.parse(nodes2);
-        assertThat(sut.isChanged(partitions1, partitions2)).isFalse();
+        assertThat(isChanged(partitions1, partitions2)).isFalse();
     }
 
     @Test
@@ -83,7 +84,7 @@ public class ClusterTopologyRefreshTest {
 
         Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
         Partitions partitions2 = ClusterPartitionParser.parse(nodes2);
-        assertThat(sut.isChanged(partitions1, partitions2)).isTrue();
+        assertThat(isChanged(partitions1, partitions2)).isTrue();
     }
 
     @Test
@@ -96,7 +97,7 @@ public class ClusterTopologyRefreshTest {
 
         Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
         Partitions partitions2 = ClusterPartitionParser.parse(nodes2);
-        assertThat(sut.isChanged(partitions1, partitions2)).isTrue();
+        assertThat(isChanged(partitions1, partitions2)).isTrue();
     }
 
     @Test
@@ -109,7 +110,7 @@ public class ClusterTopologyRefreshTest {
 
         Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
         Partitions partitions2 = ClusterPartitionParser.parse(nodes2);
-        assertThat(sut.isChanged(partitions1, partitions2)).isTrue();
+        assertThat(isChanged(partitions1, partitions2)).isTrue();
     }
 
     @Test
