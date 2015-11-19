@@ -489,7 +489,7 @@ public class RedisClusterSetupTest {
 
         setup2Masters();
 
-        PooledClusterConnectionProvider<?, ?> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        final PooledClusterConnectionProvider<?, ?> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -514,7 +514,7 @@ public class RedisClusterSetupTest {
         WaitFor.waitOrTimeout(new Condition() {
             @Override
             public boolean isSatisfied() {
-                return clusterClient.getPartitions().size() == 1;
+                return clusterClient.getPartitions().size() == 1 && clusterConnectionProvider.getConnectionCount() == 1;
             }
         }, timeout(seconds(6)));
 
