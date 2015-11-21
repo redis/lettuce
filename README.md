@@ -1,6 +1,5 @@
-lettuce - A scalable Java Redis client
-======================================
-
+lettuce - Advanced Java Redis client
+===============================
 
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://coveralls.io/repos/mp911de/lettuce/badge.svg?branch=master&service=github)](https://coveralls.io/github/mp911de/lettuce?branch=master) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 

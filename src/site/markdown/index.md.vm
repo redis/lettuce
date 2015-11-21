@@ -1,24 +1,24 @@
-lettuce - A scalable Java Redis client
+Introduction
 =============
 
-Lettuce is a scalable thread-safe Redis client providing both synchronous and
-asynchronous connections. Multiple threads may share one connection provided
-they avoid blocking and transactional operations such as BLPOP, and MULTI/EXEC.
-Multiple connections are efficiently managed by the excellent netty NIO
-framework. Support for advanced Redis features such as Sentinel, Cluster and Redis data models
-is included.
+Lettuce is a scalable thread-safe Redis client for synchronous,
+asynchronous and reactive usage. Multiple threads may share one connection if they avoid blocking and transactional
+operations such as `BLPOP` and  `MULTI`/`EXEC`.
+lettuce is built with [netty](https://github.com/netty/netty).
+Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Reconnect and Redis data models.
+
 
 This version of lettuce has been tested against Redis and 3.0.
 
-* Works with Java 6, 7 and 8
-* synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
+* lettuce 3.x works with Java 6, 7 and 8, lettuce 4.x requires Java 8
+* [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and  [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
 * [SSL](https://github.com/mp911de/lettuce/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets) connections
 * [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
-* [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) support
+* [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) integration
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
-* multiple [Connection Interfaces](https://github.com/mp911de/lettuce/wiki/Connection-Interfaces)
+* multiple [Command Interfaces](https://github.com/mp911de/lettuce/wiki/Command-Interfaces-%284.0%29)
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 

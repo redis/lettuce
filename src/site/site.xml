@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/DECORATION/1.6.0 http://maven.apache.org/xsd/decoration-1.6.0.xsd"
          name="lettuce">
     <bannerLeft>
-        <name>lettuce - A scalable Java Redis client</name>
+        <name>lettuce - Advanced Java Redis client</name>
         <href>http://redis.paluch.biz/</href>
     </bannerLeft>
 
