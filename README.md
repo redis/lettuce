@@ -1,5 +1,5 @@
-lettuce - Java Redis client
-====================================================
+lettuce - Advanced Java Redis client
+===============================
 
 [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
@@ -11,15 +11,15 @@ Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Rec
 
 This version of lettuce has been tested against Redis 3.0.
 
-* [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and  [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage
+* lettuce 3.x works with Java 6, 7 and 8, lettuce 4.x requires Java 8
+* [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
 * [SSL](https://github.com/mp911de/lettuce/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/mp911de/lettuce/wiki/Unix-Domain-Sockets) connections
 * [Streaming API](https://github.com/mp911de/lettuce/wiki/Streaming-API)
 * [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) integration
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
-* multiple [Command Interfaces](https://github.com/mp911de/lettuce/wiki/Command-Interfaces-(4.0))
-* Requires Java 8
+* multiple [Command Interfaces](https://github.com/mp911de/lettuce/wiki/Command-Interfaces-%284.0%29)
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
