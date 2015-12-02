@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster.commands;
 
-import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushClusterDb;
+import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushDatabaseOfAllNodes;
 
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -35,7 +35,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-        flushClusterDb(clusterConnection);
+        flushDatabaseOfAllNodes(clusterConnection);
     }
 
     @Override

@@ -79,6 +79,19 @@ public class Wait {
                 return true;
             }
 
+            if (o instanceof Number && expectation instanceof Number) {
+                Number actualNumber = (Number) o;
+                Number expectedNumber = (Number) o;
+
+                if (actualNumber.doubleValue() == expectedNumber.doubleValue()) {
+                    return false;
+                }
+
+                if (actualNumber.longValue() == expectedNumber.longValue()) {
+                    return false;
+                }
+            }
+
             return !o.equals(expectation);
         };
         wb.messageFunction = o -> "Objects are equal: " + expectation + " and " + o;
@@ -106,6 +119,19 @@ public class Wait {
 
             if ((o == null && expectation != null) || (o != null && expectation == null)) {
                 return false;
+            }
+
+            if (o instanceof Number && expectation instanceof Number) {
+                Number actualNumber = (Number) o;
+                Number expectedNumber = (Number) o;
+
+                if (actualNumber.doubleValue() == expectedNumber.doubleValue()) {
+                    return true;
+                }
+
+                if (actualNumber.longValue() == expectedNumber.longValue()) {
+                    return true;
+                }
             }
 
             return o.equals(expectation);

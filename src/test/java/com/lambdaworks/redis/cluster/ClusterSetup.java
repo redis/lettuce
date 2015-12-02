@@ -18,58 +18,6 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 public class ClusterSetup {
 
     /**
-     * Setup a cluster consisting of four members (see {@link AbstractClusterTest#port1} to {@link AbstractClusterTest#port4}).
-     * Two masters (0-11999 and 12000-16383) and two slaves
-     * 
-     * @param clusterRule
-     * @throws InterruptedException
-     * @throws ExecutionException
-     * @throws TimeoutException
-     */
-    public static void setup2Master2Slaves(ClusterRule clusterRule) throws InterruptedException, ExecutionException,
-            TimeoutException {
-
-        if (is2Masters2Slaves(clusterRule)) {
-            return;
-        }
-
-        clusterRule.clusterReset();
-        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port1);
-        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port2);
-        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port3);
-        clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port4);
-
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
-
-        RedisClusterAsyncCommands<String, String> node1 = connection.getConnection(AbstractClusterTest.host,
-                AbstractClusterTest.port1);
-        node1.clusterAddSlots(AbstractClusterTest.createSlots(0, 12000)).get();
-
-        RedisClusterAsyncCommands<String, String> node2 = connection.getConnection(AbstractClusterTest.host,
-                AbstractClusterTest.port2);
-        node2.clusterAddSlots(AbstractClusterTest.createSlots(12000, 16384)).get();
-
-        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
-        clusterRule.getClusterClient().reloadPartitions();
-
-        connection.getConnection(AbstractClusterTest.host, AbstractClusterTest.port3).clusterReplicate(
-                AbstractClusterTest.clusterClient.getPartitions().getPartitionBySlot(1).getNodeId());
-        connection.getConnection(AbstractClusterTest.host, AbstractClusterTest.port4).clusterReplicate(
-                AbstractClusterTest.clusterClient.getPartitions().getPartitionBySlot(12002).getNodeId());
-
-        Wait.untilEquals(
-                2L,
-                () -> {
-                    clusterRule.getClusterClient().reloadPartitions();
-
-                    return partitionStream(clusterRule).filter(
-                            redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)).count();
-                }).waitOrTimeout();
-
-        connection.close();
-    }
-
-    /**
      * Setup a cluster consisting of two members (see {@link AbstractClusterTest#port5} to {@link AbstractClusterTest#port6}).
      * Two masters (0-11999 and 12000-16383)
      *

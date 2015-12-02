@@ -17,7 +17,13 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 public class ClusterTestUtil {
 
-    public static String getNodeId(RedisClusterCommands<String, String> connection) {
+    /**
+     * Retrieve the cluster node Id from the {@code connection}.
+     * 
+     * @param connection
+     * @return
+     */
+    public static String getNodeId(RedisClusterCommands<?, ?> connection) {
         RedisClusterNode ownPartition = getOwnPartition(connection);
         if (ownPartition != null) {
             return ownPartition.getNodeId();
@@ -26,7 +32,13 @@ public class ClusterTestUtil {
         return null;
     }
 
-    public static RedisClusterNode getOwnPartition(RedisClusterCommands<String, String> connection) {
+    /**
+     * Retrieve the {@link RedisClusterNode} from the {@code connection}.
+     * 
+     * @param connection
+     * @return
+     */
+    public static RedisClusterNode getOwnPartition(RedisClusterCommands<?, ?> connection) {
         Partitions partitions = ClusterPartitionParser.parse(connection.clusterNodes());
 
         for (RedisClusterNode partition : partitions) {
@@ -37,16 +49,28 @@ public class ClusterTestUtil {
         return null;
     }
 
-    public static void flushClusterDb(StatefulRedisClusterConnection<String, String> connection) {
+    /**
+     * Flush databases of all cluster nodes.
+     * 
+     * @param connection the cluster connection
+     */
+    public static void flushDatabaseOfAllNodes(StatefulRedisClusterConnection<?, ?> connection) {
         for (RedisClusterNode node : connection.getPartitions()) {
             try {
                 connection.getConnection(node.getNodeId()).sync().flushall();
                 connection.getConnection(node.getNodeId()).sync().flushdb();
-            } catch (Exception e) {
+            } catch (Exception o_O) {
+                // ignore
             }
         }
     }
 
+    /**
+     * Create an API wrapper which exposes the {@link RedisCommands} API by using internally a cluster connection.
+     * 
+     * @param connection
+     * @return
+     */
     public static RedisCommands<String, String> redisCommandsOverCluster(
             StatefulRedisClusterConnection<String, String> connection) {
         StatefulRedisClusterConnectionImpl clusterConnection = (StatefulRedisClusterConnectionImpl) connection;

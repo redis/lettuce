@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.Connections;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -73,7 +74,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
-        ConnectionWatchdog connectionWatchdog = getHandler(ConnectionWatchdog.class, getRedisChannelHandler(connection));
+        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
         assertThat(connectionWatchdog).isNotNull();
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
         assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
@@ -170,7 +171,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         final CountDownLatch block = new CountDownLatch(1);
 
-        ConnectionWatchdog connectionWatchdog = getHandler(ConnectionWatchdog.class, getRedisChannelHandler(connection));
+        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
 
         AsyncCommand<String, String, Object> command = getBlockOnEncodeCommand(block);
 
@@ -209,7 +210,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         final CountDownLatch block = new CountDownLatch(1);
 
-        ConnectionWatchdog connectionWatchdog = getHandler(ConnectionWatchdog.class, getRedisChannelHandler(connection));
+        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
 
         AsyncCommand<String, String, Object> command = getBlockOnEncodeCommand(block);
 
@@ -291,7 +292,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1");
 
-        ConnectionWatchdog connectionWatchdog = getHandler(ConnectionWatchdog.class, getRedisChannelHandler(connection));
+        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
         connectionWatchdog.setListenOnChannelInactive(false);
 
         connection.quit();
@@ -331,7 +332,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1").get();
 
-        ConnectionWatchdog connectionWatchdog = getHandler(ConnectionWatchdog.class, redisChannelHandler);
+        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
         connectionWatchdog.setListenOnChannelInactive(false);
 
         connection.quit();

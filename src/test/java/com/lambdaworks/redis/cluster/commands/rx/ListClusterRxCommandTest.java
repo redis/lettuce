@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.cluster.commands.rx;
 
-import java.util.concurrent.TimeUnit;
-
 import com.lambdaworks.redis.FastShutdown;
 import org.assertj.core.api.Assertions;
 import org.junit.AfterClass;
@@ -38,7 +36,7 @@ public class ListClusterRxCommandTest extends ListCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-        ClusterTestUtil.flushClusterDb(clusterConnection);
+        ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
 
     @Override

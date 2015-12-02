@@ -37,7 +37,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     @Before
     public void openConnection() throws Exception {
         redis = connect();
-        ClusterTestUtil.flushClusterDb(clusterConnection);
+        ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
 
     @Override

@@ -17,10 +17,11 @@ import org.junit.*;
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.Lists;
+import com.lambdaworks.Connections;
+import com.lambdaworks.Futures;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
@@ -31,6 +32,8 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
+ * Test for mutable cluster setup scenarios.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -51,7 +54,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
     }
 
     @AfterClass
@@ -260,7 +263,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         suspendConnection(node2Connection);
 
-        final List<RedisFuture<String>> futures = Lists.newArrayList();
+        List<RedisFuture<String>> futures = Lists.newArrayList();
 
         futures.add(clusterConnection.set("t", "value")); // 15891
         futures.add(clusterConnection.set("p", "value")); // 16023
@@ -277,17 +280,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).build());
         waitUntilOnlyOnePartition();
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                for (RedisFuture<String> future : futures) {
-                    if (!future.isDone()) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }, timeout(seconds(6)));
+        Wait.untilTrue(() -> Futures.areAllCompleted(futures)).waitOrTimeout();
 
         assertRoutedExecution(clusterConnection);
 
@@ -327,8 +320,8 @@ public class RedisClusterSetupTest extends AbstractTest {
         }
 
         Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
+        Wait.untilEquals(1, () -> clusterConnectionProvider.getConnectionCount()).waitOrTimeout();
 
-        assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(1);
         clusterConnection.close();
 
     }
@@ -467,42 +460,30 @@ public class RedisClusterSetupTest extends AbstractTest {
     }
 
     private void assertExecuted(RedisFuture<String> set) throws Exception {
-        set.get();
+        set.get(5, TimeUnit.SECONDS);
         assertThat(set.getError()).isNull();
         assertThat(set.get()).isEqualTo("OK");
     }
 
     private void waitUntilOnlyOnePartition() throws InterruptedException, TimeoutException {
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                if (clusterClient.getPartitions().size() != 1) {
-                    return false;
+        Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
+        Wait.untilTrue(() -> {
+            for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
+                if (redisClusterNode.getSlots().size() > 16380) {
+                    return true;
                 }
-
-                for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-                    if (redisClusterNode.getSlots().size() > 16380) {
-                        return true;
-                    }
-                }
-
-                return false;
             }
-        }, timeout(seconds(10)));
+
+            return false;
+        }).waitOrTimeout();
     }
 
-    private void suspendConnection(final RedisClusterAsyncCommands<String, String> asyncCommands) throws InterruptedException,
+    private void suspendConnection(RedisClusterAsyncCommands<String, String> asyncCommands) throws InterruptedException,
             TimeoutException {
-
-        suspendAutoReconnect(((RedisAsyncCommands<?, ?>) asyncCommands).getStatefulConnection());
+        Connections.getConnectionWatchdog(((RedisAsyncCommands<?, ?>) asyncCommands).getStatefulConnection())
+                .setReconnectSuspended(true);
         asyncCommands.quit();
         WaitFor.waitOrTimeout(() -> !asyncCommands.isOpen(), timeout(seconds(6)));
-    }
-
-    private void suspendAutoReconnect(StatefulConnection<?, ?> connection) {
-        ClusterNodeCommandHandler<?, ?> channelWriter = (ClusterNodeCommandHandler<?, ?>) ((RedisChannelHandler<?, ?>) connection)
-                .getChannelWriter();
-        channelWriter.prepareClose();
     }
 
     protected void shiftAllSlotsToNode1() throws InterruptedException, TimeoutException {
@@ -528,10 +509,9 @@ public class RedisClusterSetupTest extends AbstractTest {
 
             private void removeRemaining(RedisClusterNode partition) {
                 try {
-                    int[] ints = toIntArray(partition.getSlots());
-                    redis1.clusterDelSlots(ints);
-                } catch (Exception e) {
-
+                    redis1.clusterDelSlots(toIntArray(partition.getSlots()));
+                } catch (Exception o_O) {
+                    // ignore
                 }
             }
         }, timeout(seconds(10)));
@@ -542,12 +522,8 @@ public class RedisClusterSetupTest extends AbstractTest {
         Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
     }
 
-    private int[] toIntArray(List<Integer> source) {
-        int[] result = new int[source.size()];
-        for (int i = 0; i < source.size(); i++) {
-            result[i] = source.get(i);
-        }
-        return result;
+    private int[] toIntArray(List<Integer> list) {
+        return list.parallelStream().mapToInt(Integer::intValue).toArray();
     }
 
     private void waitForSlots(RedisClusterCommands<String, String> connection, int slotCount) throws InterruptedException,
