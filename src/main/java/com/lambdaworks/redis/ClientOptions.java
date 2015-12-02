@@ -14,12 +14,14 @@ public class ClientOptions implements Serializable {
     public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
+    public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
 
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
     private final boolean cancelCommandsOnReconnectFailure;
     private final boolean suspendReconnectOnProtocolFailure;
     private final int requestQueueSize;
+    private final DisconnectedBehavior disconnectedBehavior;
 
     /**
      * Create a copy of {@literal options}
@@ -37,6 +39,7 @@ public class ClientOptions implements Serializable {
         autoReconnect = builder.autoReconnect;
         suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         requestQueueSize = builder.requestQueueSize;
+        disconnectedBehavior = builder.disconnectedBehavior;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -45,6 +48,7 @@ public class ClientOptions implements Serializable {
         this.cancelCommandsOnReconnectFailure = original.cancelCommandsOnReconnectFailure;
         this.suspendReconnectOnProtocolFailure = original.suspendReconnectOnProtocolFailure;
         this.requestQueueSize = original.requestQueueSize;
+        this.disconnectedBehavior = original.disconnectedBehavior;
     }
 
     /**
@@ -66,6 +70,7 @@ public class ClientOptions implements Serializable {
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
+        private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
 
         /**
          * Sets the {@literal PING} before activate connection flag. Defaults to {@literal false}. See
@@ -127,6 +132,18 @@ public class ClientOptions implements Serializable {
          */
         public Builder requestQueueSize(int requestQueueSize) {
             this.requestQueueSize = requestQueueSize;
+            return this;
+        }
+
+        /**
+         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to
+         * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+         * 
+         * @param disconnectedBehavior true/false
+         * @return {@code this}
+         */
+        public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
+            this.disconnectedBehavior = disconnectedBehavior;
             return this;
         }
 
@@ -193,5 +210,36 @@ public class ClientOptions implements Serializable {
      */
     public int getRequestQueueSize() {
         return requestQueueSize;
+    }
+
+    /**
+     * Behavior for command invocation when connections are in a disconnected state. Defaults to
+     * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+     * 
+     * @return the behavior for command invocation when connections are in a disconnected state
+     */
+    public DisconnectedBehavior getDisconnectedBehavior() {
+        return disconnectedBehavior;
+    }
+
+    /**
+     * Behavior of connections in disconnected state.
+     */
+    public enum DisconnectedBehavior {
+
+        /**
+         * Accept commands when auto-reconnect is enabled, reject commands when auto-reconnect is disabled.
+         */
+        DEFAULT,
+
+        /**
+         * Accept commands in disconnected state..
+         */
+        ACCEPT_COMMANDS,
+
+        /**
+         * Reject commands in disconnected state.
+         */
+        REJECT_COMMANDS,
     }
 }

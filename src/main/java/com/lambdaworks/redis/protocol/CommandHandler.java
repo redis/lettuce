@@ -8,33 +8,17 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.ConnectionEvents;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.resource.ClientResources;
+
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -226,9 +210,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     + ". Commands are not accepted until the queue size drops.");
         }
 
-        if ((channel == null || !isConnected()) && !clientOptions.isAutoReconnect()) {
-            throw new RedisException(
-                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted.");
+        if ((channel == null || !isConnected()) && isRejectCommand()) {
+            throw new RedisException("Currently not connected. Commands are rejected.");
         }
 
         try {
@@ -284,6 +267,29 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         return command;
+    }
+
+    private boolean isRejectCommand() {
+
+        if (clientOptions == null) {
+            return false;
+        }
+
+        switch (clientOptions.getDisconnectedBehavior()) {
+            case REJECT_COMMANDS:
+                return true;
+
+            case ACCEPT_COMMANDS:
+                return false;
+
+            default:
+            case DEFAULT:
+                if (!clientOptions.isAutoReconnect()) {
+                    return true;
+                }
+
+                return false;
+        }
     }
 
     private <T> void bufferCommand(RedisCommand<K, V, T> command) {

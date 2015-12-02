@@ -29,6 +29,7 @@ public class ClientOptionsTest {
         assertThat(sut.isCancelCommandsOnReconnectFailure()).isEqualTo(false);
         assertThat(sut.isPingBeforeActivateConnection()).isEqualTo(false);
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isEqualTo(false);
+        assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
     }
 
 }

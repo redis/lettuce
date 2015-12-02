@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.io.ByteStreams;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -103,14 +102,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
-
         logger.debug("dispatching command {}", cmd);
-        if (clientOptions != null && !clientOptions.isAutoReconnect() && !active) {
-            cmd.completeExceptionally(new RedisException(
-                    "Connection is in a disconnected state and reconnect is disabled. Commands are not accepted."));
-            return cmd;
-        }
-
         return channelWriter.write(cmd);
     }
 
@@ -156,9 +148,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * Notification when the connection becomes active (connected).
      */
     public void activated() {
-        active = true;
-        closed = false;
-
+        synchronized (this) {
+            active = true;
+            closed = false;
+        }
     }
 
     /**
@@ -194,7 +187,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     public void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
-        this.clientOptions = clientOptions;
+        synchronized (this) {
+            this.clientOptions = clientOptions;
+        }
     }
 
     public long getTimeout() {

@@ -256,7 +256,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
             connection2.incr(key);
         } catch (Exception e) {
-            assertThat(e).isExactlyInstanceOf(RedisException.class).hasMessageContaining("reconnect is disabled");
+            assertThat(e).isExactlyInstanceOf(RedisException.class).hasMessageContaining("not connected");
         }
 
         connection2.close();

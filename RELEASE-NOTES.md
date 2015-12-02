@@ -8,6 +8,7 @@ Enhancements
 * Provide a reusable client configuration for ThreadPools and other expensive resources #110
 * Support FLUSHALL [ASYNC]/FLUSHDB [ASYNC]/UNLINK commands #146
 * Support DEBUG RESTART/CRASH-AND-RECOVER [delay] commands #145
+* Allow control over behavior in disconnected state #121
 
 Fixes
 -----
