@@ -35,7 +35,7 @@ public interface RedisHLLConnection<K, V> {
      *
      * @return Long simple-string-reply The command just returns {@code OK}.
      */
-    Long pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
+    String pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
 
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).

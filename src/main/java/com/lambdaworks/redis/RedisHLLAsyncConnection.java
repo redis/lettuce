@@ -33,9 +33,9 @@ public interface RedisHLLAsyncConnection<K, V> {
      * @param sourcekey the source key
      * @param moreSourceKeys more source keys
      *
-     * @return RedisFuture&lt;Long&gt; simple-string-reply The command just returns {@code OK}.
+     * @return RedisFuture&lt;String&gt; simple-string-reply The command just returns {@code OK}.
      */
-    RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
+    RedisFuture<String> pfmerge(K destkey, K sourcekey, K... moreSourceKeys);
 
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).

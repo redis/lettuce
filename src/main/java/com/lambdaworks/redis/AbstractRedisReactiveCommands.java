@@ -1,14 +1,14 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import rx.Observable;
+import rx.Subscriber;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.rx.*;
@@ -19,8 +19,6 @@ import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import rx.Observable;
-import rx.Subscriber;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -1448,14 +1446,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createObservable(() -> commandBuilder.pfadd(key, values));
     }
 
+    public Observable<Long> pfadd(K key, V value, V... values) {
+        return createObservable(() -> commandBuilder.pfadd(key, value, values));
+    }
+
     @Override
-    public Observable<Long> pfmerge(K destkey, K... sourcekeys) {
+    public Observable<String> pfmerge(K destkey, K... sourcekeys) {
         return createObservable(() -> commandBuilder.pfmerge(destkey, sourcekeys));
+    }
+
+    public Observable<String> pfmerge(K destkey, K sourceKey, K... sourcekeys) {
+        return createObservable(() -> commandBuilder.pfmerge(destkey, sourceKey, sourcekeys));
     }
 
     @Override
     public Observable<Long> pfcount(K... keys) {
         return createObservable(() -> commandBuilder.pfcount(keys));
+    }
+
+    public Observable<Long> pfcount(K key, K... keys) {
+        return createObservable(() -> commandBuilder.pfcount(key, keys));
     }
 
     @Override
@@ -1500,7 +1510,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Long> clusterCountKeysInSlot(int slot) {
-       return createObservable(() -> commandBuilder.clusterCountKeysInSlot(slot));
+        return createObservable(() -> commandBuilder.clusterCountKeysInSlot(slot));
     }
 
     @Override
@@ -1656,6 +1666,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     /**
      * Emits just {@link Success#Success} or the {@link Throwable} after the inner observable is completed.
+     * 
      * @param observable inner observable
      * @param <T> used for type inference
      * @return Success observable
