@@ -1512,12 +1512,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
+    public RedisFuture<String> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
         return dispatch(commandBuilder.pfmerge(destkey, sourcekey, moreSourceKeys));
     }
 
     @Override
-    public RedisFuture<Long> pfmerge(K destkey, K... sourcekeys) {
+    public RedisFuture<String> pfmerge(K destkey, K... sourcekeys) {
         return dispatch(commandBuilder.pfmerge(destkey, sourcekeys));
     }
 

@@ -2,7 +2,9 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -447,5 +449,21 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test(expected = IllegalArgumentException.class)
     public void testReadFromNull() throws Exception {
         sync.getStatefulConnection().setReadFrom(null);
+    }
+
+    @Test
+    public void testPfmerge() throws Exception {
+        RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster();
+
+        assertThat(SlotHash.getSlot("key2660")).isEqualTo(SlotHash.getSlot("key7112")).isEqualTo(SlotHash.getSlot("key8885"));
+
+        connection.pfadd("key2660", "rand", "mat");
+        connection.pfadd("key7112", "mat", "perrin");
+
+        connection.pfmerge("key8885", "key2660", "key7112");
+
+        assertThat(connection.pfcount("key8885")).isEqualTo(3);
+
+        connection.close();
     }
 }

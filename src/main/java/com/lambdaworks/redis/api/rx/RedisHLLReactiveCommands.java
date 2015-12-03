@@ -31,9 +31,9 @@ public interface RedisHLLReactiveCommands<K, V> {
      * @param destkey the destination key
      * @param sourcekeys the source key
      *
-     * @return Long simple-string-reply The command just returns {@code OK}.
+     * @return String simple-string-reply The command just returns {@code OK}.
      */
-    Observable<Long> pfmerge(K destkey, K... sourcekeys);
+    Observable<String> pfmerge(K destkey, K... sourcekeys);
 
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).
