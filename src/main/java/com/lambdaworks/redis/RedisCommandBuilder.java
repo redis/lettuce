@@ -1571,14 +1571,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings("unchecked")
-    public Command<K, V, Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
+    public Command<K, V, String> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
         assertNotNull(destkey, "destkey " + MUST_NOT_BE_NULL);
         assertNotNull(sourcekey, "sourcekey " + MUST_NOT_BE_NULL);
         assertNotNull(moreSourceKeys, "moreSourceKeys " + MUST_NOT_BE_NULL);
         assertNoNullElements(moreSourceKeys, "moreSourceKeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKey(sourcekey).addKeys(moreSourceKeys);
-        return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
+        return createCommand(PFMERGE, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterMeet(String ip, int port) {

@@ -1511,7 +1511,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<Long> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
+    public RedisFuture<String> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
         return dispatch(commandBuilder.pfmerge(destkey, sourcekey, moreSourceKeys));
     }
 
