@@ -1,11 +1,10 @@
-# lettuce 4.0.1.Final RELEASE NOTES
+# lettuce 4.0.2.Final RELEASE NOTES
 
-This is a bugfix release for lettuce 4.0.Final to fix a bug in the Redis Cluster API
-when using Geo commands.
+This is a bugfix release for lettuce 4.0.1.Final.
 
 Fixes
 -----
-* Cluster API does not implement the Geo commands interface #154 (thanks to @IdanFridman)
+* pfmerge invokes PFADD instead of PFMERGE (thanks to @christophstrobl) #158
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously against the latest Redis source-build.
 
