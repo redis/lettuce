@@ -5,6 +5,7 @@ package com.lambdaworks.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.lambdaworks.redis.cluster.SlotHash;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -42,7 +43,15 @@ public class HLLCommandTest extends AbstractCommandTest {
         redis.pfadd("key2", "value2");
         redis.pfadd("key3", "value3");
 
-        assertThat(redis.pfmerge(key, "key2", "key3")).isEqualTo(1);
+        assertThat(redis.pfmerge(key, "key2", "key3")).isEqualTo("OK");
+        assertThat(redis.pfcount(key)).isEqualTo(3);
+
+        redis.pfadd("key2660", "rand", "mat");
+        redis.pfadd("key7112", "mat", "perrin");
+
+        redis.pfmerge("key8885", "key2660", "key7112");
+
+        assertThat(redis.pfcount("key8885")).isEqualTo(3);
     }
 
     @Test
