@@ -4,7 +4,8 @@ This is a bugfix release for lettuce 4.0.1.Final.
 
 Fixes
 -----
-* pfmerge invokes PFADD instead of PFMERGE (thanks to @christophstrobl) #158
+* pfmerge invokes PFADD instead of PFMERGE #158 (Thanks to @christophstrobl)
+* Fix set with args method signature #159 (Thanks to @joshdurbin)
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously against the latest Redis source-build.
 
