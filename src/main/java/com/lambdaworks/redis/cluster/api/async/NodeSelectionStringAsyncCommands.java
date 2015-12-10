@@ -267,9 +267,9 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @param value the value
      * @param setArgs the setArgs
      * 
-     * @return V simple-string-reply {@code OK} if {@code SET} was executed correctly.
+     * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
-    AsyncExecutions<V> set(K key, V value, SetArgs setArgs);
+    AsyncExecutions<String> set(K key, V value, SetArgs setArgs);
 
     /**
      * Sets or clears the bit at offset in the string value stored at key.

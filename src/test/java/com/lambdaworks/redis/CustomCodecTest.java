@@ -12,26 +12,46 @@ import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import org.junit.Test;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
+import rx.observers.TestSubscriber;
 
 public class CustomCodecTest extends AbstractRedisClientTest {
 
     @Test
-    public void test() throws Exception {
-
-        RedisCommands<String, Object> connection = client.connect(new SerializedObjectCodec()).sync();
+    public void testJavaSerializer() throws Exception {
+        StatefulRedisConnection<String, Object> redisConnection = client.connect(new SerializedObjectCodec());
+        RedisCommands<String, Object> sync = redisConnection.sync();
         List<String> list = list("one", "two");
-        connection.set(key, list);
-        assertThat(connection.get(key)).isEqualTo(list);
+        sync.set(key, list);
 
-        connection.close();
+        assertThat(sync.get(key)).isEqualTo(list);
+        assertThat(sync.set(key, list)).isEqualTo("OK");
+        assertThat(sync.set(key, list, SetArgs.Builder.ex(1))).isEqualTo("OK");
+
+        redisConnection.close();
+    }
+
+    @Test
+    public void testJavaSerializerRx() throws Exception {
+        StatefulRedisConnection<String, Object> redisConnection = client.connect(new SerializedObjectCodec());
+        List<String> list = list("one", "two");
+
+        TestSubscriber<String> subscriber = TestSubscriber.create();
+
+        redisConnection.reactive().set(key, list, SetArgs.Builder.ex(1)).subscribe(subscriber);
+        subscriber.awaitTerminalEvent(1, TimeUnit.SECONDS);
+        subscriber.assertCompleted();
+        subscriber.assertValue("OK");
+
+        redisConnection.close();
     }
 
     @Test
