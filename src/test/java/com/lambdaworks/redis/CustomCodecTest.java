@@ -9,6 +9,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.protocol.SetArgs;
 import org.junit.Test;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
@@ -17,11 +19,15 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 public class CustomCodecTest extends AbstractCommandTest {
     @Test
-    public void test() throws Exception {
+    public void testJavaSerializer() throws Exception {
         RedisConnection<String, Object> connection = client.connect(new SerializedObjectCodec());
+
         List<String> list = list("one", "two");
         connection.set(key, list);
+
         assertThat(connection.get(key)).isEqualTo(list);
+        assertThat(connection.set(key, list)).isEqualTo("OK");
+        assertThat(connection.set(key, list, SetArgs.Builder.ex(1))).isEqualTo("OK");
 
         connection.close();
     }

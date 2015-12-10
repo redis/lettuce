@@ -271,7 +271,7 @@ public interface RedisStringsAsyncConnection<K, V> {
      * 
      * @return RedisFuture&lt;V&gt; simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
-    RedisFuture<V> set(K key, V value, SetArgs setArgs);
+    RedisFuture<String> set(K key, V value, SetArgs setArgs);
 
     /**
      * Sets or clears the bit at offset in the string value stored at key.

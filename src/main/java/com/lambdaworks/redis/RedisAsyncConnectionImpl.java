@@ -813,7 +813,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
-    public RedisFuture<V> set(K key, V value, SetArgs setArgs) {
+    public RedisFuture<String> set(K key, V value, SetArgs setArgs) {
         return dispatch(commandBuilder.set(key, value, setArgs));
     }
 

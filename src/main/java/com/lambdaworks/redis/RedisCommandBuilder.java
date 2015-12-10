@@ -794,10 +794,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SET, new StatusOutput<K, V>(codec), key, value);
     }
 
-    public Command<K, V, V> set(K key, V value, SetArgs setArgs) {
+    public Command<K, V, String> set(K key, V value, SetArgs setArgs) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(value);
         setArgs.build(args);
-        return createCommand(SET, new ValueOutput<K, V>(codec), args);
+        return createCommand(SET, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> setbit(K key, long offset, int value) {
