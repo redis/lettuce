@@ -762,7 +762,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<V> set(K key, V value, SetArgs setArgs) {
+    public Observable<String> set(K key, V value, SetArgs setArgs) {
         return createObservable(() -> commandBuilder.set(key, value, setArgs));
     }
 

@@ -779,7 +779,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<V> set(K key, V value, SetArgs setArgs) {
+    public RedisFuture<String> set(K key, V value, SetArgs setArgs) {
         return dispatch(commandBuilder.set(key, value, setArgs));
     }
 
