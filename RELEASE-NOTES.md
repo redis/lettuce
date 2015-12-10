@@ -13,8 +13,9 @@ Enhancements
 Fixes
 -----
 * Do not cache InetSocketAddress/SocketAddress in RedisURI #144
-* Cluster API does not implement the Geo commands interface #154 (thanks to @IdanFridman)
-* pfmerge invokes PFADD instead of PFMERGE (thanks to @christophstrobl) #158
+* Cluster API does not implement the Geo commands interface #154 (Thanks to @IdanFridman)
+* pfmerge invokes PFADD instead of PFMERGE #158 (Thanks to @christophstrobl)
+* Fix set with args method signature #159 (Thanks to @joshdurbin)
 
 Other
 ------
