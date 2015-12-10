@@ -11,7 +11,8 @@ Enhancements
 Fixes
 -----
 * Do not cache InetSocketAddress/SocketAddress in RedisURI #144
-* pfmerge invokes PFADD instead of PFMERGE (thanks to @christophstrobl) #158
+* pfmerge invokes PFADD instead of PFMERGE #158 (Thanks to @christophstrobl)
+* Fix set with args method signature #159 (Thanks to @joshdurbin)
 
 Other
 ------
