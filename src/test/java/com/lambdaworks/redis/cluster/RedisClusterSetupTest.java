@@ -728,6 +728,7 @@ public class RedisClusterSetupTest {
         String nodeId2 = getNodeId(redis2);
         assertThat(redis1.clusterSetSlotMigrating(6, nodeId2)).isEqualTo("OK");
         assertThat(redis2.clusterSetSlotImporting(6, nodeId2)).isEqualTo("OK");
+        assertThat(redis1.clusterSetSlotStable(6)).isEqualTo("OK");
     }
 
     @Test

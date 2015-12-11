@@ -1596,6 +1596,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<String> clusterSetSlotStable(int slot) {
+        return dispatch(commandBuilder.clusterSetSlotStable(slot));
+    }
+
+    @Override
     public RedisFuture<String> clusterSetSlotMigrating(int slot, String nodeId) {
         return dispatch(commandBuilder.clusterSetSlotMigrating(slot, nodeId));
     }

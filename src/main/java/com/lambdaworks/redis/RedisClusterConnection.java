@@ -64,6 +64,14 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
     String clusterSetSlotNode(int slot, String nodeId);
 
     /**
+     * Clears migrating / importing state from the slot.
+     *
+     * @param slot the slot
+     * @return String simple-string-reply
+     */
+    String clusterSetSlotStable(int slot);
+
+    /**
      * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
      * the current node in order to be migrated.
      *

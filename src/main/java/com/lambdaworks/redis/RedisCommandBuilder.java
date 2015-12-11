@@ -1672,6 +1672,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, String> clusterSetSlotStable(int slot) {
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(STABLE);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> clusterSetSlotMigrating(int slot, String nodeId) {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(MIGRATING).add(nodeId);

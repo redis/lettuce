@@ -65,6 +65,14 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
     RedisFuture<String> clusterSetSlotNode(int slot, String nodeId);
 
     /**
+     * Clears migrating / importing state from the slot.
+     *
+     * @param slot the slot
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> clusterSetSlotStable(int slot);
+
+    /**
      * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
      * the current node in order to be migrated.
      *
