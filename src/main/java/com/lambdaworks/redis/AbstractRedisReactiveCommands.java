@@ -1583,6 +1583,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<String> clusterSetSlotStable(int slot) {
+        return createObservable(() -> commandBuilder.clusterSetSlotStable(slot));
+    }
+
+    @Override
     public Observable<String> clusterSetSlotMigrating(int slot, String nodeId) {
         return createObservable(() -> commandBuilder.clusterSetSlotMigrating(slot, nodeId));
     }
