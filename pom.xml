@@ -131,7 +131,7 @@
     <dependency>
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
-      <version>3.0.5.RELEASE</version>
+      <version>3.0.6.RELEASE</version>
       <scope>provided</scope>
     </dependency>
 
