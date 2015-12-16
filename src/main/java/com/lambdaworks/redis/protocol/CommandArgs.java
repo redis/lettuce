@@ -220,21 +220,15 @@ public class CommandArgs<K, V> {
         return this;
     }
 
-    private void write(long value) {
+    private void write(int value) {
         if (value < 10) {
             buffer.put((byte) ('0' + value));
             return;
         }
 
-        StringBuilder sb = new StringBuilder(8);
-        while (value > 0) {
-            long digit = value % 10;
-            sb.append((char) ('0' + digit));
-            value /= 10;
-        }
-
-        for (int i = sb.length() - 1; i >= 0; i--) {
-            buffer.put((byte) sb.charAt(i));
+        String asString = Integer.toString(value);
+        for (int i = 0; i < asString.length(); i++) {
+            buffer.put((byte) asString.charAt(i));
         }
     }
 
