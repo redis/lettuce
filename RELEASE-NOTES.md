@@ -9,6 +9,7 @@ Enhancements
 * Support FLUSHALL [ASYNC]/FLUSHDB [ASYNC]/UNLINK commands #146
 * Support DEBUG RESTART/CRASH-AND-RECOVER [delay] commands #145
 * Allow control over behavior in disconnected state #121
+* Use much faster JDK utility for converting an int to a byte sequence #163 (Thanks to @CodingFabian)
 
 Fixes
 -----
