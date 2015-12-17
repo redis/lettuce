@@ -7,6 +7,7 @@ Enhancements
 * ClientResources for 4.1 enhancement #137
 * Provide a reusable client configuration for ThreadPools and other expensive resources #110
 * Support FLUSHALL [ASYNC]/FLUSHDB [ASYNC]/UNLINK commands #146
+* Use much faster JDK utility for converting an int to a byte sequence #163 (Thanks to @CodingFabian)
 
 Fixes
 -----

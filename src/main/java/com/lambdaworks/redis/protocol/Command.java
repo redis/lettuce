@@ -211,20 +211,15 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
      * @param value Value to write.
      */
     protected static void writeInt(ByteBuf buf, int value) {
+
         if (value < 10) {
-            buf.writeByte('0' + value);
+            buf.writeByte((byte) ('0' + value));
             return;
         }
 
-        StringBuilder sb = new StringBuilder(8);
-        while (value > 0) {
-            int digit = value % 10;
-            sb.append((char) ('0' + digit));
-            value /= 10;
-        }
-
-        for (int i = sb.length() - 1; i >= 0; i--) {
-            buf.writeByte(sb.charAt(i));
+        String asString = Integer.toString(value);
+        for (int i = 0; i < asString.length(); i++) {
+            buf.writeByte((byte) asString.charAt(i));
         }
     }
 
