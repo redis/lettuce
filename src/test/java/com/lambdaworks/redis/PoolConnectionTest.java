@@ -28,21 +28,6 @@ public class PoolConnectionTest extends AbstractCommandTest {
     }
 
     @Test
-    public void setAutoFlushCommandsNotAllowed() throws Exception {
-
-        RedisConnectionPool<RedisAsyncConnection<String, String>> pool = client.asyncPool();
-        RedisAsyncConnection<String, String> c1 = pool.allocateConnection();
-        try {
-            c1.setAutoFlushCommands(true);
-            fail("Missing UnsupportedOperationException");
-        } catch (Exception e) {
-            assertThat(e).isInstanceOf(UnsupportedOperationException.class);
-        } finally {
-            pool.close();
-        }
-    }
-
-    @Test
     public void sameConnectionAfterFree() throws Exception {
 
         RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
@@ -91,27 +76,6 @@ public class PoolConnectionTest extends AbstractCommandTest {
 
         pool.allocateConnection();
         assertThat(pool.getNumActive()).isEqualTo(1);
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void unsupportedAuthOnPooledConnection() throws Exception {
-
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        pool.allocateConnection().auth("");
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void unsupportedSelectOnPooledConnection() throws Exception {
-
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        pool.allocateConnection().select(99);
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void unsupportedQuitOnPooledConnection() throws Exception {
-
-        RedisConnectionPool<RedisConnection<String, String>> pool = client.pool();
-        pool.allocateConnection().quit();
     }
 
     @Test

@@ -18,7 +18,6 @@ import com.google.common.reflect.AbstractInvocationHandler;
  * @since 3.0
  */
 class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
-    public static final Set<String> DISABLED_METHODS = ImmutableSet.of("auth", "select", "quit", "setAutoFlushCommands");
 
     private T connection;
     private final RedisConnectionPool<T> pool;
@@ -38,10 +37,6 @@ class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
     @SuppressWarnings("unchecked")
     @Override
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
-
-        if (DISABLED_METHODS.contains(method.getName())) {
-            throw new UnsupportedOperationException("Calls to " + method.getName() + " are not supported on pooled connections");
-        }
 
         if (connection == null) {
             throw new RedisException("Connection is deallocated and cannot be used anymore.");
