@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.sync.BaseRedisCommands;
+
 /**
  * A complete synchronous and thread-safe cluster Redis API with 400+ Methods.
  * 
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
         RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, RedisGeoConnection<K, V>,
-        AutoCloseable {
+        BaseRedisConnection<K, V>, AutoCloseable {
 
     /**
      * Set the default timeout for operations.

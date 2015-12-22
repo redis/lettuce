@@ -16,7 +16,8 @@ import com.lambdaworks.redis.api.sync.*;
  */
 public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCommands<K, V>, RedisStringCommands<K, V>,
         RedisListCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisScriptingCommands<K, V>,
-        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, RedisGeoCommands<K, V>, AutoCloseable, RedisClusterConnection<K, V> {
+        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, RedisGeoCommands<K, V>, BaseRedisCommands<K, V>, AutoCloseable,
+        RedisClusterConnection<K, V> {
 
     /**
      * Set the default timeout for operations.
@@ -132,7 +133,8 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as {@link #clusterNodes()} but one line per slave.
+     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as
+     *         {@link #clusterNodes()} but one line per slave.
      */
     List<String> clusterSlaves(String nodeId);
 
