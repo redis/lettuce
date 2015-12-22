@@ -39,6 +39,7 @@ public class ConnectionBuilder {
     private long timeout;
     private TimeUnit timeUnit;
     private ClientResources clientResources;
+    private char[] password;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -113,6 +114,11 @@ public class ConnectionBuilder {
         return this;
     }
 
+    public ConnectionBuilder password(char[] password) {
+        this.password = password;
+        return this;
+    }
+
     protected List<ChannelHandler> buildHandlers() {
         checkState(channelGroup != null, "channelGroup must be set");
         checkState(connectionEvents != null, "connectionEvents must be set");
@@ -141,11 +147,10 @@ public class ConnectionBuilder {
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
 
         return handlers;
-
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), buildHandlers(),
+        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), password(), buildHandlers(),
                 clientResources.eventBus());
     }
 
@@ -167,6 +172,10 @@ public class ConnectionBuilder {
 
     public ClientResources clientResources() {
         return clientResources;
+    }
+
+    public char[] password() {
+        return password;
     }
 
 }

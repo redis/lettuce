@@ -151,14 +151,14 @@ public abstract class AbstractRedisClient {
         } else {
             redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) redisURI.getUnit()
                     .toMillis(redisURI.getTimeout()));
-
             connectionBuilder.timeout(redisURI.getTimeout(), redisURI.getUnit());
+            connectionBuilder.password(redisURI.getPassword());
         }
+
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
         connectionBuilder.workerPool(genericWorkerPool);
-
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {

@@ -28,11 +28,14 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
     protected boolean pingBeforeActivate;
     protected SettableFuture<Boolean> initializedFuture = SettableFuture.create();
+    protected final char[] password;
     private final List<ChannelHandler> handlers;
     private final EventBus eventBus;
 
-    public PlainChannelInitializer(boolean pingBeforeActivateConnection, List<ChannelHandler> handlers, EventBus eventBus) {
+    public PlainChannelInitializer(boolean pingBeforeActivateConnection, char[] password, List<ChannelHandler> handlers,
+            EventBus eventBus) {
         this.pingBeforeActivate = pingBeforeActivateConnection;
+        this.password = password;
         this.handlers = handlers;
         this.eventBus = eventBus;
     }
@@ -80,7 +83,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 public void channelActive(final ChannelHandlerContext ctx) throws Exception {
                     eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
                     if (pingBeforeActivate) {
-                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
+                        if (password != null && password.length != 0) {
+                            pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
+                        } else {
+                            pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
+                        }
                         pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                     } else {
                         super.channelActive(ctx);

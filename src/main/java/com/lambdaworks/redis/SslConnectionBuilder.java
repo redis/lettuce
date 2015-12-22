@@ -26,11 +26,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
-import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.*;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
@@ -157,7 +153,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
                             if (event.isSuccess()) {
                                 if (pingBeforeActivate) {
-                                    pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
+                                    if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword())));
+                                    } else {
+                                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
+                                    }
                                     pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                                 } else {
                                     ctx.fireChannelActive();
