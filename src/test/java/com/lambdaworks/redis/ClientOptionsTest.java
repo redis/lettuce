@@ -2,8 +2,8 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.Connections.getConnectionWatchdog;
 import static com.lambdaworks.Connections.getStatefulConnection;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.StrictAssertions.assertThat;
 
 import org.junit.Test;
 

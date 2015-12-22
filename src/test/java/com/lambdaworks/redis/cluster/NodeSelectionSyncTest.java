@@ -2,7 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.StrictAssertions.fail;
+import static org.assertj.core.api.Fail.fail;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;

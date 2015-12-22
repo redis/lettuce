@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
-import org.assertj.core.api.StrictAssertions;
 import org.assertj.core.util.Lists;
 import org.junit.After;
 import org.junit.Before;
@@ -79,7 +78,7 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
 
         MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
 
-        StrictAssertions.assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
+        assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
         slaveCall(connection);
 
         assertThat(connectionProvider.getConnectionCount()).isEqualTo(2);

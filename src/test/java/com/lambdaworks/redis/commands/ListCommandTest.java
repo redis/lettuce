@@ -3,7 +3,6 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.StrictAssertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
