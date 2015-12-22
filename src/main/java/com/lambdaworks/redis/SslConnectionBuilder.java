@@ -152,7 +152,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
                             if (event.isSuccess()) {
                                 if (pingBeforeActivate) {
-                                    pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                                    if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                                        pingCommand = INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword()));
+                                    } else {
+                                        pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                                    }
                                     pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                                 } else {
                                     ctx.fireChannelActive();

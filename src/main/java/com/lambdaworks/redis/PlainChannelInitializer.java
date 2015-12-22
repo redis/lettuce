@@ -1,5 +1,8 @@
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.ConnectionEventTrigger.local;
+import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
+
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -16,9 +19,6 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 
-import static com.lambdaworks.redis.ConnectionEventTrigger.local;
-import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
-
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 02.02.15 09:36
@@ -30,11 +30,14 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
     protected boolean pingBeforeActivate;
     protected SettableFuture<Boolean> initializedFuture = SettableFuture.create();
+    protected final char[] password;
     private final List<ChannelHandler> handlers;
     private final EventBus eventBus;
 
-    public PlainChannelInitializer(boolean pingBeforeActivateConnection, List<ChannelHandler> handlers, EventBus eventBus) {
+    public PlainChannelInitializer(boolean pingBeforeActivateConnection, char[] password, List<ChannelHandler> handlers,
+            EventBus eventBus) {
         this.pingBeforeActivate = pingBeforeActivateConnection;
+        this.password = password;
         this.handlers = handlers;
         this.eventBus = eventBus;
     }
@@ -82,7 +85,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 public void channelActive(final ChannelHandlerContext ctx) throws Exception {
                     eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
                     if (pingBeforeActivate) {
-                        pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                        if (password != null && password.length != 0) {
+                            pingCommand = INITIALIZING_CMD_BUILDER.auth(new String(password));
+                        } else {
+                            pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                        }
                         pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                     } else {
                         super.channelActive(ctx);
@@ -141,6 +148,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             if (!initializedFuture.isDone()) {
                 if (cmd.getException() != null) {
                     initializedFuture.setException(cmd.getException());
+                    return;
+                }
+
+                if (cmd.getError() != null) {
+                    initializedFuture.setException(new RedisCommandExecutionException(cmd.getError()));
                     return;
                 }
 
