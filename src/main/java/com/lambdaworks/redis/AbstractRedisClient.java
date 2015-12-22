@@ -243,10 +243,10 @@ public abstract class AbstractRedisClient {
 
             return (T) connection;
         } catch (RedisException e) {
-            connection.close();
+            connectionBuilder.commandHandler().initialState();
             throw e;
         } catch (Exception e) {
-            connection.close();
+            connectionBuilder.commandHandler().initialState();
             throw new RedisConnectionException("Unable to connect to " + redisAddress, e);
         }
     }

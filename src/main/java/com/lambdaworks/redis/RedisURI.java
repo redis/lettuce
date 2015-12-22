@@ -190,6 +190,17 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
+     * Create a Redis URI from host and port.
+     *
+     * @param host the host
+     * @param port the port
+     * @return An instance of {@link RedisURI} containing details from the {@code host} and {@code port}.
+     */
+    public static RedisURI create(String host, int port) {
+        return new Builder().redis(host, port).build();
+    }
+
+    /**
      * Create a Redis URI from an URI string.
      *
      * The uri must follow conventions of {@link java.net.URI}

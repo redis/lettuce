@@ -1,15 +1,17 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -38,8 +40,7 @@ class ClusterTopologyRefresh {
 
     private static final Utf8StringCodec CODEC = new Utf8StringCodec();
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefresh.class);
-
-    private RedisClusterClient client;
+    private final RedisClusterClient client;
 
     public ClusterTopologyRefresh(RedisClusterClient client) {
         this.client = client;
@@ -52,7 +53,7 @@ class ClusterTopologyRefresh {
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
-    public static boolean isChanged(Partitions o1, Partitions o2) {
+    static boolean isChanged(Partitions o1, Partitions o2) {
 
         if (o1.size() != o2.size()) {
             return true;
@@ -68,13 +69,24 @@ class ClusterTopologyRefresh {
     }
 
     /**
+     * Sort partitions by RedisURI.
+     * @param clusterNodes
+     * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}
+     */
+    static List<RedisClusterNode> createSortedList(Iterable<RedisClusterNode> clusterNodes) {
+        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        Collections.sort(ordered, (o1, o2) -> RedisUriComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
+        return ordered;
+    }
+
+    /**
      * Check for {@code MASTER} or {@code SLAVE} flags and whether the responsible slots changed.
      * 
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
-    protected static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
+    static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
 
         if (o2 == null) {
             return false;
@@ -165,7 +177,7 @@ class ClusterTopologyRefresh {
                 Thread.interrupted();
                 throw new RedisCommandInterruptedException(e);
             } catch (ExecutionException e) {
-                logger.warn("Cannot retrieve partition view from " + entry.getKey(), e);
+                logger.warn("Cannot retrieve partition view from " + entry.getKey() + ", error: " + e.toString());
             }
         }
 
@@ -221,6 +233,12 @@ class ClusterTopologyRefresh {
             try {
                 StatefulRedisConnection<String, String> connection = client.connectToNode(redisURI.getResolvedAddress());
                 connections.put(redisURI, connection);
+            } catch (RedisConnectionException e) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(e.getMessage(), e);
+                } else {
+                    logger.warn(e.getMessage());
+                }
             } catch (RuntimeException e) {
                 logger.warn("Cannot connect to " + redisURI, e);
             }
