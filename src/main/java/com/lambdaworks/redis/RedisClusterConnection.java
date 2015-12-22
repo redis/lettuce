@@ -12,7 +12,8 @@ import java.util.List;
  */
 public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
-        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, RedisGeoConnection<K, V> {
+        RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, RedisGeoConnection<K, V>,
+        BaseRedisConnection<K, V> {
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.
