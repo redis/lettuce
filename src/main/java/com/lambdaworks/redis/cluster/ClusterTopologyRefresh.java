@@ -1,11 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
@@ -15,9 +9,14 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utility to refresh the cluster topology view based on {@link Partitions}.
@@ -185,6 +184,12 @@ class ClusterTopologyRefresh {
 
             try {
                 RedisAsyncConnectionImpl<String, String> connection = client.connectAsyncImpl(redisURI.getResolvedAddress());
+                if (redisURI.getPassword() != null) {
+                    String password = new String(redisURI.getPassword());
+                    if (!"".equals(password.trim())) {
+                        connection.auth(password);
+                    }
+                }
                 connections.put(redisURI, connection);
             } catch (RuntimeException e) {
                 logger.warn("Cannot connect to " + redisURI, e);
