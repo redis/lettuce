@@ -221,7 +221,7 @@ class ClusterTopologyRefresh {
                 RedisAsyncConnectionImpl<String, String> connection = client.connectAsyncImpl(redisURI.getResolvedAddress());
                 if (redisURI.getPassword() != null) {
                     String password = new String(redisURI.getPassword());
-                    if (!"".equals(password)) {
+                    if (!"".equals(password.trim())) {
                         connection.auth(password);
                     }
                 }
