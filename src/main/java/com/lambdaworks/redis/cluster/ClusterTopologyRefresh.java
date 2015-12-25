@@ -232,6 +232,9 @@ class ClusterTopologyRefresh {
 
             try {
                 StatefulRedisConnection<String, String> connection = client.connectToNode(redisURI.getResolvedAddress());
+                if(redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                    connection.sync().auth(new String(redisURI.getPassword()));
+                }
                 connections.put(redisURI, connection);
             } catch (RedisConnectionException e) {
                 if (logger.isDebugEnabled()) {
