@@ -133,6 +133,29 @@ public class ClusterTopologyRefreshTest {
             assertThat(value).extracting("nodeId").containsExactly("1", "2");
         }
     }
+    @Test
+    public void getNodeSpecificViewTestingNoAddrFilter() throws Exception {
+
+        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> commands = Maps.newHashMap();
+
+        String nodes1 = "n1 10.37.110.63:7000 slave n3 0 1452553664848 43 connected\n" +
+                "n2 10.37.110.68:7000 slave n6 0 1452553664346 45 connected\n" +
+                "badSlave :0 slave,fail,noaddr n5 1449160058028 1449160053146 46 disconnected\n" +
+                "n3 10.37.110.69:7000 master - 0 1452553662842 43 connected 3829-6787 7997-9999\n" +
+                "n4 10.37.110.62:7000 slave n3 0 1452553663844 43 connected\n" +
+                "n5 10.37.110.70:7000 myself,master - 0 0 46 connected 10039-14999\n" +
+                "n6 10.37.110.65:7000 master - 0 1452553663844 45 connected 0-3828 6788-7996 10000-10038 15000-16383";
+        
+        createCommand(commands, 1, nodes1);
+
+        List<Partitions> values = Lists.newArrayList(sut.getNodeSpecificViews(commands).values());
+
+        assertThat(values).hasSize(1);
+
+        for (Partitions value : values) {
+            assertThat(value).extracting("nodeId").containsOnly("n1", "n2", "n3", "n4", "n5", "n6");
+        }
+    }
 
     @Test
     public void getNodeSpecificViews_2_1() throws Exception {
