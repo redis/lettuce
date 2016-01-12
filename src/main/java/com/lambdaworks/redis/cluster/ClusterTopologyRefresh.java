@@ -162,8 +162,12 @@ class ClusterTopologyRefresh {
 
                 String raw = future.get();
                 Partitions partitions = ClusterPartitionParser.parse(raw);
+                List<RedisClusterNode> badNodes = Lists.newArrayList();
 
                 for (RedisClusterNode partition : partitions) {
+                    if (partition.getFlags().contains(RedisClusterNode.NodeFlag.NOADDR)) {
+                        badNodes.add(partition);
+                    }
                     if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                         partition.setUri(entry.getKey());
 
@@ -171,7 +175,9 @@ class ClusterTopologyRefresh {
                         latencies.put(partition.getNodeId(), entry.getValue().duration());
                     }
                 }
-
+                if(!badNodes.isEmpty()){
+                    partitions.removeAll(badNodes);
+                }
                 nodeSpecificViews.put(entry.getKey(), partitions);
             } catch (InterruptedException e) {
                 Thread.interrupted();
