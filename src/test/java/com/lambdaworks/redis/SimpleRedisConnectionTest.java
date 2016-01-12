@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -12,20 +13,13 @@ import static org.junit.Assert.assertEquals;
  * @author <a href="mailto:a.abdelfatah@live.com">Ahmed Kamal</a>
  * @since 12.01.16 09:17
  */
-public class SimpleRedisConnectionTest {
+public class SimpleRedisConnectionTest extends AbstractCommandTest{
 
-    RedisClient redisClient;
     SimpleRedisConnection redisConnection;
 
+    @Before
     public void setUp() throws Exception {
-        String redisUrl = "redis://localhost:6379";
-
-        redisClient = new RedisClient(RedisURI.create(redisUrl));
-        redisConnection = new SimpleRedisConnection(redisClient);
-    }
-
-    public void tearDown() throws Exception {
-        redisClient.shutdown();
+        redisConnection = new SimpleRedisConnection(client);
     }
 
     @Test
