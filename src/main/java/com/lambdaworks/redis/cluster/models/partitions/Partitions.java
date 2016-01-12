@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,7 +32,7 @@ import com.lambdaworks.redis.cluster.SlotHash;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public class Partitions extends AbstractCollection<RedisClusterNode> implements Collection<RedisClusterNode> {
+public class Partitions implements Collection<RedisClusterNode> {
 
     private List<RedisClusterNode> partitions = Lists.newArrayList();
     private RedisClusterNode slotCache[];
@@ -120,5 +119,70 @@ public class Partitions extends AbstractCollection<RedisClusterNode> implements 
         this.partitions.clear();
         this.partitions.addAll(partitions);
         updateCache();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return getPartitions().isEmpty();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return getPartitions().contains(o);
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends RedisClusterNode> c) {
+        boolean b = partitions.addAll(c);
+        updateCache();
+        return b;
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        boolean b = getPartitions().removeAll(c);
+        updateCache();
+        return b;
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        boolean b = getPartitions().retainAll(c);
+        updateCache();
+        return b;
+    }
+
+    @Override
+    public void clear() {
+        getPartitions().clear();
+        updateCache();
+    }
+    @Override
+    public Object[] toArray() {
+        return getPartitions().toArray();
+    }
+
+    @Override
+    public <T> T[] toArray(T[] a) {
+        return getPartitions().toArray(a);
+    }
+
+    @Override
+    public boolean add(RedisClusterNode redisClusterNode) {
+        boolean add = getPartitions().add(redisClusterNode);
+        updateCache();
+        return add;
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        boolean remove = getPartitions().remove(o);
+        updateCache();
+        return remove;
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        return getPartitions().containsAll(c);
     }
 }
