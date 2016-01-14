@@ -33,7 +33,7 @@ public class SimpleRedisConnectionTest extends AbstractCommandTest{
     }
 
     @Test
-    public void testCachePersonListAndGetThem() {
+    public void testCachePersonListAndGetThem() throws Exception {
         ArrayList<Person> personList = new ArrayList<Person>();
 
         personList.add(createPersonAdam());

@@ -5,25 +5,35 @@ import com.lambdaworks.redis.codec.ByteArrayCodec;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-/**
- * @author <a href="mailto:a.abdelfatah@live.com">Ahmed Kamal</a>
- * @since 12.01.16 09:17
- */
+import java.io.Serializable;
 
 /**
  * A simple redis connection for caching and retrieval from redis
+ *
+ * @author <a href="mailto:a.abdelfatah@live.com">Ahmed Kamal</a>
+ * @since 12.01.16 09:17
  */
 public class SimpleRedisConnection {
 
     private final RedisClient redisClient;
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(SimpleRedisConnection.class);
+    private JavaSerializer codec;
 
+    /**
+     * creates a simple redis connection providing redis client
+     * @param redisClient
+     */
     public SimpleRedisConnection(RedisClient redisClient) {
+
+        if (redisClient == null)
+            throw new IllegalArgumentException("Redis Client argument shouldn't be null");
+
         this.redisClient = redisClient;
+        this.codec = new JavaSerializer();
     }
 
     /**
-     * Cache generic value in redis (The class of the value should implement Serializable)
+     * Cache generic serializable value in redis
      * <br/>
      * Sets field in the hash stored at key to value. If key does not exist, a new key holding a hash is created.
      * <br/>
@@ -31,27 +41,26 @@ public class SimpleRedisConnection {
      *
      * @param key
      * @param field
-     * @param value
+     * @param value that implements serializable
      * @param <T>
      * @return true if field is a new field in the hash and value was set.
      * <br/> false if field already exists in the hash and the value was updated.
      */
-    public <T> boolean cache(String key, String field, T value) {
+    public <T extends Serializable> boolean cache(String key, String field, T value) throws Exception {
 
         RedisConnection<byte[], byte[]> redisCommands = null;
         try {
             redisCommands = getRedisConnection();
 
-            byte[] serializedValues = new JavaSerializer().serializeObject(value);
-            redisCommands.hset(key.getBytes(), field.getBytes(), serializedValues);
+            byte[] serializedValues = codec.serializeObject(value);
+            return redisCommands.hset(key.getBytes(), field.getBytes(), serializedValues);
 
-            return true;
         } catch (Exception e) {
             logger.error("Exception Occurred while caching a value in redis", e);
+            throw e;
         } finally {
             closeConnection(redisCommands);
         }
-        return false;
     }
 
     /**
@@ -63,22 +72,22 @@ public class SimpleRedisConnection {
      * @param <T>
      * @return the value stored in a deserialized form or null when field is not present in the hash or key does not exist.
      */
-    public <T> T get(String key, String field) {
+    public <T> T get(String key, String field) throws Exception {
 
         RedisConnection<byte[], byte[]> redisCommands = null;
         try {
             redisCommands = getRedisConnection();
 
             byte[] serializedData = redisCommands.hget(key.getBytes(), field.getBytes());
-            T deserializeObject = new JavaSerializer().deserializeObject(serializedData);
+            T deserializeObject = codec.deserializeObject(serializedData);
 
             return deserializeObject;
         } catch (Exception e) {
             logger.error("Exception Occurred while getting a value from redis", e);
+            throw e;
         } finally {
             closeConnection(redisCommands);
         }
-        return null;
     }
 
     /**
@@ -89,20 +98,13 @@ public class SimpleRedisConnection {
      * @param fields
      * @return the number of fields that were removed from the hash, not including specified but non existing fields.
      */
-    public Long clear(String key, String... fields) {
+    public Long clear(String key, String... fields) throws Exception {
 
         RedisConnection<byte[], byte[]> redisCommands = null;
         try {
             redisCommands = getRedisConnection();
 
-            int maxBytes = Integer.MIN_VALUE;
-
-            for (int i = 0; i < fields.length; i++) {
-                if (fields[i].getBytes().length > maxBytes)
-                    maxBytes = fields[i].getBytes().length;
-            }
-
-            byte[][] fieldsInBytes = new byte[fields.length][maxBytes + 1];
+            byte[][] fieldsInBytes = new byte[fields.length][];
             for (int i = 0; i < fields.length; i++) {
                 fieldsInBytes[i] = fields[i].getBytes();
             }
@@ -111,13 +113,13 @@ public class SimpleRedisConnection {
 
         } catch (Exception e) {
             logger.error("Exception Occurred while clearing a value from redis", e);
+            throw e;
         } finally {
             closeConnection(redisCommands);
         }
-        return new Long(-1);
     }
 
-    private synchronized RedisConnection getRedisConnection() {
+    private synchronized RedisConnection getRedisConnection() throws Exception {
         try {
             RedisConnection connection = redisClient.connect(new ByteArrayCodec());
 
@@ -125,14 +127,10 @@ public class SimpleRedisConnection {
 
             return connection;
 
-        } catch (RedisConnectionException e) {
-            logger.error("Exception Occurred while connecting to the server", e);
-            throw e;
-
         } catch (Exception e) {
             logger.error("Exception Occurred while connecting to the server", e);
+            throw e;
         }
-        return null;
     }
 
     private <K, V> void closeConnection(RedisConnection<K, V> connection) {

@@ -14,7 +14,7 @@ public class JavaSerializer {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(JavaSerializer.class);
 
-    public byte[] serializeObject(Object object) {
+    public byte[] serializeObject(Object object) throws IOException {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = null;
@@ -26,6 +26,7 @@ public class JavaSerializer {
             return byteArray;
         } catch (IOException e) {
             logger.error("Exception while trying serialize java object", e);
+            throw e;
         } finally {
             try {
                 if (out != null) {
@@ -33,18 +34,18 @@ public class JavaSerializer {
                 }
             } catch (IOException ex) {
                 logger.error("Exception while trying to close object output stream", ex);
+                throw ex;
             }
             try {
                 bos.close();
             } catch (IOException ex) {
                 logger.error("Exception while trying to close bytes output stream", ex);
+                throw ex;
             }
         }
-        return null;
-
     }
 
-    public <T> T deserializeObject(byte[] bytes) {
+    public <T> T deserializeObject(byte[] bytes) throws IOException, ClassNotFoundException {
         ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
         ObjectInput in = null;
         try {
@@ -55,13 +56,16 @@ public class JavaSerializer {
 
         } catch (ClassNotFoundException e) {
             logger.error("Exception because class of deserialized object can't be determined", e);
+            throw e;
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Exception occurred while deserializing an object", e);
+            throw e;
         } finally {
             try {
                 bis.close();
             } catch (IOException ex) {
                 logger.error("Exception while trying to close ByteArray Input Stream", ex);
+                throw ex;
             }
             try {
                 if (in != null) {
@@ -69,9 +73,8 @@ public class JavaSerializer {
                 }
             } catch (IOException ex) {
                 logger.error("Exception while trying to close Object Input Stream", ex);
+                throw ex;
             }
         }
-        return null;
-
     }
 }
