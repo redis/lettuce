@@ -100,7 +100,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         }
 
         /**
-         * Sets whether whether to distinct latencies on local level. If {@literal true}, multiple connections to the same
+         * Enables per connection metrics tracking insead of per host/port. If {@literal true}, multiple connections to the same
          * host/connection point will be recorded separately which allows to inspect every connection individually. If
          * {@literal false}, multiple connections to the same host/connection point will be recorded together. This allows a
          * consolidated view on one particular service. Defaults to {@literal false}. See
