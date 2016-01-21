@@ -147,12 +147,11 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<Long> dbsize();
 
     /**
-     * Get debugging information about a key.
-     * 
-     * @param key the key
+     * Crash and recover
+     * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
-    Executions<String> debugObject(K key);
+    Executions<String> debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
@@ -163,6 +162,36 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> debugHtstats(int db);
 
     /**
+     * Get debugging information about a key.
+     * 
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    Executions<String> debugObject(K key);
+
+    /**
+     * Save RDB, clear the database and reload RDB.
+     *
+     * @return String simple-string-reply The commands returns OK on success.
+     */
+    Executions<String> debugReload();
+
+    /**
+     * Restart the server gracefully.
+     * @param delay optional delay in milliseconds
+     * @return String simple-string-reply
+     */
+    Executions<String> debugRestart(Long delay);
+
+    /**
+     * Get debugging information about the internal SDS length.
+     *
+     * @param key the key
+     * @return String simple-string-reply
+     */
+    Executions<String> debugSdslen(K key);
+
+    /**
      * Remove all keys from all databases.
      * 
      * @return String simple-string-reply
@@ -170,11 +199,25 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> flushall();
 
     /**
+     * Remove all keys asynchronously from all databases.
+     *
+     * @return String simple-string-reply
+     */
+    Executions<String> flushallAsync();
+
+    /**
      * Remove all keys from the current database.
      * 
      * @return String simple-string-reply
      */
     Executions<String> flushdb();
+
+    /**
+     * Remove all keys asynchronously from the current database.
+     *
+     * @return String simple-string-reply
+     */
+    Executions<String> flushdbAsync();
 
     /**
      * Get information and statistics about the server.
