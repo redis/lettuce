@@ -13,6 +13,7 @@ import java.io.Serializable;
  * @author <a href="mailto:a.abdelfatah@live.com">Ahmed Kamal</a>
  * @since 12.01.16 09:17
  */
+
 public class SimpleRedisConnection {
 
     private final RedisClient redisClient;
@@ -46,7 +47,7 @@ public class SimpleRedisConnection {
      * @return true if field is a new field in the hash and value was set.
      * <br/> false if field already exists in the hash and the value was updated.
      */
-    public <T extends Serializable> boolean cache(String key, String field, T value) throws Exception {
+    public <T extends Serializable> boolean cache(String key, String field, T value) {
 
         RedisConnection<byte[], byte[]> redisCommands = null;
         try {
@@ -55,9 +56,6 @@ public class SimpleRedisConnection {
             byte[] serializedValues = codec.serializeObject(value);
             return redisCommands.hset(key.getBytes(), field.getBytes(), serializedValues);
 
-        } catch (Exception e) {
-            logger.error("Exception Occurred while caching a value in redis", e);
-            throw e;
         } finally {
             closeConnection(redisCommands);
         }
@@ -72,7 +70,7 @@ public class SimpleRedisConnection {
      * @param <T>
      * @return the value stored in a deserialized form or null when field is not present in the hash or key does not exist.
      */
-    public <T> T get(String key, String field) throws Exception {
+    public <T> T get(String key, String field) {
 
         RedisConnection<byte[], byte[]> redisCommands = null;
         try {
@@ -82,9 +80,6 @@ public class SimpleRedisConnection {
             T deserializeObject = codec.deserializeObject(serializedData);
 
             return deserializeObject;
-        } catch (Exception e) {
-            logger.error("Exception Occurred while getting a value from redis", e);
-            throw e;
         } finally {
             closeConnection(redisCommands);
         }
@@ -98,7 +93,7 @@ public class SimpleRedisConnection {
      * @param fields
      * @return the number of fields that were removed from the hash, not including specified but non existing fields.
      */
-    public Long clear(String key, String... fields) throws Exception {
+    public Long clear(String key, String... fields) {
 
         RedisConnection<byte[], byte[]> redisCommands = null;
         try {
@@ -110,27 +105,17 @@ public class SimpleRedisConnection {
             }
 
             return redisCommands.hdel(key.getBytes(), fieldsInBytes);
-
-        } catch (Exception e) {
-            logger.error("Exception Occurred while clearing a value from redis", e);
-            throw e;
         } finally {
             closeConnection(redisCommands);
         }
     }
 
-    private synchronized RedisConnection getRedisConnection() throws Exception {
-        try {
+    private synchronized RedisConnection getRedisConnection() {
             RedisConnection connection = redisClient.connect(new ByteArrayCodec());
 
             logger.info("Redis Connection is Opened");
 
             return connection;
-
-        } catch (Exception e) {
-            logger.error("Exception Occurred while connecting to the server", e);
-            throw e;
-        }
     }
 
     private <K, V> void closeConnection(RedisConnection<K, V> connection) {

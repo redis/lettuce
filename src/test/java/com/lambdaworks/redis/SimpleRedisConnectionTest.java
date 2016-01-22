@@ -18,12 +18,12 @@ public class SimpleRedisConnectionTest extends AbstractCommandTest{
     SimpleRedisConnection redisConnection;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         redisConnection = new SimpleRedisConnection(client);
     }
 
     @Test
-    public void testCachePersonAndGetIt() throws Exception {
+    public void testCachePersonAndGetIt() {
         Person person = createPersonAdam();
         boolean succeeded = redisConnection.cache("People", "Adam", person);
         assertEquals(succeeded, true);
@@ -33,7 +33,7 @@ public class SimpleRedisConnectionTest extends AbstractCommandTest{
     }
 
     @Test
-    public void testCachePersonListAndGetThem() throws Exception {
+    public void testCachePersonListAndGetThem() {
         ArrayList<Person> personList = new ArrayList<Person>();
 
         personList.add(createPersonAdam());
@@ -59,7 +59,7 @@ public class SimpleRedisConnectionTest extends AbstractCommandTest{
     }
 
     @Test
-    public void testCachePersonAndClearIt() throws Exception {
+    public void testCachePersonAndClearIt() {
         Person person = createPersonAdam();
         boolean succeeded = redisConnection.cache("People", "AdamForClear", person);
         assertEquals(succeeded, true);
