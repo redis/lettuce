@@ -12,7 +12,7 @@ is included.
 
 This version of lettuce has been tested against Redis 3.0.
 
-* Works with Java 6, 7 and 8
+* lettuce 3.x works with Java 6, 7 and 8, lettuce 4.x requires Java 8
 * synchronous and [asynchronous connections](https://github.com/mp911de/lettuce/wiki/Asynchronous-Connections)
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
