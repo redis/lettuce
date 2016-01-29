@@ -265,6 +265,7 @@ Other
 ------
 * Improve Redis URI documentation and query parameter handling #153
 * Added configurable timeout to connection string #152
+* Update netty to 4.0.34.Final #186
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested
 continuously against Redis 3.0 and the unstable branch.

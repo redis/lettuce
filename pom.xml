@@ -57,7 +57,7 @@
         <skipTests>true</skipTests>
         <github.site.upload.skip>true</github.site.upload.skip>
         <lettuce-release-version>3.3.2.Final</lettuce-release-version>
-        <netty-version>4.0.28.Final</netty-version>
+        <netty-version>4.0.34.Final</netty-version>
     </properties>
 
     <scm>
