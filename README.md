@@ -38,7 +38,8 @@ Documentation
 ---------------
 
 * [Wiki](https://github.com/mp911de/lettuce/wiki)
-* [Javadoc](http://redis.paluch.biz/docs/api/releases/latest/)
+* [JavaDoc 3.x](http://redis.paluch.biz/docs/api/releases/latest-3.x/)
+* [JavaDoc 4.x](http://redis.paluch.biz/docs/api/releases/latest-4.x/)
 
 
 Binaries/Download
