@@ -6,8 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Ints;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
@@ -64,16 +65,21 @@ public class ClusterSlotsParser {
 
         int from = Ints.checkedCast(getLongFromIterator(iterator, 0));
         int to = Ints.checkedCast(getLongFromIterator(iterator, 0));
-        HostAndPort master = null;
+        RedisClusterNode master = null;
 
-        List<HostAndPort> slaves = Lists.newArrayList();
+        List<RedisClusterNode> slaves = Lists.newArrayList();
         if (iterator.hasNext()) {
-            master = getHostAndPort(iterator);
+            master = getRedisClusterNode(iterator);
+            if(master != null) {
+                master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
+            }
         }
 
         while (iterator.hasNext()) {
-            HostAndPort slave = getHostAndPort(iterator);
+            RedisClusterNode slave = getRedisClusterNode(iterator);
             if (slave != null) {
+                slave.setSlaveOf(master.getNodeId());
+                slave.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
                 slaves.add(slave);
             }
         }
@@ -81,20 +87,28 @@ public class ClusterSlotsParser {
         return new ClusterSlotRange(from, to, master, Collections.unmodifiableList(slaves));
     }
 
-    private static HostAndPort getHostAndPort(Iterator<?> iterator) {
+    private static RedisClusterNode getRedisClusterNode(Iterator<?> iterator) {
         Object element = iterator.next();
         if (element instanceof List) {
             List<?> hostAndPortList = (List<?>) element;
-            if (hostAndPortList.size() != 2) {
+            if (hostAndPortList.size() < 2) {
                 return null;
             }
 
             Iterator<?> hostAndPortIterator = hostAndPortList.iterator();
             String host = (String) hostAndPortIterator.next();
             int port = Ints.checkedCast(getLongFromIterator(hostAndPortIterator, 0));
-            HostAndPort hostAndPort = HostAndPort.fromParts(host, port);
+            String nodeId;
 
-            return hostAndPort;
+            RedisClusterNode redisClusterNode = new RedisClusterNode();
+            redisClusterNode.setUri(RedisURI.create(host, port));
+
+            if (hostAndPortIterator.hasNext()) {
+                nodeId = (String) hostAndPortIterator.next();
+                redisClusterNode.setNodeId(nodeId);
+            }
+
+            return redisClusterNode;
 
         }
         return null;
