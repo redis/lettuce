@@ -101,7 +101,7 @@ public class ClusterSlotsParser {
             String nodeId;
 
             RedisClusterNode redisClusterNode = new RedisClusterNode();
-            redisClusterNode.setUri(RedisURI.create(host, port));
+            redisClusterNode.setUri(new RedisURI.Builder().redis(host, port).build());
 
             if (hostAndPortIterator.hasNext()) {
                 nodeId = (String) hostAndPortIterator.next();
