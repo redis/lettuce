@@ -9,7 +9,7 @@ operations such as `BLPOP` and  `MULTI`/`EXEC`.
 lettuce is built with [netty](https://github.com/netty/netty).
 Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Reconnect and Redis data models.
 
-This version of lettuce has been tested against Redis 3.0.
+This version of lettuce has been tested against Redis 3.2 RC3.
 
 * lettuce 3.x works with Java 6, 7 and 8, lettuce 4.x requires Java 8
 * [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage

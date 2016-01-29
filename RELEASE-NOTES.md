@@ -1,7 +1,9 @@
 lettuce 4.1 RELEASE NOTES
 =========================
 lettuce 4.1 is here. This release contains numerous features and bugfixes. Lettuce 4.1 introduces reusable
-client-resources, an EventBus, client metrics, and support for newly introduced commands.
+client-resources, an EventBus, client metrics, and support for newly introduced commands. This version 
+works with Redis 3.2 RC3 but Redis expects a change in the format of CLUSTER NODES. So watch out for a new
+release of lettuce as soon as Redis 3.2 RC4 or a final is released.
 
 lettuce is available in two major versions. The 3.x stream and the 4.x stream. Both streams are maintained. 
 
@@ -289,6 +291,7 @@ Enhancements
 * Extend support for CLUSTER commands #111
 * Dispatch CLUSTER commands based on the slot #112
 * Enable initial support for read from slaves in Master-Slave setups #125
+* Support changed CLUSTER SLOTS #183
 
 Fixes
 -----
