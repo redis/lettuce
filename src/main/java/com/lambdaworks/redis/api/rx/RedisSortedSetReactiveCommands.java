@@ -155,7 +155,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @return V array-reply list of elements in the specified range.
      */
     Observable<V> zrange(K key, long start, long stop);
 
@@ -165,7 +165,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @return V array-reply list of elements in the specified range.
      */
     Observable<ScoredValue<V>> zrangeWithScores(K key, long start, long stop);
 
@@ -175,7 +175,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrangebyscore(K key, double min, double max);
 
@@ -185,7 +185,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrangebyscore(K key, String min, String max);
 
@@ -197,7 +197,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrangebyscore(K key, double min, double max, long offset, long count);
 
@@ -209,7 +209,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrangebyscore(K key, String min, String max, long offset, long count);
 
@@ -219,7 +219,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max);
 
@@ -229,7 +229,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max);
 
@@ -241,7 +241,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
 
@@ -253,7 +253,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
 
@@ -432,7 +432,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @return V array-reply list of elements in the specified range.
      */
     Observable<V> zrevrange(K key, long start, long stop);
 
@@ -442,7 +442,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param start the start
      * @param stop the stop
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @return V array-reply list of elements in the specified range.
      */
     Observable<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
 
@@ -452,7 +452,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrevrangebyscore(K key, double max, double min);
 
@@ -462,7 +462,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrevrangebyscore(K key, String max, String min);
 
@@ -474,7 +474,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param min min score
      * @param offset the withscores
      * @param count the null
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrevrangebyscore(K key, double max, double min, long offset, long count);
 
@@ -486,7 +486,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param min min score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrevrangebyscore(K key, String max, String min, long offset, long count);
 
@@ -496,7 +496,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param max max score
      * @param min min score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min);
 
@@ -506,7 +506,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param max max score
      * @param min min score
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min);
 
@@ -518,7 +518,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param min min score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
 
@@ -530,7 +530,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param min min score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
 
@@ -793,7 +793,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrangebylex(K key, String min, String max);
 
@@ -805,7 +805,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified score range.
      */
     Observable<V> zrangebylex(K key, String min, String max, long offset, long count);
 }

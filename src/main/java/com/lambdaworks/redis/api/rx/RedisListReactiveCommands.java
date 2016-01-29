@@ -114,7 +114,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @return V array-reply list of elements in the specified range.
      */
     Observable<V> lrange(K key, long start, long stop);
 

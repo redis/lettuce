@@ -97,7 +97,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * Get all the fields in a hash.
      * 
      * @param key the key
-     * @return List&lt;K&gt; array-reply list of fields in the hash, or an empty list when {@code key} does not exist.
+     * @return K array-reply list of fields in the hash, or an empty list when {@code key} does not exist.
      */
     Observable<K> hkeys(K key);
 
@@ -124,7 +124,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * 
      * @param key the key
      * @param fields the field type: key
-     * @return List&lt;V&gt; array-reply list of values associated with the given fields, in the same
+     * @return V array-reply list of values associated with the given fields, in the same
      */
     Observable<V> hmget(K key, K... fields);
 
@@ -264,7 +264,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * Get all the values in a hash.
      *
      * @param key the key
-     * @return List&lt;V&gt; array-reply list of values in the hash, or an empty list when {@code key} does not exist.
+     * @return V array-reply list of values in the hash, or an empty list when {@code key} does not exist.
      */
     Observable<V> hvals(K key);
 

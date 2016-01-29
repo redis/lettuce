@@ -20,6 +20,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.ModifierSet;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.type.Type;
@@ -41,15 +42,18 @@ public class CompilationUnitFactory {
     private Predicate<MethodDeclaration> methodFilter;
     private Supplier<List<String>> importSupplier;
     private Consumer<ClassOrInterfaceDeclaration> typeMutator;
+    private Function<Comment, Comment> methodCommentMutator;
 
     CompilationUnit template;
     CompilationUnit result = new CompilationUnit();
     ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
-            Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
-            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
-            Consumer<ClassOrInterfaceDeclaration> typeMutator) {
+                                  Function<String, String> typeDocFunction,
+                                  Function<MethodDeclaration, Type> methodReturnTypeFunction,
+                                  Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
+                                  Consumer<ClassOrInterfaceDeclaration> typeMutator,
+                                  Function<Comment, Comment> methodCommentMutator) {
 
         this.templateFile = templateFile;
         this.sources = sources;
@@ -60,6 +64,7 @@ public class CompilationUnitFactory {
         this.methodFilter = methodFilter;
         this.importSupplier = importSupplier;
         this.typeMutator = typeMutator;
+        this.methodCommentMutator = methodCommentMutator;
 
         this.target = new File(sources, targetPackage.replace('.', '/') + "/" + targetName + ".java");
     }
@@ -127,7 +132,11 @@ public class CompilationUnitFactory {
 
             MethodDeclaration method = new MethodDeclaration(n.getModifiers(), methodReturnTypeFunction.apply(n), n.getName());
 
-            method.setComment(n.getComment());
+            if(methodCommentMutator != null){
+                method.setComment(methodCommentMutator.apply(n.getComment()));
+            }else {
+                method.setComment(n.getComment());
+            }
 
             for (Parameter parameter : n.getParameters()) {
                 Parameter param = ASTHelper.createParameter(parameter.getType(), parameter.getId().getName());

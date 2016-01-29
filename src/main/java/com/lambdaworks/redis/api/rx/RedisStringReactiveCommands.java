@@ -218,7 +218,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * Get the values of all the given keys.
      * 
      * @param keys the key
-     * @return List&lt;V&gt; array-reply list of values at the specified keys.
+     * @return V array-reply list of values at the specified keys.
      */
     Observable<V> mget(K... keys);
 

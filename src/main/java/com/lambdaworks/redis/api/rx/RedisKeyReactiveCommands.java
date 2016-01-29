@@ -94,7 +94,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * Find all keys matching the given pattern.
      * 
      * @param pattern the pattern type: patternkey (pattern)
-     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @return K array-reply list of keys matching {@code pattern}.
      */
     Observable<K> keys(K pattern);
 
@@ -250,7 +250,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * Sort the elements in a list, set or sorted set.
      * 
      * @param key the key
-     * @return List&lt;V&gt; array-reply list of sorted elements.
+     * @return V array-reply list of sorted elements.
      */
     Observable<V> sort(K key);
 
@@ -268,7 +268,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * 
      * @param key the key
      * @param sortArgs sort arguments
-     * @return List&lt;V&gt; array-reply list of sorted elements.
+     * @return V array-reply list of sorted elements.
      */
     Observable<V> sort(K key, SortArgs sortArgs);
 

@@ -29,7 +29,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
     /**
      * Lists the currently *active channels*.
      * 
-     * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
+     * @return K array-reply a list of active channels, optionally matching the specified pattern.
      */
     Observable<K> pubsubChannels();
 
@@ -37,7 +37,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * Lists the currently *active channels*.
      * 
      * @param channel the key
-     * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
+     * @return K array-reply a list of active channels, optionally matching the specified pattern.
      */
     Observable<K> pubsubChannels(K channel);
 
@@ -67,7 +67,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return List&lt;Object&gt; array-reply where the first element is one of master, slave, sentinel and the additional
+     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional
      *         elements are role-specific.
      */
     Observable<Object> role();

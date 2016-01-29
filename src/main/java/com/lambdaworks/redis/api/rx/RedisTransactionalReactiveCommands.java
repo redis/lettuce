@@ -24,7 +24,7 @@ public interface RedisTransactionalReactiveCommands<K, V> {
     /**
      * Execute all commands issued after MULTI.
      *
-     * @return List&lt;Object&gt; array-reply each element being the reply to each of the commands in the atomic transaction.
+     * @return Object array-reply each element being the reply to each of the commands in the atomic transaction.
      *
      *         When using {@code WATCH}, {@code EXEC} can return a
      */

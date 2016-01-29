@@ -45,7 +45,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
      * Provides a list of slaves for the master with the specified name.
      * 
      * @param key the key
-     * @return List&lt;Map&lt;K, V&gt;&gt;
+     * @return Map&lt;K, V&gt;
      */
     Observable<Map<K, V>> slaves(K key);
 

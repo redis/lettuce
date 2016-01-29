@@ -65,7 +65,7 @@ public class CreateAsyncApi {
         }
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodDeclaration -> true, importSupplier(), typeMutator());
+                methodTypeMutator(), methodDeclaration -> true, importSupplier(), typeMutator(), null);
     }
 
     private Consumer<ClassOrInterfaceDeclaration> typeMutator() {

@@ -58,7 +58,7 @@ public class CreateSyncNodeSelectionClusterApi {
 
         // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodFilter(), importSupplier(), null);
+                methodTypeMutator(), methodFilter(), importSupplier(), null, null);
     }
 
     /**

@@ -52,7 +52,7 @@ public class CreateSyncApi {
         }
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodDeclaration -> true, importSupplier(), null);
+                methodTypeMutator(), methodDeclaration -> true, importSupplier(), null, null);
     }
 
     /**

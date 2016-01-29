@@ -1,9 +1,11 @@
 package com.lambdaworks.redis.cluster.commands.rx;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
+import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import org.junit.*;
 
 import com.google.common.collect.Maps;
@@ -16,6 +18,7 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.StringCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import rx.Observable;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -56,6 +59,20 @@ public class StringClusterRxCommandTest extends StringCommandTest {
         redis.del("one");
         assertTrue(redis.msetnx(map));
         Assert.assertEquals("2", redis.get("two"));
+    }
+
+    @Test
+    public void mget() throws Exception {
+
+        redis.set(key, value);
+        redis.set("key1", value);
+        redis.set("key2", value);
+
+        RedisAdvancedClusterReactiveCommands<String, String> reactive = clusterConnection.reactive();
+
+        Observable<String> mget = reactive.mget(key, "key1", "key2");
+        String first = mget.toBlocking().first();
+        assertThat(first).isEqualTo(value);
     }
 
 }

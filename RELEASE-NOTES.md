@@ -304,6 +304,7 @@ Fixes
 * Perform multiple connection attempts when connecting a Redis Cluster #164
 * Include BaseRedis interface in synchronous RedisCluster API #166
 * Allow state-changing commands on pooled connections #162
+* Fix return type description in JavaDoc of the reactive API #185 (Thanks to @HaloFour)
 
 Other
 ------

@@ -42,7 +42,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * Subtract multiple sets.
      * 
      * @param keys the key
-     * @return Set&lt;V&gt; array-reply list with members of the resulting set.
+     * @return V array-reply list with members of the resulting set.
      */
     Observable<V> sdiff(K... keys);
 
@@ -68,7 +68,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * Intersect multiple sets.
      * 
      * @param keys the key
-     * @return Set&lt;V&gt; array-reply list with members of the resulting set.
+     * @return V array-reply list with members of the resulting set.
      */
     Observable<V> sinter(K... keys);
 
@@ -119,7 +119,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * Get all the members in a set.
      * 
      * @param key the key
-     * @return Set&lt;V&gt; array-reply all elements of the set.
+     * @return V array-reply all elements of the set.
      */
     Observable<V> smembers(K key);
 
@@ -155,7 +155,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * 
      * @param key the key
      * @param count the count type: long
-     * @return Set&lt;V&gt; bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
+     * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
      *         with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
     Observable<V> srandmember(K key, long count);
@@ -183,7 +183,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * Add multiple sets.
      * 
      * @param keys the key
-     * @return Set&lt;V&gt; array-reply list with members of the resulting set.
+     * @return V array-reply list with members of the resulting set.
      */
     Observable<V> sunion(K... keys);
 

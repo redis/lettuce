@@ -81,7 +81,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Returns an array reply of details about all Redis commands.
      * 
-     * @return List&lt;Object&gt; array-reply
+     * @return Object array-reply
      */
     Observable<Object> command();
 
@@ -89,7 +89,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Returns an array reply of details about the requested commands.
      * 
      * @param commands the commands to query for
-     * @return List&lt;Object&gt; array-reply
+     * @return Object array-reply
      */
     Observable<Object> commandInfo(String... commands);
 
@@ -97,7 +97,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Returns an array reply of details about the requested commands.
      * 
      * @param commands the commands to query for
-     * @return List&lt;Object&gt; array-reply
+     * @return Object array-reply
      */
     Observable<Object> commandInfo(CommandType... commands);
 
@@ -112,7 +112,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Get the value of a configuration parameter.
      * 
      * @param parameter name of the parameter
-     * @return List&lt;String&gt; bulk-string-reply
+     * @return String bulk-string-reply
      */
     Observable<String> configGet(String parameter);
 
@@ -290,7 +290,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Read the slow log.
      * 
-     * @return List&lt;Object&gt; deeply nested multi bulk replies
+     * @return Object deeply nested multi bulk replies
      */
     Observable<Object> slowlogGet();
 
@@ -298,7 +298,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Read the slow log.
      * 
      * @param count the count
-     * @return List&lt;Object&gt; deeply nested multi bulk replies
+     * @return Object deeply nested multi bulk replies
      */
     Observable<Object> slowlogGet(int count);
 
@@ -326,7 +326,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Return the current server time.
      * 
-     * @return List&lt;V&gt; array-reply specifically:
+     * @return V array-reply specifically:
      * 
      *         A multi bulk reply containing two elements:
      * 
