@@ -226,7 +226,7 @@ Custom read settings can be implemented by extending the `com.lambdaworks.redis.
 
 Read more: https://github.com/mp911de/lettuce/wiki/ReadFrom-Settings
 
-lettuce 3.4 requires Java 8 and can be used with Java 6 and 7.
+lettuce 3.4 requires Java 8 to build and can be used with Java 6 and 7.
 
 If you need any support, meet lettuce at:
 
