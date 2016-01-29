@@ -54,6 +54,6 @@ Using lettuce on your classpath
     netty-transport-native-epoll-${netty-version}.jar
     netty-handler-${netty-version}.jar
     guava-17.0.jar
-    commons-pool2-2.2.jar
+    commons-pool2-2.4.2.jar
 
 You can do this from the command line or a manifest file.
