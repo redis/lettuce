@@ -1,11 +1,10 @@
 package com.lambdaworks.redis.cluster.models.slots;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -34,6 +33,7 @@ public class ClusterSlotsParser {
      */
     public static List<ClusterSlotRange> parse(List<?> clusterSlotsOutput) {
         List<ClusterSlotRange> result = Lists.newArrayList();
+        Map<String, RedisClusterNode> nodeCache = Maps.newHashMap();
 
         for (Object o : clusterSlotsOutput) {
 
@@ -46,7 +46,7 @@ public class ClusterSlotsParser {
                 continue;
             }
 
-            ClusterSlotRange clusterSlotRange = parseRange(range);
+            ClusterSlotRange clusterSlotRange = parseRange(range, nodeCache);
             result.add(clusterSlotRange);
         }
 
@@ -60,7 +60,7 @@ public class ClusterSlotsParser {
         return Collections.unmodifiableList(result);
     }
 
-    private static ClusterSlotRange parseRange(List<?> range) {
+    private static ClusterSlotRange parseRange(List<?> range, Map<String, RedisClusterNode> nodeCache) {
         Iterator<?> iterator = range.iterator();
 
         int from = Ints.checkedCast(getLongFromIterator(iterator, 0));
@@ -69,14 +69,17 @@ public class ClusterSlotsParser {
 
         List<RedisClusterNode> slaves = Lists.newArrayList();
         if (iterator.hasNext()) {
-            master = getRedisClusterNode(iterator);
+            master = getRedisClusterNode(iterator, nodeCache);
             if(master != null) {
                 master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
+                Set<Integer> slots = Sets.newTreeSet(master.getSlots());
+                slots.addAll(createSlots(from, to));
+                master.setSlots(Lists.newArrayList(slots));
             }
         }
 
         while (iterator.hasNext()) {
-            RedisClusterNode slave = getRedisClusterNode(iterator);
+            RedisClusterNode slave = getRedisClusterNode(iterator, nodeCache);
             if (slave != null) {
                 slave.setSlaveOf(master.getNodeId());
                 slave.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
@@ -87,8 +90,17 @@ public class ClusterSlotsParser {
         return new ClusterSlotRange(from, to, master, Collections.unmodifiableList(slaves));
     }
 
-    private static RedisClusterNode getRedisClusterNode(Iterator<?> iterator) {
+    private static List<Integer> createSlots(int from, int to) {
+        List<Integer> slots = Lists.newArrayList();
+        for (int i = from; i < to + 1; i++) {
+            slots.add(i);
+        }
+        return slots;
+    }
+
+    private static RedisClusterNode getRedisClusterNode(Iterator<?> iterator, Map<String, RedisClusterNode> nodeCache) {
         Object element = iterator.next();
+        RedisClusterNode redisClusterNode = null;
         if (element instanceof List) {
             List<?> hostAndPortList = (List<?>) element;
             if (hostAndPortList.size() < 2) {
@@ -100,18 +112,33 @@ public class ClusterSlotsParser {
             int port = Ints.checkedCast(getLongFromIterator(hostAndPortIterator, 0));
             String nodeId;
 
-            RedisClusterNode redisClusterNode = new RedisClusterNode();
-            redisClusterNode.setUri(new RedisURI.Builder().redis(host, port).build());
-
             if (hostAndPortIterator.hasNext()) {
                 nodeId = (String) hostAndPortIterator.next();
-                redisClusterNode.setNodeId(nodeId);
+
+                redisClusterNode = nodeCache.get(nodeId);
+                if(redisClusterNode == null) {
+                    redisClusterNode = createNode(host, port);
+                    nodeCache.put(nodeId, redisClusterNode);
+                    redisClusterNode.setNodeId(nodeId);
+                }
             }
-
-            return redisClusterNode;
-
+            else {
+                String key = host + ":" + port;
+                redisClusterNode = nodeCache.get(key);
+                if(redisClusterNode == null) {
+                    redisClusterNode = createNode(host, port);
+                    nodeCache.put(key, redisClusterNode);
+                }
+            }
         }
-        return null;
+        return redisClusterNode;
+    }
+
+    private static RedisClusterNode createNode(String host, int port) {
+        RedisClusterNode redisClusterNode = new RedisClusterNode();
+        redisClusterNode.setUri(new RedisURI.Builder().redis(host, port).build());
+        redisClusterNode.setSlots(new ArrayList<Integer>());
+        return redisClusterNode;
     }
 
     private static long getLongFromIterator(Iterator<?> iterator, long defaultValue) {
