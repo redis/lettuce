@@ -45,7 +45,7 @@ public class ClusterSlotsParserTest {
 
     @Test
     public void testParseWithSlave() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")));
+        List<?> list = ImmutableList.of(Lists.newArrayList("100", "200", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
         ClusterSlotRange clusterSlotRange = result.get(0);
@@ -60,6 +60,10 @@ public class ClusterSlotsParserTest {
         assertThat(masterNode.getUri().getHost()).isEqualTo("1");
         assertThat(masterNode.getUri().getPort()).isEqualTo(2);
         assertThat(masterNode.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+        assertThat(masterNode.getSlots()).contains(100, 101, 199, 200);
+        assertThat(masterNode.getSlots()).doesNotContain(99, 201);
+        assertThat(masterNode.getSlots()).hasSize(101);
+
 
         assertThat(clusterSlotRange.getSlaves()).hasSize(1);
         assertThat(clusterSlotRange.getSlaveNodes()).hasSize(1);
@@ -73,6 +77,27 @@ public class ClusterSlotsParserTest {
         assertThat(slaveNode.getNodeId()).isEqualTo("nodeId2");
         assertThat(slaveNode.getSlaveOf()).isEqualTo("nodeId1");
         assertThat(slaveNode.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+    }
+
+    @Test
+    public void testSameNode() throws Exception {
+        List<?> list = ImmutableList.of(Lists.newArrayList("100", "200", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")),
+                Lists.newArrayList("200", "300", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")));
+
+        List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
+        assertThat(result).hasSize(2);
+
+        assertThat(result.get(0).getMasterNode()).isSameAs(result.get(1).getMasterNode());
+
+        RedisClusterNode masterNode = result.get(0).getMasterNode();
+        assertThat(masterNode).isNotNull();
+        assertThat(masterNode.getNodeId()).isEqualTo("nodeId1");
+        assertThat(masterNode.getUri().getHost()).isEqualTo("1");
+        assertThat(masterNode.getUri().getPort()).isEqualTo(2);
+        assertThat(masterNode.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+        assertThat(masterNode.getSlots()).contains(100, 101, 199, 200, 203);
+        assertThat(masterNode.getSlots()).doesNotContain(99, 301);
+        assertThat(masterNode.getSlots()).hasSize(201);
     }
 
     @Test
