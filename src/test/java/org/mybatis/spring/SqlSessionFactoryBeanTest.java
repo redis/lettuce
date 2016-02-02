@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.apache.ibatis.io.JBoss6VFS;
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
@@ -136,6 +137,7 @@ public final class SqlSessionFactoryBeanTest {
     assertSame(factory.getConfiguration().getEnvironment().getDataSource(), dataSource);
     assertSame(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass(),
         org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
+    assertSame(factory.getConfiguration().getVfsImpl(), JBoss6VFS.class);
 
     // properties explicitly set differently than the defaults in the config xml
     assertFalse(factory.getConfiguration().isCacheEnabled());

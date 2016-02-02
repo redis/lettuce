@@ -28,6 +28,7 @@
         <setting name="cacheEnabled" value="false" />
         <setting name="useGeneratedKeys" value="true" />
         <setting name="defaultExecutorType" value="REUSE" />
+        <setting name="vfsImpl" value="org.apache.ibatis.io.JBoss6VFS"/>
     </settings>
 
     <mappers>
