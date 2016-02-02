@@ -29,6 +29,7 @@ import javax.sql.DataSource;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.executor.ErrorContext;
+import org.apache.ibatis.io.VFS;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.DatabaseIdProvider;
@@ -64,7 +65,8 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
  * @author Putthibong Boonbong
  * @author Hunter Presnall
  * @author Eduardo Macarron
- * 
+ * @author Eddú Meléndez
+ *
  * @see #setConfigLocation
  * @see #setDataSource
  * @version $Id$
@@ -107,13 +109,15 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   //issue #19. No default provider.
   private DatabaseIdProvider databaseIdProvider;
 
+  private Class<? extends VFS> vfs;
+
   private ObjectFactory objectFactory;
 
   private ObjectWrapperFactory objectWrapperFactory;
 
   /**
    * Sets the ObjectFactory.
-   * 
+   *
    * @since 1.1.2
    * @param objectFactory
    */
@@ -123,7 +127,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Sets the ObjectWrapperFactory.
-   * 
+   *
    * @since 1.1.2
    * @param objectWrapperFactory
    */
@@ -143,13 +147,21 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   /**
    * Sets the DatabaseIdProvider.
-   * As of version 1.2.2 this variable is not initialized by default. 
+   * As of version 1.2.2 this variable is not initialized by default.
    *
    * @since 1.1.0
    * @param databaseIdProvider
    */
   public void setDatabaseIdProvider(DatabaseIdProvider databaseIdProvider) {
     this.databaseIdProvider = databaseIdProvider;
+  }
+
+  public Class<? extends VFS> getVfs() {
+    return this.vfs;
+  }
+
+  public void setVfs(Class<? extends VFS> vfs) {
+    this.vfs = vfs;
   }
 
   /**
@@ -425,7 +437,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
       }
     }
-    
+
     if (this.databaseIdProvider != null) {//fix #64 set databaseId before parse mapper xmls
       try {
         configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
@@ -433,7 +445,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         throw new NestedIOException("Failed getting a databaseId", e);
       }
     }
-    
+
+    if (this.vfs != null) {
+      configuration.setVfsImpl(this.vfs);
+    }
+
     if (xmlConfigBuilder != null) {
       try {
         xmlConfigBuilder.parse();
