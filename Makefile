@@ -376,7 +376,7 @@ endif
 
 endif
 	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch unstable --single-branch work/redis-git && cd work/redis-git|| true
-	[ -e work/redis-git ] && cd work/redis-git && git reset --hard && git pull && git checkout unstable || true
+	[ -e work/redis-git ] && cd work/redis-git && git fetch && git merge origin/master || true
 	make -C work/redis-git clean
 	make -C work/redis-git -j4
 
