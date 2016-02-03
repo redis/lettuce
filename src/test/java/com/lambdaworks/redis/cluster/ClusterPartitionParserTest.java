@@ -23,6 +23,12 @@ public class ClusterPartitionParserTest {
             + "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379 myself,slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 0 1 connected 0-6999 7001-7999 12001\n"
             + "5f4a2236d00008fba7ac0dd24b95762b446767bd :0 myself,master - 0 0 1 connected [5460->-5f4a2236d00008fba7ac0dd24b95762b446767bd] [5461-<-5f4a2236d00008fba7ac0dd24b95762b446767bd]";
 
+
+    private static String nodesWithBusPort = "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381@17381 slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 1454482721690 3 connected\n" +
+            "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380@17380 master - 0 1454482721690 0 connected 12000-16383\n" +
+            "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379@17379 myself,master - 0 0 1 connected 0-11999\n" +
+            "5f4a2236d00008fba7ac0dd24b95762b446767bd 127.0.0.1:7382@17382 slave 3d005a179da7d8dc1adae6409d47b39c369e992b 0 1454482721690 2 connected";
+
     @Test
     public void testParse() throws Exception {
 
@@ -53,8 +59,20 @@ public class ClusterPartitionParserTest {
         assertThat(p3.getSlaveOf()).isEqualTo("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c");
         assertThat(p3.toString()).contains(RedisClusterNode.class.getSimpleName());
         assertThat(result.toString()).contains(Partitions.class.getSimpleName());
+    }
 
+    @Test
+    public void testParseWithBusPort() throws Exception {
 
+        Partitions result = ClusterPartitionParser.parse(nodesWithBusPort);
+
+        assertThat(result.getPartitions()).hasSize(4);
+
+        RedisClusterNode p1 = result.getPartitions().get(0);
+
+        assertThat(p1.getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
+        assertThat(p1.getUri().getHost()).isEqualTo("127.0.0.1");
+        assertThat(p1.getUri().getPort()).isEqualTo(7381);
     }
 
     @Test
