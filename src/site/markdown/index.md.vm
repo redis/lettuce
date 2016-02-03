@@ -26,6 +26,29 @@ I'm developing and maintaining actively the fork of https://github.com/wg/lettuc
 
 [![Join the chat at https://gitter.im/mp911de/lettuce](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mp911de/lettuce) [![Build Status](https://travis-ci.org/mp911de/lettuce.svg)](https://travis-ci.org/mp911de/lettuce) [![Coverage Status](https://img.shields.io/coveralls/mp911de/lettuce.svg)](https://coveralls.io/r/mp911de/lettuce) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.paluch.redis/lettuce)
 
+- - -
+
+3.x and 4.x
+------------
+lettuce is available in two major versions. The 3.x stream and the 4.x stream. Both streams are maintained. 
+
+After this release, the 4.x branch will be promoted to the default branch.
+Following rules should give a guidance for the stream in which a particular change is done:
+
+**Changes affecting both streams**
+
+* New Redis commands (such as HSTRLEN)
+* Bugfixes
+
+**Changes for the 4.x stream only**
+
+* New Redis paradigms
+* Enriching the API (such as multi-key command execution in the Cluster API)
+* Technical improvements to the client (such as the Reactive API)
+
+The 3.x stream will be maintained at least until end of 2016.
+
+- - -
 
 How to get
 -------------
