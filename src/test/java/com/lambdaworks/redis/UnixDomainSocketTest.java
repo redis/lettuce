@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.sentinel.SentinelRule;
 import org.apache.log4j.Logger;
 import org.junit.*;
 
@@ -41,11 +43,6 @@ public class UnixDomainSocketTest {
         FastShutdown.shutdown(sentinelClient);
     }
 
-    @Before
-    public void openConnection() throws Exception {
-        sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(), 1, true);
-    }
-
     @Test
     public void standalone_Linux_x86_64_socket() throws Exception {
 
@@ -55,9 +52,9 @@ public class UnixDomainSocketTest {
 
         RedisClient redisClient = new RedisClient(redisURI);
 
-        RedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
 
-        someRedisAction(connection);
+        someRedisAction(connection.sync());
         connection.close();
 
         FastShutdown.shutdown(redisClient);
@@ -89,9 +86,9 @@ public class UnixDomainSocketTest {
 
         RedisClient redisClient = new RedisClient(uri);
 
-        RedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
 
-        someRedisAction(connection);
+        someRedisAction(connection.sync());
 
         connection.close();
 
@@ -106,12 +103,13 @@ public class UnixDomainSocketTest {
     @Test
     public void sentinel_Linux_x86_64_socket_and_inet() throws Exception {
 
+        sentinelRule.waitForMaster(MASTER_ID);
         linuxOnly();
 
         RedisURI uri = new RedisURI();
         uri.getSentinels().add(getSentinelSocketRedisUri());
         uri.getSentinels().add(RedisURI.create(RedisURI.URI_SCHEME_REDIS + "://" + TestSettings.host() + ":26379"));
-        uri.setSentinelMasterId("mymaster");
+        uri.setSentinelMasterId(MASTER_ID);
 
         RedisClient redisClient = new RedisClient(uri);
 

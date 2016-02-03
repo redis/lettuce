@@ -15,10 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-
-public class AsyncConnectionTest extends AbstractCommandTest {
+public class AsyncConnectionTest extends AbstractRedisClientTest {
     private RedisAsyncConnection<String, String> async;
 
     @Rule
@@ -78,7 +75,6 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         for (int i = 0; i < 1000; i++) {
             redis.lpush(key, "" + i);
         }
-        ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
 
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
@@ -88,7 +84,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         RedisFuture<List<String>> sort = connection.sort(key);
         assertThat(sort.isCancelled()).isFalse();
 
-        sort.addListener(listener, executor);
+        sort.thenRun(listener);
 
         sort.get();
         Thread.sleep(100);
@@ -109,21 +105,18 @@ public class AsyncConnectionTest extends AbstractCommandTest {
             }
         };
 
-        ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
-
         RedisAsyncConnection<String, String> connection = client.connectAsync();
 
         RedisFuture<String> set = connection.set(key, value);
         set.get();
-        assertThat(set.get()).isEqualTo("OK");
 
-        set.addListener(listener, executor);
+        set.thenRun(listener);
 
         assertThat(run).hasSize(1);
 
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 500)
     public void discardCompletesFutures() throws Exception {
         async.multi();
         Future<String> set = async.set(key, value);
@@ -146,7 +139,7 @@ public class AsyncConnectionTest extends AbstractCommandTest {
         assertThat((long) append.get()).isEqualTo(value.length() * 2);
     }
 
-    @Test(timeout = 100)
+    @Test(timeout = 500)
     public void awaitAllTimeout() throws Exception {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
         assertThat(LettuceFutures.awaitAll(1, TimeUnit.NANOSECONDS, blpop)).isFalse();

@@ -2,19 +2,10 @@ package com.lambdaworks.redis;
 
 /**
  * Utility to determine which Java runtime is used.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class JavaRuntime {
-
-    /**
-     * Constant whether the current JDK is Java 6 or higher.
-     */
-    public final static boolean AT_LEAST_JDK_6 = isPresent("java.io.Console");
-
-    /**
-     * Constant whether the current JDK is Java 7 or higher.
-     */
-    public final static boolean AT_LEAST_JDK_7 = isPresent("java.nio.file.Path");
 
     /**
      * Constant whether the current JDK is Java 8 or higher.

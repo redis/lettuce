@@ -16,8 +16,7 @@
         </menu>
 
         <menu name="Project Documentation">
-            <item name="JavaDoc (3.x)" href="docs/api/releases/latest-3.x/index.html"/>
-            <item name="JavaDoc (4.x)" href="docs/api/releases/latest-4.x/index.html"/>
+            <item name="JavaDoc (current)" href="docs/api/releases/latest/index.html"/>
             <item name="JavaDoc (archive)" href="docs/api/releases/"/>
         </menu>
 

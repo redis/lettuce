@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -13,16 +15,16 @@ import com.google.common.collect.Lists;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @SuppressWarnings("rawtypes")
-public class PipeliningTest extends AbstractCommandTest {
+public class PipeliningTest extends AbstractRedisClientTest {
 
     @Test
     public void basic() throws Exception {
 
-        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        StatefulRedisConnection<String, String> connection = client.connect();
         connection.setAutoFlushCommands(false);
 
-        int iterations = 1000;
-        List<RedisFuture<?>> futures = triggerSet(connection, iterations);
+        int iterations = 100;
+        List<RedisFuture<?>> futures = triggerSet(connection.async(), iterations);
 
         verifyNotExecuted(iterations);
 
@@ -44,11 +46,11 @@ public class PipeliningTest extends AbstractCommandTest {
     @Test
     public void setAutoFlushTrueDoesNotFlush() throws Exception {
 
-        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        StatefulRedisConnection<String, String> connection = client.connect();
         connection.setAutoFlushCommands(false);
 
-        int iterations = 1000;
-        List<RedisFuture<?>> futures = triggerSet(connection, iterations);
+        int iterations = 100;
+        List<RedisFuture<?>> futures = triggerSet(connection.async(), iterations);
 
         verifyNotExecuted(iterations);
 
@@ -69,7 +71,7 @@ public class PipeliningTest extends AbstractCommandTest {
         }
     }
 
-    protected List<RedisFuture<?>> triggerSet(RedisAsyncConnection<String, String> connection, int iterations) {
+    protected List<RedisFuture<?>> triggerSet(RedisAsyncCommands<String, String> connection, int iterations) {
         List<RedisFuture<?>> futures = Lists.newArrayList();
         for (int i = 0; i < iterations; i++) {
             futures.add(connection.set(key(i), value(i)));

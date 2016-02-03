@@ -3,6 +3,7 @@ package com.lambdaworks.examples;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -12,8 +13,8 @@ public class ConnectToRedis {
 
     public static void main(String[] args) {
         // Syntax: redis://[password@]host[:port][/databaseNumber]
-        RedisClient redisClient = new RedisClient(RedisURI.create("redis://password@localhost:6379/0"));
-        RedisConnection<String, String> connection = redisClient.connect();
+        RedisClient redisClient = RedisClient.create("redis://password@localhost:6379/0");
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
 
         System.out.println("Connected to Redis");
 

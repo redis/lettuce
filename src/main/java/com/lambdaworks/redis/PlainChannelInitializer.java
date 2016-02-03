@@ -12,8 +12,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
-import com.lambdaworks.redis.protocol.Command;
-
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,8 +24,7 @@ import io.netty.channel.ChannelPipeline;
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-    final static RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<String, String>(
-            new Utf8StringCodec());
+    final static RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(new Utf8StringCodec());
 
     protected boolean pingBeforeActivate;
     protected SettableFuture<Boolean> initializedFuture = SettableFuture.create();
@@ -49,7 +47,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
             channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-                private Command<?, ?, ?> pingCommand;
+                private AsyncCommand<?, ?, ?> pingCommand;
 
                 @Override
                 public Future<Boolean> channelInitialized() {
@@ -86,9 +84,9 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                     eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
                     if (pingBeforeActivate) {
                         if (password != null && password.length != 0) {
-                            pingCommand = INITIALIZING_CMD_BUILDER.auth(new String(password));
+                            pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
                         } else {
-                            pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                            pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                         }
                         pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                     } else {
@@ -112,9 +110,17 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         }
     }
 
-    static void pingBeforeActivate(final Command<?, ?, ?> cmd, final SettableFuture<Boolean> initializedFuture,
+    static void pingBeforeActivate(final AsyncCommand<?, ?, ?> cmd, final SettableFuture<Boolean> initializedFuture,
             final ChannelHandlerContext ctx, final List<ChannelHandler> handlers) throws Exception {
-        cmd.addListener(new PingResponseListener(initializedFuture, cmd, ctx), ctx.executor());
+        cmd.handle((o, throwable) -> {
+            if (throwable == null) {
+                initializedFuture.set(true);
+                ctx.fireChannelActive();
+            } else {
+                initializedFuture.setException(throwable);
+            }
+            return null;
+        });
 
         ctx.channel().writeAndFlush(cmd);
     }
@@ -131,34 +137,4 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         return initializedFuture;
     }
 
-    private static class PingResponseListener implements Runnable {
-
-        private final SettableFuture<Boolean> initializedFuture;
-        private final Command<?, ?, ?> cmd;
-        private final ChannelHandlerContext ctx;
-
-        public PingResponseListener(SettableFuture<Boolean> initializedFuture, Command<?, ?, ?> cmd, ChannelHandlerContext ctx) {
-            this.initializedFuture = initializedFuture;
-            this.cmd = cmd;
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void run() {
-            if (!initializedFuture.isDone()) {
-                if (cmd.getException() != null) {
-                    initializedFuture.setException(cmd.getException());
-                    return;
-                }
-
-                if (cmd.getError() != null) {
-                    initializedFuture.setException(new RedisCommandExecutionException(cmd.getError()));
-                    return;
-                }
-
-                initializedFuture.set(true);
-                ctx.fireChannelActive();
-            }
-        }
-    }
 }

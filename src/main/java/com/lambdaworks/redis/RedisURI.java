@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.LettuceStrings.isEmpty;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.google.common.base.Preconditions.*;
+import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -27,9 +29,9 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, password and
  * timeouts within the RedisURI.
- * 
+ *
  * You have following possibilities to create a {@link RedisURI}:
- * 
+ *
  * <ul>
  * <li>Use an URI:
  * <p>
@@ -185,6 +187,17 @@ public class RedisURI implements Serializable, ConnectionPoint {
         this.port = port;
         this.timeout = timeout;
         this.unit = unit;
+    }
+
+    /**
+     * Create a Redis URI from host and port.
+     *
+     * @param host the host
+     * @param port the port
+     * @return An instance of {@link RedisURI} containing details from the {@code host} and {@code port}.
+     */
+    public static RedisURI create(String host, int port) {
+        return new Builder().redis(host, port).build();
     }
 
     /**

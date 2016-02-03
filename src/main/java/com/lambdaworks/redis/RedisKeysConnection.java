@@ -13,7 +13,9 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@literal RedisKeyCommands}
  */
+@Deprecated
 public interface RedisKeysConnection<K, V> {
 
     /**

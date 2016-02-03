@@ -21,7 +21,7 @@ public class FastShutdown {
 
     /**
      * Shut down a {@link ClientResources} client with a timeout of 10ms.
-     * 
+     *
      * @param clientResources
      */
     public static void shutdown(ClientResources clientResources) {

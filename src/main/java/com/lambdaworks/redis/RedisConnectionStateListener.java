@@ -12,14 +12,14 @@ public interface RedisConnectionStateListener {
      * 
      * @param connection Source connection.
      */
-    public void onRedisConnected(RedisChannelHandler<?, ?> connection);
+    void onRedisConnected(RedisChannelHandler<?, ?> connection);
 
     /**
      * Event handler for disconnection event.
      * 
      * @param connection Source connection.
      */
-    public void onRedisDisconnected(RedisChannelHandler<?, ?> connection);
+    void onRedisDisconnected(RedisChannelHandler<?, ?> connection);
 
     /**
      * 
@@ -29,5 +29,5 @@ public interface RedisConnectionStateListener {
      * 
      * @param cause Caught exception.
      */
-    public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause);
+    void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause);
 }

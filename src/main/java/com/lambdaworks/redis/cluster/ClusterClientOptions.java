@@ -145,6 +145,12 @@ public class ClusterClientOptions extends ClientOptions {
             return this;
         }
 
+        @Override
+        public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
+            super.disconnectedBehavior(disconnectedBehavior);
+            return this;
+        }
+
         /**
          * Create a new instance of {@link ClusterClientOptions}
          *
@@ -204,7 +210,7 @@ public class ClusterClientOptions extends ClientOptions {
 
     /**
      * Create a new {@link ClusterClientOptions} using default settings.
-     * 
+     *
      * @return a new instance of default cluster client client options.
      */
     public static ClusterClientOptions create() {

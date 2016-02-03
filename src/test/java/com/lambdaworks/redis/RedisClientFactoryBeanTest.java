@@ -13,16 +13,9 @@ import com.lambdaworks.redis.support.RedisClientFactoryBean;
 public class RedisClientFactoryBeanTest {
     private RedisClientFactoryBean sut = new RedisClientFactoryBean();
 
-    /*
-     * This Test should not trigger a connection.
-     */
-    @Before
-    public void before() throws Exception {
-        sut.setSingleton(false);
-    }
-
     @After
     public void tearDown() throws Exception {
+        FastShutdown.shutdown(sut.getObject());
         sut.destroy();
     }
 
@@ -40,7 +33,6 @@ public class RedisClientFactoryBeanTest {
         assertThat(redisURI.getHost()).isEqualTo("localhost");
         assertThat(redisURI.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(new String(redisURI.getPassword())).isEqualTo("password");
-
     }
 
     @Test
@@ -53,7 +45,6 @@ public class RedisClientFactoryBeanTest {
         RedisURI redisURI = sut.getRedisURI();
 
         assertThat(redisURI.getDatabase()).isEqualTo(0);
-
     }
 
     @Test
@@ -66,7 +57,6 @@ public class RedisClientFactoryBeanTest {
         RedisURI redisURI = sut.getRedisURI();
 
         assertThat(redisURI.getDatabase()).isEqualTo(0);
-
     }
 
     @Test

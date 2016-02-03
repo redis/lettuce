@@ -12,8 +12,8 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.resource.ClientResources;
 
+import com.lambdaworks.redis.resource.ClientResources;
 import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -22,7 +22,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Command handler for node connections within the Redis Cluster context. This handler can requeue commands if it is
  * disconnected and closed but has commands in the queue. If the handler was connected it would retry commands using the
  * {@literal MOVED} or {@literal ASK} redirection.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @ChannelHandler.Sharable
@@ -78,7 +78,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
                     try {
                         clusterChannelWriter.write(queuedCommand);
                     } catch (RedisException e) {
-                        queuedCommand.setException(e);
+                        queuedCommand.completeExceptionally(e);
                         queuedCommand.complete();
                     }
                 }
@@ -89,8 +89,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
                 try {
                     clusterChannelWriter.write(queuedCommand);
                 } catch (RedisException e) {
-                    queuedCommand.setException(e);
-                    queuedCommand.complete();
+                    queuedCommand.completeExceptionally(e);
                 }
             }
         }

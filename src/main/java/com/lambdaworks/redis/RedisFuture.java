@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -12,7 +14,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-public interface RedisFuture<V> extends ListenableFuture<V> {
+public interface RedisFuture<V> extends CompletionStage<V>, Future<V> {
 
     /**
      * 
@@ -27,6 +29,7 @@ public interface RedisFuture<V> extends ListenableFuture<V> {
      * @param unit Unit of time for the timeout.
      *
      * @return true if the output became available.
+     * @throws InterruptedException if the current thread is interrupted while waiting
      */
-    boolean await(long timeout, TimeUnit unit);
+    boolean await(long timeout, TimeUnit unit) throws InterruptedException;
 }

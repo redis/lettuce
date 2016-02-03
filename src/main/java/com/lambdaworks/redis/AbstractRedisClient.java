@@ -3,7 +3,6 @@ package com.lambdaworks.redis;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
-import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +16,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DefaultClientResources;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -29,8 +28,10 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
+import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -44,7 +45,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * You can set the number of threads per {@link NioEventLoopGroup} by setting the {@code io.netty.eventLoopThreads} system
  * property to a reasonable number of threads.
  * </p>
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -83,7 +84,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Create a new instance with client resources.
-     * 
+     *
      * @param clientResources the client resources. If {@literal null}, the client will create a new dedicated instance of
      *        client resources and keep track of them.
      */
@@ -116,7 +117,7 @@ public abstract class AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisAsyncConnectionImpl<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
+    protected <K, V, T extends RedisChannelHandler<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
             final T connection, final Supplier<SocketAddress> socketAddressSupplier) {
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
@@ -236,16 +237,16 @@ public abstract class AbstractRedisClient {
                 initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
             } catch (TimeoutException e) {
                 throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout()
-                        + " " + connectionBuilder.getTimeUnit());
+                        + " " + connectionBuilder.getTimeUnit(), e);
             }
             connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
             return (T) connection;
         } catch (RedisException e) {
-            connection.close();
+            connectionBuilder.commandHandler().initialState();
             throw e;
         } catch (Exception e) {
-            connection.close();
+            connectionBuilder.commandHandler().initialState();
             throw new RedisConnectionException("Unable to connect to " + redisAddress, e);
         }
     }
@@ -311,8 +312,7 @@ public abstract class AbstractRedisClient {
         } else {
             for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
                 Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
-                        timeout,
-                        timeUnit);
+                        timeout, timeUnit);
                 closeFutures.add(groupCloseFuture);
             }
         }
@@ -331,15 +331,7 @@ public abstract class AbstractRedisClient {
     }
 
     protected int getChannelCount() {
-        if (channels == null) {
-            return 0;
-        }
         return channels.size();
-    }
-
-    protected static <K, V> Object syncHandler(RedisChannelHandler<K, V> connection, Class<?>... interfaceClasses) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<K, V>(connection);
-        return Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaceClasses, h);
     }
 
     /**
@@ -381,7 +373,7 @@ public abstract class AbstractRedisClient {
      * 
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
-    public void setOptions(ClientOptions clientOptions) {
+    protected void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
         this.clientOptions = clientOptions;
     }

@@ -1,16 +1,14 @@
 package com.lambdaworks.redis;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.RedisCommand;
-
 /**
  * Utility to {@link #awaitAll(long, TimeUnit, Future[])} futures until they are done and to synchronize future execution using
- * {@link #awaitOrCancel(RedisCommand, long, TimeUnit)}.
- * 
+ * {@link #awaitOrCancel(RedisFuture, long, TimeUnit)}.
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -22,12 +20,11 @@ public class LettuceFutures {
 
     /**
      * Wait until futures are complete or the supplied timeout is reached. Commands are not canceled (in contrast to
-     * {@link #await(RedisCommand, long, TimeUnit)}) when the timeout expires.
-     * 
+     * {@link #awaitOrCancel(RedisFuture, long, TimeUnit)}) when the timeout expires.
+     *
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param futures Futures to wait for.
-     * 
      * @return {@literal true} if all futures complete in time, otherwise {@literal false}
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
@@ -50,6 +47,11 @@ public class LettuceFutures {
             complete = true;
         } catch (TimeoutException e) {
             complete = false;
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+            throw new RedisException(e.getCause());
         } catch (Exception e) {
             throw new RedisCommandInterruptedException(e);
         }
@@ -60,46 +62,48 @@ public class LettuceFutures {
     /**
      * Wait until futures are complete or the supplied timeout is reached. Commands are canceled if the timeout is reached but
      * the command is not finished.
-     * 
-     * @param cmd Command to wait for.
-     * @param timeout Maximum time to wait for futures to complete.
-     * @param unit Unit of time for the timeout.
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @param <T> Result type.
+     *
+     * @param cmd Command to wait for
+     * @param timeout Maximum time to wait for futures to complete
+     * @param unit Unit of time for the timeout
+     * @param <T> Result type
      * 
      * @return Result of the command.
      */
-    public static <K, V, T> T awaitOrCancel(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
-        return await(cmd, timeout, unit);
+    public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
+        return await(timeout, unit, cmd);
     }
 
     /**
      * Wait until futures are complete or the supplied timeout is reached. Commands are canceled if the timeout is reached but
      * the command is not finished.
-     * 
-     * @param cmd Command to wait for.
-     * @param timeout Maximum time to wait for futures to complete.
-     * @param unit Unit of time for the timeout.
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @param <T> Result type.
+     *
+     * @param cmd Command to wait for
+     * @param timeout Maximum time to wait for futures to complete
+     * @param unit Unit of time for the timeout
+     * @param <T> Result type
      * @deprecated The method name does not reflect what the method is doing, therefore it is deprecated. Use
-     *             {@link #awaitOrCancel(RedisCommand, long, TimeUnit)} instead. The semantics did not change and
-     *             {@link #awaitOrCancel(RedisCommand, long, TimeUnit)} simply calls this method.
-     * 
-     * @return Result of the command.
+     *             {@link #awaitOrCancel(RedisFuture, long, TimeUnit)} instead. The semantics did not change and
+     *             {@link #awaitOrCancel(RedisFuture, long, TimeUnit)} simply calls this method.
+     * @return True if all futures complete in time.
      */
     @Deprecated
-    public static <K, V, T> T await(RedisCommand<K, V, T> cmd, long timeout, TimeUnit unit) {
-        if (!cmd.await(timeout, unit)) {
-            cmd.cancel(true);
-            throw new RedisCommandTimeoutException();
+    public static <T> T await(long timeout, TimeUnit unit, RedisFuture<T> cmd) {
+        try {
+            if (!cmd.await(timeout, unit)) {
+                cmd.cancel(true);
+                throw new RedisCommandTimeoutException();
+            }
+
+            return cmd.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+            throw new RedisException(e.getCause());
         }
-        CommandOutput<K, V, T> output = cmd.getOutput();
-        if (output.hasError()) {
-            throw new RedisCommandExecutionException(output.getError());
-        }
-        return output.get();
     }
 }

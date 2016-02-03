@@ -2,9 +2,9 @@ package com.lambdaworks.redis.cluster;
 
 import java.io.Closeable;
 
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
 /**
@@ -14,28 +14,33 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
  * @since 3.0
  */
 interface ClusterConnectionProvider extends Closeable {
+
     /**
      * Provide a connection for the intent and cluster slot. The underlying connection is bound to the nodeId. If the slot
      * responsibility changes, the connection will not point to the updated nodeId.
      * 
-     * @param intent Connection intent {@literal READ} or {@literal WRITE}
+     * @param intent {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#READ} or
+     *        {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#WRITE} {@literal READ} connections will be
+     *        provided in {@literal READONLY} mode
      * @param slot the slot-hash of the key, see {@link SlotHash}
      * @return a valid connection which handles the slot.
-     * @throws RedisException if no host is handling the slot
+     * @throws RedisException if no know node can be found for the slot
      */
-    <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot);
+    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, int slot);
 
     /**
      * Provide a connection for the intent and host/port. The connection can survive cluster topology updates. The connection *
      * will be closed if the node identified by {@code host} and {@code port} is no longer part of the cluster.
      * 
-     * @param intent Connection intent {@literal READ} or {@literal WRITE}
-     * @param host the host
-     * @param port the port
+     * @param intent {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#READ} or
+     *        {@link com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent#WRITE} {@literal READ} connections will be
+     *        provided in {@literal READONLY} mode
+     * @param host host of the node
+     * @param port port of the node
      * @return a valid connection to the given host.
      * @throws RedisException if the host is not part of the cluster
      */
-    <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port);
+    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port);
 
     /**
      * Provide a connection for the intent and nodeId. The connection can survive cluster topology updates. The connection will
@@ -47,7 +52,7 @@ interface ClusterConnectionProvider extends Closeable {
      * @return a valid connection to the given nodeId.
      * @throws RedisException if the {@code nodeId} is not part of the cluster
      */
-    <K, V> RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String nodeId);
+    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String nodeId);
 
     /**
      * Close the connections and free all resources.
@@ -68,8 +73,8 @@ interface ClusterConnectionProvider extends Closeable {
 
     /**
      * Update partitions.
-     * 
-     * @param partitions
+     *
+     * @param partitions the new partitions
      */
     void setPartitions(Partitions partitions);
 
@@ -103,7 +108,7 @@ interface ClusterConnectionProvider extends Closeable {
      */
     ReadFrom getReadFrom();
 
-    public static enum Intent {
+    enum Intent {
         READ, WRITE;
     }
 }

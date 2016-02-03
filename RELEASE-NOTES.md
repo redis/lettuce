@@ -1,14 +1,11 @@
-lettuce 3.4 RELEASE NOTES
+lettuce 4.1 RELEASE NOTES
 =========================
-
-lettuce 3.4 is here. This release contains numerous features and bugfixes. Lettuce 3.4 introduces reusable
-client-resources, an EventBus, client metrics, and support for newly introduced commands. This version
+lettuce 4.1 is here. This release contains numerous features and bugfixes. Lettuce 4.1 introduces reusable
+client-resources, an EventBus, client metrics, and support for newly introduced commands. This version 
 works with Redis 3.2 RC3 but Redis expects a change in the format of CLUSTER NODES. So watch out for a new
 release of lettuce as soon as Redis 3.2 RC4 or a final is released.
 
 lettuce is available in two major versions. The 3.x stream and the 4.x stream. Both streams are maintained. 
-The 4.x stream introduced breaking changes, as a user of 3.x you might be interested in the migration guide from 3.x to 4.x.
-See https://github.com/mp911de/lettuce/wiki/Migration-from-3.x-to-4.x
 
 After this release, the 4.x branch will be promoted to the default branch.
 Following rules should give a guidance for the stream in which a particular change is done:
@@ -28,7 +25,7 @@ The 3.x stream will be maintained at least until end of 2016.
 
 
 Reusable ClientResources
----------------------------
+------------------------
 lettuce requires a threading infrastructure to operate. Threads are grouped within `EventLoopGroup`s and are 
 expensive resources. They need to be spun up and shut down. Prior to this release, each instance of 
 `RedisClient` and `RedisClusterClient` created its own `EventLoopGroup`s and `EventExecutorGroup`.
@@ -97,9 +94,9 @@ When calling `shutdown()` of the client instance `ClientResources` are shut down
 Read more: https://github.com/mp911de/lettuce/wiki/Configuring-Client-resources
 
 
+
 `create` methods to construct the client
 ----------------------------------------
-
 lettuce 4.1 introduces new `create` methods to create client instances. The `create` methods replace
 the deprecated constructors of `RedisClient` and `RedisClusterClient`. The `create` methods come with 
 various signatures to support a conslidated style of client creation:
@@ -206,27 +203,72 @@ ClientResources res = new DefaultClientResources
 RedisClient client = RedisClient.create(res);
 ```
 
+## Master/Slave connections 
+---------------------------
+Redis nodes can be operated in a Master/Slave setup to achieve availability and performance.
+Master/Slave setups can be run either Standalone or managed using Redis Sentinel.
+Lettuce allows to use slave nodes for read operations by using the `MasterSlave` API that 
+supports both Master/Slave setups:
 
-ReadFrom Settings/Redis Cluster slave reads
--------------------------------------------
-The `ReadFrom` setting describes how lettuce routes read operations to the members of a Redis Cluster.
+1. Redis Standalone Master/Slave (no failover)
+2. Redis Sentinel Master/Slave (Sentinel-managed failover)
 
-By default, lettuce routes its read operations to the master node. Reading from the master returns the most recent 
-version of the data because write operations are issued to the single master node. Reading from 
-masters guarantees strong consistency.
+The resulting connection uses in any case the primary connection-point to dispatch non-read operations.
 
-The `ReadFrom` setting can be set to one of the following presets:
+### Redis Sentinel
 
-* `MASTER` Default mode. Read from the current master node.
-* `MASTER_PREFERRED` Read from the master, but if it is unavailable, read from slave nodes.
-* `SLAVE` Read from slave nodes.
-* `NEAREST` Read from any node of the cluster with the lowest latency.
+Master/Slave with Redis Sentinel is very similar to regular Redis Sentinel operations. When the master fails over, 
+a slave is promoted by Redis Sentinel to the new master and the client obtains the new topology from 
+Redis Sentinel.
 
-Custom read settings can be implemented by extending the `com.lambdaworks.redis.ReadFrom` class.
+Connections to Master/Slave require one or more Redis Sentinel connection points and a master name. 
+The primary connection point is the Sentinel monitored master node. 
+ 
+**Example**
+  
+```java
+RedisURI sentinelUri = RedisURI.Builder.sentinel("sentinel-host", 26379, "master-name").build();
+RedisClient client = RedisClient.create();
+
+StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(client,
+            new Utf8StringCodec(), sentinelUri);
+
+connection.setReadFrom(ReadFrom.SLAVE);
+
+connection.sync().get("key");
+
+connection.close();
+client.shutdown();
+```
+
+### Redis Standalone
+
+Master/Slave with Redis Standalone is very similar to regular Redis Standalone operations. 
+A Redis Standalone Master/Slave setup is static and provides no built-in failover. Slaves
+are read from the Redis Master node's `INFO` command. 
+
+Connecting to Redis Standalone Master/Slave nodes requires to connect use the Redis Master for the `RedisURI`.
+The node used within the `RedisURI` is the primary connection point.
+  
+```java
+RedisURI masterUri = RedisURI.Builder.redis("master-host", 6379).build();
+RedisClient client = RedisClient.create();
+
+StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(client,
+            new Utf8StringCodec(), masterUri);
+
+connection.setReadFrom(ReadFrom.SLAVE);
+
+connection.sync().get("key");
+
+connection.close();
+client.shutdown();
+```
 
 Read more: https://github.com/mp911de/lettuce/wiki/ReadFrom-Settings
 
-lettuce 3.4 requires Java 8 to build and can be used with Java 6 and 7.
+
+lettuce 4.1 requires Java 8 and cannot be used with Java 6 or 7.
 
 If you need any support, meet lettuce at:
 
@@ -234,32 +276,35 @@ If you need any support, meet lettuce at:
 * Gitter: https://gitter.im/mp911de/lettuce
 * Github Issues: https://github.com/mp911de/lettuce/issues
 
+
 Enhancements
 ------------
 * Support CLUSTER SETSLOT <slot> STABLE command #160
 * Support FLUSHALL [ASYNC]/FLUSHDB [ASYNC]/UNLINK commands #146
+* Support DEBUG RESTART/CRASH-AND-RECOVER [delay] commands #145
 * Adjust logging when running into Exceptions (exceptionCaught()) #140
 * Implement an EventBus system to publish events and metrics #124 (Thanks to @pulse00)
-* Implement a CompressionCodec for GZIP and Deflate compression #127
+* ClientResources and EventBus for 4.1 enhancement #137
 * Provide a reusable client configuration for ThreadPools and other expensive resources #110
+* Allow control over behavior in disconnected state #121
 * Use much faster JDK utility for converting an int to a byte sequence #163 (Thanks to @CodingFabian)
-* Cluster ReadFrom #114
-* Allow limiting the request queue size #115
 * Extend support for CLUSTER commands #111
 * Dispatch CLUSTER commands based on the slot #112
+* Enable initial support for read from slaves in Master-Slave setups #125
 * Support changed CLUSTER SLOTS #183
 
 Fixes
 -----
 * Do not cache InetSocketAddress/SocketAddress in RedisURI #144
+* Cluster API does not implement the Geo commands interface #154 (Thanks to @IdanFridman)
 * pfmerge invokes PFADD instead of PFMERGE #158 (Thanks to @christophstrobl)
 * Fix set with args method signature #159 (Thanks to @joshdurbin)
 * fix NOAUTH error when connecting to a cluster with password protection #171 (Thanks to @liufl)
 * Enable PING before connect with secured Redis servers #167
+* Perform multiple connection attempts when connecting a Redis Cluster #164
 * Include BaseRedis interface in synchronous RedisCluster API #166
 * Allow state-changing commands on pooled connections #162
-* NullPointer with bad cluster node list #173 (Thanks to @taer)
-* Avoid infinite reconnect loops when the connection is closed #126
+* Fix return type description in JavaDoc of the reactive API #185 (Thanks to @HaloFour)
 
 Other
 ------
@@ -267,8 +312,7 @@ Other
 * Added configurable timeout to connection string #152
 * Update netty to 4.0.34.Final #186
 
-lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested
-continuously against Redis 3.0 and the unstable branch.
+lettuce requires a minimum of Java 8 to build and run. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet lettuce at
 

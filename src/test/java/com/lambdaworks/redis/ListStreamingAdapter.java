@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
@@ -17,7 +18,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  */
 public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T>,
         ScoredValueStreamingChannel<T> {
-    private final List<T> list = new ArrayList<T>();
+    private final List<T> list = new Vector<>();
 
     @Override
     public void onKey(T key) {

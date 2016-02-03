@@ -1,24 +1,40 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 
 /**
- * Complete asynchronous cluster Redis API with 400+ Methods..
+ * A complete asynchronous and thread-safe cluster Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisClusterAsyncCommands}
  */
+@Deprecated
 public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
         RedisHLLAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V> {
 
     /**
-     * Close the connection. The connection will become not usable anymore as soon as this method was called.
+     * Set the default timeout for operations.
+     *
+     * @param timeout the timeout value
+     * @param unit the unit of the timeout value
      */
-    void close();
+    void setTimeout(long timeout, TimeUnit unit);
+
+    /**
+     * Authenticate to the server.
+     *
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    String auth(String password);
 
     /**
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
@@ -118,7 +134,8 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as {@link #clusterNodes()} but one line per slave.
+     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as
+     *         {@link #clusterNodes()} but one line per slave.
      */
     RedisFuture<List<String>> clusterSlaves(String nodeId);
 
@@ -186,9 +203,7 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
     RedisFuture<List<Object>> clusterSlots();
 
     /**
-     * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to actually send the
-     * command to the target instance. See the Redis Cluster specification for more information.
-     * 
+     *
      * @return String simple-string-reply
      */
     RedisFuture<String> asking();
@@ -239,13 +254,13 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
      *
      * @return String simple-string-reply
      */
-    String readOnly();
+    RedisFuture<String> readOnly();
 
     /**
      * Resets readOnly flag.
      *
      * @return String simple-string-reply
      */
-    String readWrite();
+    RedisFuture<String> readWrite();
 
 }

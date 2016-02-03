@@ -30,6 +30,7 @@
         </dependencySet>
         <dependencySet>
             <includes>
+                <include>io.reactivex:*</include>
                 <include>io.netty:*</include>
                 <include>com.google.guava:*</include>
                 <include>org.apache.commons:*</include>

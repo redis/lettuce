@@ -2,13 +2,16 @@ package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisPubSubAsyncCommands}
  */
+@Deprecated
 public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> {
 
     /**

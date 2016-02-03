@@ -2,6 +2,7 @@ package com.lambdaworks.redis.support;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,11 +34,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * instances. Client instances are provided under the same qualifiers as the {@link RedisURI}. {@link ClientResources} can be
  * shared across multiple client instances (Standalone, Cluster) by providing a {@link ClientResources} bean with the same
  * qualifiers as the {@link RedisURI}.
- * 
+ *
  * <p>
  * <strong>Example:</strong>
  * </p>
- * 
+ *
  * <pre>
  * <code>
  *  public class Producers {
@@ -45,29 +46,29 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *     public RedisURI redisURI() {
  *         return RedisURI.Builder.redis("localhost", 6379).build();
  *     }
- *     
+ * 
  *     &#64;Produces
  *     public ClientResources clientResources() {
  *         return DefaultClientResources.create()
  *     }
- *     
+ * 
  *     public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
  *         clientResources.shutdown().get();
  *     }
  * }
  * </code>
  * </pre>
- * 
+ *
  *
  * <pre>
  *  <code>
  *   public class Consumer {
  *      &#64;Inject
  *      private RedisClient client;
- *      
+ * 
  *      &#64;Inject
  *      private RedisClusterClient clusterClient;
- * }     
+ * }
  *  </code>
  * </pre>
  * 
@@ -136,7 +137,7 @@ public class LettuceCdiExtension implements Extension {
 
             String clientBeanName = RedisClient.class.getSimpleName();
             String clusterClientBeanName = RedisClusterClient.class.getSimpleName();
-            if (!contains(qualifiers, Default.class)) {
+            if (!containsDefault(qualifiers)) {
                 clientBeanName += counter;
                 clusterClientBeanName += counter;
                 counter++;
@@ -155,13 +156,8 @@ public class LettuceCdiExtension implements Extension {
         }
     }
 
-    private boolean contains(Set<Annotation> qualifiers, Class<Default> defaultClass) {
-        Optional<Annotation> result = Iterables.tryFind(qualifiers, new Predicate<Annotation>() {
-            @Override
-            public boolean apply(Annotation input) {
-                return input instanceof Default;
-            }
-        });
+    private boolean containsDefault(Set<Annotation> qualifiers) {
+        Optional<Annotation> result = Iterables.tryFind(qualifiers, input -> input instanceof Default);
         return result.isPresent();
     }
 

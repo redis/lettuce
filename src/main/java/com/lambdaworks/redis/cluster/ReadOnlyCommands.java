@@ -23,7 +23,6 @@ class ReadOnlyCommands {
             set.add(CommandType.valueOf(commandNames.name()));
         }
 
-
         READ_ONLY_COMMANDS = set.toArray(new ProtocolKeyword[set.size()]);
     }
 

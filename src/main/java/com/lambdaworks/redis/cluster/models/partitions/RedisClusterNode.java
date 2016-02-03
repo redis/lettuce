@@ -49,6 +49,18 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.flags = flags;
     }
 
+    /**
+     * Create a new instance of {@link RedisClusterNode} by passing the {@code nodeId}
+     * 
+     * @param nodeId the nodeId
+     * @return a new instance of {@link RedisClusterNode}
+     */
+    public static RedisClusterNode of(String nodeId) {
+        RedisClusterNode redisClusterNode = new RedisClusterNode();
+        redisClusterNode.setNodeId(nodeId);
+        return redisClusterNode;
+    }
+
     public RedisURI getUri() {
         return uri;
     }
@@ -217,6 +229,24 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
+     * 
+     * @param nodeFlag the node flag
+     * @return true if the {@linkplain NodeFlag} is contained within the flags.
+     */
+    public boolean is(NodeFlag nodeFlag) {
+        return getFlags().contains(nodeFlag);
+    }
+
+    /**
+     * 
+     * @param slot the slot hash
+     * @return true if the slot is contained within the handled slots.
+     */
+    public boolean hasSlot(int slot) {
+        return getSlots().contains(slot);
+    }
+
+    /**
      * Returns the {@link com.lambdaworks.redis.models.role.RedisInstance.Role} of the Redis Cluster node based on the
      * {@link #getFlags() flags}.
      * 
@@ -224,7 +254,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      */
     @Override
     public Role getRole() {
-        return getFlags().contains(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
+        return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
     }
 
     /**

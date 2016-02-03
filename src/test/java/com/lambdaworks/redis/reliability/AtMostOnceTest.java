@@ -6,26 +6,30 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.lambdaworks.redis.output.StatusOutput;
 import io.netty.handler.codec.EncoderException;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.lambdaworks.redis.AbstractCommandTest;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
@@ -36,8 +40,8 @@ import io.netty.channel.Channel;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 03.07.15 13:40
  */
-@SuppressWarnings({ "unchecked", "rawtypes" })
-public class AtMostOnceTest extends AbstractCommandTest {
+@SuppressWarnings("rawtypes")
+public class AtMostOnceTest extends AbstractRedisClientTest {
 
     protected final Utf8StringCodec CODEC = new Utf8StringCodec();
     protected String key = "key";
@@ -49,7 +53,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
         // needs to be increased on slow systems...perhaps...
         client.setDefaultTimeout(3, TimeUnit.SECONDS);
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
         connection.flushall();
         connection.flushdb();
         connection.close();
@@ -58,7 +62,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void connectionIsConnectedAfterConnect() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
 
         assertThat(getConnectionState(getRedisChannelHandler(connection)));
 
@@ -68,7 +72,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void noReconnectHandler() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
 
         assertThat(getHandler(RedisChannelWriter.class, getRedisChannelHandler(connection))).isNotNull();
         assertThat(getHandler(ConnectionWatchdog.class, getRedisChannelHandler(connection))).isNull();
@@ -79,7 +83,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void basicOperations() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
 
         connection.set(key, "1");
         assertThat(connection.get("key")).isEqualTo("1");
@@ -90,7 +94,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void noBufferedCommandsAfterExecute() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
 
         connection.set(key, "1");
 
@@ -103,7 +107,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void commandIsExecutedOnce() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
 
         connection.set(key, "1");
         connection.incr(key);
@@ -121,18 +125,19 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void commandNotExecutedFailsOnEncode() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
 
         connection.set(key, "1");
-        Command<String, String, String> working = new Command<String, String, String>(CommandType.INCR,
-                new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key));
+        AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<String, String, String>(CommandType.INCR,
+                new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)));
         channelWriter.write(working);
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
 
-        Command<String, String, Object> command = new Command<String, String, Object>(CommandType.INCR,
-                new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)) {
+        AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(
+                new Command<String, String, Object>(CommandType.INCR, new IntegerOutput(CODEC),
+                        new CommandArgs<String, String>(CODEC).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -143,9 +148,9 @@ public class AtMostOnceTest extends AbstractCommandTest {
         channelWriter.write(command);
 
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(command.isCancelled()).isTrue();
+        assertThat(command.isCancelled()).isFalse();
         assertThat(command.isDone()).isTrue();
-        assertThat(command.getException()).isInstanceOf(EncoderException.class);
+        assertThat(getException(command)).isInstanceOf(EncoderException.class);
 
         assertThat(connection.get(key)).isEqualTo("2");
 
@@ -158,8 +163,8 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void commandNotExecutedChannelClosesWhileFlush() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
-        RedisConnection<String, String> verificationConnection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
+        RedisCommands<String, String> verificationConnection = client.connect().sync();
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
 
         connection.set(key, "1");
@@ -167,8 +172,8 @@ public class AtMostOnceTest extends AbstractCommandTest {
 
         final CountDownLatch block = new CountDownLatch(1);
 
-        Command<String, String, Object> command = new Command<String, String, Object>(CommandType.INCR,
-                new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)) {
+        AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR,
+                new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -190,7 +195,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
         assertThat(command.isDone()).isFalse();
         block.countDown();
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(command.isCancelled()).isTrue();
+        assertThat(command.isCancelled()).isFalse();
         assertThat(command.isDone()).isTrue();
 
         assertThat(verificationConnection.get(key)).isEqualTo("1");
@@ -204,21 +209,21 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void commandFailsDuringDecode() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> connection = client.connect().sync();
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
-        RedisConnection<String, String> verificationConnection = client.connect();
+        RedisCommands<String, String> verificationConnection = client.connect().sync();
 
         connection.set(key, "1");
 
-        Command<String, String, String> command = new Command<String, String, String>(CommandType.INCR,
-                new StatusOutput<String, String>(CODEC), new CommandArgs<String, String>(CODEC).addKey(key));
+        AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.INCR, new StatusOutput<>(
+                CODEC), new CommandArgs<>(CODEC).addKey(key)));
 
         channelWriter.write(command);
 
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(command.isCancelled()).isTrue();
+        assertThat(command.isCancelled()).isFalse();
         assertThat(command.isDone()).isTrue();
-        assertThat(command.getException()).isInstanceOf(IllegalStateException.class);
+        assertThat(getException(command)).isInstanceOf(IllegalStateException.class);
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
         assertThat(connection.get(key)).isEqualTo("2");
@@ -229,9 +234,10 @@ public class AtMostOnceTest extends AbstractCommandTest {
     @Test
     public void noCommandsExecutedAfterConnectionIsDisconnected() throws Exception {
 
-        RedisConnection<String, String> connection = client.connect();
-
+        RedisCommands<String, String> connection = client.connect().sync();
         connection.quit();
+
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
         try {
             connection.incr(key);
@@ -241,20 +247,30 @@ public class AtMostOnceTest extends AbstractCommandTest {
 
         connection.close();
 
-        connection = client.connect();
-        connection.quit();
+        RedisCommands<String, String> connection2 = client.connect().sync();
+        connection2.quit();
 
         try {
 
-            while (connection.isOpen()) {
-                Thread.sleep(100);
-            }
-            connection.incr(key);
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+            connection2.incr(key);
         } catch (Exception e) {
-            assertThat(e).isExactlyInstanceOf(RedisException.class).hasMessageContaining("reconnect is disabled");
+            assertThat(e).isExactlyInstanceOf(RedisException.class).hasMessageContaining("not connected");
         }
 
-        connection.close();
+        connection2.close();
+    }
+
+    private Throwable getException(RedisFuture<?> command) {
+        try {
+            command.get();
+        } catch (InterruptedException e) {
+            return e;
+        } catch (ExecutionException e) {
+            return e.getCause();
+        }
+        return null;
     }
 
     private <K, V> RedisChannelHandler<K, V> getRedisChannelHandler(RedisConnection<K, V> sync) {

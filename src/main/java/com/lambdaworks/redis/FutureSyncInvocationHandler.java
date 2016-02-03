@@ -2,16 +2,13 @@ package com.lambdaworks.redis;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.AbstractInvocationHandler;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -24,20 +21,18 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
-    private final RedisChannelHandler<K, V> connection;
-    protected long timeout;
-    protected TimeUnit unit;
+    private final StatefulConnection<?, ?> connection;
+    private final Object asyncApi;
     private LoadingCache<Method, Method> methodCache;
 
-    public FutureSyncInvocationHandler(final RedisChannelHandler<K, V> connection) {
+    public FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi) {
         this.connection = connection;
-        this.timeout = connection.timeout;
-        this.unit = connection.unit;
+        this.asyncApi = asyncApi;
 
         methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
             @Override
             public Method load(Method key) throws Exception {
-                return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
+                return asyncApi.getClass().getMethod(key.getName(), key.getParameterTypes());
             }
         });
 
@@ -49,66 +44,29 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
      *      java.lang.Object[])
      */
     @Override
+    @SuppressWarnings("unchecked")
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         try {
 
-            // void setTimeout(long timeout, TimeUnit unit)
-            if (method.getName().equals("setTimeout")) {
-                setTimeout((Long) args[0], (TimeUnit) args[1]);
-                return null;
-            }
-
             Method targetMethod = methodCache.get(method);
-            Object result = targetMethod.invoke(connection, args);
+            Object result = targetMethod.invoke(asyncApi, args);
 
-            if (result instanceof RedisCommand) {
-                RedisCommand<?, ?, ?> redisCommand = (RedisCommand<?, ?, ?>) result;
+            if (result instanceof RedisFuture) {
+                RedisFuture<?> command = (RedisFuture<?>) result;
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                    if (connection instanceof RedisAsyncConnectionImpl && ((RedisAsyncConnectionImpl) connection).isMulti()) {
+                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
                         return null;
                     }
                 }
 
-                Object awaitedResult = LettuceFutures.awaitOrCancel(redisCommand, timeout, unit);
-
-                if (redisCommand instanceof Command) {
-                    Command<?, ?, ?> command = (Command<?, ?, ?>) redisCommand;
-                    if (command.getException() != null) {
-                        throw new RedisException(command.getException());
-                    }
-                }
-
-                if (redisCommand instanceof Future<?>) {
-                    if (redisCommand.isDone()) {
-                        try {
-                            redisCommand.get();
-                        } catch (InterruptedException e) {
-                            throw e;
-                        } catch (ExecutionException e) {
-                            throw new RedisException(e.getCause());
-                        }
-                    }
-                }
-
-                return awaitedResult;
+                LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
+                return command.get();
             }
-
-            if (result instanceof RedisClusterAsyncConnection) {
-                return AbstractRedisClient.syncHandler((RedisChannelHandler<?, ?>) result, RedisConnection.class,
-                        RedisClusterConnection.class);
-            }
-
             return result;
-
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
 
-    }
-
-    private void setTimeout(long timeout, TimeUnit unit) {
-        this.timeout = timeout;
-        this.unit = unit;
     }
 }

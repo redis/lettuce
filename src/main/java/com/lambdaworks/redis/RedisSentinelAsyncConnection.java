@@ -4,7 +4,8 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 /**
  * Asynchronous executed commands for Sentinel.
@@ -13,7 +14,9 @@ import java.util.concurrent.Future;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisSentinelAsyncCommands}
  */
+@Deprecated
 public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
 
     /**
@@ -22,7 +25,7 @@ public interface RedisSentinelAsyncConnection<K, V> extends Closeable {
      * @param key the key
      * @return Future&lt;SocketAddress&gt;
      */
-    Future<SocketAddress> getMasterAddrByName(K key);
+    RedisFuture<SocketAddress> getMasterAddrByName(K key);
 
     /**
      * Enumerates all the monitored masters and their states.

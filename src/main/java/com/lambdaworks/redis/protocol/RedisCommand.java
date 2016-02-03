@@ -1,17 +1,21 @@
 package com.lambdaworks.redis.protocol;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
 /**
+ * A redis command that holds an output, arguments and a state, whether it is completed or not.
+ *
+ * Commands can be wrapped. Outer commands have to notify inner commands but inner commands do not communicate with outer
+ * commands.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Output type.
  * @since 3.0
  */
-public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<T> {
+public interface RedisCommand<K, V, T> {
 
     /**
      * The command output. Can be null.
@@ -26,10 +30,23 @@ public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<
     void complete();
 
     /**
+     * Cancel a command.
+     */
+    void cancel();
+
+    /**
      * 
      * @return the current command args
      */
     CommandArgs<K, V> getArgs();
+
+    /**
+     *
+     * @param throwable the exception
+     * @return {@code true} if this invocation caused this CompletableFuture to transition to a completed state, else
+     *         {@code false}
+     */
+    boolean completeExceptionally(Throwable throwable);
 
     /**
      *
@@ -39,17 +56,28 @@ public interface RedisCommand<K, V, T> extends ListenableFuture<T>, RedisFuture<
 
     /**
      * Encode the command.
-     * 
+     *
      * @param buf byte buffer to operate on.
      */
     void encode(ByteBuf buf);
 
     /**
-     * Subclasses should invoke this method to set the result of the computation to an error, {@code throwable}. This will set
-     * the state of the future to COMPLETED and invoke the listeners if the state was successfully changed.
-     * 
-     * @param throwable the exception that the task failed with.
-     * @return true if the state was successfully changed.
+     *
+     * @return true if the command is cancelled.
      */
-    boolean setException(Throwable throwable);
+    boolean isCancelled();
+
+    /**
+     *
+     * @return true if the command is completed.
+     */
+    boolean isDone();
+
+    /**
+     * Set a new output. Only possible as long as the command is not completed/cancelled.
+     * 
+     * @param output the new command output
+     * @throws IllegalStateException if the command is cancelled/completed
+     */
+    void setOutput(CommandOutput<K, V, T> output);
 }

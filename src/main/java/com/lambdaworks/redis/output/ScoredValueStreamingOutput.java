@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * Streaming-Output of of values and their associated scores. Returns the count of all values (including null).

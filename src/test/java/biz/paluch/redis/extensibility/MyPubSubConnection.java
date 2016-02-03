@@ -1,14 +1,16 @@
 package biz.paluch.redis.extensibility;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.enterprise.inject.Alternative;
-
+import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubOutput;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 
 /**
  * Demo code for extending a RedisPubSubConnectionImpl.
@@ -16,7 +18,10 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 @SuppressWarnings("unchecked")
-public class MyPubSubConnection<K, V> extends RedisPubSubConnectionImpl<K, V> {
+public class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> {
+
+    private AtomicInteger subscriptions = new AtomicInteger();
+
     /**
      * Initialize a new connection.
      * 
@@ -30,10 +35,13 @@ public class MyPubSubConnection<K, V> extends RedisPubSubConnectionImpl<K, V> {
     }
 
     @Override
-    public RedisFuture<Void> psubscribe(K... patterns) {
-        RedisFuture<Void> result = super.psubscribe(patterns);
-        channels.size();
-        return result;
+    public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
+
+        if (cmd.getType() == CommandType.SUBSCRIBE) {
+            subscriptions.incrementAndGet();
+        }
+
+        return super.dispatch(cmd);
     }
 
     public void channelRead(Object msg) {

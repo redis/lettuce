@@ -87,6 +87,14 @@ public class TestSettings {
 
     /**
      *
+     * @return {@link #port()} with added {@literal 500}
+     */
+    public static int nonexistentPort() {
+        return port() + 500;
+    }
+
+    /**
+     *
      * @param offset
      * @return {@link #port()} with added {@literal offset}
      */

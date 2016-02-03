@@ -7,7 +7,6 @@
         <property name="uri" value="redis://localhost:6379"/>
     </bean>
 
-    <bean
-            class="com.lambdaworks.examples.MySpringBean" autowire="byType"/>
+    <bean class="com.lambdaworks.examples.MySpringBean" autowire="byType"/>
 
 </beans>

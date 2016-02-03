@@ -1,15 +1,13 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.google.common.util.concurrent.AbstractFuture;
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
@@ -18,44 +16,38 @@ import io.netty.buffer.ByteBuf;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
-class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<K, V, T> {
+class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {
 
-    private RedisCommand<K, V, T> command;
     private RedisChannelWriter<K, V> retry;
     private int executions;
     private int executionLimit;
+    private boolean completed;
 
     ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
-        this.command = command;
+        super(command);
         this.retry = retry;
         this.executionLimit = executionLimit;
-    }
-
-    @Override
-    public CommandOutput<K, V, T> getOutput() {
-        return command.getOutput();
     }
 
     @Override
     public void complete() {
         executions++;
 
-        try {
-            if (executions < executionLimit && (isMoved() || isAsk())) {
+        if (executions < executionLimit && (isMoved() || isAsk())) {
+            try {
                 retry.write(this);
-                return;
+            } catch (Exception e) {
+                completeExceptionally(e);
             }
-        } catch (Exception e) {
-            setException(e);
-            command.complete();
             return;
         }
-
-        command.complete();
+        super.complete();
+        completed = true;
     }
 
     public boolean isMoved() {
-        if (getError() != null && getError().startsWith(CommandKeyword.MOVED.name())) {
+        if (command.getOutput() != null && command.getOutput().getError() != null
+                && command.getOutput().getError().startsWith(CommandKeyword.MOVED.name())) {
             return true;
         }
         return false;
@@ -69,56 +61,8 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     }
 
     @Override
-    public void addListener(Runnable listener, Executor executor) {
-        command.addListener(listener, executor);
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return command.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return command.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-        return command.isDone();
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        return command.get(timeout, unit);
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-        return command.get();
-    }
-
-    @Override
-    public String getError() {
-        return command.getError();
-    }
-
-    @Override
     public CommandArgs<K, V> getArgs() {
         return command.getArgs();
-    }
-
-    @Override
-    public boolean await(long timeout, TimeUnit unit) {
-        return command.await(timeout, unit);
-    }
-
-    public int getExecutions() {
-        return executions;
-    }
-
-    public int getExecutionLimit() {
-        return executionLimit;
     }
 
     @Override
@@ -127,8 +71,35 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
     }
 
     @Override
-    public boolean setException(Throwable exception) {
-        return command.setException(exception);
+    public boolean completeExceptionally(Throwable ex) {
+        boolean result = command.completeExceptionally(ex);
+        completed = true;
+        return result;
+    }
+
+    @Override
+    public ProtocolKeyword getType() {
+        return command.getType();
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public int getExecutions() {
+        return executions;
+    }
+
+    @Override
+    public boolean isDone() {
+        return isCompleted();
+    }
+
+    public String getError() {
+        if (command.getOutput() != null) {
+            return command.getOutput().getError();
+        }
+        return null;
     }
 
     @Override
@@ -139,10 +110,5 @@ class ClusterCommand<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         sb.append(", executions=").append(executions);
         sb.append(']');
         return sb.toString();
-    }
-
-    @Override
-    public ProtocolKeyword getType() {
-        return command.getType();
     }
 }

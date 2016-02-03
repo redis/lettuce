@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -11,21 +10,22 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
+import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.ProtocolKeyword;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
@@ -33,15 +33,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Utility to refresh the cluster topology view based on {@link Partitions}.
- *
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 class ClusterTopologyRefresh {
 
     private static final Utf8StringCodec CODEC = new Utf8StringCodec();
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefresh.class);
-
-    private RedisClusterClient client;
+    private final RedisClusterClient client;
 
     public ClusterTopologyRefresh(RedisClusterClient client) {
         this.client = client;
@@ -49,12 +48,12 @@ class ClusterTopologyRefresh {
 
     /**
      * Check if properties changed which are essential for cluster operations.
-     *
+     * 
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
-    public static boolean isChanged(Partitions o1, Partitions o2) {
+    static boolean isChanged(Partitions o1, Partitions o2) {
 
         if (o1.size() != o2.size()) {
             return true;
@@ -70,13 +69,24 @@ class ClusterTopologyRefresh {
     }
 
     /**
+     * Sort partitions by RedisURI.
+     * @param clusterNodes
+     * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}
+     */
+    static List<RedisClusterNode> createSortedList(Iterable<RedisClusterNode> clusterNodes) {
+        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        Collections.sort(ordered, (o1, o2) -> RedisUriComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
+        return ordered;
+    }
+
+    /**
      * Check for {@code MASTER} or {@code SLAVE} flags and whether the responsible slots changed.
-     *
+     * 
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
-    protected static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
+    static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
 
         if (o2 == null) {
             return false;
@@ -119,7 +129,7 @@ class ClusterTopologyRefresh {
      */
     public Map<RedisURI, Partitions> loadViews(Iterable<RedisURI> seed) {
 
-        Map<RedisURI, RedisAsyncConnectionImpl<String, String>> connections = getConnections(seed);
+        Map<RedisURI, StatefulRedisConnection<String, String>> connections = getConnections(seed);
         Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = requestViews(connections);
         Map<RedisURI, Partitions> nodeSpecificViews = getNodeSpecificViews(rawViews);
         close(connections);
@@ -173,7 +183,7 @@ class ClusterTopologyRefresh {
                 Thread.interrupted();
                 throw new RedisCommandInterruptedException(e);
             } catch (ExecutionException e) {
-                logger.warn("Cannot retrieve partition view from " + entry.getKey(), e);
+                logger.warn("Cannot retrieve partition view from " + entry.getKey() + ", error: " + e.toString());
             }
         }
 
@@ -191,9 +201,9 @@ class ClusterTopologyRefresh {
      */
     @SuppressWarnings("unchecked")
     private Map<RedisURI, TimedAsyncCommand<String, String, String>> requestViews(
-            Map<RedisURI, RedisAsyncConnectionImpl<String, String>> connections) {
+            Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
         Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
-        for (Map.Entry<RedisURI, RedisAsyncConnectionImpl<String, String>> entry : connections.entrySet()) {
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
 
             TimedAsyncCommand<String, String, String> timed = createClusterNodesCommand();
 
@@ -204,12 +214,13 @@ class ClusterTopologyRefresh {
     }
 
     protected TimedAsyncCommand<String, String, String> createClusterNodesCommand() {
-        CommandArgs<String, String> args = new CommandArgs<String, String>(CODEC).add(CommandKeyword.NODES);
-        return new TimedAsyncCommand<String, String, String>(CommandType.CLUSTER, new StatusOutput<String, String>(CODEC), args);
+        CommandArgs<String, String> args = new CommandArgs<>(CODEC).add(CommandKeyword.NODES);
+        Command<String, String, String> command = new Command<>(CommandType.CLUSTER, new StatusOutput<>(CODEC), args);
+        return new TimedAsyncCommand<>(command);
     }
 
-    protected void close(Map<RedisURI, RedisAsyncConnectionImpl<String, String>> connections) {
-        for (RedisAsyncConnectionImpl<String, String> connection : connections.values()) {
+    private void close(Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
+        for (StatefulRedisConnection<String, String> connection : connections.values()) {
             connection.close();
         }
     }
@@ -217,8 +228,8 @@ class ClusterTopologyRefresh {
     /*
      * Open connections where an address can be resolved.
      */
-    protected Map<RedisURI, RedisAsyncConnectionImpl<String, String>> getConnections(Iterable<RedisURI> seed) {
-        Map<RedisURI, RedisAsyncConnectionImpl<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
+    private Map<RedisURI, StatefulRedisConnection<String, String>> getConnections(Iterable<RedisURI> seed) {
+        Map<RedisURI, StatefulRedisConnection<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
 
         for (RedisURI redisURI : seed) {
             if (redisURI.getResolvedAddress() == null) {
@@ -226,14 +237,17 @@ class ClusterTopologyRefresh {
             }
 
             try {
-                RedisAsyncConnectionImpl<String, String> connection = client.connectAsyncImpl(redisURI.getResolvedAddress());
-                if (redisURI.getPassword() != null) {
-                    String password = new String(redisURI.getPassword());
-                    if (!"".equals(password.trim())) {
-                        connection.auth(password);
-                    }
+                StatefulRedisConnection<String, String> connection = client.connectToNode(redisURI.getResolvedAddress());
+                if(redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                    connection.sync().auth(new String(redisURI.getPassword()));
                 }
                 connections.put(redisURI, connection);
+            } catch (RedisConnectionException e) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(e.getMessage(), e);
+                } else {
+                    logger.warn(e.getMessage());
+                }
             } catch (RuntimeException e) {
                 logger.warn("Cannot connect to " + redisURI, e);
             }
@@ -243,7 +257,7 @@ class ClusterTopologyRefresh {
 
     /**
      * Resolve a {@link RedisURI} from a map of cluster views by {@link Partitions} as key
-     *
+     * 
      * @param map the map
      * @param partitions the key
      * @return a {@link RedisURI} or null
@@ -290,13 +304,13 @@ class ClusterTopologyRefresh {
      * @param <V> Value type
      * @param <T> Result type
      */
-    static class TimedAsyncCommand<K, V, T> extends Command<K, V, T> {
+    static class TimedAsyncCommand<K, V, T> extends AsyncCommand<K, V, T> {
 
         long encodedAtNs = -1;
         long completedAtNs = -1;
 
-        public TimedAsyncCommand(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-            super(type, output, args);
+        public TimedAsyncCommand(RedisCommand<K, V, T> command) {
+            super(command);
         }
 
         @Override

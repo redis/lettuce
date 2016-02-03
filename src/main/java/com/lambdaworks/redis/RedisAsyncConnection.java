@@ -2,20 +2,25 @@ package com.lambdaworks.redis;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisTransactionalAsyncCommands;
+
 /**
- * Complete async Redis API with 400+ Methods.
+ * A complete asynchronous and thread-safe Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisAsyncCommands}
  */
+@Deprecated
 public interface RedisAsyncConnection<K, V> extends RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>,
         RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>,
         RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>,
         RedisHLLAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V>,
         RedisClusterAsyncConnection<K, V> {
-
     /**
      * Set the default timeout for operations.
      * 
@@ -39,5 +44,10 @@ public interface RedisAsyncConnection<K, V> extends RedisHashesAsyncConnection<K
      * @return String simple-string-reply
      */
     String select(int db);
+
+    /**
+     * @return the underlying connection.
+     */
+    StatefulRedisConnection<K, V> getStatefulConnection();
 
 }

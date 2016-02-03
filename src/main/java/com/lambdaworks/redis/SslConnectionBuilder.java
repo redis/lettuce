@@ -3,12 +3,16 @@ package com.lambdaworks.redis;
 import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.ConnectionEventTrigger.local;
 import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
-import static com.lambdaworks.redis.PlainChannelInitializer.*;
+import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
+import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
+import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
 
 import java.util.List;
 import java.util.concurrent.Future;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLParameters;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -16,16 +20,13 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
-import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.AsyncCommand;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
-import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.*;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
@@ -84,18 +85,17 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         @Override
         protected void initChannel(Channel channel) throws Exception {
-            SslContext sslContext;
 
             SSLParameters sslParams = new SSLParameters();
 
+            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(SslProvider.JDK);
             if (redisURI.isVerifyPeer()) {
-                sslContext = SslContext.newClientContext(SslProvider.JDK);
-                if (JavaRuntime.AT_LEAST_JDK_7) {
-                    sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-                }
+                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
             } else {
-                sslContext = SslContext.newClientContext(SslProvider.JDK, InsecureTrustManagerFactory.INSTANCE);
+                sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
+
+            SslContext sslContext = sslContextBuilder.build();
 
             SSLEngine sslEngine = sslContext.newEngine(channel.alloc(), redisURI.getHost(), redisURI.getPort());
             sslEngine.setSSLParameters(sslParams);
@@ -121,10 +121,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SslHandler sslHandler = new SslHandler(sslEngine, redisURI.isStartTls());
             channel.pipeline().addLast(sslHandler);
+
             if (channel.pipeline().get("channelActivator") == null) {
                 channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-                    private Command<?, ?, ?> pingCommand;
+                    private AsyncCommand<?, ?, ?> pingCommand;
 
                     @Override
                     public Future<Boolean> channelInitialized() {
@@ -153,9 +154,9 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             if (event.isSuccess()) {
                                 if (pingBeforeActivate) {
                                     if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-                                        pingCommand = INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword()));
+                                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword())));
                                     } else {
-                                        pingCommand = INITIALIZING_CMD_BUILDER.ping();
+                                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                                     }
                                     pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                                 } else {
@@ -184,8 +185,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                     @Override
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
-                        if (!initializedFuture.isDone()) {
+                        if (cause instanceof SSLHandshakeException || cause.getCause() instanceof SSLException) {
                             initializedFuture.setException(cause);
                         }
                         super.exceptionCaught(ctx, cause);

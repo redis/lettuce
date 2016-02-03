@@ -5,7 +5,6 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * Streaming-Output of Key Value Pairs. Returns the count of all Key-Value pairs (including null).

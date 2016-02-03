@@ -1,7 +1,14 @@
 package com.lambdaworks.redis;
 
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import com.lambdaworks.codec.Base16;
+
 /**
  * Helper for {@link String} checks.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -33,5 +40,44 @@ public class LettuceStrings {
      */
     public static boolean isNotEmpty(final CharSequence cs) {
         return !isEmpty(cs);
+    }
+
+    /**
+     * Convert double to string. If double is infinite, returns positive/negative infinity {@code +inf} and {@code -inf}.
+     * 
+     * @param n the double.
+     * @return string representation of {@code n}
+     */
+    public static String string(double n) {
+        if (Double.isInfinite(n)) {
+            return (n > 0) ? "+inf" : "-inf";
+        }
+        return Double.toString(n);
+    }
+
+    /**
+     * Create SHA1 digest from Lua script.
+     * 
+     * @param script the script
+     * @return the Base16 encoded SHA1 value
+     */
+    public static String digest(byte[] script) {
+        return digest(ByteBuffer.wrap(script));
+    }
+
+    /**
+     * Create SHA1 digest from Lua script.
+     * 
+     * @param script the script
+     * @return the Base16 encoded SHA1 value
+     */
+    public static String digest(ByteBuffer script) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA1");
+            md.update(script);
+            return new String(Base16.encode(md.digest(), false));
+        } catch (NoSuchAlgorithmException e) {
+            throw new RedisException("JVM does not support SHA1");
+        }
     }
 }

@@ -40,29 +40,6 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ConnectionEventSupport))
-            return false;
-
-        ConnectionEventSupport that = (ConnectionEventSupport) o;
-
-        if (!local.equals(that.local))
-            return false;
-        if (!remote.equals(that.remote))
-            return false;
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = local.hashCode();
-        result = 31 * result + remote.hashCode();
-        return result;
-    }
-
-    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(getClass().getSimpleName());

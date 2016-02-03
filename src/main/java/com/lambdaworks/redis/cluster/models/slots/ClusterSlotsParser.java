@@ -112,6 +112,7 @@ public class ClusterSlotsParser {
             int port = Ints.checkedCast(getLongFromIterator(hostAndPortIterator, 0));
             String nodeId;
 
+
             if (hostAndPortIterator.hasNext()) {
                 nodeId = (String) hostAndPortIterator.next();
 
@@ -136,7 +137,7 @@ public class ClusterSlotsParser {
 
     private static RedisClusterNode createNode(String host, int port) {
         RedisClusterNode redisClusterNode = new RedisClusterNode();
-        redisClusterNode.setUri(new RedisURI.Builder().redis(host, port).build());
+        redisClusterNode.setUri(RedisURI.create(host, port));
         redisClusterNode.setSlots(new ArrayList<Integer>());
         return redisClusterNode;
     }

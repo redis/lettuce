@@ -4,7 +4,6 @@ package com.lambdaworks.redis.output;
 
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 import java.nio.ByteBuffer;
 

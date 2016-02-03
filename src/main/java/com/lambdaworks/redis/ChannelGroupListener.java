@@ -8,8 +8,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
 
 /**
- * A netty {@link io.netty.channel.ChannelHandler} responsible for monitoring the channel and adding/removing the channel
- * from/to the ChannelGroup.
+ * A netty {@link ChannelHandler} responsible for monitoring the channel and adding/removing the channel from/to the
+ * ChannelGroup.
  * 
  * @author Will Glozer
  */

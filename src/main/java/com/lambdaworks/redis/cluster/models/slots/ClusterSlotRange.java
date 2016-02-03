@@ -96,8 +96,8 @@ public class ClusterSlotRange implements Serializable {
 
     private RedisClusterNode toRedisClusterNode(HostAndPort hostAndPort, String slaveOf, Set<RedisClusterNode.NodeFlag> flags) {
         RedisClusterNode redisClusterNode = new RedisClusterNode();
-        redisClusterNode.setUri(new RedisURI
-                .Builder().redis(hostAndPort.getHostText(), hostAndPort.getPortOrDefault(RedisURI.DEFAULT_REDIS_PORT)).build());
+        redisClusterNode.setUri(RedisURI
+                .create(hostAndPort.getHostText(), hostAndPort.getPortOrDefault(RedisURI.DEFAULT_REDIS_PORT)));
         redisClusterNode.setSlaveOf(slaveOf);
         redisClusterNode.setFlags(flags);
         return redisClusterNode;

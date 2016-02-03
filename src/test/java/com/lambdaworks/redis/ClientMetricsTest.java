@@ -21,7 +21,7 @@ import com.lambdaworks.redis.event.Event;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class ClientMetricsTest extends AbstractCommandTest {
+public class ClientMetricsTest extends AbstractRedisClientTest {
 
     @Test
     public void testMetricsEvent() throws Exception {

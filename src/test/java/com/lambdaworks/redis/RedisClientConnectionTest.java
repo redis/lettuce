@@ -9,7 +9,7 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class RedisClientConnectionTest extends AbstractCommandTest {
+public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
     /*
      * Pool/Sync
@@ -114,6 +114,29 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
     @Test
     public void connectPubSubCodecOwnUri() throws Exception {
         client.connectPubSub(new Utf8StringCodec(), redis(host, port).build()).close();
+    }
+
+    /*
+     * Sentinel Stateful
+     */
+    @Test
+    public void connectSentinelClientUri() throws Exception {
+        client.connectSentinel().close();
+    }
+
+    @Test
+    public void connectSentinelCodecClientUri() throws Exception {
+        client.connectSentinel(new Utf8StringCodec()).close();
+    }
+
+    @Test
+    public void connectSentinelOwnUri() throws Exception {
+        client.connectSentinel(redis(host, port).build()).close();
+    }
+
+    @Test
+    public void connectSentinelCodecOwnUri() throws Exception {
+        client.connectSentinel(new Utf8StringCodec(), redis(host, port).build()).close();
     }
 
     /*

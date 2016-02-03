@@ -8,24 +8,26 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
+import org.assertj.core.api.Assertions;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class ConnectionCommandTest extends AbstractCommandTest {
+public class ConnectionCommandTest extends AbstractRedisClientTest {
     @Test
     public void auth() throws Exception {
         new WithPasswordRequired() {
             @Override
             public void run(RedisClient client) {
-                RedisConnection<String, String> connection = client.connect();
+                RedisConnection<String, String> connection = client.connect().sync();
                 try {
                     connection.ping();
                     fail("Server doesn't require authentication");
@@ -37,7 +39,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
                 RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
                 RedisClient redisClient = new RedisClient(redisURI);
-                RedisConnection<String, String> authConnection = redisClient.connect();
+                RedisConnection<String, String> authConnection = redisClient.connect().sync();
                 authConnection.ping();
                 authConnection.close();
                 FastShutdown.shutdown(redisClient);
@@ -47,19 +49,29 @@ public class ConnectionCommandTest extends AbstractCommandTest {
 
     @Test
     public void echo() throws Exception {
-        assertThat(redis.echo("hello")).isEqualTo("hello");
+        Assertions.assertThat(redis.echo("hello")).isEqualTo("hello");
     }
 
     @Test
     public void ping() throws Exception {
-        assertThat(redis.ping()).isEqualTo("PONG");
+        Assertions.assertThat(redis.ping()).isEqualTo("PONG");
     }
 
     @Test
     public void select() throws Exception {
         redis.set(key, value);
-        assertThat(redis.select(1)).isEqualTo("OK");
-        assertThat(redis.get(key)).isNull();
+        Assertions.assertThat(redis.select(1)).isEqualTo("OK");
+        Assertions.assertThat(redis.get(key)).isNull();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void authNull() throws Exception {
+        redis.auth(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void authEmpty() throws Exception {
+        redis.auth("");
     }
 
     @Test
@@ -67,7 +79,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         new WithPasswordRequired() {
             @Override
             public void run(RedisClient client) {
-                RedisConnection<String, String> connection = client.connect();
+                RedisConnection<String, String> connection = client.connect().sync();
                 assertThat(connection.auth(passwd)).isEqualTo("OK");
                 assertThat(connection.set(key, value)).isEqualTo("OK");
                 connection.quit();
@@ -81,22 +93,23 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         redis.select(1);
         redis.set(key, value);
         redis.quit();
-        assertThat(redis.get(key)).isEqualTo(value);
+        Assertions.assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void isValid() throws Exception {
 
-        assertThat(Connections.isValid(redis)).isTrue();
+        Assertions.assertThat(Connections.isValid(redis)).isTrue();
+        RedisAsyncCommandsImpl<String, String> asyncConnection = (RedisAsyncCommandsImpl<String, String>) client.connectAsync();
+        RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) asyncConnection
+                .getStatefulConnection();
 
-        RedisAsyncConnectionImpl<String, String> asyncConnection = (RedisAsyncConnectionImpl<String, String>) client
-                .connectAsync();
         assertThat(Connections.isValid(asyncConnection)).isTrue();
         assertThat(Connections.isOpen(asyncConnection)).isTrue();
         assertThat(asyncConnection.isOpen()).isTrue();
-        assertThat(asyncConnection.isClosed()).isFalse();
+        assertThat(channelHandler.isClosed()).isFalse();
 
-        CommandHandler<String, String> channelWriter = (CommandHandler<String, String>) asyncConnection.getChannelWriter();
+        CommandHandler<String, String> channelWriter = (CommandHandler<String, String>) channelHandler.getChannelWriter();
         assertThat(channelWriter.isClosed()).isFalse();
         assertThat(channelWriter.isSharable()).isTrue();
 
@@ -105,7 +118,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
         assertThat(Connections.isValid(asyncConnection)).isFalse();
 
         assertThat(asyncConnection.isOpen()).isFalse();
-        assertThat(asyncConnection.isClosed()).isTrue();
+        assertThat(channelHandler.isClosed()).isTrue();
 
         assertThat(channelWriter.isClosed()).isTrue();
     }
@@ -159,10 +172,11 @@ public class ConnectionCommandTest extends AbstractCommandTest {
     public void getSetReconnect() throws Exception {
         redis.set(key, value);
         redis.quit();
-        assertThat(redis.get(key)).isEqualTo(value);
+        Assertions.assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void authInvalidPassword() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
@@ -170,15 +184,16 @@ public class ConnectionCommandTest extends AbstractCommandTest {
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
             assertThat(e.getMessage()).isEqualTo("ERR Client sent AUTH, but no password is set");
-            Field f = async.getClass().getDeclaredField("password");
-            f.setAccessible(true);
-            assertThat(f.get(async)).isNull();
+            StatefulRedisConnection<String, String> statefulRedisConnection = (StatefulRedisConnection<String, String>) ReflectionTestUtils
+                    .getField(async, "connection");
+            assertThat(ReflectionTestUtils.getField(statefulRedisConnection, "password")).isNull();
         } finally {
             async.close();
         }
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void selectInvalid() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
@@ -186,20 +201,20 @@ public class ConnectionCommandTest extends AbstractCommandTest {
             fail("Selected invalid db index");
         } catch (RedisException e) {
             assertThat(e.getMessage()).isEqualTo("ERR invalid DB index");
-            Field f = async.getClass().getDeclaredField("db");
-            f.setAccessible(true);
-            assertThat(f.get(async)).isEqualTo(0);
+            StatefulRedisConnection<String, String> statefulRedisConnection = (StatefulRedisConnection<String, String>) ReflectionTestUtils
+                    .getField(async, "connection");
+            assertThat(ReflectionTestUtils.getField(statefulRedisConnection, "db")).isEqualTo(0);
         } finally {
             async.close();
         }
     }
 
     @Test
-    public void string() throws Exception {
+    public void testDoubleToString() throws Exception {
 
-        assertThat(RedisAsyncConnectionImpl.string(1.1)).isEqualTo("1.1");
-        assertThat(RedisAsyncConnectionImpl.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
-        assertThat(RedisAsyncConnectionImpl.string(Double.NEGATIVE_INFINITY)).isEqualTo("-inf");
+        assertThat(LettuceStrings.string(1.1)).isEqualTo("1.1");
+        assertThat(LettuceStrings.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
+        assertThat(LettuceStrings.string(Double.NEGATIVE_INFINITY)).isEqualTo("-inf");
 
     }
 }

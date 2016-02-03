@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-public class Utf8StringCodecTest extends AbstractCommandTest {
+public class Utf8StringCodecTest extends AbstractRedisClientTest {
     @Test
     public void decodeHugeBuffer() throws Exception {
         char[] huge = new char[8192];

@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Synchronous executed commands for Geo-Commands.
+ * Asynchronous executed commands for Geo-Commands.
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
+ * @deprecated Use {@link com.lambdaworks.redis.api.async.RedisGeoAsyncCommands}
  */
+@Deprecated
 public interface RedisGeoAsyncConnection<K, V> {
 
     /**

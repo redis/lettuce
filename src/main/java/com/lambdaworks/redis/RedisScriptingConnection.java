@@ -2,6 +2,8 @@ package com.lambdaworks.redis;
 
 import java.util.List;
 
+import com.lambdaworks.redis.api.sync.RedisScriptingCommands;
+
 /**
  * Synchronous executed commands for Scripting.
  * 
@@ -9,7 +11,9 @@ import java.util.List;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link RedisScriptingCommands}
  */
+@Deprecated
 public interface RedisScriptingConnection<K, V> {
     /**
      * Execute a Lua script server side.

@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.lambdaworks.redis.cluster.SlotHash.getSlot;
 
 import java.util.List;
 
@@ -8,11 +9,11 @@ import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
-import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
@@ -38,51 +39,55 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     }
 
     @Override
-    public <T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
+    @SuppressWarnings("unchecked")
+    public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
         checkArgument(command != null, "command must not be null");
 
+        if (closed) {
+            throw new RedisException("Connection is closed");
+        }
+
         RedisCommand<K, V, T> commandToSend = command;
         CommandArgs<K, V> args = command.getArgs();
+
+        if (!(command instanceof ClusterCommand)) {
+            RedisCommand<K, V, T> singleCommand = command;
+            commandToSend = new ClusterCommand<>(singleCommand, this, executionLimit);
+        }
+
         RedisChannelWriter<K, V> channelWriter = null;
 
-        if (command instanceof Command) {
-            Command<K, V, T> singleCommand = (Command<K, V, T>) command;
-            if (!singleCommand.isMulti()) {
-                commandToSend = new ClusterCommand<K, V, T>(singleCommand, this, executionLimit);
-            }
-        }
-
-        if (commandToSend instanceof ClusterCommand) {
+        if (commandToSend instanceof ClusterCommand && !commandToSend.isDone()) {
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) commandToSend;
-            if (!clusterCommand.isDone()) {
+            if (clusterCommand.isMoved() || clusterCommand.isAsk()) {
+                HostAndPort target;
                 if (clusterCommand.isMoved()) {
-                    HostAndPort moveTarget = getMoveTarget(clusterCommand.getError());
-                    commandToSend.getOutput().setError((String) null);
-                    RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
-                            ClusterConnectionProvider.Intent.WRITE, moveTarget.getHostText(), moveTarget.getPort());
-                    channelWriter = connection.getChannelWriter();
+                    target = getMoveTarget(clusterCommand.getError());
+                } else {
+                    target = getAskTarget(clusterCommand.getError());
                 }
+
+                commandToSend.getOutput().setError((String) null);
+                RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(
+                        ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
+                channelWriter = connection.getChannelWriter();
 
                 if (clusterCommand.isAsk()) {
-                    HostAndPort askTarget = getAskTarget(clusterCommand.getError());
-                    commandToSend.getOutput().setError((String) null);
-                    RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(
-                            ClusterConnectionProvider.Intent.WRITE, askTarget.getHostText(), askTarget.getPort());
-                    channelWriter = connection.getChannelWriter();
-
                     // set asking bit
-                    connection.asking();
+                    StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
+                    statefulRedisConnection.async().asking();
                 }
             }
         }
 
-        if (channelWriter == null && args != null && args.getEncodedKey() != null) {
-            int hash = getHash(args.getEncodedKey());
-
+        if (channelWriter == null && args != null && args.getFirstEncodedKey() != null) {
+            int hash = getSlot(args.getFirstEncodedKey());
             ClusterConnectionProvider.Intent intent = getIntent(command.getType());
 
-            RedisAsyncConnectionImpl<K, V> connection = clusterConnectionProvider.getConnection(intent, hash);
+            RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(intent,
+                    hash);
+
             channelWriter = connection.getChannelWriter();
         }
 
@@ -91,11 +96,14 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             channelWriter = writer.defaultWriter;
         }
 
+        commandToSend.getOutput().setError((String) null);
         if (channelWriter != null && channelWriter != this && channelWriter != defaultWriter) {
-            return channelWriter.write(commandToSend);
+            return channelWriter.write((C) commandToSend);
         }
 
-        return defaultWriter.write(commandToSend);
+        defaultWriter.write((C) commandToSend);
+
+        return command;
     }
 
     private ClusterConnectionProvider.Intent getIntent(ProtocolKeyword type) {
@@ -129,10 +137,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         checkArgument(movedMessageParts.size() >= 3, "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
 
         return HostAndPort.fromString(movedMessageParts.get(2));
-    }
-
-    protected int getHash(byte[] encodedKey) {
-        return SlotHash.getSlot(encodedKey);
     }
 
     @Override

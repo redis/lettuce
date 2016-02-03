@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.LettuceStrings.string;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
@@ -9,47 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.ArrayOutput;
-import com.lambdaworks.redis.output.BooleanListOutput;
-import com.lambdaworks.redis.output.BooleanOutput;
-import com.lambdaworks.redis.output.ByteArrayOutput;
-import com.lambdaworks.redis.output.DateOutput;
-import com.lambdaworks.redis.output.DoubleOutput;
-import com.lambdaworks.redis.output.GeoCoordinatesListOutput;
-import com.lambdaworks.redis.output.GeoWithinListOutput;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.KeyListOutput;
-import com.lambdaworks.redis.output.KeyOutput;
-import com.lambdaworks.redis.output.KeyScanOutput;
-import com.lambdaworks.redis.output.KeyScanStreamingOutput;
-import com.lambdaworks.redis.output.KeyStreamingChannel;
-import com.lambdaworks.redis.output.KeyStreamingOutput;
-import com.lambdaworks.redis.output.KeyValueOutput;
-import com.lambdaworks.redis.output.KeyValueScanStreamingOutput;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.KeyValueStreamingOutput;
-import com.lambdaworks.redis.output.MapOutput;
-import com.lambdaworks.redis.output.MapScanOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.ScoredValueListOutput;
-import com.lambdaworks.redis.output.ScoredValueScanOutput;
-import com.lambdaworks.redis.output.ScoredValueScanStreamingOutput;
-import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
-import com.lambdaworks.redis.output.ScoredValueStreamingOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.StringListOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
-import com.lambdaworks.redis.output.ValueOutput;
-import com.lambdaworks.redis.output.ValueScanOutput;
-import com.lambdaworks.redis.output.ValueScanStreamingOutput;
-import com.lambdaworks.redis.output.ValueSetOutput;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingOutput;
+import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.SetArgs;
 
 /**
  * @param <K>
@@ -242,14 +207,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DBSIZE, new IntegerOutput<K, V>(codec));
     }
 
+    public Command<K, V, String> debugCrashAndRecover(Long delay) {
+         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("CRASH-AND-RECOVER");
+        if(delay != null) {
+            args.add(delay);
+        }
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec),args );
+    }
+
     public Command<K, V, String> debugObject(K key) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(OBJECT).addKey(key);
         return createCommand(DEBUG, new StatusOutput<K, V>(codec), args);
-    }
-
-    public Command<K, V, Void> debugSegfault() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SEGFAULT);
-        return createCommand(DEBUG, null, args);
     }
 
     public Command<K, V, Void> debugOom() {
@@ -259,6 +227,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> debugHtstats(int db) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(HTSTATS).add(db);
         return createCommand(DEBUG, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> debugReload() {
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec), new CommandArgs<K, V>(codec).add(RELOAD));
+    }
+
+    public Command<K, V, String> debugRestart(Long delay) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESTART);
+        if(delay != null) {
+            args.add(delay);
+        }
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec),args );
+    }
+
+    public Command<K, V, String> debugSdslen(K key) {
+        return createCommand(DEBUG, new StatusOutput<K, V>(codec), new CommandArgs<K, V>(codec).add("SDSLEN").addKey(key));
+    }
+
+    public Command<K, V, Void> debugSegfault() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SEGFAULT);
+        return createCommand(DEBUG, null, args);
     }
 
     public Command<K, V, Long> decr(K key) {
@@ -277,9 +266,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> del(Iterable<K> keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> unlink(K... keys) {
         assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
 
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(UNLINK, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> unlink(Iterable<K> keys) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(UNLINK, new IntegerOutput<K, V>(codec), args);
     }
@@ -577,8 +576,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<V>> mget(Iterable<K> keys) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, K... keys) {
         assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
@@ -1561,12 +1571,28 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> pfadd(K key, V... values) {
+        assertNotEmpty(values, "values " + MUST_NOT_BE_NULL);
+        assertNoNullElements(values, "values " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
+        return createCommand(PFADD, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> pfcount(K key, K... moreKeys) {
         assertNotNull(key, "key " + MUST_NOT_BE_NULL);
         assertNotNull(moreKeys, "moreKeys " + MUST_NOT_BE_NULL);
         assertNoNullElements(moreKeys, "moreKeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(moreKeys);
+        return createCommand(PFCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> pfcount(K... keys) {
+        assertNotNull(keys, "keys " + MUST_NOT_BE_NULL);
+        assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(PFCOUNT, new IntegerOutput<K, V>(codec), args);
     }
 
@@ -1579,6 +1605,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKey(sourcekey).addKeys(moreSourceKeys);
         return createCommand(PFMERGE, new StatusOutput<K, V>(codec), args);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Command<K, V, String> pfmerge(K destkey, K... sourcekeys) {
+        assertNotNull(destkey, "destkey " + MUST_NOT_BE_NULL);
+        assertNotEmpty(sourcekeys, "sourcekeys " + MUST_NOT_BE_NULL);
+        assertNoNullElements(sourcekeys, "sourcekeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKeys(sourcekeys);
+        return createCommand(PFADD, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterMeet(String ip, int port) {
@@ -1739,7 +1775,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
     }
 
-    @SuppressWarnings("unchecked")
     public Command<K, V, Long> geoadd(K key, Object[] lngLatMember) {
 
         assertNotEmpty(lngLatMember, "lngLatMember " + MUST_NOT_BE_EMPTY);
@@ -1890,5 +1925,4 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             throw new IllegalArgumentException(message);
         }
     }
-
 }

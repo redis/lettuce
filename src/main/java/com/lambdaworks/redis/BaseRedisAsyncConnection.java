@@ -4,6 +4,8 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.api.async.BaseRedisAsyncCommands;
+
 /**
  * 
  * Basic asynchronous executed commands.
@@ -12,8 +14,10 @@ import java.util.Map;
  * @param <K> Key type.
  * @param <V> Value type.
  * @since 3.0
+ * @deprecated Use {@link BaseRedisAsyncCommands}
  */
-public interface BaseRedisAsyncConnection<K, V> extends Closeable {
+@Deprecated
+public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyncCommands<K, V> {
 
     /**
      * Post a message to a channel.

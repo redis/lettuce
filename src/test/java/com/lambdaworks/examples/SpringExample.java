@@ -1,5 +1,7 @@
 package com.lambdaworks.examples;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.lambdaworks.redis.RedisClient;
@@ -18,8 +20,10 @@ public class SpringExample {
 
         RedisClient client = context.getBean(RedisClient.class);
 
-        RedisConnection<String, String> connection = client.connect();
-        System.out.println("PING: " + connection.ping());
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        RedisCommands<String, String> sync = connection.sync();
+        System.out.println("PING: " + sync.ping());
         connection.close();
 
         MySpringBean mySpringBean = context.getBean(MySpringBean.class);

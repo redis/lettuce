@@ -10,7 +10,6 @@ import java.util.Queue;
 
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**

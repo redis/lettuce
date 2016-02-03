@@ -1,15 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
@@ -81,11 +81,18 @@ public class ClusterPartitionParserTest {
         Partitions partitions = ClusterPartitionParser.parse(nodes);
         assertThat(partitions.getPartitionBySlot(7000).getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
         assertThat(partitions.getPartitionBySlot(5460).getNodeId()).isEqualTo("4213a8dabb94f92eb6a860f4d0729e6a25d43e0c");
-
     }
 
     @Test
     public void testModel() throws Exception {
+        RedisClusterNode node = mockRedisClusterNode();
+
+        assertThat(node.toString()).contains(RedisClusterNode.class.getSimpleName());
+        assertThat(node.hasSlot(1)).isTrue();
+        assertThat(node.hasSlot(9)).isFalse();
+    }
+
+    protected RedisClusterNode mockRedisClusterNode() {
         RedisClusterNode node = new RedisClusterNode();
         node.setConfigEpoch(1);
         node.setConnected(true);
@@ -94,10 +101,16 @@ public class ClusterPartitionParserTest {
         node.setPingSentTimestamp(2);
         node.setPongReceivedTimestamp(3);
         node.setSlaveOf("me");
-        node.setSlots(Lists.<Integer> newArrayList());
+        node.setSlots(ImmutableList.of(1, 2, 3));
         node.setUri(new RedisURI("localhost", 1, 1, TimeUnit.DAYS));
+        return node;
+    }
 
-        assertThat(node.toString()).contains(RedisClusterNode.class.getSimpleName());
+    @Test
+    public void createNode() throws Exception {
+        RedisClusterNode original = mockRedisClusterNode();
+        RedisClusterNode created = RedisClusterNode.of(original.getNodeId());
 
+        assertThat(original).isEqualTo(created);
     }
 }

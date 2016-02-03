@@ -1,6 +1,8 @@
 package com.lambdaworks.examples;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -18,8 +20,10 @@ public class MySpringBean {
 
     public String ping() {
 
-        RedisConnection<String, String> connection = redisClient.connect();
-        String result = connection.ping();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+
+        RedisCommands<String, String> sync = connection.sync();
+        String result = sync.ping();
         connection.close();
         return result;
     }

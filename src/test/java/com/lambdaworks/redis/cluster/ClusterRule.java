@@ -3,8 +3,11 @@ package com.lambdaworks.redis.cluster;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -12,9 +15,9 @@ import org.junit.runners.model.Statement;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisAsyncConnectionImpl;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -26,15 +29,15 @@ public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
     private int[] ports;
-    private Map<Integer, RedisAsyncConnectionImpl<?, ?>> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = Maps.newHashMap();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
         this.ports = ports;
 
         for (int port : ports) {
-            RedisAsyncConnectionImpl<String, String> connection = clusterClient.connectAsyncImpl(new InetSocketAddress(
-                    "localhost", port));
+            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(
+                    new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
     }
@@ -45,13 +48,7 @@ public class ClusterRule implements TestRule {
         final Statement beforeCluster = new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                List<Future<?>> futures = Lists.newArrayList();
-
-                for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
-                    futures.add(connection.flushall());
-                }
-
-                await(futures);
+                flushdb();
             }
         };
 
@@ -66,23 +63,19 @@ public class ClusterRule implements TestRule {
         };
     }
 
-    private void await(List<Future<?>> futures) throws InterruptedException, java.util.concurrent.ExecutionException,
-            java.util.concurrent.TimeoutException {
-        for (Future<?> future : futures) {
-            future.get(10, TimeUnit.SECONDS);
-        }
-    }
-
+    /**
+     * 
+     * @return true if the cluster state is {@code ok} and there are no failing nodes
+     */
     public boolean isStable() {
 
-        for (int port : ports) {
-            RedisAsyncConnectionImpl<String, String> connection = clusterClient.connectAsyncImpl(new InetSocketAddress(
-                    TestSettings.host(), port));
+        for (RedisAsyncCommands<String, String> commands : connectionCache.values()) {
             try {
-                String info = connection.clusterInfo().get();
+                RedisCommands<String, String> sync = commands.getStatefulConnection().sync();
+                String info = sync.clusterInfo();
                 if (info != null && info.contains("cluster_state:ok")) {
 
-                    String s = connection.clusterNodes().get();
+                    String s = sync.clusterNodes();
                     Partitions parse = ClusterPartitionParser.parse(s);
 
                     for (RedisClusterNode redisClusterNode : parse) {
@@ -92,59 +85,79 @@ public class ClusterRule implements TestRule {
                             return false;
                         }
                     }
+
                 } else {
                     return false;
                 }
             } catch (Exception e) {
                 // nothing to do
-            } finally {
-                connection.close();
             }
         }
 
         return true;
     }
 
+    /**
+     * Flush data on all nodes, ignore failures.
+     */
     public void flushdb() {
-        try {
-            for (RedisAsyncConnection<?, ?> connection : connectionCache.values()) {
-                connection.flushdb().get(10, TimeUnit.SECONDS);
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        onAllConnections(c -> c.flushdb(), true);
     }
 
+    /**
+     * Cluster reset on all nodes.
+     */
     public void clusterReset() {
-        try {
-
-            for (RedisAsyncConnectionImpl<?, ?> connection : connectionCache.values()) {
-                connection.clusterReset(false).get(10, TimeUnit.SECONDS);
-                connection.clusterReset(true).get(10, TimeUnit.SECONDS);
-                connection.clusterFlushslots().get(10, TimeUnit.SECONDS);
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        onAllConnections(c -> c.clusterReset(true));
+        onAllConnections(RedisClusterAsyncCommands::clusterFlushslots);
     }
 
+    /**
+     * Meet on all nodes.
+     * 
+     * @param host
+     * @param port
+     */
     public void meet(String host, int port) {
-
-        List<Future<?>> futures = Lists.newArrayList();
-        for (RedisAsyncConnectionImpl<?, ?> redisAsyncConnection : connectionCache.values()) {
-            futures.add(redisAsyncConnection.clusterMeet(host, port));
-        }
-
-        for (Future<?> future : futures) {
-            try {
-                future.get(10, TimeUnit.SECONDS);
-            } catch (Exception ignore) {
-            }
-        }
-
+        onAllConnections(c -> c.clusterMeet(host, port));
     }
 
     public RedisClusterClient getClusterClient() {
         return clusterClient;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private <T> void onAllConnections(Function<RedisClusterAsyncCommands<?, ?>, Future<T>> function) {
+        onAllConnections(function, false);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private <T> void onAllConnections(Function<RedisClusterAsyncCommands<?, ?>, Future<T>> function,
+            boolean ignoreExecutionException) {
+
+        List<Future<?>> futures = Lists.newArrayList();
+        for (RedisClusterAsyncCommands<?, ?> connection : connectionCache.values()) {
+            futures.add(function.apply(connection));
+        }
+
+        try {
+            await((List) futures, ignoreExecutionException);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+
+    private void await(List<Future<?>> futures, boolean ignoreExecutionException) throws InterruptedException,
+            java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+        for (Future<?> future : futures) {
+            try {
+                future.get(10, TimeUnit.SECONDS);
+            } catch (ExecutionException e) {
+                if (!ignoreExecutionException) {
+                    throw e;
+                }
+            }
+        }
     }
 }

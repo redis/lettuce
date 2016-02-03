@@ -2,19 +2,15 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BULK;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.BYTES;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.ERROR;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.INTEGER;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.MULTI;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.SINGLE;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 import java.nio.ByteBuffer;
 import java.util.Deque;
 import java.util.LinkedList;
 
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.output.CommandOutput;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
@@ -179,39 +175,26 @@ public class RedisStateMachine<K, V> {
     }
 
     protected void safeSet(CommandOutput<K, V, ?> output, long integer, RedisCommand<K, V, ?> command) {
-
-        try {
-            output.set(integer);
-        } catch (Exception e) {
-            command.setException(e);
-            command.cancel(true);
-        }
+        safeSet(() -> output.set(integer), command);
     }
 
     protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
-        try {
-            output.set(bytes);
-        } catch (Exception e) {
-            command.setException(e);
-            command.cancel(true);
-        }
+        safeSet(() -> output.set(bytes), command);
     }
 
     protected void safeMulti(CommandOutput<K, V, ?> output, int count, RedisCommand<K, V, ?> command) {
-        try {
-            output.multi(count);
-        } catch (Exception e) {
-            command.setException(e);
-            command.cancel(true);
-        }
+        safeSet(() -> output.multi(count), command);
     }
 
     protected void safeSetError(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+        safeSet(() -> output.setError(bytes), command);
+    }
+
+    protected void safeSet(Runnable runnable, RedisCommand<K, V, ?> command) {
         try {
-            output.setError(bytes);
+            runnable.run();
         } catch (Exception e) {
-            command.setException(e);
-            command.cancel(true);
+            command.completeExceptionally(e);
         }
     }
 

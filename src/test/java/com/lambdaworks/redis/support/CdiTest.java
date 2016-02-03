@@ -6,13 +6,14 @@ import static org.mockito.Mockito.mock;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.FastShutdown;
 import org.apache.webbeans.cditest.CdiTestContainer;
 import org.apache.webbeans.cditest.CdiTestContainerLoader;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.AbstractCommandTest;
 import com.lambdaworks.redis.RedisConnectionStateListener;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.resource.ClientResources;
@@ -36,7 +37,7 @@ public class CdiTest {
 
     @Produces
     public RedisURI redisURI() {
-        return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port).build();
+        return RedisURI.Builder.redis(AbstractRedisClientTest.host, AbstractRedisClientTest.port).build();
     }
 
     @Produces
@@ -46,13 +47,13 @@ public class CdiTest {
     }
 
     public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
-        clientResources.shutdown().get();
+        FastShutdown.shutdown(clientResources);
     }
 
     @PersonDB
     @Produces
     public RedisURI redisURIQualified() {
-        return RedisURI.Builder.redis(AbstractCommandTest.host, AbstractCommandTest.port + 1).build();
+        return RedisURI.Builder.redis(AbstractRedisClientTest.host, AbstractRedisClientTest.port + 1).build();
     }
 
     @Test

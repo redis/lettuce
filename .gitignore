@@ -16,5 +16,6 @@ dependency-reduced-pom.xml
 .idea
 .vagrant
 Vagrantfile
+CluTest.java
 
 CluTest.java

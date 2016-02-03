@@ -69,7 +69,6 @@ public abstract class ReadFrom {
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");
-
     }
 
     /**

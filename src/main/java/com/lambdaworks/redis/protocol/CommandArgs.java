@@ -2,18 +2,17 @@
 
 package com.lambdaworks.redis.protocol;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Math.max;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * Redis command argument encoder.
+ * Redis command arguments.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
@@ -24,17 +23,23 @@ public class CommandArgs<K, V> {
 
     private final RedisCodec<K, V> codec;
     private ByteBuffer buffer;
+    private ByteBuffer firstEncodedKey;
     private int count;
-    private final List<ProtocolKeyword> keywords = new ArrayList<ProtocolKeyword>(8);
-    private K firstKey;
-    private byte[] encodedFirstKey;
 
+    private Long firstInteger;
+    private String firstString;
+
+    /**
+     *
+     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     */
     public CommandArgs(RedisCodec<K, V> codec) {
+        checkArgument(codec != null, "RedisCodec must not be null");
         this.codec = codec;
         this.buffer = ByteBuffer.allocate(32);
     }
 
-    public ByteBuffer buffer() {
+    ByteBuffer buffer() {
         buffer.flip();
         return buffer;
     }
@@ -44,14 +49,20 @@ public class CommandArgs<K, V> {
     }
 
     public CommandArgs<K, V> addKey(K key) {
-        if (firstKey == null) {
-            firstKey = key;
+
+        if (firstEncodedKey == null) {
+            firstEncodedKey = codec.encodeKey(key);
+            return write(firstEncodedKey.duplicate());
         }
-        byte[] b = codec.encodeKey(key);
-        if (encodedFirstKey == null) {
-            encodedFirstKey = b;
+
+        return write(codec.encodeKey(key));
+    }
+
+    public CommandArgs<K, V> addKeys(Iterable<K> keys) {
+        for (K key : keys) {
+            addKey(key);
         }
-        return write(b);
+        return this;
     }
 
     public CommandArgs<K, V> addKeys(K... keys) {
@@ -78,7 +89,14 @@ public class CommandArgs<K, V> {
         }
 
         for (Map.Entry<K, V> entry : map.entrySet()) {
-            write(codec.encodeKey(entry.getKey()));
+            if (firstEncodedKey == null) {
+                firstEncodedKey = codec.encodeKey(entry.getKey());
+                write(firstEncodedKey.duplicate());
+
+            } else {
+                write(codec.encodeKey(entry.getKey()));
+            }
+
             write(codec.encodeValue(entry.getValue()));
         }
 
@@ -86,10 +104,16 @@ public class CommandArgs<K, V> {
     }
 
     public CommandArgs<K, V> add(String s) {
+        if (firstString == null) {
+            firstString = s;
+        }
         return write(s);
     }
 
     public CommandArgs<K, V> add(long n) {
+        if (firstInteger == null) {
+            firstInteger = n;
+        }
         return write(Long.toString(n));
     }
 
@@ -102,7 +126,6 @@ public class CommandArgs<K, V> {
     }
 
     public CommandArgs<K, V> add(CommandKeyword keyword) {
-        keywords.add(keyword);
         return write(keyword.bytes);
     }
 
@@ -111,8 +134,34 @@ public class CommandArgs<K, V> {
     }
 
     public CommandArgs<K, V> add(ProtocolKeyword keyword) {
-        keywords.add(keyword);
         return write(keyword.getBytes());
+    }
+
+    private CommandArgs<K, V> write(ByteBuffer arg) {
+        buffer.mark();
+
+        if (buffer.remaining() < arg.remaining()) {
+            int estimate = buffer.remaining() + arg.remaining() + 10;
+            realloc(max(buffer.capacity() * 2, estimate));
+        }
+
+        while (true) {
+            try {
+                ByteBuffer toWrite = arg.duplicate();
+                buffer.put((byte) '$');
+                write(toWrite.remaining());
+                buffer.put(CRLF);
+                buffer.put(toWrite);
+                buffer.put(CRLF);
+                break;
+            } catch (BufferOverflowException e) {
+                buffer.reset();
+                realloc(buffer.capacity() * 2);
+            }
+        }
+
+        count++;
+        return this;
     }
 
     private CommandArgs<K, V> write(byte[] arg) {
@@ -191,22 +240,27 @@ public class CommandArgs<K, V> {
         this.buffer = newBuffer;
     }
 
-    public byte[] getEncodedKey() {
-        return encodedFirstKey;
-    }
-
-    public List<ProtocolKeyword> getKeywords() {
-        return keywords;
+    public ByteBuffer getFirstEncodedKey() {
+        if (firstEncodedKey != null) {
+            return firstEncodedKey.duplicate();
+        }
+        return null;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
-        sb.append(" [firstKey=").append(firstKey);
-        sb.append(", keywords=").append(keywords);
-        sb.append(", buffer=").append(new String(buffer.array()));
+        sb.append(" [buffer=").append(new String(buffer.array()));
         sb.append(']');
         return sb.toString();
+    }
+
+    public Long getFirstInteger() {
+        return firstInteger;
+    }
+
+    public String getFirstString() {
+        return firstString;
     }
 }

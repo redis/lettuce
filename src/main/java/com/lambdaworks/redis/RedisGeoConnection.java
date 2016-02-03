@@ -8,7 +8,9 @@ import java.util.Set;
  * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.3
+ * @deprecated Use {@link com.lambdaworks.redis.api.sync.RedisGeoCommands}
  */
+@Deprecated
 public interface RedisGeoConnection<K, V> {
 
     /**

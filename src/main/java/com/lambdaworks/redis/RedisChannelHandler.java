@@ -4,10 +4,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -71,7 +73,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         logger.debug("close()");
 
         if (closed) {
-            logger.warn("Client is already closed");
+            logger.warn("Connection is already closed");
             return;
         }
 
@@ -99,8 +101,8 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     }
 
-    protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-
+    protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
+        logger.debug("dispatching command {}", cmd);
         return channelWriter.write(cmd);
     }
 
@@ -113,23 +115,20 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     public void registerCloseables(final Collection<Closeable> registry, final Closeable... closeables) {
         registry.addAll(Arrays.asList(closeables));
 
-        addListener(new CloseEvents.CloseListener() {
-            @Override
-            public void resourceClosed(Object resource) {
-                for (Closeable closeable : closeables) {
-                    if (closeable == RedisChannelHandler.this) {
-                        continue;
-                    }
-
-                    try {
-                        closeable.close();
-                    } catch (IOException e) {
-                        logger.debug(e.toString(), e);
-                    }
+        addListener(resource -> {
+            for (Closeable closeable : closeables) {
+                if (closeable == RedisChannelHandler.this) {
+                    continue;
                 }
 
-                registry.removeAll(Arrays.asList(closeables));
+                try {
+                    closeable.close();
+                } catch (IOException e) {
+                    logger.debug(e.toString(), e);
+                }
             }
+
+            registry.removeAll(Arrays.asList(closeables));
         });
     }
 
@@ -149,9 +148,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * Notification when the connection becomes active (connected).
      */
     public void activated() {
-        active = true;
-        closed = false;
-
+        synchronized (this) {
+            active = true;
+            closed = false;
+        }
     }
 
     /**
@@ -187,7 +187,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     public void setOptions(ClientOptions clientOptions) {
         checkArgument(clientOptions != null, "clientOptions must not be null");
-        this.clientOptions = clientOptions;
+        synchronized (this) {
+            this.clientOptions = clientOptions;
+        }
     }
 
     public long getTimeout() {
@@ -196,6 +198,11 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     public TimeUnit getTimeoutUnit() {
         return unit;
+    }
+
+    protected <T> T syncHandler(Object asyncApi, Class<?>... interfaces) {
+        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>((StatefulConnection) this, asyncApi);
+        return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }
 
     public void setAutoFlushCommands(boolean autoFlush) {

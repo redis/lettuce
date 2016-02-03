@@ -22,9 +22,9 @@ public interface RedisPubSubListener<K, V> {
     /**
      * Message received from a pattern subscription.
      * 
-     * @param pattern Pattern.
-     * @param channel Channel.
-     * @param message Message.
+     * @param pattern Pattern
+     * @param channel Channel
+     * @param message Message
      */
     void message(K pattern, K channel, V message);
 

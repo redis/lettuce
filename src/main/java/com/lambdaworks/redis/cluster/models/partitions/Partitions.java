@@ -17,9 +17,9 @@ import com.lambdaworks.redis.cluster.SlotHash;
  * Partitions are cached to ensure a cheap lookup by {@code slot}. Users of {@link Partitions} are required to call
  * {@link #updateCache()} after topology changes occur.
  * </p>
- * 
+ *
  * Topology changes are:
- * 
+ *
  * <ul>
  * <li>Changes in {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}/
  * {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#SLAVE} state</li>
@@ -28,7 +28,7 @@ import com.lambdaworks.redis.cluster.SlotHash;
  * <li>Changes to the {@link RedisClusterNode#getSlaveOf() slave replication source} (the master of a slave)</li>
  * <li>Changes to the {@link RedisClusterNode#getUri()} () connection point}</li>
  * </ul>
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */

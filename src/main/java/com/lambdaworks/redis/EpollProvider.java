@@ -1,7 +1,10 @@
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.lang.reflect.Constructor;
 import java.net.SocketAddress;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 
 import io.netty.channel.Channel;
@@ -39,7 +42,6 @@ public class EpollProvider {
      * @param <T> Expected return type for casting.
      * @return instance of {@literal className} or null
      */
-    @SuppressWarnings("unchecked")
     private static <T> Class<T> getClass(String className) {
         try {
             return (Class) JavaRuntime.forName(className);
@@ -57,20 +59,15 @@ public class EpollProvider {
      */
     static void checkForEpollLibrary() {
 
-        if (domainSocketAddressClass == null || epollDomainSocketChannelClass == null) {
-            throw new IllegalStateException(
-                    "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
-        }
+        checkState(domainSocketAddressClass != null && epollDomainSocketChannelClass != null,
+                "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
     }
 
     static SocketAddress newSocketAddress(String socketPath) {
-
-        try {
+        return get(() -> {
             Constructor<SocketAddress> constructor = domainSocketAddressClass.getConstructor(String.class);
             return constructor.newInstance(socketPath);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     public static EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
@@ -79,6 +76,14 @@ public class EpollProvider {
             Constructor<EventLoopGroup> constructor = epollEventLoopGroupClass
                     .getConstructor(Integer.TYPE, ThreadFactory.class);
             return constructor.newInstance(nThreads, threadFactory);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static <V> V get(Callable<V> supplier) {
+        try {
+            return supplier.call();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

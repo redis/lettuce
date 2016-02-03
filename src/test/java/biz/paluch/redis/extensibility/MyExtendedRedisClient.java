@@ -1,13 +1,10 @@
 package biz.paluch.redis.extensibility;
 
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 
 import javax.enterprise.inject.Alternative;
 
@@ -34,9 +31,8 @@ public class MyExtendedRedisClient extends RedisClient {
     }
 
     @Override
-    protected <K, V> RedisPubSubConnectionImpl<K, V> newRedisPubSubConnectionImpl(RedisChannelWriter<K, V> handler,
-            RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new MyPubSubConnection<K, V>(handler, codec, timeout, unit);
-
+    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
+            PubSubCommandHandler<K, V> handler, RedisCodec<K, V> codec) {
+        return new MyPubSubConnection<>(handler, codec, timeout, unit);
     }
 }

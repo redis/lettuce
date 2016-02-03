@@ -2,34 +2,25 @@ package com.lambdaworks.redis.cluster;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
-
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
+
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -46,10 +37,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
 
     // Contains NodeId-identified and HostAndPort-identified connections.
-    private final LoadingCache<ConnectionKey, RedisAsyncConnectionImpl<K, V>> connections;
+    private final LoadingCache<ConnectionKey, StatefulRedisConnection<K, V>> connections;
     private final boolean debugEnabled;
-    private final RedisAsyncConnectionImpl<K, V> writers[] = new RedisAsyncConnectionImpl[SlotHash.SLOT_COUNT];
-    private final RedisAsyncConnectionImpl<K, V> readers[][] = new RedisAsyncConnectionImpl[SlotHash.SLOT_COUNT][];
+    private final StatefulRedisConnection<K, V> writers[] = new StatefulRedisConnection[SlotHash.SLOT_COUNT];
+    private final StatefulRedisConnection<K, V> readers[][] = new StatefulRedisConnection[SlotHash.SLOT_COUNT][];
     private final RedisClusterClient redisClusterClient;
     private Partitions partitions;
 
@@ -66,19 +57,28 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     @Override
-    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, int slot) {
+    @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
+    public StatefulRedisConnection<K, V> getConnection(Intent intent, int slot) {
         if (debugEnabled) {
             logger.debug("getConnection(" + intent + ", " + slot + ")");
         }
 
-        if (intent == Intent.READ && readFrom != null) {
-            return getReadConnection(slot);
+        try {
+            if (intent == Intent.READ && readFrom != null) {
+                return getReadConnection(slot);
+            }
+            return getWriteConnection(slot);
+        } catch (RedisException e) {
+            throw e;
+        } catch (UncheckedExecutionException | ExecutionException e) {
+            throw new RedisException(e.getCause());
+        } catch (RuntimeException e) {
+            throw new RedisException(e);
         }
-        return getWriteConnection(slot);
     }
 
-    protected RedisAsyncConnectionImpl<K, V> getWriteConnection(int slot) {
-        RedisAsyncConnectionImpl<K, V> writer;// avoid races when reconfiguring partitions.
+    protected StatefulRedisConnection<K, V> getWriteConnection(int slot) throws ExecutionException {
+        StatefulRedisConnection<K, V> writer;// avoid races when reconfiguring partitions.
         synchronized (stateLock) {
             writer = writers[slot];
         }
@@ -89,23 +89,18 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
             }
 
-            try {
-                // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
-                // host because the nodeId can be handled by a different host.
-                RedisURI uri = partition.getUri();
-                ConnectionKey key = new ConnectionKey(Intent.WRITE, uri.getHost(), uri.getPort());
-                return writers[slot] = connections.get(key);
-            } catch (UncheckedExecutionException e) {
-                throw new RedisException(e.getCause());
-            } catch (Exception e) {
-                throw new RedisException(e);
-            }
+            // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
+            // host because the nodeId can be handled by a different host.
+            RedisURI uri = partition.getUri();
+            ConnectionKey key = new ConnectionKey(Intent.WRITE, uri.getHost(), uri.getPort());
+            return writers[slot] = connections.get(key);
+
         }
         return writer;
     }
 
-    protected RedisAsyncConnectionImpl<K, V> getReadConnection(int slot) {
-        RedisAsyncConnectionImpl<K, V> readerCandidates[];// avoid races when reconfiguring partitions.
+    protected StatefulRedisConnection<K, V> getReadConnection(int slot) throws ExecutionException {
+        StatefulRedisConnection<K, V> readerCandidates[];// avoid races when reconfiguring partitions.
         synchronized (stateLock) {
             readerCandidates = readers[slot];
         }
@@ -117,7 +112,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                         + partitions + ")");
             }
 
-            final List<RedisNodeDescription> candidates = getReadCandidates(master);
+            List<RedisNodeDescription> candidates = getReadCandidates(master);
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
                 @Override
                 public List<RedisNodeDescription> getNodes() {
@@ -140,7 +135,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
 
         // try working connections at first
-        for (RedisAsyncConnectionImpl<K, V> readerCandidate : readerCandidates) {
+        for (StatefulRedisConnection<K, V> readerCandidate : readerCandidates) {
             if (!readerCandidate.isOpen()) {
                 continue;
             }
@@ -151,29 +146,24 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return readerCandidates[0];
     }
 
-    private RedisAsyncConnectionImpl<K, V>[] getReadFromConnections(List<RedisNodeDescription> selection) {
-        RedisAsyncConnectionImpl<K, V>[] readerCandidates;
-        try {
-            // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
-            // host because the nodeId can be handled by a different host.
+    private StatefulRedisConnection<K, V>[] getReadFromConnections(List<RedisNodeDescription> selection)
+            throws ExecutionException {
+        StatefulRedisConnection<K, V>[] readerCandidates;
+        // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
+        // host because the nodeId can be handled by a different host.
 
-            readerCandidates = new RedisAsyncConnectionImpl[selection.size()];
+        readerCandidates = new StatefulRedisConnection[selection.size()];
 
-            for (int i = 0; i < selection.size(); i++) {
-                RedisNodeDescription redisClusterNode = selection.get(i);
+        for (int i = 0; i < selection.size(); i++) {
+            RedisNodeDescription redisClusterNode = selection.get(i);
 
-                RedisURI uri = redisClusterNode.getUri();
-                ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
-                        : Intent.READ, uri.getHost(), uri.getPort());
+            RedisURI uri = redisClusterNode.getUri();
+            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
+                    : Intent.READ, uri.getHost(), uri.getPort());
 
-                readerCandidates[i] = connections.get(key);
-            }
-
-        } catch (UncheckedExecutionException e) {
-            throw new RedisException(e.getCause());
-        } catch (Exception e) {
-            throw new RedisException(e);
+            readerCandidates[i] = connections.get(key);
         }
+
         return readerCandidates;
     }
 
@@ -189,7 +179,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     @Override
-    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String nodeId) {
+    public StatefulRedisConnection<K, V> getConnection(Intent intent, String nodeId) {
         if (debugEnabled) {
             logger.debug("getConnection(" + intent + ", " + nodeId + ")");
         }
@@ -197,14 +187,14 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         try {
             ConnectionKey key = new ConnectionKey(intent, nodeId);
             return connections.get(key);
-        } catch (Exception e) {
-            throw new RedisException(e);
+        } catch (UncheckedExecutionException | ExecutionException e) {
+            throw new RedisException(e.getCause());
         }
     }
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
-    public RedisAsyncConnectionImpl<K, V> getConnection(Intent intent, String host, int port) {
+    public StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port) {
         try {
             if (debugEnabled) {
                 logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
@@ -221,9 +211,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
             ConnectionKey key = new ConnectionKey(intent, host, port);
             return connections.get(key);
-        } catch (UncheckedExecutionException e) {
+        } catch (RedisException e) {
+            throw e;
+        } catch (UncheckedExecutionException | ExecutionException e) {
             throw new RedisException(e.getCause());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new RedisException(e);
         }
     }
@@ -240,10 +232,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void close() {
-        ImmutableMap<ConnectionKey, RedisAsyncConnectionImpl<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
+        ImmutableMap<ConnectionKey, StatefulRedisConnection<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
         this.connections.invalidateAll();
         resetFastConnectionCache();
-        for (RedisAsyncConnectionImpl<K, V> kvRedisAsyncConnection : copy.values()) {
+        for (StatefulRedisConnection<K, V> kvRedisAsyncConnection : copy.values()) {
             if (kvRedisAsyncConnection.isOpen()) {
                 kvRedisAsyncConnection.close();
             }
@@ -252,10 +244,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void reset() {
-        ImmutableMap<ConnectionKey, RedisAsyncConnectionImpl<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
-        for (RedisAsyncConnectionImpl<K, V> kvRedisAsyncConnection : copy.values()) {
-            kvRedisAsyncConnection.reset();
-        }
+        allConnections().forEach(StatefulRedisConnection::reset);
     }
 
     /**
@@ -275,9 +264,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         Set<ConnectionKey> staleConnections = getStaleConnectionKeys();
 
         for (ConnectionKey key : staleConnections) {
-            RedisAsyncConnectionImpl<K, V> connection = connections.getIfPresent(key);
-            if (connection.getChannelWriter() instanceof ClusterNodeCommandHandler) {
-                ClusterNodeCommandHandler<?, ?> clusterNodeCommandHandler = (ClusterNodeCommandHandler<?, ?>) connection
+            StatefulRedisConnection<K, V> connection = connections.getIfPresent(key);
+
+            RedisChannelHandler<K, V> redisChannelHandler = (RedisChannelHandler<K, V>) connection;
+
+            if (redisChannelHandler.getChannelWriter() instanceof ClusterNodeCommandHandler) {
+                ClusterNodeCommandHandler<?, ?> clusterNodeCommandHandler = (ClusterNodeCommandHandler<?, ?>) redisChannelHandler
                         .getChannelWriter();
                 clusterNodeCommandHandler.prepareClose();
             }
@@ -300,7 +292,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         Set<ConnectionKey> stale = getStaleConnectionKeys();
 
         for (ConnectionKey connectionKey : stale) {
-            RedisAsyncConnectionImpl<K, V> connection = connections.getIfPresent(connectionKey);
+            StatefulRedisConnection<K, V> connection = connections.getIfPresent(connectionKey);
             if (connection != null) {
                 connections.invalidate(connectionKey);
                 connection.close();
@@ -316,7 +308,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, RedisAsyncConnectionImpl<K, V>> map = Maps.newHashMap(connections.asMap());
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = Maps.newHashMap(connections.asMap());
         Set<ConnectionKey> stale = Sets.newHashSet();
 
         for (ConnectionKey connectionKey : map.keySet()) {
@@ -344,16 +336,17 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         synchronized (stateLock) {
             this.autoFlushCommands = autoFlush;
         }
-        for (RedisAsyncConnectionImpl<K, V> connection : connections.asMap().values()) {
-            connection.getChannelWriter().setAutoFlushCommands(autoFlush);
-        }
+
+        allConnections().forEach(connection -> connection.setAutoFlushCommands(autoFlush));
+    }
+
+    protected Collection<StatefulRedisConnection<K, V>> allConnections() {
+        return ImmutableList.copyOf(connections.asMap().values());
     }
 
     @Override
     public void flushCommands() {
-        for (RedisAsyncConnectionImpl<K, V> connection : connections.asMap().values()) {
-            connection.getChannelWriter().flushCommands();
-        }
+        allConnections().forEach(StatefulConnection::flushCommands);
     }
 
     @Override
@@ -397,16 +390,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier(final ConnectionKey connectionKey) {
-        return new Supplier<SocketAddress>() {
-            @Override
-            public SocketAddress get() {
-
-                if (connectionKey.nodeId != null) {
-                    return getSocketAddress(connectionKey.nodeId);
-                }
-                return new InetSocketAddress(connectionKey.host, connectionKey.port);
+        return () -> {
+            if (connectionKey.nodeId != null) {
+                return getSocketAddress(connectionKey.nodeId);
             }
-
+            return new InetSocketAddress(connectionKey.host, connectionKey.port);
         };
     }
 
@@ -475,7 +463,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 || redisClusterClient.getClusterClientOptions().isValidateClusterNodeMembership();
     }
 
-    private class ConnectionFactory<K, V> extends CacheLoader<ConnectionKey, RedisAsyncConnectionImpl<K, V>> {
+    private class ConnectionFactory<K, V> extends CacheLoader<ConnectionKey, StatefulRedisConnection<K, V>> {
 
         private final RedisClusterClient redisClusterClient;
         private final RedisCodec<K, V> redisCodec;
@@ -489,16 +477,16 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
 
         @Override
-        public RedisAsyncConnectionImpl<K, V> load(ConnectionKey key) throws Exception {
+        public StatefulRedisConnection<K, V> load(ConnectionKey key) throws Exception {
 
-            RedisAsyncConnectionImpl<K, V> connection = null;
+            StatefulRedisConnection<K, V> connection = null;
             if (key.nodeId != null) {
                 if (partitions.getPartitionByNodeId(key.nodeId) == null) {
                     throw invalidConnectionPoint("node id " + key.nodeId);
                 }
 
                 // NodeId connections do not provide command recovery due to cluster reconfiguration
-                connection = redisClusterClient.connectNode(redisCodec, key.nodeId, null, getSocketAddressSupplier(key));
+                connection = redisClusterClient.connectToNode(redisCodec, key.nodeId, null, getSocketAddressSupplier(key));
             }
 
             if (key.host != null) {
@@ -509,20 +497,20 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                     }
                 }
 
-                // Host and port connections do not provide command recovery due to cluster reconfiguration
-                connection = redisClusterClient.connectNode(redisCodec, key.host + ":" + key.port, clusterWriter,
+                // Host and port connections do provide command recovery due to cluster reconfiguration
+                connection = redisClusterClient.connectToNode(redisCodec, key.host + ":" + key.port, clusterWriter,
                         getSocketAddressSupplier(key));
             }
 
             if (key.intent == Intent.READ) {
-                connection.readOnly();
+                connection.sync().readOnly();
             }
 
             synchronized (stateLock) {
-                connection.getChannelWriter().setAutoFlushCommands(autoFlushCommands);
+                connection.setAutoFlushCommands(autoFlushCommands);
             }
+
             return connection;
         }
-
     }
 }

@@ -9,7 +9,6 @@ import com.google.common.collect.Lists;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoWithin;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * A list output that creates a list with either double/long or {@link GeoCoordinates}'s.
@@ -37,7 +36,6 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void set(long integer) {
         if (member == null) {
             member = (V) (Long) integer;

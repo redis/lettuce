@@ -62,6 +62,16 @@ public class RedisURIBuilderTest {
     }
 
     @Test
+    public void redisWithSSL() throws Exception {
+        RedisURI result = RedisURI.Builder.redis("localhost").withSsl(true).withStartTls(true).build();
+
+        assertThat(result.getSentinels()).isEmpty();
+        assertThat(result.getHost()).isEqualTo("localhost");
+        assertThat(result.isSsl()).isTrue();
+        assertThat(result.isStartTls()).isTrue();
+    }
+
+    @Test
     public void redisSslFromUrl() throws Exception {
         RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SECURE + "://:password@localhost/1");
 
@@ -145,5 +155,4 @@ public class RedisURIBuilderTest {
         assertThat(result.getPort()).isEqualTo(0);
         assertThat(result.isSsl()).isFalse();
     }
-
 }

@@ -158,7 +158,6 @@ public class GeoArgs {
         mi;
     }
 
-
     public <K, V> void build(CommandArgs<K, V> args) {
         if (withdistance) {
             args.add("withdist");

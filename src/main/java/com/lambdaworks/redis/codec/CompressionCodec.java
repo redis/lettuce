@@ -2,7 +2,10 @@ package com.lambdaworks.redis.codec;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPInputStream;
@@ -35,7 +38,7 @@ public class CompressionCodec {
         return (RedisCodec) new CompressingValueCodecWrapper((RedisCodec) delegate, compressionType);
     }
 
-    private static class CompressingValueCodecWrapper extends RedisCodec<Object, Object> {
+    private static class CompressingValueCodecWrapper implements RedisCodec<Object, Object> {
 
         private RedisCodec<Object, Object> delegate;
         private CompressionType compressionType;
@@ -60,12 +63,12 @@ public class CompressionCodec {
         }
 
         @Override
-        public byte[] encodeKey(Object key) {
+        public ByteBuffer encodeKey(Object key) {
             return delegate.encodeKey(key);
         }
 
         @Override
-        public byte[] encodeValue(Object value) {
+        public ByteBuffer encodeValue(Object value) {
             try {
                 return compress(delegate.encodeValue(value));
             } catch (IOException e) {
@@ -73,13 +76,13 @@ public class CompressionCodec {
             }
         }
 
-        private byte[] compress(byte[] source) throws IOException {
-            if (source == null || source.length == 0) {
+        private ByteBuffer compress(ByteBuffer source) throws IOException {
+            if (source.remaining() == 0) {
                 return source;
             }
 
-            ByteArrayInputStream sourceStream = new ByteArrayInputStream(source);
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(source.length / 2);
+            ByteBufferInputStream sourceStream = new ByteBufferInputStream(source);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(source.remaining() / 2);
             OutputStream compressor = null;
             if (compressionType == CompressionType.GZIP) {
                 compressor = new GZIPOutputStream(outputStream);
@@ -95,7 +98,7 @@ public class CompressionCodec {
                 compressor.close();
             }
 
-            return outputStream.toByteArray();
+            return ByteBuffer.wrap(outputStream.toByteArray());
         }
 
         private ByteBuffer decompress(ByteBuffer source) throws IOException {

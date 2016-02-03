@@ -12,7 +12,9 @@ import java.util.Map;
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link com.lambdaworks.redis.api.sync.BaseRedisCommands}
  */
+@Deprecated
 public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**

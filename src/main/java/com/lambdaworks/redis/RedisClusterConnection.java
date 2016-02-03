@@ -1,24 +1,40 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.api.sync.BaseRedisCommands;
 
 /**
- * Complete synchronous cluster Redis API with 400+ Methods..
+ * A complete synchronous and thread-safe cluster Redis API with 400+ Methods.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
+ * @deprecated Use {@link com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands}
  */
+@Deprecated
 public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V>, RedisKeysConnection<K, V>,
         RedisStringsConnection<K, V>, RedisListsConnection<K, V>, RedisSetsConnection<K, V>, RedisSortedSetsConnection<K, V>,
         RedisScriptingConnection<K, V>, RedisServerConnection<K, V>, RedisHLLConnection<K, V>, RedisGeoConnection<K, V>,
-        BaseRedisConnection<K, V> {
+        BaseRedisConnection<K, V>, AutoCloseable {
 
     /**
-     * Close the connection. The connection will become not usable anymore as soon as this method was called.
+     * Set the default timeout for operations.
+     *
+     * @param timeout the timeout value
+     * @param unit the unit of the timeout value
      */
-    void close();
+    void setTimeout(long timeout, TimeUnit unit);
+
+    /**
+     * Authenticate to the server.
+     *
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    String auth(String password);
 
     /**
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
