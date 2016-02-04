@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisAsyncConnectionImpl;
+import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
@@ -151,6 +151,10 @@ class ClusterTopologyRefresh {
                 waitTime += System.nanoTime() - startWait;
 
                 String raw = future.get();
+                if (future.getError() != null) {
+                    throw new ExecutionException(new RedisCommandExecutionException(future.getError()));
+                }
+
                 Partitions partitions = ClusterPartitionParser.parse(raw);
                 List<RedisClusterNode> badNodes = Lists.newArrayList();
 
