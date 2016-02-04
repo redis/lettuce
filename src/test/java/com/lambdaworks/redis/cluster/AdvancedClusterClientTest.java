@@ -484,6 +484,19 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     }
 
+
+    @Test
+    public void transactions() throws Exception {
+
+        commands.multi();
+        commands.set(key, value);
+        commands.discard();
+
+        commands.multi();
+        commands.set(key, value);
+        commands.exec();
+    }
+
     protected String value(int i) {
         return value + "-" + i;
     }

@@ -96,7 +96,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             channelWriter = writer.defaultWriter;
         }
 
-        commandToSend.getOutput().setError((String) null);
+        if(command.getOutput() != null){
+            commandToSend.getOutput().setError((String) null);
+        }
+
         if (channelWriter != null && channelWriter != this && channelWriter != defaultWriter) {
             return channelWriter.write((C) commandToSend);
         }
