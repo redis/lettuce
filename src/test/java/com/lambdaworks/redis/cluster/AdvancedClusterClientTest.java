@@ -207,6 +207,19 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         verificationConnection.close();
     }
 
+
+    @Test
+    public void transactions() throws Exception {
+
+        connection.multi();
+        connection.set(key, value);
+        connection.discard();
+
+        connection.multi();
+        connection.set(key, value);
+        connection.exec();
+    }
+
     protected String value(int i) {
         return value + "-" + i;
     }
