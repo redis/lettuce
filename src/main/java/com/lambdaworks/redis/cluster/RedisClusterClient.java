@@ -264,6 +264,10 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connection.registerCloseables(closeableResources, connection);
 
+        RedisURI redisURI = initialUris.iterator().next();
+        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+            connection.auth(new String(redisURI.getPassword()));
+        }
         return connection;
     }
 
