@@ -7,11 +7,7 @@ import java.util.List;
 
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
-import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -34,8 +30,12 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     private boolean closed = false;
     private int executionLimit = 5;
 
-    public ClusterDistributionChannelWriter(RedisChannelWriter<K, V> defaultWriter) {
+    public ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter<K, V> defaultWriter) {
         this.defaultWriter = defaultWriter;
+
+        if(clientOptions instanceof ClusterClientOptions) {
+            executionLimit = ((ClusterClientOptions) clientOptions).getMaxRedirects();
+        }
     }
 
     @Override

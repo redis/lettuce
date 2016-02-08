@@ -16,12 +16,14 @@ public class ClusterClientOptions extends ClientOptions {
     public static final TimeUnit DEFAULT_REFRESH_PERIOD_UNIT = TimeUnit.SECONDS;
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
     public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
+    public static final int DEFAULT_MAX_REDIRECTS = 5;
 
     private final boolean refreshClusterView;
     private final long refreshPeriod;
     private final TimeUnit refreshPeriodUnit;
     private final boolean closeStaleConnections;
     private final boolean validateClusterNodeMembership;
+    private final int maxRedirects;
 
     protected ClusterClientOptions(Builder builder) {
         super(builder);
@@ -30,6 +32,7 @@ public class ClusterClientOptions extends ClientOptions {
         this.refreshPeriodUnit = builder.refreshPeriodUnit;
         this.closeStaleConnections = builder.closeStaleConnections;
         this.validateClusterNodeMembership = builder.validateClusterNodeMembership;
+        this.maxRedirects = builder.maxRedirects;
     }
 
     protected ClusterClientOptions(ClusterClientOptions original) {
@@ -39,6 +42,7 @@ public class ClusterClientOptions extends ClientOptions {
         this.refreshPeriodUnit = original.refreshPeriodUnit;
         this.closeStaleConnections = original.closeStaleConnections;
         this.validateClusterNodeMembership = original.validateClusterNodeMembership;
+        this.maxRedirects = original.maxRedirects;
     }
 
     /**
@@ -61,6 +65,7 @@ public class ClusterClientOptions extends ClientOptions {
         private TimeUnit refreshPeriodUnit = DEFAULT_REFRESH_PERIOD_UNIT;
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
         private boolean validateClusterNodeMembership = DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP;
+        private int maxRedirects = DEFAULT_MAX_REDIRECTS;
 
         /**
          * Enable regular cluster topology updates. The client starts updating the cluster topology in the intervals of
@@ -112,6 +117,18 @@ public class ClusterClientOptions extends ClientOptions {
          */
         public Builder validateClusterNodeMembership(boolean validateClusterNodeMembership) {
             this.validateClusterNodeMembership = validateClusterNodeMembership;
+            return this;
+        }
+
+        /**
+         * Number of maximal cluster redirects ({@literal -MOVED} and {@literal -ASK}) to follow in case a key was moved from
+         * one node to another node. Defaults to {@literal 5}. See {@link ClusterClientOptions#DEFAULT_MAX_REDIRECTS}.
+         *
+         * @param maxRedirects the limit of maximal cluster redirects
+         * @return {@code this}
+         */
+        public Builder maxRedirects(int maxRedirects) {
+            this.maxRedirects = maxRedirects;
             return this;
         }
 
@@ -206,6 +223,16 @@ public class ClusterClientOptions extends ClientOptions {
      */
     public boolean isValidateClusterNodeMembership() {
         return validateClusterNodeMembership;
+    }
+
+    /**
+     * Number of maximal of cluster redirects ({@literal -MOVED} and {@literal -ASK}) to follow in case a key was moved from one
+     * node to another node. Defaults to {@literal 5}. See {@link ClusterClientOptions#DEFAULT_MAX_REDIRECTS}.
+     * 
+     * @return the maximal number of followed cluster redirects
+     */
+    public int getMaxRedirects() {
+        return maxRedirects;
     }
 
     /**

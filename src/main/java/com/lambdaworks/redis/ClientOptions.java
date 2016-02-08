@@ -125,7 +125,7 @@ public class ClientOptions implements Serializable {
          * size is exceeded. Setting the {@code requestQueueSize} to a lower value will lead earlier to exceptions during
          * overload or while the connection is in a disconnected state. A higher value means hitting the boundary will take
          * longer to occur, but more requests will potentially be queued up and more heap space is used. Defaults to
-         * {@literal false}. See {@link #DEFAULT_REQUEST_QUEUE_SIZE}.
+         * {@link Integer#MAX_VALUE}. See {@link #DEFAULT_REQUEST_QUEUE_SIZE}.
          *
          * @param requestQueueSize the queue size.
          * @return {@code this}
@@ -137,7 +137,7 @@ public class ClientOptions implements Serializable {
 
         /**
          * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to
-         * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+         * {@literal true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
          * 
          * @param disconnectedBehavior true/false
          * @return {@code this}
@@ -233,7 +233,7 @@ public class ClientOptions implements Serializable {
         DEFAULT,
 
         /**
-         * Accept commands in disconnected state..
+         * Accept commands in disconnected state.
          */
         ACCEPT_COMMANDS,
 

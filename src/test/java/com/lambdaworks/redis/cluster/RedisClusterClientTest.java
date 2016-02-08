@@ -2,12 +2,11 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -75,6 +74,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Before
     public void before() throws Exception {
 
+        clusterClient.setOptions(ClusterClientOptions.create());
         clusterRule.getClusterClient().reloadPartitions();
 
         redis1 = client.connect(RedisURI.Builder.redis(host, port1).build());
@@ -215,13 +215,14 @@ public class RedisClusterClientTest extends AbstractClusterTest {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
         }
+        partitions.updateCache();
 
         // appropriate cluster node
         RedisFuture<String> setB = connection.set(KEY_B, value);
 
         assertThat(setB).isInstanceOf(AsyncCommand.class);
 
-        setB.get();
+        setB.get(10, TimeUnit.SECONDS);
         assertThat(setB.getError()).isNull();
         assertThat(setB.get()).isEqualTo("OK");
 
@@ -230,9 +231,36 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         assertThat(setA instanceof AsyncCommand).isTrue();
 
-        setA.get();
+        setA.get(10, TimeUnit.SECONDS);
         assertThat(setA.getError()).isNull();
         assertThat(setA.get()).isEqualTo("OK");
+
+        connection.close();
+    }
+
+    @Test
+    @SuppressWarnings({ "rawtypes" })
+    public void testClusterRedirectionLimit() throws Exception {
+
+        clusterClient.setOptions(new ClusterClientOptions.Builder().maxRedirects(0).build());
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
+        Partitions partitions = clusterClient.getPartitions();
+
+        for (RedisClusterNode partition : partitions) {
+            partition.setSlots(Lists.<Integer> newArrayList());
+            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
+            }
+        }
+        partitions.updateCache();
+
+        // gets redirection to node 3
+        RedisFuture<String> setA = connection.set(KEY_A, value);
+
+        assertThat(setA instanceof AsyncCommand).isTrue();
+
+        setA.await(10, TimeUnit.SECONDS);
+        assertThat(setA.getError()).isEqualTo("MOVED 15495 127.0.0.1:7380");
 
         connection.close();
     }

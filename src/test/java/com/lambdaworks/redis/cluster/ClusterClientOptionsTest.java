@@ -13,7 +13,7 @@ public class ClusterClientOptionsTest {
     public void testCopy() throws Exception {
 
         ClusterClientOptions options = new ClusterClientOptions.Builder().closeStaleConnections(true).refreshClusterView(true)
-                .autoReconnect(false).requestQueueSize(100).suspendReconnectOnProtocolFailure(true)
+                .autoReconnect(false).requestQueueSize(100).suspendReconnectOnProtocolFailure(true).maxRedirects(1234)
                 .validateClusterNodeMembership(false).build();
 
         ClusterClientOptions copy = ClusterClientOptions.copyOf(options);
@@ -27,5 +27,6 @@ public class ClusterClientOptionsTest {
         assertThat(copy.isAutoReconnect()).isEqualTo(options.isAutoReconnect());
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
+        assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
     }
 }
