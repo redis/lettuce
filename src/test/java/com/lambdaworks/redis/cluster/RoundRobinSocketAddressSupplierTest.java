@@ -43,7 +43,7 @@ public class RoundRobinSocketAddressSupplierTest {
     @Test
     public void noOffset() throws Exception {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions);
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions, redisClusterNodes -> redisClusterNodes);
 
         assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
         assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
@@ -56,7 +56,7 @@ public class RoundRobinSocketAddressSupplierTest {
     @Test
     public void partitionTableChanges() throws Exception {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions);
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions, redisClusterNodes -> redisClusterNodes);
 
         assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
         assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());

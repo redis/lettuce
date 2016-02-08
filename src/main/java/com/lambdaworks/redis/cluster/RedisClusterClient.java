@@ -8,6 +8,7 @@ import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.google.common.base.Supplier;
@@ -28,6 +29,9 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.util.internal.logging.InternalLogger;
@@ -224,7 +228,16 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Connect to a Redis Cluster and treat keys and values as UTF-8 strings.
-     * 
+     * <p>
+     * What to expect from this connection:
+     * </p>
+     * <ul>
+     * <li>A <i>default</i> connection is created to the node with the lowest latency</li>
+     * <li>Keyless commands are send to the default connection</li>
+     * <li>Single-key keyspace commands are routed to the appropriate node</li>
+     * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
+     * <li>Pub/sub commands are sent to the node that handles the slot derived from the pub/sub channel</li>
+     * </ul>
      * @return A new stateful Redis Cluster connection
      */
     public StatefulRedisClusterConnection<String, String> connect() {
@@ -233,6 +246,16 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Connect to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
+     * <p>
+     * What to expect from this connection:
+     * </p>
+     * <ul>
+     * <li>A <i>default</i> connection is created to the node with the lowest latency</li>
+     * <li>Keyless commands are send to the default connection</li>
+     * <li>Single-key keyspace commands are routed to the appropriate node</li>
+     * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
+     * <li>Pub/sub commands are sent to the node that handles the slot derived from the pub/sub channel</li>
+     * </ul>
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
@@ -242,6 +265,49 @@ public class RedisClusterClient extends AbstractRedisClient {
     @SuppressWarnings("unchecked")
     public <K, V> StatefulRedisClusterConnection<K, V> connect(RedisCodec<K, V> codec) {
         return connectClusterImpl(codec);
+    }
+
+    /**
+     * Connect to a Redis Cluster using pub/sub connections and treat keys and values as UTF-8 strings.
+     * <p>
+     * What to expect from this connection:
+     * </p>
+     * <ul>
+     * <li>A <i>default</i> connection is created to the node with the least number of clients</li>
+     * <li>Pub/sub commands are sent to the node with the least number of clients</li>
+     * <li>Keyless commands are send to the default connection</li>
+     * <li>Single-key keyspace commands are routed to the appropriate node</li>
+     * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
+     * </ul>
+     *
+     * @return A new stateful Redis Cluster connection
+     */
+    public StatefulRedisPubSubConnection<String, String> connectPubSub() {
+        return connectPubSub(newStringStringCodec());
+    }
+
+    /**
+     * Connect to a Redis Cluster using pub/sub connections. Use the supplied {@link RedisCodec codec} to encode/decode keys and
+     * values.
+     * <p>
+     * What to expect from this connection:
+     * </p>
+     * <ul>
+     * <li>A <i>default</i> connection is created to the node with the least number of clients</li>
+     * <li>Pub/sub commands are sent to the node with the least number of clients</li>
+     * <li>Keyless commands are send to the default connection</li>
+     * <li>Single-key keyspace commands are routed to the appropriate node</li>
+     * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
+     * </ul>
+     * 
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new stateful Redis Cluster connection
+     */
+    @SuppressWarnings("unchecked")
+    public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
+        return connectClusterPubSubImpl(codec);
     }
 
     /**
@@ -346,7 +412,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Create a clustered connection with command distributor.
+     * Create a clustered pub/sub connection with command distributor.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
@@ -362,13 +428,14 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
 
-        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier();
+        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(ClusterTopologyRefresh::sortByLatency);
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
 
-        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions, handler);
+        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
+                handler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
 
@@ -379,6 +446,70 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connection.setReadFrom(ReadFrom.MASTER);
         connection.setPartitions(partitions);
+
+        boolean connected = false;
+        RedisException causingException = null;
+        int connectionAttempts = partitions.size();
+
+        for (int i = 0; i < connectionAttempts; i++) {
+            try {
+                connectAsyncImpl(handler, connection, socketAddressSupplier);
+                connected = true;
+                break;
+            } catch (RedisException e) {
+                logger.warn(e.getMessage());
+                causingException = e;
+            }
+        }
+
+        if (!connected) {
+            connection.close();
+            throw causingException;
+        }
+
+        connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
+
+        if (getFirstUri().getPassword() != null) {
+            connection.async().auth(new String(getFirstUri().getPassword()));
+        }
+
+        return connection;
+    }
+
+    /**
+     * Create a clustered connection with command distributor.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a new connection
+     */
+    <K, V> StatefulRedisPubSubConnectionImpl<K, V> connectClusterPubSubImpl(RedisCodec<K, V> codec) {
+
+        if (partitions == null) {
+            initializePartitions();
+        }
+
+        activateTopologyRefreshIfNeeded();
+
+        logger.debug("connectClusterPubSub(" + initialUris + ")");
+        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
+
+        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(ClusterTopologyRefresh::sortByClientCount);
+
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, clientResources, queue, codec);
+
+        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
+                handler);
+        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
+                clusterWriter, codec);
+
+        clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
+
+        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(clusterWriter, codec,
+                timeout, unit);
+
+        clusterWriter.setPartitions(partitions);
 
         boolean connected = false;
         RedisException causingException = null;
@@ -520,17 +651,15 @@ public class RedisClusterClient extends AbstractRedisClient {
         return iterator.next();
     }
 
-    private Supplier<SocketAddress> getSocketAddressSupplier() {
-        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions);
-        return new Supplier<SocketAddress>() {
-            @Override
-            public SocketAddress get() {
-                if (partitions.isEmpty()) {
-                    return getFirstUri().getResolvedAddress();
-                }
-
-                return socketAddressSupplier.get();
+    private Supplier<SocketAddress> getSocketAddressSupplier(
+            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort) {
+        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions, sort);
+        return () -> {
+            if (partitions.isEmpty()) {
+                return getFirstUri().getResolvedAddress();
             }
+
+            return socketAddressSupplier.get();
         };
     }
 
@@ -607,7 +736,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 seed = RedisClusterClient.this.initialUris;
             } else {
                 List<RedisURI> uris = Lists.newArrayList();
-                for (RedisClusterNode partition : ClusterTopologyRefresh.createSortedList(partitions)) {
+                for (RedisClusterNode partition : ClusterTopologyRefresh.sortByUri(partitions)) {
                     uris.add(partition.getUri());
                 }
                 seed = uris;

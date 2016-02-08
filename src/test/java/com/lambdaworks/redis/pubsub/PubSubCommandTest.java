@@ -2,9 +2,8 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -14,22 +13,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.Wait;
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 public class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
     private RedisPubSubAsyncCommands<String, String> pubsub;
@@ -180,14 +172,10 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(listener).hasSize(1);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void pubsubEmptyChannels() throws Exception {
-        RedisFuture<Void> future = pubsub.subscribe();
-        try {
-            future.get();
-        } catch (Exception e) {
-            assertThat(e).hasMessageContaining("ERR wrong number of arguments for 'subscribe' command");
-        }
+        pubsub.subscribe();
+        fail("Missing IllegalArgumentException: channels must not be empty");
     }
 
     @Test

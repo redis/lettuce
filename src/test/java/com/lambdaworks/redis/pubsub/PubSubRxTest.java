@@ -2,6 +2,7 @@ package com.lambdaworks.redis.pubsub;
 
 import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 import java.util.Iterator;
 import java.util.List;
@@ -188,13 +189,10 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         assertThat((long) counts.take()).isEqualTo(1);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void pubsubEmptyChannels() throws Exception {
-        try {
-            pubsub.subscribe().toBlocking().singleOrDefault(null);
-        } catch (Exception e) {
-            assertThat(e).hasMessageContaining("ERR wrong number of arguments for 'subscribe' command");
-        }
+        pubsub.subscribe();
+        fail("Missing IllegalArgumentException: channels must not be empty");
     }
 
     @Test
@@ -202,7 +200,6 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         pubsub.subscribe(channel).toBlocking().singleOrDefault(null);
         List<String> result = pubsub2.pubsubChannels().toList().toBlocking().first();
         assertThat(result).contains(channel);
-
     }
 
     @Test

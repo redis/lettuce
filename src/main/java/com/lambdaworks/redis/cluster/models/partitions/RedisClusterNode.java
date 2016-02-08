@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -47,6 +49,18 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.configEpoch = configEpoch;
         this.slots = slots;
         this.flags = flags;
+    }
+
+    public RedisClusterNode(RedisClusterNode redisClusterNode) {
+        this.uri = redisClusterNode.uri;
+        this.nodeId = redisClusterNode.nodeId;
+        this.connected = redisClusterNode.connected;
+        this.slaveOf = redisClusterNode.slaveOf;
+        this.pingSentTimestamp = redisClusterNode.pingSentTimestamp;
+        this.pongReceivedTimestamp = redisClusterNode.pongReceivedTimestamp;
+        this.configEpoch = redisClusterNode.configEpoch;
+        this.slots = Lists.newArrayList(redisClusterNode.slots);
+        this.flags = Sets.newHashSet(redisClusterNode.flags);
     }
 
     /**

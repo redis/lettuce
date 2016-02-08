@@ -21,7 +21,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 public class CommandArgs<K, V> {
     private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
-    private final RedisCodec<K, V> codec;
+    protected final RedisCodec<K, V> codec;
     private ByteBuffer buffer;
     private ByteBuffer firstEncodedKey;
     private int count;
@@ -137,7 +137,7 @@ public class CommandArgs<K, V> {
         return write(keyword.getBytes());
     }
 
-    private CommandArgs<K, V> write(ByteBuffer arg) {
+    protected CommandArgs<K, V> write(ByteBuffer arg) {
         buffer.mark();
 
         if (buffer.remaining() < arg.remaining()) {

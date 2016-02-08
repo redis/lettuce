@@ -3,14 +3,14 @@ package com.lambdaworks.redis.cluster;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisClusterNodeSnapshot;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -19,12 +19,12 @@ public class LatencyComparatorTest {
 
     private ClusterTopologyRefresh.LatencyComparator sut;
 
-    private RedisClusterNode node1 = createNode("1");
-    private RedisClusterNode node2 = createNode("2");
-    private RedisClusterNode node3 = createNode("3");
+    private RedisClusterNodeSnapshot node1 = createNode("1");
+    private RedisClusterNodeSnapshot node2 = createNode("2");
+    private RedisClusterNodeSnapshot node3 = createNode("3");
 
-    private static RedisClusterNode createNode(String nodeId) {
-        RedisClusterNode result = new RedisClusterNode();
+    private static RedisClusterNodeSnapshot createNode(String nodeId) {
+        RedisClusterNodeSnapshot result = new RedisClusterNodeSnapshot();
         result.setNodeId(nodeId);
         return result;
     }
@@ -77,10 +77,13 @@ public class LatencyComparatorTest {
         runTest(map, newArrayList(node2, node1, node3), newArrayList(node3, node1, node2));
     }
 
-    protected void runTest(Map<String, Long> map, List<RedisClusterNode> expectation, List<RedisClusterNode> nodes) {
-        sut = new ClusterTopologyRefresh.LatencyComparator(map);
-        Collections.sort(nodes, sut);
+    protected void runTest(Map<String, Long> map, List<RedisClusterNodeSnapshot> expectation, List<RedisClusterNodeSnapshot> nodes) {
 
-        assertThat(nodes).containsExactly(expectation.toArray(new RedisClusterNode[expectation.size()]));
+        for (RedisClusterNodeSnapshot node : nodes) {
+            node.setLatencyNs(map.get(node.getNodeId()));
+        }
+        List<RedisClusterNode> result = ClusterTopologyRefresh.sortByLatency((Iterable) nodes);
+
+        assertThat(result).containsExactly(expectation.toArray(new RedisClusterNodeSnapshot[expectation.size()]));
     }
 }

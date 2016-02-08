@@ -2,6 +2,7 @@ package com.lambdaworks.redis.pubsub;
 
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
+import com.lambdaworks.redis.protocol.Command;
 import rx.Observable;
 import rx.Subscriber;
 
@@ -13,6 +14,8 @@ import com.lambdaworks.redis.pubsub.api.rx.ChannelMessage;
 import com.lambdaworks.redis.pubsub.api.rx.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 
+import java.util.Map;
+
 /**
  * A reactive and thread-safe API for a Redis pub/sub connection.
  * 
@@ -23,6 +26,8 @@ import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V> implements
         RedisPubSubReactiveCommands<K, V> {
 
+    private PubSubCommandBuilder<K, V> commandBuilder;
+
     /**
      * Initialize a new connection.
      *
@@ -32,6 +37,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     public RedisPubSubReactiveCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
         this.connection = connection;
+        this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 
     /**
@@ -104,29 +110,37 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     @Override
     public Observable<Success> psubscribe(K... patterns) {
-
-        return getSuccessObservable(createObservable(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
+        return getSuccessObservable(createObservable(() -> commandBuilder.psubscribe(patterns)));
     }
 
     @Override
     public Observable<Success> punsubscribe(K... patterns) {
-        return getSuccessObservable(createObservable(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns)));
+        return getSuccessObservable(createObservable(() -> commandBuilder.punsubscribe(patterns)));
     }
 
     @Override
     public Observable<Success> subscribe(K... channels) {
-        return getSuccessObservable(createObservable(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
+        return getSuccessObservable(createObservable(() -> commandBuilder.subscribe(channels)));
     }
 
     @Override
     public Observable<Success> unsubscribe(K... channels) {
-        return getSuccessObservable(createObservable(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels)));
+        return getSuccessObservable(createObservable(() -> commandBuilder.unsubscribe(channels)));
     }
 
-    private CommandArgs<K, V> args(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKeys(keys);
-        return args;
+    @Override
+    public Observable<Long> publish(K channel, V message) {
+        return createObservable(() -> commandBuilder.publish(channel, message));
+    }
+
+    @Override
+    public Observable<K> pubsubChannels(K channel) {
+        return createDissolvingObservable(() -> commandBuilder.pubsubChannels(channel));
+    }
+
+    @Override
+    public Observable<Map<K, Long>> pubsubNumsub(K... channels) {
+        return createObservable(() -> commandBuilder.pubsubNumsub(channels));
     }
 
     @Override
@@ -154,12 +168,10 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     private static class SubscriptionPubSubListener<K, V, T> extends RedisPubSubAdapter<K, V> {
-
         protected Subscriber<? super T> subscriber;
 
         public void activate(Subscriber<? super T> subscriber) {
             this.subscriber = subscriber;
         }
-
     }
 }

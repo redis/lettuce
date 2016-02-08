@@ -12,6 +12,10 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import rx.Observable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * An asynchronous and thread-safe API for a Redis pub/sub connection.
@@ -23,6 +27,8 @@ import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubConnection<K, V>,
         RedisPubSubAsyncCommands<K, V> {
 
+    private PubSubCommandBuilder<K, V> commandBuilder;
+
     /**
      * Initialize a new connection.
      * 
@@ -32,6 +38,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     public RedisPubSubAsyncCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
         this.connection = connection;
+        this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 
     /**
@@ -57,31 +64,40 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> psubscribe(K... patterns) {
-        return (RedisFuture<Void>) dispatch(PSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
+        return (RedisFuture<Void>) dispatch(commandBuilder.psubscribe(patterns));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> punsubscribe(K... patterns) {
-        return (RedisFuture<Void>) dispatch(PUNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(patterns));
+        return (RedisFuture<Void>) dispatch(commandBuilder.punsubscribe(patterns));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> subscribe(K... channels) {
-        return (RedisFuture<Void>) dispatch(SUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
+        return (RedisFuture<Void>) dispatch(commandBuilder.subscribe(channels));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> unsubscribe(K... channels) {
-        return (RedisFuture<Void>) dispatch(UNSUBSCRIBE, new PubSubOutput<K, V, K>(codec), args(channels));
+        return (RedisFuture<Void>) dispatch(commandBuilder.unsubscribe(channels));
     }
 
-    private CommandArgs<K, V> args(K... keys) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKeys(keys);
-        return args;
+    @Override
+    public RedisFuture<Long> publish(K channel, V message) {
+        return dispatch(commandBuilder.publish(channel, message));
+    }
+
+    @Override
+    public RedisFuture<List<K>> pubsubChannels(K channel) {
+        return dispatch(commandBuilder.pubsubChannels(channel));
+    }
+
+    @Override
+    public RedisFuture<Map<K, Long>> pubsubNumsub(K... channels) {
+        return dispatch(commandBuilder.pubsubNumsub(channels));
     }
 
     @Override

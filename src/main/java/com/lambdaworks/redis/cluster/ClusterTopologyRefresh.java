@@ -1,11 +1,9 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -20,12 +18,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.AsyncCommand;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.*;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
@@ -70,12 +63,37 @@ class ClusterTopologyRefresh {
 
     /**
      * Sort partitions by RedisURI.
+     * 
      * @param clusterNodes
      * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}
      */
-    static List<RedisClusterNode> createSortedList(Iterable<RedisClusterNode> clusterNodes) {
+    static List<RedisClusterNode> sortByUri(Iterable<RedisClusterNode> clusterNodes) {
         List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
         Collections.sort(ordered, (o1, o2) -> RedisUriComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
+        return ordered;
+    }
+
+    /**
+     * Sort partitions by client count.
+     *
+     * @param clusterNodes
+     * @return List containing {@link RedisClusterNode}s ordered by client count
+     */
+    static List<RedisClusterNode> sortByClientCount(Iterable<RedisClusterNode> clusterNodes) {
+        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        Collections.sort(ordered, ClientCountComparator.INSTANCE);
+        return ordered;
+    }
+
+    /**
+     * Sort partitions by latency.
+     *
+     * @param clusterNodes
+     * @return List containing {@link RedisClusterNode}s ordered by lastency
+     */
+    static List<RedisClusterNode> sortByLatency(Iterable<RedisClusterNode> clusterNodes) {
+        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        Collections.sort(ordered, LatencyComparator.INSTANCE);
         return ordered;
     }
 
@@ -131,40 +149,78 @@ class ClusterTopologyRefresh {
 
         Map<RedisURI, StatefulRedisConnection<String, String>> connections = getConnections(seed);
         Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = requestViews(connections);
-        Map<RedisURI, Partitions> nodeSpecificViews = getNodeSpecificViews(rawViews);
-        close(connections);
+        Map<RedisURI, AsyncCommand<String, String, String>> rawClients = requestClients(connections);
 
-        return nodeSpecificViews;
-    }
+        try {
+            Map<RedisURI, Partitions> nodeSpecificViews = getNodeSpecificViews(rawViews, rawClients);
 
-    protected Map<RedisURI, Partitions> getNodeSpecificViews(Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews) {
-        Map<RedisURI, Partitions> nodeSpecificViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
-        long timeout = client.getFirstUri().getUnit().toNanos(client.getFirstUri().getTimeout());
-        long waitTime = 0;
-        Map<String, Long> latencies = Maps.newHashMap();
+            Set<RedisURI> allKnownUris = nodeSpecificViews.values().stream().flatMap(Collection::stream)
+                    .map(RedisClusterNode::getUri).collect(Collectors.toSet());
 
-        for (Map.Entry<RedisURI, TimedAsyncCommand<String, String, String>> entry : rawViews.entrySet()) {
-            long timeoutLeft = timeout - waitTime;
+            Set<RedisURI> discoveredNodes = Sets.difference(allKnownUris, connections.keySet());
+            if (!discoveredNodes.isEmpty()) {
+                RedisURI firstUri = seed.iterator().next();
+                if (firstUri.getPassword() != null) {
+                    discoveredNodes.stream().forEach(redisURI -> redisURI.setPassword(new String(firstUri.getPassword())));
+                }
 
-            if (timeoutLeft <= 0) {
-                break;
+                Map<RedisURI, StatefulRedisConnection<String, String>> discoveredNodesConnections = getConnections(discoveredNodes);
+                connections.putAll(discoveredNodesConnections);
+                rawViews.putAll(requestViews(discoveredNodesConnections));
+                rawClients.putAll(requestClients(discoveredNodesConnections));
+                nodeSpecificViews = getNodeSpecificViews(rawViews, rawClients);
             }
 
-            long startWait = System.nanoTime();
+            return nodeSpecificViews;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
+        } finally {
+            close(connections);
+        }
+
+    }
+
+    protected Map<RedisURI, Partitions> getNodeSpecificViews(Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews,
+            Map<RedisURI, AsyncCommand<String, String, String>> rawClients) throws InterruptedException {
+        Map<RedisURI, Partitions> nodeSpecificViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
+        List<RedisClusterNodeSnapshot> allNodes = Lists.newArrayList();
+
+        long timeout = client.getFirstUri().getUnit().toNanos(client.getFirstUri().getTimeout());
+
+        Map<String, Long> latencies = Maps.newHashMap();
+        Map<String, Integer> clientCountByNodeId = Maps.newHashMap();
+        Map<RedisURI, Integer> clientCountByRedisUri = Maps.newHashMap();
+
+        long waitTime = await(rawViews, timeout);
+        await(rawClients, timeout - waitTime);
+
+        for (Map.Entry<RedisURI, AsyncCommand<String, String, String>> entry : rawClients.entrySet()) {
             RedisFuture<String> future = entry.getValue();
-
             try {
-
-                if (!future.await(timeoutLeft, TimeUnit.NANOSECONDS)) {
-                    break;
+                if (!future.isDone() || future.isCancelled()) {
+                    continue;
                 }
-                waitTime += System.nanoTime() - startWait;
+                clientCountByRedisUri.put(entry.getKey(), getClients(future.get()));
+            } catch (ExecutionException e) {
+                logger.warn("Cannot retrieve CLIENT LIST from " + entry.getKey() + ", error: " + e.toString());
+            }
+        }
+
+        for (Map.Entry<RedisURI, TimedAsyncCommand<String, String, String>> entry : rawViews.entrySet()) {
+            RedisFuture<String> future = entry.getValue();
+            if (!future.isDone() || future.isCancelled()) {
+                break;
+            }
+            try {
 
                 String raw = future.get();
                 Partitions partitions = ClusterPartitionParser.parse(raw);
-                List<RedisClusterNode> badNodes = Lists.newArrayList();
+                List<RedisClusterNodeSnapshot> nodeWithStats = partitions.stream().map(n -> new RedisClusterNodeSnapshot(n))
+                        .collect(Collectors.toList());
+                List<RedisClusterNodeSnapshot> badNodes = Lists.newArrayList();
 
-                for (RedisClusterNode partition : partitions) {
+                for (RedisClusterNodeSnapshot partition : nodeWithStats) {
                     if (partition.getFlags().contains(RedisClusterNode.NodeFlag.NOADDR)) {
                         badNodes.add(partition);
                     }
@@ -173,31 +229,63 @@ class ClusterTopologyRefresh {
 
                         // record latency for later partition ordering
                         latencies.put(partition.getNodeId(), entry.getValue().duration());
+                        clientCountByNodeId.put(partition.getNodeId(), clientCountByRedisUri.get(entry.getKey()));
                     }
                 }
-                if(!badNodes.isEmpty()){
-                    partitions.removeAll(badNodes);
+
+                if (!badNodes.isEmpty()) {
+                    nodeWithStats.removeAll(badNodes);
                 }
+
+                allNodes.addAll(nodeWithStats);
+                partitions.clear();
+                partitions.addAll(nodeWithStats);
                 nodeSpecificViews.put(entry.getKey(), partitions);
-            } catch (InterruptedException e) {
-                Thread.interrupted();
-                throw new RedisCommandInterruptedException(e);
             } catch (ExecutionException e) {
                 logger.warn("Cannot retrieve partition view from " + entry.getKey() + ", error: " + e.toString());
             }
         }
 
-        LatencyComparator comparator = new LatencyComparator(latencies);
+        for (RedisClusterNodeSnapshot node : allNodes) {
+            node.setConnectedClients(clientCountByNodeId.get(node.getNodeId()));
+            node.setLatencyNs(latencies.get(node.getNodeId()));
+        }
 
         for (Partitions redisClusterNodes : nodeSpecificViews.values()) {
-            Collections.sort(redisClusterNodes.getPartitions(), comparator);
+            Collections.sort(redisClusterNodes.getPartitions(), LatencyComparator.INSTANCE);
         }
 
         return nodeSpecificViews;
     }
 
+    private long await(Map<RedisURI, ? extends RedisFuture<?>> rawViews, long timeout) throws InterruptedException {
+        long waitTime = 0;
+
+        for (Map.Entry<RedisURI, ? extends RedisFuture<?>> entry : rawViews.entrySet()) {
+            long timeoutLeft = timeout - waitTime;
+
+            if (timeoutLeft <= 0) {
+                break;
+            }
+
+            long startWait = System.nanoTime();
+            RedisFuture<?> future = entry.getValue();
+
+            if (!future.await(timeoutLeft, TimeUnit.NANOSECONDS)) {
+                break;
+            }
+
+            waitTime += System.nanoTime() - startWait;
+        }
+        return waitTime;
+    }
+
+    private int getClients(String rawClientsOutput) {
+        return rawClientsOutput.trim().split("\\n").length;
+    }
+
     /*
-     * Async request of views.
+     * Async request of CLUSTER NODES.
      */
     @SuppressWarnings("unchecked")
     private Map<RedisURI, TimedAsyncCommand<String, String, String>> requestViews(
@@ -209,6 +297,25 @@ class ClusterTopologyRefresh {
 
             entry.getValue().dispatch(timed);
             rawViews.put(entry.getKey(), timed);
+        }
+        return rawViews;
+    }
+
+    /*
+     * Async request of CLIENT LIST.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<RedisURI, AsyncCommand<String, String, String>> requestClients(
+            Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
+        Map<RedisURI, AsyncCommand<String, String, String>> rawViews = Maps.newHashMap();
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
+
+            CommandArgs<String, String> args = new CommandArgs<>(CODEC).add(CommandKeyword.LIST);
+            Command<String, String, String> command = new Command<>(CommandType.CLIENT, new StatusOutput<>(CODEC), args);
+            AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
+
+            entry.getValue().dispatch(async);
+            rawViews.put(entry.getKey(), async);
         }
         return rawViews;
     }
@@ -238,9 +345,10 @@ class ClusterTopologyRefresh {
 
             try {
                 StatefulRedisConnection<String, String> connection = client.connectToNode(redisURI.getResolvedAddress());
-                if(redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
                     connection.sync().auth(new String(redisURI.getPassword()));
                 }
+                connection.async().clientSetname("lettuce#ClusterTopologyRefresh");
                 connections.put(redisURI, connection);
             } catch (RedisConnectionException e) {
                 if (logger.isDebugEnabled()) {
@@ -298,6 +406,70 @@ class ClusterTopologyRefresh {
     }
 
     /**
+     * Compare {@link RedisClusterNodeSnapshot} based on their client count. Lowest comes first. Objects of type {@link RedisClusterNode}
+     * cannot be compared and yield to a result of {@literal 0}.
+     */
+    static class ClientCountComparator implements Comparator<RedisClusterNode> {
+
+        public final static ClientCountComparator INSTANCE = new ClientCountComparator();
+
+        @Override
+        public int compare(RedisClusterNode o1, RedisClusterNode o2) {
+            if (o1 instanceof RedisClusterNodeSnapshot && o2 instanceof RedisClusterNodeSnapshot) {
+
+                RedisClusterNodeSnapshot w1 = (RedisClusterNodeSnapshot) o1;
+                RedisClusterNodeSnapshot w2 = (RedisClusterNodeSnapshot) o2;
+
+                if (w1.getConnectedClients() != null && w2.getConnectedClients() != null) {
+                    return w1.getConnectedClients().compareTo(w2.getConnectedClients());
+                }
+
+                if (w1.getConnectedClients() == null && w2.getConnectedClients() != null) {
+                    return 1;
+                }
+
+                if (w1.getConnectedClients() != null && w2.getConnectedClients() == null) {
+                    return -1;
+                }
+            }
+
+            return 0;
+        }
+    }
+
+    /**
+     * Compare {@link RedisClusterNodeSnapshot} based on their latency. Lowest comes first. Objects of type {@link RedisClusterNode} cannot
+     * be compared and yield to a result of {@literal 0}.
+     */
+    static class LatencyComparator implements Comparator<RedisClusterNode> {
+
+        public final static LatencyComparator INSTANCE = new LatencyComparator();
+
+        @Override
+        public int compare(RedisClusterNode o1, RedisClusterNode o2) {
+            if (o1 instanceof RedisClusterNodeSnapshot && o2 instanceof RedisClusterNodeSnapshot) {
+
+                RedisClusterNodeSnapshot w1 = (RedisClusterNodeSnapshot) o1;
+                RedisClusterNodeSnapshot w2 = (RedisClusterNodeSnapshot) o2;
+
+                if (w1.getLatencyNs() != null && w2.getLatencyNs() != null) {
+                    return w1.getLatencyNs().compareTo(w2.getLatencyNs());
+                }
+
+                if (w1.getLatencyNs() != null && w2.getLatencyNs() == null) {
+                    return -1;
+                }
+
+                if (w1.getLatencyNs() == null && w2.getLatencyNs() != null) {
+                    return 1;
+                }
+            }
+
+            return 0;
+        }
+    }
+
+    /**
      * Timed command that records the time at which the command was encoded and completed.
      * 
      * @param <K> Key type
@@ -336,35 +508,32 @@ class ClusterTopologyRefresh {
         }
     }
 
-    static class LatencyComparator implements Comparator<RedisClusterNode> {
+    static class RedisClusterNodeSnapshot extends RedisClusterNode {
 
-        private final Map<String, Long> latencies;
+        private Long latencyNs;
+        private Integer connectedClients;
 
-        public LatencyComparator(Map<String, Long> latencies) {
-            this.latencies = latencies;
+        RedisClusterNodeSnapshot() {
         }
 
-        @Override
-        public int compare(RedisClusterNode o1, RedisClusterNode o2) {
-
-            Long latency1 = latencies.get(o1.getNodeId());
-            Long latency2 = latencies.get(o2.getNodeId());
-
-            if (latency1 != null && latency2 != null) {
-                return latency1.compareTo(latency2);
-            }
-
-            if (latency1 != null && latency2 == null) {
-                return -1;
-            }
-
-            if (latency1 == null && latency2 != null) {
-                return 1;
-            }
-
-            return 0;
+        RedisClusterNodeSnapshot(RedisClusterNode redisClusterNode) {
+            super(redisClusterNode);
         }
 
+        Long getLatencyNs() {
+            return latencyNs;
+        }
+
+        void setLatencyNs(Long latencyNs) {
+            this.latencyNs = latencyNs;
+        }
+
+        Integer getConnectedClients() {
+            return connectedClients;
+        }
+
+        void setConnectedClients(Integer connectedClients) {
+            this.connectedClients = connectedClients;
+        }
     }
-
 }

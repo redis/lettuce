@@ -57,4 +57,86 @@ public class BaseRedisCommandBuilder<K, V> {
         }
     }
 
+    /**
+     * Assert that a string is not empty, it must not be {@code null} and it must not be empty.
+     *
+     * @param string the object to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object is {@code null} or the underlying string is empty
+     */
+    protected static void assertNotEmpty(String string, String message) {
+        if (string == null || string.isEmpty()) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * Assert that an object is not {@code null} .
+     *
+     * @param object the object to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object is {@code null}
+     */
+    public static void assertNotNull(Object object, String message) {
+        if (object == null) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * Assert that an array has elements; that is, it must not be {@code null} and must have at least one element.
+     *
+     * @param array the array to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array is {@code null} or has no elements
+     */
+    protected void assertNotEmpty(Object[] array, String message) {
+        if (array == null || array.length == 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * Assert that an array has elements; that is, it must not be {@code null} and must have at least one element.
+     *
+     * @param array the array to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array is {@code null} or has no elements
+     */
+    protected static void assertNotEmpty(int[] array, String message) {
+        if (array == null || array.length == 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * Assert that an array has no null elements.
+     *
+     * @param array the array to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array contains a {@code null} element
+     */
+    public static void assertNoNullElements(Object[] array, String message) {
+        if (array != null) {
+            for (Object element : array) {
+                if (element == null) {
+                    throw new IllegalArgumentException(message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Assert that {@code value} is {@literal true}.
+     *
+     * @param value the value to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array contains a {@code null} element
+     */
+    public static void assertTrue(boolean value, String message) {
+        if (!value) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
 }

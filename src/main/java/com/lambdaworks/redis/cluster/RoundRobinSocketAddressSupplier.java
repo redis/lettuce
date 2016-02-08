@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.SocketAddress;
 import java.util.Collection;
+import java.util.function.Function;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -17,13 +17,18 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
-    protected final Collection<RedisClusterNode> clusterNodes = Lists.newArrayList();
-    protected final Partitions partitions;
-    protected RoundRobin<? extends RedisClusterNode> roundRobin;
+    private final Collection<RedisClusterNode> partitions;
+    private final Collection<RedisClusterNode> clusterNodes = Lists.newArrayList();
+    private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort;
+    private RoundRobin<? extends RedisClusterNode> roundRobin;
 
-    public RoundRobinSocketAddressSupplier(Partitions partitions) {
+    public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
+            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort) {
+        this.sort = sort;
         checkArgument(partitions != null, "Partitions must not be null");
+        checkArgument(sort != null, "Sort-Function must not be null");
         this.partitions = partitions;
+        this.clusterNodes.addAll(partitions);
         this.roundRobin = new RoundRobin<>(clusterNodes);
         resetRoundRobin();
     }
@@ -41,7 +46,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     protected void resetRoundRobin() {
         clusterNodes.clear();
-        clusterNodes.addAll(ClusterTopologyRefresh.createSortedList(partitions));
+        clusterNodes.addAll(sort.apply(partitions));
         roundRobin.offset = null;
     }
 

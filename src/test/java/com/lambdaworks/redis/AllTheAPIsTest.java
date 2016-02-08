@@ -19,7 +19,7 @@ public class AllTheAPIsTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
         clusterPort = TestSettings.port(900);
-        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), clusterPort).build());
+        clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), clusterPort).build());
     }
 
     @BeforeClass
@@ -160,6 +160,26 @@ public class AllTheAPIsTest {
     }
 
     @Test
+    public void clusterPubSubSync() throws Exception {
+        clusterClient.connectPubSub().sync().close();
+    }
+
+    @Test
+    public void clusterPubSubAsync() throws Exception {
+        clusterClient.connectPubSub().async().close();
+    }
+
+    @Test
+    public void clusterPubSubReactive() throws Exception {
+        clusterClient.connectPubSub().reactive().close();
+    }
+
+    @Test
+    public void clusterPubSubStateful() throws Exception {
+        clusterClient.connectPubSub().close();
+    }
+
+    @Test
     public void deprecatedClusterSync() throws Exception {
         clusterClient.connectCluster().getStatefulConnection().sync().close();
     }
@@ -184,7 +204,8 @@ public class AllTheAPIsTest {
     public void advancedClusterSync() throws Exception {
         StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connectCluster()
                 .getStatefulConnection();
-        statefulConnection.getConnection(TestSettings.host(), clusterPort).sync();
+        RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
+        statefulConnection.getConnection(uri.getHost(), uri.getPort()).sync();
         statefulConnection.close();
     }
 
@@ -192,7 +213,8 @@ public class AllTheAPIsTest {
     public void advancedClusterAsync() throws Exception {
         StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connectCluster()
                 .getStatefulConnection();
-        statefulConnection.getConnection(TestSettings.host(), clusterPort).async();
+        RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
+        statefulConnection.getConnection(uri.getHost(), uri.getPort()).sync();
         statefulConnection.close();
     }
 
@@ -200,7 +222,8 @@ public class AllTheAPIsTest {
     public void advancedClusterReactive() throws Exception {
         StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connectCluster()
                 .getStatefulConnection();
-        statefulConnection.getConnection(TestSettings.host(), clusterPort).reactive();
+        RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
+        statefulConnection.getConnection(uri.getHost(), uri.getPort()).reactive();
         statefulConnection.close();
     }
 
