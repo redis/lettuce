@@ -38,6 +38,7 @@ class Connections {
             } catch (RuntimeException e) {
                 return false;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 return false;
             } catch (ExecutionException e) {
                 return false;

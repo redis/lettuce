@@ -112,6 +112,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
 
             return output.get();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         }
     }
@@ -133,6 +134,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
                 throw new TimeoutException("Command timed out");
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         }
         if (exception != null) {
@@ -154,6 +156,7 @@ public class Command<K, V, T> extends AbstractFuture<T> implements RedisCommand<
         try {
             return latch.await(timeout, unit);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         }
     }

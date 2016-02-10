@@ -174,7 +174,7 @@ class ClusterTopologyRefresh {
                 }
                 nodeSpecificViews.put(entry.getKey(), partitions);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 throw new RedisCommandInterruptedException(e);
             } catch (ExecutionException e) {
                 logger.warn("Cannot retrieve partition view from " + entry.getKey(), e);

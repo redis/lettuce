@@ -84,6 +84,7 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                         try {
                             redisCommand.get();
                         } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
                             throw e;
                         } catch (ExecutionException e) {
                             throw new RedisException(e.getCause());

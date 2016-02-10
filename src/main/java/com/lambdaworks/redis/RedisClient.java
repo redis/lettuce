@@ -688,6 +688,7 @@ public class RedisClient extends AbstractRedisClient {
                 try {
                     return getSocketAddress(redisURI);
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     throw new RedisException(e);
                 } catch (TimeoutException e) {
                     throw new RedisException(e);
