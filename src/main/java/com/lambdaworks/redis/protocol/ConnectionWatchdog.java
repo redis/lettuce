@@ -202,7 +202,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         try {
             reconnect(infoLevel, warnLevel);
         } catch (InterruptedException e) {
-            return;
+            Thread.currentThread().interrupt();
+            throw e;
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot connect: {}", e.toString());
             if (!isReconnectSuspended()) {

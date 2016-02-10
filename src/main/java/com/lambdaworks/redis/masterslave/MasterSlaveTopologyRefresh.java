@@ -100,7 +100,7 @@ class MasterSlaveTopologyRefresh {
                 latencies.put(redisNodeDescription, entry.getValue().duration());
                 result.add(redisNodeDescription);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 throw new RedisCommandInterruptedException(e);
             } catch (ExecutionException e) {
                 logger.warn("Cannot retrieve partition view from " + entry.getKey(), e);

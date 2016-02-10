@@ -85,6 +85,7 @@ class MultiNodeExecution {
                     try {
                         future.get();
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                         throw new RedisCommandInterruptedException(e);
                     } catch (ExecutionException e) {
                         // swallow exceptions
