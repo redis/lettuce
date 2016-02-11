@@ -9,7 +9,7 @@
 
     <groupId>biz.paluch.redis</groupId>
     <artifactId>lettuce</artifactId>
-    <version>3.5-SNAPSHOT</version>
+    <version>3.4.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>lettuce</name>
