@@ -282,10 +282,6 @@ public abstract class AbstractRedisClient {
 
         List<Future<?>> closeFutures = Lists.newArrayList();
 
-        if (genericWorkerPool != null) {
-            closeFutures.add(clientResources.eventLoopGroupProvider()
-                    .release(genericWorkerPool, quietPeriod, timeout, timeUnit));
-        }
 
         if (channels != null) {
             for (Channel c : channels) {
