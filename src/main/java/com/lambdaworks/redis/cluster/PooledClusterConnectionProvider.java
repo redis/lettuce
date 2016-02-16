@@ -254,13 +254,26 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      */
     @Override
     public void setPartitions(Partitions partitions) {
+        boolean reconfigurePartitions = false;
+        
         synchronized (stateLock) {
+            if (this.partitions != null) {
+                reconfigurePartitions = true;
+            }
             this.partitions = partitions;
+        }
+
+        if(reconfigurePartitions){
             reconfigurePartitions();
         }
     }
 
     private void reconfigurePartitions() {
+        
+        if (!redisClusterClient.expireStaleConnections()) {
+            return;
+        }
+
         Set<ConnectionKey> staleConnections = getStaleConnectionKeys();
 
         for (ConnectionKey key : staleConnections) {
@@ -276,10 +289,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
 
         resetFastConnectionCache();
-
-        if (redisClusterClient.expireStaleConnections()) {
-            closeStaleConnections();
-        }
+        closeStaleConnections();
     }
 
     /**
