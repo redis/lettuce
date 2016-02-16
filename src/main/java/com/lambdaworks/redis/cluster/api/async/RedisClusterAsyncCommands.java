@@ -16,11 +16,11 @@ import com.lambdaworks.redis.api.async.*;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 4.0
  */
-public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
-        RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
-        RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
-        RedisHLLAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>,
-        RedisClusterAsyncConnection<K, V> {
+public interface RedisClusterAsyncCommands<K, V>
+        extends RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
+        RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
+        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,
+        RedisGeoAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisClusterAsyncConnection<K, V> {
 
     /**
      * Set the default timeout for operations.
@@ -37,6 +37,15 @@ public interface RedisClusterAsyncCommands<K, V> extends RedisHashAsyncCommands<
      * @return String simple-string-reply
      */
     String auth(String password);
+
+    /**
+     * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
+     * persist the configuration on disk before sending packets with the new configuration.
+     *
+     * @return String simple-string-reply If the new config epoch is generated and assigned either BUMPED (epoch) or STILL
+     *         (epoch) are returned.
+     */
+    RedisFuture<String> clusterBumpepoch();
 
     /**
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with

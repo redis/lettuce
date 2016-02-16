@@ -63,6 +63,14 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     }
 
     @Test
+    public void testClusterBumpEpoch() throws Exception {
+
+        String result = first(reactive.clusterBumpepoch());
+
+        assertThat(result).matches("(BUMPED|STILL).*");
+    }
+
+    @Test
     public void testClusterInfo() throws Exception {
 
         String status = first(reactive.clusterInfo());

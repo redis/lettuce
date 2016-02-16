@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -38,7 +39,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
     protected StatefulRedisConnection<String, String> connection;
 
-    protected RedisClusterAsyncConnection<String, String> async;
+    protected RedisClusterAsyncCommands<String, String> async;
 
     protected RedisClusterCommands<String, String> sync;
 
@@ -81,6 +82,16 @@ public class ClusterCommandTest extends AbstractClusterTest {
     public void statefulConnectionFromAsync() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
+    }
+
+    @Test
+    public void testClusterBumpEpoch() throws Exception {
+
+        RedisFuture<String> future = async.clusterBumpepoch();
+
+        String result = future.get();
+
+        assertThat(result).matches("(BUMPED|STILL).*");
     }
 
     @Test

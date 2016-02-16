@@ -1531,6 +1531,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
         return dispatch(commandBuilder.pfcount(keys));
     }
 
+
+    @Override
+    public RedisFuture<String> clusterBumpepoch() {
+        return dispatch(commandBuilder.clusterBumpepoch());
+    }
+
     @Override
     public RedisFuture<String> clusterMeet(String ip, int port) {
         return dispatch(commandBuilder.clusterMeet(ip, port));

@@ -1617,6 +1617,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PFADD, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, String> clusterBumpepoch() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(BUMPEPOCH);
+        return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> clusterMeet(String ip, int port) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(MEET).add(ip).add(port);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);

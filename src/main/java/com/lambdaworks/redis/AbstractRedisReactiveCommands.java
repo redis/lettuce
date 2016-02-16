@@ -1508,6 +1508,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<String> clusterBumpepoch() {
+        return createObservable(() -> commandBuilder.clusterBumpepoch());
+    }
+
+    @Override
     public Observable<String> clusterMeet(String ip, int port) {
         return createObservable(() -> commandBuilder.clusterMeet(ip, port));
     }
