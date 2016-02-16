@@ -27,7 +27,8 @@ public interface EventLoopGroupProvider {
 
     /**
      * Retrieve a {@link EventLoopGroup} for the type {@code type}. Do not terminate or shutdown the instance. Call the
-     * {@link #shutdown(long, long, TimeUnit)} method to free the resources.
+     * {@link #release(EventExecutorGroup, long, long, TimeUnit)} to release an individual instance or
+     * {@link #shutdown(long, long, TimeUnit)} method to free the all resources.
      *
      * @param type type of the event loop group, must not be {@literal null}
      * @param <T> type parameter
@@ -44,7 +45,7 @@ public interface EventLoopGroupProvider {
     int threadPoolSize();
 
     /**
-     * Release the {@code eventLoopGroup} instance. The method will shutdown/terminate the event loop group if it is no longer
+     * Release a {@code eventLoopGroup} instance. The method will shutdown/terminate the event loop group if it is no longer
      * needed.
      * 
      * @param eventLoopGroup the eventLoopGroup instance, must not be {@literal null}

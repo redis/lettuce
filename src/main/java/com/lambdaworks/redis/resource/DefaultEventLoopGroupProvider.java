@@ -4,12 +4,12 @@ import static com.lambdaworks.redis.resource.Futures.toBooleanPromise;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Maps;
 import com.lambdaworks.redis.EpollProvider;
 
-import com.lambdaworks.redis.output.BooleanListOutput;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.*;
@@ -27,6 +27,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEventLoopGroupProvider.class);
 
     private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<Class<? extends EventExecutorGroup>, EventExecutorGroup>();
+    private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<ExecutorService, Long>();
+
     private final int numberOfThreads;
 
     private volatile boolean shutdownCalled = false;
@@ -43,8 +45,47 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     @Override
     public <T extends EventLoopGroup> T allocate(Class<T> type) {
         synchronized (this) {
-            return getOrCreate(type);
+            return addReference(getOrCreate(type));
         }
+    }
+
+    private <T extends ExecutorService> T addReference(T reference) {
+
+        synchronized (refCounter){
+            long counter = 0;
+            if(refCounter.containsKey(reference)){
+                counter = refCounter.get(reference);
+            }
+
+            logger.debug("Adding reference to {}, existing ref count {}", reference, counter);
+            counter++;
+            refCounter.put(reference, counter);
+        }
+
+        return reference;
+    }
+
+    private <T extends ExecutorService> T release(T reference) {
+
+        synchronized (refCounter) {
+            long counter = 0;
+            if (refCounter.containsKey(reference)) {
+                counter = refCounter.get(reference);
+            }
+
+            if (counter < 1) {
+                logger.debug("Attempting to release {} but ref count is {}", reference, counter);
+            }
+
+            counter--;
+            if (counter == 0) {
+                refCounter.remove(reference);
+            } else {
+                refCounter.put(reference, counter);
+            }
+        }
+
+        return reference;
     }
 
     @SuppressWarnings("unchecked")
@@ -93,9 +134,9 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     @Override
     public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
 
-        Class<?> key = getKey(eventLoopGroup);
+        Class<?> key = getKey(release(eventLoopGroup));
 
-        if (key == null && eventLoopGroup.isShuttingDown()) {
+        if ((key == null && eventLoopGroup.isShuttingDown()) || refCounter.containsKey(eventLoopGroup)) {
             DefaultPromise<Boolean> promise = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
             promise.setSuccess(true);
             return promise;
@@ -144,7 +185,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         aggregator.arm();
 
         for (EventExecutorGroup executorGroup : copy.values()) {
-            Promise<Boolean> shutdown = toBooleanPromise(executorGroup.shutdownGracefully(quietPeriod, timeout, timeUnit));
+            Promise<Boolean> shutdown = toBooleanPromise(release(executorGroup, quietPeriod, timeout, timeUnit));
             aggregator.add(shutdown);
         }
 

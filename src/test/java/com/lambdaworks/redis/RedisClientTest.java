@@ -1,0 +1,111 @@
+package com.lambdaworks.redis;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Test;
+
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DefaultClientResources;
+import com.lambdaworks.redis.resource.DefaultEventLoopGroupProvider;
+import io.netty.util.concurrent.EventExecutorGroup;
+
+/**
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ */
+public class RedisClientTest {
+
+    @Test
+    public void reuseClientConnections() throws Exception {
+
+        // given
+        DefaultClientResources clientResources = DefaultClientResources.create();
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
+
+        RedisClient redisClient1 = newClient(clientResources);
+        RedisClient redisClient2 = newClient(clientResources);
+        connectAndClose(redisClient1);
+        connectAndClose(redisClient2);
+
+        // when
+        EventExecutorGroup executor = eventLoopGroups.values().iterator().next();
+        redisClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+
+        // then
+        connectAndClose(redisClient2);
+
+        clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS).get();
+
+        assertThat(eventLoopGroups).isEmpty();
+        assertThat(executor.isShuttingDown()).isTrue();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    @Test
+    public void reuseClientConnectionsShutdownTwoClients() throws Exception {
+
+        // given
+        DefaultClientResources clientResources = DefaultClientResources.create();
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
+
+        RedisClient redisClient1 = newClient(clientResources);
+        RedisClient redisClient2 = newClient(clientResources);
+        connectAndClose(redisClient1);
+        connectAndClose(redisClient2);
+
+        // when
+        EventExecutorGroup executor = eventLoopGroups.values().iterator().next();
+
+        redisClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        assertThat(executor.isShutdown()).isFalse();
+        connectAndClose(redisClient2);
+        redisClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+
+        // then
+        assertThat(eventLoopGroups).isEmpty();
+        assertThat(executor.isShutdown()).isTrue();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isFalse();
+
+        // cleanup
+        clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS).get();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    @Test
+    public void managedClientResources() throws Exception {
+
+        // given
+        RedisClient redisClient1 = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        ClientResources clientResources = redisClient1.getResources();
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
+        connectAndClose(redisClient1);
+
+        // when
+        EventExecutorGroup executor = eventLoopGroups.values().iterator().next();
+
+        redisClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+
+        // then
+        assertThat(eventLoopGroups).isEmpty();
+        assertThat(executor.isShuttingDown()).isTrue();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    private void connectAndClose(RedisClient client) {
+        client.connect().close();
+    }
+
+    private RedisClient newClient(DefaultClientResources clientResources) {
+        return RedisClient.create(clientResources, RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+    }
+
+    private Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> getExecutors(ClientResources clientResources)
+            throws Exception {
+        Field eventLoopGroupsField = DefaultEventLoopGroupProvider.class.getDeclaredField("eventLoopGroups");
+        eventLoopGroupsField.setAccessible(true);
+        return (Map) eventLoopGroupsField.get(clientResources.eventLoopGroupProvider());
+    }
+}
