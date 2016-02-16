@@ -31,10 +31,10 @@ import io.netty.channel.ChannelHandler;
 /**
  * An asynchronous thread-safe connection to a redis server. Multiple threads may share one {@link RedisAsyncConnectionImpl}
  * provided they avoid blocking and transactional operations such as {@link #blpop} and {@link #multi()}/{@link #exec}.
- * 
+ *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -52,7 +52,7 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
 
     /**
      * Initialize a new connection.
-     * 
+     *
      * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
@@ -1518,6 +1518,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     @Override
     public RedisFuture<Long> pfcount(K key, K... moreKeys) {
         return dispatch(commandBuilder.pfcount(key, moreKeys));
+    }
+
+    @Override
+    public RedisFuture<String> clusterBumpepoch() {
+        return dispatch(commandBuilder.clusterBumpepoch());
     }
 
     @Override

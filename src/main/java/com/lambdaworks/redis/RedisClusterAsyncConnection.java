@@ -21,6 +21,15 @@ public interface RedisClusterAsyncConnection<K, V> extends RedisHashesAsyncConne
     void close();
 
     /**
+     * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
+     * persist the configuration on disk before sending packets with the new configuration.
+     *
+     * @return String simple-string-reply If the new config epoch is generated and assigned either BUMPED (epoch) or STILL
+     *         (epoch) are returned.
+     */
+    RedisFuture<String> clusterBumpepoch();
+
+    /**
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
      * {@literal OK} when the node was added to the cluster.
      *

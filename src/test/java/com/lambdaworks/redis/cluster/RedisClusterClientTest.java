@@ -111,6 +111,16 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
+    public void testClusterBumpEpoch() throws Exception {
+
+        RedisFuture<String> future = redis1.clusterBumpepoch();
+
+        String result = future.get();
+
+        assertThat(result).matches("(BUMPED|STILL).*");
+    }
+
+    @Test
     public void testClusterInfo() throws Exception {
 
         RedisFuture<String> future = redis1.clusterInfo();
