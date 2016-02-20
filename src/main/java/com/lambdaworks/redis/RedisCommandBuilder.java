@@ -570,6 +570,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MIGRATE, new StatusOutput<K, V>(codec), args);
     }
 
+
+    public Command<K, V, String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
+        assertNotNull(migrateArgs, "migrateArgs " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+
+        args.add(host).add(port);
+
+        if (migrateArgs.keys.size() == 1) {
+            args.addKey(migrateArgs.keys.get(0));
+        } else {
+            args.add("");
+        }
+
+        args.add(db).add(timeout);
+        migrateArgs.build(args);
+
+        return createCommand(MIGRATE, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, List<V>> mget(K... keys) {
         assertNotEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
 

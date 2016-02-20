@@ -2,17 +2,23 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
-import static com.lambdaworks.redis.TestSettings.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.TestSettings.host;
+import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
@@ -21,9 +27,6 @@ import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
 import com.lambdaworks.redis.protocol.CommandType;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ServerCommandTest extends AbstractCommandTest {
@@ -365,4 +368,19 @@ public class ServerCommandTest extends AbstractCommandTest {
         String result = redis.migrate("localhost", port + 1, key, 0, 10);
         assertThat(result).isEqualTo("OK");
     }
+
+    @Test
+    public void migrateCopyReplace() throws Exception {
+        redis.set(key, value);
+        redis.set("key1", value);
+        redis.set("key2", value);
+
+        String result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder.keys(key).copy().replace());
+        assertThat(result).isEqualTo("OK");
+
+        result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder
+                .keys(Arrays.asList("key1", "key2")).replace());
+        assertThat(result).isEqualTo("OK");
+    }
+
 }

@@ -575,6 +575,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
+        return dispatch(commandBuilder.migrate(host, port, db, timeout, migrateArgs));
+    }
+
+    @Override
     public RedisFuture<List<V>> mget(K... keys) {
         return dispatch(commandBuilder.mget(keys));
     }
