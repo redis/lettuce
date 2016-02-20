@@ -524,22 +524,23 @@
 
                             <relocations>
                                 <relocation>
-                                    <pattern>io.reactivex</pattern>
-                                    <shadedPattern>com.lambdaworks.io.reactivex</shadedPattern>
+                                    <pattern>rx</pattern>
+                                    <shadedPattern>com.lambdaworks.rx</shadedPattern>
                                 </relocation>
+
                                 <relocation>
                                     <pattern>com.google</pattern>
                                     <shadedPattern>com.lambdaworks.com.google</shadedPattern>
                                 </relocation>
 
                                 <relocation>
-                                    <pattern>org.apache</pattern>
-                                    <shadedPattern>com.lambdaworks.org.apache</shadedPattern>
+                                    <pattern>org</pattern>
+                                    <shadedPattern>com.lambdaworks.org</shadedPattern>
                                 </relocation>
 
                                 <relocation>
-                                    <pattern>io.netty</pattern>
-                                    <shadedPattern>com.lambdaworks.io.netty</shadedPattern>
+                                    <pattern>io</pattern>
+                                    <shadedPattern>com.lambdaworks.io</shadedPattern>
                                 </relocation>
                             </relocations>
                             <minimizeJar>false</minimizeJar>
