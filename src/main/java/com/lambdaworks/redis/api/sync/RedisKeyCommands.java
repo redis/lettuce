@@ -3,6 +3,7 @@ package com.lambdaworks.redis.api.sync;
 import java.util.Date;
 import java.util.List;
 import com.lambdaworks.redis.KeyScanCursor;
+import com.lambdaworks.redis.MigrateArgs;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.SortArgs;
@@ -117,6 +118,18 @@ public interface RedisKeyCommands<K, V> {
      * @return String simple-string-reply The command returns OK on success.
      */
     String migrate(String host, int port, K key, int db, long timeout);
+
+    /**
+     * Atomically transfer one or more keys from a Redis instance to another one.
+     *
+     * @param host the host
+     * @param port the port
+     * @param db the database
+     * @param timeout the timeout in milliseconds
+     * @param migrateArgs migrate args that allow to configure further options
+     * @return String simple-string-reply The command returns OK on success.
+     */
+    String migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs);
 
     /**
      * Move a key to another database.

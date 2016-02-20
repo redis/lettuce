@@ -574,6 +574,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
+        return createObservable(() -> commandBuilder.migrate(host, port, db, timeout, migrateArgs));
+    }
+
+    @Override
     public Observable<V> mget(K... keys) {
         return createDissolvingObservable(() -> commandBuilder.mget(keys));
     }
