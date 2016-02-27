@@ -6,12 +6,8 @@ import static com.lambdaworks.redis.protocol.SetArgs.Builder.ex;
 import static com.lambdaworks.redis.protocol.SetArgs.Builder.nx;
 import static com.lambdaworks.redis.protocol.SetArgs.Builder.px;
 import static com.lambdaworks.redis.protocol.SetArgs.Builder.xx;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,53 +15,55 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.google.common.collect.Maps;
+
 public class StringCommandTest extends AbstractCommandTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
     @Test
     public void append() throws Exception {
-        assertEquals(value.length(), (long) redis.append(key, value));
-        assertEquals(value.length() + 1, (long) redis.append(key, "X"));
+        assertThat(redis.append(key, value)).isEqualTo(value.length());
+        assertThat(redis.append(key, "X")).isEqualTo(value.length() + 1);
     }
 
     @Test
     public void get() throws Exception {
-        assertNull(redis.get(key));
+        assertThat(redis.get(key)).isNull();
         redis.set(key, value);
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void getbit() throws Exception {
-        assertEquals(0, (long) redis.getbit(key, 0));
+        assertThat(redis.getbit(key, 0)).isEqualTo(0);
         redis.setbit(key, 0, 1);
-        assertEquals(1, (long) redis.getbit(key, 0));
+        assertThat(redis.getbit(key, 0)).isEqualTo(1);
     }
 
     @Test
     public void getrange() throws Exception {
-        assertEquals("", redis.getrange(key, 0, -1));
+        assertThat(redis.getrange(key, 0, -1)).isEqualTo("");
         redis.set(key, "foobar");
-        assertEquals("oba", redis.getrange(key, 2, 4));
-        assertEquals("bar", redis.getrange(key, 3, -1));
+        assertThat(redis.getrange(key, 2, 4)).isEqualTo("oba");
+        assertThat(redis.getrange(key, 3, -1)).isEqualTo("bar");
     }
 
     @Test
     public void getset() throws Exception {
-        assertNull(redis.getset(key, value));
-        assertEquals(value, redis.getset(key, "two"));
-        assertEquals("two", redis.get(key));
+        assertThat(redis.getset(key, value)).isNull();
+        assertThat(redis.getset(key, "two")).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo("two");
     }
 
     @Test
     public void mget() throws Exception {
         setupMget();
-        assertEquals(list("1", "2"), redis.mget("one", "two"));
+        assertThat(redis.mget("one", "two")).isEqualTo(list("1", "2"));
     }
 
-    private void setupMget() {
-        assertEquals(list((String) null), redis.mget(key));
+    protected void setupMget() {
+        assertThat(redis.mget(key)).isEqualTo(list((String) null));
         redis.set("one", "1");
         redis.set("two", "2");
     }
@@ -76,67 +74,61 @@ public class StringCommandTest extends AbstractCommandTest {
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.mget(streamingAdapter, "one", "two");
-        assertEquals(2, count.intValue());
+        assertThat(count.intValue()).isEqualTo(2);
 
-        assertEquals(list("1", "2"), streamingAdapter.getList());
+        assertThat(streamingAdapter.getList()).isEqualTo(list("1", "2"));
     }
 
     @Test
     public void mset() throws Exception {
-        assertEquals(list(null, null), redis.mget("one", "two"));
-        Map<String, String> map = new HashMap<String, String>();
+        assertThat(redis.mget("one", "two")).isEqualTo(list(null, null));
+        Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
-        assertEquals("OK", redis.mset(map));
-        assertEquals(list("1", "2"), redis.mget("one", "two"));
+        assertThat(redis.mset(map)).isEqualTo("OK");
+        assertThat(redis.mget("one", "two")).isEqualTo(list("1", "2"));
     }
 
     @Test
     public void msetnx() throws Exception {
         redis.set("one", "1");
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
-        assertFalse(redis.msetnx(map));
+        assertThat(redis.msetnx(map)).isFalse();
         redis.del("one");
-        assertTrue(redis.msetnx(map));
-        assertEquals("2", redis.get("two"));
+        assertThat(redis.msetnx(map)).isTrue();
+        assertThat(redis.get("two")).isEqualTo("2");
     }
 
     @Test
     public void set() throws Exception {
-        assertNull(redis.get(key));
-        assertEquals("OK", redis.set(key, value));
-        assertEquals(value, redis.get(key));
+        assertThat(redis.get(key)).isNull();
+        assertThat(redis.set(key, value)).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
 
-        assertEquals("OK", redis.set(key, value, ex(10)));
-        assertEquals(value, redis.get(key));
-        assertTrue(redis.ttl(key) >= 9);
+        assertThat(redis.set(key, value, px(20000))).isEqualTo("OK");
+        assertThat(redis.set(key, value, ex(10))).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
 
-        assertEquals("OK", redis.set(key, value, px(20000)));
-        assertEquals(value, redis.get(key));
-        assertTrue(redis.ttl(key) >= 19);
+        assertThat(redis.set(key, value, px(10000))).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
 
-        assertEquals("OK", redis.set(key, value, px(10000)));
-        assertEquals(value, redis.get(key));
-        assertTrue(redis.ttl(key) >= 9);
+        assertThat(redis.set(key, value, nx())).isNull();
+        assertThat(redis.set(key, value, xx())).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
 
-        assertNull(redis.set(key, value, nx()));
-        assertEquals("OK", redis.set(key, value, xx()));
-        assertEquals(value, redis.get(key));
+        redis.del(key);
+        assertThat(redis.set(key, value, nx())).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
 
         redis.del(key);
 
-        assertEquals("OK", redis.set(key, value, nx()));
-        assertEquals(value, redis.get(key));
-
-    }
-
-    @Test
-    public void setExWithPx() throws Exception {
-        exception.expect(RedisCommandExecutionException.class);
-        exception.expectMessage("ERR syntax error");
-        redis.set(key, value, ex(10).px(20000).nx());
+        assertThat(redis.set(key, value, px(20000).nx())).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.ttl(key) >= 19).isTrue();
     }
 
     @Test(expected = RedisException.class)
@@ -150,50 +142,57 @@ public class StringCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void setExWithPx() throws Exception {
+        exception.expect(RedisCommandExecutionException.class);
+        exception.expectMessage("ERR syntax error");
+        redis.set(key, value, ex(10).px(20000).nx());
+    }
+
+    @Test
     public void setbit() throws Exception {
-        assertEquals(0, (long) redis.setbit(key, 0, 1));
-        assertEquals(1, (long) redis.setbit(key, 0, 0));
+        assertThat(redis.setbit(key, 0, 1)).isEqualTo(0);
+        assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
     }
 
     @Test
     public void setex() throws Exception {
-        assertEquals("OK", redis.setex(key, 10, value));
-        assertEquals(value, redis.get(key));
-        assertTrue(redis.ttl(key) >= 9);
+        assertThat(redis.setex(key, 10, value)).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.ttl(key) >= 9).isTrue();
     }
 
     @Test
     public void psetex() throws Exception {
-        assertEquals("OK", redis.psetex(key, 20000, value));
-        assertEquals(value, redis.get(key));
-        assertTrue(redis.pttl(key) >= 19000);
+        assertThat(redis.psetex(key, 20000, value)).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.pttl(key) >= 19000).isTrue();
     }
 
     @Test
     public void setnx() throws Exception {
-        assertTrue(redis.setnx(key, value));
-        assertFalse(redis.setnx(key, value));
+        assertThat(redis.setnx(key, value)).isTrue();
+        assertThat(redis.setnx(key, value)).isFalse();
     }
 
     @Test
     public void setrange() throws Exception {
-        assertEquals("foo".length(), (long) redis.setrange(key, 0, "foo"));
-        assertEquals(6, (long) redis.setrange(key, 3, "bar"));
-        assertEquals("foobar", redis.get(key));
+        assertThat(redis.setrange(key, 0, "foo")).isEqualTo("foo".length());
+        assertThat(redis.setrange(key, 3, "bar")).isEqualTo(6);
+        assertThat(redis.get(key)).isEqualTo("foobar");
     }
 
     @Test
     public void strlen() throws Exception {
-        assertEquals(0, (long) redis.strlen(key));
+        assertThat((long) redis.strlen(key)).isEqualTo(0);
         redis.set(key, value);
-        assertEquals(value.length(), (long) redis.strlen(key));
+        assertThat((long) redis.strlen(key)).isEqualTo(value.length());
     }
 
     @Test
     public void time() throws Exception {
 
         List<String> time = redis.time();
-        assertEquals(2, time.size());
+        assertThat(time).hasSize(2);
 
         Long.parseLong(time.get(0));
         Long.parseLong(time.get(1));
