@@ -162,6 +162,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    @Ignore("Causes instabilities")
     public void debugCrashAndRecover() throws Exception {
         try {
             assertThat(redis.debugCrashAndRecover(1L)).isNotNull();
@@ -189,6 +190,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    @Ignore("Causes instabilities")
     public void debugRestart() throws Exception {
         try {
             assertThat(redis.debugRestart(1L)).isNotNull();
