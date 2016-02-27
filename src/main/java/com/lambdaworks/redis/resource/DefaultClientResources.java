@@ -93,7 +93,7 @@ public class DefaultClientResources implements ClientResources {
 
         if (builder.eventExecutorGroup == null) {
             int computationThreadPoolSize = builder.computationThreadPoolSize;
-            if (computationThreadPoolSize < MIN_IO_THREADS) {
+            if (computationThreadPoolSize < MIN_COMPUTATION_THREADS) {
 
                 logger.info("computationThreadPoolSize is less than {} ({}), setting to: {}", MIN_COMPUTATION_THREADS,
                         computationThreadPoolSize, MIN_COMPUTATION_THREADS);
