@@ -1836,6 +1836,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
                 geoArgs.isWithCoordinates()), args);
     }
 
+    public Command<K, V, Long> georadius(K key, double longitude, double latitude, double distance, String unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
+
+        assertNotNull(geoRadiusStoreArgs, "geoRadiusStoreArgs must not be null");
+        assertTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
+                "At least STORE key or STORDIST key is required");
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
+        geoRadiusStoreArgs.build(args);
+
+        return createCommand(GEORADIUS, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Set<V>> georadiusbymember(K key, V member, double distance, String unit) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
         return createCommand(GEORADIUSBYMEMBER, new ValueSetOutput<K, V>(codec), args);
@@ -1850,6 +1862,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
                 GEORADIUSBYMEMBER,
                 new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs
                         .isWithCoordinates()), args);
+    }
+
+    public Command<K, V, Long> georadiusbymember(K key, V member, double distance, String unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
+
+        assertNotNull(geoRadiusStoreArgs, "geoRadiusStoreArgs must not be null");
+        assertTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
+                "At least STORE key or STORDIST key is required");
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
+        geoRadiusStoreArgs.build(args);
+
+        return createCommand(GEORADIUSBYMEMBER, new IntegerOutput<K, V>(codec), args);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

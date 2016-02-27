@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster.api.async;
 
 import com.lambdaworks.redis.GeoArgs;
 import com.lambdaworks.redis.GeoCoordinates;
+import com.lambdaworks.redis.GeoRadiusStoreArgs;
 import com.lambdaworks.redis.GeoWithin;
 import java.util.List;
 import java.util.Set;
@@ -63,6 +64,22 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
             GeoArgs geoArgs);
 
     /**
+     * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a
+     * sorted set.
+     *
+     * @param key the key of the geo set
+     * @param longitude the longitude coordinate according to WGS84
+     * @param latitude the latitude coordinate according to WGS84
+     * @param distance radius distance
+     * @param unit distance unit
+     * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
+     *        their locations a sorted set.
+     * @return Long integer-reply the number of elements in the result
+     */
+    AsyncExecutions<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+
+    /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
      * 
@@ -89,6 +106,20 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
     AsyncExecutions<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
+     * Perform a {@link #georadiusbymember(Object, Object, double, GeoArgs.Unit, GeoArgs)} query and store the results in a
+     * sorted set.
+     *
+     * @param key the key of the geo set
+     * @param member reference member
+     * @param distance radius distance
+     * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
+     *        their locations a sorted set.
+     * @return Long integer-reply the number of elements in the result
+     */
+    AsyncExecutions<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+
+    /**
      * Get geo coordinates for the {@code members}.
      *
      * @param key the key of the geo set
@@ -113,5 +144,4 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      *         returned.
      */
     AsyncExecutions<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
-
 }

@@ -1,16 +1,21 @@
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 import java.util.List;
 import java.util.Set;
 
-import com.lambdaworks.redis.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.GeoArgs;
+import com.lambdaworks.redis.GeoCoordinates;
+import com.lambdaworks.redis.GeoRadiusStoreArgs;
+import com.lambdaworks.redis.GeoWithin;
+import com.lambdaworks.redis.ScoredValue;
 
 public class GeoCommandTest extends AbstractRedisClientTest {
 
@@ -113,9 +118,73 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(bahn.coordinates).isNull();
     }
 
+    @Test
+    public void georadiusStore() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withStore(resultKey));
+        assertThat(result).isEqualTo(2);
+
+        List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(results).hasSize(2);
+    }
+
+    @Test
+    public void georadiusStoreWithCountAndSort() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStore(resultKey));
+        assertThat(result).isEqualTo(1);
+
+        List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).score).isGreaterThan(99999);
+    }
+
+    @Test
+    public void georadiusStoreDist() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withStoreDist("38o54"));
+        assertThat(result).isEqualTo(2);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(2);
+    }
+
+    @Test
+    public void georadiusStoreDistWithCountAndSort() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
+        assertThat(result).isEqualTo(1);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(1);
+
+        assertThat(dist.get(0).score).isBetween(2d, 3d);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void georadiusWithNullArgs() throws Exception {
-        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, null);
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, (GeoArgs) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void georadiusStoreWithNullArgs() throws Exception {
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null);
     }
 
     @Test
@@ -151,7 +220,12 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void georadiusbymemberWithNullArgs() throws Exception {
-        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, null);
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoArgs) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void georadiusStorebymemberWithNullArgs() throws Exception {
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null);
     }
 
 }
