@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
@@ -1692,6 +1693,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
+        return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoRadiusStoreArgs));
+    }
+
+    @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
         return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name()));
     }
@@ -1700,6 +1707,12 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
         return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> georadiusbymember(K key, V member, double distance, Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
+        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoRadiusStoreArgs));
     }
 
     @Override

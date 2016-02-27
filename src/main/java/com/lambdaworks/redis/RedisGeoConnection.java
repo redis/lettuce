@@ -3,6 +3,8 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.Set;
 
+import com.lambdaworks.redis.GeoArgs.Unit;
+
 /**
  * Synchronous executed commands for Geo-Commands.
  * 
@@ -45,7 +47,7 @@ public interface RedisGeoConnection<K, V> {
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -55,6 +57,21 @@ public interface RedisGeoConnection<K, V> {
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}
      */
     List<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
+
+    /**
+     * Perform a {@link #georadius(Object, double, double, double, Unit, GeoArgs)} query and store the results in a sorted set.
+     *
+     * @param key the key of the geo set
+     * @param longitude the longitude coordinate according to WGS84
+     * @param latitude the latitude coordinate according to WGS84
+     * @param distance radius distance
+     * @param unit distance unit
+     * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
+     *        their locations a sorted set.
+     * @return Long integer-reply the number of elements in the result
+     */
+    Long georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
@@ -81,6 +98,19 @@ public interface RedisGeoConnection<K, V> {
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}
      */
     List<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
+
+    /**
+     * Perform a {@link #georadiusbymember(Object, Object, double, Unit, GeoArgs)} query and store the results in a sorted set.
+     *
+     * @param key the key of the geo set
+     * @param member reference member
+     * @param distance radius distance
+     * @param unit distance unit
+     * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
+     *        their locations a sorted set.
+     * @return Long integer-reply the number of elements in the result
+     */
+    Long georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Get geo coordinates for the {@code members}.

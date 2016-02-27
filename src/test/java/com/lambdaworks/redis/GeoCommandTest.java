@@ -111,9 +111,73 @@ public class GeoCommandTest extends AbstractCommandTest {
         assertThat(bahn.coordinates).isNull();
     }
 
+    @Test
+    public void georadiusStore() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<String>().withStore(resultKey));
+        assertThat(result).isEqualTo(2);
+
+        List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(results).hasSize(2);
+    }
+
+    @Test
+    public void georadiusStoreWithCountAndSort() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<String>().withCount(1).desc().withStore(resultKey));
+        assertThat(result).isEqualTo(1);
+
+        List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).score).isGreaterThan(99999);
+    }
+
+    @Test
+    public void georadiusStoreDist() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<String>().withStoreDist("38o54"));
+        assertThat(result).isEqualTo(2);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(2);
+    }
+
+    @Test
+    public void georadiusStoreDistWithCountAndSort() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<String>().withCount(1).desc().withStoreDist("38o54"));
+        assertThat(result).isEqualTo(1);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(1);
+
+        assertThat(dist.get(0).score).isBetween(2d, 3d);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void georadiusWithNullArgs() throws Exception {
-        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, null);
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, (GeoArgs) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void georadiusStoreWithNullArgs() throws Exception {
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null);
     }
 
     @Test
@@ -149,7 +213,12 @@ public class GeoCommandTest extends AbstractCommandTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void georadiusbymemberWithNullArgs() throws Exception {
-        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, null);
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoArgs) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void georadiusStorebymemberWithNullArgs() throws Exception {
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null);
     }
 
 }
