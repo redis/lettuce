@@ -55,10 +55,10 @@ public class StringClusterRxCommandTest extends StringCommandTest {
         Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
-        assertTrue(redis.msetnx(map));
+        assertThat(redis.msetnx(map)).isTrue();
         redis.del("one");
-        assertTrue(redis.msetnx(map));
-        Assert.assertEquals("2", redis.get("two"));
+        assertThat(redis.msetnx(map)).isTrue();
+        assertThat(redis.get("two")).isEqualTo("2");
     }
 
     @Test

@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TimeTest {
     RedisClient client = RedisClient.create();
 
@@ -22,6 +24,6 @@ public class TimeTest {
 
     @Test
     public void testTime() throws Exception {
-        Assert.assertEquals(15000, client.makeTimeout());
+        assertThat(client.makeTimeout()).isEqualTo(15000);
     }
 }
