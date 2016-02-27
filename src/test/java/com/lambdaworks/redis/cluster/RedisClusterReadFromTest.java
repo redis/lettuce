@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 import com.lambdaworks.redis.ReadFrom;
 import org.junit.After;

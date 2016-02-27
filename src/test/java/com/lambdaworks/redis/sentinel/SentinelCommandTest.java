@@ -3,7 +3,7 @@ package com.lambdaworks.redis.sentinel;
 import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

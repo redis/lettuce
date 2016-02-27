@@ -1,15 +1,15 @@
 package com.lambdaworks.redis.issue42;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.sync.RedisHashCommands;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
 
 import com.lambdaworks.redis.RedisCommandTimeoutException;
+import com.lambdaworks.redis.api.sync.RedisHashCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 /**
@@ -27,16 +27,17 @@ public abstract class BreakClientBase {
     public void testSingle(RedisHashCommands<String, String> client) throws InterruptedException {
         populateTest(0, client);
 
-        assertEquals(16385, client.hvals(TEST_KEY).size());
+        assertThat(client.hvals(TEST_KEY)).hasSize(16385);
 
         breakClient(client);
 
-        assertEquals(16385, client.hvals(TEST_KEY).size());
+        assertThat(client.hvals(TEST_KEY)).hasSize(16385);
     }
 
     public void testLoop(RedisHashCommands<String, String> client) throws InterruptedException {
         populateTest(100, client);
-        assertEquals(16385 + 100, client.hvals(TEST_KEY).size());
+
+        assertThat(client.hvals(TEST_KEY)).hasSize(16485);
 
         breakClient(client);
 
@@ -46,7 +47,7 @@ public abstract class BreakClientBase {
     public void assertExtraKeys(int howmany, RedisHashCommands<String, String> target) {
         for (int x = 0; x < howmany; x++) {
             int i = Integer.parseInt(target.hget(TEST_KEY, "GET-" + x));
-            Assert.assertEquals(x, i);
+            assertThat(x).isEqualTo(i);
         }
     }
 
@@ -72,8 +73,7 @@ public abstract class BreakClientBase {
         for (int i = 0; i < 16384; i++) {
             target.hset(TEST_KEY, Integer.toString(i), TEST_KEY);
         }
-
-        assertEquals(16385 + loopFor, target.hvals(TEST_KEY).size());
+        assertThat(target.hvals(TEST_KEY)).hasSize(16385 + loopFor);
         log.info("done");
 
     }

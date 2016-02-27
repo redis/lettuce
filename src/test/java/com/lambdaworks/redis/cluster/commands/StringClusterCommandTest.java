@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.cluster.commands;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
@@ -55,10 +55,10 @@ public class StringClusterCommandTest extends StringCommandTest {
         Map<String, String> map = Maps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
-        assertTrue(redis.msetnx(map));
+        assertThat(redis.msetnx(map)).isTrue();
         redis.del("one");
-        assertTrue(redis.msetnx(map));
-        Assert.assertEquals("2", redis.get("two"));
+        assertThat(redis.msetnx(map)).isTrue();
+        assertThat(redis.get("two")).isEqualTo("2");
     }
 
     @Test
@@ -68,8 +68,8 @@ public class StringClusterCommandTest extends StringCommandTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.mget(streamingAdapter, "one", "two");
 
-        assertEquals(new HashSet<>(list("1", "2")), new HashSet<String>(streamingAdapter.getList()));
+        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(new HashSet<>(list("1", "2")));
 
-        assertEquals(2, count.intValue());
+        assertThat(count.intValue()).isEqualTo(2);
     }
 }

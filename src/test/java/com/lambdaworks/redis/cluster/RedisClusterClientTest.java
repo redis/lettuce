@@ -2,7 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
