@@ -103,6 +103,24 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
         Container-Managed トランザクションを利用する環境では、<code>transactionFactoryClass</code> プロパティが必須となります。
         「トランザクション」章の該当する節を参照してください。
       </p>
+
+      <p>
+        <span class="label important">NOTE</span>
+        1.3.0より、<code>configuration</code>プロパティが追加されました。
+        このプロパティには、MyBatisのXML設定ファイルを使わずに<code>Configuration</code>インスタンスを直接指定することができます。
+        次の例を見てください。
+      </p>
+
+      <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="configuration">
+    <bean class="org.apache.ibatis.session.Configuration">
+      <property name="mapUnderscoreToCamelCase" value="true"/>
+    </bean>
+  </property>
+</bean>]]></source>
+
       </subsection>
     </section>
   </body>
