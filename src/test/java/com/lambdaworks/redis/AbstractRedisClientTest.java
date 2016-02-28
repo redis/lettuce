@@ -2,8 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -33,8 +31,26 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     public void openConnection() throws Exception {
         client.setOptions(new ClientOptions.Builder().build());
         redis = connect();
-        redis.flushall();
-        redis.flushdb();
+        boolean scriptRunning;
+        do {
+
+            scriptRunning = false;
+
+            try {
+                redis.flushall();
+                redis.flushdb();
+            } catch (RedisException e) {
+                if (e.getMessage() != null && e.getMessage().contains("BUSY")) {
+                    scriptRunning = true;
+                    try {
+                        redis.scriptKill();
+                    } catch (RedisException e1) {
+                        // I know, it sounds crazy, but there is a possibility where one of the commands above raises BUSY.
+                        // Meanwhile the script ends and a call to SCRIPT KILL says NOTBUSY.
+                    }
+                }
+            }
+        } while (scriptRunning);
     }
 
     @After
