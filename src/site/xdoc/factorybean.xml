@@ -202,8 +202,25 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
     <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
     <property name="databaseIdProvider" ref="databaseIdProvider"/>
 </bean>]]></source>
-      
-      </subsection>
+
+      <p>
+        <span class="label important">NOTE</span>
+        Since 1.3.0, <code>configuration</code> property has been added.
+        It can be specified a <code>Configuration</code> instance directly without MyBatis XML configuration file.
+        For example:
+      </p>
+
+      <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="configuration">
+    <bean class="org.apache.ibatis.session.Configuration">
+      <property name="mapUnderscoreToCamelCase" value="true"/>
+    </bean>
+  </property>
+</bean>]]></source>
+
+    </subsection>
     </section>
   </body>
 </document>

@@ -115,6 +115,24 @@ XML 文件。
 在容器环境管理事务中,一个可能需要的属性是 transactionFactoryClass。请参考
 第四章(4.2 节)中来查看有关部分。
       </p>
+
+        <p>
+            <span class="label important">NOTE</span>
+            Since 1.3.0, <code>configuration</code> property has been added.
+            It can be specified a <code>Configuration</code> instance directly without MyBatis XML configuration file.
+            For example:
+        </p>
+
+        <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="configuration">
+    <bean class="org.apache.ibatis.session.Configuration">
+      <property name="mapUnderscoreToCamelCase" value="true"/>
+    </bean>
+  </property>
+</bean>]]></source>
+
       </subsection>
     </section>
   </body>

@@ -84,6 +84,24 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
 
       <p>컨테이너 관리 트랜잭션을 사용하는 환경에서 필요한 하나의 프로퍼티는 <code>transactionFactoryClass</code> 이다. 
       이에 관련해서는 트랜잭션을 다루는 장에서 볼수 있다. </p>
+
+      <p>
+        <span class="label important">NOTE</span>
+        Since 1.3.0, <code>configuration</code> property has been added.
+        It can be specified a <code>Configuration</code> instance directly without MyBatis XML configuration file.
+        For example:
+      </p>
+
+      <source><![CDATA[
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="configuration">
+    <bean class="org.apache.ibatis.session.Configuration">
+      <property name="mapUnderscoreToCamelCase" value="true"/>
+    </bean>
+  </property>
+</bean>]]></source>
+
       </subsection>
     </section>
   </body>
