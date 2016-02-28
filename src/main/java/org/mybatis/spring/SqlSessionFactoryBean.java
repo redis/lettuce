@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2016 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.mybatis.spring;
 
 import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.Assert.state;
 import static org.springframework.util.ObjectUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.tokenizeToStringArray;
@@ -66,6 +67,7 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
  * @author Hunter Presnall
  * @author Eduardo Macarron
  * @author Eddú Meléndez
+ * @author Kazuki Shimizu
  *
  * @see #setConfigLocation
  * @see #setDataSource
@@ -76,6 +78,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   private static final Log LOGGER = LogFactory.getLog(SqlSessionFactoryBean.class);
 
   private Resource configLocation;
+
+  private Configuration configuration;
 
   private Resource[] mapperLocations;
 
@@ -257,6 +261,15 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   }
 
   /**
+   * Set a customized MyBatis configuration.
+   * @param configuration MyBatis configuration
+   * @since 1.3.0
+   */
+  public void setConfiguration(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
+  /**
    * Set locations of MyBatis mapper files that are going to be merged into the {@code SqlSessionFactory}
    * configuration at runtime.
    *
@@ -351,6 +364,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   public void afterPropertiesSet() throws Exception {
     notNull(dataSource, "Property 'dataSource' is required");
     notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
+    state((configuration == null && configLocation == null) || !(configuration != null && configLocation != null),
+              "Property 'configuration' and 'configLocation' can not specified with together");
 
     this.sqlSessionFactory = buildSqlSessionFactory();
   }
@@ -360,6 +375,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    *
    * The default implementation uses the standard MyBatis {@code XMLConfigBuilder} API to build a
    * {@code SqlSessionFactory} instance based on an Reader.
+   * Since 1.3.0, it can be specified a {@link Configuration} instance directly(without config file).
    *
    * @return SqlSessionFactory
    * @throws IOException if loading the config file failed
@@ -369,12 +385,19 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     Configuration configuration;
 
     XMLConfigBuilder xmlConfigBuilder = null;
-    if (this.configLocation != null) {
+    if (this.configuration != null) {
+      configuration = this.configuration;
+      if (configuration.getVariables() == null) {
+        configuration.setVariables(this.configurationProperties);
+      } else if (this.configurationProperties != null) {
+        configuration.getVariables().putAll(this.configurationProperties);
+      }
+    } else if (this.configLocation != null) {
       xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
       configuration = xmlConfigBuilder.getConfiguration();
     } else {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Property 'configLocation' not specified, using default MyBatis Configuration");
+        LOGGER.debug("Property `configuration` or 'configLocation' not specified, using default MyBatis Configuration");
       }
       configuration = new Configuration();
       configuration.setVariables(this.configurationProperties);
