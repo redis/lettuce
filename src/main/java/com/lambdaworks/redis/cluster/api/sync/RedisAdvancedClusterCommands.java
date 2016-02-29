@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -228,4 +228,79 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      */
     void shutdown(boolean save);
 
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan()
+     */
+    KeyScanCursor<K> scan();
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param scanArgs scan arguments
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanArgs)
+     */
+    KeyScanCursor<K> scan(ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @param scanArgs scan arguments
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor, ScanArgs)
+     */
+    KeyScanCursor<K> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor)
+     */
+    KeyScanCursor<K> scan(ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @return StreamScanCursor scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel)
+     */
+    StreamScanCursor scan(KeyStreamingChannel<K> channel);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @param scanArgs scan arguments
+     * @return StreamScanCursor scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel, ScanArgs)
+     */
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @param scanArgs scan arguments
+     * @return StreamScanCursor scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
+     */
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @param channel streaming channel that receives a call for every key
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @return StreamScanCursor scan cursor.
+     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor, ScanArgs)
+     */
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }

@@ -4,17 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
+import com.lambdaworks.RandomKeys;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -484,7 +484,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     }
 
-
     @Test
     public void transactions() throws Exception {
 
@@ -495,6 +494,96 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         commands.multi();
         commands.set(key, value);
         commands.exec();
+    }
+
+    @Test
+    public void clusterScan() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        Set<String> allKeys = Sets.newHashSet();
+
+        KeyScanCursor<String> scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = sync.scan();
+            } else {
+                scanCursor = sync.scan(scanCursor);
+            }
+            allKeys.addAll(scanCursor.getKeys());
+        } while (!scanCursor.isFinished());
+
+        assertThat(allKeys).containsAll(RandomKeys.KEYS);
+
+    }
+
+    @Test
+    public void clusterScanWithArgs() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        Set<String> allKeys = Sets.newHashSet();
+
+        KeyScanCursor<String> scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = sync.scan(ScanArgs.Builder.matches("a*"));
+            } else {
+                scanCursor = sync.scan(scanCursor, ScanArgs.Builder.matches("a*"));
+            }
+            allKeys.addAll(scanCursor.getKeys());
+        } while (!scanCursor.isFinished());
+
+        assertThat(allKeys).containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+
+    }
+
+    @Test
+    public void clusterScanStreaming() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = sync.scan(adapter);
+            } else {
+                scanCursor = sync.scan(adapter, scanCursor);
+            }
+        } while (!scanCursor.isFinished());
+
+        assertThat(adapter.getList()).containsAll(RandomKeys.KEYS);
+
+    }
+
+    @Test
+    public void clusterScanStreamingWithArgs() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = sync.scan(adapter, ScanArgs.Builder.matches("a*"));
+            } else {
+                scanCursor = sync.scan(adapter, scanCursor, ScanArgs.Builder.matches("a*"));
+            }
+        } while (!scanCursor.isFinished());
+
+        assertThat(adapter.getList()).containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+
     }
 
     protected String value(int i) {

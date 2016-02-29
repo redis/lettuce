@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -17,8 +18,15 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
 
     private CountDownLatch latch = new CountDownLatch(1);
 
-    public PipelinedRedisFuture(Map<?, ? extends RedisFuture<?>> executions,
-            Function<PipelinedRedisFuture<V>, V> converter) {
+    public PipelinedRedisFuture(CompletionStage<V> completionStage, Function<V, V> converter) {
+        completionStage.thenAccept(v -> complete(converter.apply(v)))
+                .exceptionally(throwable -> {
+                    completeExceptionally(throwable);
+                    return null;
+                });
+    }
+
+    public PipelinedRedisFuture(Map<?, ? extends RedisFuture<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
 
         CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[executions.size()]))
                 .thenRun(() -> complete(converter.apply(this))).exceptionally(throwable -> {
