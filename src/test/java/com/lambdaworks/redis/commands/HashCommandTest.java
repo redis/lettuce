@@ -3,6 +3,7 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     public void hincrbyfloat() throws Exception {
         assertThat(redis.hincrbyfloat(key, "one", 1.0)).isEqualTo(1.0);
         assertThat(redis.hincrbyfloat(key, "one", -2.0)).isEqualTo(-1.0);
+        assertThat(redis.hincrbyfloat(key, "one", 1.23)).isEqualTo(0.23, offset(0.001));
     }
 
     @Test
