@@ -3,25 +3,30 @@ package com.lambdaworks.redis.cluster;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import rx.Observable;
+import rx.functions.Func1;
+
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * Methods to support a Cluster-wide SCAN operation over multiple hosts.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 class ClusterScanSupport {
 
-    final static ScanCursorMapper<KeyScanCursor<?>> keyScanCursorMapper = new ScanCursorMapper<KeyScanCursor<?>>() {
+    /**
+     * Map a {@link RedisFuture} of {@link KeyScanCursor} to a {@link RedisFuture} of {@link ClusterKeyScanCursor}.
+     */
+    final static ScanCursorMapper<RedisFuture<KeyScanCursor<?>>> futureKeyScanCursorMapper = new ScanCursorMapper<RedisFuture<KeyScanCursor<?>>>() {
         @Override
         public RedisFuture<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId,
-                                                 RedisFuture<KeyScanCursor<?>> cursor) {
+                RedisFuture<KeyScanCursor<?>> cursor) {
             return new PipelinedRedisFuture<>(cursor, new Function<KeyScanCursor<?>, KeyScanCursor<?>>() {
                 @Override
                 public KeyScanCursor<?> apply(KeyScanCursor<?> result) {
@@ -31,12 +36,14 @@ class ClusterScanSupport {
         }
     };
 
-    final static ScanCursorMapper<StreamScanCursor> streamScanCursorMapper = new ScanCursorMapper<StreamScanCursor>() {
+    /**
+     * Map a {@link RedisFuture} of {@link StreamScanCursor} to a {@link RedisFuture} of {@link ClusterStreamScanCursor}.
+     */
+    final static ScanCursorMapper<RedisFuture<StreamScanCursor>> futureStreamScanCursorMapper = new ScanCursorMapper<RedisFuture<StreamScanCursor>>() {
         @Override
         public RedisFuture<StreamScanCursor> map(List<String> nodeIds, String currentNodeId,
-                                                 RedisFuture<StreamScanCursor> cursor) {
-            return new PipelinedRedisFuture<>(
-                    cursor, new Function<StreamScanCursor, StreamScanCursor>() {
+                RedisFuture<StreamScanCursor> cursor) {
+            return new PipelinedRedisFuture<>(cursor, new Function<StreamScanCursor, StreamScanCursor>() {
                 @Override
                 public StreamScanCursor apply(StreamScanCursor result) {
                     return new ClusterStreamScanCursor(nodeIds, currentNodeId, result);
@@ -45,67 +52,90 @@ class ClusterScanSupport {
         }
     };
 
-    static <K> ScanCursorMapper<KeyScanCursor<K>> keyScanCursorMapper() {
-        return (ScanCursorMapper) keyScanCursorMapper;
-    }
-
-    static <K> ScanCursorMapper<StreamScanCursor> streamScanCursorMapper() {
-        return streamScanCursorMapper;
-    }
+    /**
+     * Map a {@link Observable} of {@link KeyScanCursor} to a {@link Observable} of {@link ClusterKeyScanCursor}.
+     */
+    final static ScanCursorMapper<Observable<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = new ScanCursorMapper<Observable<KeyScanCursor<?>>>() {
+        @Override
+        public Observable<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId, Observable<KeyScanCursor<?>> cursor) {
+            return cursor.map(new Func1<KeyScanCursor<?>, KeyScanCursor<?>>() {
+                @Override
+                public KeyScanCursor<?> call(KeyScanCursor<?> keyScanCursor) {
+                    return new ClusterKeyScanCursor<>(nodeIds, currentNodeId, keyScanCursor);
+                }
+            });
+        }
+    };
 
     /**
-     * Perform a SCAN in the cluster.
-     * @param connection
-     * @param cursor
-     * @param scanFunction
-     * @param mapper
-     * @param <T>
-     * @param <K>
-     * @param <V>
+     * Map a {@link Observable} of {@link StreamScanCursor} to a {@link Observable} of {@link ClusterStreamScanCursor}.
+     */
+    final static ScanCursorMapper<Observable<StreamScanCursor>> reactiveStreamScanCursorMapper = new ScanCursorMapper<Observable<StreamScanCursor>>() {
+        @Override
+        public Observable<StreamScanCursor> map(List<String> nodeIds, String currentNodeId, Observable<StreamScanCursor> cursor) {
+            return cursor.map(new Func1<StreamScanCursor, StreamScanCursor>() {
+                @Override
+                public StreamScanCursor call(StreamScanCursor streamScanCursor) {
+                    return new ClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor);
+                }
+            });
+        }
+    };
+
+    /**
+     * Retrieve the cursor to continue the scan.
+     * 
+     * @param scanCursor can be {@literal null}.
      * @return
      */
-    static <T extends ScanCursor, K, V> RedisFuture<T> clusterScan(StatefulRedisClusterConnection<K, V> connection, T cursor,
-            BiFunction<RedisKeyAsyncCommands<K, V>, ScanCursor, RedisFuture<T>> scanFunction, ScanCursorMapper<T> mapper) {
-
-        List<String> nodeIds;
-        String currentNodeId;
-        ScanCursor continuationCursor = null;
-
-        if (cursor == null) {
-            nodeIds = getNodeIds(connection);
-
-            if (nodeIds.isEmpty()) {
-                throw new RedisException("No available nodes for a scan");
-            }
-
-            currentNodeId = nodeIds.get(0);
-        } else {
-            if (!(cursor instanceof ClusterScanCursor)) {
-                throw new IllegalArgumentException(
-                        "A scan in Redis Cluster mode requires to reuse the resulting cursor from the previous scan invocation");
-            }
-
-            ClusterScanCursor clusterScanCursor = (ClusterScanCursor) cursor;
-            nodeIds = clusterScanCursor.getNodeIds();
-            if (clusterScanCursor.isScanOnCurrentNodeFinished()) {
-                continuationCursor = null;
-            }else{
-                continuationCursor = cursor;
-            }
-
-            currentNodeId = getNodeIdForNextScanIteration(nodeIds, clusterScanCursor);
+    static ScanCursor getContinuationCursor(ScanCursor scanCursor) {
+        if (ScanCursor.INITIAL.equals(scanCursor)) {
+            return scanCursor;
         }
 
-        RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
-        return mapper.map(nodeIds, currentNodeId, scanCursor);
+        assertClusterScanCursor(scanCursor);
+
+        ClusterScanCursor clusterScanCursor = (ClusterScanCursor) scanCursor;
+        if (clusterScanCursor.isScanOnCurrentNodeFinished()) {
+            return ScanCursor.FINISHED;
+        }
+
+        return scanCursor;
+    }
+
+    static <K, V> List<String> getNodeIds(StatefulRedisClusterConnection<K, V> connection, ScanCursor cursor) {
+        if (ScanCursor.INITIAL.equals(cursor)) {
+            List<String> nodeIds = getNodeIds(connection);
+
+            assertHasNodes(nodeIds);
+
+            return nodeIds;
+        }
+
+        assertClusterScanCursor(cursor);
+
+        ClusterScanCursor clusterScanCursor = (ClusterScanCursor) cursor;
+        return clusterScanCursor.getNodeIds();
+    }
+
+    static String getCurrentNodeId(ScanCursor cursor, List<String> nodeIds) {
+
+        if (ScanCursor.INITIAL.equals(cursor)) {
+            assertHasNodes(nodeIds);
+            return nodeIds.get(0);
+        }
+
+        assertClusterScanCursor(cursor);
+        return getNodeIdForNextScanIteration(nodeIds, (ClusterScanCursor) cursor);
     }
 
     /**
      * Retrieve a list of node Ids to use for the SCAN operation.
+     * 
      * @param connection
      * @return
      */
-    private static  List<String> getNodeIds(StatefulRedisClusterConnection<?, ?> connection) {
+    private static List<String> getNodeIds(StatefulRedisClusterConnection<?, ?> connection) {
         List<String> nodeIds;
         nodeIds = new ArrayList<>();
 
@@ -139,7 +169,7 @@ class ClusterScanSupport {
         return nodeIds;
     }
 
-    static String getNodeIdForNextScanIteration(List<String> nodeIds, ClusterScanCursor clusterKeyScanCursor) {
+    private static String getNodeIdForNextScanIteration(List<String> nodeIds, ClusterScanCursor clusterKeyScanCursor) {
         if (clusterKeyScanCursor.isScanOnCurrentNodeFinished()) {
             if (clusterKeyScanCursor.isFinished()) {
                 throw new IllegalStateException("Cluster scan is finished");
@@ -152,12 +182,42 @@ class ClusterScanSupport {
         return clusterKeyScanCursor.getCurrentNodeId();
     }
 
+    private static void assertClusterScanCursor(ScanCursor cursor) {
+        if (!(cursor instanceof ClusterScanCursor)) {
+            throw new IllegalArgumentException(
+                    "A scan in Redis Cluster mode requires to reuse the resulting cursor from the previous scan invocation");
+        }
+    }
+
+    private static void assertHasNodes(List<String> nodeIds) {
+        if (nodeIds.isEmpty()) {
+            throw new RedisException("No available nodes for a scan");
+        }
+    }
+
+    static <K> ScanCursorMapper<RedisFuture<KeyScanCursor<K>>> asyncClusterKeyScanCursorMapper() {
+        return (ScanCursorMapper) futureKeyScanCursorMapper;
+    }
+
+    static ScanCursorMapper<RedisFuture<StreamScanCursor>> asyncClusterStreamScanCursorMapper() {
+        return futureStreamScanCursorMapper;
+    }
+
+    static <K> ScanCursorMapper<Observable<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
+        return (ScanCursorMapper) reactiveKeyScanCursorMapper;
+    }
+
+    static ScanCursorMapper<Observable<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
+        return reactiveStreamScanCursorMapper;
+    }
+
     /**
      * Mapper between the node operation cursor and the cluster scan cursor.
+     *
      * @param <T>
      */
     interface ScanCursorMapper<T> {
-        RedisFuture<T> map(List<String> nodeIds, String currentNodeId, RedisFuture<T> cursor);
+        T map(List<String> nodeIds, String currentNodeId, T cursor);
     }
 
     /**
@@ -173,7 +233,12 @@ class ClusterScanSupport {
         boolean isFinished();
     }
 
-    static class ClusterKeyScanCursor<K> extends KeyScanCursor<K> implements ClusterScanCursor {
+    /**
+     * State object for a cluster-wide SCAN using Key results.
+     * 
+     * @param <K>
+     */
+    private static class ClusterKeyScanCursor<K> extends KeyScanCursor<K> implements ClusterScanCursor {
         final List<String> nodeIds;
         final String currentNodeId;
         final KeyScanCursor<K> cursor;
@@ -209,7 +274,10 @@ class ClusterScanSupport {
         }
     }
 
-    static class ClusterStreamScanCursor extends StreamScanCursor implements ClusterScanCursor {
+    /**
+     * State object for a cluster-wide SCAN using streaming.
+     */
+    private static class ClusterStreamScanCursor extends StreamScanCursor implements ClusterScanCursor {
         final List<String> nodeIds;
         final String currentNodeId;
         final StreamScanCursor cursor;

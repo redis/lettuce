@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.cluster.ClusterScanSupport.asyncClusterKeyScanCursorMapper;
+import static com.lambdaworks.redis.cluster.ClusterScanSupport.asyncClusterStreamScanCursorMapper;
 import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
 
 import java.lang.reflect.Proxy;
@@ -407,49 +409,71 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan() {
-        return clusterScan(null, (connection, cursor) -> connection.scan(), ClusterScanSupport.keyScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), asyncClusterKeyScanCursorMapper());
     }
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
-        return clusterScan(null,(connection, cursor) -> connection.scan(scanArgs), ClusterScanSupport.keyScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs),
+                asyncClusterKeyScanCursorMapper());
     }
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs), ClusterScanSupport.keyScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs),
+                asyncClusterKeyScanCursorMapper());
     }
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor), ClusterScanSupport.keyScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor), asyncClusterKeyScanCursorMapper());
     }
 
     @Override
     public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
-        return clusterScan(null, (connection, cursor) -> connection.scan(channel), ClusterScanSupport.streamScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel),
+                asyncClusterStreamScanCursorMapper());
     }
 
     @Override
     public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
-        return clusterScan(null, (connection, cursor) -> connection.scan(channel, scanArgs), ClusterScanSupport.streamScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
+                asyncClusterStreamScanCursorMapper());
     }
 
     @Override
     public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs), ClusterScanSupport
-                .streamScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
+                asyncClusterStreamScanCursorMapper());
     }
 
     @Override
     public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor), ClusterScanSupport.streamScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor),
+                asyncClusterStreamScanCursorMapper());
     }
 
-    private <T extends ScanCursor, S extends T> RedisFuture<S> clusterScan(T cursor,
-            BiFunction<RedisKeyAsyncCommands<K, V>, ScanCursor, RedisFuture<S>> scanFunction, ScanCursorMapper<S> resultMapper) {
-        return ClusterScanSupport.clusterScan(getStatefulConnection(), cursor, (BiFunction) scanFunction,
-                (ScanCursorMapper) resultMapper);
+    private <T extends ScanCursor> RedisFuture<T> clusterScan(ScanCursor cursor,
+            BiFunction<RedisKeyAsyncCommands<K, V>, ScanCursor, RedisFuture<T>> scanFunction,
+            ScanCursorMapper<RedisFuture<T>> resultMapper) {
+
+        return clusterScan(getStatefulConnection(), cursor, scanFunction, resultMapper);
+    }
+
+    /**
+     * Perform a SCAN in the cluster.
+     *
+     */
+    static <T extends ScanCursor, K, V> RedisFuture<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
+            ScanCursor cursor, BiFunction<RedisKeyAsyncCommands<K, V>, ScanCursor, RedisFuture<T>> scanFunction,
+            ScanCursorMapper<RedisFuture<T>> mapper) {
+
+        List<String> nodeIds = ClusterScanSupport.getNodeIds(connection, cursor);
+        String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
+        ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
+
+        RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
+        return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 
 }

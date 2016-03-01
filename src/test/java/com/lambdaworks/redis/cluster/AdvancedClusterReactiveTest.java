@@ -5,8 +5,13 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Sets;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -17,8 +22,6 @@ import rx.exceptions.CompositeException;
 
 import com.google.common.collect.Lists;
 import com.lambdaworks.RandomKeys;
-import com.lambdaworks.redis.ListStreamingAdapter;
-import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
@@ -279,6 +282,97 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         } catch (Exception e) {
             assertThat(error.get()).isTrue();
         }
+    }
+
+    @Test
+    public void clusterScan() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        Set<String> allKeys = Sets.newHashSet();
+
+        KeyScanCursor<String> scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = getSingle(commands.scan());
+            } else {
+                scanCursor = getSingle(commands.scan(scanCursor));
+            }
+            allKeys.addAll(scanCursor.getKeys());
+        } while (!scanCursor.isFinished());
+
+        assertThat(allKeys).containsAll(RandomKeys.KEYS);
+
+    }
+
+    @Test
+    public void clusterScanWithArgs() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        Set<String> allKeys = Sets.newHashSet();
+
+        KeyScanCursor<String> scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = getSingle(commands.scan(ScanArgs.Builder.matches("a*")));
+            } else {
+                scanCursor = getSingle(commands.scan(scanCursor, ScanArgs.Builder.matches("a*")));
+            }
+            allKeys.addAll(scanCursor.getKeys());
+        } while (!scanCursor.isFinished());
+
+        assertThat(allKeys).containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+
+    }
+
+    @Test
+    public void clusterScanStreaming() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = getSingle(commands.scan(adapter));
+            } else {
+                scanCursor = getSingle(commands.scan(adapter, scanCursor));
+            }
+        } while (!scanCursor.isFinished());
+
+        assertThat(adapter.getList()).containsAll(RandomKeys.KEYS);
+
+    }
+
+    @Test
+    public void clusterScanStreamingWithArgs() throws Exception {
+
+        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        sync.mset(RandomKeys.MAP);
+
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor scanCursor = null;
+        do {
+
+            if (scanCursor == null) {
+                scanCursor = getSingle(commands.scan(adapter, ScanArgs.Builder.matches("a*")));
+            } else {
+                scanCursor = getSingle(commands.scan(adapter, scanCursor, ScanArgs.Builder.matches("a*")));
+            }
+        } while (!scanCursor.isFinished());
+
+        assertThat(adapter.getList()).containsAll(
+                RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+
     }
 
     private <T> T getSingle(Observable<T> observable) {

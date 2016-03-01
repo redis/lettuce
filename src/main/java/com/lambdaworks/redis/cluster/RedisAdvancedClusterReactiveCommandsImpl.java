@@ -1,25 +1,27 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.cluster.ClusterScanSupport.reactiveClusterKeyScanCursorMapper;
+import static com.lambdaworks.redis.cluster.ClusterScanSupport.reactiveClusterStreamScanCursorMapper;
 import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.api.rx.Success;
 import rx.Observable;
 import rx.internal.operators.OperatorConcat;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.lambdaworks.redis.AbstractRedisReactiveCommands;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
+import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
@@ -323,12 +325,73 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return getStatefulConnection().getConnection(host, port).reactive();
     }
 
-    static class FlattenTransform<T> implements Observable.Transformer<Iterable<T>, T> {
+    @Override
+    public Observable<KeyScanCursor<K>> scan() {
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), reactiveClusterKeyScanCursorMapper());
+    }
 
-        @Override
-        public Observable<T> call(Observable<Iterable<T>> source) {
-            return source.flatMap(values -> Observable.from(values));
-        }
+    @Override
+    public Observable<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs),
+                reactiveClusterKeyScanCursorMapper());
+    }
+
+    @Override
+    public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs),
+                reactiveClusterKeyScanCursorMapper());
+    }
+
+    @Override
+    public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor), reactiveClusterKeyScanCursorMapper());
+    }
+
+    @Override
+    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel),
+                reactiveClusterStreamScanCursorMapper());
+    }
+
+    @Override
+    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
+                reactiveClusterStreamScanCursorMapper());
+    }
+
+    @Override
+    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
+                reactiveClusterStreamScanCursorMapper());
+    }
+
+    @Override
+    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor),
+                reactiveClusterStreamScanCursorMapper());
+    }
+
+    private <T extends ScanCursor> Observable<T> clusterScan(ScanCursor cursor,
+            BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
+            ClusterScanSupport.ScanCursorMapper<Observable<T>> resultMapper) {
+
+        return clusterScan(getStatefulConnection(), cursor, scanFunction, (ClusterScanSupport.ScanCursorMapper) resultMapper);
+    }
+
+    /**
+     * Perform a SCAN in the cluster.
+     * 
+     */
+    static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
+            ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
+            ClusterScanSupport.ScanCursorMapper<Observable<T>> mapper) {
+
+        List<String> nodeIds = ClusterScanSupport.getNodeIds(connection, cursor);
+        String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
+        ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
+
+        Observable<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).reactive(), continuationCursor);
+        return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 
     private <T> Observable<T> pipeliningWithMap(Map<K, V> map, Function<Map<K, V>, Observable<T>> function,
@@ -348,4 +411,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         return resultFunction.apply(Observable.merge(observables));
     }
+
+    static class FlattenTransform<T> implements Observable.Transformer<Iterable<T>, T> {
+
+        @Override
+        public Observable<T> call(Observable<Iterable<T>> source) {
+            return source.flatMap(values -> Observable.from(values));
+        }
+    }
+
 }

@@ -8,8 +8,28 @@ package com.lambdaworks.redis;
  */
 public class ScanCursor {
 
+    public final static ScanCursor FINISHED = new ImmutableScanCursor("0", true);
+    public final static ScanCursor INITIAL = new ImmutableScanCursor("0", false);
+
     private String cursor;
     private boolean finished;
+
+    /**
+     * Creates a new {@link ScanCursor}.
+     */
+    public ScanCursor() {
+    }
+
+    /**
+     * Creates a new {@link ScanCursor}.
+     * 
+     * @param cursor
+     * @param finished
+     */
+    public ScanCursor(String cursor, boolean finished) {
+        this.cursor = cursor;
+        this.finished = finished;
+    }
 
     /**
      * 
@@ -50,5 +70,22 @@ public class ScanCursor {
         ScanCursor scanCursor = new ScanCursor();
         scanCursor.setCursor(cursor);
         return scanCursor;
+    }
+
+    private static class ImmutableScanCursor extends ScanCursor {
+
+        public ImmutableScanCursor(String cursor, boolean finished) {
+            super(cursor, finished);
+        }
+
+        @Override
+        public void setCursor(String cursor) {
+            throw new UnsupportedOperationException("setCursor not supported on " + getClass().getSimpleName());
+        }
+
+        @Override
+        public void setFinished(boolean finished) {
+            throw new UnsupportedOperationException("setFinished not supported on " + getClass().getSimpleName());
+        }
     }
 }

@@ -570,7 +570,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         StreamScanCursor scanCursor = null;
         do {
@@ -582,8 +582,19 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList()).containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(adapter.getList()).containsAll(
+                RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void clusterScanCursorFinished() throws Exception {
+        syncCommands.scan(ScanCursor.FINISHED);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void clusterScanCursorNotReused() throws Exception {
+        syncCommands.scan(ScanCursor.of("dummy"));
     }
 
     protected String value(int i) {
