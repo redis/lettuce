@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -116,7 +120,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Delete one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
      * 
      * @param keys the keys
-     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
+     * @return Long integer-reply The number of keys that were removed.
+     * @see RedisKeyAsyncCommands#del(Object[])
      */
     RedisFuture<Long> del(K... keys);
 
@@ -124,7 +129,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Unlink one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
      *
      * @param keys the keys
-     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
+     * @return Long integer-reply The number of keys that were removed.
+     * @see RedisKeyAsyncCommands#unlink(Object[])
      */
     RedisFuture<Long> unlink(K... keys);
 
@@ -133,7 +139,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * cluster nodes.
      * 
      * @param keys the key
-     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
+     * @return List&lt;V&gt; array-reply list of values at the specified keys.
+     * @see RedisStringAsyncCommands#mget(Object[])
      */
     RedisFuture<List<V>> mget(K... keys);
 
@@ -142,7 +149,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * cluster nodes.
      * 
      * @param map the map
-     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
+     * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
+     * @see RedisStringAsyncCommands#mset(Map)
      */
     RedisFuture<String> mset(Map<K, V> map);
 
@@ -151,9 +159,10 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * multiple calls to the particular cluster nodes.
      * 
      * @param map the null
-     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
+     * @return Boolean integer-reply specifically:
      * 
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
+     * @see RedisStringAsyncCommands#msetnx(Map)
      */
     RedisFuture<Boolean> msetnx(Map<K, V> map);
 
@@ -162,6 +171,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param name the client name
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @see RedisServerAsyncCommands#clientSetname(Object)
      */
     RedisFuture<String> clientSetname(K name);
 
@@ -169,6 +179,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Remove all keys from all databases on all cluster masters with pipelining.
      *
      * @return String simple-string-reply
+     * @see RedisServerAsyncCommands#flushall()
      */
     RedisFuture<String> flushall();
 
@@ -176,6 +187,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Remove all keys from the current database on all cluster masters with pipelining.
      *
      * @return String simple-string-reply
+     * @see RedisServerAsyncCommands#flushdb()
      */
     RedisFuture<String> flushdb();
 
@@ -183,6 +195,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Return the number of keys in the selected database on all cluster masters.
      * 
      * @return Long integer-reply
+     * @see RedisServerAsyncCommands#dbsize()
      */
     RedisFuture<Long> dbsize();
 
@@ -191,6 +204,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param pattern the pattern type: patternkey (pattern)
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @see RedisKeyAsyncCommands#keys(Object)
      */
     RedisFuture<List<K>> keys(K pattern);
 
@@ -200,6 +214,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
+     * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, Object)
      */
     RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
@@ -207,6 +222,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Return a random key from the keyspace on a random master.
      *
      * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @see RedisKeyAsyncCommands#randomkey()
      */
     RedisFuture<V> randomkey();
 
@@ -214,6 +230,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Remove all the scripts from the script cache on all cluster nodes.
      *
      * @return String simple-string-reply
+     * @see RedisScriptingAsyncCommands#scriptFlush()
      */
     RedisFuture<String> scriptFlush();
 
@@ -221,6 +238,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Kill the script currently in execution on all cluster nodes. This call does not fail even if no scripts are running.
      *
      * @return String simple-string-reply, always {@literal OK}.
+     * @see RedisScriptingAsyncCommands#scriptKill()
      */
     RedisFuture<String> scriptKill();
 
@@ -228,6 +246,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      * 
      * @param save {@literal true} force save operation
+     * @see RedisServerAsyncCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
 
@@ -236,26 +255,28 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanArgs)
+     * @see RedisKeyAsyncCommands#scan(ScanArgs)
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #scan()} call.
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor, ScanArgs)
+     * @see RedisKeyAsyncCommands#scan(ScanCursor, ScanArgs)
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #scan()} call.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor)
+     * @see RedisKeyAsyncCommands#scan(ScanCursor)
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
@@ -264,7 +285,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param channel streaming channel that receives a call for every key
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel)
+     * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel)
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
@@ -274,7 +295,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param channel streaming channel that receives a call for every key
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel, ScanArgs)
+     * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel, ScanArgs)
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
@@ -282,10 +303,11 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Incrementally iterate the keys space over the whole Cluster.
      *
      * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #scan()} call.
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
+     * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -293,9 +315,10 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * Incrementally iterate the keys space over the whole Cluster.
      *
      * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous {@link #scan()} call.
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #scan()} call.
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor, ScanArgs)
+     * @see RedisKeyAsyncCommands#scan(ScanCursor, ScanArgs)
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }

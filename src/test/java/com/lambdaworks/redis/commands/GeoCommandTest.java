@@ -10,12 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.GeoArgs;
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.GeoRadiusStoreArgs;
-import com.lambdaworks.redis.GeoWithin;
-import com.lambdaworks.redis.ScoredValue;
+import com.lambdaworks.redis.*;
 
 public class GeoCommandTest extends AbstractRedisClientTest {
 
@@ -138,8 +133,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStore(resultKey));
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1)
+                .desc().withStore(resultKey));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
@@ -167,8 +162,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1)
+                .desc().withStoreDist("38o54"));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -197,6 +192,22 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         Set<String> georadiusbymember = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km);
         assertThat(georadiusbymember).hasSize(2).contains("Bahn", "Weinheim");
+    }
+
+    @Test
+    public void georadiusbymemberStoreDistWithCountAndSort() throws Exception {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1).desc()
+                .withStoreDist("38o54"));
+        assertThat(result).isEqualTo(1);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(1);
+
+        assertThat(dist.get(0).score).isBetween(2d, 3d);
     }
 
     @Test

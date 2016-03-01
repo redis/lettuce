@@ -8,6 +8,10 @@ import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;
+import com.lambdaworks.redis.api.sync.RedisKeyCommands;
+import com.lambdaworks.redis.api.sync.RedisScriptingCommands;
+import com.lambdaworks.redis.api.sync.RedisServerCommands;
+import com.lambdaworks.redis.api.sync.RedisStringCommands;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -117,6 +121,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
+     * @see RedisKeyCommands#del(Object[])
      */
     Long del(K... keys);
 
@@ -125,6 +130,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
+     * @see RedisKeyCommands#unlink(Object[])
      */
     Long unlink(K... keys);
 
@@ -134,6 +140,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * 
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
+     * @see RedisStringCommands#mget(Object[])
      */
     List<V> mget(K... keys);
 
@@ -143,6 +150,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * 
      * @param map the map
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
+     * @see RedisStringCommands#mset(Map)
      */
     String mset(Map<K, V> map);
 
@@ -154,6 +162,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return Boolean integer-reply specifically:
      * 
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
+     * @see RedisStringCommands#msetnx(Map)
      */
     Boolean msetnx(Map<K, V> map);
 
@@ -162,6 +171,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param name the client name
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @see RedisServerCommands#clientSetname(Object)
      */
     String clientSetname(K name);
 
@@ -169,6 +179,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Remove all keys from all databases on all cluster masters with pipelining.
      *
      * @return String simple-string-reply
+     * @see RedisServerCommands#flushall()
      */
     String flushall();
 
@@ -176,6 +187,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Remove all keys from the current database on all cluster masters with pipelining.
      *
      * @return String simple-string-reply
+     * @see RedisServerCommands#flushdb()
      */
     String flushdb();
 
@@ -183,6 +195,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Return the number of keys in the selected database on all cluster masters.
      *
      * @return Long integer-reply
+     * @see RedisServerCommands#dbsize()
      */
     Long dbsize();
 
@@ -191,6 +204,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param pattern the pattern type: patternkey (pattern)
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @see RedisKeyCommands#keys(Object)
      */
     List<K> keys(K pattern);
 
@@ -200,6 +214,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
+     * @see RedisKeyCommands#keys(KeyStreamingChannel, Object)
      */
     Long keys(KeyStreamingChannel<K> channel, K pattern);
 
@@ -207,6 +222,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Return a random key from the keyspace on a random master.
      *
      * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @see RedisKeyCommands#randomkey()
      */
     V randomkey();
 
@@ -214,6 +230,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Remove all the scripts from the script cache on all cluster nodes.
      *
      * @return String simple-string-reply
+     * @see RedisScriptingCommands#scriptFlush()
      */
     String scriptFlush();
 
@@ -221,6 +238,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Kill the script currently in execution on all cluster nodes. This call does not fail even if no scripts are running.
      *
      * @return String simple-string-reply, always {@literal OK}.
+     * @see RedisScriptingCommands#scriptKill()
      */
     String scriptKill();
 
@@ -228,6 +246,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      * 
      * @param save {@literal true} force save operation
+     * @see RedisServerCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
 
@@ -235,7 +254,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Incrementally iterate the keys space over the whole Cluster.
      *
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan()
+     * @see RedisKeyCommands#scan()
      */
     KeyScanCursor<K> scan();
 
@@ -244,7 +263,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanArgs)
+     * @see RedisKeyCommands#scan(ScanArgs)
      */
     KeyScanCursor<K> scan(ScanArgs scanArgs);
 
@@ -255,7 +274,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *        {@link #scan()} call.
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor, ScanArgs)
+     * @see RedisKeyCommands#scan(ScanCursor, ScanArgs)
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -265,7 +284,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
      *        {@link #scan()} call.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor)
+     * @see RedisKeyCommands#scan(ScanCursor)
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor);
 
@@ -274,7 +293,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param channel streaming channel that receives a call for every key
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel)
+     * @see RedisKeyCommands#scan(KeyStreamingChannel)
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel);
 
@@ -284,7 +303,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param channel streaming channel that receives a call for every key
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel, ScanArgs)
+     * @see RedisKeyCommands#scan(KeyStreamingChannel, ScanArgs)
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
@@ -296,7 +315,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *        {@link #scan()} call.
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
+     * @see RedisKeyCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -307,7 +326,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
      *        {@link #scan()} call.
      * @return StreamScanCursor scan cursor.
-     * @see com.lambdaworks.redis.api.sync.RedisKeyCommands#scan(ScanCursor, ScanArgs)
+     * @see RedisKeyCommands#scan(ScanCursor, ScanArgs)
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }
