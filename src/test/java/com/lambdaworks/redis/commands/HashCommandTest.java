@@ -15,6 +15,7 @@ import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
 
 public class HashCommandTest extends AbstractRedisClientTest {
+
     @Test
     public void hdel() throws Exception {
         assertThat(redis.hdel(key, "one")).isEqualTo(0);
@@ -173,7 +174,6 @@ public class HashCommandTest extends AbstractRedisClientTest {
         assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
     }
 
-
     @Test
     public void hset() throws Exception {
         assertThat(redis.hset(key, "one", "1")).isTrue();
@@ -218,18 +218,28 @@ public class HashCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
+    }
 
-        MapScanCursor<String, String> cursor2 = redis.hscan(key, cursor);
+    @Test
+    public void hscanWithCursor() throws Exception {
+        redis.hset(key, key, value);
 
-        assertThat(cursor2.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
-        assertThat(cursor2.getMap()).isEqualTo(ImmutableMap.of(key, value));
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanCursor.INITIAL);
 
-        MapScanCursor<String, String> cursor3 = redis.hscan(key, cursor, ScanArgs.Builder.limit(2));
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
+    }
 
-        assertThat(cursor3.getCursor()).isEqualTo("0");
-        assertThat(cursor3.isFinished()).isTrue();
-        assertThat(cursor3.getMap()).isEqualTo(ImmutableMap.of(key, value));
+    @Test
+    public void hscanWithCursorAndArgs() throws Exception {
+        redis.hset(key, key, value);
+
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanCursor.INITIAL, ScanArgs.Builder.limit(2));
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
     }
 
     @Test
@@ -243,25 +253,42 @@ public class HashCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getMap()).isEqualTo(ImmutableMap.of(key, value));
+    }
 
-        StreamScanCursor cursor2 = redis.hscan(adapter, key, cursor);
+    @Test
+    public void hscanStreamingWithCursor() throws Exception {
+        redis.hset(key, key, value);
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
 
-        assertThat(cursor2.getCount()).isEqualTo(1);
-        assertThat(cursor2.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
+        StreamScanCursor cursor = redis.hscan(adapter, key, ScanCursor.INITIAL);
 
-        StreamScanCursor cursor3 = redis.hscan(adapter, key, cursor, ScanArgs.Builder.limit(100).match("*"));
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+    }
+
+    @Test
+    public void hscanStreamingWithCursorAndArgs() throws Exception {
+        redis.hset(key, key, value);
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+
+        StreamScanCursor cursor3 = redis.hscan(adapter, key, ScanCursor.INITIAL, ScanArgs.Builder.limit(100).match("*"));
 
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
         assertThat(cursor3.isFinished()).isTrue();
+    }
 
-        StreamScanCursor cursor4 = redis.hscan(adapter, key);
+    @Test
+    public void hscanStreamingWithArgs() throws Exception {
+        redis.hset(key, key, value);
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
 
-        assertThat(cursor4.getCount()).isEqualTo(1);
-        assertThat(cursor4.getCursor()).isEqualTo("0");
-        assertThat(cursor4.isFinished()).isTrue();
+        StreamScanCursor cursor = redis.hscan(adapter, key);
 
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
     }
 
     @Test

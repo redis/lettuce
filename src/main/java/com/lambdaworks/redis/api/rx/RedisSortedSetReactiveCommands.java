@@ -712,7 +712,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return ScoredValueScanCursor&lt;V&gt; scan cursor.
      */
@@ -722,7 +722,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return ScoredValueScanCursor&lt;V&gt; scan cursor.
      */
     Observable<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor);
@@ -751,7 +751,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * 
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
@@ -762,7 +762,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
     Observable<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);

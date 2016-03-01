@@ -17,13 +17,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.ListStreamingAdapter;
-import com.lambdaworks.redis.ScanArgs;
-import com.lambdaworks.redis.ScoredValueScanCursor;
-import com.lambdaworks.redis.ScoredValueStreamingAdapter;
-import com.lambdaworks.redis.StreamScanCursor;
-import com.lambdaworks.redis.ZAddArgs;
+import com.lambdaworks.redis.*;
 
 public class SortedSetCommandTest extends AbstractRedisClientTest {
 
@@ -198,12 +192,12 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertThat(redis.zrangebyscoreWithScores(key, 2.0, 3.0)).isEqualTo(svlist(sv(2.0, "b"), sv(3.0, "c")));
         assertThat(redis.zrangebyscoreWithScores(key, "(1.0", "(4.0")).isEqualTo(svlist(sv(2.0, "b"), sv(3.0, "c")));
-        assertThat(redis.zrangebyscoreWithScores(key, NEGATIVE_INFINITY, POSITIVE_INFINITY))
-                .isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
-        assertThat(redis.zrangebyscoreWithScores(key, "-inf", "+inf"))
-                .isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
-        assertThat(redis.zrangebyscoreWithScores(key, 0.0, 4.0, 1, 3))
-                .isEqualTo(svlist(sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
+        assertThat(redis.zrangebyscoreWithScores(key, NEGATIVE_INFINITY, POSITIVE_INFINITY)).isEqualTo(
+                svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
+        assertThat(redis.zrangebyscoreWithScores(key, "-inf", "+inf")).isEqualTo(
+                svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
+        assertThat(redis.zrangebyscoreWithScores(key, 0.0, 4.0, 1, 3)).isEqualTo(
+                svlist(sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
         assertThat(redis.zrangebyscoreWithScores(key, "-inf", "+inf", 2, 2)).isEqualTo(svlist(sv(3.0, "c"), sv(4.0, "d")));
     }
 
@@ -312,12 +306,12 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertThat(redis.zrevrangebyscoreWithScores(key, 3.0, 2.0)).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
         assertThat(redis.zrevrangebyscoreWithScores(key, "(4.0", "(1.0")).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
-        assertThat(redis.zrevrangebyscoreWithScores(key, POSITIVE_INFINITY, NEGATIVE_INFINITY))
-                .isEqualTo(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
-        assertThat(redis.zrevrangebyscoreWithScores(key, "+inf", "-inf"))
-                .isEqualTo(svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
-        assertThat(redis.zrevrangebyscoreWithScores(key, 4.0, 0.0, 1, 3))
-                .isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
+        assertThat(redis.zrevrangebyscoreWithScores(key, POSITIVE_INFINITY, NEGATIVE_INFINITY)).isEqualTo(
+                svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
+        assertThat(redis.zrevrangebyscoreWithScores(key, "+inf", "-inf")).isEqualTo(
+                svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
+        assertThat(redis.zrevrangebyscoreWithScores(key, 4.0, 0.0, 1, 3)).isEqualTo(
+                svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
         assertThat(redis.zrevrangebyscoreWithScores(key, "+inf", "-inf", 2, 2)).isEqualTo(svlist(sv(2.0, "b"), sv(1.0, "a")));
     }
 
@@ -423,19 +417,28 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getValues().get(0)).isEqualTo(sv(1, value));
+    }
 
-        ScoredValueScanCursor<String> cursor2 = redis.zscan(key, cursor);
+    @Test
+    public void zsscanWithCursor() throws Exception {
+        redis.zadd(key, 1, value);
 
-        assertThat(cursor2.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
-        assertThat(cursor2.getValues().get(0)).isEqualTo(sv(1, value));
+        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanCursor.INITIAL);
 
-        ScoredValueScanCursor<String> cursor3 = redis.zscan(key, cursor, ScanArgs.Builder.limit(5));
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getValues().get(0)).isEqualTo(sv(1, value));
+    }
 
-        assertThat(cursor3.getCursor()).isEqualTo("0");
-        assertThat(cursor3.isFinished()).isTrue();
-        assertThat(cursor3.getValues().get(0)).isEqualTo(sv(1, value));
+    @Test
+    public void zsscanWithCursorAndArgs() throws Exception {
+        redis.zadd(key, 1, value);
 
+        ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanCursor.INITIAL, ScanArgs.Builder.limit(5));
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getValues().get(0)).isEqualTo(sv(1, value));
     }
 
     @Test
@@ -449,24 +452,42 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getList().get(0)).isEqualTo(value);
+    }
 
-        StreamScanCursor cursor2 = redis.zscan(adapter, key, cursor);
+    @Test
+    public void zscanStreamingWithCursor() throws Exception {
+        redis.zadd(key, 1, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
-        assertThat(cursor2.getCount()).isEqualTo(1);
-        assertThat(cursor2.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
+        StreamScanCursor cursor = redis.zscan(adapter, key, ScanCursor.INITIAL);
 
-        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.matches("*").limit(100));
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+    }
 
-        assertThat(cursor3.getCount()).isEqualTo(1);
-        assertThat(cursor3.getCursor()).isEqualTo("0");
-        assertThat(cursor3.isFinished()).isTrue();
+    @Test
+    public void zscanStreamingWithCursorAndArgs() throws Exception {
+        redis.zadd(key, 1, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
-        StreamScanCursor cursor4 = redis.zscan(adapter, key, ScanArgs.Builder.limit(100).match("*"));
+        StreamScanCursor cursor = redis.zscan(adapter, key, ScanCursor.INITIAL, ScanArgs.Builder.matches("*").limit(100));
 
-        assertThat(cursor4.getCount()).isEqualTo(1);
-        assertThat(cursor4.getCursor()).isEqualTo("0");
-        assertThat(cursor4.isFinished()).isTrue();
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+    }
+
+    @Test
+    public void zscanStreamingWithArgs() throws Exception {
+        redis.zadd(key, 1, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+
+        StreamScanCursor cursor = redis.zscan(adapter, key, ScanArgs.Builder.limit(100).match("*"));
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
 
     }
 

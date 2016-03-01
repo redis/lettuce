@@ -224,7 +224,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Incrementally iterate Set elements.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
@@ -234,7 +234,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * Incrementally iterate Set elements.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
     RedisFuture<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor);
@@ -263,7 +263,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param channel streaming channel that receives a call for every value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
@@ -274,7 +274,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * 
      * @param channel streaming channel that receives a call for every value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);

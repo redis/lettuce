@@ -34,6 +34,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     public static final String KEY_ON_NODE_1 = "a";
     public static final String KEY_ON_NODE_2 = "b";
+
     private RedisAdvancedClusterAsyncCommands<String, String> commands;
     private RedisAdvancedClusterCommands<String, String> syncCommands;
     private StatefulRedisClusterConnection<String, String> clusterConnection;

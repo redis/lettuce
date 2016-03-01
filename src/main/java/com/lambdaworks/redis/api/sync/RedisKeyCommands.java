@@ -338,7 +338,7 @@ public interface RedisKeyCommands<K, V> {
     /**
      * Incrementally iterate the keys space.
      * 
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
@@ -347,7 +347,7 @@ public interface RedisKeyCommands<K, V> {
     /**
      * Incrementally iterate the keys space.
      * 
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor);
@@ -373,7 +373,7 @@ public interface RedisKeyCommands<K, V> {
      * Incrementally iterate the keys space.
      * 
      * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
@@ -383,7 +383,7 @@ public interface RedisKeyCommands<K, V> {
      * Incrementally iterate the keys space.
      * 
      * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);

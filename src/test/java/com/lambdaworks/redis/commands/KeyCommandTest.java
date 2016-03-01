@@ -15,6 +15,7 @@ import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
 
 public class KeyCommandTest extends AbstractRedisClientTest {
+
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -272,11 +273,38 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getKeys()).isEqualTo(list(key));
+    }
 
-        KeyScanCursor<String> cursor2 = redis.scan(cursor, ScanArgs.Builder.limit(10));
-        assertThat(cursor2.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
+    @Test
+    public void scanWithArgs() throws Exception {
+        redis.set(key, value);
 
+        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(10));
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+
+    }
+
+    @Test
+    public void scanInitialCursor() throws Exception {
+        redis.set(key, value);
+
+        KeyScanCursor<String> cursor = redis.scan(ScanCursor.INITIAL);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).isEqualTo(list(key));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void scanFinishedCursor() throws Exception {
+        redis.set(key, value);
+        redis.scan(ScanCursor.FINISHED);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void scanNullCursor() throws Exception {
+        redis.set(key, value);
+        redis.scan((ScanCursor) null);
     }
 
     @Test
@@ -290,19 +318,30 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getList()).isEqualTo(list(key));
+    }
 
-        StreamScanCursor cursor2 = redis.scan(adapter, cursor);
+    @Test
+    public void scanStreamingWithCursor() throws Exception {
+        redis.set(key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
-        assertThat(cursor2.getCount()).isEqualTo(1);
-        assertThat(cursor2.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
+        StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL);
 
-        StreamScanCursor cursor3 = redis.scan(adapter, cursor, ScanArgs.Builder.limit(5));
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+    }
 
-        assertThat(cursor3.getCount()).isEqualTo(1);
-        assertThat(cursor3.getCursor()).isEqualTo("0");
-        assertThat(cursor2.isFinished()).isTrue();
+    @Test
+    public void scanStreamingWithCursorAndArgs() throws Exception {
+        redis.set(key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
+        StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL, ScanArgs.Builder.limit(5));
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
     }
 
     @Test
@@ -316,7 +355,6 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getList()).isEqualTo(list(key));
-
     }
 
     @Test

@@ -97,7 +97,7 @@ class ClusterScanSupport {
 
         ClusterScanCursor clusterScanCursor = (ClusterScanCursor) scanCursor;
         if (clusterScanCursor.isScanOnCurrentNodeFinished()) {
-            return ScanCursor.FINISHED;
+            return ScanCursor.INITIAL;
         }
 
         return scanCursor;

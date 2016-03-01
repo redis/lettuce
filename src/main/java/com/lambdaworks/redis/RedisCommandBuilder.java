@@ -1394,7 +1394,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, KeyScanCursor<K>> scan() {
-        return scan(null, null);
+        return scan(ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, KeyScanCursor<K>> scan(ScanCursor scanCursor) {
@@ -1402,7 +1402,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, KeyScanCursor<K>> scan(ScanArgs scanArgs) {
-        return scan(null, scanArgs);
+        return scan(ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
@@ -1415,11 +1415,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     protected void scanArgs(ScanCursor scanCursor, ScanArgs scanArgs, CommandArgs<K, V> args) {
-        if (scanCursor != null) {
-            args.add(scanCursor.getCursor());
-        } else {
-            args.add("0");
-        }
+        assertNotNull(scanCursor, "scanCursor " + MUST_NOT_BE_NULL);
+        assertTrue(!scanCursor.isFinished(), "scanCursor must not be finished");
+
+        args.add(scanCursor.getCursor());
 
         if (scanArgs != null) {
             scanArgs.build(args);
@@ -1427,7 +1426,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel) {
-        return scanStreaming(channel, null, null);
+        return scanStreaming(channel, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
@@ -1435,7 +1434,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
-        return scanStreaming(channel, null, scanArgs);
+        return scanStreaming(channel, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel, ScanCursor scanCursor,
@@ -1448,7 +1447,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, ValueScanCursor<V>> sscan(K key) {
-        return sscan(key, null, null);
+        return sscan(key, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
@@ -1456,7 +1455,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
-        return sscan(key, null, scanArgs);
+        return sscan(key, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
@@ -1470,7 +1469,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key) {
-        return sscanStreaming(channel, key, null, null);
+        return sscanStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
@@ -1478,7 +1477,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
-        return sscanStreaming(channel, key, null, scanArgs);
+        return sscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, StreamScanCursor> sscanStreaming(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
@@ -1493,7 +1492,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, MapScanCursor<K, V>> hscan(K key) {
-        return hscan(key, null, null);
+        return hscan(key, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
@@ -1501,7 +1500,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
-        return hscan(key, null, scanArgs);
+        return hscan(key, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
@@ -1515,7 +1514,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key) {
-        return hscanStreaming(channel, key, null, null);
+        return hscanStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
@@ -1523,7 +1522,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
-        return hscanStreaming(channel, key, null, scanArgs);
+        return hscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
@@ -1538,7 +1537,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, ScoredValueScanCursor<V>> zscan(K key) {
-        return zscan(key, null, null);
+        return zscan(key, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
@@ -1546,7 +1545,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
-        return zscan(key, null, scanArgs);
+        return zscan(key, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
@@ -1560,7 +1559,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key) {
-        return zscanStreaming(channel, key, null, null);
+        return zscanStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
     public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
@@ -1568,7 +1567,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
-        return zscanStreaming(channel, key, null, scanArgs);
+        return zscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
     }
 
     public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,

@@ -713,7 +713,7 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return RedisFuture&lt;ScoredValueScanCursor&lt;V&gt;&gt; scan cursor.
      */
@@ -723,7 +723,7 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return RedisFuture&lt;ScoredValueScanCursor&lt;V&gt;&gt; scan cursor.
      */
     RedisFuture<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor);
@@ -752,7 +752,7 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * 
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
@@ -763,7 +763,7 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
      * 
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
      */
     RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);

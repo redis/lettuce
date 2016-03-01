@@ -168,7 +168,7 @@ public interface NodeSelectionHashCommands<K, V> {
      * Incrementally iterate hash fields and associated values.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
@@ -178,7 +178,7 @@ public interface NodeSelectionHashCommands<K, V> {
      * Incrementally iterate hash fields and associated values.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     Executions<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
@@ -207,7 +207,7 @@ public interface NodeSelectionHashCommands<K, V> {
      * 
      * @param channel streaming channel that receives a call for every key-value pair
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
@@ -218,7 +218,7 @@ public interface NodeSelectionHashCommands<K, V> {
      * 
      * @param channel streaming channel that receives a call for every key-value pair
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
     Executions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);

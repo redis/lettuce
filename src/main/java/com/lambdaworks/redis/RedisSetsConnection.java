@@ -223,7 +223,7 @@ public interface RedisSetsConnection<K, V> {
      * Incrementally iterate Set elements.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
@@ -233,7 +233,7 @@ public interface RedisSetsConnection<K, V> {
      * Incrementally iterate Set elements.
      * 
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     ValueScanCursor<V> sscan(K key, ScanCursor scanCursor);
@@ -262,7 +262,7 @@ public interface RedisSetsConnection<K, V> {
      * 
      * @param channel streaming channel that receives a call for every value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
@@ -273,7 +273,7 @@ public interface RedisSetsConnection<K, V> {
      * 
      * @param channel streaming channel that receives a call for every value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan
+     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
