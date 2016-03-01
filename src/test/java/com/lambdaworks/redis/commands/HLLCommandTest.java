@@ -59,19 +59,19 @@ public class HLLCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void pfmerge() throws Exception {
-        connection().pfadd(key, value);
-        connection().pfadd("key2", "value2");
-        connection().pfadd("key3", "value3");
+        commands().pfadd(key, value);
+        commands().pfadd("key2", "value2");
+        commands().pfadd("key3", "value3");
 
-        assertThat(connection().pfmerge(key, "key2", "key3")).isEqualTo("OK");
-        assertThat(connection().pfcount(key)).isEqualTo(3);
+        assertThat(commands().pfmerge(key, "key2", "key3")).isEqualTo("OK");
+        assertThat(commands().pfcount(key)).isEqualTo(3);
 
-        connection().pfadd("key2660", "rand", "mat");
-        connection().pfadd("key7112", "mat", "perrin");
+        commands().pfadd("key2660", "rand", "mat");
+        commands().pfadd("key7112", "mat", "perrin");
 
-        connection().pfmerge("key8885", "key2660", "key7112");
+        commands().pfmerge("key8885", "key2660", "key7112");
 
-        assertThat(connection().pfcount("key8885")).isEqualTo(3);
+        assertThat(commands().pfcount("key8885")).isEqualTo(3);
     }
 
     @Test

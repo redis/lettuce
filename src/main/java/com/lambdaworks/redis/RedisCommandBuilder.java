@@ -1614,7 +1614,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         assertNoNullElements(sourcekeys, "sourcekeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKeys(sourcekeys);
-        return createCommand(PFADD, new StatusOutput<K, V>(codec), args);
+        return createCommand(PFMERGE, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterMeet(String ip, int port) {
