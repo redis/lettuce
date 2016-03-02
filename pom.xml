@@ -9,7 +9,7 @@
 
     <groupId>biz.paluch.redis</groupId>
     <artifactId>lettuce</artifactId>
-    <version>4.1.1-SNAPSHOT</version>
+    <version>4.1.1.Final</version>
     <packaging>jar</packaging>
 
     <name>lettuce</name>
@@ -64,7 +64,8 @@
         <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
         <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
         <url>http://github.com/mp911de/lettuce</url>
-    </scm>
+      <tag>4.1.1.Final</tag>
+  </scm>
 
     <prerequisites>
         <maven>3.0</maven>
