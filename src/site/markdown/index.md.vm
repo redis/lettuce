@@ -71,6 +71,14 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
   <classifier>shaded</classifier>
   
   <exclusions>
+	<exclusion>
+	  <groupId>io.reactivex</groupId>
+	  <artifactId>rxjava</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.latencyutils</groupId>
+	  <artifactId>LatencyUtils</artifactId>
+	</exclusion>
     <exclusion>
       <groupId>io.netty</groupId>
       <artifactId>netty-common</artifactId>
