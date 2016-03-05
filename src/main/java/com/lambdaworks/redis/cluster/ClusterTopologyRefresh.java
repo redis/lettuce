@@ -1,6 +1,13 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.*;
+import static com.lambdaworks.redis.cluster.RedisClusterClient.*;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -18,7 +25,12 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandKeyword;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
@@ -160,11 +172,10 @@ class ClusterTopologyRefresh {
             Set<RedisURI> discoveredNodes = Sets.difference(allKnownUris, connections.keySet());
             if (!discoveredNodes.isEmpty()) {
                 RedisURI firstUri = seed.iterator().next();
-                if (firstUri.getPassword() != null) {
-                    discoveredNodes.stream().forEach(redisURI -> redisURI.setPassword(new String(firstUri.getPassword())));
-                }
+                discoveredNodes.stream().forEach(redisURI -> applyUriConnectionSettings(firstUri, redisURI));
 
-                Map<RedisURI, StatefulRedisConnection<String, String>> discoveredNodesConnections = getConnections(discoveredNodes);
+                Map<RedisURI, StatefulRedisConnection<String, String>> discoveredNodesConnections = getConnections(
+                        discoveredNodes);
                 connections.putAll(discoveredNodesConnections);
                 rawViews.putAll(requestViews(discoveredNodesConnections));
                 rawClients.putAll(requestClients(discoveredNodesConnections));
@@ -406,8 +417,8 @@ class ClusterTopologyRefresh {
     }
 
     /**
-     * Compare {@link RedisClusterNodeSnapshot} based on their client count. Lowest comes first. Objects of type {@link RedisClusterNode}
-     * cannot be compared and yield to a result of {@literal 0}.
+     * Compare {@link RedisClusterNodeSnapshot} based on their client count. Lowest comes first. Objects of type
+     * {@link RedisClusterNode} cannot be compared and yield to a result of {@literal 0}.
      */
     static class ClientCountComparator implements Comparator<RedisClusterNode> {
 
@@ -438,8 +449,8 @@ class ClusterTopologyRefresh {
     }
 
     /**
-     * Compare {@link RedisClusterNodeSnapshot} based on their latency. Lowest comes first. Objects of type {@link RedisClusterNode} cannot
-     * be compared and yield to a result of {@literal 0}.
+     * Compare {@link RedisClusterNodeSnapshot} based on their latency. Lowest comes first. Objects of type
+     * {@link RedisClusterNode} cannot be compared and yield to a result of {@literal 0}.
      */
     static class LatencyComparator implements Comparator<RedisClusterNode> {
 

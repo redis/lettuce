@@ -47,6 +47,27 @@ c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7580 master - 0 1434887920102
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
+define REDIS_CLUSTER_CONFIG_SSL_1
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 myself,master - 0 1434887920102 1 connected 0-10000
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected 
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384 
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
+define REDIS_CLUSTER_CONFIG_SSL_2
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 master - 0 1434887920102 1 connected 0-10000
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 myself,slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected 
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384 
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
+define REDIS_CLUSTER_CONFIG_SSL_3
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 master - 0 1434887920102 1 connected 0-10000
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected 
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 myself,master  - 0 0 2 connected 10001-16384 
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
 
 #######
 # Redis
@@ -126,12 +147,75 @@ work/cluster-node-7385.conf:
 	@echo logfile $(shell pwd)/work/cluster-node-7385.log >> $@
 	@echo save \"\" >> $@
 	@echo appendonly no >> $@
-	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-7385 >> $@
 	@echo cluster-enabled yes >> $@
 	@echo cluster-node-timeout 50 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7385.conf >> $@
 	@echo requirepass foobared >> $@
+
+
+work/cluster-node-7479.conf:
+	@mkdir -p $(@D)
+
+	@echo port 7479 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/cluster-node-7479.pid >> $@
+	@echo logfile $(shell pwd)/work/cluster-node-7479.log >> $@
+	@echo save \"\" >> $@
+	@echo appendonly no >> $@
+	@echo cluster-enabled yes >> $@
+	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7479.conf >> $@
+	@echo cluster-announce-port 7443 >> $@
+	@echo requirepass foobared >> $@
+
+
+work/cluster-node-7480.conf:
+	@mkdir -p $(@D)
+
+	@echo port 7480 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/cluster-node-7480.pid >> $@
+	@echo logfile $(shell pwd)/work/cluster-node-7480.log >> $@
+	@echo save \"\" >> $@
+	@echo appendonly no >> $@
+	@echo cluster-enabled yes >> $@
+	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7480.conf >> $@
+	@echo cluster-announce-port 7444 >> $@
+	@echo requirepass foobared >> $@
+
+
+work/cluster-node-7481.conf:
+	@mkdir -p $(@D)
+
+	@echo port 7481 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/cluster-node-7481.pid >> $@
+	@echo logfile $(shell pwd)/work/cluster-node-7481.log >> $@
+	@echo save \"\" >> $@
+	@echo appendonly no >> $@
+	@echo cluster-enabled yes >> $@
+	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7481.conf >> $@
+	@echo cluster-announce-port 7445 >> $@
+	@echo requirepass foobared >> $@
+
+
+work/cluster-node-%.conf:
+	@mkdir -p $(@D)
+
+	@echo port $* >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/cluster-node-$*.pid >> $@
+	@echo logfile $(shell pwd)/work/cluster-node-$*.log >> $@
+	@echo save \"\" >> $@
+	@echo appendonly no >> $@
+	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
+	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
+	@echo cluster-enabled yes >> $@
+	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-$*.conf >> $@
 
 
 work/cluster-node-%.conf:
@@ -152,7 +236,7 @@ work/cluster-node-%.conf:
 work/cluster-node-%.pid: work/cluster-node-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $<
 
-cluster-start: work/cluster-node-7379.pid work/cluster-node-7380.pid work/cluster-node-7381.pid work/cluster-node-7382.pid work/cluster-node-7383.pid work/cluster-node-7384.pid work/cluster-node-7385.pid work/cluster-node-7582.pid
+cluster-start: work/cluster-node-7379.pid work/cluster-node-7380.pid work/cluster-node-7381.pid work/cluster-node-7382.pid work/cluster-node-7383.pid work/cluster-node-7384.pid work/cluster-node-7385.pid work/cluster-node-7479.pid work/cluster-node-7480.pid work/cluster-node-7481.pid work/cluster-node-7582.pid
 
 ##########
 # stunnel
@@ -172,6 +256,19 @@ work/stunnel.conf:
 	@echo [stunnel] >> $@
 	@echo accept = 127.0.0.1:6443 >> $@
 	@echo connect = 127.0.0.1:6479 >> $@
+	
+	@echo [ssl-cluster-node-1] >> $@
+	@echo accept = 127.0.0.1:7443 >> $@
+	@echo connect = 127.0.0.1:7479 >> $@
+		
+	@echo [ssl-cluster-node-2] >> $@
+	@echo accept = 127.0.0.1:7444 >> $@
+	@echo connect = 127.0.0.1:7480 >> $@	
+	
+	@echo [ssl-cluster-node-3] >> $@
+	@echo accept = 127.0.0.1:7445 >> $@
+	@echo connect = 127.0.0.1:7481 >> $@
+	
 
 work/stunnel.pid: work/stunnel.conf ssl-keys
 	which stunnel4 >/dev/null 2>&1 && stunnel4 $(ROOT_DIR)/work/stunnel.conf || stunnel $(ROOT_DIR)/work/stunnel.conf
@@ -183,6 +280,9 @@ export REDIS_CLUSTER_CONFIG2
 export REDIS_CLUSTER_CONFIG3
 export REDIS_CLUSTER_CONFIG4
 export REDIS_CLUSTER_CONFIG8
+export REDIS_CLUSTER_CONFIG_SSL_1
+export REDIS_CLUSTER_CONFIG_SSL_2
+export REDIS_CLUSTER_CONFIG_SSL_3
 
 start: cleanup
 	@echo "$$REDIS_CLUSTER_CONFIG1" > work/cluster-node-config-7379.conf
@@ -190,6 +290,9 @@ start: cleanup
 	@echo "$$REDIS_CLUSTER_CONFIG3" > work/cluster-node-config-7381.conf
 	@echo "$$REDIS_CLUSTER_CONFIG4" > work/cluster-node-config-7382.conf
 	@echo "$$REDIS_CLUSTER_CONFIG8" > work/cluster-node-config-7582.conf
+	@echo "$$REDIS_CLUSTER_CONFIG_SSL_1" > work/cluster-node-config-7479.conf
+	@echo "$$REDIS_CLUSTER_CONFIG_SSL_2" > work/cluster-node-config-7480.conf
+	@echo "$$REDIS_CLUSTER_CONFIG_SSL_3" > work/cluster-node-config-7481.conf
 	$(MAKE) redis-start
 	$(MAKE) sentinel-start
 	$(MAKE) cluster-start
