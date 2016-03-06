@@ -2,6 +2,8 @@
 
 package com.lambdaworks.redis.output;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,17 +13,20 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * {@link List} of values and their associated scores.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
- * 
+ *
  * @author Will Glozer
  */
-public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>> {
+public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>>
+        implements StreamingOutput<ScoredValue<V>> {
     private V value;
+    private Subscriber<ScoredValue<V>> subscriber;
 
     public ScoredValueListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<ScoredValue<V>>());
+        super(codec, new ArrayList<>());
+        setSubscriber(ListSubscriber.of(output));
     }
 
     @Override
@@ -32,7 +37,18 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        output.add(new ScoredValue<V>(score, value));
+        subscriber.onNext(new ScoredValue<>(score, value));
         value = null;
+    }
+
+    @Override
+    public void setSubscriber(Subscriber<ScoredValue<V>> subscriber) {
+        checkArgument(subscriber != null, "subscriber must not be null");
+        this.subscriber = subscriber;
+    }
+
+    @Override
+    public Subscriber<ScoredValue<V>> getSubscriber() {
+        return subscriber;
     }
 }

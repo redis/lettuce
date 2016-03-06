@@ -23,7 +23,8 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
-    private RedisReactiveCommands<String, String> reactive;
+
+	private RedisReactiveCommands<String, String> reactive;
 
     @Rule
     public ExpectedException exception = ExpectedException.none();
@@ -31,7 +32,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Before
     public void openReactiveConnection() throws Exception {
-        stateful = client.connectAsync().getStatefulConnection();
+        stateful = client.connect();
         reactive = stateful.reactive();
     }
 
@@ -113,6 +114,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
         assertThat(redis.get(key)).isEqualTo("4");
     }
+
 
     @Test
     public void transactional() throws Exception {

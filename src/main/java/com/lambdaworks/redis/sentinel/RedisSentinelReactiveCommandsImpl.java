@@ -20,7 +20,7 @@ import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -39,8 +39,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     @Override
     public Observable<SocketAddress> getMasterAddrByName(K key) {
 
-        Observable<List<V>> observable = createObservable(() -> commandBuilder.getMasterAddrByKey(key));
-        return observable.map(list -> {
+        Observable<V> observable = createDissolvingObservable(() -> commandBuilder.getMasterAddrByKey(key));
+        return observable.buffer(2).map(list -> {
             if (list.isEmpty()) {
                 return null;
             }

@@ -1,7 +1,8 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -9,41 +10,46 @@ import rx.Observable;
 import rx.Subscriber;
 
 import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.output.StreamingOutput;
 import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Reactive command dispatcher.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscribe<T> {
 
     private Supplier<? extends RedisCommand<K, V, T>> commandSupplier;
-    private RedisCommand<K, V, T> command;
+    private volatile RedisCommand<K, V, T> command;
     private StatefulConnection<K, V> connection;
     private boolean dissolve;
 
     /**
-     * 
+     *
      * @param staticCommand static command, must not be {@literal null}
      * @param connection the connection, must not be {@literal null}
      * @param dissolve dissolve collections into particular elements
      */
-    public ReactiveCommandDispatcher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve) {
+    public ReactiveCommandDispatcher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection,
+            boolean dissolve) {
         this(() -> staticCommand, connection, dissolve);
     }
 
     /**
-     * 
+     *
      * @param commandSupplier command supplier, must not be {@literal null}
      * @param connection the connection, must not be {@literal null}
      * @param dissolve dissolve collections into particular elements
      */
     public ReactiveCommandDispatcher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection,
             boolean dissolve) {
+
         checkArgument(commandSupplier != null, "CommandSupplier must not be null");
         checkArgument(connection != null, "StatefulConnection must not be null");
+
         this.commandSupplier = commandSupplier;
         this.connection = connection;
         this.dissolve = dissolve;
@@ -57,6 +63,17 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         RedisCommand<K, V, T> command = this.command;
         if (command == null) {
             command = commandSupplier.get();
+        }
+
+        if (command.getOutput() instanceof StreamingOutput<?>) {
+            StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
+
+            if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
+                streamingOutput.setSubscriber(new DelegatingWrapper<T>(
+                        Arrays.asList(new ObservableSubscriberWrapper<>(subscriber), streamingOutput.getSubscriber())));
+            } else {
+                streamingOutput.setSubscriber(new ObservableSubscriberWrapper<>(subscriber));
+            }
         }
 
         connection.dispatch(new ObservableCommand<>(command, subscriber, dissolve));
@@ -88,7 +105,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
             if (getOutput() != null) {
                 Object result = getOutput().get();
-                if (result != null) {
+                if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
 
                     if (dissolve && result instanceof Collection) {
                         Collection<T> collection = (Collection<T>) result;
@@ -133,6 +150,37 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
             subscriber.onError(throwable);
             completed = true;
             return b;
+        }
+    }
+
+    static class ObservableSubscriberWrapper<T> implements StreamingOutput.Subscriber<T> {
+
+        private Subscriber<? super T> subscriber;
+
+        public ObservableSubscriberWrapper(Subscriber<? super T> subscriber) {
+            this.subscriber = subscriber;
+        }
+
+        @Override
+        public void onNext(T t) {
+            subscriber.onNext(t);
+        }
+    }
+
+    static class DelegatingWrapper<T> implements StreamingOutput.Subscriber<T> {
+
+        private Collection<StreamingOutput.Subscriber<T>> subscribers;
+
+        public DelegatingWrapper(Collection<StreamingOutput.Subscriber<T>> subscribers) {
+            this.subscribers = subscribers;
+        }
+
+        @Override
+        public void onNext(T t) {
+
+            for (StreamingOutput.Subscriber<T> subscriber : subscribers) {
+                subscriber.onNext(t);
+            }
         }
     }
 }

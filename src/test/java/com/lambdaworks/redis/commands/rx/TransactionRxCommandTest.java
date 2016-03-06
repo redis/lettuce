@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import rx.Observable;
 import rx.observables.BlockingObservable;
+import rx.observers.TestSubscriber;
 
 public class TransactionRxCommandTest extends TransactionCommandTest {
 
@@ -44,15 +45,20 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
     @Test
     public void discard() throws Exception {
         assertThat(first(commands.multi())).isEqualTo("OK");
+
         commands.set(key, value);
+
         assertThat(first(commands.discard())).isEqualTo("OK");
         assertThat(first(commands.get(key))).isNull();
     }
 
     @Test
     public void execSingular() throws Exception {
+
         assertThat(first(commands.multi())).isEqualTo("OK");
+
         redis.set(key, value);
+
         assertThat(first(commands.exec())).isEqualTo("OK");
         assertThat(first(commands.get(key))).isEqualTo(value);
     }
@@ -63,11 +69,52 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
         commands.set(key, value).subscribe();
         commands.lpop(key).onExceptionResumeNext(Observable.<String> empty()).subscribe();
         commands.get(key).subscribe();
+
         List<Object> values = all(commands.exec());
         assertThat(values.get(0)).isEqualTo("OK");
         assertThat(values.get(1) instanceof RedisException).isTrue();
         assertThat(values.get(2)).isEqualTo(value);
+    }
 
+    @Test
+    public void resultOfMultiIsContainedInCommandObservables() throws Exception {
+
+        TestSubscriber<String> set1 = TestSubscriber.create();
+        TestSubscriber<String> set2 = TestSubscriber.create();
+        TestSubscriber<String> mget = TestSubscriber.create();
+        TestSubscriber<Long> llen = TestSubscriber.create();
+        TestSubscriber<Object> exec = TestSubscriber.create();
+
+        commands.multi().subscribe();
+        commands.set("key1", "value1").subscribe(set1);
+        commands.set("key2", "value2").subscribe(set2);
+        commands.mget("key1", "key2").subscribe(mget);
+        commands.llen("something").subscribe(llen);
+        commands.exec().subscribe(exec);
+
+        exec.awaitTerminalEvent();
+
+        set1.assertValue("OK");
+        set2.assertValue("OK");
+        mget.assertValues("value1", "value2");
+        llen.assertValue(0L);
+    }
+
+    @Test
+    public void resultOfMultiIsContainedInExecObservable() throws Exception {
+
+        TestSubscriber<Object> exec = TestSubscriber.create();
+
+        commands.multi().subscribe();
+        commands.set("key1", "value1").subscribe();
+        commands.set("key2", "value2").subscribe();
+        commands.mget("key1", "key2").subscribe();
+        commands.llen("something").subscribe();
+        commands.exec().subscribe(exec);
+
+        exec.awaitTerminalEvent();
+
+        assertThat(exec.getOnNextEvents()).hasSize(4).containsExactly("OK", "OK", list("value1", "value2"), 0L);
     }
 
     protected <T> T first(Observable<T> observable) {

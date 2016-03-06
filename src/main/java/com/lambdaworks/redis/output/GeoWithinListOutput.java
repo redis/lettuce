@@ -1,21 +1,22 @@
 package com.lambdaworks.redis.output;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Double.parseDouble;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoWithin;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * A list output that creates a list with either double/long or {@link GeoCoordinates}'s.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>> {
+public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>  implements StreamingOutput<GeoWithin<V>>{
 
     private V member;
     private Double distance;
@@ -27,12 +28,14 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     private boolean withDistance;
     private boolean withHash;
     private boolean withCoordinates;
+	private Subscriber<GeoWithin<V>> subscriber;
 
-    public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
-        super(codec, null);
+	public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
+        super(codec, new ArrayList<>());
         this.withDistance = withDistance;
         this.withHash = withHash;
         this.withCoordinates = withCoordinates;
+		setSubscriber(ListSubscriber.of(output));
     }
 
     @Override
@@ -74,16 +77,9 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     }
 
     @Override
-    public void multi(int count) {
-        if (output == null) {
-            output = Lists.newArrayListWithCapacity(count);
-        }
-    }
-
-    @Override
     public void complete(int depth) {
         if (depth == 1) {
-            output.add(new GeoWithin<V>(member, distance, geohash, coordinates));
+            subscriber.onNext(new GeoWithin<V>(member, distance, geohash, coordinates));
 
             member = null;
             distance = null;
@@ -91,4 +87,15 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
             coordinates = null;
         }
     }
+
+	@Override
+	public void setSubscriber(Subscriber<GeoWithin<V>> subscriber) {
+		checkArgument(subscriber != null, "subscriber must not be null");
+		this.subscriber = subscriber;
+	}
+
+	@Override
+	public Subscriber<GeoWithin<V>> getSubscriber() {
+		return subscriber;
+	}
 }
