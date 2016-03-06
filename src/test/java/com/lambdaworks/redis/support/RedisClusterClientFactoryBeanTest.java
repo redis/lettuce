@@ -48,4 +48,15 @@ public class RedisClusterClientFactoryBeanTest {
         assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
         assertThat(sut.getRedisURI().getPassword()).isEqualTo("thepassword".toCharArray());
     }
+    
+    @Test
+    public void supportsSsl() throws Exception {
+
+        sut.setUri(URI.create(RedisURI.URI_SCHEME_REDIS_SECURE + "://password@host"));
+        sut.afterPropertiesSet();
+        assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
+        assertThat(sut.getRedisURI().getPassword()).isEqualTo("password".toCharArray());
+        assertThat(sut.getRedisURI().isVerifyPeer()).isFalse();
+        assertThat(sut.getRedisURI().isSsl()).isTrue();
+    }
 }

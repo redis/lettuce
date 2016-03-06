@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.support;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.google.common.base.Preconditions.*;
+import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.net.URI;
 
@@ -13,6 +13,10 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
  * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format: {@code
  *     redis://[password@]host[:port]
  * }
+ * 
+ * {@code
+ *     rediss://[password@]host[:port]
+ * }
  *
  * @see RedisURI
  * @see ClientResourcesFactoryBean
@@ -20,6 +24,8 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
  * @since 3.0
  */
 public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<RedisClusterClient> {
+
+    private boolean verifyPeer = false;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -29,13 +35,18 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
 
             checkArgument(!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL),
                     "Sentinel mode not supported when using RedisClusterClient");
-            checkArgument(uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS),
-                    "Only plain connections allowed when using RedisClusterClient");
 
             RedisURI redisURI = RedisURI.create(uri);
             if (isNotEmpty(getPassword())) {
                 redisURI.setPassword(getPassword());
             }
+
+            if (RedisURI.URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())
+                    || RedisURI.URI_SCHEME_REDIS_SECURE_ALT.equals(uri.getScheme())
+                    || RedisURI.URI_SCHEME_REDIS_TLS_ALT.equals(uri.getScheme())) {
+                redisURI.setVerifyPeer(verifyPeer);
+            }
+
             setRedisURI(redisURI);
         }
 
@@ -60,5 +71,13 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
             return RedisClusterClient.create(getClientResources(), getRedisURI());
         }
         return RedisClusterClient.create(getRedisURI());
+    }
+
+    public boolean isVerifyPeer() {
+        return verifyPeer;
+    }
+
+    public void setVerifyPeer(boolean verifyPeer) {
+        this.verifyPeer = verifyPeer;
     }
 }
