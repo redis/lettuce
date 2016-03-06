@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -109,5 +110,23 @@ public class RedisClusterClientFactoryTest {
     @Test(expected = IllegalArgumentException.class)
     public void clientResourcesNullWithUriIterable() throws Exception {
         RedisClusterClient.create(null, REDIS_URIS);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void clientWithDifferentSslSettings() throws Exception {
+        RedisClusterClient.create(Arrays.asList(RedisURI.create("redis://host1"), RedisURI.create("redis+ssl://host1")));
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void clientWithDifferentTlsSettings() throws Exception {
+        RedisClusterClient.create(Arrays.asList(RedisURI.create("rediss://host1"), RedisURI.create("redis+tls://host1")));
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void clientWithDifferentVerifyPeerSettings() throws Exception {
+        RedisURI redisURI = RedisURI.create("rediss://host1");
+        redisURI.setVerifyPeer(false);
+        
+        RedisClusterClient.create(Arrays.asList(redisURI, RedisURI.create("rediss://host1")));
     }
 }

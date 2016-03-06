@@ -1,11 +1,15 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,7 +19,16 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.AbstractRedisClient;
+import com.lambdaworks.redis.ConnectionBuilder;
+import com.lambdaworks.redis.ReadFrom;
+import com.lambdaworks.redis.RedisChannelHandler;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.SslConnectionBuilder;
+import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -138,11 +151,47 @@ public class RedisClusterClient extends AbstractRedisClient {
     protected RedisClusterClient(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
         super(clientResources);
         assertNotEmpty(redisURIs);
+        assertSameOptions(redisURIs);
 
         this.initialUris = redisURIs;
 
         setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
         setOptions(new ClusterClientOptions.Builder().build());
+    }
+
+    private static void assertSameOptions(Iterable<RedisURI> redisURIs) {
+
+        Boolean ssl = null;
+        Boolean startTls = null;
+        Boolean verifyPeer = null;
+
+        for (RedisURI redisURI : redisURIs) {
+
+            if (ssl == null) {
+                ssl = redisURI.isSsl();
+            }
+            if (startTls == null) {
+                startTls = redisURI.isStartTls();
+            }
+            if (verifyPeer == null) {
+                verifyPeer = redisURI.isVerifyPeer();
+            }
+
+            if (ssl.booleanValue() != redisURI.isSsl()) {
+                throw new IllegalArgumentException(
+                        "RedisURI " + redisURI + " SSL is not consistent with the other seed URI SSL settings");
+            }
+
+            if (startTls.booleanValue() != redisURI.isStartTls()) {
+                throw new IllegalArgumentException(
+                        "RedisURI " + redisURI + " StartTLS is not consistent with the other seed URI StartTLS settings");
+            }
+
+            if (verifyPeer.booleanValue() != redisURI.isVerifyPeer()) {
+                throw new IllegalArgumentException(
+                        "RedisURI " + redisURI + " VerifyPeer is not consistent with the other seed URI VerifyPeer settings");
+            }
+        }
     }
 
     /**
@@ -166,6 +215,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public static RedisClusterClient create(Iterable<RedisURI> redisURIs) {
         assertNotEmpty(redisURIs);
+        assertSameOptions(redisURIs);
         return new RedisClusterClient(null, redisURIs);
     }
 
@@ -223,6 +273,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     public static RedisClusterClient create(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
         assertNotNull(clientResources);
         assertNotEmpty(redisURIs);
+        assertSameOptions(redisURIs);
         return new RedisClusterClient(clientResources, redisURIs);
     }
 
