@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
  * Store Args for {@literal GEORADIUS} to store {@literal GEORADIUS} results or {@literal GEORADIUS} distances in a sorted set.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class GeoRadiusStoreArgs<K> {
@@ -20,7 +20,9 @@ public class GeoRadiusStoreArgs<K> {
 
     /**
      * Store the resulting members with their location in the new Geo set {@code storeKey}.
-     * 
+     * Cannot be used together with {@link #withStoreDist(Object)}.
+     *
+     * @param storeKey the destination key.
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withStore(K storeKey) {
@@ -31,7 +33,9 @@ public class GeoRadiusStoreArgs<K> {
 
     /**
      * Store the resulting members with their distance in the sorted set {@code storeKey}.
+     * Cannot be used together with {@link #withStore(Object)}.
      *
+     * @param storeKey the destination key.
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withStoreDist(K storeKey) {
@@ -42,7 +46,7 @@ public class GeoRadiusStoreArgs<K> {
 
     /**
      * Limit results to {@code count} entries.
-     * 
+     *
      * @param count number greater 0
      * @return {@code this}
      */
@@ -54,7 +58,7 @@ public class GeoRadiusStoreArgs<K> {
 
     /**
      * Sort results ascending.
-     * 
+     *
      * @return {@code this}
      */
     public GeoRadiusStoreArgs asc() {
@@ -63,7 +67,7 @@ public class GeoRadiusStoreArgs<K> {
 
     /**
      * Sort results descending.
-     * 
+     *
      * @return {@code this}
      */
     public GeoRadiusStoreArgs desc() {
@@ -88,7 +92,7 @@ public class GeoRadiusStoreArgs<K> {
 
     /**
      * Sort results.
-     * 
+     *
      * @param sort sort order, must not be {@literal null}
      * @return {@code this}
      */

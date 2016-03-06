@@ -52,7 +52,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection. The
- * cluster client handles command routing based on the first key of the command and maintains a view on the cluster that is
+ * cluster client handles command routing based on the first key of the command and maintains a view of the cluster that is
  * available when calling the {@link #getPartitions()} method.
  *
  * <p>
@@ -72,11 +72,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <p>
  * <a href="http://redis.io/topics/cluster-spec#multiple-keys-operations">Multiple keys operations</a> have to operate on a key
- * that hashes to the same slot. Following commands do not need to follow that rule since they are pipelined according its hash
- * value to multiple nodes in parallel:
+ * that hashes to the same slot. Following commands do not need to follow that rule since they are pipelined according to its hash
+ * value to multiple nodes in parallel on the sync, async and, reactive API:
  * </p>
  * <ul>
  * <li>{@link RedisAdvancedClusterAsyncCommands#del(Object[]) DEL}</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#unlink(Object[]) UNLINK}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#mget(Object[]) MGET}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#mget(ValueStreamingChannel, Object[]) MGET with streaming}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#mset(Map) MSET}</li>
@@ -84,9 +85,24 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </ul>
  *
  * <p>
+ * Following commands on the Cluster sync, async and, reactive API are implemented with a Cluster-flavor:
+ * </p>
+ * <ul>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#clientSetname(Object)} Executes {@code CLIENT SET} on all connections and initializes new connections with the {@code clientName}.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#flushall()} Run {@code FLUSHALL} on all master nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#flushdb()} Executes {@code FLUSHDB} on all master nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code KEYS} on all.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#randomkey()} Returns a random key from a random master node.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#scriptFlush()} Executes {@code SCRIPT FLUSH} on all nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#scriptKill()} Executes {@code SCRIPT KILL} on all nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#shutdown(boolean)} Executes {@code SHUTDOWN} on all nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#scan()} Executes a {@code SCAN} on all nodes according to {@link ReadFrom}. The resulting cursor must be reused across the {@code SCAN} to scan iteratively across the whole cluster.</li>
+ * </ul>
+ *
+ * <p>
  * Cluster commands can be issued to multiple hosts in parallel by using the {@link NodeSelectionSupport} API. A set of nodes is
  * selected using a {@link java.util.function.Predicate} and commands can be issued to the node selection
- * 
+ *
  * <code><pre>
    AsyncExecutions<String> ping = commands.masters().commands().ping();
    Collection<RedisClusterNode> nodes = ping.nodes();
@@ -97,7 +113,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link RedisClusterClient} is an expensive resource. Reuse this instance or the {@link ClientResources} as much as possible.
  *
  *
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -289,7 +305,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
      * <li>Pub/sub commands are sent to the node that handles the slot derived from the pub/sub channel</li>
      * </ul>
-     * 
+     *
      * @return A new stateful Redis Cluster connection
      */
     public StatefulRedisClusterConnection<String, String> connect() {
@@ -308,7 +324,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
      * <li>Pub/sub commands are sent to the node that handles the slot derived from the pub/sub channel</li>
      * </ul>
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -351,7 +367,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * <li>Single-key keyspace commands are routed to the appropriate node</li>
      * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
      * </ul>
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -364,7 +380,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Open a new synchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new connection
      * @deprecated Use {@code connect().sync()}
      */
@@ -431,7 +447,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param nodeId the nodeId
      * @param clusterWriter global cluster writer
      * @param socketAddressSupplier supplier for the socket address
-     * 
+     *
      * @param <K> Key type
      * @param <V> Value type
      * @return A new connection
@@ -465,7 +481,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Create a clustered pub/sub connection with command distributor.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -591,7 +607,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
      * {@code connectionSettings}.
-     * 
+     *
      * @param handler
      * @param connection
      * @param connectionSettings
@@ -612,7 +628,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
      * {@code connectionSettings}.
-     * 
+     *
      * @param handler
      * @param connection
      * @param connectionSettings
@@ -633,7 +649,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (SSL) from
      * {@code connectionSettings}.
-     * 
+     *
      * @param handler
      * @param connection
      * @param connectionSettings
@@ -711,7 +727,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Retrieve partitions. Nodes within {@link Partitions} are ordered by latency. Lower latency nodes come first.
-     * 
+     *
      * @return Partitions
      */
     protected Partitions loadPartitions() {
@@ -756,7 +772,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Check if the {@link #genericWorkerPool} is active
-     * 
+     *
      * @return false if the worker pool is terminating, shutdown or terminated
      */
     protected boolean isEventLoopActive() {
@@ -791,7 +807,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Sets the new cluster topology. The partitions are not applied to existing connections.
-     * 
+     *
      * @param partitions partitions object
      */
     public void setPartitions(Partitions partitions) {
@@ -821,7 +837,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Set the {@link ClusterClientOptions} for the client.
-     * 
+     *
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
     public void setOptions(ClusterClientOptions clientOptions) {

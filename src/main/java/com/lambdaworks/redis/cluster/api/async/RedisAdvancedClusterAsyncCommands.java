@@ -17,7 +17,7 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
 
 /**
  * Advanced asynchronous and thread-safe Redis Cluster API.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 4.0
  */
@@ -26,10 +26,10 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
 
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list.
-     * 
+     *
      * In contrast to the {@link RedisAdvancedClusterAsyncCommands}, node-connections do not route commands to other cluster
      * nodes
-     * 
+     *
      * @param nodeId the node Id
      * @return a connection to the requested cluster node
      */
@@ -38,7 +38,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. In contrast to the
      * {@link RedisAdvancedClusterAsyncCommands}, node-connections do not route commands to other cluster nodes
-     * 
+     *
      * @param host the host
      * @param port the port
      * @return a connection to the requested cluster node
@@ -118,7 +118,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
 
     /**
      * Delete one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
-     * 
+     *
      * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
      * @see RedisKeyAsyncCommands#del(Object[])
@@ -137,7 +137,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
-     * 
+     *
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      * @see RedisStringAsyncCommands#mget(Object[])
@@ -147,7 +147,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
-     * 
+     *
      * @param map the map
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      * @see RedisStringAsyncCommands#mset(Map)
@@ -157,10 +157,10 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
      * multiple calls to the particular cluster nodes.
-     * 
+     *
      * @param map the null
      * @return Boolean integer-reply specifically:
-     * 
+     *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      * @see RedisStringAsyncCommands#msetnx(Map)
      */
@@ -193,7 +193,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
 
     /**
      * Return the number of keys in the selected database on all cluster masters.
-     * 
+     *
      * @return Long integer-reply
      * @see RedisServerAsyncCommands#dbsize()
      */
@@ -244,11 +244,19 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
-     * 
+     *
      * @param save {@literal true} force save operation
      * @see RedisServerAsyncCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
+
+    /**
+     * Incrementally iterate the keys space over the whole Cluster.
+     *
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see RedisKeyAsyncCommands#scan()
+     */
+    RedisFuture<KeyScanCursor<K>> scan();
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
