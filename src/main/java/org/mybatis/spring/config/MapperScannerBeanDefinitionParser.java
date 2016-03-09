@@ -44,12 +44,12 @@ import org.w3c.dom.Element;
 
 public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
 
-  private static String ATTRIBUTE_BASE_PACKAGE = "base-package";
-  private static String ATTRIBUTE_ANNOTATION = "annotation";
-  private static String ATTRIBUTE_MARKER_INTERFACE = "marker-interface";
-  private static String ATTRIBUTE_NAME_GENERATOR = "name-generator";
-  private static String ATTRIBUTE_TEMPLATE_REF = "template-ref";
-  private static String ATTRIBUTE_FACTORY_REF = "factory-ref";
+  private static final String ATTRIBUTE_BASE_PACKAGE = "base-package";
+  private static final String ATTRIBUTE_ANNOTATION = "annotation";
+  private static final String ATTRIBUTE_MARKER_INTERFACE = "marker-interface";
+  private static final String ATTRIBUTE_NAME_GENERATOR = "name-generator";
+  private static final String ATTRIBUTE_TEMPLATE_REF = "template-ref";
+  private static final String ATTRIBUTE_FACTORY_REF = "factory-ref";
 
   /**
    * {@inheritDoc}

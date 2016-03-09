@@ -59,6 +59,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
   private boolean addToConfig = true;
 
   public MapperFactoryBean() {
+    //intentially empty 
   }
   
   public MapperFactoryBean(Class<T> mapperInterface) {

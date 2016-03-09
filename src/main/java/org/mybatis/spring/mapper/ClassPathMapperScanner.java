@@ -105,7 +105,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   }
 
   public void setMapperFactoryBean(MapperFactoryBean mapperFactoryBean) {
-    this.mapperFactoryBean = (mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean());
+    this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean();
   }
 
 
