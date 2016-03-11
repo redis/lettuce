@@ -29,11 +29,14 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     private ClusterConnectionProvider clusterConnectionProvider;
     private boolean closed = false;
     private int executionLimit = 5;
+    
+    long p20, p21, p22, p23, p24, p25, p26;
+    long p30, p31, p32, p33, p34, p35, p36, p37;
 
     public ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter<K, V> defaultWriter) {
         this.defaultWriter = defaultWriter;
 
-        if(clientOptions instanceof ClusterClientOptions) {
+        if (clientOptions instanceof ClusterClientOptions) {
             executionLimit = ((ClusterClientOptions) clientOptions).getMaxRedirects();
         }
     }

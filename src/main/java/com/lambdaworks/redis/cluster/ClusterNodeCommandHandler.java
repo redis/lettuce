@@ -101,15 +101,16 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
      * Retrieve commands within a lock to prevent concurrent modification
      */
     private Collection<RedisCommand<K, V, ?>> shiftCommands(Collection<RedisCommand<K, V, ?>> source) {
+        
         try {
-            writeLock.lock();
+            lockWritersExclusive();
             try {
                 return Lists.newArrayList(source);
             } finally {
                 source.clear();
             }
         } finally {
-            writeLock.unlock();
+            unlockWritersExclusive();
         }
     }
 

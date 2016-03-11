@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.*;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
-import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -47,6 +46,7 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 
+import com.lambdaworks.redis.support.Factories;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -461,7 +461,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         checkArgument(socketAddressSupplier != null, "SocketAddressSupplier must not be null");
 
         logger.debug("connectNode(" + nodeId + ")");
-        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
+        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
 
         ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(), queue,
                 clusterWriter);
@@ -496,7 +496,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
+        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(ClusterTopologyRefresh::sortByLatency);
 
@@ -557,7 +557,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<>();
+        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(ClusterTopologyRefresh::sortByClientCount);
 

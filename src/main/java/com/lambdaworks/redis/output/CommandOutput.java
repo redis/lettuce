@@ -18,7 +18,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * @author Will Glozer
  */
 public abstract class CommandOutput<K, V, T> {
-    protected RedisCodec<K, V> codec;
+    protected final RedisCodec<K, V> codec;
     protected T output;
     protected String error;
 

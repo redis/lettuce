@@ -37,6 +37,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     private final RedisChannelWriter<K, V> channelWriter;
     private boolean active = true;
     private ClientOptions clientOptions;
+    
+    // If DEBUG level logging has been enabled at startup.
+    private final boolean debugEnabled;
 
     /**
      * @param writer the channel writer
@@ -44,7 +47,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * @param unit unit of the timeout
      */
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
+        
         this.channelWriter = writer;
+        debugEnabled = logger.isDebugEnabled();
+        
         writer.setRedisChannelHandler(this);
         setTimeout(timeout, unit);
     }
@@ -70,7 +76,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      */
     @Override
     public synchronized void close() {
-        logger.debug("close()");
+        
+        if(debugEnabled) {
+            logger.debug("close()");
+        }
 
         if (closed) {
             logger.warn("Connection is already closed");
@@ -102,7 +111,11 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
-        logger.debug("dispatching command {}", cmd);
+        
+        if(debugEnabled) {
+            logger.debug("dispatching command {}", cmd);
+        }
+        
         return channelWriter.write(cmd);
     }
 
@@ -124,7 +137,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
                 try {
                     closeable.close();
                 } catch (IOException e) {
-                    logger.debug(e.toString(), e);
+                    if(debugEnabled) {
+                        logger.debug(e.toString(), e);
+                    }
                 }
             }
 

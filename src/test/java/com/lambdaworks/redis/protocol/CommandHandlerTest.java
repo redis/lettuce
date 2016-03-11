@@ -6,37 +6,28 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Queue;
-import java.util.concurrent.Future;
+import java.util.*;
 
-import com.lambdaworks.redis.resource.ClientResources;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelPromise;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-
-import org.junit.Before;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.output.StatusOutput;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisException;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoop;
-import org.springframework.test.util.ReflectionTestUtils;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.resource.ClientResources;
+
+import edu.umd.cs.mtc.MultithreadedTestCase;
+import edu.umd.cs.mtc.TestFramework;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommandHandlerTest {
@@ -45,7 +36,7 @@ public class CommandHandlerTest {
 
     private CommandHandler<String, String> sut;
 
-    private Command<String, String, String> command = new Command<>(CommandType.APPEND,
+    public static final Command<String, String, String> command = new Command<>(CommandType.APPEND,
             new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
     @Mock
@@ -154,6 +145,226 @@ public class CommandHandlerTest {
 
         sut.exceptionCaught(context, new Exception());
         verifyZeroInteractions(context);
+    }
+
+    @Test
+    public void testMTCConcurrentWriteThenReset() throws Throwable {
+        TestFramework.runOnce(new MTCConcurrentWriteThenReset(clientResources, q));
+    }
+
+    @Test
+    public void testMTCConcurrentResetThenWrite() throws Throwable {
+        TestFramework.runOnce(new MTCConcurrentResetThenWrite(clientResources, q));
+    }
+    
+    @Test
+    public void testMTCConcurrentConcurrentWrite() throws Throwable {
+        TestFramework.runOnce(new MTCConcurrentConcurrentWrite(clientResources, q));
+    }
+
+    /**
+     * Test of concurrent access to locks. write call wins over reset call.
+     */
+    static class MTCConcurrentWriteThenReset extends MultithreadedTestCase {
+
+        private TestableCommandHandler handler;
+        private List<Thread> expectedThreadOrder = Collections.synchronizedList(new ArrayList<>());
+        private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
+        private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
+
+        public MTCConcurrentWriteThenReset(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
+            handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
+
+                @Override
+                protected void incrementWriters() {
+
+                    waitForTick(2);
+                    super.incrementWriters();
+                    waitForTick(4);
+                }
+
+                @Override
+                protected void lockWritersExclusive() {
+
+                    waitForTick(4);
+                    super.lockWritersExclusive();
+                }
+
+                @Override
+                protected <C extends RedisCommand<String, String, T>, T> void writeToBuffer(C command) {
+
+                    entryThreadOrder.add(Thread.currentThread());
+                    super.writeToBuffer(command);
+                }
+
+                @Override
+                protected List<RedisCommand<String, String, ?>> prepareReset() {
+
+                    entryThreadOrder.add(Thread.currentThread());
+                    return super.prepareReset();
+                }
+
+                @Override
+                protected void unlockWritersExclusive() {
+
+                    exitThreadOrder.add(Thread.currentThread());
+                    super.unlockWritersExclusive();
+                }
+
+                @Override
+                protected void decrementWriters() {
+
+                    exitThreadOrder.add(Thread.currentThread());
+                    super.decrementWriters();
+                }
+            };
+        }
+
+        public void thread1() throws InterruptedException {
+
+            waitForTick(1);
+            expectedThreadOrder.add(Thread.currentThread());
+            handler.write(command);
+
+        }
+
+        public void thread2() throws InterruptedException {
+
+            waitForTick(3);
+            expectedThreadOrder.add(Thread.currentThread());
+            handler.reset();
+        }
+
+        @Override
+        public void finish() {
+
+            assertThat(entryThreadOrder).containsExactlyElementsOf(expectedThreadOrder);
+            assertThat(exitThreadOrder).containsExactlyElementsOf(expectedThreadOrder);
+        }
+    }
+
+    /**
+     * Test of concurrent access to locks. write call wins over flush call.
+     */
+    static class MTCConcurrentResetThenWrite extends MultithreadedTestCase {
+
+        private TestableCommandHandler handler;
+        private List<Thread> expectedThreadOrder = Collections.synchronizedList(new ArrayList<>());
+        private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
+        private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
+
+        public MTCConcurrentResetThenWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
+            handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
+
+                @Override
+                protected void incrementWriters() {
+
+                    waitForTick(4);
+                    super.incrementWriters();
+                }
+
+                @Override
+                protected void lockWritersExclusive() {
+
+                    waitForTick(2);
+                    super.lockWritersExclusive();
+                    waitForTick(4);
+                }
+
+                @Override
+                protected <C extends RedisCommand<String, String, T>, T> void writeToBuffer(C command) {
+                    
+                    entryThreadOrder.add(Thread.currentThread());
+                    super.writeToBuffer(command);
+                }
+
+                @Override
+                protected List<RedisCommand<String, String, ?>> prepareReset() {
+
+                    entryThreadOrder.add(Thread.currentThread());
+                    return super.prepareReset();
+                }
+
+                @Override
+                protected void unlockWritersExclusive() {
+
+                    exitThreadOrder.add(Thread.currentThread());
+                    super.unlockWritersExclusive();
+                }
+
+                @Override
+                protected void decrementWriters() {
+
+                    exitThreadOrder.add(Thread.currentThread());
+                    super.decrementWriters();
+                }
+            };
+        }
+
+        public void thread1() throws InterruptedException {
+            
+            waitForTick(1);
+            expectedThreadOrder.add(Thread.currentThread());
+            handler.reset();
+        }
+
+        public void thread2() throws InterruptedException {
+
+            waitForTick(3);
+            expectedThreadOrder.add(Thread.currentThread());
+            handler.write(command);
+        }
+
+        @Override
+        public void finish() {
+
+            assertThat(entryThreadOrder).containsExactlyElementsOf(expectedThreadOrder);
+            assertThat(exitThreadOrder).containsExactlyElementsOf(expectedThreadOrder);
+        }
+    }
+    
+    /**
+     * Test of concurrent access to locks. Two concurrent writes.
+     */
+    static class MTCConcurrentConcurrentWrite extends MultithreadedTestCase {
+
+        private TestableCommandHandler handler;
+
+        public MTCConcurrentConcurrentWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
+            handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
+
+
+                @Override
+                protected <C extends RedisCommand<String, String, T>, T> void writeToBuffer(C command) {
+                    
+                    waitForTick(2);
+                    assertThat(writers.get()).isEqualTo(2);
+                    waitForTick(3);
+                    super.writeToBuffer(command);
+                }
+
+            };
+        }
+
+        public void thread1() throws InterruptedException {
+            
+            waitForTick(1);
+            handler.write(command);
+        }
+
+        public void thread2() throws InterruptedException {
+
+            waitForTick(1);
+            handler.write(command);
+        }
+
+    }
+
+    static class TestableCommandHandler extends CommandHandler<String, String> {
+        public TestableCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
+                Queue<RedisCommand<String, String, ?>> queue) {
+            super(clientOptions, clientResources, queue);
+        }
     }
 
 }
