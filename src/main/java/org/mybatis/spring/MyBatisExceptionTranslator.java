@@ -24,6 +24,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.transaction.TransactionException;
 
 /**
  * Default exception translator.
@@ -72,6 +73,8 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
       if (e.getCause() instanceof SQLException) {
         this.initExceptionTranslator();
         return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
+      } else if (e.getCause() instanceof TransactionException) {
+        throw (TransactionException) e.getCause();
       }
       return new MyBatisSystemException(e);
     } 
