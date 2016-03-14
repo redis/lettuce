@@ -1033,6 +1033,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<Long> zadd(K key, ScoredValue<V>... scoredValues) {
+        return dispatch(commandBuilder.zadd(key, null, scoredValues));
+    }
+
+    @Override
     public RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
         return dispatch(commandBuilder.zadd(key, zAddArgs, score, member));
     }
@@ -1040,6 +1045,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
         return dispatch(commandBuilder.zadd(key, zAddArgs, scoresAndValues));
+    }
+
+    @Override
+    public RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
+        return dispatch(commandBuilder.zadd(key, zAddArgs, scoredValues));
     }
 
     @Override

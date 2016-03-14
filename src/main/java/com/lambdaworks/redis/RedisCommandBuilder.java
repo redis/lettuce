@@ -1061,8 +1061,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
         assertNotEmpty(scoresAndValues, "scoresAndValues " + MUST_NOT_BE_EMPTY);
         assertNoNullElements(scoresAndValues, "scoresAndValues " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
-        assertTrue(scoresAndValues.length % 2 == 0, "scoresAndValues.length must be a multiple of 2 and contain a "
-                + "sequence of score1, value1, score2, value2, scoreN,valueN");
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
 
@@ -1070,11 +1068,37 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             zAddArgs.build(args);
         }
 
-        for (int i = 0; i < scoresAndValues.length; i += 2) {
-            args.add((Double) scoresAndValues[i]);
-            args.addValue((V) scoresAndValues[i + 1]);
+        if (allElementsInstanceOf(scoresAndValues, ScoredValue.class)) {
+
+            for (Object o : scoresAndValues) {
+                ScoredValue<V> scoredValue = (ScoredValue<V>) o;
+
+                args.add(scoredValue.score);
+                args.addValue(scoredValue.value);
+            }
+
+        } else {
+            assertTrue(scoresAndValues.length % 2 == 0, "scoresAndValues.length must be a multiple of 2 and contain a "
+                    + "sequence of score1, value1, score2, value2, scoreN,valueN");
+
+            for (int i = 0; i < scoresAndValues.length; i += 2) {
+                args.add((Double) scoresAndValues[i]);
+                args.addValue((V) scoresAndValues[i + 1]);
+            }
         }
+
         return createCommand(ZADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {
+
+        for (Object object : objects) {
+            if(!expectedAssignableType.isAssignableFrom(object.getClass())) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     public Command<K, V, Long> zcard(K key) {

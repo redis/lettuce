@@ -51,6 +51,18 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
+     * 
+     * @param key the key
+     * @param scoredValues the scored values
+     * @return Long integer-reply specifically:
+     * 
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
+     */
+    AsyncExecutions<Long> zadd(K key, ScoredValue<V>... scoredValues);
+
+    /**
+     * Add one or more members to a sorted set, or update its score if it already exists.
      *
      * @param key the key
      * @param zAddArgs arguments for zadd
@@ -76,6 +88,19 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      *         updated.
      */
     AsyncExecutions<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues);
+
+    /**
+     * Add one or more members to a sorted set, or update its score if it already exists.
+     * 
+     * @param key the ke
+     * @param zAddArgs arguments for zadd
+     * @param scoredValues the scored values
+     * @return Long integer-reply specifically:
+     * 
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
+     */
+    AsyncExecutions<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues);
 
     /**
      * ZADD acts like ZINCRBY

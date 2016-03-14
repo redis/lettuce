@@ -50,6 +50,18 @@ public interface NodeSelectionSortedSetCommands<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
+     * 
+     * @param key the key
+     * @param scoredValues the scored values
+     * @return Long integer-reply specifically:
+     * 
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
+     */
+    Executions<Long> zadd(K key, ScoredValue<V>... scoredValues);
+
+    /**
+     * Add one or more members to a sorted set, or update its score if it already exists.
      *
      * @param key the key
      * @param zAddArgs arguments for zadd
@@ -75,6 +87,19 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      *         updated.
      */
     Executions<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues);
+
+    /**
+     * Add one or more members to a sorted set, or update its score if it already exists.
+     * 
+     * @param key the ke
+     * @param zAddArgs arguments for zadd
+     * @param scoredValues the scored values
+     * @return Long integer-reply specifically:
+     * 
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
+     */
+    Executions<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues);
 
     /**
      * ZADD acts like ZINCRBY
@@ -359,8 +384,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified score range.
      */
-    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
-            long offset, long count);
+    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -373,8 +397,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified score range.
      */
-    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
-            long offset, long count);
+    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
     /**
      * Determine the index of a member in a sorted set.
@@ -638,8 +661,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
-            long offset, long count);
+    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -652,8 +674,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count the count
      * @return Long count of elements in the specified range.
      */
-    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
-            long offset, long count);
+    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.

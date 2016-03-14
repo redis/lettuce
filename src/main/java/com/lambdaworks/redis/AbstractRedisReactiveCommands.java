@@ -1012,6 +1012,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zadd(K key, ScoredValue<V>... scoredValues) {
+        return createObservable(() -> commandBuilder.zadd(key, null, scoredValues));
+    }
+
+    @Override
     public Observable<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
         return createObservable(() -> commandBuilder.zadd(key, zAddArgs, score, member));
     }
@@ -1019,6 +1024,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
         return createObservable(() -> commandBuilder.zadd(key, zAddArgs, scoresAndValues));
+    }
+    
+    @Override
+    public Observable<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
+        return createObservable(() -> commandBuilder.zadd(key, zAddArgs, scoredValues));
     }
 
     @Override
