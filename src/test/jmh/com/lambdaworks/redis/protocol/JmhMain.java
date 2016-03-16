@@ -20,7 +20,7 @@ public class JmhMain {
         
         // run selectively
         // runCommandHandlerBenchmark();
-        // runCommandBenchmark();
+        runCommandBenchmark();
     }
 
     private static void runCommandBenchmark() throws RunnerException {
@@ -42,7 +42,7 @@ public class JmhMain {
     }
 
     private static ChainedOptionsBuilder prepareOptions() {
-        return new OptionsBuilder().forks(1).warmupIterations(5).threads(5).measurementIterations(5)
+        return new OptionsBuilder().forks(1).warmupIterations(5).threads(1).measurementIterations(5)
                 .timeout(TimeValue.seconds(2));
     }
 }

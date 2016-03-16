@@ -506,8 +506,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         Set<String> allKeys = Sets.newHashSet();
 
         KeyScanCursor<String> scanCursor = null;
-        do {
 
+        do {
             if (scanCursor == null) {
                 scanCursor = sync.scan();
             } else {
@@ -529,8 +529,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         Set<String> allKeys = Sets.newHashSet();
 
         KeyScanCursor<String> scanCursor = null;
-        do {
 
+        do {
             if (scanCursor == null) {
                 scanCursor = sync.scan(ScanArgs.Builder.matches("a*"));
             } else {
@@ -552,8 +552,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         StreamScanCursor scanCursor = null;
-        do {
 
+        do {
             if (scanCursor == null) {
                 scanCursor = sync.scan(adapter);
             } else {
@@ -575,7 +575,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         StreamScanCursor scanCursor = null;
         do {
-
             if (scanCursor == null) {
                 scanCursor = sync.scan(adapter, ScanArgs.Builder.matches("a*"));
             } else {

@@ -15,10 +15,9 @@ import io.netty.buffer.ByteBuf;
  * @param <T> Command output type.
  *
  * @author Will Glozer
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T> {
-
-    private static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
     private final ProtocolKeyword type;
 
@@ -92,35 +91,16 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      * @param buf Buffer to write to.
      */
     public void encode(ByteBuf buf) {
+
         buf.writeByte('*');
-        writeInt(buf, 1 + (args != null ? args.count() : 0));
-        buf.writeBytes(CRLF);
-        buf.writeByte('$');
-        writeInt(buf, type.getBytes().length);
-        buf.writeBytes(CRLF);
-        buf.writeBytes(type.getBytes());
-        buf.writeBytes(CRLF);
+        CommandArgs.IntegerArgument.writeInteger(buf, 1 + (args != null ? args.count() : 0));
+
+        buf.writeBytes(CommandArgs.CRLF);
+
+        CommandArgs.BytesArgument.writeBytes(buf, type.getBytes());
+
         if (args != null) {
-            buf.writeBytes(args.buffer());
-        }
-    }
-
-    /**
-     * Write the textual value of a positive integer to the supplied buffer.
-     *
-     * @param buf Buffer to write to.
-     * @param value Value to write.
-     */
-    protected static void writeInt(ByteBuf buf, int value) {
-
-        if (value < 10) {
-            buf.writeByte((byte) ('0' + value));
-            return;
-        }
-
-        String asString = Integer.toString(value);
-        for (int i = 0; i < asString.length(); i++) {
-            buf.writeByte((byte) asString.charAt(i));
+            args.encode(buf);
         }
     }
 

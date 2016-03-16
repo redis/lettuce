@@ -9,7 +9,8 @@ import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
 
-import org.openjdk.jmh.annotations.Benchmark;
+import com.lambdaworks.redis.protocol.CommandArgs.ExperimentalByteArrayCodec;
+import org.openjdk.jmh.annotations.*;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -29,11 +30,12 @@ import io.netty.buffer.ByteBufProcessor;
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
+@State(Scope.Benchmark)
 public class CommandBenchmark {
 
     private final static ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
+    private final static ExperimentalByteArrayCodec BYTE_ARRAY_CODEC2 = ExperimentalByteArrayCodec.INSTANCE;
     private final static Utf8StringCodec STRING_CODEC = new Utf8StringCodec();
-
     private final static DummyByteBuf DUMMY_BYTE_BUF = new DummyByteBuf();
 
     private final static String KEY = "key";
@@ -52,6 +54,11 @@ public class CommandBenchmark {
     @Benchmark
     public void encodeCommandUsingByteArrayCodec() {
         createCommand(BYTE_KEY, BYTE_ARRAY_CODEC).encode(DUMMY_BYTE_BUF);
+    }
+
+    @Benchmark
+    public void encodeCommandUsingByteArrayCodec2() {
+        createCommand(BYTE_KEY, BYTE_ARRAY_CODEC2).encode(DUMMY_BYTE_BUF);
     }
 
     @Benchmark

@@ -3,6 +3,8 @@ package com.lambdaworks.redis.pubsub;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
+import java.nio.ByteBuffer;
+
 /**
  * PubSub keys are not keys from the key-space.
  * 
@@ -19,7 +21,7 @@ class PubSubCommandArgs<K, V> extends CommandArgs<K, V> {
     }
 
     @Override
-    public CommandArgs addKey(K key) {
-        return write(codec.encodeKey(key));
+    public ByteBuffer getFirstEncodedKey() {
+        return null;
     }
 }
