@@ -8,10 +8,12 @@ import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
 /**
+ * Wrapper for a command.
+ * 
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 16.06.15 10:34
  */
-public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T> {
+public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     protected RedisCommand<K, V, T> command;
     private List<Consumer<? super T>> onComplete = Lists.newArrayList();
@@ -27,7 +29,9 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
     @Override
     public void complete() {
+
         command.complete();
+
         for (Consumer<? super T> consumer : onComplete) {
             if (getOutput() != null) {
                 consumer.accept(getOutput().get());
@@ -35,7 +39,6 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
                 consumer.accept(null);
             }
         }
-
     }
 
     @Override
@@ -92,5 +95,29 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     @Override
     public boolean isDone() {
         return command.isDone();
+    }
+
+    @Override
+    public RedisCommand<K, V, T> getDelegate() {
+        return command;
+    }
+
+    /**
+     * Unwrap a wrapped command.
+     * 
+     * @param wrapped
+     * @param <K>
+     * @param <V>
+     * @param <T>
+     * @return
+     */
+    public static <K, V, T> RedisCommand<K, V, T> unwrap(RedisCommand<K, V, T> wrapped) {
+
+        RedisCommand<K, V, T> result = wrapped;
+        while (result instanceof DecoratedCommand<?, ?, ?>) {
+            result = ((DecoratedCommand<K, V, T>) result).getDelegate();
+        }
+
+        return result;
     }
 }

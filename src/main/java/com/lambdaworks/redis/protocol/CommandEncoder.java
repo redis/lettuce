@@ -44,6 +44,25 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     }
 
     @Override
+    protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, Object msg, boolean preferDirect) throws Exception {
+
+        if (msg instanceof Collection) {
+
+            if (preferDirect) {
+                return ctx.alloc().ioBuffer(((Collection) msg).size() * 16);
+            } else {
+                return ctx.alloc().heapBuffer(((Collection) msg).size() * 16);
+            }
+        }
+
+        if (preferDirect) {
+            return ctx.alloc().ioBuffer();
+        } else {
+            return ctx.alloc().heapBuffer();
+        }
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
 
@@ -64,7 +83,9 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     }
 
     private void encode(ChannelHandlerContext ctx, ByteBuf out, RedisCommand<?, ?, ?> command) {
+
         command.encode(out);
+
         if (debugEnabled) {
             logger.debug("{} writing command {}", logPrefix(ctx.channel()), command);
             if (traceEnabled) {

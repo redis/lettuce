@@ -17,7 +17,7 @@ import io.netty.buffer.ByteBuf;
  * @author Will Glozer
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
-public class Command<K, V, T> implements RedisCommand<K, V, T> {
+public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency{
 
     private final ProtocolKeyword type;
 
@@ -26,6 +26,9 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     protected Throwable exception;
     protected boolean cancelled = false;
     protected boolean completed = false;
+    protected long sentNs = -1;
+    protected long firstResponseNs = -1;
+    protected long completedNs = -1;
 
     /**
      * Create a new command with the supplied type.
@@ -155,4 +158,36 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     public boolean isDone() {
         return completed;
     }
+
+	@Override
+	public void sent(long timeNs) {
+		sentNs = timeNs;
+		firstResponseNs = -1;
+		completedNs = -1;
+	}
+
+	@Override
+	public void firstResponse(long timeNs) {
+		firstResponseNs = timeNs;
+	}
+
+	@Override
+	public void completed(long timeNs) {
+		completedNs = timeNs; 
+	}
+
+	@Override
+	public long getSent() {
+		return sentNs;
+	}
+
+	@Override
+	public long getFirstResponse() {
+		return firstResponseNs;
+	}
+
+	@Override
+	public long getCompleted() {
+		return completedNs;
+	}
 }

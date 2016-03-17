@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.protocol;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -11,6 +11,7 @@ import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.output.CommandOutput;
+
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -24,7 +25,7 @@ import io.netty.buffer.ByteBuf;
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
-        CompleteableCommand<T> {
+        CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     protected RedisCommand<K, V, T> command;
     protected CountDownLatch latch = new CountDownLatch(1);
@@ -151,4 +152,10 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     public void onComplete(Consumer<? super T> action) {
         thenAccept(action);
     }
+
+	@Override
+	public RedisCommand<K, V, T> getDelegate() {
+		return command;
+	}
+	
 }
