@@ -114,6 +114,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
 
         releaseBuffer();
+        releaseStateMachine();
 
         if (lifecycleState == LifecycleState.CLOSED) {
             cancelCommands("Connection closed");
@@ -696,13 +697,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    private void releaseBuffer() {
-        if (buffer != null) {
-            buffer.release();
-            buffer = null;
-        }
-    }
-
     public boolean isClosed() {
         return lifecycleState == LifecycleState.CLOSED;
     }
@@ -762,6 +756,22 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         StringBuffer buffer = new StringBuffer(64);
         buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return logPrefix = buffer.toString();
+    }
+
+    private void releaseBuffer() {
+
+        if (buffer != null) {
+            buffer.release();
+            buffer = null;
+        }
+    }
+
+    private void releaseStateMachine() {
+
+        if (rsm != null) {
+            rsm.close();
+            rsm = null;
+        }
     }
 
     public enum LifecycleState {

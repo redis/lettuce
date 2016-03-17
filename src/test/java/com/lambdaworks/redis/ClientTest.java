@@ -261,5 +261,4 @@ public class ClientTest extends AbstractRedisClientTest {
         connection.close();
     }
 
-
 }

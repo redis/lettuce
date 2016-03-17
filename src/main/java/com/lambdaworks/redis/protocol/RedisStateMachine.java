@@ -2,29 +2,32 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 import java.nio.ByteBuffer;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.Arrays;
 
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.output.CommandOutput;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufProcessor;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
- * Request Protocol</a>.
+ * Request Protocol (RESP)</a>.
  * 
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class RedisStateMachine<K, V> {
+
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
     private static final ByteBuffer QUEUED = buffer("QUEUED");
 
@@ -37,13 +40,20 @@ public class RedisStateMachine<K, V> {
         int count = -1;
     }
 
-    private final Deque<State> stack;
+    private final State[] stack;
+    private int stackElements;
+
+    // If DEBUG level logging has been enabled at startup.
+    private final boolean debugEnabled;
+    private final ToLongProcessor toLongProcessor = new ToLongProcessor();
+    private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
 
     /**
      * Initialize a new instance.
      */
     public RedisStateMachine() {
-        stack = new LinkedList<State>();
+        stack = new State[32];
+        debugEnabled = logger.isDebugEnabled();
     }
 
     /**
@@ -70,22 +80,22 @@ public class RedisStateMachine<K, V> {
         int length, end;
         ByteBuffer bytes;
 
-        if (logger.isDebugEnabled()) {
+        if (debugEnabled) {
             logger.debug("Decode " + command);
         }
 
-        if (stack.isEmpty()) {
-            stack.add(new State());
+        if (isEmpty(stack)) {
+            add(stack, new State());
         }
 
         if (output == null) {
-            return stack.isEmpty();
+            return isEmpty(stack);
         }
 
         loop:
 
-        while (!stack.isEmpty()) {
-            State state = stack.peek();
+        while (!isEmpty(stack)) {
+            State state = peek(stack);
 
             if (state.type == null) {
                 if (!buffer.isReadable()) {
@@ -100,6 +110,7 @@ public class RedisStateMachine<K, V> {
                     if ((bytes = readLine(buffer)) == null) {
                         break loop;
                     }
+
                     if (!QUEUED.equals(bytes)) {
                         safeSet(output, bytes, command);
                     }
@@ -147,7 +158,7 @@ public class RedisStateMachine<K, V> {
                     }
 
                     state.count--;
-                    stack.addFirst(new State());
+                    addFirst(stack, new State());
 
                     continue loop;
                 case BYTES:
@@ -161,44 +172,35 @@ public class RedisStateMachine<K, V> {
             }
 
             buffer.markReaderIndex();
-            stack.remove();
+            remove(stack);
 
-            output.complete(stack.size());
-
+            output.complete(size(stack));
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Decoded " + command + ", empty stack: " + stack.isEmpty());
+        if (debugEnabled) {
+            logger.debug("Decoded " + command + ", empty stack: " + isEmpty(stack));
         }
 
-        return stack.isEmpty();
+        return isEmpty(stack);
     }
 
-    protected void safeSet(CommandOutput<K, V, ?> output, long integer, RedisCommand<K, V, ?> command) {
-        safeSet(() -> output.set(integer), command);
+    /**
+     * Reset the state machine.
+     */
+    public void reset() {
+        Arrays.fill(stack, null);
+        stackElements = 0;
     }
 
-    protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
-        safeSet(() -> output.set(bytes), command);
-    }
-
-    protected void safeMulti(CommandOutput<K, V, ?> output, int count, RedisCommand<K, V, ?> command) {
-        safeSet(() -> output.multi(count), command);
-    }
-
-    protected void safeSetError(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
-        safeSet(() -> output.setError(bytes), command);
-    }
-
-    protected void safeSet(Runnable runnable, RedisCommand<K, V, ?> command) {
-        try {
-            runnable.run();
-        } catch (Exception e) {
-            command.completeExceptionally(e);
-        }
+    /**
+     * Close the state machine to free resources.
+     */
+    public void close(){
+        responseElementBuffer.release();
     }
 
     private int findLineEnd(ByteBuf buffer) {
+
         int start = buffer.readerIndex();
         int index = buffer.indexOf(start, buffer.writerIndex(), (byte) '\n');
         return (index > 0 && buffer.getByte(index - 1) == '\r') ? index : -1;
@@ -223,28 +225,37 @@ public class RedisStateMachine<K, V> {
     }
 
     private long readLong(ByteBuf buffer, int start, int end) {
-        long value = 0;
 
-        boolean negative = buffer.getByte(start) == '-';
-        int offset = negative ? start + 1 : start;
-        while (offset < end - 1) {
-            int digit = buffer.getByte(offset++) - '0';
-            value = value * 10 - digit;
-        }
-        if (!negative) {
-            value = -value;
+        toLongProcessor.result = 0;
+        toLongProcessor.first = true;
+
+        buffer.forEachByte(start, end - start - 1, toLongProcessor);
+        if (!toLongProcessor.negative) {
+            toLongProcessor.result = -toLongProcessor.result;
         }
         buffer.readerIndex(end + 1);
 
-        return value;
+        return toLongProcessor.result;
     }
 
     private ByteBuffer readLine(ByteBuf buffer) {
+
         ByteBuffer bytes = null;
         int end = findLineEnd(buffer);
+
         if (end > -1) {
             int start = buffer.readerIndex();
-            bytes = buffer.nioBuffer(start, end - start - 1);
+            responseElementBuffer.clear();
+            int size = end - start - 1;
+
+            if (responseElementBuffer.capacity() < size) {
+                responseElementBuffer.capacity(size);
+            }
+
+            buffer.readBytes(responseElementBuffer, size);
+
+            bytes = responseElementBuffer.internalNioBuffer(0, size);
+
             buffer.readerIndex(end + 1);
             buffer.markReaderIndex();
         }
@@ -252,15 +263,180 @@ public class RedisStateMachine<K, V> {
     }
 
     private ByteBuffer readBytes(ByteBuf buffer, int count) {
+
         ByteBuffer bytes = null;
+
         if (buffer.readableBytes() >= count) {
-            bytes = buffer.nioBuffer(buffer.readerIndex(), count - 2);
-            buffer.readerIndex(buffer.readerIndex() + count);
+            responseElementBuffer.clear();
+
+            int size = count - 2;
+
+            if (responseElementBuffer.capacity() < size) {
+                responseElementBuffer.capacity(size);
+            }
+            buffer.readBytes(responseElementBuffer, size);
+
+            bytes = responseElementBuffer.internalNioBuffer(0, size);
+            buffer.readerIndex(buffer.readerIndex() + 2);
         }
         return bytes;
     }
 
-    public void reset() {
-        stack.clear();
+    /**
+     * Remove the head element from the stack.
+     * 
+     * @param stack
+     */
+    private void remove(State[] stack) {
+        stack[stackElements - 1] = null;
+        stackElements--;
     }
+
+    /**
+     * Add the element to the stack to be the new head element.
+     * 
+     * @param stack
+     * @param state
+     */
+    private void addFirst(State[] stack, State state) {
+        stack[stackElements++] = state;
+    }
+
+    /**
+     * Returns the head element without removing it.
+     * 
+     * @param stack
+     * @return
+     */
+    private State peek(State[] stack) {
+        return stack[stackElements - 1];
+    }
+
+    /**
+     * Add a state as tail element. This method shifts the whole stack if the stack is not empty.
+     * 
+     * @param stack
+     * @param state
+     */
+    private void add(State[] stack, State state) {
+
+        if (stackElements != 0) {
+            System.arraycopy(stack, 0, stack, 1, stackElements);
+        }
+
+        stack[0] = state;
+        stackElements++;
+    }
+
+    /**
+     * 
+     * @param stack
+     * @return number of stack elements.
+     */
+    private int size(State[] stack) {
+        return stackElements;
+    }
+
+    /**
+     * 
+     * @param stack
+     * @return true if the stack is empty.
+     */
+    private boolean isEmpty(State[] stack) {
+        return stackElements == 0;
+    }
+
+    /**
+     * Safely sets {@link CommandOutput#set(long)}. Completes a command exceptionally in case an exception occurs.
+     * 
+     * @param output
+     * @param integer
+     * @param command
+     */
+    protected void safeSet(CommandOutput<K, V, ?> output, long integer, RedisCommand<K, V, ?> command) {
+
+        try {
+            output.set(integer);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
+    }
+
+    /**
+     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     * 
+     * @param output
+     * @param bytes
+     * @param command
+     */
+    protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+
+        try {
+            output.set(bytes);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
+    }
+
+    /**
+     * Safely sets {@link CommandOutput#multi(int)}. Completes a command exceptionally in case an exception occurs.
+     * 
+     * @param output
+     * @param count
+     * @param command
+     */
+    protected void safeMulti(CommandOutput<K, V, ?> output, int count, RedisCommand<K, V, ?> command) {
+
+        try {
+            output.multi(count);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
+    }
+
+    /**
+     * Safely sets {@link CommandOutput#setError(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     * 
+     * @param output
+     * @param bytes
+     * @param command
+     */
+    protected void safeSetError(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+
+        try {
+            output.setError(bytes);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
+    }
+
+    static class ToLongProcessor implements ByteBufProcessor {
+
+        long result;
+        boolean negative;
+        boolean first;
+
+        @Override
+        public boolean process(byte value) throws Exception {
+
+            if (first) {
+                first = false;
+
+                if (value == '-') {
+                    negative = true;
+                } else {
+                    negative = false;
+                    int digit = value - '0';
+                    result = result * 10 - digit;
+                }
+                return true;
+            }
+
+            int digit = value - '0';
+            result = result * 10 - digit;
+
+            return true;
+        }
+    }
+
 }
