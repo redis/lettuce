@@ -5,8 +5,6 @@ BREW_BIN := $(shell which brew)
 YUM_BIN := $(shell which yum)
 APT_BIN := $(shell which apt-get)
 
-
-
 define REDIS_CLUSTER_CONFIG1
 c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 1434887920102 1434887920002 0 connected 12000-16383
 27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7379 myself,master - 0 0 1 connected 0-11999
@@ -217,22 +215,6 @@ work/cluster-node-%.conf:
 	@echo cluster-node-timeout 50 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-$*.conf >> $@
 
-
-work/cluster-node-%.conf:
-	@mkdir -p $(@D)
-
-	@echo port $* >> $@
-	@echo daemonize yes >> $@
-	@echo pidfile $(shell pwd)/work/cluster-node-$*.pid >> $@
-	@echo logfile $(shell pwd)/work/cluster-node-$*.log >> $@
-	@echo save \"\" >> $@
-	@echo appendonly no >> $@
-	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
-	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
-	@echo cluster-enabled yes >> $@
-	@echo cluster-node-timeout 50 >> $@
-	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-$*.conf >> $@
-
 work/cluster-node-%.pid: work/cluster-node-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $<
 
@@ -300,7 +282,7 @@ start: cleanup
 
 
 cleanup: stop
-	@mkdir -p $(@D)
+	@mkdir -p work
 	rm -f work/cluster-node*.conf 2>/dev/null
 	rm -f work/*.rdb work/*.aof work/*.conf work/*.log 2>/dev/null
 	rm -f *.aof
