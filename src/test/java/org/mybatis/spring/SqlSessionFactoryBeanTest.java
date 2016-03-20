@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Properties;
 
+import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.io.JBoss6VFS;
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
@@ -396,6 +397,14 @@ public final class SqlSessionFactoryBeanTest {
 
     ObjectWrapperFactory objectWrapperFactory = factoryBean.getObject().getConfiguration().getObjectWrapperFactory();
     assertTrue(objectWrapperFactory instanceof TestObjectWrapperFactory);
+  }
+
+  @Test
+  public void testAddCache() {
+    setupFactoryBean();
+    PerpetualCache cache = new PerpetualCache("test-cache");
+    this.factoryBean.setCache(cache);
+    assertEquals("test-cache", this.factoryBean.getCache().getId());
   }
 
   private void assertDefaultConfig(SqlSessionFactory factory) {

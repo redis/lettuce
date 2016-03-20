@@ -29,6 +29,7 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
+import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.io.VFS;
 import org.apache.ibatis.logging.Log;
@@ -115,6 +116,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   private Class<? extends VFS> vfs;
 
+  private Cache cache;
+
   private ObjectFactory objectFactory;
 
   private ObjectWrapperFactory objectWrapperFactory;
@@ -166,6 +169,14 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
   public void setVfs(Class<? extends VFS> vfs) {
     this.vfs = vfs;
+  }
+
+  public Cache getCache() {
+    return this.cache;
+  }
+
+  public void setCache(Cache cache) {
+    this.cache = cache;
   }
 
   /**
@@ -471,6 +482,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     if (this.vfs != null) {
       configuration.setVfsImpl(this.vfs);
+    }
+
+    if (this.cache != null) {
+      configuration.addCache(this.cache);
     }
 
     if (xmlConfigBuilder != null) {
