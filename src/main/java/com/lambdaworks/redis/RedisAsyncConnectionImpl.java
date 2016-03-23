@@ -102,6 +102,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs) {
+        return dispatch(commandBuilder.bitfield(key, bitFieldArgs));
+    }
+
+    @Override
     public RedisFuture<Long> bitpos(K key, boolean state) {
         return dispatch(commandBuilder.bitpos(key, state));
     }

@@ -95,6 +95,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(key).add(start).add(end);
         return createCommand(BITCOUNT, new IntegerOutput<K, V>(codec), args);
     }
+    
+    public Command<K, V, List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs) {
+        assertNotNull(bitFieldArgs != null, "bitFieldArgs must not be null");
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key);
+
+        bitFieldArgs.build(args);
+        
+        return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<K, V>(codec), args);
+    }
 
     public Command<K, V, Long> bitpos(K key, boolean state) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
