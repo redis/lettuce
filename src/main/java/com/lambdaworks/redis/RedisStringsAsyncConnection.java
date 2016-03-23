@@ -1,10 +1,9 @@
 package com.lambdaworks.redis;
 
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 import java.util.List;
 import java.util.Map;
-
-import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Strings.
@@ -17,6 +16,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  */
 @Deprecated
 public interface RedisStringsAsyncConnection<K, V> {
+
     /**
      * Append a value to a key.
      * 
@@ -45,6 +45,16 @@ public interface RedisStringsAsyncConnection<K, V> {
      * @return RedisFuture&lt;Long&gt; integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key, long start, long end);
+    
+    /**
+     * Execute {@code BITFIELD} with its subcommands.
+     * 
+     * @param key the key
+     * @param bitFieldArgs the args containing subcommands, must not be {@literal null}.
+     * 
+     * @return Long bulk-reply the results from the bitfield commands.
+     */
+    RedisFuture<List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs);
 
     /**
      * Find first bit set or clear in a string.

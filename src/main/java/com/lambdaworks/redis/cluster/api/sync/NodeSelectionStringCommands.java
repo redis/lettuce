@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster.api.sync;
 import java.util.List;
 import java.util.Map;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.SetArgs;
 
 /**
@@ -44,6 +45,16 @@ public interface NodeSelectionStringCommands<K, V> {
      * @return Long integer-reply The number of bits set to 1.
      */
     Executions<Long> bitcount(K key, long start, long end);
+
+    /**
+     * Execute {@code BITFIELD} with its subcommands.
+     * 
+     * @param key the key
+     * @param bitFieldArgs the args containing subcommands, must not be {@literal null}.
+     * 
+     * @return Long bulk-reply the results from the bitfield commands.
+     */
+    Executions<List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs);
 
     /**
      * Find first bit set or clear in a string.

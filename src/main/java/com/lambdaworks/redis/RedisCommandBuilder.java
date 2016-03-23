@@ -1,20 +1,21 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.LettuceStrings.string;
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
-import static com.lambdaworks.redis.protocol.CommandType.*;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.RedisCommand;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.lambdaworks.redis.LettuceStrings.string;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 /**
  * @param <K>
@@ -59,6 +60,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.addKey(key).add(start).add(end);
         return createCommand(BITCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+    
+    public Command<K, V, List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs) {
+        checkArgument(bitFieldArgs != null, "bitFieldArgs must not be null");
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key);
+
+        bitFieldArgs.build(args);
+        
+        return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> bitpos(K key, boolean state) {
