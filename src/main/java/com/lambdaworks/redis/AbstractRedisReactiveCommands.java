@@ -82,6 +82,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> bitcount(K key, long start, long end) {
         return createObservable(() -> commandBuilder.bitcount(key, start, end));
     }
+    
+    @Override
+    public Observable<Long> bitfield(K key, BitFieldArgs args) {
+        return createDissolvingObservable(() -> commandBuilder.bitfield(key, args));
+    }
 
     @Override
     public Observable<Long> bitpos(K key, boolean state) {

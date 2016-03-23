@@ -2,14 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.*;
@@ -17,6 +9,14 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.*;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 /**
  * An asynchronous and thread-safe API for a Redis connection.
@@ -88,6 +88,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public RedisFuture<Long> bitcount(K key, long start, long end) {
         return dispatch(commandBuilder.bitcount(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs) {
+        return dispatch(commandBuilder.bitfield(key, bitFieldArgs));
     }
 
     @Override
