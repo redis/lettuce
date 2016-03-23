@@ -2,18 +2,24 @@
 
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.*;
+import static com.lambdaworks.redis.BitFieldArgs.OverflowType.WRAP;
+import static com.lambdaworks.redis.BitFieldArgs.signed;
+import static com.lambdaworks.redis.BitFieldArgs.unsigned;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 public class BitCommandTest extends AbstractRedisClientTest {
+
     protected RedisCommands<String, String> bitstring;
 
     @Override
@@ -35,12 +41,79 @@ public class BitCommandTest extends AbstractRedisClientTest {
     @Test
     public void bitcount() throws Exception {
         assertThat((long) redis.bitcount(key)).isEqualTo(0);
+
         redis.setbit(key, 0, 1);
         redis.setbit(key, 1, 1);
         redis.setbit(key, 2, 1);
+
         assertThat((long) redis.bitcount(key)).isEqualTo(3);
-        // assertThat(1).isEqualTo(2, (long) redis.bitcount(key, offset(3)));
-        Assertions.assertThat(redis.bitcount(key, 3, -1)).isEqualTo(0);
+        assertThat(redis.bitcount(key, 3, -1)).isEqualTo(0);
+    }
+
+    @Test
+    public void bitfieldType() throws Exception {
+        assertThat(signed(64).getBits()).isEqualTo(64);
+        assertThat(signed(64).isSigned()).isTrue();
+        assertThat(unsigned(63).getBits()).isEqualTo(63);
+        assertThat(unsigned(63).isSigned()).isFalse();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bitfieldTypeSigned65() throws Exception {
+        signed(65);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bitfieldTypeUnsigned64() throws Exception {
+        unsigned(64);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void bitfieldBuilderEmptyPreviousType() throws Exception {
+        new BitFieldArgs().overflow(WRAP).get();
+    }
+
+    @Test
+    public void bitfield() throws Exception {
+
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).set(5, 1).incrBy(2, 3).get().get(2);
+
+        List<Long> values = redis.bitfield(key, bitFieldArgs);
+
+        assertThat(values).containsExactly(0L, 32L, 3L, 0L, 3L);
+        assertThat(bitstring.get(key)).isEqualTo("0000000000010011");
+    }
+
+    @Test
+    public void bitfieldSet() throws Exception {
+
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).set(5);
+
+        List<Long> values = redis.bitfield(key, bitFieldArgs);
+
+        assertThat(values).containsExactly(0L, 5L);
+        assertThat(bitstring.get(key)).isEqualTo("10100000");
+    }
+
+    @Test
+    public void bitfieldIncrBy() throws Exception {
+
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).incrBy(1);
+
+        List<Long> values = redis.bitfield(key, bitFieldArgs);
+
+        assertThat(values).containsExactly(0L, 6L);
+        assertThat(bitstring.get(key)).isEqualTo("01100000");
+    }
+
+    @Test
+    public void bitfieldOverflow() throws Exception {
+
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(WRAP).set(signed(8), 9, Integer.MAX_VALUE).get(signed(8));
+
+        List<Long> values = redis.bitfield(key, bitFieldArgs);
+        assertThat(values).containsExactly(0L, 0L);
+        assertThat(bitstring.get(key)).isEqualTo("000000001111111000000001");
     }
 
     @Test
