@@ -1,7 +1,7 @@
 package com.lambdaworks.codec;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  *         <ul>
  *         <li>Name: XMODEM (also known as ZMODEM or CRC-16/ACORN)</li>
  *         <li>Width: 16 bit</li>

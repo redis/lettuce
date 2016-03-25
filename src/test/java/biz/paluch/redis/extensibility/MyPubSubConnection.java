@@ -13,7 +13,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 /**
  * Demo code for extending a RedisPubSubConnectionImpl.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @SuppressWarnings("unchecked")
 public class MyPubSubConnection<K, V> extends RedisPubSubConnectionImpl<K, V> {

@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class Sockets {
     public static boolean isOpen(String host, int port) {

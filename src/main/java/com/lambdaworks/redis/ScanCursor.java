@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 /**
  * Generic Cursor data structure.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class ScanCursor {

@@ -45,7 +45,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * property to a reasonable number of threads.
  * </p>
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public abstract class AbstractRedisClient {

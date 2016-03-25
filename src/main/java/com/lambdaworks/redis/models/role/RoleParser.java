@@ -12,7 +12,7 @@ import com.google.common.primitives.Ints;
 /**
  * Parser for redis <a href="http://redis.io/commands/role">ROLE</a> command output.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")

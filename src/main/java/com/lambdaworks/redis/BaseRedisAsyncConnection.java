@@ -8,7 +8,7 @@ import java.util.Map;
  * 
  * Basic asynchronous executed commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <K> Key type.
  * @param <V> Value type.
  * @since 3.0

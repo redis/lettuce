@@ -9,7 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * finish of the future execution or, if the future is completed already, immediately.
  * 
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public interface RedisFuture<V> extends ListenableFuture<V> {

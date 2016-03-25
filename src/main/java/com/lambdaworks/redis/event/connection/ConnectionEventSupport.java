@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.net.SocketAddress;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 abstract class ConnectionEventSupport implements ConnectionEvent {

@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Arguments and types for the {@code BITFIELD} command.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.5 (Backported from 4.2)
  */
 public class BitFieldArgs {

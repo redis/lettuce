@@ -7,7 +7,7 @@ import com.lambdaworks.redis.ClientOptions;
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ClusterClientOptions extends ClientOptions {
 

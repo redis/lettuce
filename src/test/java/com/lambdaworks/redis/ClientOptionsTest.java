@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ClientOptionsTest extends AbstractCommandTest{
 

@@ -7,7 +7,7 @@ import io.netty.channel.ChannelHandler;
 /**
  * Channel initializer to set up the transport before a Redis connection can be used. This is part of the internal API.
  * This class is part of the internal API.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public interface RedisChannelInitializer extends ChannelHandler {
 

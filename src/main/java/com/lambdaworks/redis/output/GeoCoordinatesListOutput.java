@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * A list output that creates a list with {@link GeoCoordinates}'s.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<GeoCoordinates>> {
 

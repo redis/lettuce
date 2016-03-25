@@ -33,7 +33,7 @@ import com.lambdaworks.redis.resource.ClientResources;
  * this instance as much as possible.
  *
  * @author Will Glozer
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class RedisClient extends AbstractRedisClient {
 

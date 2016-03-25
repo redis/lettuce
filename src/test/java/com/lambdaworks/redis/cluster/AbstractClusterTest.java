@@ -12,7 +12,7 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class AbstractClusterTest {
 

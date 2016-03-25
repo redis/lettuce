@@ -11,7 +11,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * Utility to {@link #awaitAll(long, TimeUnit, Future[])} futures until they are done and to synchronize future execution using
  * {@link #awaitOrCancel(RedisCommand, long, TimeUnit)}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class LettuceFutures {

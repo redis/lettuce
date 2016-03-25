@@ -8,7 +8,7 @@ import com.lambdaworks.redis.ClientOptions;
  * Event for a connection activation (after SSL-handshake, {@link ClientOptions#isPingBeforeActivateConnection() PING before
  * activation}, and buffered command replay).
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public class ConnectionActivatedEvent extends ConnectionEventSupport {

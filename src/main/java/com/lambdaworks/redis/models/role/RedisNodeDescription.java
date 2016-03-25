@@ -5,7 +5,7 @@ import com.lambdaworks.redis.RedisURI;
 /**
  * Description of a single Redis Node.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface RedisNodeDescription extends RedisInstance {

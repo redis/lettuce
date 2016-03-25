@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 /**
  * Interface for a connection point described with a host and port or socket.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public interface ConnectionPoint {
 

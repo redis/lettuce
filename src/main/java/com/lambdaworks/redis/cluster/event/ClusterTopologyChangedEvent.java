@@ -8,7 +8,7 @@ import com.lambdaworks.redis.event.Event;
 /**
  * Signals a discovered cluster topology change. The event carries the view {@link #before()} and {@link #after} the change.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public class ClusterTopologyChangedEvent implements Event {

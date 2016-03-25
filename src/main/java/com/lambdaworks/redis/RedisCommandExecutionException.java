@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 /**
  * Exception for errors states reported by Redis.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @SuppressWarnings("serial")
 public class RedisCommandExecutionException extends RedisException {

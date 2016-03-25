@@ -19,7 +19,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Default implementation which manages one event loop group instance per type.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {

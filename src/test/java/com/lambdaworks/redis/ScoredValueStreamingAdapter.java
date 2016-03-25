@@ -6,7 +6,7 @@ import java.util.List;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class ScoredValueStreamingAdapter<T> implements ScoredValueStreamingChannel<T> {

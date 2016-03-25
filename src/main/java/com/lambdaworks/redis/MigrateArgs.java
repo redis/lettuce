@@ -14,7 +14,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  * Argument list builder for the new redis <a href="http://redis.io/commands/migrate">MIGRATE</a> command. Static import
  * the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class MigrateArgs<K> {
 

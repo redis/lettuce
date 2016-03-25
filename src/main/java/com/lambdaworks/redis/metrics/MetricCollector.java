@@ -3,7 +3,7 @@ package com.lambdaworks.redis.metrics;
 /**
  * Generic metrics collector interface. A metrics collector collects metrics and emits metric events.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <T> data type of the metrics
  * @since 3.4
  *

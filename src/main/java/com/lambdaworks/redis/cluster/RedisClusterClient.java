@@ -40,7 +40,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * {@link RedisClusterClient} is an expensive resource. Reuse this instance or the {@link ClientResources} as much as possible.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class RedisClusterClient extends AbstractRedisClient {

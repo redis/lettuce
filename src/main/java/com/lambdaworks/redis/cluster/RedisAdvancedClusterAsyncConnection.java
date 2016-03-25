@@ -7,7 +7,7 @@ import com.lambdaworks.redis.RedisException;
 /**
  * Advanced asynchronous cluster API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.3
  */
 public interface RedisAdvancedClusterAsyncConnection<K, V> extends RedisClusterAsyncConnection<K, V> {

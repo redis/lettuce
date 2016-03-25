@@ -34,7 +34,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Utility to refresh the cluster topology view based on {@link Partitions}.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class ClusterTopologyRefresh {
 

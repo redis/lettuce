@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public interface RedisSentinelAsyncConnection<K, V> extends Closeable {

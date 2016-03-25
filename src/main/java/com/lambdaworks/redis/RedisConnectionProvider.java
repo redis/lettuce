@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 /**
  * Connection provider for redis connections.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <T> Connection type.
  * @since 3.0
  */

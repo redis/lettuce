@@ -7,7 +7,7 @@ import java.net.UnknownHostException;
 /**
  * This class provides settings used while testing. You can override these using system properties.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class TestSettings {
     private TestSettings() {

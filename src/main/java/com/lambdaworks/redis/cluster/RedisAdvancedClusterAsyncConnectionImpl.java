@@ -18,7 +18,7 @@ import io.netty.channel.ChannelHandler;
 /**
  * Advanced asynchronous Cluster connection.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.3
  */
 @ChannelHandler.Sharable

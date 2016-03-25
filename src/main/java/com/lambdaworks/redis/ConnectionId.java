@@ -5,7 +5,7 @@ import java.net.SocketAddress;
 /**
  * Connection identifier. A connection identifier consists of the {@link #localAddress()} and the {@link #remoteAddress()}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public interface ConnectionId {

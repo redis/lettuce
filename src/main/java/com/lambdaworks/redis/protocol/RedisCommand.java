@@ -5,7 +5,7 @@ import com.lambdaworks.redis.RedisFuture;
 import io.netty.buffer.ByteBuf;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Output type.

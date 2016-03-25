@@ -54,7 +54,7 @@ import com.lambdaworks.redis.protocol.SetArgs;
 /**
  * @param <K>
  * @param <V>
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 

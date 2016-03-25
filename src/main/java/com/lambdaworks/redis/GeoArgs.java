@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 /**
  * Args for {@literal GEORADIUS} and {@literal GEORADIUSBYMEMBER} commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoArgs {
 

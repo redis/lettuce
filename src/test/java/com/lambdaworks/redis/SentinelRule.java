@@ -31,7 +31,7 @@ import com.lambdaworks.redis.models.role.RoleParser;
  * </ul>
  *
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class SentinelRule implements TestRule {
 

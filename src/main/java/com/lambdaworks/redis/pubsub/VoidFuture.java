@@ -9,7 +9,7 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @SuppressWarnings({ "raw", "unchecked" })
 class VoidFuture implements RedisFuture<Void> {

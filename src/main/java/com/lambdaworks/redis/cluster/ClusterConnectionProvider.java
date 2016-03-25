@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 /**
  * Connection provider for cluster operations.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 interface ClusterConnectionProvider extends Closeable {

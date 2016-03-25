@@ -6,7 +6,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * Argument list builder for the improved redis <a href="http://redis.io/commands/zadd">ZADD</a> command starting from Redis
  * 3.0.2. Static import the methods from {@link Builder} and call the methods: {@code xx()} or {@code nx()} .
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ZAddArgs {
     private boolean nx = false;

@@ -13,7 +13,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Wraps and provides Epoll classes. This is to protect the user from {@link ClassNotFoundException}'s caused by the absence of
  * the {@literal netty-transport-native-epoll} library during runtime. Internal API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class EpollProvider {
 

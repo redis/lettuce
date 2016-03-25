@@ -4,8 +4,7 @@ import com.lambdaworks.redis.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 18.06.15 09:31
+ * @author Mark Paluch
  */
 public class MySpringBean {
 

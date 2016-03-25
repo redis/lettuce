@@ -14,7 +14,7 @@ import javax.enterprise.inject.Alternative;
 /**
  * Demo code for extending a RedisClient.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @Alternative
 public class MyExtendedRedisClient extends RedisClient {

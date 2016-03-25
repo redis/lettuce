@@ -27,7 +27,7 @@ import io.netty.util.concurrent.Future;
  * <li>An instance of {@link EventExecutorGroup} for performing internal computation tasks</li>
  * </ul>
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public interface ClientResources {

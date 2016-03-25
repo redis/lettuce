@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Client Options to control the behavior of {@link RedisClient}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ClientOptions implements Serializable {
 

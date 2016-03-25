@@ -9,7 +9,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 /**
  * Streaming-Output of of values and their associated scores. Returns the count of all values (including null).
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <K> Key type.
  * @param <V> Value type.
  */

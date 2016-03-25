@@ -32,7 +32,7 @@ import com.lambdaworks.redis.event.Event;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })

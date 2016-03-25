@@ -14,7 +14,7 @@ import io.netty.util.concurrent.Promise;
  * tests. Every time a new {@link TestEventLoopGroupProvider} instance is created, shutdown hook is added
  * {@link Runtime#addShutdownHook(Thread)}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class TestEventLoopGroupProvider extends DefaultEventLoopGroupProvider {
 

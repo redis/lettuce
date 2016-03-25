@@ -15,7 +15,7 @@ import com.google.common.io.ByteStreams;
  * A compressing/decompressing {@link RedisCodec} that wraps a typed {@link RedisCodec codec} and compresses values using GZIP
  * or Deflate. See {@link com.lambdaworks.redis.codec.CompressionCodec.CompressionType} for supported compression types.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class CompressionCodec {
 

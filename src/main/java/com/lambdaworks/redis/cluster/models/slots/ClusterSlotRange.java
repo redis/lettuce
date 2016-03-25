@@ -15,7 +15,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * Represents a range of slots together with its master and slaves.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")

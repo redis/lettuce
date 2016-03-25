@@ -14,7 +14,7 @@ import com.lambdaworks.redis.resource.DefaultEventLoopGroupProvider;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class RedisClientTest {
 

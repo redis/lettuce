@@ -12,7 +12,7 @@ import io.netty.util.concurrent.*;
 /**
  * Utility class to support netty's future handling.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 class Futures {

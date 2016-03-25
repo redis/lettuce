@@ -5,8 +5,7 @@ import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisURI;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 18.06.15 09:17
+ * @author Mark Paluch
  */
 public class ConnectToRedis {
 

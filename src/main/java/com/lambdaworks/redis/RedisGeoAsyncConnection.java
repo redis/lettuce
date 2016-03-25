@@ -6,7 +6,7 @@ import java.util.Set;
 /**
  * Synchronous executed commands for Geo-Commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.3
  */
 public interface RedisGeoAsyncConnection<K, V> {

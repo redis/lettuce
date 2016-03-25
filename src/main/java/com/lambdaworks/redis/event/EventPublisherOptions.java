@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Configuration interface for command latency collection.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public interface EventPublisherOptions {
 

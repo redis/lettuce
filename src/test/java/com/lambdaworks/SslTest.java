@@ -32,7 +32,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import io.netty.handler.codec.DecoderException;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class SslTest extends AbstractCommandTest {
     public static final String KEYSTORE = "work/keystore.jks";
