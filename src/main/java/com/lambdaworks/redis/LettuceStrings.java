@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import com.lambdaworks.codec.Base16;
 
 /**
- * Helper for {@link String} checks.
+ * Helper for {@link String} checks. This class is part of the internal API and may change without further notice.
  * 
  * @author Mark Paluch
  * @since 3.0
