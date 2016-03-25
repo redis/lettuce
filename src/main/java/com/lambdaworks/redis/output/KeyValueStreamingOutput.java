@@ -12,7 +12,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * @param <K> Key type.
  * @param <V> Value type.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
     private K key;

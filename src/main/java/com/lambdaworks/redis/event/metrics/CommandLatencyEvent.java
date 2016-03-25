@@ -9,7 +9,7 @@ import com.lambdaworks.redis.metrics.CommandMetrics;
 /**
  * Event that transports command latency metrics. This event carries latencies for multiple commands and connections.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class CommandLatencyEvent implements Event {
 

@@ -9,7 +9,7 @@ import com.google.common.net.HostAndPort;
 /**
  * Replication partner providing the host and the replication offset.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")

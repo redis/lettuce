@@ -14,7 +14,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * Utility to calculate the slot from a key.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class SlotHash {

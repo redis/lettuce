@@ -21,7 +21,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ClusterPartiallyDownTest extends AbstractTest {
     private static ClientResources clientResources = TestClientResources.create();

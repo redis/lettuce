@@ -22,7 +22,7 @@ import com.lambdaworks.redis.models.role.RoleParser;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
 @SuppressWarnings("unchecked")

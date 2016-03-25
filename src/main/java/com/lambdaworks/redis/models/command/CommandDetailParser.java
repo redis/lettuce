@@ -13,7 +13,7 @@ import com.google.common.primitives.Ints;
  * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
  * href="http://redis.io/commands/command-info">COMMAND INFO</a>command output.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")

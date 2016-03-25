@@ -22,8 +22,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 /**
  * Connection builder for connections. This class is part of the internal API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 02.02.15 09:40
+ * @author Mark Paluch
  */
 public class ConnectionBuilder {
 

@@ -21,7 +21,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * Utility to perform and synchronize command executions on multiple cluster nodes.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class MultiNodeExecution {
     static <T> T execute(Callable<T> function) {

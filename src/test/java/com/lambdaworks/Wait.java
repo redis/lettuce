@@ -13,7 +13,7 @@ import com.google.code.tempusfugit.temporal.Timeout;
 /**
  * Wait-Until helper.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class Wait {
 

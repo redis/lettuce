@@ -5,7 +5,7 @@ import com.lambdaworks.redis.output.DoubleOutput;
 /**
  * A tuple consisting of numerical geo data points to describe geo coordinates.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoCoordinates {
 

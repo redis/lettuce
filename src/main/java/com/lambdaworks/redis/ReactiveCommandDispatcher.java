@@ -18,7 +18,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 /**
  * Reactive command dispatcher.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscribe<T> {
 

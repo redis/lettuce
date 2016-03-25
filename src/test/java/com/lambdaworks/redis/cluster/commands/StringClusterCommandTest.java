@@ -20,7 +20,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.StringCommandTest;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class StringClusterCommandTest extends StringCommandTest {
     private static RedisClusterClient redisClusterClient;

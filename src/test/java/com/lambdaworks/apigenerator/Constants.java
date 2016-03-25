@@ -3,7 +3,7 @@ package com.lambdaworks.apigenerator;
 import java.io.File;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class Constants {
 

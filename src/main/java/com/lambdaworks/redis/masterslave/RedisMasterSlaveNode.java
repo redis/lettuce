@@ -6,7 +6,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 /**
  * A node within a Redis Master-Slave setup.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class RedisMasterSlaveNode implements RedisNodeDescription {
     private final RedisURI redisURI;

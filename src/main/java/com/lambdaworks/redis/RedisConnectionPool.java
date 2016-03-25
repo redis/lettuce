@@ -22,7 +22,7 @@ import com.google.common.reflect.AbstractInvocationHandler;
 /**
  * Connection pool for redis connections.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <T> Connection type.
  * @since 3.0
  */
@@ -171,7 +171,7 @@ public class RedisConnectionPool<T> implements Closeable {
     /**
      * Invocation handler which takes care of connection.close(). Connections are returned to the pool on a close()-call.
      *
-     * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+     * @author Mark Paluch
      * @param <T> Connection type.
      * @since 3.0
      */
@@ -229,7 +229,7 @@ public class RedisConnectionPool<T> implements Closeable {
     /**
      * Connection provider for redis connections.
      *
-     * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+     * @author Mark Paluch
      * @param <T> Connection type.
      * @since 3.0
      */

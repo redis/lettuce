@@ -21,7 +21,7 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
 /**
  * Advanced synchronous and thread-safe Redis Cluster API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands<K, V>, RedisAdvancedClusterConnection<K, V> {

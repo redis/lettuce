@@ -32,7 +32,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 /**
  * Connection builder for SSL connections. This class is part of the internal API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
     private RedisURI redisURI;
@@ -64,8 +64,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     }
 
     /**
-     * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
-     * @since 02.02.15 09:36
+     * @author Mark Paluch
      */
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 

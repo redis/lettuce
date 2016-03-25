@@ -8,7 +8,7 @@ import com.lambdaworks.redis.output.StreamingOutput.Subscriber;
 
 /**
  * Simple subscriber
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.2
  */
 class ListSubscriber<T> implements Subscriber<T> {

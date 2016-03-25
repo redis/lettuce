@@ -36,7 +36,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link com.lambdaworks.redis.metrics.CommandLatencyCollector}.</li>
  * </ul>
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public class DefaultClientResources implements ClientResources {

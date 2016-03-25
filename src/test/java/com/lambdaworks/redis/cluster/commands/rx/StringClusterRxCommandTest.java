@@ -21,7 +21,7 @@ import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 import rx.Observable;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class StringClusterRxCommandTest extends StringCommandTest {
     private static RedisClusterClient redisClusterClient;

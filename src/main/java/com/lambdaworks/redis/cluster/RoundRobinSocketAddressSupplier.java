@@ -13,7 +13,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * Round-Robin socket address supplier. Cluster nodes are iterated circular/infinitely.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 

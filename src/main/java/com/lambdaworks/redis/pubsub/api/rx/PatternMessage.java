@@ -3,8 +3,7 @@ package com.lambdaworks.redis.pubsub.api.rx;
 /**
  * Message payload for a subscription to a pattern.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 16.06.15 10:47
+ * @author Mark Paluch
  */
 public class PatternMessage<K, V> {
 

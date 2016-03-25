@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ByteCodecClusterTest extends AbstractClusterTest {
 

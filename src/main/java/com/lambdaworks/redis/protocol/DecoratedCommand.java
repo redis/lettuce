@@ -3,7 +3,7 @@ package com.lambdaworks.redis.protocol;
 /**
  * A decorated command allowing access to the underlying {@link #getDelegate()}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public interface DecoratedCommand<K, V, T> {
 

@@ -3,7 +3,7 @@ package com.lambdaworks.redis.models.role;
 /**
  * Represents a redis instance according to the {@code ROLE} output.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public interface RedisInstance {

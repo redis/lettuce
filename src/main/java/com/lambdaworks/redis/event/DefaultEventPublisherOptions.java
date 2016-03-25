@@ -9,7 +9,7 @@ import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
 /**
  * The default implementation of {@link CommandLatencyCollectorOptions}.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class DefaultEventPublisherOptions implements EventPublisherOptions {
 

@@ -7,7 +7,7 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class MasterSlaveUtils {
     static final Utf8StringCodec CODEC = new Utf8StringCodec();

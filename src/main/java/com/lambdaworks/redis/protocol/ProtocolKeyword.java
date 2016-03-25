@@ -3,7 +3,7 @@ package com.lambdaworks.redis.protocol;
 /**
  * Interface for protocol keywords providing an encoded representation.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public interface ProtocolKeyword {
 

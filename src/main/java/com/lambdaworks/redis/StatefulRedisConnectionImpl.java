@@ -32,7 +32,7 @@ import io.netty.channel.ChannelHandler;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @ChannelHandler.Sharable
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {

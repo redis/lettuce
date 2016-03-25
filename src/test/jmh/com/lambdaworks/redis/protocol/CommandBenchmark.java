@@ -28,7 +28,7 @@ import io.netty.buffer.ByteBufProcessor;
  * <li>Encode commands using String and ByteArray codecs</li>
  * </ul>
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @State(Scope.Benchmark)
 public class CommandBenchmark {

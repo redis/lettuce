@@ -10,7 +10,7 @@ import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import io.netty.channel.Channel;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class Connections {
 

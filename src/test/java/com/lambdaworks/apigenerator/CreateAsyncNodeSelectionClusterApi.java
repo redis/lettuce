@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 /**
  * Create async API based on the templates.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
 public class CreateAsyncNodeSelectionClusterApi {

@@ -17,7 +17,7 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 abstract class AbstractCdiBean<T> implements Bean<T> {

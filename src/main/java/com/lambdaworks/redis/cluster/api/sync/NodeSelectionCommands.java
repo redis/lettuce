@@ -5,7 +5,7 @@ import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 /**
  * Synchronous and thread-safe Redis API to execute commands on a {@link NodeSelectionSupport}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public interface NodeSelectionCommands<K, V> extends BaseNodeSelectionCommands<K, V>, NodeSelectionHashCommands<K, V>,
         NodeSelectionHLLCommands<K, V>, NodeSelectionKeyCommands<K, V>, NodeSelectionListCommands<K, V>,

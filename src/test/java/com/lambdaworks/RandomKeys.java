@@ -13,7 +13,7 @@ import com.google.common.collect.Maps;
 /**
  * Random keys for testing slot-hashes.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class RandomKeys {
 

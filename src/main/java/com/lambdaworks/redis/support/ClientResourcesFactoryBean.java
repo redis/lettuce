@@ -10,7 +10,7 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
  * {@link FactoryBean} that creates a {@link ClientResources} instance representing the infrastructure resources (thread pools)
  * for a Redis Client.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResources> {
 

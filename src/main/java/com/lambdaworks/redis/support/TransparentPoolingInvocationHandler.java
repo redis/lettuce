@@ -14,7 +14,7 @@ import com.lambdaworks.redis.RedisException;
 /**
  * Invocation Handler with transparent pooling. This handler is thread-safe.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHandler {

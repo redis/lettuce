@@ -6,8 +6,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Latency metrics for commands. This class provides the count, time unit and firstResponse/completion latencies.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 23.09.15 15:10
+ * @author Mark Paluch
  */
 public class CommandMetrics {
     private final long count;

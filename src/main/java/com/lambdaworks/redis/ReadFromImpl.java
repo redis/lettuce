@@ -10,7 +10,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 /**
  * Collection of common read setting implementations.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 class ReadFromImpl {

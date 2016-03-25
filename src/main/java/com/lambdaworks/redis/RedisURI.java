@@ -107,7 +107,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * 
  * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")

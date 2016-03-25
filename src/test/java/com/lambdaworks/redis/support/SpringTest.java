@@ -13,7 +13,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)

@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 /**
  * Exception for connection failures.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @SuppressWarnings("serial")
 public class RedisConnectionException extends RedisException {

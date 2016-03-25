@@ -14,7 +14,7 @@ import rx.schedulers.Schedulers;
 import rx.schedulers.TestScheduler;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultEventBusTest {

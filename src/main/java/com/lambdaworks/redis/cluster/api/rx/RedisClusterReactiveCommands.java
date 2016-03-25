@@ -12,7 +12,7 @@ import com.lambdaworks.redis.api.rx.*;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,

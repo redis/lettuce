@@ -10,7 +10,7 @@ import io.netty.util.concurrent.ScheduledFuture;
 /**
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher {
 

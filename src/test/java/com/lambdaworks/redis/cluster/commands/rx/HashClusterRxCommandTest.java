@@ -15,7 +15,7 @@ import com.lambdaworks.redis.commands.HashCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class HashClusterRxCommandTest extends HashCommandTest {
 

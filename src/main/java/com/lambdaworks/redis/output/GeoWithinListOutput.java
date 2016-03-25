@@ -14,7 +14,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * A list output that creates a list with either double/long or {@link GeoCoordinates}'s.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>  implements StreamingOutput<GeoWithin<V>>{
 

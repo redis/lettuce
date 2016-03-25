@@ -12,7 +12,7 @@ import com.lambdaworks.redis.RedisFuture;
 /**
  * Pipelining for commands that are executed on multiple cluster nodes. Merges results and emits one composite result.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFuture<V> {
 

@@ -17,7 +17,7 @@ import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnection<K, V> {

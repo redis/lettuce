@@ -6,7 +6,7 @@ import java.util.Collection;
  * Circular element provider. This class allows infinite scrolling over a collection with the possibility to provide an initial
  * offset.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class RoundRobin<V> {
 

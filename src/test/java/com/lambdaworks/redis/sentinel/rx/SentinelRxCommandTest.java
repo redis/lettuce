@@ -10,7 +10,7 @@ import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class SentinelRxCommandTest extends SentinelCommandTest {
 

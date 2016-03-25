@@ -11,7 +11,7 @@ import com.lambdaworks.redis.resource.ClientResources;
  * Adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
  * {@link com.lambdaworks.redis.RedisClient} factories via Spring configuration.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T> {

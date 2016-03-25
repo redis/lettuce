@@ -7,7 +7,7 @@ import org.junit.Test;
 import com.google.common.collect.Maps;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class PipelinedRedisFutureTest {
 

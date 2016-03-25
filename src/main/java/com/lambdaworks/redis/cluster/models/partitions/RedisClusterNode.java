@@ -17,7 +17,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
  * {@link com.lambdaworks.redis.cluster.SlotHash#SLOT_COUNT 16384} slots, a slave of one {@link #getSlaveOf() master} of carry
  * different {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag flags}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")

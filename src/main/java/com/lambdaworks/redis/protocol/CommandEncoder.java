@@ -16,7 +16,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * A netty {@link ChannelHandler} responsible for encoding commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @ChannelHandler.Sharable
 public class CommandEncoder extends MessageToByteEncoder<Object> {

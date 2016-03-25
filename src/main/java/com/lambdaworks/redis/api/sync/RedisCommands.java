@@ -12,7 +12,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public interface RedisCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCommands<K, V>, RedisStringCommands<K, V>,

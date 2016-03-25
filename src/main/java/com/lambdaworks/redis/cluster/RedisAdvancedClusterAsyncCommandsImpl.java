@@ -40,7 +40,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.3
  */
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements

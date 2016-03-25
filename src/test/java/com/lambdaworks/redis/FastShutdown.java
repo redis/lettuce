@@ -5,8 +5,7 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 08.07.15 11:02
+ * @author Mark Paluch
  */
 public class FastShutdown {
 

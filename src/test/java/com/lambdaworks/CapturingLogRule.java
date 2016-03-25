@@ -7,7 +7,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class CapturingLogRule implements TestRule {
 

@@ -42,7 +42,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * The topology is discovered once during the connection phase but is not updated afterwards.
  * </p>
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class MasterSlave {
 

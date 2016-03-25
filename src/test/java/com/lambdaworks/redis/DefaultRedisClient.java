@@ -3,8 +3,7 @@ package com.lambdaworks.redis;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 16.06.15 15:23
+ * @author Mark Paluch
  */
 public class DefaultRedisClient {
 

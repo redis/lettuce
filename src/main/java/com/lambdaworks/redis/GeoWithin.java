@@ -10,7 +10,7 @@ package com.lambdaworks.redis;
  * </ul>
  * 
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoWithin<V> {
 

@@ -32,7 +32,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @ChannelHandler.Sharable
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {

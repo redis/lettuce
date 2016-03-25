@@ -8,7 +8,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.1
  */
 public interface StatefulRedisMasterSlaveConnection<K, V> extends StatefulRedisConnection<K, V> {

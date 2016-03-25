@@ -28,7 +28,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 /**
  * Invocation handler to trigger commands on multiple connections and return a holder for the values.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 

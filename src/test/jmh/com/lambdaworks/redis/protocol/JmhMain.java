@@ -11,7 +11,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @soundtrack E-Rotic - Willy Use A Billy Boy (Extended Version)
  */
 public class JmhMain {

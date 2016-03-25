@@ -13,7 +13,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class LatencyComparatorTest {
 

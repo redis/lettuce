@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch;
  * @param <V> Value type.
  * @param <T> Command output type.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class TransactionalCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisCommand<K, V, T> {
 

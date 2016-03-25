@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import org.junit.Test;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class CompressionCodecTest {
 

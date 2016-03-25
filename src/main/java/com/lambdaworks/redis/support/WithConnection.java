@@ -7,7 +7,7 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * redis calls within the run-method.
  * 
  * @param <T> Connection type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public abstract class WithConnection<T> {

@@ -12,7 +12,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements RedisAsyncConnection<K, V>,
         RedisClusterAsyncConnection<K, V>, RedisAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {

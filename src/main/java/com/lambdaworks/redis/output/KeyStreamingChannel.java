@@ -5,7 +5,7 @@ package com.lambdaworks.redis.output;
  * Key uniqueness is not guaranteed.
  * 
  * @param <K> Key type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @FunctionalInterface

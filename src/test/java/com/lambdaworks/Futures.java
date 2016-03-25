@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class Futures {
 
