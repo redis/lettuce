@@ -13,7 +13,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.lambdaworks.RandomKeys;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -25,6 +26,9 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * @author Mark Paluch
@@ -167,7 +171,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     protected Map<String, String> prepareMset() {
-        Map<String, String> mset = Maps.newHashMap();
+        Map<String, String> mset = LettuceMaps.newHashMap();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             mset.put(key, "value-" + key);
@@ -203,8 +207,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void mgetCrossSlot() throws Exception {
 
         msetCrossSlot();
-        List<String> keys = Lists.newArrayList();
-        List<String> expectation = Lists.newArrayList();
+        List<String> keys = LettuceLists.newList();
+        List<String> expectation = LettuceLists.newList();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             keys.add(key);
@@ -269,7 +273,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     protected List<String> prepareKeys() throws Exception {
         msetCrossSlot();
-        List<String> keys = Lists.newArrayList();
+        List<String> keys = LettuceLists.newList();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             keys.add(key);
@@ -464,7 +468,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         int iterations = 1000;
         commands.setAutoFlushCommands(false);
-        List<RedisFuture<?>> futures = Lists.newArrayList();
+        List<RedisFuture<?>> futures = LettuceLists.newList();
         for (int i = 0; i < iterations; i++) {
             futures.add(commands.set(key(i), value(i)));
         }
@@ -503,7 +507,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-        Set<String> allKeys = Sets.newHashSet();
+        Set<String> allKeys = LettuceSets.newHashSet();
 
         KeyScanCursor<String> scanCursor = null;
 
@@ -526,7 +530,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-        Set<String> allKeys = Sets.newHashSet();
+        Set<String> allKeys = LettuceSets.newHashSet();
 
         KeyScanCursor<String> scanCursor = null;
 

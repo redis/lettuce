@@ -5,15 +5,15 @@ import java.util.Queue;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
-
 import com.lambdaworks.redis.resource.ClientResources;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -105,7 +105,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
         try {
             lockWritersExclusive();
             try {
-                return Lists.newArrayList(source);
+                return LettuceLists.newList(source);
             } finally {
                 source.clear();
             }

@@ -1,15 +1,14 @@
 package com.lambdaworks.redis;
 
-import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.List;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
-
-import java.util.Collections;
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Arguments and types for the {@code BITFIELD} command.
@@ -25,11 +24,11 @@ public class BitFieldArgs {
      * Creates a new {@link BitFieldArgs} instance.
      */
     public BitFieldArgs() {
-        this(Lists.newArrayList());
+        this(LettuceLists.newList());
     }
 
     private BitFieldArgs(List<SubCommand> commands) {
-        checkArgument(commands != null, "commands must not be null");
+        LettuceAssert.notNull(commands, "commands must not be null");
         this.commands = commands;
     }
 
@@ -117,7 +116,7 @@ public class BitFieldArgs {
      * @param subCommand
      */
     private BitFieldArgs addSubCommand(SubCommand subCommand) {
-        checkArgument(subCommand != null, "subCommand must not be null");
+        LettuceAssert.notNull(subCommand, "subCommand must not be null");
         commands.add(subCommand);
         return this;
     }
@@ -268,7 +267,7 @@ public class BitFieldArgs {
 
     private BitFieldType previousFieldType() {
 
-        List<SubCommand> list = Lists.newArrayList(commands);
+        List<SubCommand> list = LettuceLists.newList(commands);
         Collections.reverse(list);
 
         for (SubCommand command : list) {
@@ -300,8 +299,8 @@ public class BitFieldArgs {
 
         private Set(BitFieldType bitFieldType, int offset, long value) {
 
-            checkArgument(bitFieldType != null, "bitFieldType must not be null");
-            checkArgument(offset > -1, "offset must be greater or equal to 0");
+            LettuceAssert.notNull(bitFieldType, "bitFieldType must not be null");
+            LettuceAssert.isTrue(offset > -1, "offset must be greater or equal to 0");
 
             this.offset = offset;
             this.bitFieldType = bitFieldType;
@@ -324,8 +323,8 @@ public class BitFieldArgs {
 
         private Get(BitFieldType bitFieldType, int offset) {
 
-            checkArgument(bitFieldType != null, "bitFieldType must not be null");
-            checkArgument(offset > -1, "offset must be greater or equal to 0");
+            LettuceAssert.notNull(bitFieldType, "bitFieldType must not be null");
+            LettuceAssert.isTrue(offset > -1, "offset must be greater or equal to 0");
 
             this.offset = offset;
             this.bitFieldType = bitFieldType;
@@ -348,8 +347,8 @@ public class BitFieldArgs {
 
         private IncrBy(BitFieldType bitFieldType, int offset, long value) {
 
-            checkArgument(bitFieldType != null, "bitFieldType must not be null");
-            checkArgument(offset > -1, "offset must be greater or equal to 0");
+            LettuceAssert.notNull(bitFieldType, "bitFieldType must not be null");
+            LettuceAssert.isTrue(offset > -1, "offset must be greater or equal to 0");
 
             this.offset = offset;
             this.bitFieldType = bitFieldType;
@@ -371,7 +370,7 @@ public class BitFieldArgs {
 
         private Overflow(OverflowType overflowType) {
 
-            checkArgument(overflowType != null, "overflowType must not be null");
+            LettuceAssert.notNull(overflowType, "overflowType must not be null");
             this.overflowType = overflowType;
         }
 
@@ -424,12 +423,12 @@ public class BitFieldArgs {
 
         private BitFieldType(boolean signed, int bits) {
 
-            checkArgument(bits > 0, "bits must be greater 0");
+            LettuceAssert.isTrue(bits > 0, "bits must be greater 0");
 
             if (signed) {
-                checkArgument(bits < 65, "Signed integers support only up to 64 bits");
+                LettuceAssert.isTrue(bits < 65, "Signed integers support only up to 64 bits");
             } else {
-                checkArgument(bits < 64, "Unsigned integers support only up to 63 bits");
+                LettuceAssert.isTrue(bits < 64, "Unsigned integers support only up to 63 bits");
             }
 
             this.signed = signed;

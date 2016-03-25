@@ -4,10 +4,13 @@ import static com.lambdaworks.redis.resource.Futures.toBooleanPromise;
 
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.lambdaworks.redis.event.*;
+import com.lambdaworks.redis.event.DefaultEventBus;
+import com.lambdaworks.redis.event.DefaultEventPublisherOptions;
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.event.metrics.DefaultCommandLatencyEventPublisher;
 import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
@@ -355,7 +358,7 @@ public class DefaultClientResources implements ClientResources {
 
     @Override
     public int computationThreadPoolSize() {
-        return Lists.newArrayList(eventExecutorGroup.iterator()).size();
+        return LettuceLists.newList(eventExecutorGroup.iterator()).size();
     }
 
     @Override

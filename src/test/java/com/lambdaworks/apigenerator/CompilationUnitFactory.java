@@ -3,7 +3,6 @@ package com.lambdaworks.apigenerator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -25,6 +24,7 @@ import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -82,7 +82,7 @@ public class CompilationUnitFactory {
         }
 
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
-            resultType.setTypeParameters(new ArrayList<TypeParameter>());
+            resultType.setTypeParameters(LettuceLists.newList());
             for (TypeParameter typeParameter : templateTypeDeclaration.getTypeParameters()) {
                 resultType.getTypeParameters().add(new TypeParameter(typeParameter.getName(), typeParameter.getTypeBound()));
             }
@@ -90,7 +90,7 @@ public class CompilationUnitFactory {
 
         resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().getContent())));
 
-        result.setImports(new ArrayList<>());
+        result.setImports(LettuceLists.newList());
         ASTHelper.addTypeDeclaration(result, resultType);
         resultType.setParentNode(result);
 
@@ -146,7 +146,7 @@ public class CompilationUnitFactory {
             }
 
             if (n.getTypeParameters() != null) {
-                method.setTypeParameters(new ArrayList<>());
+                method.setTypeParameters(LettuceLists.newList());
                 method.getTypeParameters().addAll(n.getTypeParameters());
             }
 

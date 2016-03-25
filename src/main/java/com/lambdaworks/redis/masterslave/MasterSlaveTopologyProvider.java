@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -51,7 +51,7 @@ public class MasterSlaveTopologyProvider implements TopologyProvider {
     }
 
     protected List<RedisNodeDescription> getNodesFromInfo(String info) {
-        List<RedisNodeDescription> result = Lists.newArrayList();
+        List<RedisNodeDescription> result = LettuceLists.newList();
 
         result.add(getMasterFromInfo(info));
         result.addAll(getSlavesFromInfo(info));
@@ -60,7 +60,7 @@ public class MasterSlaveTopologyProvider implements TopologyProvider {
 
     private List<RedisNodeDescription> getSlavesFromInfo(String info) {
 
-        List<RedisNodeDescription> slaves = Lists.newArrayList();
+        List<RedisNodeDescription> slaves = LettuceLists.newList();
 
         Matcher matcher = SLAVE_PATTERN.matcher(info);
         while (matcher.find()) {

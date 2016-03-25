@@ -1,8 +1,7 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.lambdaworks.redis.GeoArgs.Sort;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
@@ -26,7 +25,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withStore(K storeKey) {
-        checkArgument(storeKey != null, "storeKey must not be null");
+        LettuceAssert.notNull(storeKey, "storeKey must not be null");
         this.storeKey = storeKey;
         return this;
     }
@@ -39,7 +38,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withStoreDist(K storeKey) {
-        checkArgument(storeKey != null, "storeKey must not be null");
+        LettuceAssert.notNull(storeKey, "storeKey must not be null");
         this.storeDistKey = storeKey;
         return this;
     }
@@ -51,7 +50,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withCount(long count) {
-        checkArgument(count > 0, "count must be greater 0");
+        LettuceAssert.isTrue(count > 0, "count must be greater 0");
         this.count = count;
         return this;
     }
@@ -97,7 +96,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs sort(Sort sort) {
-        checkArgument(sort != null, "sort must not be null");
+        LettuceAssert.notNull(sort, "sort must not be null");
 
         this.sort = sort;
         return this;

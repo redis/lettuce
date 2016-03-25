@@ -1,14 +1,13 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
@@ -59,8 +58,8 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = redisClusterNode.pingSentTimestamp;
         this.pongReceivedTimestamp = redisClusterNode.pongReceivedTimestamp;
         this.configEpoch = redisClusterNode.configEpoch;
-        this.slots = Lists.newArrayList(redisClusterNode.slots);
-        this.flags = Sets.newHashSet(redisClusterNode.flags);
+        this.slots = LettuceLists.newList(redisClusterNode.slots);
+        this.flags = LettuceSets.newHashSet(redisClusterNode.flags);
     }
 
     /**
@@ -85,7 +84,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param uri the {@link RedisURI}, must not be {@literal null}
      */
     public void setUri(RedisURI uri) {
-        checkArgument(uri != null, "uri must not be null");
+        LettuceAssert.notNull(uri, "uri must not be null");
         this.uri = uri;
     }
 
@@ -99,7 +98,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param nodeId the {@code nodeId}
      */
     public void setNodeId(String nodeId) {
-        checkArgument(nodeId != null, "nodeId must not be null");
+        LettuceAssert.notNull(nodeId, "nodeId must not be null");
         this.nodeId = nodeId;
     }
 
@@ -181,7 +180,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param slots list of slots, must not be {@literal null} but may be empty
      */
     public void setSlots(List<Integer> slots) {
-        checkArgument(slots != null, "slots must not be null");
+        LettuceAssert.notNull(slots, "slots must not be null");
 
         this.slots = slots;
     }

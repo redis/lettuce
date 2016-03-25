@@ -6,14 +6,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
@@ -53,9 +49,9 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             TimeUnit unit) {
         super(writer, codec, timeout, unit);
 
-        listeners = Lists.newCopyOnWriteArrayList();
-        channels = Sets.newConcurrentHashSet();
-        patterns = Sets.newConcurrentHashSet();
+        listeners = LettuceLists.newSynchronizedList();
+        channels = LettuceSets.newConcurrentLinkedHashSet();
+        patterns = LettuceSets.newConcurrentLinkedHashSet();
     }
 
     /**
@@ -161,7 +157,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
      */
     protected List<RedisFuture<Void>> resubscribe() {
 
-        List<RedisFuture<Void>> result = Lists.newArrayList();
+        List<RedisFuture<Void>> result = LettuceLists.newList();
 
         if (!channels.isEmpty()) {
             result.add(async().subscribe(toArray(channels)));

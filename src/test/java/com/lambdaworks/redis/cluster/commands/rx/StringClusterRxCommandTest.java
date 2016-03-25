@@ -1,14 +1,16 @@
 package com.lambdaworks.redis.cluster.commands.rx;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
-import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import com.google.common.collect.Maps;
+import rx.Observable;
+
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
@@ -16,9 +18,10 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.commands.StringCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
-import rx.Observable;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * @author Mark Paluch
@@ -52,7 +55,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     @Test
     public void msetnx() throws Exception {
         redis.set("one", "1");
-        Map<String, String> map = Maps.newLinkedHashMap();
+        Map<String, String> map = LettuceMaps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         assertThat(redis.msetnx(map)).isTrue();

@@ -2,27 +2,21 @@ package com.lambdaworks.redis.support;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessBean;
+import javax.enterprise.inject.spi.*;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.util.internal.logging.InternalLogger;
@@ -78,8 +72,8 @@ public class LettuceCdiExtension implements Extension {
 
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(LettuceCdiExtension.class);
 
-    private final Map<Set<Annotation>, Bean<RedisURI>> redisUris = Maps.newConcurrentMap();
-    private final Map<Set<Annotation>, Bean<ClientResources>> clientResources = Maps.newConcurrentMap();
+    private final Map<Set<Annotation>, Bean<RedisURI>> redisUris = LettuceMaps.newConcurrentMap();
+    private final Map<Set<Annotation>, Bean<ClientResources>> clientResources = LettuceMaps.newConcurrentMap();
 
     public LettuceCdiExtension() {
         LOGGER.info("Activating CDI extension for lettuce.");
@@ -102,7 +96,7 @@ public class LettuceCdiExtension implements Extension {
 
             // Check if the bean is an RedisURI.
             if (RedisURI.class.isAssignableFrom((Class<?>) type)) {
-                Set<Annotation> qualifiers = new HashSet<Annotation>(bean.getQualifiers());
+                Set<Annotation> qualifiers = LettuceSets.newHashSet(bean.getQualifiers());
                 if (bean.isAlternative() || !redisUris.containsKey(qualifiers)) {
                     LOGGER.debug(String.format("Discovered '%s' with qualifiers %s.", RedisURI.class.getName(), qualifiers));
                     redisUris.put(qualifiers, (Bean<RedisURI>) bean);
@@ -110,7 +104,7 @@ public class LettuceCdiExtension implements Extension {
             }
 
             if (ClientResources.class.isAssignableFrom((Class<?>) type)) {
-                Set<Annotation> qualifiers = new HashSet<Annotation>(bean.getQualifiers());
+                Set<Annotation> qualifiers = LettuceSets.newHashSet(bean.getQualifiers());
                 if (bean.isAlternative() || !clientResources.containsKey(qualifiers)) {
                     LOGGER.debug(String.format("Discovered '%s' with qualifiers %s.", ClientResources.class.getName(),
                             qualifiers));

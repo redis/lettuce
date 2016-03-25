@@ -11,8 +11,8 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 public class HashCommandTest extends AbstractRedisClientTest {
 
@@ -155,7 +155,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void hmset() throws Exception {
-        Map<String, String> hash = Maps.newLinkedHashMap();
+        Map<String, String> hash = LettuceMaps.newLinkedHashMap();
         hash.put("one", "1");
         hash.put("two", "2");
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
@@ -164,7 +164,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void hmsetWithNulls() throws Exception {
-        Map<String, String> hash = Maps.newLinkedHashMap();
+        Map<String, String> hash = LettuceMaps.newLinkedHashMap();
         hash.put("one", null);
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
         assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
@@ -294,8 +294,8 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanMultiple() throws Exception {
 
-        Map<String, String> expect = Maps.newLinkedHashMap();
-        Map<String, String> check = Maps.newLinkedHashMap();
+        Map<String, String> expect = LettuceMaps.newLinkedHashMap();
+        Map<String, String> check = LettuceMaps.newLinkedHashMap();
         setup100KeyValues(expect);
 
         MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(5));
@@ -319,7 +319,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanMatch() throws Exception {
 
-        Map<String, String> expect = Maps.newLinkedHashMap();
+        Map<String, String> expect = LettuceMaps.newLinkedHashMap();
         setup100KeyValues(expect);
 
         MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(100).match("key1*"));

@@ -5,8 +5,8 @@ package com.lambdaworks.redis.output;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * {@link Map} of keys and values output.
@@ -20,7 +20,7 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     private K key;
 
     public MapOutput(RedisCodec<K, V> codec) {
-        super(codec, Maps.newLinkedHashMap());
+        super(codec, LettuceMaps.newLinkedHashMap());
     }
 
     @Override

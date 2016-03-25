@@ -3,7 +3,6 @@ package com.lambdaworks.redis.support;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -14,6 +13,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 
 import com.google.common.collect.ImmutableSet;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
@@ -60,7 +60,7 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
 
     @Override
     public Set<Class<? extends Annotation>> getStereotypes() {
-        Set<Class<? extends Annotation>> stereotypes = new HashSet<Class<? extends Annotation>>();
+        Set<Class<? extends Annotation>> stereotypes = LettuceSets.newHashSet();
 
         for (Annotation annotation : getQualifiers()) {
             Class<? extends Annotation> annotationType = annotation.annotationType();

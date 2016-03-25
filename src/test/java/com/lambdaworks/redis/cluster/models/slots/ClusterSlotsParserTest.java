@@ -1,41 +1,41 @@
 package com.lambdaworks.redis.cluster.models.slots;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 @SuppressWarnings("unchecked")
 public class ClusterSlotsParserTest {
 
     @Test
     public void testEmpty() throws Exception {
-        List<ClusterSlotRange> result = ClusterSlotsParser.parse(Lists.newArrayList());
+        List<ClusterSlotRange> result = ClusterSlotsParser.parse(LettuceLists.newList());
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
     public void testOneString() throws Exception {
-        List<ClusterSlotRange> result = ClusterSlotsParser.parse(Lists.newArrayList(""));
+        List<ClusterSlotRange> result = ClusterSlotsParser.parse(LettuceLists.newList(""));
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
     public void testOneStringInList() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("0"));
+        List<?> list = ImmutableList.of(LettuceLists.newList("0"));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
     public void testParse() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", Lists.newArrayList("1", "2")));
+        List<?> list = ImmutableList.of(LettuceLists.newList("0", "1", LettuceLists.newList("1", "2")));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
 
@@ -45,7 +45,8 @@ public class ClusterSlotsParserTest {
 
     @Test
     public void testParseWithSlave() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("100", "200", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")));
+        List<?> list = ImmutableList.of(LettuceLists.newList("100", "200", LettuceLists.newList("1", "2", "nodeId1"),
+                LettuceLists.newList("1", 2, "nodeId2")));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
         ClusterSlotRange clusterSlotRange = result.get(0);
@@ -81,8 +82,11 @@ public class ClusterSlotsParserTest {
 
     @Test
     public void testSameNode() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("100", "200", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")),
-                Lists.newArrayList("200", "300", Lists.newArrayList("1", "2", "nodeId1"), Lists.newArrayList("1", 2, "nodeId2")));
+        List<?> list = ImmutableList.of(
+                LettuceLists.newList("100", "200", LettuceLists.newList("1", "2", "nodeId1"),
+                        LettuceLists.newList("1", 2, "nodeId2")),
+                LettuceLists.newList("200", "300", LettuceLists.newList("1", "2", "nodeId1"),
+                        LettuceLists.newList("1", 2, "nodeId2")));
 
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(2);
@@ -130,7 +134,8 @@ public class ClusterSlotsParserTest {
 
     @Test
     public void testParseWithSlaveAndNodeIds() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", Lists.newArrayList("1", "2"), Lists.newArrayList("1", 2)));
+        List<?> list = ImmutableList
+                .of(LettuceLists.newList("0", "1", LettuceLists.newList("1", "2"), LettuceLists.newList("1", 2)));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getMaster()).isNotNull();
@@ -139,13 +144,13 @@ public class ClusterSlotsParserTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testParseInvalidMaster() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", Lists.newArrayList("1")));
+        List<?> list = ImmutableList.of(LettuceLists.newList("0", "1", LettuceLists.newList("1")));
         ClusterSlotsParser.parse(list);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testParseInvalidMaster2() throws Exception {
-        List<?> list = ImmutableList.of(Lists.newArrayList("0", "1", ""));
+        List<?> list = ImmutableList.of(LettuceLists.newList("0", "1", ""));
         ClusterSlotsParser.parse(list);
     }
 
@@ -155,7 +160,7 @@ public class ClusterSlotsParserTest {
         ClusterSlotRange range = new ClusterSlotRange();
         range.setFrom(1);
         range.setTo(2);
-        range.setSlaves(Lists.<HostAndPort> newArrayList());
+        range.setSlaves(LettuceLists.newList());
         range.setMaster(HostAndPort.fromHost("localhost"));
 
         assertThat(range.toString()).contains(ClusterSlotRange.class.getSimpleName());

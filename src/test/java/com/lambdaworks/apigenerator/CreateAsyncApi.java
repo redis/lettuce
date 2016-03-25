@@ -1,7 +1,6 @@
 package com.lambdaworks.apigenerator;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -22,7 +21,7 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Create async API based on the templates.
@@ -39,7 +38,7 @@ public class CreateAsyncApi {
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
-        List<Object[]> result = Lists.newArrayList();
+        List<Object[]> result = LettuceLists.newList();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
             result.add(new Object[] { templateName });
@@ -75,7 +74,7 @@ public class CreateAsyncApi {
                 type.getExtends().add(new ClassOrInterfaceType("RedisSentinelAsyncConnection<K, V>"));
                 CompilationUnit compilationUnit = (CompilationUnit) type.getParentNode();
                 if (compilationUnit.getImports() == null) {
-                    compilationUnit.setImports(new ArrayList<>());
+                    compilationUnit.setImports(LettuceLists.newList());
                 }
                 compilationUnit.getImports()
                         .add(new ImportDeclaration(new NameExpr("com.lambdaworks.redis.RedisSentinelAsyncConnection"), false,

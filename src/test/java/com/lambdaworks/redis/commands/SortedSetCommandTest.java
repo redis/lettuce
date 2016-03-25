@@ -11,13 +11,13 @@ import static java.lang.Double.POSITIVE_INFINITY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 public class SortedSetCommandTest extends AbstractRedisClientTest {
 
@@ -504,7 +504,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     @Test
     public void zscanMultiple() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
+        Set<String> expect = LettuceSets.newHashSet();
         setup100KeyValues(expect);
 
         ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.limit(5));
@@ -520,7 +520,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     @Test
     public void zscanMatch() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
+        Set<String> expect = LettuceSets.newHashSet();
         setup100KeyValues(expect);
 
         ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.limit(10).match("val*"));
@@ -533,7 +533,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zlexcount() throws Exception {
-        setup100KeyValues(new HashSet<String>());
+        setup100KeyValues(LettuceSets.newHashSet());
         Long result = redis.zlexcount(key, "-", "+");
 
         assertThat(result.longValue()).isEqualTo(100);
@@ -544,7 +544,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zrangebylex() throws Exception {
-        setup100KeyValues(new HashSet<String>());
+        setup100KeyValues(LettuceSets.newHashSet());
         List<String> result = redis.zrangebylex(key, "-", "+");
 
         assertThat(result).hasSize(100);
@@ -556,7 +556,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zremrangebylex() throws Exception {
-        setup100KeyValues(new HashSet<String>());
+        setup100KeyValues(LettuceSets.newHashSet());
         Long result = redis.zremrangebylex(key, "(aaa", "[zzz");
 
         assertThat(result.longValue()).isEqualTo(100);

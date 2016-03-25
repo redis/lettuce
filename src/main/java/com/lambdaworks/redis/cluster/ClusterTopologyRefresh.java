@@ -1,19 +1,12 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.cluster.RedisClusterClient.*;
+import static com.lambdaworks.redis.cluster.RedisClusterClient.applyUriConnectionSettings;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisConnectionException;
@@ -24,13 +17,11 @@ import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.AsyncCommand;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.*;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
@@ -80,7 +71,7 @@ class ClusterTopologyRefresh {
      * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}
      */
     static List<RedisClusterNode> sortByUri(Iterable<RedisClusterNode> clusterNodes) {
-        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
         Collections.sort(ordered, (o1, o2) -> RedisUriComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
         return ordered;
     }
@@ -92,7 +83,7 @@ class ClusterTopologyRefresh {
      * @return List containing {@link RedisClusterNode}s ordered by client count
      */
     static List<RedisClusterNode> sortByClientCount(Iterable<RedisClusterNode> clusterNodes) {
-        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
         Collections.sort(ordered, ClientCountComparator.INSTANCE);
         return ordered;
     }
@@ -104,7 +95,7 @@ class ClusterTopologyRefresh {
      * @return List containing {@link RedisClusterNode}s ordered by lastency
      */
     static List<RedisClusterNode> sortByLatency(Iterable<RedisClusterNode> clusterNodes) {
-        List<RedisClusterNode> ordered = Lists.newArrayList(clusterNodes);
+        List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
         Collections.sort(ordered, LatencyComparator.INSTANCE);
         return ordered;
     }
@@ -130,7 +121,7 @@ class ClusterTopologyRefresh {
             return false;
         }
 
-        if (!Sets.newHashSet(o1.getSlots()).equals(Sets.newHashSet(o2.getSlots()))) {
+        if (!LettuceSets.newHashSet(o1.getSlots()).equals(LettuceSets.newHashSet(o2.getSlots()))) {
             return false;
         }
 
@@ -194,14 +185,14 @@ class ClusterTopologyRefresh {
 
     protected Map<RedisURI, Partitions> getNodeSpecificViews(Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews,
             Map<RedisURI, AsyncCommand<String, String, String>> rawClients) throws InterruptedException {
-        Map<RedisURI, Partitions> nodeSpecificViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
-        List<RedisClusterNodeSnapshot> allNodes = Lists.newArrayList();
+        Map<RedisURI, Partitions> nodeSpecificViews = LettuceMaps.newTreeMap(RedisUriComparator.INSTANCE);
+        List<RedisClusterNodeSnapshot> allNodes = LettuceLists.newList();
 
         long timeout = client.getFirstUri().getUnit().toNanos(client.getFirstUri().getTimeout());
 
-        Map<String, Long> latencies = Maps.newHashMap();
-        Map<String, Integer> clientCountByNodeId = Maps.newHashMap();
-        Map<RedisURI, Integer> clientCountByRedisUri = Maps.newHashMap();
+        Map<String, Long> latencies = LettuceMaps.newHashMap();
+        Map<String, Integer> clientCountByNodeId = LettuceMaps.newHashMap();
+        Map<RedisURI, Integer> clientCountByRedisUri = LettuceMaps.newHashMap();
 
         long waitTime = await(rawViews, timeout);
         await(rawClients, timeout - waitTime);
@@ -229,7 +220,7 @@ class ClusterTopologyRefresh {
                 Partitions partitions = ClusterPartitionParser.parse(raw);
                 List<RedisClusterNodeSnapshot> nodeWithStats = partitions.stream().map(n -> new RedisClusterNodeSnapshot(n))
                         .collect(Collectors.toList());
-                List<RedisClusterNodeSnapshot> badNodes = Lists.newArrayList();
+                List<RedisClusterNodeSnapshot> badNodes = LettuceLists.newList();
 
                 for (RedisClusterNodeSnapshot partition : nodeWithStats) {
                     if (partition.getFlags().contains(RedisClusterNode.NodeFlag.NOADDR)) {
@@ -301,7 +292,7 @@ class ClusterTopologyRefresh {
     @SuppressWarnings("unchecked")
     private Map<RedisURI, TimedAsyncCommand<String, String, String>> requestViews(
             Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
-        Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
+        Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = LettuceMaps.newTreeMap(RedisUriComparator.INSTANCE);
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
 
             TimedAsyncCommand<String, String, String> timed = createClusterNodesCommand();
@@ -318,7 +309,7 @@ class ClusterTopologyRefresh {
     @SuppressWarnings("unchecked")
     private Map<RedisURI, AsyncCommand<String, String, String>> requestClients(
             Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
-        Map<RedisURI, AsyncCommand<String, String, String>> rawViews = Maps.newHashMap();
+        Map<RedisURI, AsyncCommand<String, String, String>> rawViews = LettuceMaps.newHashMap();
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
 
             CommandArgs<String, String> args = new CommandArgs<>(CODEC).add(CommandKeyword.LIST);
@@ -347,7 +338,8 @@ class ClusterTopologyRefresh {
      * Open connections where an address can be resolved.
      */
     private Map<RedisURI, StatefulRedisConnection<String, String>> getConnections(Iterable<RedisURI> seed) {
-        Map<RedisURI, StatefulRedisConnection<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
+        Map<RedisURI, StatefulRedisConnection<String, String>> connections = LettuceMaps
+                .newTreeMap(RedisUriComparator.INSTANCE);
 
         for (RedisURI redisURI : seed) {
             if (redisURI.getResolvedAddress() == null) {

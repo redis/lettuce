@@ -3,7 +3,7 @@ package com.lambdaworks.redis.protocol;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
@@ -15,7 +15,7 @@ import io.netty.buffer.ByteBuf;
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     protected RedisCommand<K, V, T> command;
-    private List<Consumer<? super T>> onComplete = Lists.newArrayList();
+    private List<Consumer<? super T>> onComplete = LettuceLists.newList();
 
     public CommandWrapper(RedisCommand<K, V, T> command) {
         this.command = command;

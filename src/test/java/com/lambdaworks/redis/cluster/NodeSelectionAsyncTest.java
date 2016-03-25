@@ -15,7 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -26,6 +25,7 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -52,7 +52,7 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
     @Test
     public void testMultiNodeOperations() throws Exception {
 
-        List<String> expectation = Lists.newArrayList();
+        List<String> expectation = LettuceLists.newList();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             expectation.add(key);
@@ -187,7 +187,7 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
         commands.set(key, value).get();
         waitForReplication(key, port4);
 
-        List<Throwable> t = Lists.newArrayList();
+        List<Throwable> t = LettuceLists.newList();
         AsyncExecutions<String> keys = nodes.commands().get(key);
         keys.stream().forEach(lcs -> {
             lcs.toCompletableFuture().exceptionally(throwable -> {
@@ -212,8 +212,8 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
         commands.set(key, value).get();
         waitForReplication(key, port4);
 
-        List<Throwable> t = Lists.newArrayList();
-        List<String> strings = Lists.newArrayList();
+        List<Throwable> t = LettuceLists.newList();
+        List<String> strings = LettuceLists.newList();
         AsyncExecutions<String> keys = nodes.commands().get(key);
         keys.stream().forEach(lcs -> {
             lcs.toCompletableFuture().exceptionally(throwable -> {

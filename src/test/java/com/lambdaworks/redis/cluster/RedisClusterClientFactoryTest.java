@@ -4,18 +4,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.TestClientResources;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestEventLoopGroupProvider;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.resource.ClientResources;
-import com.lambdaworks.redis.resource.DefaultClientResources;
 
 /**
  * @author Mark Paluch
@@ -24,7 +22,7 @@ public class RedisClusterClientFactoryTest {
 
     private final static String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
     private final static RedisURI REDIS_URI = RedisURI.create(URI);
-    private static final List<RedisURI> REDIS_URIS = Lists.newArrayList(REDIS_URI);
+    private static final List<RedisURI> REDIS_URIS = LettuceLists.newList(REDIS_URI);
     private static ClientResources DEFAULT_RESOURCES;
 
     @BeforeClass
@@ -59,7 +57,7 @@ public class RedisClusterClientFactoryTest {
 
     @Test
     public void withUriIterable() throws Exception {
-        FastShutdown.shutdown(RedisClusterClient.create(Lists.newArrayList(REDIS_URI)));
+        FastShutdown.shutdown(RedisClusterClient.create(LettuceLists.newList(REDIS_URI)));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -99,7 +97,7 @@ public class RedisClusterClientFactoryTest {
 
     @Test
     public void clientResourcesWithUriIterable() throws Exception {
-        FastShutdown.shutdown(RedisClusterClient.create(DEFAULT_RESOURCES, Lists.newArrayList(REDIS_URI)));
+        FastShutdown.shutdown(RedisClusterClient.create(DEFAULT_RESOURCES, LettuceLists.newList(REDIS_URI)));
     }
 
     @Test(expected = IllegalArgumentException.class)

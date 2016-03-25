@@ -2,15 +2,11 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.AGGREGATE;
-import static com.lambdaworks.redis.protocol.CommandKeyword.MAX;
-import static com.lambdaworks.redis.protocol.CommandKeyword.MIN;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SUM;
-import static com.lambdaworks.redis.protocol.CommandKeyword.WEIGHTS;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
@@ -58,7 +54,7 @@ public class ZStoreArgs {
     }
 
     public ZStoreArgs weights(long... weights) {
-        this.weights = new ArrayList<Long>(weights.length);
+        this.weights = LettuceLists.newListWithExpectedSize(weights.length);
         for (long weight : weights) {
             this.weights.add(weight);
         }

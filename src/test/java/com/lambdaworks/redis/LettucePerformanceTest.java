@@ -1,13 +1,7 @@
 package com.lambdaworks.redis;
 
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -19,11 +13,11 @@ import org.junit.Test;
 
 import rx.Observable;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import com.lambdaworks.CapturingLogAppender;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -76,7 +70,7 @@ public class LettucePerformanceTest {
 
         executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(totalCalls));
 
-        List<Future<List<CompletableFuture<String>>>> futurama = Lists.newArrayList();
+        List<Future<List<CompletableFuture<String>>>> futurama = LettuceLists.newList();
 
         preheat(threads);
 
@@ -130,7 +124,7 @@ public class LettucePerformanceTest {
                 }
                 connection.ping().get();
 
-                List<CompletableFuture<String>> futures = Lists.newArrayListWithCapacity(callsPerThread);
+                List<CompletableFuture<String>> futures = LettuceLists.newListWithExpectedSize(callsPerThread);
                 latch.await();
                 for (int i1 = 0; i1 < callsPerThread; i1++) {
                     futures.add(connection.ping().toCompletableFuture());
@@ -165,7 +159,7 @@ public class LettucePerformanceTest {
 
         executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(totalCalls));
 
-        List<Future<List<Observable<String>>>> futurama = Lists.newArrayList();
+        List<Future<List<Observable<String>>>> futurama = LettuceLists.newList();
 
         preheat(threads);
         final int callsPerThread = totalCalls / threads;
@@ -216,7 +210,7 @@ public class LettucePerformanceTest {
 
                 connection.sync().ping();
 
-                List<Observable<String>> observables = Lists.newArrayListWithCapacity(callsPerThread);
+                List<Observable<String>> observables = LettuceLists.newListWithExpectedSize(callsPerThread);
                 latch.await();
                 for (int i1 = 0; i1 < callsPerThread; i1++) {
                     observables.add(reactive.ping());
@@ -231,7 +225,7 @@ public class LettucePerformanceTest {
 
     protected void preheat(int threads) throws Exception {
 
-        List<Future<?>> futures = Lists.newArrayList();
+        List<Future<?>> futures = LettuceLists.newList();
 
         for (int i = 0; i < threads; i++) {
 

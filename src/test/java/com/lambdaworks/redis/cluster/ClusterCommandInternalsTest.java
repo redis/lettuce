@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
@@ -52,7 +52,7 @@ public class ClusterCommandInternalsTest {
     @Test
     public void testCompleteListener() throws Exception {
 
-        final List<String> someList = Lists.newArrayList();
+        final List<String> someList = LettuceLists.newList();
 
         AsyncCommand<?, ?, ?> asyncCommand = new AsyncCommand<>(sut);
 

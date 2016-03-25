@@ -1,9 +1,8 @@
 package com.lambdaworks.redis.event;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
 
 /**
@@ -47,8 +46,8 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
          * @return this
          */
         public Builder eventEmitInterval(long eventEmitInterval, TimeUnit eventEmitIntervalUnit) {
-            checkArgument(eventEmitInterval >= 0, "eventEmitInterval must be greater or equal to 0");
-            checkArgument(eventEmitIntervalUnit != null, "eventEmitIntervalUnit must not be null");
+            LettuceAssert.isTrue(eventEmitInterval >= 0, "eventEmitInterval must be greater or equal to 0");
+            LettuceAssert.notNull(eventEmitIntervalUnit, "eventEmitIntervalUnit must not be null");
 
             this.eventEmitInterval = eventEmitInterval;
             this.eventEmitIntervalUnit = eventEmitIntervalUnit;

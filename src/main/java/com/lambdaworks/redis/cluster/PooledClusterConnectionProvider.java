@@ -9,7 +9,8 @@ import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.lambdaworks.redis.*;
@@ -18,6 +19,9 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -168,7 +172,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private List<RedisNodeDescription> getReadCandidates(RedisClusterNode master) {
-        List<RedisNodeDescription> candidates = Lists.newArrayList();
+        List<RedisNodeDescription> candidates = LettuceLists.newList();
 
         for (RedisClusterNode partition : partitions) {
             if (master.getNodeId().equals(partition.getNodeId()) || master.getNodeId().equals(partition.getSlaveOf())) {
@@ -318,8 +322,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = Maps.newHashMap(connections.asMap());
-        Set<ConnectionKey> stale = Sets.newHashSet();
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = LettuceMaps.newHashMap(connections.asMap());
+        Set<ConnectionKey> stale = LettuceSets.newHashSet();
 
         for (ConnectionKey connectionKey : map.keySet()) {
 

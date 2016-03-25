@@ -3,12 +3,12 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * {@link java.util.List} of maps output.
@@ -21,10 +21,10 @@ import com.lambdaworks.redis.codec.RedisCodec;
 public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>> {
     private MapOutput<K, V> nested;
     private int mapCount = -1;
-    private List<Integer> counts = new ArrayList<Integer>();
+    private List<Integer> counts = LettuceLists.newList();
 
     public ListOfMapsOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<Map<K, V>>());
+        super(codec, LettuceLists.newList());
         nested = new MapOutput<K, V>(codec);
     }
 
@@ -41,7 +41,7 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
 
             if (nested.get().size() == expectedSize) {
                 counts.remove(0);
-                output.add(Maps.newLinkedHashMap(nested.get()));
+                output.add(LettuceMaps.newLinkedHashMap(nested.get()));
                 nested.get().clear();
             }
         }

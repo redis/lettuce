@@ -11,14 +11,10 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelInitializer;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -27,8 +23,6 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
@@ -75,10 +69,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      */
     public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Supplier<SocketAddress> socketAddressSupplier) {
-        checkArgument(clientOptions != null, "ClientOptions must not be null");
-        checkArgument(bootstrap != null, "Bootstrap must not be null");
-        checkArgument(timer != null, "Timer must not be null");
-        checkArgument(reconnectWorkers != null, "reconnectWorkers must not be null");
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
+        LettuceAssert.notNull(timer, "Timer must not be null");
+        LettuceAssert.notNull(reconnectWorkers, "reconnectWorkers must not be null");
 
         this.clientOptions = clientOptions;
         this.bootstrap = bootstrap;

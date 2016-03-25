@@ -1,22 +1,24 @@
 package com.lambdaworks.redis.commands.rx;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.Lists;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import rx.Observable;
+import rx.observables.BlockingObservable;
+import rx.observers.TestSubscriber;
+
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.TransactionCommandTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import rx.Observable;
-import rx.observables.BlockingObservable;
-import rx.observers.TestSubscriber;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class TransactionRxCommandTest extends TransactionCommandTest {
 
@@ -129,6 +131,6 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
     protected <T> List<T> all(Observable<T> observable) {
         BlockingObservable<T> blocking = observable.toBlocking();
         Iterator<T> iterator = blocking.getIterator();
-        return Lists.newArrayList(iterator);
+        return LettuceLists.newList(iterator);
     }
 }

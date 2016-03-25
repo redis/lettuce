@@ -7,15 +7,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.models.role.RedisNodeDescription;
-import org.assertj.core.util.Lists;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * @author Mark Paluch
@@ -66,7 +66,7 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
         connection.setReadFrom(new ReadFrom() {
             @Override
             public List<RedisNodeDescription> select(Nodes nodes) {
-                return Lists.emptyList();
+                return LettuceLists.emptyList();
             }
         });
 

@@ -1,13 +1,12 @@
 package com.lambdaworks.redis.models.role;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Ints;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/role">ROLE</a> command output.
@@ -38,8 +37,8 @@ public class RoleParser {
      * @return RedisInstance
      */
     public static RedisInstance parse(List<?> roleOutput) {
-        checkArgument(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
-        checkArgument(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),
+        LettuceAssert.isTrue(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
+        LettuceAssert.isTrue(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),
                 "First role element must be a string (any of " + ROLE_MAPPING.keySet() + ")");
 
         RedisInstance.Role role = ROLE_MAPPING.get(roleOutput.get(0));
@@ -100,7 +99,7 @@ public class RoleParser {
     }
 
     private static List<String> getMonitoredMasters(Iterator<?> iterator) {
-        List<String> monitoredMasters = Lists.newArrayList();
+        List<String> monitoredMasters = LettuceLists.newList();
 
         if (!iterator.hasNext()) {
             return monitoredMasters;
@@ -122,7 +121,7 @@ public class RoleParser {
     }
 
     private static List<ReplicationPartner> getMasterSlaveReplicationPartners(List<?> roleOutput) {
-        List<ReplicationPartner> slaves = Lists.newArrayList();
+        List<ReplicationPartner> slaves = LettuceLists.newList();
         if (roleOutput.size() > 2 && roleOutput.get(2) instanceof Collection) {
             Collection<?> slavesOutput = (Collection<?>) roleOutput.get(2);
 

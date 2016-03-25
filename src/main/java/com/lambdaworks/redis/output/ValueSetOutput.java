@@ -3,10 +3,10 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * {@link Set} of value output.
@@ -18,7 +18,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  */
 public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {
     public ValueSetOutput(RedisCodec<K, V> codec) {
-        super(codec, new HashSet<V>());
+        super(codec, LettuceSets.newHashSet());
     }
 
     @Override

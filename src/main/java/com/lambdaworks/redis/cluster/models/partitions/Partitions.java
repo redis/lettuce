@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Cluster topology view. An instance of {@link Partitions} provides access to the partitions of a Redis Cluster. A partition is
@@ -34,7 +34,7 @@ import com.lambdaworks.redis.cluster.SlotHash;
  */
 public class Partitions implements Collection<RedisClusterNode> {
 
-    private List<RedisClusterNode> partitions = Lists.newArrayList();
+    private List<RedisClusterNode> partitions = LettuceLists.newList();
     private RedisClusterNode slotCache[];
 
     /**

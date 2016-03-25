@@ -7,8 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.EpollProvider;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -153,7 +153,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     private Class<?> getKey(EventExecutorGroup eventLoopGroup) {
         Class<?> key = null;
 
-        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = Maps.newHashMap(eventLoopGroups);
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = LettuceMaps.newHashMap(eventLoopGroups);
         for (Map.Entry<Class<? extends EventExecutorGroup>, EventExecutorGroup> entry : copy.entrySet()) {
             if (entry.getValue() == eventLoopGroup) {
                 key = entry.getKey();
@@ -173,7 +173,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
         shutdownCalled = true;
 
-        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = Maps.newHashMap(eventLoopGroups);
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = LettuceMaps.newHashMap(eventLoopGroups);
 
         DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
         DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);

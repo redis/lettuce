@@ -1,6 +1,5 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.ConnectionEventTrigger.local;
 import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
@@ -20,6 +19,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
 import io.netty.channel.Channel;
@@ -48,8 +48,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
     @Override
     protected List<ChannelHandler> buildHandlers() {
-        checkState(redisURI != null, "redisURI must not be null");
-        checkState(redisURI.isSsl(), "redisURI is not configured for SSL (ssl is false)");
+        LettuceAssert.assertState(redisURI != null, "redisURI must not be null");
+        LettuceAssert.assertState(redisURI.isSsl(), "redisURI is not configured for SSL (ssl is false)");
 
         return super.buildHandlers();
     }

@@ -2,12 +2,12 @@ package com.lambdaworks.redis.cluster.models.slots;
 
 import java.util.*;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
@@ -32,8 +32,8 @@ public class ClusterSlotsParser {
      * @return List&gt;ClusterSlotRange&gt;
      */
     public static List<ClusterSlotRange> parse(List<?> clusterSlotsOutput) {
-        List<ClusterSlotRange> result = Lists.newArrayList();
-        Map<String, RedisClusterNode> nodeCache = Maps.newHashMap();
+        List<ClusterSlotRange> result = LettuceLists.newList();
+        Map<String, RedisClusterNode> nodeCache = LettuceMaps.newHashMap();
 
         for (Object o : clusterSlotsOutput) {
 
@@ -67,14 +67,14 @@ public class ClusterSlotsParser {
         int to = Ints.checkedCast(getLongFromIterator(iterator, 0));
         RedisClusterNode master = null;
 
-        List<RedisClusterNode> slaves = Lists.newArrayList();
+        List<RedisClusterNode> slaves = LettuceLists.newList();
         if (iterator.hasNext()) {
             master = getRedisClusterNode(iterator, nodeCache);
             if(master != null) {
                 master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
-                Set<Integer> slots = Sets.newTreeSet(master.getSlots());
+                Set<Integer> slots = LettuceSets.newTreeSet(master.getSlots());
                 slots.addAll(createSlots(from, to));
-                master.setSlots(Lists.newArrayList(slots));
+                master.setSlots(LettuceLists.newList(slots));
             }
         }
 
@@ -91,7 +91,7 @@ public class ClusterSlotsParser {
     }
 
     private static List<Integer> createSlots(int from, int to) {
-        List<Integer> slots = Lists.newArrayList();
+        List<Integer> slots = LettuceLists.newList();
         for (int i = from; i < to + 1; i++) {
             slots.add(i);
         }
@@ -138,7 +138,7 @@ public class ClusterSlotsParser {
     private static RedisClusterNode createNode(String host, int port) {
         RedisClusterNode redisClusterNode = new RedisClusterNode();
         redisClusterNode.setUri(RedisURI.create(host, port));
-        redisClusterNode.setSlots(new ArrayList<Integer>());
+        redisClusterNode.setSlots(LettuceLists.newList());
         return redisClusterNode;
     }
 

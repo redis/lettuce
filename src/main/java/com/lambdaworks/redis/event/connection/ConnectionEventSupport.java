@@ -1,8 +1,8 @@
 package com.lambdaworks.redis.event.connection;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.net.SocketAddress;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * @author Mark Paluch
@@ -14,8 +14,8 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
     private final SocketAddress remote;
 
     ConnectionEventSupport(SocketAddress local, SocketAddress remote) {
-        checkArgument(local != null, "local must not be null");
-        checkArgument(remote != null, "remote must not be null");
+        LettuceAssert.notNull(local, "local must not be null");
+        LettuceAssert.notNull(remote, "remote must not be null");
 
         this.local = local;
         this.remote = remote;

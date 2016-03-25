@@ -1,7 +1,8 @@
 package com.lambdaworks.redis;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Cursor providing a list of keys.
@@ -12,7 +13,7 @@ import java.util.List;
  */
 public class KeyScanCursor<K> extends ScanCursor {
 
-    private final List<K> keys = new ArrayList<K>();
+    private final List<K> keys = LettuceLists.newList();
 
     public List<K> getKeys() {
         return keys;

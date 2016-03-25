@@ -15,12 +15,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisClusterNodeSnapshot;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
 /**
@@ -118,7 +118,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void getNodeSpecificViews_1_2() throws Exception {
 
-        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> commands = Maps.newHashMap();
+        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> commands = LettuceMaps.newHashMap();
 
         String nodes1 = "1 127.0.0.1:7380 master,myself - 0 1401258245007 2 disconnected 8000-11999\n"
                 + "2 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
@@ -128,7 +128,7 @@ public class ClusterTopologyRefreshTest {
                 + "2 127.0.0.1:7381 master,myself - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
         createClusterNodesCommand(commands, 2, nodes2);
 
-        List<Partitions> values = Lists.newArrayList(sut.getNodeSpecificViews(commands, Maps.newHashMap()).values());
+        List<Partitions> values = LettuceLists.newList(sut.getNodeSpecificViews(commands, LettuceMaps.newHashMap()).values());
 
         assertThat(values).hasSize(2);
 
@@ -140,8 +140,9 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void getNodeSpecificViewTestingNoAddrFilter() throws Exception {
 
-        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> clusterCommands = Maps.newHashMap();
-        Map<RedisURI, AsyncCommand<String, String, String>> clientCommands = Maps.newHashMap();
+        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> clusterCommands = LettuceMaps
+                .newHashMap();
+        Map<RedisURI, AsyncCommand<String, String, String>> clientCommands = LettuceMaps.newHashMap();
 
         String nodes1 = "n1 10.37.110.63:7000 slave n3 0 1452553664848 43 connected\n"
                 + "n2 10.37.110.68:7000 slave n6 0 1452553664346 45 connected\n"
@@ -154,7 +155,7 @@ public class ClusterTopologyRefreshTest {
         createClusterNodesCommand(clusterCommands, 1, nodes1);
         createClientCommand(clientCommands, 1, "c1\nc2\n");
 
-        List<Partitions> values = Lists.newArrayList(sut.getNodeSpecificViews(clusterCommands, clientCommands).values());
+        List<Partitions> values = LettuceLists.newList(sut.getNodeSpecificViews(clusterCommands, clientCommands).values());
 
         assertThat(values).hasSize(1);
 
@@ -172,7 +173,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void getNodeSpecificViews_2_1() throws Exception {
 
-        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> commands = Maps.newHashMap();
+        Map<RedisURI, ClusterTopologyRefresh.TimedAsyncCommand<String, String, String>> commands = LettuceMaps.newHashMap();
 
         String nodes1 = "1 127.0.0.1:7380 master,myself - 0 1401258245007 2 disconnected 8000-11999\n"
                 + "2 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
@@ -182,7 +183,7 @@ public class ClusterTopologyRefreshTest {
                 + "2 127.0.0.1:7381 master,myself - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
         createClusterNodesCommand(commands, 1, nodes2);
 
-        List<Partitions> values = Lists.newArrayList(sut.getNodeSpecificViews(commands, Maps.newHashMap()).values());
+        List<Partitions> values = LettuceLists.newList(sut.getNodeSpecificViews(commands, LettuceMaps.newHashMap()).values());
 
         assertThat(values).hasSize(2);
 
@@ -203,7 +204,7 @@ public class ClusterTopologyRefreshTest {
         RedisClusterNodeSnapshot node3 = new RedisClusterNodeSnapshot();
         node3.setConnectedClients(3);
 
-        List<RedisClusterNodeSnapshot> list = Lists.newArrayList(node2, node3, node1);
+        List<RedisClusterNodeSnapshot> list = LettuceLists.newList(node2, node3, node1);
         Collections.sort(list, ClusterTopologyRefresh.LatencyComparator.INSTANCE);
 
         assertThat(list).containsSequence(node1, node2, node3);
@@ -221,7 +222,7 @@ public class ClusterTopologyRefreshTest {
         RedisClusterNodeSnapshot node3 = new RedisClusterNodeSnapshot();
         node3.setConnectedClients(3);
 
-        List<RedisClusterNodeSnapshot> list = Lists.newArrayList(node2, node3, node1);
+        List<RedisClusterNodeSnapshot> list = LettuceLists.newList(node2, node3, node1);
         Collections.sort(list, ClusterTopologyRefresh.LatencyComparator.INSTANCE);
 
         assertThat(list).containsSequence(node1, node3, node2);

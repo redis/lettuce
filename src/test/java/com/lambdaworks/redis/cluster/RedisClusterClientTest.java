@@ -4,32 +4,16 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -37,6 +21,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -210,7 +195,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.setSlots(Lists.<Integer> newArrayList());
+            partition.setSlots(LettuceLists.newList());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
@@ -247,7 +232,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.setSlots(Lists.<Integer> newArrayList());
+            partition.setSlots(LettuceLists.newList());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
                 partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
             }
@@ -372,7 +357,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public void getButNoPartitionForSlothash() throws Exception {
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            redisClusterNode.setSlots(new ArrayList<>());
+            redisClusterNode.setSlots(LettuceLists.newList());
         }
         RedisChannelHandler rch = (RedisChannelHandler) sync.getStatefulConnection();
         ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) rch

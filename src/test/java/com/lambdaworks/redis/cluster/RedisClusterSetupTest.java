@@ -16,7 +16,6 @@ import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.google.common.collect.Lists;
 import com.lambdaworks.Connections;
 import com.lambdaworks.Futures;
 import com.lambdaworks.Wait;
@@ -30,6 +29,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Test for mutable cluster setup scenarios.
@@ -193,7 +193,8 @@ public class RedisClusterSetupTest extends AbstractTest {
         shiftAllSlotsToNode1();
         assertRoutedExecution(clusterConnection);
 
-        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).build());
+        clusterClient.setOptions(
+                new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS).build());
 
         Wait.untilTrue(() -> {
             if (clusterClient.getPartitions().size() == 2) {
@@ -265,7 +266,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         suspendConnection(node2Connection);
 
-        List<RedisFuture<String>> futures = Lists.newArrayList();
+        List<RedisFuture<String>> futures = LettuceLists.newList();
 
         futures.add(clusterConnection.set("t", "value")); // 15891
         futures.add(clusterConnection.set("p", "value")); // 16023
@@ -337,7 +338,8 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void doNotExpireStaleNodeIdConnections() throws Exception {
 
-        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).closeStaleConnections(false)
+        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
+                .closeStaleConnections(false)
                 .refreshPeriod(1, TimeUnit.SECONDS).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 

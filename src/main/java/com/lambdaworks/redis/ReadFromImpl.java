@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -23,7 +23,7 @@ class ReadFromImpl {
         public List<RedisNodeDescription> select(Nodes nodes) {
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.MASTER) {
-                    return Lists.newArrayList(node);
+                    return LettuceLists.newList(node);
                 }
             }
             return Collections.emptyList();
@@ -36,7 +36,7 @@ class ReadFromImpl {
     static final class ReadFromMasterPreferred extends ReadFrom {
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
-            List<RedisNodeDescription> result = Lists.newArrayList();
+            List<RedisNodeDescription> result = LettuceLists.newList();
 
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.MASTER) {
@@ -59,7 +59,7 @@ class ReadFromImpl {
     static final class ReadFromSlave extends ReadFrom {
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
-            List<RedisNodeDescription> result = Lists.newArrayList();
+            List<RedisNodeDescription> result = LettuceLists.newList();
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.SLAVE) {
                     result.add(node);

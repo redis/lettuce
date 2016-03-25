@@ -1,7 +1,5 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
@@ -10,6 +8,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -201,7 +200,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     public void setOptions(ClientOptions clientOptions) {
-        checkArgument(clientOptions != null, "clientOptions must not be null");
+        LettuceAssert.notNull(clientOptions, "clientOptions must not be null");
         synchronized (this) {
             this.clientOptions = clientOptions;
         }

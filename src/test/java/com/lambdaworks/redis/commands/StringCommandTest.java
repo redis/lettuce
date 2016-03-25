@@ -2,22 +2,24 @@
 
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.SetArgs.Builder.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.lambdaworks.redis.SetArgs.Builder.ex;
+import static com.lambdaworks.redis.SetArgs.Builder.nx;
+import static com.lambdaworks.redis.SetArgs.Builder.px;
+import static com.lambdaworks.redis.SetArgs.Builder.xx;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 public class StringCommandTest extends AbstractRedisClientTest {
     @Rule
@@ -84,7 +86,7 @@ public class StringCommandTest extends AbstractRedisClientTest {
     @Test
     public void mset() throws Exception {
         assertThat(redis.mget("one", "two")).isEqualTo(list(null, null));
-        Map<String, String> map = Maps.newLinkedHashMap();
+        Map<String, String> map = LettuceMaps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         assertThat(redis.mset(map)).isEqualTo("OK");
@@ -94,7 +96,7 @@ public class StringCommandTest extends AbstractRedisClientTest {
     @Test
     public void msetnx() throws Exception {
         redis.set("one", "1");
-        Map<String, String> map = Maps.newLinkedHashMap();
+        Map<String, String> map = LettuceMaps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         assertThat(redis.msetnx(map)).isFalse();

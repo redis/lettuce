@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -11,12 +11,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.lambdaworks.codec.Base16;
 import com.lambdaworks.codec.CRC16;
 import com.lambdaworks.redis.cluster.SlotHash;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RoleParser;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
@@ -39,7 +39,7 @@ public class PrivateAccessorTest {
                                                   ClusterSlotsParser.class, CommandDetailParser.class, RoleParser.class,
                                                   ClusterPartitionParser.class);
 
-        List<Object[]> result = Lists.newArrayList();
+        List<Object[]> result = LettuceLists.newList();
         for (Class<?> aClass : classes) {
             result.add(new Object[] { aClass });
         }

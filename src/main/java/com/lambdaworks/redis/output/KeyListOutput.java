@@ -2,13 +2,12 @@
 
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * {@link List} of keys output.
@@ -23,7 +22,7 @@ public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> implements
     private Subscriber<K> subscriber;
 
     public KeyListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<K>());
+        super(codec, LettuceLists.newList());
         setSubscriber(ListSubscriber.of(output));
     }
 
@@ -34,7 +33,7 @@ public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> implements
 
     @Override
     public void setSubscriber(Subscriber<K> subscriber) {
-        checkArgument(subscriber != null, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "subscriber must not be null");
         this.subscriber = subscriber;
     }
 

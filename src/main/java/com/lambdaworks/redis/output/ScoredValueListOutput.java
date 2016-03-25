@@ -2,14 +2,13 @@
 
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * {@link List} of values and their associated scores.
@@ -25,7 +24,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
     private Subscriber<ScoredValue<V>> subscriber;
 
     public ScoredValueListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, LettuceLists.newList());
         setSubscriber(ListSubscriber.of(output));
     }
 
@@ -43,7 +42,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
 
     @Override
     public void setSubscriber(Subscriber<ScoredValue<V>> subscriber) {
-        checkArgument(subscriber != null, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "subscriber must not be null");
         this.subscriber = subscriber;
     }
 

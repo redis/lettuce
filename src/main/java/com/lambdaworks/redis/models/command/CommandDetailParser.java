@@ -1,13 +1,12 @@
 package com.lambdaworks.redis.models.command;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
@@ -56,9 +55,9 @@ public class CommandDetailParser {
      * @return RedisInstance
      */
     public static List<CommandDetail> parse(List<?> commandOutput) {
-        checkArgument(commandOutput != null, "CommandOutput must not be null");
+        LettuceAssert.notNull(commandOutput, "CommandOutput must not be null");
 
-        List<CommandDetail> result = Lists.newArrayList();
+        List<CommandDetail> result = LettuceLists.newList();
 
         for (Object o : commandOutput) {
             if (!(o instanceof Collection<?>)) {
@@ -92,7 +91,7 @@ public class CommandDetailParser {
     }
 
     private static Set<CommandDetail.Flag> parseFlags(Object flags) {
-        Set<CommandDetail.Flag> result = Sets.newHashSet();
+        Set<CommandDetail.Flag> result = LettuceSets.newHashSet();
 
         if (flags instanceof Collection<?>) {
             Collection<?> collection = (Collection<?>) flags;

@@ -1,13 +1,12 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.CommandEncoder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
@@ -50,7 +49,7 @@ public class ConnectionBuilder {
     }
 
     public SocketAddress socketAddress() {
-        checkState(socketAddressSupplier != null, "socketAddressSupplier must be set");
+        LettuceAssert.assertState(socketAddressSupplier != null, "socketAddressSupplier must be set");
         return socketAddressSupplier.get();
     }
 
@@ -119,16 +118,17 @@ public class ConnectionBuilder {
     }
 
     protected List<ChannelHandler> buildHandlers() {
-        checkState(channelGroup != null, "channelGroup must be set");
-        checkState(connectionEvents != null, "connectionEvents must be set");
-        checkState(connection != null, "connection must be set");
-        checkState(clientResources != null, "clientResources must be set");
+        LettuceAssert.assertState(channelGroup != null, "channelGroup must be set");
+        LettuceAssert.assertState(connectionEvents != null, "connectionEvents must be set");
+        LettuceAssert.assertState(connection != null, "connection must be set");
+        LettuceAssert.assertState(clientResources != null, "clientResources must be set");
 
-        List<ChannelHandler> handlers = Lists.newArrayList();
+        List<ChannelHandler> handlers = LettuceLists.newList();
         if (clientOptions.isAutoReconnect()) {
-            checkState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
-            checkState(timer != null, "timer must be set for autoReconnect=true");
-            checkState(socketAddressSupplier != null, "socketAddressSupplier must be set for autoReconnect=true");
+            LettuceAssert.assertState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
+            LettuceAssert.assertState(timer != null, "timer must be set for autoReconnect=true");
+            LettuceAssert.assertState(socketAddressSupplier != null,
+                    "socketAddressSupplier must be set for autoReconnect=true");
 
             ConnectionWatchdog watchdog = new ConnectionWatchdog(clientOptions, bootstrap, timer, workerPool,
                     socketAddressSupplier);

@@ -1,8 +1,8 @@
 package com.lambdaworks.redis.metrics;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * The default implementation of {@link CommandLatencyCollectorOptions}.
@@ -66,7 +66,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          *
          */
         public Builder targetUnit(TimeUnit targetUnit) {
-            checkArgument(targetUnit != null, "targetUnit must not be null");
+            LettuceAssert.notNull(targetUnit, "targetUnit must not be null");
             this.targetUnit = targetUnit;
             return this;
         }
@@ -80,7 +80,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          * @return this
          */
         public Builder targetPercentiles(double[] targetPercentiles) {
-            checkArgument(targetPercentiles != null, "targetPercentiles must not be null");
+            LettuceAssert.notNull(targetPercentiles, "targetPercentiles must not be null");
             this.targetPercentiles = targetPercentiles;
             return this;
         }

@@ -1,16 +1,16 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.util.Lists.newArrayList;
 
 import java.util.List;
 import java.util.Map;
 
-import com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisClusterNodeSnapshot;
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
+import com.lambdaworks.redis.cluster.ClusterTopologyRefresh.RedisClusterNodeSnapshot;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author Mark Paluch

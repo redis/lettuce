@@ -1,19 +1,21 @@
 package com.lambdaworks.redis.commands.rx;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.google.code.tempusfugit.temporal.Duration.millis;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import org.junit.Before;
+import org.junit.Test;
+
+import rx.observers.TestSubscriber;
+import rx.schedulers.Schedulers;
+
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.lambdaworks.Delay;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
-import org.junit.Before;
-import org.junit.Test;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -40,7 +42,7 @@ public class RxTest extends AbstractRedisClientTest {
 
     @Test
     public void auth() throws Exception {
-        List<Throwable> errors = Lists.newArrayList();
+        List<Throwable> errors = LettuceLists.newList();
         reactive.auth("error").doOnError(errors::add).subscribe(new TestSubscriber<>());
         Delay.delay(millis(50));
         assertThat(errors).hasSize(1);

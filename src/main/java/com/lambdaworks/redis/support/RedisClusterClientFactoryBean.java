@@ -1,12 +1,12 @@
 package com.lambdaworks.redis.support;
 
-import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.LettuceStrings.*;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.net.URI;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input and allows
@@ -33,7 +33,7 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
         if (getRedisURI() == null) {
             URI uri = getUri();
 
-            checkArgument(!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL),
+            LettuceAssert.isTrue(!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL),
                     "Sentinel mode not supported when using RedisClusterClient");
 
             RedisURI redisURI = RedisURI.create(uri);

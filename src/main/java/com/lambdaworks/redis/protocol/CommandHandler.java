@@ -2,20 +2,23 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.resource.ClientResources;
-import com.lambdaworks.redis.support.Factories;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -55,7 +58,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected final Object stateLock = new Object();
 
     // all access to the commandBuffer is synchronized
-    protected final Queue<RedisCommand<K, V, ?>> commandBuffer = Factories.newConcurrentQueue();
+    protected final Queue<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
@@ -83,9 +86,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Queue<RedisCommand<K, V, ?>> queue) {
 
-        checkArgument(clientOptions != null, "clientOptions must not be null");
-        checkArgument(clientResources != null, "clientResources must not be null");
-        checkArgument(queue != null, "queue must not be null");
+        LettuceAssert.notNull(clientOptions, "clientOptions must not be null");
+        LettuceAssert.notNull(clientResources, "clientResources must not be null");
+        LettuceAssert.notNull(queue, "queue must not be null");
 
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
@@ -213,7 +216,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
-        checkArgument(command != null, "command must not be null");
+        LettuceAssert.notNull(command, "command must not be null");
 
         if (lifecycleState == LifecycleState.CLOSED) {
             throw new RedisException("Connection is closed");
@@ -396,7 +399,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void flushCommands() {
 
         if (channel != null && isConnected()) {
-            ArrayList<RedisCommand<K, V, ?>> queuedCommands;
+            List<RedisCommand<K, V, ?>> queuedCommands;
 
             synchronized (stateLock) {
                 try {
@@ -406,8 +409,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                         return;
                     }
 
-                    queuedCommands = new ArrayList<>(commandBuffer.size());
-                    queuedCommands.addAll(commandBuffer);
+                    queuedCommands = LettuceLists.newList(commandBuffer);
                     commandBuffer.removeAll(queuedCommands);
                 } finally {
                     unlockWritersExclusive();
@@ -624,7 +626,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             size += commandBuffer.size();
         }
 
-        List<RedisCommand<K, V, ?>> toCancel = new ArrayList<>(size);
+        List<RedisCommand<K, V, ?>> toCancel = LettuceLists.newListWithExpectedSize(size);
 
         if (queue != null) {
             toCancel.addAll(queue);

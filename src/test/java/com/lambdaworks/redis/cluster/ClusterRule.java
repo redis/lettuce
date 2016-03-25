@@ -13,14 +13,14 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * @author Mark Paluch
@@ -29,7 +29,7 @@ public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
     private int[] ports;
-    private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = LettuceMaps.newHashMap();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
@@ -135,7 +135,7 @@ public class ClusterRule implements TestRule {
     private <T> void onAllConnections(Function<RedisClusterAsyncCommands<?, ?>, Future<T>> function,
             boolean ignoreExecutionException) {
 
-        List<Future<?>> futures = Lists.newArrayList();
+        List<Future<?>> futures = LettuceLists.newList();
         for (RedisClusterAsyncCommands<?, ?> connection : connectionCache.values()) {
             futures.add(function.apply(connection));
         }

@@ -1,7 +1,5 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -11,6 +9,7 @@ import rx.Subscriber;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StreamingOutput;
 import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -47,8 +46,8 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
     public ReactiveCommandDispatcher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection,
             boolean dissolve) {
 
-        checkArgument(commandSupplier != null, "CommandSupplier must not be null");
-        checkArgument(connection != null, "StatefulConnection must not be null");
+        LettuceAssert.notNull(commandSupplier, "CommandSupplier must not be null");
+        LettuceAssert.notNull(connection, "StatefulConnection must not be null");
 
         this.commandSupplier = commandSupplier;
         this.connection = connection;

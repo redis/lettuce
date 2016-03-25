@@ -1,14 +1,14 @@
 package com.lambdaworks.redis.models.command;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class CommandDetailParserTest {
 
@@ -20,21 +20,21 @@ public class CommandDetailParserTest {
     @Test
     public void testEmptyList() throws Exception {
 
-        List<CommandDetail> result = CommandDetailParser.parse(Lists.newArrayList());
+        List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList());
         assertThat(result).isEmpty();
     }
 
     @Test
     public void testMalformedList() throws Exception {
         Object o = ImmutableList.of("", "", "");
-        List<CommandDetail> result = CommandDetailParser.parse(Lists.newArrayList(o));
+        List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
         assertThat(result).isEmpty();
     }
 
     @Test
     public void testParse() throws Exception {
         Object o = ImmutableList.of("get", "1", ImmutableList.of("fast", "loading"), 1L, 2L, 3L);
-        List<CommandDetail> result = CommandDetailParser.parse(Lists.newArrayList(o));
+        List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
         assertThat(result).hasSize(1);
 
         CommandDetail commandDetail = result.get(0);

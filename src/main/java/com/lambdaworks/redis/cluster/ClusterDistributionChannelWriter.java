@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.lambdaworks.redis.cluster.SlotHash.getSlot;
 
 import java.util.List;
@@ -10,6 +9,7 @@ import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
@@ -45,7 +45,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     @SuppressWarnings("unchecked")
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
-        checkArgument(command != null, "command must not be null");
+        LettuceAssert.notNull(command, "command must not be null");
 
         if (closed) {
             throw new RedisException("Connection is closed");
@@ -124,23 +124,27 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
     private HostAndPort getMoveTarget(String errorMessage) {
 
-        checkArgument(LettuceStrings.isNotEmpty(errorMessage), "errorMessage must not be empty");
-        checkArgument(errorMessage.startsWith(CommandKeyword.MOVED.name()), "errorMessage must start with "
+        LettuceAssert.notEmpty(errorMessage, "errorMessage must not be empty");
+        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
+                "errorMessage must start with "
                 + CommandKeyword.MOVED);
 
         List<String> movedMessageParts = Splitter.on(' ').splitToList(errorMessage);
-        checkArgument(movedMessageParts.size() >= 3, "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
+        LettuceAssert.isTrue(movedMessageParts.size() >= 3,
+                "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
 
         return HostAndPort.fromString(movedMessageParts.get(2));
     }
 
     private HostAndPort getAskTarget(String errorMessage) {
 
-        checkArgument(LettuceStrings.isNotEmpty(errorMessage), "errorMessage must not be empty");
-        checkArgument(errorMessage.startsWith(CommandKeyword.ASK.name()), "errorMessage must start with " + CommandKeyword.ASK);
+        LettuceAssert.notEmpty(errorMessage, "errorMessage must not be empty");
+        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()),
+                "errorMessage must start with " + CommandKeyword.ASK);
 
         List<String> movedMessageParts = Splitter.on(' ').splitToList(errorMessage);
-        checkArgument(movedMessageParts.size() >= 3, "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
+        LettuceAssert.isTrue(movedMessageParts.size() >= 3,
+                "errorMessage must consist of 3 tokens (" + movedMessageParts + ")");
 
         return HostAndPort.fromString(movedMessageParts.get(2));
     }

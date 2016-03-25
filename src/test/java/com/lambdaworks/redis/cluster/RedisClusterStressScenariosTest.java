@@ -9,37 +9,20 @@ import java.util.List;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.AbstractTest;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -174,7 +157,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
         RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
 
-        List<RedisFuture<?>> futures = Lists.newArrayList();
+        List<RedisFuture<?>> futures = LettuceLists.newList();
         for (int i = 0; i < 100; i++) {
             futures.add(connection.set("a" + i, "myValue1" + i));
             futures.add(connection.set("b" + i, "myValue2" + i));

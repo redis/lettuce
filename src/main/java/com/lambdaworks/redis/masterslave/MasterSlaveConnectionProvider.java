@@ -8,9 +8,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
@@ -19,6 +16,9 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -39,7 +39,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     private final LoadingCache<ConnectionKey, StatefulRedisConnection<K, V>> connections;
     private final StatefulRedisConnection<K, V> masterConnection;
 
-    private List<RedisNodeDescription> knownNodes = Lists.newArrayList();
+    private List<RedisNodeDescription> knownNodes = LettuceLists.newList();
 
     private boolean autoFlushCommands = true;
     private Object stateLock = new Object();
@@ -125,8 +125,8 @@ public class MasterSlaveConnectionProvider<K, V> {
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = Maps.newHashMap(connections.asMap());
-        Set<ConnectionKey> stale = Sets.newHashSet();
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = LettuceMaps.newHashMap(connections.asMap());
+        Set<ConnectionKey> stale = LettuceSets.newHashSet();
 
         for (ConnectionKey connectionKey : map.keySet()) {
 

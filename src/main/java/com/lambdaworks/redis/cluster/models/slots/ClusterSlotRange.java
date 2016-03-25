@@ -1,16 +1,15 @@
 package com.lambdaworks.redis.cluster.models.slots;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Represents a range of slots together with its master and slaves.
@@ -49,8 +48,8 @@ public class ClusterSlotRange implements Serializable {
     @Deprecated
     public ClusterSlotRange(int from, int to, HostAndPort master, List<HostAndPort> slaves) {
 
-        checkArgument(master != null, "master must not be null");
-        checkArgument(slaves != null, "slaves must not be null");
+        LettuceAssert.notNull(master, "master must not be null");
+        LettuceAssert.notNull(slaves, "slaves must not be null");
 
         this.from = from;
         this.to = to;
@@ -70,8 +69,8 @@ public class ClusterSlotRange implements Serializable {
      */
     public ClusterSlotRange(int from, int to, RedisClusterNode masterNode, List<RedisClusterNode> slaveNodes) {
 
-        checkArgument(masterNode != null, "masterNode must not be null");
-        checkArgument(slaveNodes != null, "slaveNodes must not be null");
+        LettuceAssert.notNull(masterNode, "masterNode must not be null");
+        LettuceAssert.notNull(slaveNodes, "slaveNodes must not be null");
 
         this.from = from;
         this.to = to;
@@ -87,7 +86,7 @@ public class ClusterSlotRange implements Serializable {
     }
 
     private List<HostAndPort> toHostAndPorts(List<RedisClusterNode> nodes) {
-         List<HostAndPort> result = Lists.newArrayList();
+        List<HostAndPort> result = LettuceLists.newList();
         for (RedisClusterNode node : nodes) {
             result.add(toHostAndPort(node));
         }
@@ -104,7 +103,7 @@ public class ClusterSlotRange implements Serializable {
     }
 
     private List<RedisClusterNode> toRedisClusterNodes(List<HostAndPort> hostAndPorts, String slaveOf, Set<RedisClusterNode.NodeFlag> flags) {
-        List<RedisClusterNode> result = Lists.newArrayList();
+        List<RedisClusterNode> result = LettuceLists.newList();
         for (HostAndPort hostAndPort : hostAndPorts) {
             result.add(toRedisClusterNode(hostAndPort, slaveOf, flags));
         }
@@ -162,13 +161,13 @@ public class ClusterSlotRange implements Serializable {
     }
 
     public void setMaster(HostAndPort master) {
-        checkArgument(master != null, "master must not be null");
+        LettuceAssert.notNull(master, "master must not be null");
         this.master = master;
     }
 
     public void setSlaves(List<HostAndPort> slaves) {
 
-        checkArgument(slaves != null, "slaves must not be null");
+        LettuceAssert.notNull(slaves, "slaves must not be null");
         this.slaves = slaves;
     }
 

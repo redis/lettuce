@@ -1,7 +1,8 @@
 package com.lambdaworks.redis;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Cursor providing a list of values.
@@ -12,7 +13,7 @@ import java.util.List;
  */
 public class ValueScanCursor<V> extends ScanCursor {
 
-    private final List<V> values = new ArrayList<V>();
+    private final List<V> values = LettuceLists.newList();
 
     public ValueScanCursor() {
     }

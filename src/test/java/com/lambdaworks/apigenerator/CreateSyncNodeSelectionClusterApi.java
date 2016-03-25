@@ -18,7 +18,7 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Create sync API based on the templates.
@@ -35,7 +35,7 @@ public class CreateSyncNodeSelectionClusterApi {
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
-        List<Object[]> result = Lists.newArrayList();
+        List<Object[]> result = LettuceLists.newList();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
             if (templateName.contains("Transactional") || templateName.contains("Sentinel")) {

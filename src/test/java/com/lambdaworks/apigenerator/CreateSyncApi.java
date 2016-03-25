@@ -12,7 +12,7 @@ import org.junit.runners.Parameterized;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Create sync API based on the templates.
@@ -26,7 +26,7 @@ public class CreateSyncApi {
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
-        List<Object[]> result = Lists.newArrayList();
+        List<Object[]> result = LettuceLists.newList();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
             result.add(new Object[] { templateName });

@@ -2,12 +2,11 @@
 
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.*;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * {@link java.util.List} of boolean output.
@@ -21,7 +20,7 @@ public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> 
     private Subscriber<Boolean> subscriber;
 
     public BooleanListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, LettuceLists.newList());
         setSubscriber(ListSubscriber.of(output));
     }
 
@@ -32,7 +31,7 @@ public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> 
 
     @Override
     public void setSubscriber(Subscriber<Boolean> subscriber) {
-        checkArgument(subscriber != null, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "subscriber must not be null");
         this.subscriber = subscriber;
     }
 

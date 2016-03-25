@@ -1,12 +1,7 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.LettuceStrings.isEmpty;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
-import static com.google.common.base.Preconditions.*;
-import static com.lambdaworks.redis.LettuceStrings.*;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -16,14 +11,12 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
@@ -166,7 +159,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private boolean startTls = false;
     private long timeout = 60;
     private TimeUnit unit = TimeUnit.SECONDS;
-    private final List<RedisURI> sentinels = new ArrayList<RedisURI>();
+    private final List<RedisURI> sentinels = LettuceLists.newList();
 
     /**
      * Default empty constructor.
@@ -209,6 +202,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return An instance of {@link RedisURI} containing details from the URI.
      */
     public static RedisURI create(String uri) {
+        LettuceAssert.notEmpty(uri, "uri must not be empty");
         return create(URI.create(uri));
     }
 
@@ -280,7 +274,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
-            checkArgument(isNotEmpty(builder.sentinelMasterId), "URI must contain the sentinelMasterId");
+            LettuceAssert.notEmpty(builder.sentinelMasterId, "URI must contain the sentinelMasterId");
         }
 
         return builder.build();
@@ -422,7 +416,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         }
 
-        checkArgument(builder != null, "Invalid URI, cannot get host part");
+        LettuceAssert.notNull(builder, "Invalid URI, cannot get host part");
         return builder;
     }
 
@@ -542,16 +536,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (host != null) {
             authority = urlEncode(host) + getPortPart(port, scheme);
         }
-        if (sentinels.size() != 0) {
-            List<String> strings = Lists.transform(sentinels, new Function<RedisURI, String>() {
-                @Nullable
-                @Override
-                public String apply(RedisURI input) {
-                    return urlEncode(input.getHost()) + getPortPart(input.getPort(), scheme);
-                }
-            });
 
-            authority = Joiner.on(',').join(strings);
+        if (sentinels.size() != 0) {
+            String joinedSentinels = sentinels.stream()
+                    .map(redisURI -> urlEncode(redisURI.getHost()) + getPortPart(redisURI.getPort(), scheme))
+                    .collect(Collectors.joining(","));
+
+            authority = joinedSentinels;
         }
 
         if (socket != null) {
@@ -565,7 +556,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     private String getQueryString() {
-        List<String> queryPairs = Lists.newArrayList();
+        List<String> queryPairs = LettuceLists.newList();
 
         if (database != 0) {
             queryPairs.add(PARAMETER_NAME_DATABASE + "=" + database);
@@ -579,7 +570,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout + toQueryParamUnit(unit));
         }
 
-        return Joiner.on('&').join(queryPairs);
+        return queryPairs.stream().collect(Collectors.joining("&"));
     }
 
     private String getPortPart(int port, String scheme) {
@@ -727,7 +718,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private boolean startTls = false;
         private long timeout = 60;
         private TimeUnit unit = TimeUnit.SECONDS;
-        private final List<HostAndPort> sentinels = new ArrayList<HostAndPort>();
+        private final List<HostAndPort> sentinels = LettuceLists.newList();
 
         /**
          * Set Redis socket. Creates a new builder.
@@ -736,7 +727,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return New builder with Redis socket.
          */
         public static Builder socket(String socket) {
-            checkNotNull(socket, "Socket must not be null");
+            LettuceAssert.notNull(socket, "Socket must not be null");
             Builder builder = new Builder();
             builder.socket = socket;
             return builder;
@@ -760,7 +751,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return New builder with Redis host/port.
          */
         public static Builder redis(String host, int port) {
-            checkNotNull(host, "Host must not be null");
+            LettuceAssert.notNull(host, "Host must not be null");
             Builder builder = new Builder();
             builder.host = host;
             builder.port = port;
@@ -808,7 +799,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return New builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, int port, String masterId) {
-            checkNotNull(host, "Host must not be null");
+            LettuceAssert.notNull(host, "Host must not be null");
             Builder builder = new Builder();
             builder.sentinelMasterId = masterId;
             builder.withSentinel(host, port);
@@ -834,8 +825,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withSentinel(String host, int port) {
-            checkState(this.host == null, "Cannot use with Redis mode.");
-            checkNotNull(host, "Host must not be null");
+            LettuceAssert.assertState(this.host == null, "Cannot use with Redis mode.");
+            LettuceAssert.notNull(host, "Host must not be null");
             sentinels.add(HostAndPort.fromParts(host, port));
             return this;
         }
@@ -847,7 +838,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withPort(int port) {
-            checkState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
+            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
             this.port = port;
             return this;
         }
@@ -859,7 +850,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withSsl(boolean ssl) {
-            checkState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
+            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
             this.ssl = ssl;
             return this;
         }
@@ -871,7 +862,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withStartTls(boolean startTls) {
-            checkState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
+            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
             this.startTls = startTls;
             return this;
         }
@@ -883,7 +874,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withVerifyPeer(boolean verifyPeer) {
-            checkState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
+            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
             this.verifyPeer = verifyPeer;
             return this;
         }
@@ -895,7 +886,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withDatabase(int database) {
-            checkArgument(database >= 0 && database <= 15, "Invalid database number: " + database);
+            LettuceAssert.isTrue(database >= 0 && database <= 15, "Invalid database number: " + database);
             this.database = database;
             return this;
         }
@@ -907,7 +898,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withPassword(String password) {
-            checkNotNull(password, "Password must not be null");
+            LettuceAssert.notNull(password, "Password must not be null");
             this.password = password.toCharArray();
             return this;
         }
@@ -920,8 +911,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withTimeout(long timeout, TimeUnit unit) {
-            checkNotNull(unit, "TimeUnit must not be null");
-            checkArgument(timeout >= 0, "Timeout must be greater or equal 0");
+            LettuceAssert.notNull(unit, "TimeUnit must not be null");
+            LettuceAssert.isTrue(timeout >= 0, "Timeout must be greater or equal 0");
             this.timeout = timeout;
             this.unit = unit;
             return this;
@@ -934,7 +925,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withSentinelMasterId(String sentinelMasterId) {
-            checkNotNull(sentinelMasterId, "Sentinel master id must not ne null");
+            LettuceAssert.notNull(sentinelMasterId, "Sentinel master id must not ne null");
             this.sentinelMasterId = sentinelMasterId;
             return this;
         }

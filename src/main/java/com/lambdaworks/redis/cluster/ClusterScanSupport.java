@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -11,6 +10,7 @@ import rx.functions.Func1;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
@@ -136,8 +136,7 @@ class ClusterScanSupport {
      * @return
      */
     private static List<String> getNodeIds(StatefulRedisClusterConnection<?, ?> connection) {
-        List<String> nodeIds;
-        nodeIds = new ArrayList<>();
+        List<String> nodeIds = LettuceLists.newList();
 
         PartitionAccessor partitionAccessor = new PartitionAccessor(connection.getPartitions());
         for (RedisClusterNode redisClusterNode : partitionAccessor.getMasters()) {

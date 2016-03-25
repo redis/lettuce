@@ -6,19 +6,19 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.github.javaparser.ast.comments.Comment;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Create reactive API based on the templates.
@@ -35,7 +35,7 @@ public class CreateReactiveApi {
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
-        List<Object[]> result = Lists.newArrayList();
+        List<Object[]> result = LettuceLists.newList();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
             result.add(new Object[] { templateName });

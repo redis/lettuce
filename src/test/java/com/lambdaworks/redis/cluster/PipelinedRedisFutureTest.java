@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
-import com.google.common.collect.Maps;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * @author Mark Paluch
@@ -18,7 +18,7 @@ public class PipelinedRedisFutureTest {
 
         String other = "other";
 
-        sut = new PipelinedRedisFuture<>(Maps.newHashMap(), o -> other);
+        sut = new PipelinedRedisFuture<>(LettuceMaps.newHashMap(), o -> other);
 
         sut.complete("");
         assertThat(sut.get()).isEqualTo(other);
@@ -31,7 +31,7 @@ public class PipelinedRedisFutureTest {
 
         String other = "other";
 
-        sut = new PipelinedRedisFuture<>(Maps.newHashMap(), o -> other);
+        sut = new PipelinedRedisFuture<>(LettuceMaps.newHashMap(), o -> other);
 
         sut.completeExceptionally(new Exception());
         assertThat(sut.get()).isEqualTo(other);

@@ -7,8 +7,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * Random keys for testing slot-hashes.
@@ -39,9 +39,9 @@ public class RandomKeys {
 
     static {
 
-        List<String> keys = Lists.newArrayList();
-        List<String> values = Lists.newArrayList();
-        Map<String, String> map = Maps.newHashMap();
+        List<String> keys = LettuceLists.newList();
+        List<String> values = LettuceLists.newList();
+        Map<String, String> map = LettuceMaps.newHashMap();
 
         for (int i = 0; i < COUNT; i++) {
 

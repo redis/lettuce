@@ -2,20 +2,16 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.util.ArrayList;
+import java.lang.reflect.*;
 import java.util.List;
 
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -32,7 +28,7 @@ public class SyncAsyncApiConvergenceTest {
     @Parameterized.Parameters(name = "Method {0}/{1}")
     public static List<Object[]> parameters() {
 
-        List<Object[]> result = new ArrayList<Object[]>();
+        List<Object[]> result = LettuceLists.newList();
         Method[] methods = RedisCommands.class.getMethods();
         for (Method method : methods) {
             result.add(new Object[] { method.getName(), method });

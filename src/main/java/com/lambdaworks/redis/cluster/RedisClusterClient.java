@@ -1,14 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.io.Closeable;
 import java.net.SocketAddress;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,17 +11,7 @@ import java.util.function.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.ConnectionBuilder;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisCommandExecutionException;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.SslConnectionBuilder;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -38,6 +22,9 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -46,7 +33,6 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 
-import com.lambdaworks.redis.support.Factories;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -72,8 +58,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <p>
  * <a href="http://redis.io/topics/cluster-spec#multiple-keys-operations">Multiple keys operations</a> have to operate on a key
- * that hashes to the same slot. Following commands do not need to follow that rule since they are pipelined according to its hash
- * value to multiple nodes in parallel on the sync, async and, reactive API:
+ * that hashes to the same slot. Following commands do not need to follow that rule since they are pipelined according to its
+ * hash value to multiple nodes in parallel on the sync, async and, reactive API:
  * </p>
  * <ul>
  * <li>{@link RedisAdvancedClusterAsyncCommands#del(Object[]) DEL}</li>
@@ -88,7 +74,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Following commands on the Cluster sync, async and, reactive API are implemented with a Cluster-flavor:
  * </p>
  * <ul>
- * <li>{@link RedisAdvancedClusterAsyncCommands#clientSetname(Object)} Executes {@code CLIENT SET} on all connections and initializes new connections with the {@code clientName}.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#clientSetname(Object)} Executes {@code CLIENT SET} on all connections and
+ * initializes new connections with the {@code clientName}.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#flushall()} Run {@code FLUSHALL} on all master nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#flushdb()} Executes {@code FLUSHDB} on all master nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code KEYS} on all.</li>
@@ -96,7 +83,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptFlush()} Executes {@code SCRIPT FLUSH} on all nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptKill()} Executes {@code SCRIPT KILL} on all nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#shutdown(boolean)} Executes {@code SHUTDOWN} on all nodes.</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#scan()} Executes a {@code SCAN} on all nodes according to {@link ReadFrom}. The resulting cursor must be reused across the {@code SCAN} to scan iteratively across the whole cluster.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#scan()} Executes a {@code SCAN} on all nodes according to {@link ReadFrom}. The
+ * resulting cursor must be reused across the {@code SCAN} to scan iteratively across the whole cluster.</li>
  * </ul>
  *
  * <p>
@@ -139,7 +127,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisClusterClient(RedisURI initialUri) {
-        this(ImmutableList.of(checkNotNull(initialUri, "RedisURI (initial uri) must not be null")));
+        this(ImmutableList.of(assertNotNull(initialUri)));
     }
 
     /**
@@ -243,7 +231,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(String uri) {
-        checkArgument(uri != null, "uri must not be null");
+        LettuceAssert.notNull(uri, "uri must not be null");
         return create(RedisURI.create(uri));
     }
 
@@ -273,7 +261,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public static RedisClusterClient create(ClientResources clientResources, String uri) {
         assertNotNull(clientResources);
-        checkArgument(uri != null, "uri must not be null");
+        LettuceAssert.notNull(uri, "uri must not be null");
         return create(clientResources, RedisURI.create(uri));
     }
 
@@ -458,10 +446,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotNull(codec);
         assertNotEmpty(initialUris);
 
-        checkArgument(socketAddressSupplier != null, "SocketAddressSupplier must not be null");
+        LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
         logger.debug("connectNode(" + nodeId + ")");
-        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
+        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(), queue,
                 clusterWriter);
@@ -496,7 +484,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
+        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(ClusterTopologyRefresh::sortByLatency);
 
@@ -557,7 +545,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
+        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(ClusterTopologyRefresh::sortByClientCount);
 
@@ -873,7 +861,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             if (partitions == null || partitions.size() == 0) {
                 seed = RedisClusterClient.this.initialUris;
             } else {
-                List<RedisURI> uris = Lists.newArrayList();
+                List<RedisURI> uris = LettuceLists.newList();
                 for (RedisClusterNode partition : ClusterTopologyRefresh.sortByUri(partitions)) {
                     uris.add(partition.getUri());
                 }
@@ -882,7 +870,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
             logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
             Map<RedisURI, Partitions> partitions = refresh.loadViews(seed);
-            List<Partitions> values = Lists.newArrayList(partitions.values());
+            List<Partitions> values = LettuceLists.newList(partitions.values());
             if (!values.isEmpty() && ClusterTopologyRefresh.isChanged(getPartitions(), values.get(0))) {
                 logger.debug("Using a new cluster topology");
 
@@ -930,19 +918,20 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
-        checkArgument(codec != null, "RedisCodec must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
     }
 
     private static void assertNotEmpty(Iterable<RedisURI> redisURIs) {
-        checkArgument(redisURIs != null, "RedisURIs must not be null");
-        checkArgument(redisURIs.iterator().hasNext(), "RedisURIs must not be empty");
+        LettuceAssert.notNull(redisURIs, "RedisURIs must not be null");
+        LettuceAssert.isTrue(redisURIs.iterator().hasNext(), "RedisURIs must not be empty");
     }
 
-    private static void assertNotNull(RedisURI redisURI) {
-        checkArgument(redisURI != null, "RedisURI must not be null");
+    private static RedisURI assertNotNull(RedisURI redisURI) {
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+        return redisURI;
     }
 
     private static void assertNotNull(ClientResources clientResources) {
-        checkArgument(clientResources != null, "ClientResources must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
     }
 }

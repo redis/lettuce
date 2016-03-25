@@ -1,9 +1,12 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * {@link java.util.List} of objects and lists to support dynamic nested structures (List with mixed content of values and
@@ -19,7 +22,7 @@ public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     private Deque<List<Object>> stack = new ArrayDeque<List<Object>>();
 
     public ArrayOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<Object>());
+        super(codec, LettuceLists.newList());
     }
 
     @Override
@@ -57,7 +60,7 @@ public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         if (stack.isEmpty()) {
             stack.push(output);
         } else {
-            stack.push(new ArrayList<Object>(count));
+            stack.push(LettuceLists.newListWithExpectedSize(count));
 
         }
         counts.push(count);

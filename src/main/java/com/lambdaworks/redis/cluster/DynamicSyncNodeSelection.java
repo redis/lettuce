@@ -6,11 +6,10 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * @param <CMD> Command command interface type to invoke multi-node operations.
@@ -39,7 +38,7 @@ class DynamicSyncNodeSelection<CMD, K, V> extends DynamicNodeSelection<RedisComm
     public Map<RedisClusterNode, RedisCommands<K, V>> asMap() {
 
         List<RedisClusterNode> list = ImmutableList.copyOf(nodes());
-        Map<RedisClusterNode, RedisCommands<K, V>> map = Maps.newHashMap();
+        Map<RedisClusterNode, RedisCommands<K, V>> map = LettuceMaps.newHashMap();
 
         list.forEach((key) -> map.put(key, getConnection(key).sync()));
 

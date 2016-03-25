@@ -2,17 +2,12 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.ALPHA;
-import static com.lambdaworks.redis.protocol.CommandKeyword.ASC;
-import static com.lambdaworks.redis.protocol.CommandKeyword.BY;
-import static com.lambdaworks.redis.protocol.CommandKeyword.DESC;
-import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
-import static com.lambdaworks.redis.protocol.CommandKeyword.STORE;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.GET;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
@@ -78,7 +73,7 @@ public class SortArgs {
 
     public SortArgs get(String pattern) {
         if (get == null) {
-            get = new ArrayList<String>();
+            get = LettuceLists.newList();
         }
         get.add(pattern);
         return this;

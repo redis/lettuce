@@ -1,17 +1,22 @@
 package com.lambdaworks.redis.masterslave;
 
-import java.util.*;
+import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByUri;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceMaps;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
@@ -19,8 +24,6 @@ import com.lambdaworks.redis.protocol.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByUri;
 
 /**
  * Utility to refresh the Master-Slave topology view based on {@link RedisNodeDescription}.
@@ -71,11 +74,11 @@ class MasterSlaveTopologyRefresh {
 
     protected List<RedisNodeDescription> getNodeSpecificViews(
             Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews, List<RedisNodeDescription> nodes, RedisURI seed) {
-        List<RedisNodeDescription> result = Lists.newArrayList();
+        List<RedisNodeDescription> result = LettuceLists.newList();
 
         long timeout = seed.getUnit().toNanos(seed.getTimeout());
         long waitTime = 0;
-        Map<RedisNodeDescription, Long> latencies = Maps.newHashMap();
+        Map<RedisNodeDescription, Long> latencies = LettuceMaps.newHashMap();
 
         for (Map.Entry<RedisURI, TimedAsyncCommand<String, String, String>> entry : rawViews.entrySet()) {
             long timeoutLeft = timeout - waitTime;
@@ -120,7 +123,7 @@ class MasterSlaveTopologyRefresh {
     @SuppressWarnings("unchecked")
     private Map<RedisURI, TimedAsyncCommand<String, String, String>> requestPing(
             Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
-        Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = Maps.newTreeMap(RedisUriComparator.INSTANCE);
+        Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = LettuceMaps.newTreeMap(RedisUriComparator.INSTANCE);
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
 
             TimedAsyncCommand<String, String, String> timed = createPingCommand();
@@ -148,7 +151,8 @@ class MasterSlaveTopologyRefresh {
      * Open connections where an address can be resolved.
      */
     private Map<RedisURI, StatefulRedisConnection<String, String>> getConnections(Iterable<RedisNodeDescription> nodes) {
-        Map<RedisURI, StatefulRedisConnection<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
+        Map<RedisURI, StatefulRedisConnection<String, String>> connections = LettuceMaps
+                .newTreeMap(RedisUriComparator.INSTANCE);
 
         for (RedisNodeDescription node : nodes) {
 

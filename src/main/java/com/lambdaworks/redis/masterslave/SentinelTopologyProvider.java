@@ -9,11 +9,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
@@ -53,7 +53,7 @@ public class SentinelTopologyProvider implements TopologyProvider {
             RedisFuture<Map<String, String>> masterFuture = connection.async().master(masterId);
             RedisFuture<List<Map<String, String>>> slavesFuture = connection.async().slaves(masterId);
 
-            List<RedisNodeDescription> result = Lists.newArrayList();
+            List<RedisNodeDescription> result = LettuceLists.newList();
             try {
                 Map<String, String> master = masterFuture.get(timeout, timeUnit);
                 List<Map<String, String>> slaves = slavesFuture.get(timeout, timeUnit);

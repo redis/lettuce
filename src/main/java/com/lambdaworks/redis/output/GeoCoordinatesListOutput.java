@@ -1,14 +1,14 @@
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Double.parseDouble;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * A list output that creates a list with {@link GeoCoordinates}'s.
@@ -21,7 +21,7 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
 	private Subscriber<GeoCoordinates> subscriber;
 
 	public GeoCoordinatesListOutput(RedisCodec<K, V> codec) {
-		super(codec, new ArrayList<>());
+        super(codec, LettuceLists.newList());
 		setSubscriber(ListSubscriber.of(output));
 	}
 
@@ -47,7 +47,7 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
 
 	@Override
 	public void setSubscriber(Subscriber<GeoCoordinates> subscriber) {
-		checkArgument(subscriber != null, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "subscriber must not be null");
 		this.subscriber = subscriber;
 	}
 

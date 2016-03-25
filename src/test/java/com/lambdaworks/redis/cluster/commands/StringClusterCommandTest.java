@@ -1,14 +1,14 @@
 package com.lambdaworks.redis.cluster.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 
-import java.util.HashSet;
 import java.util.Map;
 
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.RedisURI;
@@ -18,6 +18,8 @@ import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.StringCommandTest;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * @author Mark Paluch
@@ -52,7 +54,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     @Test
     public void msetnx() throws Exception {
         redis.set("one", "1");
-        Map<String, String> map = Maps.newLinkedHashMap();
+        Map<String, String> map = LettuceMaps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         assertThat(redis.msetnx(map)).isTrue();
@@ -68,7 +70,7 @@ public class StringClusterCommandTest extends StringCommandTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.mget(streamingAdapter, "one", "two");
 
-        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(new HashSet<>(list("1", "2")));
+        assertThat(LettuceSets.newHashSet(streamingAdapter.getList())).isEqualTo(LettuceSets.newHashSet(list("1", "2")));
 
         assertThat(count.intValue()).isEqualTo(2);
     }

@@ -1,10 +1,9 @@
 package com.lambdaworks.redis.metrics;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.Serializable;
 import java.net.SocketAddress;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 /**
@@ -20,9 +19,9 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     private final ProtocolKeyword commandType;
 
     protected CommandLatencyId(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
-        checkArgument(localAddress != null, "localAddress must not be null");
-        checkArgument(remoteAddress != null, "remoteAddress must not be null");
-        checkArgument(commandType != null, "commandType must not be null");
+        LettuceAssert.notNull(localAddress, "localAddress must not be null");
+        LettuceAssert.notNull(remoteAddress, "remoteAddress must not be null");
+        LettuceAssert.notNull(commandType, "commandType must not be null");
 
         this.localAddress = localAddress;
         this.remoteAddress = remoteAddress;

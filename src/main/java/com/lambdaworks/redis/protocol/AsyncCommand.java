@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.protocol;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -10,8 +8,8 @@ import java.util.function.Consumer;
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.CommandOutput;
-
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -36,7 +34,7 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
      * 
      */
     public AsyncCommand(RedisCommand<K, V, T> command) {
-        checkArgument(command != null, "RedisCommand must not be null");
+        LettuceAssert.notNull(command, "RedisCommand must not be null");
         this.command = command;
     }
 

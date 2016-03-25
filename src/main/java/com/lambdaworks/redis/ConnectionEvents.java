@@ -2,8 +2,8 @@ package com.lambdaworks.redis;
 
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.SettableFuture;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners.
@@ -12,7 +12,7 @@ import com.google.common.util.concurrent.SettableFuture;
  * @since 3.0
  */
 public class ConnectionEvents {
-    private final Set<RedisConnectionStateListener> listeners = Sets.newConcurrentHashSet();
+    private final Set<RedisConnectionStateListener> listeners = LettuceSets.newConcurrentLinkedHashSet();
 
     protected void fireEventRedisConnected(RedisChannelHandler<?, ?> connection) {
         for (RedisConnectionStateListener listener : listeners) {

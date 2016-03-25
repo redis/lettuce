@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.cluster.api.sync.Executions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * @author Mark Paluch
@@ -19,7 +19,7 @@ class SyncExecutionsImpl<T> implements Executions<T> {
     public SyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<T>> executions) throws ExecutionException,
             InterruptedException {
 
-        Map<RedisClusterNode, T> result = Maps.newHashMap();
+        Map<RedisClusterNode, T> result = LettuceMaps.newHashMap();
         for (Map.Entry<RedisClusterNode, CompletionStage<T>> entry : executions.entrySet()) {
             result.put(entry.getKey(), entry.getValue().toCompletableFuture().get());
         }

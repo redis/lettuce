@@ -4,13 +4,13 @@ package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.junit.Test;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 public class SetCommandTest extends AbstractRedisClientTest {
 
@@ -44,14 +44,14 @@ public class SetCommandTest extends AbstractRedisClientTest {
 
         Long count = redis.sdiff(streamingAdapter, "key1", "key2", "key3");
         assertThat(count.intValue()).isEqualTo(2);
-        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(set("b", "d"));
+        assertThat(streamingAdapter.getList()).containsOnly("b", "d");
     }
 
     @Test
     public void sdiffstore() throws Exception {
         setupSet();
         assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
-        assertThat(redis.smembers("newset")).isEqualTo(set("b", "d"));
+        assertThat(redis.smembers("newset")).containsOnly("b", "d");
     }
 
     @Test
@@ -68,14 +68,14 @@ public class SetCommandTest extends AbstractRedisClientTest {
         Long count = redis.sinter(streamingAdapter, "key1", "key2", "key3");
 
         assertThat(count.intValue()).isEqualTo(1);
-        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(set("c"));
+        assertThat(streamingAdapter.getList()).containsExactly("c");
     }
 
     @Test
     public void sinterstore() throws Exception {
         setupSet();
         assertThat(redis.sinterstore("newset", "key1", "key2", "key3")).isEqualTo(1);
-        assertThat(redis.smembers("newset")).isEqualTo(set("c"));
+        assertThat(redis.smembers("newset")).containsExactly("c");
     }
 
     @Test
@@ -106,7 +106,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
         Long count = redis.smembers(streamingAdapter, key);
         assertThat(count.longValue()).isEqualTo(3);
-        assertThat(new HashSet<String>(streamingAdapter.getList())).isEqualTo(set("a", "b", "c"));
+        assertThat(streamingAdapter.getList()).containsOnly("a", "b", "c");
     }
 
     @Test
@@ -280,8 +280,8 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void sscanMultiple() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
-        Set<String> check = new HashSet<String>();
+        Set<String> expect = LettuceSets.newHashSet();
+        Set<String> check = LettuceSets.newHashSet();
         setup100KeyValues(expect);
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(5));
@@ -302,7 +302,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanMatch() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
+        Set<String> expect = LettuceSets.newHashSet();
         setup100KeyValues(expect);
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(200).match("value1*"));

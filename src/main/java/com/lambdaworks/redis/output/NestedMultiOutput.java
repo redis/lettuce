@@ -3,13 +3,13 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * {@link List} of command outputs, possibly deeply nested.
@@ -23,8 +23,8 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     private int depth;
 
     public NestedMultiOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<Object>());
-        stack = new LinkedList<List<Object>>();
+        super(codec, LettuceLists.newList());
+        stack = LettuceFactories.newSpScQueue();
         depth = 0;
     }
 
@@ -53,7 +53,7 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void multi(int count) {
-        List<Object> a = new ArrayList<Object>(count);
+        List<Object> a = LettuceLists.newListWithExpectedSize(count);
         output.add(a);
         stack.push(output);
         output = a;

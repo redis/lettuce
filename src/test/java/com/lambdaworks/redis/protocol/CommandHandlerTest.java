@@ -8,7 +8,10 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +24,7 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.resource.ClientResources;
 
@@ -168,9 +172,9 @@ public class CommandHandlerTest {
     static class MTCConcurrentWriteThenReset extends MultithreadedTestCase {
 
         private TestableCommandHandler handler;
-        private List<Thread> expectedThreadOrder = Collections.synchronizedList(new ArrayList<>());
-        private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
-        private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
+        private List<Thread> expectedThreadOrder = Collections.synchronizedList(LettuceLists.newList());
+        private List<Thread> entryThreadOrder = Collections.synchronizedList(LettuceLists.newList());
+        private List<Thread> exitThreadOrder = Collections.synchronizedList(LettuceLists.newList());
 
         public MTCConcurrentWriteThenReset(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
@@ -249,9 +253,9 @@ public class CommandHandlerTest {
     static class MTCConcurrentResetThenWrite extends MultithreadedTestCase {
 
         private TestableCommandHandler handler;
-        private List<Thread> expectedThreadOrder = Collections.synchronizedList(new ArrayList<>());
-        private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
-        private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
+        private List<Thread> expectedThreadOrder = Collections.synchronizedList(LettuceLists.newList());
+        private List<Thread> entryThreadOrder = Collections.synchronizedList(LettuceLists.newList());
+        private List<Thread> exitThreadOrder = Collections.synchronizedList(LettuceLists.newList());
 
         public MTCConcurrentResetThenWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {

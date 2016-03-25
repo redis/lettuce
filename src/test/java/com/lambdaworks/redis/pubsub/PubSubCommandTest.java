@@ -10,17 +10,17 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 public class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
@@ -39,10 +39,10 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     public void openPubSubConnection() throws Exception {
         pubsub = client.connectPubSub().async();
         pubsub.addListener(this);
-        channels = new LinkedBlockingQueue<String>();
-        patterns = new LinkedBlockingQueue<String>();
-        messages = new LinkedBlockingQueue<String>();
-        counts = new LinkedBlockingQueue<Long>();
+        channels = LettuceFactories.newBlockingQueue();
+        patterns = LettuceFactories.newBlockingQueue();
+        messages = LettuceFactories.newBlockingQueue();
+        counts = LettuceFactories.newBlockingQueue();
     }
 
     @After
@@ -162,7 +162,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     @Test(timeout = 2000)
     public void psubscribeWithListener() throws Exception {
         RedisFuture<Void> psubscribe = pubsub.psubscribe(pattern);
-        final List<Object> listener = Lists.newArrayList();
+        final List<Object> listener = LettuceLists.newList();
 
         psubscribe.thenAccept(aVoid -> listener.add("done"));
         psubscribe.await(1, TimeUnit.MINUTES);
@@ -317,7 +317,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
     @Test(timeout = 2000)
     public void adapter() throws Exception {
-        final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
+        final BlockingQueue<Long> localCounts = LettuceFactories.newBlockingQueue();
 
         RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
             @Override

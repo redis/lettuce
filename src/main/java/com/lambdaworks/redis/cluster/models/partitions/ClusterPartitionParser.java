@@ -4,12 +4,12 @@ import java.util.*;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Parser for node information output of {@code CLUSTER NODES} and {@code CLUSTER SLAVES}.
@@ -92,7 +92,7 @@ public class ClusterPartitionParser {
         }
 
         String flags = iterator.next();
-        List<String> flagStrings = Lists.newArrayList(Splitter.on(',').trimResults().split(flags).iterator());
+        List<String> flagStrings = LettuceLists.newList(Splitter.on(',').trimResults().split(flags).iterator());
 
         Set<RedisClusterNode.NodeFlag> nodeFlags = readFlags(flagStrings);
 
@@ -109,7 +109,7 @@ public class ClusterPartitionParser {
             connected = true;
         }
 
-        List<String> slotStrings = Lists.newArrayList(iterator); // slot, from-to [slot->-nodeID] [slot-<-nodeID]
+        List<String> slotStrings = LettuceLists.newList(iterator); // slot, from-to [slot->-nodeID] [slot-<-nodeID]
         List<Integer> slots = readSlots(slotStrings);
 
         RedisClusterNode partition = new RedisClusterNode(uri, nodeId, connected, slaveOf, pingSentTs, pongReceivedTs,
@@ -121,7 +121,7 @@ public class ClusterPartitionParser {
 
     private static Set<RedisClusterNode.NodeFlag> readFlags(List<String> flagStrings) {
 
-        Set<RedisClusterNode.NodeFlag> flags = Sets.newHashSet();
+        Set<RedisClusterNode.NodeFlag> flags = LettuceSets.newHashSet();
         for (String flagString : flagStrings) {
             if (FLAG_MAPPING.containsKey(flagString)) {
                 flags.add(FLAG_MAPPING.get(flagString));
@@ -132,7 +132,7 @@ public class ClusterPartitionParser {
 
     private static List<Integer> readSlots(List<String> slotStrings) {
 
-        List<Integer> slots = Lists.newArrayList();
+        List<Integer> slots = LettuceLists.newList();
         for (String slotString : slotStrings) {
 
             if (slotString.startsWith(TOKEN_SLOT_IN_TRANSITION)) {

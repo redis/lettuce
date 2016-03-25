@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * @author Mark Paluch
@@ -49,7 +49,7 @@ public class RedisURITest {
         RedisURI redisURI1 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
 
-        Map<RedisURI, String> map = Maps.newLinkedHashMap();
+        Map<RedisURI, String> map = LettuceMaps.newLinkedHashMap();
         map.put(redisURI1, "something");
 
         assertThat(map.get(redisURI2)).isEqualTo("something");

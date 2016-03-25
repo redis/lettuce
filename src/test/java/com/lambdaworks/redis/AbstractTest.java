@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -10,6 +9,7 @@ import org.junit.Rule;
 
 import com.lambdaworks.CapturingLogRule;
 import com.lambdaworks.LoggingTestRule;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * @author Mark Paluch
@@ -51,6 +51,6 @@ public class AbstractTest {
     }
 
     public static Set<String> set(String... args) {
-        return new HashSet<String>(Arrays.asList(args));
+        return LettuceSets.newHashSet(args);
     }
 }

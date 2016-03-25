@@ -5,14 +5,18 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.internal.LettuceMaps;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 public class KeyCommandTest extends AbstractRedisClientTest {
 
@@ -81,7 +85,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void keys() throws Exception {
         assertThat(redis.keys("*")).isEqualTo(list());
-        Map<String, String> map = Maps.newLinkedHashMap();
+        Map<String, String> map = LettuceMaps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         map.put("three", "3");
@@ -97,7 +101,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
         assertThat(redis.keys("*")).isEqualTo(list());
-        Map<String, String> map = Maps.newLinkedHashMap();
+        Map<String, String> map = LettuceMaps.newLinkedHashMap();
         map.put("one", "1");
         map.put("two", "2");
         map.put("three", "3");
@@ -360,8 +364,8 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanMultiple() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
-        Set<String> check = new HashSet<String>();
+        Set<String> expect = LettuceSets.newHashSet();
+        Set<String> check = LettuceSets.newHashSet();
         setup100KeyValues(expect);
 
         KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(12));
@@ -384,7 +388,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanMatch() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
+        Set<String> expect = LettuceSets.newHashSet();
         setup100KeyValues(expect);
 
         KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(200).match("key1*"));

@@ -2,13 +2,12 @@
 
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * {@link List} of string output.
@@ -22,7 +21,7 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
 	private Subscriber<String> subscriber;
 
 	public StringListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, LettuceLists.newList());
 		setSubscriber(ListSubscriber.of(output));
     }
 
@@ -33,7 +32,7 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
 
 	@Override
 	public void setSubscriber(Subscriber<String> subscriber) {
-		checkArgument(subscriber != null, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "subscriber must not be null");
 		this.subscriber = subscriber;
 	}
 

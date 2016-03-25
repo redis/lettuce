@@ -1,14 +1,14 @@
 package com.lambdaworks.redis.models.role;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class RoleParserTest {
     public static final long REPLICATION_OFFSET_1 = 3167038L;
@@ -23,19 +23,19 @@ public class RoleParserTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void emptyList() throws Exception {
-        RoleParser.parse(Lists.newArrayList());
+        RoleParser.parse(LettuceLists.newList());
 
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void invalidFirstElement() throws Exception {
-        RoleParser.parse(Lists.newArrayList(new Object()));
+        RoleParser.parse(LettuceLists.newList(new Object()));
 
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void invalidRole() throws Exception {
-        RoleParser.parse(Lists.newArrayList("blubb"));
+        RoleParser.parse(LettuceLists.newList("blubb"));
 
     }
 
@@ -134,7 +134,7 @@ public class RoleParserTest {
 
         RedisMasterInstance master = new RedisMasterInstance();
         master.setReplicationOffset(1);
-        master.setSlaves(Lists.<ReplicationPartner> newArrayList());
+        master.setSlaves(LettuceLists.newList());
         assertThat(master.toString()).contains(RedisMasterInstance.class.getSimpleName());
 
         RedisSlaveInstance slave = new RedisSlaveInstance();
@@ -143,7 +143,7 @@ public class RoleParserTest {
         assertThat(slave.toString()).contains(RedisSlaveInstance.class.getSimpleName());
 
         RedisSentinelInstance sentinel = new RedisSentinelInstance();
-        sentinel.setMonitoredMasters(Lists.<String> newArrayList());
+        sentinel.setMonitoredMasters(LettuceLists.newList());
         assertThat(sentinel.toString()).contains(RedisSentinelInstance.class.getSimpleName());
 
         ReplicationPartner partner = new ReplicationPartner();

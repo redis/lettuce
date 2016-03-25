@@ -11,13 +11,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.resource.ClientResources;
 
 /**
@@ -102,8 +102,10 @@ public class ClusterPartiallyDownTest extends AbstractTest {
         redisClusterClient = RedisClusterClient.create(clientResources, seed);
 
         Partitions partitions = new Partitions();
-        partitions.addPartition(new RedisClusterNode(URI_1, "a", true, null, 0, 0, 0, Lists.newArrayList(), Sets.newHashSet()));
-        partitions.addPartition(new RedisClusterNode(URI_2, "b", true, null, 0, 0, 0, Lists.newArrayList(), Sets.newHashSet()));
+        partitions.addPartition(
+                new RedisClusterNode(URI_1, "a", true, null, 0, 0, 0, LettuceLists.newList(), LettuceSets.newHashSet()));
+        partitions.addPartition(
+                new RedisClusterNode(URI_2, "b", true, null, 0, 0, 0, LettuceLists.newList(), LettuceSets.newHashSet()));
 
         redisClusterClient.setPartitions(partitions);
 

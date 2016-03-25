@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Accessor for Partitions.
@@ -42,7 +42,7 @@ class PartitionAccessor {
 
     List<RedisClusterNode> get(Predicate<RedisClusterNode> test) {
 
-        List<RedisClusterNode> result = Lists.newArrayListWithExpectedSize(partitions.size());
+        List<RedisClusterNode> result = LettuceLists.newListWithExpectedSize(partitions.size());
         for (RedisClusterNode partition : partitions) {
             if (test.test(partition)) {
                 result.add(partition);

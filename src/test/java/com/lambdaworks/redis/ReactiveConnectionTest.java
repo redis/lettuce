@@ -16,11 +16,11 @@ import org.junit.rules.ExpectedException;
 import rx.Observable;
 import rx.Subscriber;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
@@ -71,7 +71,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void testCancelCommand() throws Exception {
 
-        List<Object> result = Lists.newArrayList();
+        List<Object> result = LettuceLists.newList();
         reactive.clientPause(1000).subscribe();
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
         Delay.delay(millis(100));
@@ -89,7 +89,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void testMultiCancel() throws Exception {
 
-        List<Object> result = Lists.newArrayList();
+        List<Object> result = LettuceLists.newList();
         reactive.clientPause(1000).subscribe();
 
         Observable<String> set = reactive.set(key, value);

@@ -4,7 +4,6 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +13,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class AsyncConnectionTest extends AbstractRedisClientTest {
     private RedisAsyncConnection<String, String> async;
@@ -63,7 +64,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
     @Test(timeout = 10000)
     public void futureListener() throws Exception {
 
-        final List<Object> run = new ArrayList<Object>();
+        final List<Object> run = LettuceLists.newList();
 
         Runnable listener = new Runnable() {
             @Override
@@ -96,7 +97,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
     @Test(timeout = 1000)
     public void futureListenerCompleted() throws Exception {
 
-        final List<Object> run = new ArrayList<Object>();
+        final List<Object> run = LettuceLists.newList();
 
         Runnable listener = new Runnable() {
             @Override

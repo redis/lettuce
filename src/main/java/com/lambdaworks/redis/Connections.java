@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.concurrent.ExecutionException;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Utility for checking a connection's state.
@@ -29,7 +29,7 @@ class Connections {
      */
     public static final boolean isValid(Object connection) {
 
-        checkNotNull(connection, "Connection must not be null");
+        LettuceAssert.notNull(connection, "Connection must not be null");
         if (connection instanceof RedisAsyncConnection<?, ?>) {
             RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
             try {
@@ -66,7 +66,7 @@ class Connections {
      */
     public static final boolean isOpen(Object connection) {
 
-        checkNotNull(connection, "Connection must not be null");
+        LettuceAssert.notNull(connection, "Connection must not be null");
         if (connection instanceof RedisAsyncConnection<?, ?>) {
             RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;
             return redisAsyncConnection.isOpen();
@@ -90,7 +90,7 @@ class Connections {
      */
     public static void close(Object connection) {
 
-        checkNotNull(connection, "Connection must not be null");
+        LettuceAssert.notNull(connection, "Connection must not be null");
         try {
             if (connection instanceof RedisAsyncConnection<?, ?>) {
                 RedisAsyncConnection<?, ?> redisAsyncConnection = (RedisAsyncConnection<?, ?>) connection;

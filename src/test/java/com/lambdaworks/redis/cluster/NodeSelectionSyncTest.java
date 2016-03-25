@@ -7,15 +7,14 @@ import static org.assertj.core.api.Fail.fail;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisCommandTimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.RedisCommandTimeoutException;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.sync.Executions;
@@ -23,6 +22,7 @@ import com.lambdaworks.redis.cluster.api.sync.NodeSelection;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -47,7 +47,7 @@ public class NodeSelectionSyncTest extends AbstractClusterTest {
     @Test
     public void testMultiNodeOperations() throws Exception {
 
-        List<String> expectation = Lists.newArrayList();
+        List<String> expectation = LettuceLists.newList();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             expectation.add(key);

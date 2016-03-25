@@ -2,7 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.Map;
 
-import com.google.common.collect.Maps;
+import com.lambdaworks.redis.internal.LettuceMaps;
 
 /**
  * Scan cursor for maps.
@@ -14,7 +14,7 @@ import com.google.common.collect.Maps;
  */
 public class MapScanCursor<K, V> extends ScanCursor {
 
-    private final Map<K, V> map = Maps.newLinkedHashMap();
+    private final Map<K, V> map = LettuceMaps.newLinkedHashMap();
 
     /**
      * 
