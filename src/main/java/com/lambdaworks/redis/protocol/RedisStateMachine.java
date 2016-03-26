@@ -2,20 +2,19 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.output.CommandOutput;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufProcessor;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 /**
  * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
@@ -150,6 +149,7 @@ public class RedisStateMachine<K, V> {
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
                         state.count = length;
                         buffer.markReaderIndex();
+                        System.out.println("multi: " + state.count);
                         safeMulti(output, state.count, command);
                     }
 
@@ -174,6 +174,7 @@ public class RedisStateMachine<K, V> {
             buffer.markReaderIndex();
             remove(stack);
 
+            System.out.println("complete: " + size(stack));
             output.complete(size(stack));
         }
 

@@ -1,9 +1,5 @@
 package com.lambdaworks.redis;
 
-import java.net.SocketAddress;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Supplier;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceLists;
@@ -11,12 +7,16 @@ import com.lambdaworks.redis.protocol.CommandEncoder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.resource.ClientResources;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.codec.redis.RedisDecoder;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
+
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Connection builder for connections. This class is part of the internal API.
@@ -141,6 +141,7 @@ public class ConnectionBuilder {
 
         handlers.add(new ChannelGroupListener(channelGroup));
         handlers.add(new CommandEncoder());
+        handlers.add(new RedisDecoder());
         handlers.add(commandHandler);
         handlers.add(connection);
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));

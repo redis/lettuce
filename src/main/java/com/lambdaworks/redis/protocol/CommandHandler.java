@@ -2,6 +2,24 @@
 
 package com.lambdaworks.redis.protocol;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.resource.ClientResources;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.channel.local.LocalAddress;
+import io.netty.handler.codec.redis.RedisFrame;
+import io.netty.util.ReferenceCounted;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.internal.logging.InternalLogLevel;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
@@ -11,23 +29,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceFactories;
-import com.lambdaworks.redis.internal.LettuceLists;
-import com.lambdaworks.redis.resource.ClientResources;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-import io.netty.channel.local.LocalAddress;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.internal.logging.InternalLogLevel;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -59,6 +60,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     // all access to the commandBuffer is synchronized
     protected final Queue<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
+    protected final RedisFrameStateMachine<K, V> segmentStateMachine = new RedisFrameStateMachine<K, V>();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
@@ -133,6 +135,34 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
+        // TODO: Cleanup quickhack to use RedisSegment
+        if (msg instanceof RedisFrame) {
+
+            RedisCommand<K, V, ?> command = queue.peek();
+            
+            WithLatency withLatency = null;
+
+            if (clientResources.commandLatencyCollector().isEnabled()) {
+                RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+                if (unwrappedCommand instanceof WithLatency) {
+                    withLatency = (WithLatency) unwrappedCommand;
+                    if (withLatency.getFirstResponse() == -1) {
+                        withLatency.firstResponse(nanoTime());
+                    }
+                }
+            }
+            
+            if (segmentStateMachine.decode((RedisFrame) msg, command.getOutput())) {
+                recordLatency(withLatency, command.getType());
+                queue.poll().complete();
+            }
+
+            if (msg instanceof ReferenceCounted) {
+                ((ReferenceCounted) msg).release();
+            }
+            return;
+        }
+        
         ByteBuf input = (ByteBuf) msg;
 
         if (!input.isReadable() || input.refCnt() == 0 || buffer == null) {

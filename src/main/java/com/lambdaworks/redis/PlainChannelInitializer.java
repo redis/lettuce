@@ -1,11 +1,5 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.ConnectionEventTrigger.local;
-import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
-
-import java.util.List;
-import java.util.concurrent.Future;
-
 import com.google.common.util.concurrent.SettableFuture;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.event.EventBus;
@@ -17,6 +11,13 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.redis.RedisDecoder;
+
+import java.util.List;
+import java.util.concurrent.Future;
+
+import static com.lambdaworks.redis.ConnectionEventTrigger.local;
+import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 
 /**
  * @author Mark Paluch
@@ -105,7 +106,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
         for (ChannelHandler handler : handlers) {
             removeIfExists(channel.pipeline(), handler.getClass());
-            channel.pipeline().addLast(handler);
+            if (handler instanceof RedisDecoder) {
+                channel.pipeline().addLast(new RedisDecoder());
+            } else {
+                channel.pipeline().addLast(handler);
+            }
         }
     }
 

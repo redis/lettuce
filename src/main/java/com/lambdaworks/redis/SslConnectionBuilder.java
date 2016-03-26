@@ -1,19 +1,5 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.ConnectionEventTrigger.local;
-import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
-import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
-import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
-import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
-
-import java.util.List;
-import java.util.concurrent.Future;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLParameters;
-
 import com.google.common.util.concurrent.SettableFuture;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
@@ -21,13 +7,26 @@ import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.redis.RedisDecoder;
 import io.netty.handler.ssl.*;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLParameters;
+import java.util.List;
+import java.util.concurrent.Future;
+
+import static com.lambdaworks.redis.ConnectionEventTrigger.local;
+import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
+import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
+import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
+import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
 
 /**
  * Connection builder for SSL connections. This class is part of the internal API.
@@ -194,7 +193,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             for (ChannelHandler handler : handlers) {
                 removeIfExists(channel.pipeline(), handler.getClass());
-                channel.pipeline().addLast(handler);
+                if (handler instanceof RedisDecoder) {
+                    channel.pipeline().addLast(new RedisDecoder());
+                } else {
+                    channel.pipeline().addLast(handler);
+                }
             }
 
         }
