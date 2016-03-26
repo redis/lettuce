@@ -422,6 +422,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       configuration.setObjectWrapperFactory(this.objectWrapperFactory);
     }
 
+    if (this.vfs != null) {
+      configuration.setVfsImpl(this.vfs);
+    }
+
     if (hasLength(this.typeAliasesPackage)) {
       String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
@@ -478,10 +482,6 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       } catch (SQLException e) {
         throw new NestedIOException("Failed getting a databaseId", e);
       }
-    }
-
-    if (this.vfs != null) {
-      configuration.setVfsImpl(this.vfs);
     }
 
     if (this.cache != null) {
