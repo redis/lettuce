@@ -57,7 +57,7 @@
         <github.site.upload.skip>true</github.site.upload.skip>
         <lettuce-release-version>4.1.1.Final</lettuce-release-version>
         <lettuce3-release-version>3.4.2.Final</lettuce3-release-version>
-        <netty-version>4.0.34.Final</netty-version>
+        <netty-version>4.1.0.CR4</netty-version>
     </properties>
 
     <scm>
