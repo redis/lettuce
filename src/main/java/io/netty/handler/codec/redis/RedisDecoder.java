@@ -15,21 +15,24 @@
 
 package io.netty.handler.codec.redis;
 
-import java.util.*;
+import java.util.List;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.ByteProcessor;
-import io.netty.util.CharsetUtil;
 
+/**
+ * @author Jongyeol Choi
+ * @author Mark Paluch
+ */
 public class RedisDecoder extends ByteToMessageDecoder {
 
     private static final int CRLF_LENGTH = 2;
     private static final int NULL_RESPONSE = -1;
 
-    private Deque<DecodeState> stages;
+    private final DecodeState state = new DecodeState();
+    private final ToLongProcessor toLong = new ToLongProcessor();
 
     private enum State {
         DECODE_TYPE, DECODE_INLINE, // SIMPLE_STRING, ERROR, INTEGER
@@ -45,31 +48,30 @@ public class RedisDecoder extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         try {
             boolean next = true;
-            while (next) {
-                DecodeState current = stages.peek();
-                switch (current.state) {
+            do {
+                switch (state.state) {
                     case DECODE_TYPE:
-                        next = decodeType(current, in);
+                        next = decodeType(in);
                         break;
                     case DECODE_INLINE:
-                        next = decodeInline(current, in);
+                        next = decodeInline(in, out);
                         break;
                     case DECODE_LENGTH:
-                        next = decodeLength(current, in);
+                        next = decodeLength(in, out);
                         break;
                     case DECODE_BULK_STRING:
-                        next = decodeBulkStrings(current, in);
+                        next = decodeBulkStrings(in, out);
                         break;
                     case DECODE_ARRAY:
-                        decodeArrays(current);
+                        decodeArrays();
                         break;
                     case DECODE_COMPLETE:
-                        aggregate(current, out);
+                        aggregate();
                         break;
                     default:
-                        throw new Error("Unknown state: " + current.state);
+                        throw new Error("Unknown state: " + state.state);
                 }
-            }
+            } while (next);
         } catch (Exception e) {
             resetDecoder();
             throw e;
@@ -77,115 +79,128 @@ public class RedisDecoder extends ByteToMessageDecoder {
     }
 
     private void resetDecoder() {
-        stages = new ArrayDeque<DecodeState>();
-        stages.push(new DecodeState());
+        state.reset();
     }
 
-    private boolean decodeType(DecodeState current, ByteBuf in) throws Exception {
+    private boolean decodeType(ByteBuf in) throws Exception {
         if (in.readableBytes() < 1) {
             return false;
         }
-        current.type = RedisMessageType.valueOf(in.readByte());
-        current.state = current.type.isInline() ? State.DECODE_INLINE : State.DECODE_LENGTH;
+        state.type = RedisMessageType.valueOf(in.readByte());
+        state.state = state.type.isInline() ? State.DECODE_INLINE : State.DECODE_LENGTH;
         return true;
     }
 
-    private boolean decodeInline(DecodeState current, ByteBuf in) throws Exception {
+    private boolean decodeInline(ByteBuf in, List<Object> out) throws Exception {
         ByteBuf buf = readLine(in);
         if (buf == null) {
             return false;
         }
-        current.content = buf;
-        current.state = State.DECODE_COMPLETE;
+
+        switch (state.type) {
+            case INTEGER:
+                toLong.reset();
+                out.add(new RedisFrame.IntegerFrame(readLength(buf, toLong)));
+                state.segments++;
+                state.state = State.DECODE_COMPLETE;
+                break;
+            case ERROR:
+            case SIMPLE_STRING:
+                out.add(new RedisFrame.ByteBufFrame(state.type, buf)); // TODO: Use StringSegment?
+                state.segments++;
+                state.state = State.DECODE_COMPLETE;
+                break;
+            default:
+                throw new Error("Cannot decodeInline for type: " + state.type);
+        }
+
         return true;
     }
 
-    private boolean decodeLength(DecodeState current, ByteBuf in) throws Exception {
+    private boolean decodeLength(ByteBuf in, List<Object> out) throws Exception {
         ByteBuf buf = readLine(in);
         if (buf == null) {
             return false;
         }
-        final int length = readLength(buf);
-        current.length = length;
-        if (current.type.isArray()) {
-            setNextStateAndChildrenForArray(current);
-        } else if (current.type.isBulkString()) {
-            current.state = State.DECODE_BULK_STRING;
+        toLong.reset();
+        final long length = readLength(buf, toLong);
+        state.length = length;
+        if (state.type.isArray()) {
+            setNextStateAndChildrenForArray(state, out);
+        } else if (state.type.isBulkString()) {
+            state.state = State.DECODE_BULK_STRING;
         } else {
-            throw new Error("bad type: " + current.type);
+            throw new Error("bad type: " + state.type);
         }
         return true;
     }
 
-    private void setNextStateAndChildrenForArray(DecodeState current) throws Exception {
+    private void setNextStateAndChildrenForArray(DecodeState current, List<Object> out) throws Exception {
         if (current.length == NULL_RESPONSE) {
-            // $-1\r\n <here>
-            current.children = null;
+            // *-1\r\n <here>
+            out.add(RedisFrame.ArrayHeader.NULL);
+            current.segments++;
             current.state = State.DECODE_COMPLETE;
         } else if (current.length == 0) {
-            // $0\r\n <here>
-            current.children = Collections.emptyList();
+            // *0\r\n <here>
+            out.add(new RedisFrame.ArrayHeader(0));
+            current.segments++;
             current.state = State.DECODE_COMPLETE;
         } else if (current.length > 0) {
-            // ${length}\r\n <here> {children...}\r\n
-            current.children = new ArrayList<RedisMessage>();
+            // *{length}\r\n <here> {children...}\r\n
+            out.add(new RedisFrame.ArrayHeader(current.length));
+            current.segments++;
             current.state = State.DECODE_ARRAY;
         } else {
             throw new IllegalArgumentException("bad length: " + current.length);
         }
     }
 
-    private boolean decodeBulkStrings(DecodeState current, ByteBuf in) throws Exception {
-        if (current.length == NULL_RESPONSE) {
+    private boolean decodeBulkStrings(ByteBuf in, List<Object> out) throws Exception {
+        if (state.length == NULL_RESPONSE) {
             // $-1\r\n
-            current.content = null;
-            current.state = State.DECODE_COMPLETE;
-        } else if (current.length == 0) {
+            out.add(RedisFrame.NullFrame.INSTANCE);
+            state.segments++;
+            state.state = State.DECODE_COMPLETE;
+        } else if (state.length == 0) {
             // $0\r\n <here> \r\n
             if (in.readableBytes() < CRLF_LENGTH) {
                 return false;
             }
             in.skipBytes(CRLF_LENGTH);
-            current.content = Unpooled.EMPTY_BUFFER;
-            current.state = State.DECODE_COMPLETE;
-        } else if (current.length > 0) {
+            out.add(RedisFrame.ByteBufFrame.EMPTY_BULK_STRING);
+            state.segments++;
+            state.state = State.DECODE_COMPLETE;
+        } else if (state.length > 0) {
             // ${length}\r\n <here> {data...}\r\n
-            if (in.readableBytes() < current.length + CRLF_LENGTH) {
+            if (in.readableBytes() < state.length + CRLF_LENGTH) {
                 return false;
             }
-            current.content = in.readSlice(current.length);
+
+            assert state.length <= Integer.MAX_VALUE;
+            ByteBuf byteBuf = in.readSlice((int) state.length);
+            out.add(new RedisFrame.ByteBufFrame(RedisMessageType.BULK_STRING, byteBuf));
             in.skipBytes(CRLF_LENGTH);
-            current.state = State.DECODE_COMPLETE;
+            state.segments++;
+            state.state = State.DECODE_COMPLETE;
         } else {
-            throw new IllegalArgumentException("bad length: " + current.length);
+            throw new IllegalArgumentException("bad length: " + state.length);
         }
         return true;
     }
 
-    private void decodeArrays(DecodeState current) throws Exception {
-        if (current.children.size() == current.length) {
-            current.state = State.DECODE_COMPLETE;
-        } else if (current.children.size() < current.length) {
-            stages.push(new DecodeState()); // for child
+    private void decodeArrays() throws Exception {
+        if (state.segments == state.length) {
+            state.state = State.DECODE_COMPLETE;
+        } else if (state.segments < state.length) {
+            this.state.reset();
         } else {
-            throw new IllegalArgumentException(
-                    "children.size: " + current.children.size() + ", current.length: " + current.length);
+            throw new IllegalArgumentException("children.size: " + state.segments + ", current.length: " + state.length);
         }
     }
 
-    private void aggregate(DecodeState current, List<Object> out) throws Exception {
-        RedisMessage msg = newRedisMessage(current);
-        if (stages.size() == 1) {
-            out.add(msg);
-            stages.pop();
-            stages.push(new DecodeState()); // for next message
-        } else if (stages.size() > 1) {
-            stages.pop();
-            DecodeState parent = stages.peek();
-            parent.children.add(msg);
-        } else {
-            throw new Error("bad size: " + stages.size());
-        }
+    private void aggregate() throws Exception {
+        state.reset();
     }
 
     private static ByteBuf readLine(ByteBuf in) {
@@ -203,29 +218,67 @@ public class RedisDecoder extends ByteToMessageDecoder {
         return buf;
     }
 
-    private static int readLength(ByteBuf in) {
-        byte[] data = new byte[in.readableBytes()];
-        in.readBytes(data);
-        return Integer.parseInt(new String(data, CharsetUtil.UTF_8));
-    }
-
-    private static RedisMessage newRedisMessage(DecodeState state) {
-        if (state.type.isArray()) {
-            return new RedisMessage(state.type, state.children);
-        } else {
-            return new RedisMessage(state.type, state.content);
-        }
+    private static long readLength(ByteBuf in, ToLongProcessor toLong) {
+        in.forEachByte(toLong);
+        return toLong.content();
     }
 
     private static class DecodeState {
         State state;
         RedisMessageType type;
-        int length;
-        ByteBuf content;
-        List<RedisMessage> children;
+        long length;
+        long segments;
 
         DecodeState() {
+            reset();
+        }
+
+        public void reset() {
+            state = null;
             state = State.DECODE_TYPE;
+            length = 0;
+            segments = 0;
+        }
+    }
+
+    static class ToLongProcessor implements ByteProcessor {
+
+        private long result;
+        private boolean negative;
+        private boolean first;
+
+        @Override
+        public boolean process(byte value) throws Exception {
+
+            if (first) {
+                first = false;
+
+                if (value == '-') {
+                    negative = true;
+                } else {
+                    negative = false;
+                    int digit = value - '0';
+                    result = result * 10 - digit;
+                }
+                return true;
+            }
+
+            int digit = value - '0';
+            result = result * 10 - digit;
+
+            return true;
+        }
+
+        public long content() {
+            if (!negative) {
+                return -result;
+            }
+            return result;
+        }
+
+        public void reset() {
+            first = true;
+            result = 0;
         }
     }
 
