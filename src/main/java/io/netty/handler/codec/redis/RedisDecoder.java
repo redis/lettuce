@@ -15,12 +15,13 @@
 
 package io.netty.handler.codec.redis;
 
-import java.util.List;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.CodecException;
 import io.netty.util.ByteProcessor;
+
+import java.util.List;
 
 /**
  * @author Jongyeol Choi
@@ -69,7 +70,7 @@ public class RedisDecoder extends ByteToMessageDecoder {
                         aggregate();
                         break;
                     default:
-                        throw new Error("Unknown state: " + state.state);
+                        throw new CodecException(String.format("Unknown state: %s", state.state));
                 }
             } while (next);
         } catch (Exception e) {
@@ -111,7 +112,7 @@ public class RedisDecoder extends ByteToMessageDecoder {
                 state.state = State.DECODE_COMPLETE;
                 break;
             default:
-                throw new Error("Cannot decodeInline for type: " + state.type);
+                throw new CodecException(String.format("Cannot decode inline for type: %s", state.type));
         }
 
         return true;
@@ -130,7 +131,7 @@ public class RedisDecoder extends ByteToMessageDecoder {
         } else if (state.type.isBulkString()) {
             state.state = State.DECODE_BULK_STRING;
         } else {
-            throw new Error("bad type: " + state.type);
+            throw new CodecException(String.format("Cannot decodeLength for type %s", state.type));
         }
         return true;
     }
@@ -152,7 +153,7 @@ public class RedisDecoder extends ByteToMessageDecoder {
             current.segments++;
             current.state = State.DECODE_ARRAY;
         } else {
-            throw new IllegalArgumentException("bad length: " + current.length);
+            throw new CodecException(String.format("Invalid length for array processing: %d", current.length));
         }
     }
 
@@ -184,7 +185,7 @@ public class RedisDecoder extends ByteToMessageDecoder {
             state.segments++;
             state.state = State.DECODE_COMPLETE;
         } else {
-            throw new IllegalArgumentException("bad length: " + state.length);
+            throw new CodecException(String.format("Invalid length for bulk string decoding: %d", state.length));
         }
         return true;
     }
@@ -195,7 +196,7 @@ public class RedisDecoder extends ByteToMessageDecoder {
         } else if (state.segments < state.length) {
             this.state.reset();
         } else {
-            throw new IllegalArgumentException("children.size: " + state.segments + ", current.length: " + state.length);
+            throw new CodecException(String.format("Mismatch in children.size: %d and current.length: %d",state.segments ,state.length));
         }
     }
 
