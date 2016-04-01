@@ -79,7 +79,7 @@ SUM:                            58            823            612           3464
           /mybatis
             /jpetstore
               /domain         <tt>&lt;-- ドメインオブジェクト</tt>
-              /persistence    <tt>&lt;-- Mapper インターフェイス</tt>
+              /mapper         <tt>&lt;-- Mapper インターフェイス</tt>
               /service        <tt>&lt;-- アプリケーションロジック</tt>
               /web
                 /actions      <tt>&lt;-- プレゼンテーションロジック（アクション）</tt>
@@ -87,7 +87,7 @@ SUM:                            58            823            612           3464
         /org
           /mybatis
             /jpetstore
-              /persistence    <tt>&lt;-- Mapper XML ファイル</tt>
+              /mapper         <tt>&lt;-- Mapper XML ファイル</tt>
         /database
       /webapp
         /css
@@ -222,7 +222,7 @@ SUM:                            58            823            612           3464
 
 <source><![CDATA[
 <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-  <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
+  <property name="basePackage" value="org.mybatis.jpetstore.mapper" />
 </bean>
 ]]></source>
 
@@ -337,7 +337,7 @@ public interface OrderMapper {
 }]]></source>
 
 <source><![CDATA[
-<mapper namespace="org.mybatis.jpetstore.persistence.OrderMapper">
+<mapper namespace="org.mybatis.jpetstore.mapper.OrderMapper">
 
   <cache />
 

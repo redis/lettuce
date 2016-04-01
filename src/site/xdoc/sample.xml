@@ -83,7 +83,7 @@ SUM:                            58            823            612           3464
           /mybatis
             /jpetstore
               /domain         <tt>&lt;-- Business domain objects go here.</tt>
-              /persistence    <tt>&lt;-- Mapper interfaces go here.</tt>
+              /mapper         <tt>&lt;-- Mapper interfaces go here.</tt>
               /service        <tt>&lt;-- Application logic goes here.</tt>
               /web
                 /actions      <tt>&lt;-- Presentation logic (actions) goes here.</tt>
@@ -91,7 +91,7 @@ SUM:                            58            823            612           3464
         /org
           /mybatis
             /jpetstore
-              /persistence    <tt>&lt;-- Mapper XML files go here.</tt>
+              /mapper         <tt>&lt;-- Mapper XML files go here.</tt>
         /database
       /webapp
         /css
@@ -234,7 +234,7 @@ SUM:                            58            823            612           3464
 
 <source><![CDATA[
 <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-  <property name="basePackage" value="org.mybatis.jpetstore.persistence" />
+  <property name="basePackage" value="org.mybatis.jpetstore.mapper" />
 </bean>
 ]]></source>
 
@@ -365,7 +365,7 @@ public interface OrderMapper {
 }]]></source>
 
 <source><![CDATA[
-<mapper namespace="org.mybatis.jpetstore.persistence.OrderMapper">
+<mapper namespace="org.mybatis.jpetstore.mapper.OrderMapper">
 
   <cache />
 
@@ -415,21 +415,14 @@ public interface OrderMapper {
       <subsection name="Running JPetStore">
         <p>You may ask. Does all this work? Yes it does! Let's run it.</p>
         <p>Let's assume you have a clean computer. These are the steps you should follow to
-           have the sample running on Tomcat with Eclipse:
+           have the sample running under Tomcat:
         </p>
         <ul>
-          <li>Download and install a JDK 6 or later</li>
-          <li>Download and upzip Eclipse</li>
-          <li>Download and unzip Tomcat</li>
-          <li>Run Eclipse</li>
-          <li>Go to Git tab</li>
           <li>Clone the repo https://github.com/mybatis/jpetstore-6.git</li>
-          <li>Select working directory, right click and select Import Projects (general)</li>
-          <li>Go to Java EE tab</li>
-          <li>Right click on jpetstore project and select "Configure/Convert to Maven Project"</li>
-          <li>Right click on jpetstore project and select "run on server"</li>
-          <li>Select Tomcat Server and set your installation directory</li>
-          <li>JPetStore home page should be shown!!</li>
+          <li>Open command prompt/shell and change to cloned directory</li>
+          <li>Issue following command to run project using Tomcat 7: mvn clean tomcat7:run</li>
+          <li>Run application in browser http://localhost:8080/jpetstore/</li>
+          <li>Press Ctrl-C to stop the server.</li>
         </ul>
         <p>
           Now you are ready to play with it, experiment with your own changes or whatever you want.
