@@ -214,7 +214,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     private void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws Exception {
 
-        logger.log(infoLevel, "Reconnecting, last destination was " + remoteAddress);
+        logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
         if (socketAddressSupplier != null) {
             try {
@@ -228,6 +228,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         try {
             long timeLeft = timeoutUnit.toNanos(timeout);
             long start = System.nanoTime();
+            logger.debug("Connecting to Redis at {}", remoteAddress);
             currentFuture = bootstrap.connect(remoteAddress);
             if (!currentFuture.await(timeLeft, TimeUnit.NANOSECONDS)) {
                 if (currentFuture.isCancellable()) {
@@ -256,7 +257,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             try {
                 timeLeft -= System.nanoTime() - start;
                 channelInitializer.channelInitialized().get(Math.max(0, timeLeft), TimeUnit.NANOSECONDS);
-                logger.log(infoLevel, "Reconnected to " + remoteAddress);
+                logger.log(infoLevel, "Reconnected to {}", remoteAddress);
             } catch (TimeoutException e) {
                 channelInitializer.channelInitialized().cancel(true);
             } catch (Exception e) {

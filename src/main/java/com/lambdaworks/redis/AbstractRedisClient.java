@@ -217,7 +217,7 @@ public abstract class AbstractRedisClient {
         SocketAddress redisAddress = connectionBuilder.socketAddress();
         try {
 
-            logger.debug("Connecting to Redis, address: " + redisAddress);
+            logger.debug("Connecting to Redis at {}", redisAddress);
 
             Bootstrap redisBootstrap = connectionBuilder.bootstrap();
             RedisChannelInitializer initializer = connectionBuilder.build();
