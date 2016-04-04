@@ -686,7 +686,9 @@ public class RedisClient extends AbstractRedisClient {
             @Override
             public SocketAddress get() {
                 try {
-                    return getSocketAddress(redisURI);
+                    SocketAddress socketAddress =  getSocketAddress(redisURI);
+                    logger.debug("Resolved SocketAddress {} using {}", socketAddress, redisURI);
+                    return socketAddress;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RedisException(e);
@@ -713,8 +715,8 @@ public class RedisClient extends AbstractRedisClient {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
-            logger.debug("Connecting to Redis using Sentinels " + redisURI.getSentinels() + ", MasterId "
-                    + redisURI.getSentinelMasterId());
+            logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(), redisURI.getSentinelMasterId());
+
             redisAddress = lookupRedis(redisURI.getSentinelMasterId());
 
             if (redisAddress == null) {

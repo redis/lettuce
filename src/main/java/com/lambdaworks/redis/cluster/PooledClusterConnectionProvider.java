@@ -412,9 +412,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             public SocketAddress get() {
 
                 if (connectionKey.nodeId != null) {
-                    return getSocketAddress(connectionKey.nodeId);
+                    SocketAddress socketAddress = getSocketAddress(connectionKey.nodeId);
+                    logger.debug("Resolved SocketAddress {} using for Cluster node {}", socketAddress, connectionKey.nodeId);
+                    return socketAddress;
                 }
-                return new InetSocketAddress(connectionKey.host, connectionKey.port);
+                SocketAddress socketAddress = new InetSocketAddress(connectionKey.host, connectionKey.port);
+                logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host, connectionKey.port);
+                return socketAddress;
             }
 
         };

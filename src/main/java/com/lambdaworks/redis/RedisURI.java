@@ -113,7 +113,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 @SuppressWarnings("serial")
 public class RedisURI implements Serializable, ConnectionPoint {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisURI.class);
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
     public static final String URI_SCHEME_REDIS = "redis";
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
@@ -639,7 +638,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
             return EpollProvider.newSocketAddress(getSocket());
         }
         InetSocketAddress socketAddress = new InetSocketAddress(host, port);
-        logger.debug("Resolved Redis server address to {}", socketAddress);
         return socketAddress;
     }
 
