@@ -24,6 +24,8 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, password and
  * timeouts within the RedisURI.
@@ -111,6 +113,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
 @SuppressWarnings("serial")
 public class RedisURI implements Serializable, ConnectionPoint {
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisURI.class);
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
     public static final String URI_SCHEME_REDIS = "redis";
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
@@ -635,8 +638,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (getSocket() != null) {
             return EpollProvider.newSocketAddress(getSocket());
         }
-
-        return new InetSocketAddress(host, port);
+        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+        logger.debug("Resolved Redis server address to {}", socketAddress);
+        return socketAddress;
     }
 
     @Override
