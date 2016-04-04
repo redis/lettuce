@@ -480,12 +480,15 @@ public class RedisClusterClient extends AbstractRedisClient {
 
                     for (RedisClusterNode partition : ordered) {
                         if (partition.getUri() != null && partition.getUri().getResolvedAddress() != null) {
-                            return partition.getUri().getResolvedAddress();
+                            SocketAddress resolvedAddress = partition.getUri().getResolvedAddress();
+                            logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, partition.getNodeId());                       return resolvedAddress;
                         }
                     }
                 }
 
-                return getFirstUri().getResolvedAddress();
+                SocketAddress socketAddress = getFirstUri().getResolvedAddress();
+                logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
+                return socketAddress;
             }
         };
     }
