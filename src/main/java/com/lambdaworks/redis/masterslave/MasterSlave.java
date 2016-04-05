@@ -20,7 +20,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  *                                                                      RedisURI.create("redis://localhost"),
  *                                                                      new Utf8StringCodec());
  *   // ...
- *   
+ *
  *   connection.close();
  *   client.shutdown();
  *   </code>
@@ -31,7 +31,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * failover/HA mechanism and are static setups. Redis Sentinel managed instances are controlled by Redis Sentinel and allow
  * failover (which include master promotion). The {@link MasterSlave} API supports both mechanisms. The topology is provided by
  * a {@link TopologyProvider}:
- * 
+ *
  * <ul>
  * <li>{@link MasterSlaveTopologyProvider}: Topology lookup using the {@code INFO REPLICATION} output. Slaves are listed as
  * {@code slaveN=...} entries.</li>
@@ -43,13 +43,14 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * </p>
  *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 4.1
  */
 public class MasterSlave {
 
     /**
      * Open a new connection to a Redis Master-Slave server/servers using the supplied {@link RedisURI} and the supplied
      * {@link RedisCodec codec} to encode/decode keys.
-     * 
+     *
      * @param redisClient the Redis client
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param redisURI the Redis server to connect to, must not be {@literal null}
@@ -69,7 +70,7 @@ public class MasterSlave {
         }
 
         MasterSlaveConnectionProvider<K, V> connectionProvider = new MasterSlaveConnectionProvider<>(redisClient, codec,
-                masterConnection);
+                masterConnection, redisURI);
 
         MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(redisClient, topologyProvider);
         connectionProvider.setKnownNodes(refresh.getNodes(redisURI));

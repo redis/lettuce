@@ -17,8 +17,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Topology provider using Redis Standalone and the {@code INFO REPLICATION} output. Slaves are listed as {@code slaveN=...}
  * entries.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 4.1
  */
 public class MasterSlaveTopologyProvider implements TopologyProvider {
 

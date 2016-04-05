@@ -23,8 +23,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Topology provider using Redis Sentinel and the Sentinel API.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 4.1
  */
 public class SentinelTopologyProvider implements TopologyProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(SentinelTopologyProvider.class);

@@ -27,8 +27,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Connection provider for master/slave setups. The connection provider
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @since 4.1
  */
 public class MasterSlaveConnectionProvider<K, V> {
 
@@ -38,6 +39,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     // Contains HostAndPort-identified connections.
     private final LoadingCache<ConnectionKey, StatefulRedisConnection<K, V>> connections;
     private final StatefulRedisConnection<K, V> masterConnection;
+    private final RedisURI initialRedisUri;
 
     private List<RedisNodeDescription> knownNodes = Lists.newArrayList();
 
@@ -46,8 +48,9 @@ public class MasterSlaveConnectionProvider<K, V> {
     private ReadFrom readFrom;
 
     public MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec,
-            StatefulRedisConnection<K, V> masterConnection) {
+                                         StatefulRedisConnection<K, V> masterConnection, RedisURI initialRedisUri) {
         this.masterConnection = masterConnection;
+        this.initialRedisUri = initialRedisUri;
         this.debugEnabled = logger.isDebugEnabled();
         this.connections = CacheBuilder.newBuilder().build(new ConnectionFactory<>(redisClient, redisCodec));
     }
@@ -57,7 +60,7 @@ public class MasterSlaveConnectionProvider<K, V> {
      * {@link com.lambdaworks.redis.masterslave.MasterSlaveConnectionProvider.Intent#WRITE} intentions use the master
      * connection, {@link com.lambdaworks.redis.masterslave.MasterSlaveConnectionProvider.Intent#READ} intentions lookup one or
      * more read candidates using the {@link ReadFrom} setting.
-     * 
+     *
      * @param intent command intent
      * @return the connection.
      */
@@ -184,7 +187,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     /**
-     * 
+     *
      * @param knownNodes
      */
     public void setKnownNodes(Collection<RedisNodeDescription> knownNodes) {
@@ -220,8 +223,15 @@ public class MasterSlaveConnectionProvider<K, V> {
         @Override
         public StatefulRedisConnection<K, V> load(ConnectionKey key) throws Exception {
 
-            StatefulRedisConnection<K, V> connection = redisClient.connect(redisCodec,
-                    RedisURI.Builder.redis(key.host, key.port).build());
+            RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port);
+
+            if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
+                builder.withPassword(new String(initialRedisUri.getPassword()));
+            }
+
+            builder.withDatabase(initialRedisUri.getDatabase());
+
+            StatefulRedisConnection<K, V> connection = redisClient.connect(redisCodec, builder.build());
 
             synchronized (stateLock) {
                 connection.setAutoFlushCommands(autoFlushCommands);
