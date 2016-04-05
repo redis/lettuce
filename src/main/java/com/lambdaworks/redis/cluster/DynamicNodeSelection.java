@@ -14,7 +14,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @param <CMD> Command command interface type to invoke multi-node operations.
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 abstract class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD, K, V> {
 

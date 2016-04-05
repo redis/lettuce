@@ -4,8 +4,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.BitCommandTest;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 16.06.15 14:54
+ * @author Mark Paluch
  */
 public class BitRxCommandTest extends BitCommandTest {
     @Override

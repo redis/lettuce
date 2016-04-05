@@ -19,7 +19,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
  * <li>netty (in-eventloop) writes</li>
  * </ul>
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @State(Scope.Benchmark)
 public class CommandHandlerBenchmark {

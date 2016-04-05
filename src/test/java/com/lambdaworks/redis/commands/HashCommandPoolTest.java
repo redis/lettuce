@@ -5,7 +5,7 @@ import com.lambdaworks.redis.RedisConnectionPool;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class HashCommandPoolTest extends HashCommandTest {
 

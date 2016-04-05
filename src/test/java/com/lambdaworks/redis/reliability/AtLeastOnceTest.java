@@ -38,8 +38,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 03.07.15 13:40
+ * @author Mark Paluch
  */
 public class AtLeastOnceTest extends AbstractRedisClientTest {
 

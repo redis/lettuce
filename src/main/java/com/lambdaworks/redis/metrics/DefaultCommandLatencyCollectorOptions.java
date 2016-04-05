@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * The default implementation of {@link CommandLatencyCollectorOptions}.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class DefaultCommandLatencyCollectorOptions implements CommandLatencyCollectorOptions {
 

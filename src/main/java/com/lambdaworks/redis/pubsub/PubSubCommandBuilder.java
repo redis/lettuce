@@ -20,7 +20,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 /**
  * Dedicated pub/sub command builder to build pub/sub commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.2
  */
 class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {

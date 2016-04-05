@@ -17,7 +17,7 @@ import org.junit.*;
 import io.netty.util.internal.SystemPropertyUtil;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class UnixDomainSocketTest {
 

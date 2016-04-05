@@ -16,7 +16,7 @@ import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoClusterCommandTest extends GeoCommandTest {
     private static RedisClusterClient redisClusterClient;

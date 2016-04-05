@@ -3,7 +3,7 @@ package com.lambdaworks;
 import com.google.code.tempusfugit.temporal.Duration;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class Delay {
 

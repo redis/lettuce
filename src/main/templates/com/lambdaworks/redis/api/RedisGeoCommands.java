@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * ${intent} for the Geo-API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface RedisGeoCommands<K, V> {

@@ -11,7 +11,7 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  * Identifier for a command latency. Consists of a local/remote tuple of {@link SocketAddress}es and a
  * {@link com.lambdaworks.redis.protocol.ProtocolKeyword commandType} part.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class CommandLatencyId implements Serializable, Comparable<CommandLatencyId> {
 

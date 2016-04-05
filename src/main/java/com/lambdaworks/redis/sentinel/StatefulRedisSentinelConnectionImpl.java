@@ -13,7 +13,7 @@ import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import io.netty.channel.ChannelHandler;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @ChannelHandler.Sharable
 public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements

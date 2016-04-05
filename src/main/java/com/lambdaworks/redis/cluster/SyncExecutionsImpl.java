@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.api.sync.Executions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class SyncExecutionsImpl<T> implements Executions<T> {
 

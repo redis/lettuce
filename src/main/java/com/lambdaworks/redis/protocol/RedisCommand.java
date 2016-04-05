@@ -9,7 +9,7 @@ import io.netty.buffer.ByteBuf;
  * Commands can be wrapped. Outer commands have to notify inner commands but inner commands do not communicate with outer
  * commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Output type.

@@ -17,7 +17,7 @@ import com.lambdaworks.redis.commands.ListCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ListClusterRxCommandTest extends ListCommandTest {
     private static RedisClusterClient redisClusterClient;

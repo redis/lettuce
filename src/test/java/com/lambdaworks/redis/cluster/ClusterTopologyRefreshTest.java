@@ -24,7 +24,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterTopologyRefreshTest {

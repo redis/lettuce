@@ -10,13 +10,17 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 /**
  * Round-Robin socket address supplier. Cluster nodes are iterated circular/infinitely.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
     private final Collection<RedisClusterNode> partitions;
     private final Collection<RedisClusterNode> clusterNodes = Lists.newArrayList();
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort;
@@ -51,6 +55,8 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     }
 
     protected static SocketAddress getSocketAddress(RedisClusterNode redisClusterNode) {
-        return redisClusterNode.getUri().getResolvedAddress();
+        SocketAddress resolvedAddress = redisClusterNode.getUri().getResolvedAddress();
+        logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, redisClusterNode.getNodeId());
+        return resolvedAddress;
     }
 }

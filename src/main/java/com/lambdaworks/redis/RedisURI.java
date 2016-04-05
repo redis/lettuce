@@ -26,6 +26,8 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, password and
  * timeouts within the RedisURI.
@@ -107,7 +109,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * 
  * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -648,8 +650,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (getSocket() != null) {
             return EpollProvider.newSocketAddress(getSocket());
         }
-
-        return new InetSocketAddress(host, port);
+        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+        return socketAddress;
     }
 
     @Override

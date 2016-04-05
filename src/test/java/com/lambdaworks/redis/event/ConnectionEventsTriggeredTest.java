@@ -15,7 +15,7 @@ import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.event.connection.*;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ConnectionEventsTriggeredTest extends AbstractRedisClientTest {
 

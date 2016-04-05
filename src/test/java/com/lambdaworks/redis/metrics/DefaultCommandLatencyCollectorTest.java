@@ -14,7 +14,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 import io.netty.channel.local.LocalAddress;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultCommandLatencyCollectorTest {

@@ -4,7 +4,7 @@ package com.lambdaworks.redis.output;
  * Implementors of this class support a streaming {@link CommandOutput} while the command is still processed. The receiving
  * {@link Subscriber} receives {@link Subscriber#onNext(Object)} calls while the command is active.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.2
  */
 public interface StreamingOutput<T> {

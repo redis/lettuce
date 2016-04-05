@@ -7,8 +7,7 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 18.06.15 09:17
+ * @author Mark Paluch
  */
 public class ConnectToRedisCluster {
 

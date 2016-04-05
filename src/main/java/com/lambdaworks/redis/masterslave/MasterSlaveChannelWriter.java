@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 /**
  * Channel writer/dispatcher that dispatches commands based on the intent to different connections.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 

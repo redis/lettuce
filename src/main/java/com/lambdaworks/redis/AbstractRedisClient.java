@@ -46,7 +46,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * property to a reasonable number of threads.
  * </p>
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public abstract class AbstractRedisClient {
@@ -217,7 +217,7 @@ public abstract class AbstractRedisClient {
         SocketAddress redisAddress = connectionBuilder.socketAddress();
         try {
 
-            logger.debug("Connecting to Redis, address: " + redisAddress);
+            logger.debug("Connecting to Redis at {}", redisAddress);
 
             Bootstrap redisBootstrap = connectionBuilder.bootstrap();
             RedisChannelInitializer initializer = connectionBuilder.build();

@@ -28,7 +28,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Connection provider for master/slave setups. The connection provider
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class MasterSlaveConnectionProvider<K, V> {
 

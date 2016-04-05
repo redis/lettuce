@@ -5,7 +5,7 @@ import java.net.SocketAddress;
 /**
  * Event for a connection deactivation.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public class ConnectionDeactivatedEvent extends ConnectionEventSupport {

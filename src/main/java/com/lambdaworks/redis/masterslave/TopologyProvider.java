@@ -9,7 +9,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
  * Topology provider for Master-Slave topology discovery during runtime. Implementors of this interface return an unordered list
  * of {@link RedisNodeDescription} instances.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.1
  */
 @FunctionalInterface

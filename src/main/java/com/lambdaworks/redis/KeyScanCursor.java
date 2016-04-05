@@ -7,7 +7,7 @@ import java.util.List;
  * Cursor providing a list of keys.
  * 
  * @param <K> Key type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class KeyScanCursor<K> extends ScanCursor {

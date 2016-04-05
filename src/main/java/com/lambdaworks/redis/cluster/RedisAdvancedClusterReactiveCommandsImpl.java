@@ -34,7 +34,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements

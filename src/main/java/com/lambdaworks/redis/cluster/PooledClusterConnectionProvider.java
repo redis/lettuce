@@ -29,7 +29,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -402,9 +402,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private Supplier<SocketAddress> getSocketAddressSupplier(final ConnectionKey connectionKey) {
         return () -> {
             if (connectionKey.nodeId != null) {
-                return getSocketAddress(connectionKey.nodeId);
+                SocketAddress socketAddress = getSocketAddress(connectionKey.nodeId);
+                logger.debug("Resolved SocketAddress {} using for Cluster node {}", socketAddress, connectionKey.nodeId);
+                return socketAddress;
             }
-            return new InetSocketAddress(connectionKey.host, connectionKey.port);
+            SocketAddress socketAddress = new InetSocketAddress(connectionKey.host, connectionKey.port);
+            logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host, connectionKey.port);
+            return socketAddress;
         };
     }
 

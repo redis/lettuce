@@ -39,7 +39,7 @@ import com.lambdaworks.redis.support.Factories;
  * this instance as much as possible.
  *
  * @author Will Glozer
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class RedisClient extends AbstractRedisClient {
 
@@ -515,7 +515,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Open a connection to a Redis Sentinel that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new stateful Redis Sentinel connection
      */
     public StatefulRedisSentinelConnection<String, String> connectSentinel() {
@@ -525,7 +525,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a connection to a Redis Sentinel that treats keys and use the supplied {@link RedisCodec codec} to encode/decode
      * keys and values. The client {@link RedisURI} must contain one or more sentinels.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -674,7 +674,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
-     * 
+     *
      * @param commandHandler the command handler
      * @param codec codec
      * @param <K> Key-Type
@@ -688,7 +688,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
-     * 
+     *
      * @param commandHandler the command handler
      * @param codec codec
      * @param <K> Key-Type
@@ -702,7 +702,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
-     * 
+     *
      * @param commandHandler the command handler
      * @param codec codec
      * @param <K> Key-Type
@@ -735,7 +735,9 @@ public class RedisClient extends AbstractRedisClient {
     private Supplier<SocketAddress> getSocketAddressSupplier(final RedisURI redisURI) {
         return () -> {
             try {
-                return getSocketAddress(redisURI);
+                SocketAddress socketAddress =  getSocketAddress(redisURI);
+                logger.debug("Resolved SocketAddress {} using {}", socketAddress, redisURI);
+                return socketAddress;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RedisCommandInterruptedException(e);
@@ -759,8 +761,7 @@ public class RedisClient extends AbstractRedisClient {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
-            logger.debug("Connecting to Redis using Sentinels " + redisURI.getSentinels() + ", MasterId "
-                    + redisURI.getSentinelMasterId());
+            logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(), redisURI.getSentinelMasterId());
             redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {

@@ -14,13 +14,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Arguments and types for the {@code BITFIELD} command.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.2
  */
 public class BitFieldArgs {
 
     private List<SubCommand> commands;
-    private BitFieldType lastFieldType;
 
     /**
      * Creates a new {@link BitFieldArgs} instance.
@@ -311,7 +310,7 @@ public class BitFieldArgs {
 
         @Override
         <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandType.SET).add(bitFieldType.asSting()).add(offset).add(value);
+            args.add(CommandType.SET).add(bitFieldType.asString()).add(offset).add(value);
         }
     }
 
@@ -334,7 +333,7 @@ public class BitFieldArgs {
 
         @Override
         <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandType.GET).add(bitFieldType.asSting()).add(offset);
+            args.add(CommandType.GET).add(bitFieldType.asString()).add(offset);
         }
     }
 
@@ -359,7 +358,7 @@ public class BitFieldArgs {
 
         @Override
         <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandType.INCRBY).add(bitFieldType.asSting()).add(offset).add(value);
+            args.add(CommandType.INCRBY).add(bitFieldType.asString()).add(offset).add(value);
         }
     }
 
@@ -425,7 +424,7 @@ public class BitFieldArgs {
 
         private BitFieldType(boolean signed, int bits) {
 
-            checkArgument(bits > 0, "Bits must be greater 0");
+            checkArgument(bits > 0, "bits must be greater 0");
 
             if (signed) {
                 checkArgument(bits < 65, "Signed integers support only up to 64 bits");
@@ -453,7 +452,7 @@ public class BitFieldArgs {
             return bits;
         }
 
-        protected String asSting() {
+		private String asString() {
             return (signed ? "i" : "u") + bits;
         }
     }

@@ -17,7 +17,7 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.sentinel.AbstractSentinelTest;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class MasterSlaveSentinelTest extends AbstractSentinelTest {
 

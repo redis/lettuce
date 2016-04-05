@@ -16,7 +16,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * The NodeSelection command API and its result types are a base for discussions.
  *
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface AsyncExecutions<T> extends Iterable<CompletionStage<T>> {

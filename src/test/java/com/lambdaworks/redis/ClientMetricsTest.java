@@ -19,7 +19,7 @@ import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
 import com.lambdaworks.redis.event.Event;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ClientMetricsTest extends AbstractRedisClientTest {
 

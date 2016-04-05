@@ -9,7 +9,7 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
 /**
  * Contains all command names that are read-only commands.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class ReadOnlyCommands {
 

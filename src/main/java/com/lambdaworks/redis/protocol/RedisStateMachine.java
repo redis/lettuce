@@ -24,7 +24,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class RedisStateMachine<K, V> {
 

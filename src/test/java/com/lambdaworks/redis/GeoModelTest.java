@@ -9,8 +9,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 06.07.15 14:18
+ * @author Mark Paluch
  */
 public class GeoModelTest {
 

@@ -11,7 +11,7 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
  * loop groups between tests. Every time a new {@link TestClientResources} instance is created, shutdown hook is added
  * {@link Runtime#addShutdownHook(Thread)}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class TestClientResources {
 

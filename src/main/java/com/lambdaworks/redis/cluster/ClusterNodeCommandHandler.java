@@ -23,7 +23,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * disconnected and closed but has commands in the queue. If the handler was connected it would retry commands using the
  * {@literal MOVED} or {@literal ASK} redirection.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @ChannelHandler.Sharable
 class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {

@@ -16,7 +16,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 /**
  * Methods to support a Cluster-wide SCAN operation over multiple hosts.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class ClusterScanSupport {
 

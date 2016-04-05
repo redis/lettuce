@@ -7,7 +7,7 @@ import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class ServerCommandPoolTest extends ServerCommandTest {
 

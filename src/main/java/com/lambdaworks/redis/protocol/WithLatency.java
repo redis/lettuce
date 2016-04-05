@@ -3,7 +3,7 @@ package com.lambdaworks.redis.protocol;
 /**
  * Interface to items recording a latency. Unit of time depends on the actual implementation.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 interface WithLatency {
 

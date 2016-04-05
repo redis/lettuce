@@ -22,7 +22,7 @@ import io.netty.buffer.ByteBuf;
  * @param <V> Value type.
  * @param <T> Command output type.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
         CompleteableCommand<T>, DecoratedCommand<K, V, T> {

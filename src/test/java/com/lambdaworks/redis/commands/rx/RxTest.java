@@ -16,8 +16,7 @@ import rx.observers.TestSubscriber;
 import rx.schedulers.Schedulers;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 16.06.15 14:19
+ * @author Mark Paluch
  */
 public class RxTest extends AbstractRedisClientTest {
     private RedisReactiveCommands<String, String> reactive;

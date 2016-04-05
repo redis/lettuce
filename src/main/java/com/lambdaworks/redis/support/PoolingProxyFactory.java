@@ -8,7 +8,7 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * Pooling proxy factory to create transparent pooling proxies. These proxies will allocate internally connections and use
  * always valid connections. You don't need to allocate/free the connections anymore.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class PoolingProxyFactory {

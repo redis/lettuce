@@ -12,7 +12,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * Streaming adapter which stores every key or/and value in a list. This adapter can be used in KeyStreamingChannels and
  * ValueStreamingChannels.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @param <T> Valu-Type.
  * @since 3.0
  */

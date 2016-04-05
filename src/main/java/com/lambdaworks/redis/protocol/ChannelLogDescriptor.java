@@ -3,8 +3,7 @@ package com.lambdaworks.redis.protocol;
 import io.netty.channel.Channel;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 08.07.15 09:43
+ * @author Mark Paluch
  */
 class ChannelLogDescriptor {
 

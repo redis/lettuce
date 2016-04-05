@@ -25,7 +25,7 @@ import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByUri;
 /**
  * Utility to refresh the Master-Slave topology view based on {@link RedisNodeDescription}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class MasterSlaveTopologyRefresh {
 

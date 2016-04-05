@@ -15,7 +15,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @param <CMD> Command command interface type to invoke multi-node operations.
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class StaticAsyncNodeSelection<CMD, K, V> extends StaticNodeSelection<RedisAsyncCommands<K, V>, CMD, K, V> {
 

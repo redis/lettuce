@@ -23,7 +23,7 @@ import com.lambdaworks.redis.resource.ClientResources;
  * }
  *
  * @see RedisURI
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 class RedisClientCdiBean extends AbstractCdiBean<RedisClient> {

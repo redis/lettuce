@@ -7,7 +7,7 @@ import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class StatefulRedisMasterSlaveConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V> implements
         StatefulRedisMasterSlaveConnection<K, V> {

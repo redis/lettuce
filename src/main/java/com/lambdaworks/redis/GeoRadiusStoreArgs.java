@@ -9,7 +9,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 /**
  * Store Args for {@literal GEORADIUS} to store {@literal GEORADIUS} results or {@literal GEORADIUS} distances in a sorted set.
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class GeoRadiusStoreArgs<K> {
 

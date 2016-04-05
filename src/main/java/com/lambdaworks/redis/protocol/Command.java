@@ -15,7 +15,7 @@ import io.netty.buffer.ByteBuf;
  * @param <T> Command output type.
  *
  * @author Will Glozer
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency{
 

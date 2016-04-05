@@ -5,7 +5,7 @@ import java.net.SocketAddress;
 /**
  * Event for a established TCP-level connection.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.4
  */
 public class ConnectedEvent extends ConnectionEventSupport {

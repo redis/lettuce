@@ -10,7 +10,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * 
  * @param <API> API type.
  * @param <CMD> Command command interface type to invoke multi-node operations.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface NodeSelectionSupport<API, CMD> {

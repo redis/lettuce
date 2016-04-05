@@ -72,7 +72,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *  </code>
  * </pre>
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class LettuceCdiExtension implements Extension {
 

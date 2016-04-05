@@ -7,7 +7,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 /**
  * Advanced asynchronous and thread-safe cluster API.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.3
  * @deprecated Use {@link com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands}
  */

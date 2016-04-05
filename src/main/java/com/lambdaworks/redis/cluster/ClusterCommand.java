@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 import io.netty.buffer.ByteBuf;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {

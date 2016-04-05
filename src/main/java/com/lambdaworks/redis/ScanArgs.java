@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * Argument list builder for the redis scan commans (scan, hscan, sscan, zscan) . Static import the methods from {@link Builder}
  * and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class ScanArgs {

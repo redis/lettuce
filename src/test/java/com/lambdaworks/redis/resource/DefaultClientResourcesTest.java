@@ -23,8 +23,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.09.15 12:13
+ * @author Mark Paluch
  */
 public class DefaultClientResourcesTest {
 

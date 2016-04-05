@@ -7,7 +7,7 @@ import io.netty.channel.local.LocalAddress;
 import org.junit.Test;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class CommandLatencyIdTest {
 

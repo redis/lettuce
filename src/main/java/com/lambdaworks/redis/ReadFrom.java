@@ -7,7 +7,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 /**
  * Defines from which Redis nodes data is read.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public abstract class ReadFrom {

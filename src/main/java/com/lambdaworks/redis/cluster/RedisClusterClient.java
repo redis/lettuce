@@ -114,7 +114,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  *
  *
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 3.0
  */
 public class RedisClusterClient extends AbstractRedisClient {
@@ -794,7 +794,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions, sort);
         return () -> {
             if (partitions.isEmpty()) {
-                return getFirstUri().getResolvedAddress();
+                SocketAddress socketAddress = getFirstUri().getResolvedAddress();
+                logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
+                return socketAddress;
             }
 
             return socketAddressSupplier.get();

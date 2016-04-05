@@ -15,8 +15,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.Promise;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
- * @since 17.09.15 12:34
+ * @author Mark Paluch
  */
 public class FuturesTest {
 

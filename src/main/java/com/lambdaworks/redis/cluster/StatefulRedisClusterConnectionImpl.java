@@ -37,7 +37,7 @@ import io.netty.channel.ChannelHandler;
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 @ChannelHandler.Sharable
@@ -227,7 +227,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      *
      * @param <K> Key type.
      * @param <V> Value type.
-     * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+     * @author Mark Paluch
      * @since 3.0
      */
     private static class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {

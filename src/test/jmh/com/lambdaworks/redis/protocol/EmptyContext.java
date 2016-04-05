@@ -10,7 +10,7 @@ import io.netty.util.concurrent.EventExecutor;
 import java.net.SocketAddress;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 class EmptyContext implements ChannelHandlerContext {
 

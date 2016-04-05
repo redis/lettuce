@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 /**
  * PubSub keys are not keys from the key-space.
  * 
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.2
  */
 class PubSubCommandArgs<K, V> extends CommandArgs<K, V> {

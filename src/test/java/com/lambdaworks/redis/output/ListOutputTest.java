@@ -16,7 +16,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
 public class ListOutputTest {

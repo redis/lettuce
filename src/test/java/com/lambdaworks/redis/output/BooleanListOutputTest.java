@@ -9,7 +9,7 @@ import org.junit.Test;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class BooleanListOutputTest {
 

@@ -14,7 +14,7 @@ import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
  * 
  * @param <K> Key type.
  * @param <V> Value type.
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  * @since 4.0
  */
 public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnection<K, V> {

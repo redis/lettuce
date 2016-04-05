@@ -18,7 +18,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
- * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
+ * @author Mark Paluch
  */
 public class PubSubClusterTest extends AbstractClusterTest implements RedisPubSubListener<String, String> {
 
