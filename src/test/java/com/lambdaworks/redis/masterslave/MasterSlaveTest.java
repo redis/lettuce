@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 import org.assertj.core.util.Lists;
 import org.junit.After;
@@ -22,17 +24,38 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
  */
 public class MasterSlaveTest extends AbstractRedisClientTest {
 
-    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).build();
+    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd).withDatabase(5).build();
     private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
+    private RedisAsyncCommands<String, String> node1;
+    private RedisAsyncCommands<String, String> node2;
 
     @Before
     public void before() throws Exception {
+
+        node1 = client.connect(RedisURI.Builder.redis(host, TestSettings.port(3)).build()).async();
+        node2 = client.connect(RedisURI.Builder.redis(host, TestSettings.port(4)).build()).async();
+
+        node1.configSet("requirepass", passwd);
+        node1.configSet("masterauth", passwd);
+        node1.auth(passwd);
+
+        node2.configSet("requirepass", passwd);
+        node2.configSet("masterauth", passwd);
+        node2.auth(passwd);
+
         connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(), masterURI);
         connection.setReadFrom(ReadFrom.SLAVE);
     }
 
     @After
     public void after() throws Exception {
+
+        node1.configSet("requirepass", "");
+        node1.configSet("masterauth", "").get(1, TimeUnit.SECONDS);
+
+        node2.configSet("requirepass", "");
+        node2.configSet("masterauth", "").get(1, TimeUnit.SECONDS);
+
         connection.close();
     }
 
@@ -40,7 +63,6 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
     public void testMasterSlaveStandaloneBasic() throws Exception {
 
         String server = connection.sync().info("server");
-
 
         Pattern pattern = Pattern.compile("tcp_port:(\\d+)");
         Matcher matcher = pattern.matcher(server);
