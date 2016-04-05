@@ -39,6 +39,7 @@
         <item href="mappers.html#register" name="Registering a mapper" />
         <item href="mappers.html#scan" name="Scanning for mappers" />
       </item>
+      <item name="Spring Boot" href="boot.html"/>
       <item name="Using the MyBatis API" href="using-api.html"/>
       <item name="Spring Batch" href="batch.html"/>
       <item name="Sample Code" href="sample.html"/>
