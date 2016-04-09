@@ -70,7 +70,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private Class<?> markerInterface;
 
-  private MapperFactoryBean mapperFactoryBean = new MapperFactoryBean();
+  private MapperFactoryBean<?> mapperFactoryBean = new MapperFactoryBean<Object>();
 
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
@@ -104,8 +104,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     this.sqlSessionFactoryBeanName = sqlSessionFactoryBeanName;
   }
 
-  public void setMapperFactoryBean(MapperFactoryBean mapperFactoryBean) {
-    this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean();
+  public void setMapperFactoryBean(MapperFactoryBean<?> mapperFactoryBean) {
+    this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean<Object>();
   }
 
 

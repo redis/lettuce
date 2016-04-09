@@ -13,18 +13,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.dao;
-
-import org.mybatis.spring.sample.domain.User;
-
 /**
- * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a
- * proxy implementation at Spring application startup.
- * 
+ * Package with DAOs/mappers.
+ *
  * @version $Id$
  */
-public interface UserDao {
+package org.mybatis.spring.sample.mapper;
 
-  User getUser(String userId);
-
-}

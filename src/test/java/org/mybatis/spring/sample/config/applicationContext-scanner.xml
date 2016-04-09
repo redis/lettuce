@@ -34,6 +34,6 @@
          UserDaoImplementation needed. The required SqlSessionFactory will be
          autowired. -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-        <property name="basePackage" value="org.mybatis.spring.sample.dao" />
+        <property name="basePackage" value="org.mybatis.spring.sample.mapper" />
     </bean>
 </beans>

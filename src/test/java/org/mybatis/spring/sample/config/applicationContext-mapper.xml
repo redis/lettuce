@@ -17,7 +17,7 @@
 
 <!--
     A sample context that shows how to integrate MyBatis with Spring using a
-    MapperFactoryBean. With this configuration, DAOs are created
+    MapperFactoryBean. With this configuration, mappers are created
     automatically but each one much be defined in the context using an
     implementation (mapper) interface.
 
@@ -31,10 +31,8 @@
 	<!-- import datasource and transaction manager -->
 	<import	resource="classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml" />
 
-	<!-- Directly injecting mappers; notice there is no UserDaoImplementation 
-		needed, but the DAO interface is required. The required SqlSessionFactory 
-		will be autowired. -->
-	<bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean" autowire="byType">
-		<property name="mapperInterface" value="org.mybatis.spring.sample.dao.UserDao" />
+	<!-- Directly injecting mappers. The required SqlSessionFactory will be autowired. -->
+	<bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean" autowire="byType">
+		<property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
 	</bean>
 </beans>

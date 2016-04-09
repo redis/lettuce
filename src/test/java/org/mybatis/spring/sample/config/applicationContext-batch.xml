@@ -29,8 +29,8 @@
 	<import resource="classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml"/>
 
     <!-- To change the default ExecutorType, a custom SqlSessionTemplate is all that is needed. -->
-    <bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
-        <property name="mapperInterface" value="org.mybatis.spring.sample.dao.UserDao" />
+    <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
         <property name="sqlSessionTemplate">
           <bean class="org.mybatis.spring.SqlSessionTemplate">
             <constructor-arg index="0" ref="sqlSessionFactory" />

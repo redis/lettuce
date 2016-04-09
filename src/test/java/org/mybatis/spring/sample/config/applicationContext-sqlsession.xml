@@ -29,7 +29,7 @@
     <!-- import common beans  -->
     <import resource="classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml"/>
 
-    <!-- UserDaoImple extends SqlSessionDaoSupport.
-         The required SqlSessionFactory will be autowired. -->
-    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl" autowire="byType" />
+    <!-- Classic DAO pattern built with an interface and an implementation. 
+    In this case, the inteface should have been called UserDao but we keep its name for simiplicity-->
+    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl" autowire="byType" />
 </beans>

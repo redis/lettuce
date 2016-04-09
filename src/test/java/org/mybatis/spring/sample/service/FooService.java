@@ -15,8 +15,8 @@
  */
 package org.mybatis.spring.sample.service;
 
-import org.mybatis.spring.sample.dao.UserDao;
 import org.mybatis.spring.sample.domain.User;
+import org.mybatis.spring.sample.mapper.UserMapper;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -28,14 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class FooService {
 
-  private UserDao userDao;
+  private UserMapper userMapper;
 
-  public void setUserDao(UserDao userDao) {
-    this.userDao = userDao;
+  public void setUserMapper(UserMapper userMapper) {
+    this.userMapper = userMapper;
   }
 
   public User doSomeBusinessStuff(String userId) {
-    return this.userDao.getUser(userId);
+    return this.userMapper.getUser(userId);
   }
 
 }

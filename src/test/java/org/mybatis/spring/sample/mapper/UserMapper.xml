@@ -21,7 +21,7 @@
 <!--
     version: $Id$
 -->
-<mapper namespace="org.mybatis.spring.sample.dao.UserDao">
+<mapper namespace="org.mybatis.spring.sample.mapper.UserMapper">
 
     <select id="getUser" resultType="org.mybatis.spring.sample.domain.User" parameterType="java.lang.String">
         select * from users where id=#{value}

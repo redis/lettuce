@@ -13,24 +13,18 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.dao;
+package org.mybatis.spring.sample.mapper;
 
 import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
- * This DAO extends SqlSessionDaoSupport and uses a Spring managed SqlSession
- * instead of the MyBatis one. SqlSessions are handled by Spring so you don't
- * need to open/close/commit/rollback.
- * MyBatis exceptions are translated to Spring Data Exceptions.
- *
+ * A org.mybatis.spring sample mapper. This interface will be used by MapperFactoryBean to create a
+ * proxy implementation at Spring application startup.
+ * 
  * @version $Id$
  */
-public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
+public interface UserMapper {
 
-  @Override
-  public User getUser(String userId) {
-    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.dao.UserDao.getUser", userId);
-  }
+  User getUser(String userId);
 
 }

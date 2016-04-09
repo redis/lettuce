@@ -29,8 +29,8 @@ import org.junit.runner.RunWith;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.MapperFactoryBean;
-import org.mybatis.spring.sample.dao.UserDao;
 import org.mybatis.spring.sample.domain.User;
+import org.mybatis.spring.sample.mapper.UserMapper;
 import org.mybatis.spring.sample.service.FooService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +47,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
-public class ConfigurationSampleTest {
+public class SampleConfigurationTest {
 
   @Configuration
   static class ContextConfiguration {
@@ -70,21 +70,21 @@ public class ConfigurationSampleTest {
     public SqlSessionFactory sqlSessionFactory() throws Exception {
       SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
       ss.setDataSource(dataSource());
-      ss.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/sample/dao/UserDao.xml") });
+      ss.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/sample/mapper/UserMapper.xml") });
       return (SqlSessionFactory) ss.getObject();
     }
 
     @Bean
-    public UserDao userDao() throws Exception {
+    public UserMapper userMapper() throws Exception {
       // when using javaconfig a template requires less lines than a MapperFactoryBean
       SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-      return sessionTemplate.getMapper(UserDao.class);
+      return sessionTemplate.getMapper(UserMapper.class);
     }
 
     @Bean
-    public UserDao userDaoWithFactory() throws Exception {
-      MapperFactoryBean<UserDao> mapperFactoryBean = new MapperFactoryBean<UserDao>();
-      mapperFactoryBean.setMapperInterface(UserDao.class);
+    public UserMapper userMapperWithFactory() throws Exception {
+      MapperFactoryBean<UserMapper> mapperFactoryBean = new MapperFactoryBean<UserMapper>();
+      mapperFactoryBean.setMapperInterface(UserMapper.class);
       mapperFactoryBean.setSqlSessionFactory(sqlSessionFactory());
       mapperFactoryBean.afterPropertiesSet();
       return mapperFactoryBean.getObject();
@@ -93,7 +93,7 @@ public class ConfigurationSampleTest {
     @Bean
     public FooService fooService() throws Exception {
       FooService fooService = new FooService();
-      fooService.setUserDao(userDao());
+      fooService.setUserMapper(userMapper());
       return fooService;
     }
   }
