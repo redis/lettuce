@@ -268,7 +268,7 @@
           <systemProperties>
             <property>
               <name>derby.stream.error.file</name>
-              <value>target/derby.log</value>
+              <value>${project.build.directory}/derby.log</value>
             </property>
         </systemProperties>
         </configuration>
