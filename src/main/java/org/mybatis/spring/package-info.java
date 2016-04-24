@@ -15,7 +15,5 @@
  */
 /**
  * Contains core classes to build the MyBatis integration with Spring3.X.
- *
- * @version $Id$
  */
 package org.mybatis.spring;

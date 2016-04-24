@@ -21,8 +21,6 @@
  * <li>Extending SqlSessionDaoSupport to code your mapper implementation</li> 
  * <li>Configuring a DAO for batch processing</li> 
  * </ul>
- *
- * @version $Id$
  */
 package org.mybatis.spring.sample;
 

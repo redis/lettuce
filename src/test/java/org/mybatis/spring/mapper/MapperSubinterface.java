@@ -15,9 +15,6 @@
  */
 package org.mybatis.spring.mapper;
 
-/**
- * @version $Id$
- */
 // interface for MapperScannerPostProcessor tests
 // ensures marker interface usage
 // has no methods except parent methods

@@ -36,7 +36,6 @@ import org.springframework.batch.item.database.AbstractPagingItemReader;
  * @author Eduardo Macarron
  * 
  * @since 1.1.0
- * @version $Id$
  */
 public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 

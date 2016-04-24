@@ -15,7 +15,5 @@
  */
 /**
  * Contains MyBatis annotations
- *
- * @version $Id$
  */
 package org.mybatis.spring.annotation;

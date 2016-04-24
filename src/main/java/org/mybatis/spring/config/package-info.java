@@ -15,7 +15,5 @@
  */
 /**
  * Contains the MyBatis namespace schema and element handlers.
- *
- * @version $Id$
  */
 package org.mybatis.spring.config;

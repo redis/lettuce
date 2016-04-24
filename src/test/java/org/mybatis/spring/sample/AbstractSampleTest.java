@@ -13,9 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-/**
- * @version $Id$
- */
 package org.mybatis.spring.sample;
 
 import static org.junit.Assert.assertEquals;
@@ -29,9 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-/**
-* @version $Id$
-*/
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext
 public abstract class AbstractSampleTest {

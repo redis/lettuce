@@ -39,7 +39,6 @@ import org.w3c.dom.Element;
  * @since 1.2.0
  * @see MapperFactoryBean
  * @see ClassPathMapperScanner
- * @version $Id$
  */
 
 public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {

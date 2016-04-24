@@ -42,8 +42,6 @@ import com.mockrunner.mock.jdbc.MockDataSource;
  * <p>
  * This test works fine with Spring 3.1 and 3.2 but with 3.1 the registrar is
  * called twice.
- * 
- * @version $Id$
  */
 public final class NamespaceTest {
   private ClassPathXmlApplicationContext applicationContext;

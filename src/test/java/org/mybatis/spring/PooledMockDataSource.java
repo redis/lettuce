@@ -21,11 +21,6 @@ import java.util.LinkedList;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
-/**
- * 
- *
- * @version $Id$
- */
 final class PooledMockDataSource extends MockDataSource {
 
   private int connectionCount = 0;

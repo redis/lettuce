@@ -15,7 +15,5 @@
  */
 /**
  * Contains Spring3.X support classes for MyBatis.
- *
- * @version $Id$
  */
 package org.mybatis.spring.support;

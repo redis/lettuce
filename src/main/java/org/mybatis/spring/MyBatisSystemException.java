@@ -26,8 +26,6 @@ import org.springframework.dao.UncategorizedDataAccessException;
  * handle.
  *
  * @author Hunter Presnall
- * 
- * @version $Id$
  */
 public class MyBatisSystemException extends UncategorizedDataAccessException {
 

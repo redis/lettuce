@@ -65,7 +65,6 @@ import org.springframework.context.annotation.Import;
  * @since 1.2.0
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
- * @version $Id$
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

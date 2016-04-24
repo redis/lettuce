@@ -24,7 +24,6 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  *
  * @see MapperScannerBeanDefinitionParser
  * @since 1.2.0
- * @version $Id$
  */
 public class NamespaceHandler extends NamespaceHandlerSupport {
 

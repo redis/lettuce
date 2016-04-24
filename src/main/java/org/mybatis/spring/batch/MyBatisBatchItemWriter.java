@@ -50,7 +50,6 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  * @author Eduardo Macarron
  * 
  * @since 1.1.0
- * @version $Id$
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
 

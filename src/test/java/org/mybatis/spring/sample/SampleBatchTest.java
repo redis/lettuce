@@ -19,8 +19,6 @@ import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Example of MyBatis-Spring batch integration usage.
- *
- * @version $Id$
  */
 @ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-batch.xml" })
 public class SampleBatchTest extends AbstractSampleTest {

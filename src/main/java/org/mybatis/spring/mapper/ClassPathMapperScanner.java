@@ -52,7 +52,6 @@ import org.springframework.util.StringUtils;
  * 
  * @see MapperFactoryBean
  * @since 1.2.0
- * @version $Id$
  */
 public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 

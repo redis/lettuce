@@ -15,11 +15,6 @@
  */
 package org.mybatis.spring;
 
-/**
- * 
- *
- * @version $Id$
- */
 public interface TestMapper {
 
   int findTest();

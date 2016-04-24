@@ -24,9 +24,6 @@ import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-/**
- * @version $Id$
- */
 public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
 
   @Test

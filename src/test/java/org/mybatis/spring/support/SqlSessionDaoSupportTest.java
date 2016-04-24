@@ -30,9 +30,6 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.GenericApplicationContext;
 
-/**
- * @version $Id$
- */
 public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   private SqlSessionDaoSupport sqlSessionDaoSupport;
 

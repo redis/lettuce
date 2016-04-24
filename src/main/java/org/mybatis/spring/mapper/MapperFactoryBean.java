@@ -50,7 +50,6 @@ import org.springframework.beans.factory.FactoryBean;
  * @author Eduardo Macarron
  *
  * @see SqlSessionTemplate
- * @version $Id$
  */
 public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements FactoryBean<T> {
 

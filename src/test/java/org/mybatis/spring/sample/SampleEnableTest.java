@@ -25,7 +25,6 @@ import org.springframework.test.context.ContextConfiguration;
  * annotation works as expected.
  *
  * @since 1.2.0
- * @version $Id$
  */
 @ContextConfiguration
 public class SampleEnableTest extends AbstractSampleTest {

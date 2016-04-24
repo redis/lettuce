@@ -33,11 +33,6 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockResultSet;
 
-/**
- * 
- *
- * @version $Id$
- */
 public abstract class AbstractMyBatisSpringTest {
 
   protected static PooledMockDataSource dataSource = new PooledMockDataSource();

@@ -38,9 +38,6 @@ import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockDataSource;
 import com.mockrunner.mock.jdbc.MockPreparedStatement;
 
-/**
- * @version $Id$
- */
 public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
   private SqlSession session;

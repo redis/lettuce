@@ -15,8 +15,6 @@
  */
 /**
  * Package with DAOs/mappers.
- *
- * @version $Id$
  */
 package org.mybatis.spring.sample.mapper;
 

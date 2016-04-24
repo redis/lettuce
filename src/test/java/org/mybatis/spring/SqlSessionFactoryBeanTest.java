@@ -46,10 +46,6 @@ import org.springframework.core.io.Resource;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
-/**
- *
- * @version $Id$
- */
 public final class SqlSessionFactoryBeanTest {
 
   private static final class TestObjectFactory extends DefaultObjectFactory {

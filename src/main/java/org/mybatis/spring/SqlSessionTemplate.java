@@ -73,7 +73,6 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
  *
  * @see SqlSessionFactory
  * @see MyBatisExceptionTranslator
- * @version $Id$
  */
 public class SqlSessionTemplate implements SqlSession, DisposableBean {
 

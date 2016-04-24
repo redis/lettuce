@@ -20,8 +20,6 @@ import org.springframework.test.context.ContextConfiguration;
 /**
  * Example of basic MyBatis-Spring integration usage with a manual DAO
  * implementation that subclasses SqlSessionDaoSupport.
- *
- * @version $Id$
  */
 @ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-sqlsession.xml" })
 public class SampleSqlSessionTest extends AbstractSampleTest {

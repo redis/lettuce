@@ -41,8 +41,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  *
  * @author Hunter Presnall
  * @author Eduardo Macarron
- * 
- * @version $Id$
  */
 public class SpringManagedTransaction implements Transaction {
 

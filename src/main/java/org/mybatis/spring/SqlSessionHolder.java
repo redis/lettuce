@@ -30,8 +30,6 @@ import org.springframework.transaction.support.ResourceHolderSupport;
  *
  * @author Hunter Presnall
  * @author Eduardo Macarron
- * 
- * @version $Id$
  */
 public final class SqlSessionHolder extends ResourceHolderSupport {
 

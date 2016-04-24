@@ -16,7 +16,5 @@
 /**
  * Contains classes for automatically building MyBatis mapper proxy classes at
  * application startup.
- *
- * @version $Id$
  */
 package org.mybatis.spring.mapper;

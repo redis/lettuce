@@ -15,7 +15,5 @@
  */
 /**
  * Contains classes to facilitate the migration in Spring-Batch applications.
- *
- * @version $Id$
  */
 package org.mybatis.spring.batch;

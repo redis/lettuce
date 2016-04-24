@@ -36,9 +36,6 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockDataSource;
 
-/**
- * @version $Id$
- */
 public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
   private static SqlSessionTemplate sqlSessionTemplate;

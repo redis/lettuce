@@ -40,9 +40,6 @@ import org.springframework.stereotype.Component;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
-/**
- * @version $Id$
- */
 public final class MapperScannerConfigurerTest {
   private GenericApplicationContext applicationContext;
 
