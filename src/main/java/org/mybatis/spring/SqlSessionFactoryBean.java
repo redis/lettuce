@@ -72,7 +72,6 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
  *
  * @see #setConfigLocation
  * @see #setDataSource
- * @version $Id$
  */
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean, ApplicationListener<ApplicationEvent> {
 

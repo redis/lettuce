@@ -21,8 +21,6 @@
     MapperFactoryBean. With this configuration, mappers are created
     automatically but each one much be defined in the context using an
     implementation (mapper) interface.
-
-    version: $Id$
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

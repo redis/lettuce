@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2016 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -45,8 +45,6 @@ import com.mockrunner.mock.jdbc.MockDataSource;
  * Test for the MapperScannerRegistrar.
  * <p>
  * This test works fine with Spring 3.1 and 3.2 but with 3.1 the registrar is called twice.
- * 
- * @version $Id$
  */
 public final class MapperScanTest {
   private AnnotationConfigApplicationContext applicationContext;

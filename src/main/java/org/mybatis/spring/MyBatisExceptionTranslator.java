@@ -35,8 +35,6 @@ import org.springframework.transaction.TransactionException;
  * first exception is translated.
  *
  * @author Eduardo Macarron
- * 
- * @version $Id$
  */
 public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {
 

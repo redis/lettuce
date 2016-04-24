@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2016 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,9 +18,6 @@ package org.mybatis.spring.mapper.child;
 import org.mybatis.spring.mapper.MapperInterface;
 import org.springframework.stereotype.Component;
 
-/**
- * @version $Id$
- */
 // interface for MapperScannerPostProcessor tests
 // tests subpackage search
 @Component

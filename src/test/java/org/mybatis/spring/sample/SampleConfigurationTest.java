@@ -15,8 +15,6 @@
  */
 /**
  * MyBatis @Configuration style sample 
- * 
- * @version $Id$
  */
 package org.mybatis.spring.sample;
 
