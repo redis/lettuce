@@ -24,6 +24,7 @@ import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.batch.item.ItemWriter;
@@ -75,7 +76,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   /**
    * Public setter for {@link SqlSessionFactory} for injection purposes.
    *
-   * @param SqlSessionFactory sqlSessionFactory
+   * @param sqlSessionFactory a factory object for the {@link SqlSession}.
    */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     if (sqlSessionTemplate == null) {
@@ -86,7 +87,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   /**
    * Public setter for the {@link SqlSessionTemplate}.
    *
-   * @param SqlSessionTemplate the SqlSessionTemplate
+   * @param sqlSessionTemplate a template object for use the {@link SqlSession} on the Spring managed transaction
    */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
     this.sqlSessionTemplate = sqlSessionTemplate;
