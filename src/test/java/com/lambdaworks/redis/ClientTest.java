@@ -131,7 +131,7 @@ public class ClientTest extends AbstractCommandTest {
 
     /**
      * Expect to run into Invalid first byte exception instead of timeout.
-     * 
+     *
      * @throws Exception
      */
     @Test(timeout = 10000)
@@ -157,9 +157,9 @@ public class ClientTest extends AbstractCommandTest {
     /**
      * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect. Meanwhile a command
      * is fired to the connection and the watchdog is triggered afterwards to reconnect.
-     * 
+     *
      * Expectation: Command after failed reconnect contains the reconnect exception.
-     * 
+     *
      * @throws Exception
      */
     @Test(timeout = 120000)
@@ -220,9 +220,9 @@ public class ClientTest extends AbstractCommandTest {
     /**
      * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect. Meanwhile a command
      * is fired to the connection and the watchdog is triggered afterwards to reconnect.
-     * 
+     *
      * Expectation: Queued commands are canceled (reset), subsequent commands contain the connection exception.
-     * 
+     *
      * @throws Exception
      */
     @Test(timeout = 10000)
