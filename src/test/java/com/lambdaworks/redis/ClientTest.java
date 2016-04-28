@@ -68,8 +68,6 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(async.getStatefulConnection().reactive().getStatefulConnection()).isSameAs(async.getStatefulConnection());
     }
 
-
-
     @Test
     public void listenerTest() throws Exception {
 
@@ -260,6 +258,5 @@ public class ClientTest extends AbstractRedisClientTest {
 
         connection.close();
     }
-
 
 }

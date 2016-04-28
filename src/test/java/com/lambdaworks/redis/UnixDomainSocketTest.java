@@ -1,19 +1,21 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.TestSettings.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.sentinel.SentinelRule;
-import org.apache.log4j.Logger;
-import org.junit.*;
-
 import io.netty.util.internal.SystemPropertyUtil;
 
 /**
@@ -44,15 +46,32 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void standalone_Linux_x86_64_socket() throws Exception {
+    public void standalone_Linux_x86_64_RedisClientWithSocket() throws Exception {
 
         linuxOnly();
 
         RedisURI redisURI = getSocketRedisUri();
 
-        RedisClient redisClient = new RedisClient(redisURI);
+        RedisClient redisClient = RedisClient.create(redisURI);
 
         StatefulRedisConnection<String, String> connection = redisClient.connect();
+
+        someRedisAction(connection.sync());
+        connection.close();
+
+        FastShutdown.shutdown(redisClient);
+    }
+
+    @Test
+    public void standalone_Linux_x86_64_ConnectToSocket() throws Exception {
+
+        linuxOnly();
+
+        RedisURI redisURI = getSocketRedisUri();
+
+        RedisClient redisClient = RedisClient.create();
+
+        StatefulRedisConnection<String, String> connection = redisClient.connect(redisURI);
 
         someRedisAction(connection.sync());
         connection.close();
@@ -76,7 +95,7 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void sentinel_Linux_x86_64_socket() throws Exception {
+    public void sentinel_Linux_x86_64_RedisClientWithSocket() throws Exception {
 
         linuxOnly();
 
@@ -84,7 +103,7 @@ public class UnixDomainSocketTest {
         uri.getSentinels().add(getSentinelSocketRedisUri());
         uri.setSentinelMasterId("mymaster");
 
-        RedisClient redisClient = new RedisClient(uri);
+        RedisClient redisClient = RedisClient.create(uri);
 
         StatefulRedisConnection<String, String> connection = redisClient.connect();
 
@@ -93,6 +112,31 @@ public class UnixDomainSocketTest {
         connection.close();
 
         RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient.connectSentinelAsync();
+
+        assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
+        sentinelConnection.close();
+
+        FastShutdown.shutdown(redisClient);
+    }
+
+    @Test
+    public void sentinel_Linux_x86_64_ConnectToSocket() throws Exception {
+
+        linuxOnly();
+
+        RedisURI uri = new RedisURI();
+        uri.getSentinels().add(getSentinelSocketRedisUri());
+        uri.setSentinelMasterId("mymaster");
+
+        RedisClient redisClient = RedisClient.create();
+
+        StatefulRedisConnection<String, String> connection = redisClient.connect(uri);
+
+        someRedisAction(connection.sync());
+
+        connection.close();
+
+        RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient.connectSentinelAsync(uri);
 
         assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
         sentinelConnection.close();
