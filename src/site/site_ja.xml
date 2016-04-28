@@ -37,6 +37,7 @@
         <item href="mappers.html#register" name="Mapper の登録" />
         <item href="mappers.html#scan" name="Mapper の自動検出" />
       </item>
+      <item name="Spring Boot" href="boot.html"/>
       <item name="MyBatis API の使用" href="using-api.html"/>
       <item name="Spring Batch" href="batch.html"/>
       <item name="サンプルコード" href="sample.html"/>

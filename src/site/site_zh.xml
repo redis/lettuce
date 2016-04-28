@@ -37,7 +37,9 @@
         <item href="mappers.html#MapperFactoryBean" name="MapperFactoryBean" />
         <item href="mappers.html#MapperScannerConfigurer" name="MapperScannerConfigurer" />
       </item>
+      <item name="Spring Boot" href="boot.html"/>
       <item name="第七章 使用 MyBatis API" href="using-api.html"/>
+      <item name="Spring Batch" href="batch.html"/>
       <item name="第八章 示例代码" href="sample.html"/>
     </menu>
 

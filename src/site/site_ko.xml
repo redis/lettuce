@@ -37,6 +37,7 @@
         <item href="mappers.html#register" name="매퍼 등록" />
         <item href="mappers.html#scan" name="매퍼 검색" />
       </item>
+      <item name="Spring Boot" href="boot.html"/>
       <item name="마이바티스 API 사용" href="using-api.html"/>
       <item name="스프링 배치" href="batch.html"/>
       <item name="샘플코드" href="sample.html"/>

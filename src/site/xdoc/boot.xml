@@ -28,7 +28,7 @@
   <body>
     <section name="Using Spring Boot">
       <p>
-        Please see the <a href="www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-stater</a> 
+        Please see the <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-stater</a> 
         subproject docs for details.
       </p>
     </section>
