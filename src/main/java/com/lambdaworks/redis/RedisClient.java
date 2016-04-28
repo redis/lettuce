@@ -247,6 +247,7 @@ public class RedisClient extends AbstractRedisClient {
     private void checkForRedisURI() {
         checkState(this.redisURI != null,
                 "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
+        checkValidRedisURI(this.redisURI);
     }
 
     /**
@@ -338,7 +339,6 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection
      */
     public StatefulRedisConnection<String, String> connect(RedisURI redisURI) {
-        checkValidRedisURI(redisURI);
         return connect(newStringStringCodec(), redisURI);
     }
 
@@ -378,7 +378,6 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec) {
-        checkForRedisURI();
         return connect(codec, redisURI).async();
     }
 
@@ -392,7 +391,6 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisAsyncCommands<String, String> connectAsync(RedisURI redisURI) {
-        checkValidRedisURI(redisURI);
         return connect(newStringStringCodec(), redisURI).async();
     }
 
@@ -409,13 +407,12 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
-        checkValidRedisURI(redisURI);
         return connect(codec, redisURI).async();
     }
 
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI) {
         assertNotNull(codec);
-        assertNotNull(redisURI);
+        checkValidRedisURI(redisURI);
 
         Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
 
@@ -471,7 +468,6 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new stateful pub/sub connection
      */
     public StatefulRedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
-        checkValidRedisURI(redisURI);
         return connectPubSub(newStringStringCodec(), redisURI);
     }
 
@@ -502,7 +498,8 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(codec);
-        assertNotNull(redisURI);
+        checkValidRedisURI(redisURI);
+
         Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
@@ -621,7 +618,7 @@ public class RedisClient extends AbstractRedisClient {
 
     private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinelImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
         assertNotNull(codec);
-        assertNotNull(redisURI);
+        checkValidRedisURI(redisURI);
 
         Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
 
@@ -665,7 +662,8 @@ public class RedisClient extends AbstractRedisClient {
                 }
             }
             if (!connected) {
-                throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(), causingException);
+                throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(),
+                        causingException);
             }
         }
 
@@ -756,8 +754,8 @@ public class RedisClient extends AbstractRedisClient {
         return clientResources;
     }
 
-    protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,
-            ExecutionException {
+    protected SocketAddress getSocketAddress(RedisURI redisURI)
+            throws InterruptedException, TimeoutException, ExecutionException {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
@@ -765,8 +763,8 @@ public class RedisClient extends AbstractRedisClient {
             redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {
-                throw new RedisConnectionException("Cannot provide redisAddress using sentinel for masterId "
-                        + redisURI.getSentinelMasterId());
+                throw new RedisConnectionException(
+                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
             }
 
         } else {
@@ -775,8 +773,7 @@ public class RedisClient extends AbstractRedisClient {
         return redisAddress;
     }
 
-    private SocketAddress lookupRedis(RedisURI sentinelUri) throws InterruptedException, TimeoutException,
-            ExecutionException {
+    private SocketAddress lookupRedis(RedisURI sentinelUri) throws InterruptedException, TimeoutException, ExecutionException {
         RedisSentinelAsyncCommands<String, String> connection = connectSentinel(sentinelUri).async();
         try {
             return connection.getMasterAddrByName(sentinelUri.getSentinelMasterId()).get(timeout, unit);
@@ -786,7 +783,25 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkValidRedisURI(RedisURI redisURI) {
-        checkArgument(redisURI != null && isNotEmpty(redisURI.getHost()), "A valid RedisURI with a host is needed");
+
+        checkArgument(redisURI != null, "A valid RedisURI is needed");
+
+        if (redisURI.getSentinels().isEmpty()) {
+            if (isEmpty(redisURI.getHost()) && isEmpty(redisURI.getSocket())) {
+                throw new IllegalArgumentException("RedisURI for Redis Standalone does not contain a host or a socket");
+            }
+        } else {
+
+            if (isEmpty(redisURI.getSentinelMasterId())) {
+                throw new IllegalArgumentException("TRedisURI for Redis Sentinel requires a masterId");
+            }
+
+            for (RedisURI sentinel : redisURI.getSentinels()) {
+                if (isEmpty(sentinel.getHost()) && isEmpty(sentinel.getSocket())) {
+                    throw new IllegalArgumentException("RedisURI for Redis Sentinel does not contain a host or a socket");
+                }
+            }
+        }
     }
 
     protected Utf8StringCodec newStringStringCodec() {
