@@ -11,6 +11,8 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
  */
 public class RedisClientConnectionTest extends AbstractCommandTest {
 
+    public static final Utf8StringCodec CODEC = new Utf8StringCodec();
+
     /*
      * Pool/Sync
      */
@@ -26,7 +28,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void poolCodecClientUriConfig() throws Exception {
-        client.pool(new Utf8StringCodec(), 1, 1).close();
+        client.pool(CODEC, 1, 1).close();
     }
 
     /*
@@ -44,7 +46,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void asyncPoolCodecClientUriConfig() throws Exception {
-        client.asyncPool(new Utf8StringCodec(), 1, 1).close();
+        client.asyncPool(CODEC, 1, 1).close();
     }
 
     /*
@@ -57,7 +59,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void connectCodecClientUri() throws Exception {
-        client.connect(new Utf8StringCodec()).close();
+        client.connect(CODEC).close();
     }
 
     @Test
@@ -65,9 +67,29 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
         client.connect(redis(host, port).build()).close();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void connectMissingHostAndSocketUri() throws Exception {
+        client.connect(new RedisURI());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectSentinelMissingHostAndSocketUri() throws Exception {
+        client.connect(invalidSentinel());
+    }
+
     @Test
     public void connectCodecOwnUri() throws Exception {
-        client.connect(new Utf8StringCodec(), redis(host, port).build()).close();
+        client.connect(CODEC, redis(host, port).build()).close();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectCodecMissingHostAndSocketUri() throws Exception {
+        client.connect(CODEC, new RedisURI());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectcodecSentinelMissingHostAndSocketUri() throws Exception {
+        client.connect(CODEC, invalidSentinel());
     }
 
     /*
@@ -80,7 +102,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void connectAsyncCodecClientUri() throws Exception {
-        client.connectAsync(new Utf8StringCodec()).close();
+        client.connectAsync(CODEC).close();
     }
 
     @Test
@@ -90,7 +112,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void connectAsyncCodecOwnUri() throws Exception {
-        client.connectAsync(new Utf8StringCodec(), redis(host, port).build()).close();
+        client.connectAsync(CODEC, redis(host, port).build()).close();
     }
 
     /*
@@ -103,7 +125,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void connectPubSubCodecClientUri() throws Exception {
-        client.connectPubSub(new Utf8StringCodec()).close();
+        client.connectPubSub(CODEC).close();
     }
 
     @Test
@@ -111,13 +133,34 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
         client.connectPubSub(redis(host, port).build()).close();
     }
 
-    @Test
-    public void connectPubSubCodecOwnUri() throws Exception {
-        client.connectPubSub(new Utf8StringCodec(), redis(host, port).build()).close();
+    @Test(expected = IllegalArgumentException.class)
+    public void connectPubSubMissingHostAndSocketUri() throws Exception {
+        client.connectPubSub(new RedisURI());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void connectPubSubSentinelMissingHostAndSocketUri() throws Exception {
+        client.connectPubSub(invalidSentinel());
+    }
+
+    @Test
+    public void connectPubSubCodecOwnUri() throws Exception {
+        client.connectPubSub(CODEC, redis(host, port).build()).close();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectPubSubCodecMissingHostAndSocketUri() throws Exception {
+        client.connectPubSub(CODEC, new RedisURI());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectPubSubCodecSentinelMissingHostAndSocketUri() throws Exception {
+        client.connectPubSub(CODEC, invalidSentinel());
+    }
+
+
     /*
-     * Deprecated: Sentinel/Async
+     * Sentinel/Async
      */
     @Test
     public void connectSentinelAsyncClientUri() throws Exception {
@@ -126,7 +169,7 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
 
     @Test
     public void connectSentinelAsyncCodecClientUri() throws Exception {
-        client.connectSentinelAsync(new Utf8StringCodec()).close();
+        client.connectSentinelAsync(CODEC).close();
     }
 
     @Test
@@ -134,8 +177,35 @@ public class RedisClientConnectionTest extends AbstractCommandTest {
         client.connectSentinelAsync(redis(host, port).build()).close();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void connectSentinelUriMissingHostAndSocketUri() throws Exception {
+        client.connectSentinelAsync(new RedisURI());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectSentinelSentinelMissingHostAndSocketUri() throws Exception {
+        client.connectSentinelAsync(CODEC, invalidSentinel());
+    }
+
     @Test
     public void connectSentinelAsyncCodecOwnUri() throws Exception {
-        client.connectSentinelAsync(new Utf8StringCodec(), redis(host, port).build()).close();
+        client.connectSentinelAsync(CODEC, redis(host, port).build()).close();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectSentinelCodecMissingHostAndSocketUri() throws Exception {
+        client.connectSentinelAsync(CODEC, new RedisURI());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void connectSentinelCodecSentinelMissingHostAndSocketUri() throws Exception {
+        client.connectSentinelAsync(CODEC, invalidSentinel());
+    }
+
+    private RedisURI invalidSentinel() {
+        RedisURI redisURI = new RedisURI();
+        redisURI.getSentinels().add(new RedisURI());
+
+        return redisURI;
     }
 }
