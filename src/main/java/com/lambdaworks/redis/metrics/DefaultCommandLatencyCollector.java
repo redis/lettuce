@@ -4,8 +4,11 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-import com.lambdaworks.redis.protocol.CommandType;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 import org.LatencyUtils.PauseDetector;
@@ -18,13 +21,12 @@ import io.netty.channel.local.LocalAddress;
 
 /**
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
- * 
+ *
  * @author Mark Paluch
  */
 public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
-    private static final PauseDetector PAUSE_DETECTOR = new SimplePauseDetector(TimeUnit.MILLISECONDS.toNanos(10),
-            TimeUnit.MILLISECONDS.toNanos(10), 3);
+    private static final AtomicReference<PauseDetectorWrapper> PAUSE_DETECTOR = new AtomicReference<>();
 
     private static final long MIN_LATENCY = 1000;
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
@@ -38,7 +40,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     /**
      * Record the command latency per {@code connectionPoint} and {@code commandType}.
-     * 
+     *
      * @param local the local address
      * @param remote the remote address
      * @param commandType the command type
@@ -47,6 +49,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
      */
     public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
             long firstResponseLatency, long completionLatency) {
+
         if (!isEnabled()) {
             return;
         }
@@ -54,7 +57,17 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         CommandLatencyId id = createId(local, remote, commandType);
         Latencies latencies = latencyMetrics.get(id);
         if (latencies == null) {
-            latencies = new Latencies();
+
+            PauseDetectorWrapper wrapper = PAUSE_DETECTOR.get();
+            if (wrapper == null) {
+                wrapper = new PauseDetectorWrapper();
+
+                if (PAUSE_DETECTOR.compareAndSet(null, wrapper)) {
+                    wrapper.initialize();
+                }
+            }
+
+            latencies = new Latencies(PAUSE_DETECTOR.get().pauseDetector);
             latencyMetrics.put(id, latencies);
         }
 
@@ -139,7 +152,33 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private static class Latencies {
 
-        public LatencyStats firstResponse = LatencyStats.Builder.create().pauseDetector(PAUSE_DETECTOR).build();
-        public LatencyStats completion = LatencyStats.Builder.create().pauseDetector(PAUSE_DETECTOR).build();
+        public final LatencyStats firstResponse;
+        public final LatencyStats completion;
+
+        public Latencies(PauseDetector pauseDetector) {
+            firstResponse = LatencyStats.Builder.create().pauseDetector(pauseDetector).build();
+            completion = LatencyStats.Builder.create().pauseDetector(pauseDetector).build();
+        }
+    }
+
+    private static class PauseDetectorWrapper {
+        public final static AtomicLong counter = new AtomicLong();
+        PauseDetector pauseDetector;
+
+        public void initialize() {
+
+            if(counter.getAndIncrement() > 0){
+                InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
+                instance.info("Initialized PauseDetectorWrapper more than once.");
+            }
+
+            pauseDetector = new SimplePauseDetector(TimeUnit.MILLISECONDS.toNanos(10), TimeUnit.MILLISECONDS.toNanos(10), 3);
+            Runtime.getRuntime().addShutdownHook(new Thread("ShutdownHook for SimplePauseDetector") {
+                @Override
+                public void run() {
+                    pauseDetector.shutdown();
+                }
+            });
+        }
     }
 }
