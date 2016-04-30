@@ -33,6 +33,8 @@
                 <include>io.netty:*</include>
                 <include>com.google.guava:*</include>
                 <include>org.apache.commons:*</include>
+                <include>org.latencyutils:*</include>
+                <include>org.hdrhistogram:*</include>
             </includes>
             <outputDirectory>dependencies</outputDirectory>
             <unpack>false</unpack>
