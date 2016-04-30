@@ -1,20 +1,14 @@
-lettuce 3.4.2 RELEASE NOTES
+lettuce 3.4.3 RELEASE NOTES
 =========================
 
-lettuce 3.4.2 is a bugfix release to fix issues with shared client resources and the shaded jar.
+lettuce 3.4.3 is a bugfix release.
 
 Fixes
 -----
-* Switch tests to AssertJ #13
-* Do not shut down the event executor in AbstractRedisClient #194
-* Remove initial call to PooledClusterConnectionProvider.closeStaleConnections #195
-* Use RefCounters to track open resources #196
-* Adjust dependency repackaging for rx-java and hdrutils in shaded jar #198 (Thanks to @CodingFabian)
-* Fix comparison for computationThreadPoolSize #205 (Thanks to @danhyun)
+* Add log statement for resolved address #218 (Thanks to @mzapletal)
+* Lazy initialization of PauseDetector and graceful shutdown #223 (Thanks to @sf-git)
+* Fix RedisURI validation #229 (Thanks to @nivekastoreth)
 
-Other
------
-* Switch travis-ci to container build #203
 
 lettuce requires a minimum of Java 8 to build and Java 6 run. It is tested
 continuously against Redis 3.0 and the unstable branch.
