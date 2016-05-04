@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class ScoredValueScanCursor<V> extends ScanCursor {
 
-    private final List<ScoredValue<V>> values = new ArrayList<ScoredValue<V>>();
+    private final List<ScoredValue<V>> values = new ArrayList<>();
 
     public ScoredValueScanCursor() {
     }

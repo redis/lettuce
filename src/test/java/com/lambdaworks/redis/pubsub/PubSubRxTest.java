@@ -8,13 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.api.rx.Success;
-import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,15 +18,19 @@ import rx.Observable;
 import rx.Subscription;
 import rx.observables.BlockingObservable;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.rx.Success;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.pubsub.api.rx.ChannelMessage;
 import com.lambdaworks.redis.pubsub.api.rx.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
+import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 /**
  * @author Mark Paluch
@@ -54,10 +53,10 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         pubsub = client.connectPubSub().reactive();
         pubsub2 = client.connectPubSub().reactive();
         pubsub.addListener(this);
-        channels = new LinkedBlockingQueue<String>();
-        patterns = new LinkedBlockingQueue<String>();
-        messages = new LinkedBlockingQueue<String>();
-        counts = new LinkedBlockingQueue<Long>();
+        channels = LettuceFactories.newBlockingQueue();
+        patterns = LettuceFactories.newBlockingQueue();
+        messages = LettuceFactories.newBlockingQueue();
+        counts = LettuceFactories.newBlockingQueue();
     }
 
     @After
@@ -70,7 +69,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void observeChannels() throws Exception {
         pubsub.subscribe(channel).toBlocking().singleOrDefault(null);
 
-        LinkedBlockingQueue<ChannelMessage<String, String>> channelMessages = new LinkedBlockingQueue<>();
+        BlockingQueue<ChannelMessage<String, String>> channelMessages = LettuceFactories.newBlockingQueue();
 
         Subscription subscription = pubsub.observeChannels().doOnNext(channelMessages::add).subscribe();
 
@@ -95,7 +94,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void observeChannelsUnsubscribe() throws Exception {
         pubsub.subscribe(channel).toBlocking().singleOrDefault(null);
 
-        LinkedBlockingQueue<ChannelMessage<String, String>> channelMessages = new LinkedBlockingQueue<>();
+        BlockingQueue<ChannelMessage<String, String>> channelMessages = LettuceFactories.newBlockingQueue();
 
         pubsub.observeChannels().doOnNext(channelMessages::add).subscribe().unsubscribe();
 
@@ -110,7 +109,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void observePatterns() throws Exception {
         pubsub.psubscribe(pattern).toBlocking().singleOrDefault(null);
 
-        LinkedBlockingQueue<PatternMessage<String, String>> patternMessages = new LinkedBlockingQueue<>();
+        BlockingQueue<PatternMessage<String, String>> patternMessages = LettuceFactories.newBlockingQueue();
 
         pubsub.observePatterns().doOnNext(patternMessages::add).subscribe();
 
@@ -131,7 +130,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void observePatternsWithUnsubscribe() throws Exception {
         pubsub.psubscribe(pattern).toBlocking().singleOrDefault(null);
 
-        LinkedBlockingQueue<PatternMessage<String, String>> patternMessages = new LinkedBlockingQueue<>();
+        BlockingQueue<PatternMessage<String, String>> patternMessages = LettuceFactories.newBlockingQueue();
 
         Subscription subscription = pubsub.observePatterns().doOnNext(patternMessages::add).subscribe();
 
@@ -333,7 +332,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
     @Test(timeout = 2000)
     public void adapter() throws Exception {
-        final BlockingQueue<Long> localCounts = new LinkedBlockingQueue<Long>();
+        final BlockingQueue<Long> localCounts = LettuceFactories.newBlockingQueue();
 
         RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
             @Override
@@ -429,6 +428,6 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     protected <T> List<T> all(Observable<T> observable) {
         BlockingObservable<T> blocking = observable.toBlocking();
         Iterator<T> iterator = blocking.getIterator();
-        return Lists.newArrayList(iterator);
+        return LettuceLists.newList(iterator);
     }
 }

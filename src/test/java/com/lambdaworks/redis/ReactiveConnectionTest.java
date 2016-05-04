@@ -3,6 +3,7 @@ package com.lambdaworks.redis;
 import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +17,6 @@ import org.junit.rules.ExpectedException;
 import rx.Observable;
 import rx.Subscriber;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -71,7 +71,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void testCancelCommand() throws Exception {
 
-        List<Object> result = Lists.newArrayList();
+        List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
         Delay.delay(millis(100));
@@ -89,7 +89,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void testMultiCancel() throws Exception {
 
-        List<Object> result = Lists.newArrayList();
+        List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
 
         Observable<String> set = reactive.set(key, value);

@@ -18,7 +18,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
  */
 public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {
     public ValueSetOutput(RedisCodec<K, V> codec) {
-        super(codec, new HashSet<V>());
+        super(codec, new HashSet<>());
     }
 
     @Override

@@ -63,7 +63,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
     @Test(timeout = 10000)
     public void futureListener() throws Exception {
 
-        final List<Object> run = new ArrayList<Object>();
+        final List<Object> run = new ArrayList<>();
 
         Runnable listener = new Runnable() {
             @Override
@@ -96,7 +96,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
     @Test(timeout = 1000)
     public void futureListenerCompleted() throws Exception {
 
-        final List<Object> run = new ArrayList<Object>();
+        final List<Object> run = new ArrayList<>();
 
         Runnable listener = new Runnable() {
             @Override

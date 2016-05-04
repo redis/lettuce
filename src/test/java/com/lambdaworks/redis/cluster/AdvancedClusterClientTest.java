@@ -2,9 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -13,7 +11,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.google.common.collect.*;
 import com.lambdaworks.RandomKeys;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -143,7 +140,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void msetRegular() throws Exception {
 
-        Map<String, String> mset = ImmutableMap.of(key, value);
+        Map<String, String> mset = Collections.singletonMap(key, value);
 
         String result = syncCommands.mset(mset);
 
@@ -167,7 +164,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     protected Map<String, String> prepareMset() {
-        Map<String, String> mset = Maps.newHashMap();
+        Map<String, String> mset = new HashMap<>();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             mset.put(key, "value-" + key);
@@ -203,8 +200,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void mgetCrossSlot() throws Exception {
 
         msetCrossSlot();
-        List<String> keys = Lists.newArrayList();
-        List<String> expectation = Lists.newArrayList();
+        List<String> keys = new ArrayList<>();
+        List<String> expectation = new ArrayList<>();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             keys.add(key);
@@ -269,7 +266,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     protected List<String> prepareKeys() throws Exception {
         msetCrossSlot();
-        List<String> keys = Lists.newArrayList();
+        List<String> keys = new ArrayList<>();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             keys.add(key);
@@ -416,9 +413,9 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
             Partitions partitions = clusterClient.getPartitions();
             for (RedisClusterNode partition : partitions) {
-                partition.setSlots(ImmutableList.of(0));
+                partition.setSlots(Collections.singletonList(0));
                 if (partition.getUri().getPort() == 7380) {
-                    partition.setSlots(ImmutableList.of(6373));
+                    partition.setSlots(Collections.singletonList(6373));
                 } else {
                     partition.setUri(RedisURI.create("redis://non.existent.host:1234"));
                 }
@@ -464,7 +461,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         int iterations = 1000;
         commands.setAutoFlushCommands(false);
-        List<RedisFuture<?>> futures = Lists.newArrayList();
+        List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < iterations; i++) {
             futures.add(commands.set(key(i), value(i)));
         }
@@ -503,7 +500,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-        Set<String> allKeys = Sets.newHashSet();
+        Set<String> allKeys = new HashSet<>();
 
         KeyScanCursor<String> scanCursor = null;
 
@@ -526,7 +523,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-        Set<String> allKeys = Sets.newHashSet();
+        Set<String> allKeys = new HashSet<>();
 
         KeyScanCursor<String> scanCursor = null;
 

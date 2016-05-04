@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class KeyScanCursor<K> extends ScanCursor {
 
-    private final List<K> keys = new ArrayList<K>();
+    private final List<K> keys = new ArrayList<>();
 
     public List<K> getKeys() {
         return keys;

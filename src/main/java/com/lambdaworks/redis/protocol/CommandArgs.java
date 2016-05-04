@@ -2,8 +2,6 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +9,7 @@ import java.util.Map;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
@@ -40,7 +39,7 @@ public class CommandArgs<K, V> {
      * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
      */
     public CommandArgs(RedisCodec<K, V> codec) {
-        checkArgument(codec != null, "RedisCodec must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
         this.codec = codec;
     }
 

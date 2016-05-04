@@ -2,11 +2,10 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Collections;
 import java.util.Map;
 
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
 
 /**
  * @author Mark Paluch
@@ -19,7 +18,7 @@ public class GeoModelTest {
         GeoWithin<String> sut = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
         GeoWithin<String> equalsToSut = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
 
-        Map<GeoWithin<String>, String> map = ImmutableMap.of(sut, "value");
+        Map<GeoWithin<String>, String> map = Collections.singletonMap(sut, "value");
 
         assertThat(map.get(equalsToSut)).isEqualTo("value");
         assertThat(sut).isEqualTo(equalsToSut);
@@ -34,7 +33,7 @@ public class GeoModelTest {
         GeoWithin<String> sut = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
         GeoWithin<String> slightlyDifferent = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1.1, 2));
 
-        Map<GeoWithin<String>, String> map = ImmutableMap.of(sut, "value");
+        Map<GeoWithin<String>, String> map = Collections.singletonMap(sut, "value");
 
         assertThat(map.get(slightlyDifferent)).isNull();
         assertThat(sut).isNotEqualTo(slightlyDifferent);
@@ -61,7 +60,7 @@ public class GeoModelTest {
         GeoCoordinates sut = new GeoCoordinates(1, 2);
         GeoCoordinates equalsToSut = new GeoCoordinates(1, 2);
 
-        Map<GeoCoordinates, String> map = ImmutableMap.of(sut, "value");
+        Map<GeoCoordinates, String> map = Collections.singletonMap(sut, "value");
 
         assertThat(map.get(equalsToSut)).isEqualTo("value");
         assertThat(sut).isEqualTo(equalsToSut);
@@ -76,7 +75,7 @@ public class GeoModelTest {
         GeoCoordinates sut = new GeoCoordinates(1, 2);
         GeoCoordinates slightlyDifferent = new GeoCoordinates(1.1, 2);
 
-        Map<GeoCoordinates, String> map = ImmutableMap.of(sut, "value");
+        Map<GeoCoordinates, String> map = Collections.singletonMap(sut, "value");
 
         assertThat(map.get(slightlyDifferent)).isNull();
         assertThat(sut).isNotEqualTo(slightlyDifferent);

@@ -1,12 +1,10 @@
 package com.lambdaworks.redis.resource;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import io.netty.util.concurrent.*;
 
 /**
@@ -70,7 +68,7 @@ class Futures {
          * @param aggregatePromise the {@link Promise} to notify
          */
         public PromiseAggregator(Promise<V> aggregatePromise) {
-            checkArgument(aggregatePromise != null, "aggregatePromise must not be null");
+            LettuceAssert.notNull(aggregatePromise, "aggregatePromise must not be null");
             this.aggregatePromise = aggregatePromise;
         }
 
@@ -81,7 +79,7 @@ class Futures {
          * @throws IllegalStateException if the aggregator was armed
          */
         public void expectMore(int count) {
-            checkState(!armed, "Aggregator is armed and does not allow any further expectations");
+            LettuceAssert.assertState(!armed, "Aggregator is armed and does not allow any further expectations");
 
             expectedPromises.addAndGet(count);
         }
@@ -92,7 +90,7 @@ class Futures {
          * @throws IllegalStateException if the aggregator was armed
          */
         public void arm() {
-            checkState(!armed, "Aggregator is already armed");
+            LettuceAssert.assertState(!armed, "Aggregator is already armed");
             armed = true;
         }
 
@@ -105,8 +103,9 @@ class Futures {
         @SafeVarargs
         public final PromiseAggregator<V, F> add(Promise<V>... promises) {
 
-            checkArgument(promises != null, "promises must not be null");
-            checkState(armed, "Aggregator is not armed and does not allow adding promises in that state. Call arm() first.");
+            LettuceAssert.notNull(promises, "promises must not be null");
+            LettuceAssert.assertState(armed,
+                    "Aggregator is not armed and does not allow adding promises in that state. Call arm() first.");
 
             if (promises.length == 0) {
                 return this;
@@ -119,7 +118,7 @@ class Futures {
                     } else {
                         size = 2;
                     }
-                    pendingPromises = new LinkedHashSet<Promise<V>>(size);
+                    pendingPromises = new LinkedHashSet<>(size);
                 }
                 for (Promise<V> p : promises) {
                     if (p == null) {

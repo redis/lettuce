@@ -4,20 +4,16 @@ import java.io.Closeable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.Set;
 
+import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.AbstractInvocationHandler;
 
 /**
  * Connection pool for redis connections.
@@ -176,22 +172,15 @@ public class RedisConnectionPool<T> implements Closeable {
      * @since 3.0
      */
     static class PooledConnectionInvocationHandler<T> extends AbstractInvocationHandler {
-        public static final Set<String> DISABLED_METHODS = ImmutableSet.of("getStatefulConnection");
+        public static final Set<String> DISABLED_METHODS = Collections.singleton("getStatefulConnection");
 
         private T connection;
         private final RedisConnectionPool<T> pool;
-        private final LoadingCache<Method, Method> methodCache;
 
         public PooledConnectionInvocationHandler(T connection, RedisConnectionPool<T> pool) {
             this.connection = connection;
             this.pool = pool;
 
-            methodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
-                @Override
-                public Method load(Method key) throws Exception {
-                    return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
-                }
-            });
         }
 
         @SuppressWarnings("unchecked")
@@ -212,10 +201,8 @@ public class RedisConnectionPool<T> implements Closeable {
                 return null;
             }
 
-            Method targetMethod = methodCache.get(method);
-
             try {
-                return targetMethod.invoke(connection, args);
+                return method.invoke(connection, args);
             } catch (InvocationTargetException e) {
                 throw e.getTargetException();
             }

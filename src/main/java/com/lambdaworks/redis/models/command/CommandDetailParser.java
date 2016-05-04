@@ -1,13 +1,8 @@
 package com.lambdaworks.redis.models.command;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.*;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
@@ -28,22 +23,22 @@ public class CommandDetailParser {
     protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING;
 
     static {
-        ImmutableMap.Builder<String, CommandDetail.Flag> builder = ImmutableMap.builder();
-        builder.put("admin", CommandDetail.Flag.ADMIN);
-        builder.put("asking", CommandDetail.Flag.ASKING);
-        builder.put("denyoom", CommandDetail.Flag.DENYOOM);
-        builder.put("fast", CommandDetail.Flag.FAST);
-        builder.put("loading", CommandDetail.Flag.LOADING);
-        builder.put("noscript", CommandDetail.Flag.NOSCRIPT);
-        builder.put("movablekeys", CommandDetail.Flag.MOVABLEKEYS);
-        builder.put("pubsub", CommandDetail.Flag.PUBSUB);
-        builder.put("random", CommandDetail.Flag.RANDOM);
-        builder.put("readonly", CommandDetail.Flag.READONLY);
-        builder.put("skip_monitor", CommandDetail.Flag.SKIP_MONITOR);
-        builder.put("sort_for_script", CommandDetail.Flag.SORT_FOR_SCRIPT);
-        builder.put("stale", CommandDetail.Flag.STALE);
-        builder.put("write", CommandDetail.Flag.WRITE);
-        FLAG_MAPPING = builder.build();
+        Map<String, CommandDetail.Flag> flagMap = new HashMap<>();
+        flagMap.put("admin", CommandDetail.Flag.ADMIN);
+        flagMap.put("asking", CommandDetail.Flag.ASKING);
+        flagMap.put("denyoom", CommandDetail.Flag.DENYOOM);
+        flagMap.put("fast", CommandDetail.Flag.FAST);
+        flagMap.put("loading", CommandDetail.Flag.LOADING);
+        flagMap.put("noscript", CommandDetail.Flag.NOSCRIPT);
+        flagMap.put("movablekeys", CommandDetail.Flag.MOVABLEKEYS);
+        flagMap.put("pubsub", CommandDetail.Flag.PUBSUB);
+        flagMap.put("random", CommandDetail.Flag.RANDOM);
+        flagMap.put("readonly", CommandDetail.Flag.READONLY);
+        flagMap.put("skip_monitor", CommandDetail.Flag.SKIP_MONITOR);
+        flagMap.put("sort_for_script", CommandDetail.Flag.SORT_FOR_SCRIPT);
+        flagMap.put("stale", CommandDetail.Flag.STALE);
+        flagMap.put("write", CommandDetail.Flag.WRITE);
+        FLAG_MAPPING = Collections.unmodifiableMap(flagMap);
     }
 
     private CommandDetailParser() {
@@ -56,9 +51,9 @@ public class CommandDetailParser {
      * @return RedisInstance
      */
     public static List<CommandDetail> parse(List<?> commandOutput) {
-        checkArgument(commandOutput != null, "CommandOutput must not be null");
+        LettuceAssert.notNull(commandOutput, "CommandOutput must not be null");
 
-        List<CommandDetail> result = Lists.newArrayList();
+        List<CommandDetail> result = new ArrayList<>();
 
         for (Object o : commandOutput) {
             if (!(o instanceof Collection<?>)) {
@@ -80,11 +75,11 @@ public class CommandDetailParser {
     private static CommandDetail parseCommandDetail(Collection<?> collection) {
         Iterator<?> iterator = collection.iterator();
         String name = (String) iterator.next();
-        int arity = Ints.checkedCast(getLongFromIterator(iterator, 0));
+        int arity = Math.toIntExact(getLongFromIterator(iterator, 0));
         Object flags = iterator.next();
-        int firstKey = Ints.checkedCast(getLongFromIterator(iterator, 0));
-        int lastKey = Ints.checkedCast(getLongFromIterator(iterator, 0));
-        int keyStepCount = Ints.checkedCast(getLongFromIterator(iterator, 0));
+        int firstKey = Math.toIntExact(getLongFromIterator(iterator, 0));
+        int lastKey = Math.toIntExact(getLongFromIterator(iterator, 0));
+        int keyStepCount = Math.toIntExact(getLongFromIterator(iterator, 0));
 
         Set<CommandDetail.Flag> parsedFlags = parseFlags(flags);
 
@@ -92,7 +87,7 @@ public class CommandDetailParser {
     }
 
     private static Set<CommandDetail.Flag> parseFlags(Object flags) {
-        Set<CommandDetail.Flag> result = Sets.newHashSet();
+        Set<CommandDetail.Flag> result = new HashSet<>();
 
         if (flags instanceof Collection<?>) {
             Collection<?> collection = (Collection<?>) flags;

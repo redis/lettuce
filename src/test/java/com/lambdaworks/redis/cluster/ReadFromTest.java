@@ -2,13 +2,13 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableSet;
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -26,9 +26,9 @@ public class ReadFromTest {
 
     @Before
     public void before() throws Exception {
-        master.setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.MASTER));
-        nearest.setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.SLAVE));
-        slave.setFlags(ImmutableSet.of(RedisClusterNode.NodeFlag.SLAVE));
+        master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
+        nearest.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
+        slave.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
 
         sut.addPartition(nearest);
         sut.addPartition(master);

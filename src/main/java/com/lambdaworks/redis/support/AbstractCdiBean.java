@@ -12,7 +12,6 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionPoint;
 
-import com.google.common.collect.ImmutableSet;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.resource.ClientResources;
 
@@ -40,7 +39,7 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
     @Override
     @SuppressWarnings("unchecked")
     public Set<Type> getTypes() {
-        return (Set<Type>) ImmutableSet.of((Type) getBeanClass());
+        return Collections.singleton(getBeanClass());
     }
 
     @Override
@@ -60,7 +59,7 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
 
     @Override
     public Set<Class<? extends Annotation>> getStereotypes() {
-        Set<Class<? extends Annotation>> stereotypes = new HashSet<Class<? extends Annotation>>();
+        Set<Class<? extends Annotation>> stereotypes = new HashSet<>();
 
         for (Annotation annotation : getQualifiers()) {
             Class<? extends Annotation> annotationType = annotation.annotationType();

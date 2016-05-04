@@ -1,11 +1,7 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
 
 /**
@@ -34,7 +30,7 @@ import com.lambdaworks.redis.cluster.SlotHash;
  */
 public class Partitions implements Collection<RedisClusterNode> {
 
-    private List<RedisClusterNode> partitions = Lists.newArrayList();
+    private List<RedisClusterNode> partitions = new ArrayList<>();
     private RedisClusterNode slotCache[];
 
     /**

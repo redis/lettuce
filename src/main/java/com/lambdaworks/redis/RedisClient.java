@@ -2,8 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.LettuceStrings.isEmpty;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
@@ -14,13 +12,15 @@ import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
@@ -30,7 +30,6 @@ import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.support.Factories;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -132,7 +131,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(String uri) {
-        checkArgument(uri != null, "uri must not be null");
+        LettuceAssert.notEmpty(uri, "uri must not be empty");
         return new RedisClient(null, RedisURI.create(uri));
     }
 
@@ -161,7 +160,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public static RedisClient create(ClientResources clientResources, String uri) {
         assertNotNull(clientResources);
-        checkArgument(uri != null, "uri must not be null");
+        LettuceAssert.notEmpty(uri, "uri must not be empty");
         return create(clientResources, RedisURI.create(uri));
     }
 
@@ -245,7 +244,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkForRedisURI() {
-        checkState(this.redisURI != null,
+        LettuceAssert.assertState(this.redisURI != null,
                 "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
     }
@@ -286,7 +285,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
             int maxActive) {
         checkForRedisURI();
-        checkArgument(codec != null, "RedisCodec must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
 
         long maxWait = makeTimeout();
         RedisConnectionPool<RedisAsyncCommands<K, V>> pool = new RedisConnectionPool<>(
@@ -414,7 +413,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
+        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
 
@@ -500,7 +499,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
+        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec);
@@ -620,7 +619,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = Factories.newConcurrentQueue();
+        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
@@ -784,7 +783,7 @@ public class RedisClient extends AbstractRedisClient {
 
     private void checkValidRedisURI(RedisURI redisURI) {
 
-        checkArgument(redisURI != null, "A valid RedisURI is needed");
+        LettuceAssert.notNull(redisURI, "A valid RedisURI is needed");
 
         if (redisURI.getSentinels().isEmpty()) {
             if (isEmpty(redisURI.getHost()) && isEmpty(redisURI.getSocket())) {
@@ -809,15 +808,15 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
-        checkArgument(codec != null, "RedisCodec must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
     }
 
     private static void assertNotNull(RedisURI redisURI) {
-        checkArgument(redisURI != null, "RedisURI must not be null");
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
     }
 
     private static void assertNotNull(ClientResources clientResources) {
-        checkArgument(clientResources != null, "ClientResources must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
     }
 
     /**

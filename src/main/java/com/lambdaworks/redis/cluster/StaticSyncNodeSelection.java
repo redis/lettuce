@@ -1,13 +1,12 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -26,7 +25,7 @@ class StaticSyncNodeSelection<CMD, K, V> extends StaticNodeSelection<RedisComman
     }
 
     public Iterator<RedisCommands<K, V>> iterator() {
-        List<RedisClusterNode> list = ImmutableList.copyOf(nodes());
+        List<RedisClusterNode> list = nodes().stream().collect(Collectors.toList());
         return list.stream().map(node -> getConnection(node).sync()).iterator();
     }
 
@@ -38,8 +37,8 @@ class StaticSyncNodeSelection<CMD, K, V> extends StaticNodeSelection<RedisComman
     @Override
     public Map<RedisClusterNode, RedisCommands<K, V>> asMap() {
 
-        List<RedisClusterNode> list = ImmutableList.copyOf(nodes());
-        Map<RedisClusterNode, RedisCommands<K, V>> map = Maps.newHashMap();
+        List<RedisClusterNode> list = nodes().stream().collect(Collectors.toList());
+        Map<RedisClusterNode, RedisCommands<K, V>> map = new HashMap<>();
 
         list.forEach((key) -> map.put(key, getConnection(key).sync()));
 

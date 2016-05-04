@@ -1,14 +1,14 @@
 package com.lambdaworks.redis.models.role;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class RoleParserTest {
     public static final long REPLICATION_OFFSET_1 = 3167038L;
@@ -23,29 +23,29 @@ public class RoleParserTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void emptyList() throws Exception {
-        RoleParser.parse(Lists.newArrayList());
+        RoleParser.parse(new ArrayList<>());
 
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void invalidFirstElement() throws Exception {
-        RoleParser.parse(Lists.newArrayList(new Object()));
+        RoleParser.parse(LettuceLists.newList(new Object()));
 
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void invalidRole() throws Exception {
-        RoleParser.parse(Lists.newArrayList("blubb"));
+        RoleParser.parse(LettuceLists.newList("blubb"));
 
     }
 
     @Test
     public void master() throws Exception {
 
-        List<ImmutableList<String>> slaves = ImmutableList.of(ImmutableList.of(LOCALHOST, "9001", "" + REPLICATION_OFFSET_2),
-                ImmutableList.of(LOCALHOST, "9002", "3129543"));
+        List<List<String>> slaves = LettuceLists.newList(LettuceLists.newList(LOCALHOST, "9001", "" + REPLICATION_OFFSET_2),
+                LettuceLists.newList(LOCALHOST, "9002", "3129543"));
 
-        ImmutableList<Object> input = ImmutableList.of("master", REPLICATION_OFFSET_1, slaves);
+        List<Object> input = LettuceLists.newList("master", REPLICATION_OFFSET_1, slaves);
 
         RedisInstance result = RoleParser.parse(input);
 
@@ -70,7 +70,7 @@ public class RoleParserTest {
     @Test
     public void slave() throws Exception {
 
-        List<?> input = ImmutableList.of("slave", LOCALHOST, 9000L, "connected", REPLICATION_OFFSET_1);
+        List<?> input = LettuceLists.newList("slave", LOCALHOST, 9000L, "connected", REPLICATION_OFFSET_1);
 
         RedisInstance result = RoleParser.parse(input);
 
@@ -89,8 +89,7 @@ public class RoleParserTest {
     @Test
     public void sentinel() throws Exception {
 
-        List<?> input = ImmutableList
-                .of("sentinel", ImmutableList.of("resque-master", "html-fragments-master", "stats-master"));
+        List<?> input = LettuceLists.newList("sentinel", LettuceLists.newList("resque-master", "html-fragments-master", "stats-master"));
 
         RedisInstance result = RoleParser.parse(input);
 
@@ -108,7 +107,7 @@ public class RoleParserTest {
     @Test
     public void sentinelWithoutMasters() throws Exception {
 
-        List<?> input = ImmutableList.of("sentinel");
+        List<?> input = LettuceLists.newList("sentinel");
 
         RedisInstance result = RoleParser.parse(input);
         RedisSentinelInstance instance = (RedisSentinelInstance) result;
@@ -120,7 +119,7 @@ public class RoleParserTest {
     @Test
     public void sentinelMastersIsNotAList() throws Exception {
 
-        List<?> input = ImmutableList.of("sentinel", "");
+        List<?> input = LettuceLists.newList("sentinel", "");
 
         RedisInstance result = RoleParser.parse(input);
         RedisSentinelInstance instance = (RedisSentinelInstance) result;
@@ -134,7 +133,7 @@ public class RoleParserTest {
 
         RedisMasterInstance master = new RedisMasterInstance();
         master.setReplicationOffset(1);
-        master.setSlaves(Lists.<ReplicationPartner> newArrayList());
+        master.setSlaves(new ArrayList<>());
         assertThat(master.toString()).contains(RedisMasterInstance.class.getSimpleName());
 
         RedisSlaveInstance slave = new RedisSlaveInstance();
@@ -143,7 +142,7 @@ public class RoleParserTest {
         assertThat(slave.toString()).contains(RedisSlaveInstance.class.getSimpleName());
 
         RedisSentinelInstance sentinel = new RedisSentinelInstance();
-        sentinel.setMonitoredMasters(Lists.<String> newArrayList());
+        sentinel.setMonitoredMasters(new ArrayList<>());
         assertThat(sentinel.toString()).contains(RedisSentinelInstance.class.getSimpleName());
 
         ReplicationPartner partner = new ReplicationPartner();

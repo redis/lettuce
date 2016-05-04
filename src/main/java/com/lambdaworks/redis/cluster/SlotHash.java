@@ -1,13 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.primitives.Chars;
 import com.lambdaworks.codec.CRC16;
 import com.lambdaworks.redis.codec.RedisCodec;
 
@@ -22,12 +17,12 @@ public class SlotHash {
     /**
      * Constant for a subkey start.
      */
-    public static final byte SUBKEY_START = Chars.toByteArray('{')[1];
+    public static final byte SUBKEY_START = (byte) '{';
 
     /**
      * Constant for a subkey end.
      */
-    public static final byte SUBKEY_END = Chars.toByteArray('}')[1];
+    public static final byte SUBKEY_END = (byte) '}';
 
     /**
      * Number of redis cluster slot hashes.
@@ -111,11 +106,11 @@ public class SlotHash {
      */
     static <K, V> Map<Integer, List<K>> partition(RedisCodec<K, V> codec, Iterable<K> keys) {
 
-        Map<Integer, List<K>> partitioned = Maps.newHashMap();
+        Map<Integer, List<K>> partitioned = new HashMap<>();
         for (K key : keys) {
             int slot = getSlot(codec.encodeKey(key));
             if (!partitioned.containsKey(slot)) {
-                partitioned.put(slot, Lists.newArrayList());
+                partitioned.put(slot, new ArrayList<>());
             }
             Collection<K> list = partitioned.get(slot);
             list.add(key);
@@ -131,7 +126,7 @@ public class SlotHash {
      */
     static <K> Map<K, Integer> getSlots(Map<Integer, ? extends Iterable<K>> partitioned) {
 
-        Map<K, Integer> result = Maps.newHashMap();
+        Map<K, Integer> result = new HashMap<>();
         for (Map.Entry<Integer, ? extends Iterable<K>> entry : partitioned.entrySet()) {
             for (K key : entry.getValue()) {
                 result.put(key, entry.getKey());

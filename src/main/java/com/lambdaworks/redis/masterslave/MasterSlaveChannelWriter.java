@@ -1,12 +1,11 @@
 package com.lambdaworks.redis.masterslave;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -26,7 +25,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
-        checkArgument(command != null, "command must not be null");
+        LettuceAssert.notNull(command, "command must not be null");
 
         if (closed) {
             throw new RedisException("Connection is closed");

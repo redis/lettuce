@@ -3,9 +3,9 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
@@ -20,7 +20,7 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     private K key;
 
     public MapOutput(RedisCodec<K, V> codec) {
-        super(codec, Maps.newLinkedHashMap());
+        super(codec, new LinkedHashMap<>());
     }
 
     @Override

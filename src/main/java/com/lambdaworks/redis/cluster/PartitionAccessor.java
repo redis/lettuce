@@ -1,10 +1,10 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -42,7 +42,7 @@ class PartitionAccessor {
 
     List<RedisClusterNode> get(Predicate<RedisClusterNode> test) {
 
-        List<RedisClusterNode> result = Lists.newArrayListWithExpectedSize(partitions.size());
+        List<RedisClusterNode> result = new ArrayList<>(partitions.size());
         for (RedisClusterNode partition : partitions) {
             if (test.test(partition)) {
                 result.add(partition);

@@ -2,12 +2,12 @@ package com.lambdaworks.redis.resource;
 
 import static com.lambdaworks.redis.resource.Futures.toBooleanPromise;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.EpollProvider;
 
 import io.netty.channel.EventLoopGroup;
@@ -153,7 +153,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     private Class<?> getKey(EventExecutorGroup eventLoopGroup) {
         Class<?> key = null;
 
-        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = Maps.newHashMap(eventLoopGroups);
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
         for (Map.Entry<Class<? extends EventExecutorGroup>, EventExecutorGroup> entry : copy.entrySet()) {
             if (entry.getValue() == eventLoopGroup) {
                 key = entry.getKey();
@@ -173,7 +173,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
         shutdownCalled = true;
 
-        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = Maps.newHashMap(eventLoopGroups);
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
 
         DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
         DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);

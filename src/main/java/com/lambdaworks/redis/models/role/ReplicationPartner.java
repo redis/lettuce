@@ -1,10 +1,9 @@
 package com.lambdaworks.redis.models.role;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.io.Serializable;
 
 import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Replication partner providing the host and the replication offset.
@@ -28,7 +27,7 @@ public class ReplicationPartner implements Serializable {
      * @param replicationOffset the replication offset
      */
     public ReplicationPartner(HostAndPort host, long replicationOffset) {
-        checkArgument(host != null, "host must not be null");
+        LettuceAssert.notNull(host, "host must not be null");
         this.host = host;
         this.replicationOffset = replicationOffset;
     }
@@ -50,7 +49,7 @@ public class ReplicationPartner implements Serializable {
     }
 
     public void setHost(HostAndPort host) {
-        checkArgument(host != null, "host must not be null");
+        LettuceAssert.notNull(host, "host must not be null");
         this.host = host;
     }
 

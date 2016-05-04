@@ -1,24 +1,22 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.Closeable;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DefaultClientResources;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -28,10 +26,9 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import io.netty.util.internal.SystemPropertyUtil;
+import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -68,7 +65,7 @@ public abstract class AbstractRedisClient {
     protected long timeout = 60;
     protected TimeUnit unit;
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
-    protected Set<Closeable> closeableResources = Sets.newConcurrentHashSet();
+    protected Set<Closeable> closeableResources = new ConcurrentSet<>();
 
     protected volatile ClientOptions clientOptions = new ClientOptions.Builder().build();
 
@@ -281,8 +278,7 @@ public abstract class AbstractRedisClient {
             closeableResources.remove(closeableResource);
         }
 
-        List<Future<?>> closeFutures = Lists.newArrayList();
-
+        List<Future<?>> closeFutures = new ArrayList<>();
 
         if (channels != null) {
             for (Channel c : channels) {
@@ -339,7 +335,7 @@ public abstract class AbstractRedisClient {
      * @param listener must not be {@literal null}
      */
     public void addListener(RedisConnectionStateListener listener) {
-        checkArgument(listener != null, "RedisConnectionStateListener must not be null");
+        LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
         connectionEvents.addListener(listener);
     }
 
@@ -350,7 +346,7 @@ public abstract class AbstractRedisClient {
      */
     public void removeListener(RedisConnectionStateListener listener) {
 
-        checkArgument(listener != null, "RedisConnectionStateListener must not be null");
+        LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
         connectionEvents.removeListener(listener);
     }
 
@@ -370,7 +366,7 @@ public abstract class AbstractRedisClient {
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
     protected void setOptions(ClientOptions clientOptions) {
-        checkArgument(clientOptions != null, "clientOptions must not be null");
+        LettuceAssert.notNull(clientOptions, "clientOptions must not be null");
         this.clientOptions = clientOptions;
     }
 }

@@ -1,10 +1,8 @@
 package biz.paluch.redis.extensibility;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandType;

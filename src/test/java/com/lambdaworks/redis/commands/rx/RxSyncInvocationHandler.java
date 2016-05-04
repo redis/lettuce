@@ -7,18 +7,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
-import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
-import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
+import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import rx.Observable;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.internal.LettuceSets;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
+/**
+ * Invocation handler for testing purposes.
+ * @param <K>
+ * @param <V>
+ */
 public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
@@ -29,11 +34,6 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
         this.rxApi = rxApi;
     }
 
-    /**
-     * 
-     * @see com.google.common.reflect.AbstractInvocationHandler#handleInvocation(java.lang.Object, java.lang.reflect.Method,
-     *      java.lang.Object[])
-     */
     @Override
     @SuppressWarnings("unchecked")
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
@@ -59,11 +59,11 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
             Iterable<?> objects = observable.toBlocking().toIterable();
 
             if (method.getReturnType().equals(List.class)) {
-                return Lists.newArrayList(objects);
+                return LettuceLists.newList(objects);
             }
 
             if (method.getReturnType().equals(Set.class)) {
-                return Sets.newHashSet(objects);
+                return LettuceSets.newHashSet(objects);
             }
 
             Iterator<?> iterator = objects.iterator();

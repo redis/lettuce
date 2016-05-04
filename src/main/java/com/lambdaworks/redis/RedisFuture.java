@@ -4,8 +4,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
  * Redis Future, extends a Listenable Future (Notification on Complete). The execution of the notification happens either on
  * finish of the future execution or, if the future is completed already, immediately.

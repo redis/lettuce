@@ -1,24 +1,21 @@
 package com.lambdaworks.redis.pubsub;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.StatefulRedisConnectionImpl;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.channel.ChannelHandler;
+import io.netty.util.internal.ConcurrentSet;
 
 /**
  * An thread-safe pub/sub connection to a Redis server. Multiple threads may share one {@link StatefulRedisPubSubConnectionImpl}
@@ -53,9 +50,9 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             TimeUnit unit) {
         super(writer, codec, timeout, unit);
 
-        listeners = Lists.newCopyOnWriteArrayList();
-        channels = Sets.newConcurrentHashSet();
-        patterns = Sets.newConcurrentHashSet();
+        listeners = new CopyOnWriteArrayList<>();
+        channels = new ConcurrentSet<>();
+        patterns = new ConcurrentSet<>();
     }
 
     /**
@@ -161,7 +158,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
      */
     protected List<RedisFuture<Void>> resubscribe() {
 
-        List<RedisFuture<Void>> result = Lists.newArrayList();
+        List<RedisFuture<Void>> result = new ArrayList<>();
 
         if (!channels.isEmpty()) {
             result.add(async().subscribe(toArray(channels)));

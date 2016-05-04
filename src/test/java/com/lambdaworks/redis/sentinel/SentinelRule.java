@@ -3,17 +3,15 @@ package com.lambdaworks.redis.sentinel;
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import org.apache.log4j.Logger;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -21,6 +19,8 @@ import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RoleParser;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 /**
  * Rule to simplify Redis Sentinel handling.
@@ -41,7 +41,7 @@ public class SentinelRule implements TestRule {
 
     private RedisClient redisClient;
     private final boolean flushBeforeTest;
-    private Map<Integer, RedisSentinelCommands<String, String>> sentinelConnections = Maps.newHashMap();
+    private Map<Integer, RedisSentinelCommands<String, String>> sentinelConnections = new HashMap<>();
     protected Logger log = Logger.getLogger(getClass());
 
     /**
@@ -215,7 +215,7 @@ public class SentinelRule implements TestRule {
      */
     public boolean hasMaster(int... redisPorts) {
 
-        Map<Integer, RedisCommands<String, String>> connections = Maps.newHashMap();
+        Map<Integer, RedisCommands<String, String>> connections = new HashMap<>();
         for (int redisPort : redisPorts) {
             connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build())
                     .sync());
@@ -284,7 +284,7 @@ public class SentinelRule implements TestRule {
     public int setupMasterSlave(int... redisPorts) {
 
         log.info("[Sentinel] Create a master with slaves on ports " + Arrays.toString(redisPorts));
-        Map<Integer, RedisCommands<String, String>> connections = Maps.newHashMap();
+        Map<Integer, RedisCommands<String, String>> connections = new HashMap<>();
         for (int redisPort : redisPorts) {
             connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build())
                     .sync());

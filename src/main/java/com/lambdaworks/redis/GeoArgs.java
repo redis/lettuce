@@ -1,7 +1,6 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
@@ -55,7 +54,7 @@ public class GeoArgs {
      * @return {@code this}
      */
     public GeoArgs withCount(long count) {
-        checkArgument(count > 0, "count must be greater 0");
+        LettuceAssert.isTrue(count > 0, "count must be greater 0");
         this.count = count;
         return this;
     }
@@ -109,7 +108,7 @@ public class GeoArgs {
      * @return {@code this}
      */
     public GeoArgs sort(Sort sort) {
-        checkArgument(sort != null, "sort must not be null");
+        LettuceAssert.notNull(sort, "sort must not be null");
 
         this.sort = sort;
         return this;

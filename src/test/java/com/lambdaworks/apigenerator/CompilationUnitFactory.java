@@ -82,7 +82,7 @@ public class CompilationUnitFactory {
         }
 
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
-            resultType.setTypeParameters(new ArrayList<TypeParameter>());
+            resultType.setTypeParameters(new ArrayList<>());
             for (TypeParameter typeParameter : templateTypeDeclaration.getTypeParameters()) {
                 resultType.getTypeParameters().add(new TypeParameter(typeParameter.getName(), typeParameter.getTypeBound()));
             }

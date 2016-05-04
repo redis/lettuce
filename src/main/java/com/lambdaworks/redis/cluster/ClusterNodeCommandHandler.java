@@ -1,19 +1,19 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
-
 import com.lambdaworks.redis.resource.ClientResources;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -29,7 +29,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterNodeCommandHandler.class);
-    private static final Set<LifecycleState> CHANNEL_OPEN_STATES = ImmutableSet.of(LifecycleState.ACTIVATING,
+    private static final Set<LifecycleState> CHANNEL_OPEN_STATES = LettuceSets.unmodifiableSet(LifecycleState.ACTIVATING,
             LifecycleState.ACTIVE, LifecycleState.CONNECTED);
 
     private final RedisChannelWriter<K, V> clusterChannelWriter;
@@ -105,7 +105,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
         try {
             lockWritersExclusive();
             try {
-                return Lists.newArrayList(source);
+                return new ArrayList<>(source);
             } finally {
                 source.clear();
             }

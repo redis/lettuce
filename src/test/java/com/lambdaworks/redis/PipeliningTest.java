@@ -2,14 +2,14 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 
 /**
  * @author Mark Paluch
@@ -72,7 +72,7 @@ public class PipeliningTest extends AbstractRedisClientTest {
     }
 
     protected List<RedisFuture<?>> triggerSet(RedisAsyncCommands<String, String> connection, int iterations) {
-        List<RedisFuture<?>> futures = Lists.newArrayList();
+        List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < iterations; i++) {
             futures.add(connection.set(key(i), value(i)));
         }

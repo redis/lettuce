@@ -1,9 +1,9 @@
 package com.lambdaworks.redis;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.SettableFuture;
+import io.netty.util.internal.ConcurrentSet;
 
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners.
@@ -12,7 +12,7 @@ import com.google.common.util.concurrent.SettableFuture;
  * @since 3.0
  */
 public class ConnectionEvents {
-    private final Set<RedisConnectionStateListener> listeners = Sets.newConcurrentHashSet();
+    private final Set<RedisConnectionStateListener> listeners = new ConcurrentSet<>();
 
     protected void fireEventRedisConnected(RedisChannelHandler<?, ?> connection) {
         for (RedisConnectionStateListener listener : listeners) {
@@ -44,9 +44,9 @@ public class ConnectionEvents {
      * Internal event before a channel is closed.
      */
     public static class PrepareClose {
-        private SettableFuture<Boolean> prepareCloseFuture = SettableFuture.create();
+        private CompletableFuture<Boolean> prepareCloseFuture = new CompletableFuture<>();
 
-        public SettableFuture<Boolean> getPrepareCloseFuture() {
+        public CompletableFuture<Boolean> getPrepareCloseFuture() {
             return prepareCloseFuture;
         }
     }

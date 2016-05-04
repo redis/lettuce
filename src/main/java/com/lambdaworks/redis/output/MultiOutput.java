@@ -4,12 +4,12 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
@@ -23,8 +23,8 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     private final Queue<RedisCommand<K, V, ?>> queue;
 
     public MultiOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<Object>());
-        queue = new LinkedList<RedisCommand<K, V, ?>>();
+        super(codec, new ArrayList<>());
+        queue = LettuceFactories.newSpScQueue();
     }
 
     public void add(RedisCommand<K, V, ?> cmd) {

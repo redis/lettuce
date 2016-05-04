@@ -2,10 +2,6 @@ package com.lambdaworks.redis.cluster.models.slots;
 
 import java.util.*;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
@@ -32,8 +28,8 @@ public class ClusterSlotsParser {
      * @return List&gt;ClusterSlotRange&gt;
      */
     public static List<ClusterSlotRange> parse(List<?> clusterSlotsOutput) {
-        List<ClusterSlotRange> result = Lists.newArrayList();
-        Map<String, RedisClusterNode> nodeCache = Maps.newHashMap();
+        List<ClusterSlotRange> result = new ArrayList<>();
+        Map<String, RedisClusterNode> nodeCache = new HashMap<>();
 
         for (Object o : clusterSlotsOutput) {
 
@@ -63,18 +59,18 @@ public class ClusterSlotsParser {
     private static ClusterSlotRange parseRange(List<?> range, Map<String, RedisClusterNode> nodeCache) {
         Iterator<?> iterator = range.iterator();
 
-        int from = Ints.checkedCast(getLongFromIterator(iterator, 0));
-        int to = Ints.checkedCast(getLongFromIterator(iterator, 0));
+        int from = Math.toIntExact(getLongFromIterator(iterator, 0));
+        int to = Math.toIntExact(getLongFromIterator(iterator, 0));
         RedisClusterNode master = null;
 
-        List<RedisClusterNode> slaves = Lists.newArrayList();
+        List<RedisClusterNode> slaves = new ArrayList<>();
         if (iterator.hasNext()) {
             master = getRedisClusterNode(iterator, nodeCache);
             if(master != null) {
                 master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
-                Set<Integer> slots = Sets.newTreeSet(master.getSlots());
+                Set<Integer> slots = new TreeSet<>(master.getSlots());
                 slots.addAll(createSlots(from, to));
-                master.setSlots(Lists.newArrayList(slots));
+                master.setSlots(new ArrayList<>(slots));
             }
         }
 
@@ -91,7 +87,7 @@ public class ClusterSlotsParser {
     }
 
     private static List<Integer> createSlots(int from, int to) {
-        List<Integer> slots = Lists.newArrayList();
+        List<Integer> slots = new ArrayList<>();
         for (int i = from; i < to + 1; i++) {
             slots.add(i);
         }
@@ -109,7 +105,7 @@ public class ClusterSlotsParser {
 
             Iterator<?> hostAndPortIterator = hostAndPortList.iterator();
             String host = (String) hostAndPortIterator.next();
-            int port = Ints.checkedCast(getLongFromIterator(hostAndPortIterator, 0));
+            int port = Math.toIntExact(getLongFromIterator(hostAndPortIterator, 0));
             String nodeId;
 
 
@@ -138,7 +134,7 @@ public class ClusterSlotsParser {
     private static RedisClusterNode createNode(String host, int port) {
         RedisClusterNode redisClusterNode = new RedisClusterNode();
         redisClusterNode.setUri(RedisURI.create(host, port));
-        redisClusterNode.setSlots(new ArrayList<Integer>());
+        redisClusterNode.setSlots(new ArrayList<>());
         return redisClusterNode;
     }
 

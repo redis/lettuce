@@ -3,32 +3,31 @@ package com.lambdaworks.redis.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import rx.Observable;
-import rx.exceptions.CompositeException;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.RandomKeys;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -82,7 +81,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     public void msetCrossSlot() throws Exception {
 
         Observable<String> mset = commands.mset(RandomKeys.MAP);
-        List<String> result = Lists.newArrayList(mset.toBlocking().toIterable());
+        List<String> result = LettuceLists.newList(mset.toBlocking().toIterable());
         assertThat(result).hasSize(1).contains("OK");
 
         for (String mykey : RandomKeys.KEYS) {
@@ -94,7 +93,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test
     public void msetnxCrossSlot() throws Exception {
 
-        List<Boolean> result = Lists.newArrayList(commands.msetnx(RandomKeys.MAP).toBlocking().toIterable());
+        List<Boolean> result = LettuceLists.newList(commands.msetnx(RandomKeys.MAP).toBlocking().toIterable());
 
         assertThat(result).hasSize(1).contains(true);
 
@@ -290,7 +289,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-        Set<String> allKeys = Sets.newHashSet();
+        Set<String> allKeys = new HashSet<>();
 
         KeyScanCursor<String> scanCursor = null;
         do {
@@ -313,7 +312,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
         sync.mset(RandomKeys.MAP);
 
-        Set<String> allKeys = Sets.newHashSet();
+        Set<String> allKeys = new HashSet<>();
 
         KeyScanCursor<String> scanCursor = null;
         do {

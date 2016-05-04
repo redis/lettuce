@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,6 +13,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.AbstractClusterTest;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
@@ -36,10 +36,10 @@ public class PubSubClusterTest extends AbstractClusterTest implements RedisPubSu
         connection = clusterClient.connect();
         pubSubConnection = clusterClient.connectPubSub();
         pubSubConnection2 = clusterClient.connectPubSub();
-        channels = new LinkedBlockingQueue<String>();
-        patterns = new LinkedBlockingQueue<String>();
-        messages = new LinkedBlockingQueue<String>();
-        counts = new LinkedBlockingQueue<Long>();
+        channels = LettuceFactories.newBlockingQueue();
+        patterns = LettuceFactories.newBlockingQueue();
+        messages = LettuceFactories.newBlockingQueue();
+        counts = LettuceFactories.newBlockingQueue();
     }
 
     @After

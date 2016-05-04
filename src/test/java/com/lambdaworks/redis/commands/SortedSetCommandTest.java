@@ -504,7 +504,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     @Test
     public void zscanMultiple() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
+        Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
         ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.limit(5));
@@ -520,7 +520,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     @Test
     public void zscanMatch() throws Exception {
 
-        Set<String> expect = new HashSet<String>();
+        Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
         ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanArgs.Builder.limit(10).match("val*"));
@@ -533,7 +533,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zlexcount() throws Exception {
-        setup100KeyValues(new HashSet<String>());
+        setup100KeyValues(new HashSet<>());
         Long result = redis.zlexcount(key, "-", "+");
 
         assertThat(result.longValue()).isEqualTo(100);
@@ -544,7 +544,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zrangebylex() throws Exception {
-        setup100KeyValues(new HashSet<String>());
+        setup100KeyValues(new HashSet<>());
         List<String> result = redis.zrangebylex(key, "-", "+");
 
         assertThat(result).hasSize(100);
@@ -556,7 +556,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zremrangebylex() throws Exception {
-        setup100KeyValues(new HashSet<String>());
+        setup100KeyValues(new HashSet<>());
         Long result = redis.zremrangebylex(key, "(aaa", "[zzz");
 
         assertThat(result.longValue()).isEqualTo(100);

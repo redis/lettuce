@@ -1,10 +1,10 @@
 package com.lambdaworks.redis.models.role;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Redis sentinel instance.
@@ -25,7 +25,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
      * @param monitoredMasters list of monitored masters, must not be {@literal null} but may be empty
      */
     public RedisSentinelInstance(List<String> monitoredMasters) {
-        checkArgument(monitoredMasters != null, "list of monitoredMasters must not be null");
+        LettuceAssert.notNull(monitoredMasters, "list of monitoredMasters must not be null");
         this.monitoredMasters = monitoredMasters;
     }
 
@@ -47,7 +47,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
     }
 
     public void setMonitoredMasters(List<String> monitoredMasters) {
-        checkArgument(monitoredMasters != null, "list of monitoredMasters must not be null");
+        LettuceAssert.notNull(monitoredMasters, "list of monitoredMasters must not be null");
         this.monitoredMasters = monitoredMasters;
     }
 

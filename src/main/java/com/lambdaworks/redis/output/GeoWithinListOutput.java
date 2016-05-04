@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Double.parseDouble;
 
 import java.nio.ByteBuffer;
@@ -10,6 +9,7 @@ import java.util.List;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoWithin;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * A list output that creates a list with either double/long or {@link GeoCoordinates}'s.
@@ -90,7 +90,7 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
 
 	@Override
 	public void setSubscriber(Subscriber<GeoWithin<V>> subscriber) {
-		checkArgument(subscriber != null, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "subscriber must not be null");
 		this.subscriber = subscriber;
 	}
 

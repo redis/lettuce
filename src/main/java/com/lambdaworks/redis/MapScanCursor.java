@@ -1,8 +1,7 @@
 package com.lambdaworks.redis;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
-
-import com.google.common.collect.Maps;
 
 /**
  * Scan cursor for maps.
@@ -14,7 +13,7 @@ import com.google.common.collect.Maps;
  */
 public class MapScanCursor<K, V> extends ScanCursor {
 
-    private final Map<K, V> map = Maps.newLinkedHashMap();
+    private final Map<K, V> map = new LinkedHashMap<>();
 
     /**
      * 

@@ -1,9 +1,8 @@
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.List;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StreamingOutput.Subscriber;
 
 /**
@@ -17,7 +16,7 @@ class ListSubscriber<T> implements Subscriber<T> {
 
     private ListSubscriber(List<T> target) {
 
-		checkArgument(target != null, "target must not be null");
+        LettuceAssert.notNull(target, "target must not be null");
 		this.target = target;
     }
 

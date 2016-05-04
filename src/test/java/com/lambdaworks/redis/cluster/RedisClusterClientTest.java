@@ -5,31 +5,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -61,7 +45,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public static void setupClient() throws Exception {
         setupClusterClient();
         client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass
@@ -210,9 +194,13 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.setSlots(Lists.<Integer> newArrayList());
+            partition.setSlots(new ArrayList<>());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
+
+                int[] slots = createSlots(0, 16384);
+                for (int i = 0; i < slots.length; i++) {
+                    partition.getSlots().add(i);
+                }
             }
         }
         partitions.updateCache();
@@ -247,9 +235,12 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.setSlots(Lists.<Integer> newArrayList());
+            partition.setSlots(new ArrayList<>());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                partition.getSlots().addAll(Ints.asList(createSlots(0, 16384)));
+                int[] slots = createSlots(0, 16384);
+                for (int i = 0; i < slots.length; i++) {
+                    partition.getSlots().add(i);
+                }
             }
         }
         partitions.updateCache();
@@ -413,10 +404,10 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_B, value);
 
         List<String> keysA = sync.clusterGetKeysInSlot(SLOT_A, 10);
-        assertThat(keysA).isEqualTo(ImmutableList.of(KEY_A));
+        assertThat(keysA).isEqualTo(Collections.singletonList(KEY_A));
 
         List<String> keysB = sync.clusterGetKeysInSlot(SLOT_B, 10);
-        assertThat(keysB).isEqualTo(ImmutableList.of(KEY_B));
+        assertThat(keysB).isEqualTo(Collections.singletonList(KEY_B));
 
     }
 

@@ -5,16 +5,11 @@ import static com.lambdaworks.redis.cluster.ClusterScanSupport.asyncClusterStrea
 import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
 
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
@@ -66,7 +61,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return super.del(keys);
         }
 
-        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
+        Map<Integer, RedisFuture<Long>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<Long> del = super.del(entry.getValue());
@@ -84,7 +79,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return super.unlink(keys);
         }
 
-        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
+        Map<Integer, RedisFuture<Long>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<Long> unlink = super.unlink(entry.getValue());
@@ -103,7 +98,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
-        Map<Integer, RedisFuture<List<V>>> executions = Maps.newHashMap();
+        Map<Integer, RedisFuture<List<V>>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<List<V>> mget = super.mget(entry.getValue());
@@ -112,7 +107,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         // restore order of key
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            List<V> result = Lists.newArrayList();
+            List<V> result = new ArrayList<>();
             for (K opKey : keys) {
                 int slot = slots.get(opKey);
 
@@ -133,7 +128,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return super.mget(channel, keys);
         }
 
-        Map<Integer, RedisFuture<Long>> executions = Maps.newHashMap();
+        Map<Integer, RedisFuture<Long>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<Long> del = super.mget(channel, entry.getValue());
@@ -151,11 +146,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return super.mset(map);
         }
 
-        Map<Integer, RedisFuture<String>> executions = Maps.newHashMap();
+        Map<Integer, RedisFuture<String>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
-            Map<K, V> op = Maps.newHashMap();
+            Map<K, V> op = new HashMap<>();
             entry.getValue().forEach(k -> op.put(k, map.get(k)));
 
             RedisFuture<String> mset = super.mset(op);
@@ -173,11 +168,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return super.msetnx(map);
         }
 
-        Map<Integer, RedisFuture<Boolean>> executions = Maps.newHashMap();
+        Map<Integer, RedisFuture<Boolean>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
-            Map<K, V> op = Maps.newHashMap();
+            Map<K, V> op = new HashMap<>();
             entry.getValue().forEach(k -> op.put(k, map.get(k)));
 
             RedisFuture<Boolean> msetnx = super.msetnx(op);
@@ -198,7 +193,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<String> clientSetname(K name) {
-        Map<String, RedisFuture<String>> executions = Maps.newHashMap();
+        Map<String, RedisFuture<String>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
             RedisClusterAsyncCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
@@ -285,7 +280,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         Map<String, RedisFuture<List<K>>> executions = executeOnMasters(commands -> commands.keys(pattern));
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            List<K> result = Lists.newArrayList();
+            List<K> result = new ArrayList<>();
             for (RedisFuture<List<K>> future : executions.values()) {
                 result.addAll(MultiNodeExecution.execute(() -> future.get()));
             }
@@ -334,7 +329,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      */
     protected <T> Map<String, RedisFuture<T>> executeOnNodes(
             Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function, Function<RedisClusterNode, Boolean> filter) {
-        Map<String, RedisFuture<T>> executions = Maps.newHashMap();
+        Map<String, RedisFuture<T>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 

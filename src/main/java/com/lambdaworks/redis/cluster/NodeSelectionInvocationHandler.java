@@ -1,22 +1,13 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.AbstractInvocationHandler;
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisCommandTimeoutException;
@@ -24,6 +15,8 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.AbstractInvocationHandler;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Invocation handler to trigger commands on multiple connections and return a holder for the values.
@@ -55,8 +48,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     public NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, boolean sync, long timeout, TimeUnit unit) {
         if (sync) {
-            checkArgument(timeout > 0, "timeout must not greater 0 when using sync mode");
-            checkArgument(unit != null, "unit must not be null when using sync mode");
+            LettuceAssert.isTrue(timeout > 0, "timeout must be greater 0 when using sync mode");
+            LettuceAssert.notNull(unit, "unit must not be null when using sync mode");
         }
 
         this.selection = selection;
@@ -72,11 +65,11 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         try {
             Method targetMethod = findMethod(RedisClusterAsyncCommands.class, method, connectionMethod);
 
-            Map<RedisClusterNode, StatefulRedisConnection<?, ?>> connections = ImmutableMap.copyOf(selection.statefulMap());
+            Map<RedisClusterNode, StatefulRedisConnection<?, ?>> connections = new HashMap<>(selection.statefulMap());
 
             if (targetMethod != null) {
 
-                Map<RedisClusterNode, CompletionStage<?>> executions = Maps.newHashMap();
+                Map<RedisClusterNode, CompletionStage<?>> executions = new HashMap<>();
                 for (Map.Entry<RedisClusterNode, StatefulRedisConnection<?, ?>> entry : connections.entrySet()) {
 
                     CompletionStage<?> result = (CompletionStage<?>) targetMethod.invoke(entry.getValue().async(), args);
@@ -149,7 +142,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     private RedisCommandTimeoutException createTimeoutException(Map<RedisClusterNode, CompletionStage<?>> executions) {
-        List<RedisClusterNode> notFinished = Lists.newArrayList();
+        List<RedisClusterNode> notFinished = new ArrayList<>();
         executions.forEach((redisClusterNode, completionStage) -> {
             if (!completionStage.toCompletableFuture().isDone()) {
                 notFinished.add(redisClusterNode);
@@ -160,7 +153,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     private RedisCommandExecutionException createExecutionException(Map<RedisClusterNode, CompletionStage<?>> executions) {
-        List<RedisClusterNode> failed = Lists.newArrayList();
+        List<RedisClusterNode> failed = new ArrayList<>();
         executions.forEach((redisClusterNode, completionStage) -> {
             if (!completionStage.toCompletableFuture().isCompletedExceptionally()) {
                 failed.add(redisClusterNode);

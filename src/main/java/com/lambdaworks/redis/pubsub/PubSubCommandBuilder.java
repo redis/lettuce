@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.KeyListOutput;
@@ -43,7 +44,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SafeVarargs
     final Command<K, V, Map<K, Long>> pubsubNumsub(K... patterns) {
-        assertNotEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(NUMSUB).addKeys(patterns);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<>((RedisCodec) codec), args);
@@ -51,7 +52,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SafeVarargs
     final Command<K, V, K> psubscribe(K... patterns) {
-        assertNotEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(PSUBSCRIBE, new PubSubOutput<>(codec), patterns);
     }
@@ -63,7 +64,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SafeVarargs
     final Command<K, V, K> subscribe(K... channels) {
-        assertNotEmpty(channels, "channels " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notEmpty(channels, "channels " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(SUBSCRIBE, new PubSubOutput<>(codec), channels);
     }

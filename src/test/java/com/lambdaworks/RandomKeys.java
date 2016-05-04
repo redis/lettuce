@@ -1,14 +1,8 @@
 package com.lambdaworks;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.RandomStringUtils;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 /**
  * Random keys for testing slot-hashes.
@@ -39,9 +33,9 @@ public class RandomKeys {
 
     static {
 
-        List<String> keys = Lists.newArrayList();
-        List<String> values = Lists.newArrayList();
-        Map<String, String> map = Maps.newHashMap();
+        List<String> keys = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+        Map<String, String> map = new HashMap<>();
 
         for (int i = 0; i < COUNT; i++) {
 
@@ -53,9 +47,9 @@ public class RandomKeys {
             map.put(key, value);
         }
 
-        KEYS = ImmutableList.copyOf(keys);
-        VALUES = ImmutableList.copyOf(values);
-        MAP = ImmutableMap.copyOf(map);
+        KEYS = Collections.unmodifiableList(keys);
+        VALUES = Collections.unmodifiableList(values);
+        MAP = Collections.unmodifiableMap(map);
     }
 
 }

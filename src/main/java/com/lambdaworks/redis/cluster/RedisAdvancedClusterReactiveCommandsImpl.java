@@ -4,10 +4,7 @@ import static com.lambdaworks.redis.cluster.ClusterScanSupport.reactiveClusterKe
 import static com.lambdaworks.redis.cluster.ClusterScanSupport.reactiveClusterStreamScanCursorMapper;
 import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -15,8 +12,6 @@ import java.util.stream.Collectors;
 import rx.Observable;
 import rx.internal.operators.OperatorConcat;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
@@ -61,7 +56,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.del(keys);
         }
 
-        List<Observable<Long>> observables = Lists.newArrayList();
+        List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.del(entry.getValue()));
@@ -79,7 +74,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.unlink(keys);
         }
 
-        List<Observable<Long>> observables = Lists.newArrayList();
+        List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.unlink(entry.getValue()));
@@ -97,7 +92,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.mget(keys);
         }
 
-        List<Observable<V>> observables = Lists.newArrayList();
+        List<Observable<V>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.mget(entry.getValue()));
@@ -123,7 +118,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 offset += entry.getValue().size();
             }
 
-            List<V> objects = (List<V>) Lists.newArrayList(Arrays.asList(values));
+            List<V> objects = (List<V>) new ArrayList<>(Arrays.asList(values));
             return objects;
         });
 
@@ -138,7 +133,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.mget(channel, keys);
         }
 
-        List<Observable<Long>> observables = Lists.newArrayList();
+        List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.mget(channel, entry.getValue()));
@@ -183,7 +178,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<String> clientSetname(K name) {
-        List<Observable<String>> observables = Lists.newArrayList();
+        List<Observable<String>> observables = new ArrayList<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
             RedisClusterReactiveCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
@@ -284,7 +279,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      */
     protected <T> Map<String, Observable<T>> executeOnNodes(
             Function<RedisClusterReactiveCommands<K, V>, Observable<T>> function, Function<RedisClusterNode, Boolean> filter) {
-        Map<String, Observable<T>> executions = Maps.newHashMap();
+        Map<String, Observable<T>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 
@@ -404,7 +399,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
 
         List<Observable<T>> observables = partitioned.values().stream().map(ks -> {
-            Map<K, V> op = Maps.newHashMap();
+            Map<K, V> op = new HashMap<>();
             ks.forEach(k -> op.put(k, map.get(k)));
             return function.apply(op);
         }).collect(Collectors.toList());

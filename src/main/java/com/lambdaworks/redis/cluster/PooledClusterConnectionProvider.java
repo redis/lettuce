@@ -4,12 +4,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.*;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.lambdaworks.redis.*;
@@ -18,6 +17,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -168,7 +168,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private List<RedisNodeDescription> getReadCandidates(RedisClusterNode master) {
-        List<RedisNodeDescription> candidates = Lists.newArrayList();
+        List<RedisNodeDescription> candidates = new ArrayList<>();
 
         for (RedisClusterNode partition : partitions) {
             if (master.getNodeId().equals(partition.getNodeId()) || master.getNodeId().equals(partition.getSlaveOf())) {
@@ -232,7 +232,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void close() {
-        ImmutableMap<ConnectionKey, StatefulRedisConnection<K, V>> copy = ImmutableMap.copyOf(this.connections.asMap());
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> copy = new HashMap<>(this.connections.asMap());
         this.connections.invalidateAll();
         resetFastConnectionCache();
         for (StatefulRedisConnection<K, V> kvRedisAsyncConnection : copy.values()) {
@@ -318,8 +318,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = Maps.newHashMap(connections.asMap());
-        Set<ConnectionKey> stale = Sets.newHashSet();
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new HashMap<>(connections.asMap());
+        Set<ConnectionKey> stale = new HashSet<>();
 
         for (ConnectionKey connectionKey : map.keySet()) {
 
@@ -351,7 +351,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
-        return ImmutableList.copyOf(connections.asMap().values());
+        return LettuceLists.unmodifiableList(connections.asMap().values());
     }
 
     @Override

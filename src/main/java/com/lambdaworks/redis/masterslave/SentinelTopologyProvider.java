@@ -2,6 +2,7 @@ package com.lambdaworks.redis.masterslave;
 
 import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.CODEC;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -9,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
@@ -54,7 +54,7 @@ public class SentinelTopologyProvider implements TopologyProvider {
             RedisFuture<Map<String, String>> masterFuture = connection.async().master(masterId);
             RedisFuture<List<Map<String, String>>> slavesFuture = connection.async().slaves(masterId);
 
-            List<RedisNodeDescription> result = Lists.newArrayList();
+            List<RedisNodeDescription> result = new ArrayList<>();
             try {
                 Map<String, String> master = masterFuture.get(timeout, timeUnit);
                 List<Map<String, String>> slaves = slavesFuture.get(timeout, timeUnit);

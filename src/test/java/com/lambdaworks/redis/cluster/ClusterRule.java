@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -13,8 +15,6 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
@@ -29,7 +29,7 @@ public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
     private int[] ports;
-    private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = Maps.newHashMap();
+    private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
@@ -135,7 +135,7 @@ public class ClusterRule implements TestRule {
     private <T> void onAllConnections(Function<RedisClusterAsyncCommands<?, ?>, Future<T>> function,
             boolean ignoreExecutionException) {
 
-        List<Future<?>> futures = Lists.newArrayList();
+        List<Future<?>> futures = new ArrayList<>();
         for (RedisClusterAsyncCommands<?, ?> connection : connectionCache.values()) {
             futures.add(function.apply(connection));
         }

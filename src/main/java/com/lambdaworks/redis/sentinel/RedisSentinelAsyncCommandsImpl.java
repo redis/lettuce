@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
@@ -13,6 +11,7 @@ import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisSentinelAsyncConnection;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -59,7 +58,7 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
             }
 
             if (!list.isEmpty()) {
-                checkArgument(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
+                LettuceAssert.isTrue(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
                 String hostname = (String) list.get(0);
                 String port = (String) list.get(1);
                 ref.set(new InetSocketAddress(hostname, Integer.parseInt(port)));

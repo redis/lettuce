@@ -1,14 +1,13 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -22,15 +21,15 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
     private final Collection<RedisClusterNode> partitions;
-    private final Collection<RedisClusterNode> clusterNodes = Lists.newArrayList();
+    private final Collection<RedisClusterNode> clusterNodes = new ArrayList<>();
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort;
     private RoundRobin<? extends RedisClusterNode> roundRobin;
 
     public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
             Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort) {
         this.sort = sort;
-        checkArgument(partitions != null, "Partitions must not be null");
-        checkArgument(sort != null, "Sort-Function must not be null");
+        LettuceAssert.notNull(partitions, "Partitions must not be null");
+        LettuceAssert.notNull(sort, "Sort-Function must not be null");
         this.partitions = partitions;
         this.clusterNodes.addAll(partitions);
         this.roundRobin = new RoundRobin<>(clusterNodes);

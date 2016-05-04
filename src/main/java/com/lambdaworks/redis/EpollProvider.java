@@ -1,11 +1,11 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import java.lang.reflect.Constructor;
 import java.net.SocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -59,7 +59,7 @@ public class EpollProvider {
      */
     static void checkForEpollLibrary() {
 
-        checkState(domainSocketAddressClass != null && epollDomainSocketChannelClass != null,
+        LettuceAssert.assertState(domainSocketAddressClass != null && epollDomainSocketChannelClass != null,
                 "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
     }
 

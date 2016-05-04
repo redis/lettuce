@@ -2,14 +2,13 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 
 /**
  * @author Mark Paluch
@@ -38,7 +37,7 @@ public class RedisURITest {
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI3 = RedisURI.create("redis://auth@localhost:1234/6");
 
-        Set<RedisURI> set = ImmutableSet.of(redisURI1, redisURI2, redisURI3);
+        Set<RedisURI> set = LettuceSets.unmodifiableSet(redisURI1, redisURI2, redisURI3);
 
         assertThat(set).hasSize(2);
     }
@@ -49,7 +48,7 @@ public class RedisURITest {
         RedisURI redisURI1 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
 
-        Map<RedisURI, String> map = Maps.newLinkedHashMap();
+        Map<RedisURI, String> map = new LinkedHashMap<>();
         map.put(redisURI1, "something");
 
         assertThat(map.get(redisURI2)).isEqualTo("something");

@@ -1,22 +1,19 @@
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
 import rx.Observable;
 
 import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
@@ -45,7 +42,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
                 return null;
             }
 
-            checkArgument(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
+            LettuceAssert.isTrue(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
             String hostname = (String) list.get(0);
             String port = (String) list.get(1);
             return new InetSocketAddress(hostname, Integer.parseInt(port));

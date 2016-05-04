@@ -1,15 +1,13 @@
 package com.lambdaworks.codec;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import com.google.common.collect.Lists;
 
 @RunWith(Parameterized.class)
 public class CRC16Test {
@@ -25,7 +23,7 @@ public class CRC16Test {
     @Parameterized.Parameters(name = "{2}")
     public static List<Object[]> parameters() {
 
-        List<Object[]> parameters = Lists.newArrayList();
+        List<Object[]> parameters = new ArrayList<>();
 
         params(parameters, "".getBytes(), 0x0);
         params(parameters, "123456789".getBytes(), 0x31C3);

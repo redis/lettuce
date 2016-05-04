@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.codec;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +10,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.InflaterInputStream;
 
-import com.google.common.io.ByteStreams;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * A compressing/decompressing {@link RedisCodec} that wraps a typed {@link RedisCodec codec} and compresses values using GZIP
@@ -33,8 +31,8 @@ public class CompressionCodec {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static <K, V> RedisCodec<K, V> valueCompressor(RedisCodec<K, V> delegate, CompressionType compressionType) {
-        checkArgument(delegate != null, "RedisCodec must not be null");
-        checkArgument(compressionType != null, "CompressionType must not be null");
+        LettuceAssert.notNull(delegate, "RedisCodec must not be null");
+        LettuceAssert.notNull(compressionType, "CompressionType must not be null");
         return (RedisCodec) new CompressingValueCodecWrapper((RedisCodec) delegate, compressionType);
     }
 
@@ -93,7 +91,7 @@ public class CompressionCodec {
             }
 
             try {
-                ByteStreams.copy(sourceStream, compressor);
+                copy(sourceStream, compressor);
             } finally {
                 compressor.close();
             }
@@ -118,7 +116,7 @@ public class CompressionCodec {
             }
 
             try {
-                ByteStreams.copy(decompressor, outputStream);
+                copy(decompressor, outputStream);
             } finally {
                 decompressor.close();
             }
@@ -126,6 +124,30 @@ public class CompressionCodec {
             return ByteBuffer.wrap(outputStream.toByteArray());
         }
 
+    }
+
+    /**
+     * Copies all bytes from the input stream to the output stream. Does not close or flush either stream.
+     *
+     * @param from the input stream to read from
+     * @param to the output stream to write to
+     * @return the number of bytes copied
+     * @throws IOException if an I/O error occurs
+     */
+    private static long copy(InputStream from, OutputStream to) throws IOException {
+        LettuceAssert.notNull(from, "From must not be null");
+        LettuceAssert.notNull(to, "From must not be null");
+        byte[] buf = new byte[4096];
+        long total = 0;
+        while (true) {
+            int r = from.read(buf);
+            if (r == -1) {
+                break;
+            }
+            to.write(buf, 0, r);
+            total += r;
+        }
+        return total;
     }
 
     public enum CompressionType {

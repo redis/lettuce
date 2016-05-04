@@ -11,11 +11,12 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
+
+import java.util.Collections;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -27,7 +28,7 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        clusterClient = new RedisClusterClient(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = new RedisClusterClient(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

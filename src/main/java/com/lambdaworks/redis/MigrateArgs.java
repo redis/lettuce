@@ -1,11 +1,10 @@
 package com.lambdaworks.redis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandType;
@@ -63,13 +62,13 @@ public class MigrateArgs<K> {
     }
 
     public MigrateArgs<K> key(K key) {
-        checkArgument(key != null, "key must not be null");
+        LettuceAssert.notNull(key, "key must not be null");
         this.keys.add(key);
         return this;
     }
 
     public MigrateArgs<K> keys(K... keys) {
-        checkArgument(keys != null && keys.length != 0, "keys must not be empty");
+        LettuceAssert.notEmpty(keys, "keys must not be empty");
         for (K key : keys) {
             this.keys.add(key);
         }
@@ -77,7 +76,7 @@ public class MigrateArgs<K> {
     }
 
     public MigrateArgs<K> keys(Iterable<K> keys) {
-        checkArgument(keys != null, "keys must not be null");
+        LettuceAssert.notNull(keys, "keys must not be null");
         Iterator<K> iterator = keys.iterator();
         while (iterator.hasNext()) {
             this.keys.add(iterator.next());

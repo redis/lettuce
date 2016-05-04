@@ -1,19 +1,22 @@
 package com.lambdaworks.redis.commands.rx;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.google.code.tempusfugit.temporal.Duration.millis;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import org.junit.Before;
+import org.junit.Test;
+
+import rx.observers.TestSubscriber;
+import rx.schedulers.Schedulers;
+
 import com.lambdaworks.Delay;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
-import org.junit.Before;
-import org.junit.Test;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
 
 /**
  * @author Mark Paluch
@@ -30,7 +33,11 @@ public class RxTest extends AbstractRedisClientTest {
     @Test
     public void reactiveChain() throws Exception {
 
-        reactive.mset(ImmutableMap.of(key, value, "key1", "value1")).toBlocking().first();
+        Map<String, String> map = new HashMap<>();
+        map.put(key, value);
+        map.put("key1", "value1");
+
+        reactive.mset(map).toBlocking().first();
 
         List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).toList().subscribeOn(Schedulers.immediate())
                 .toBlocking().first();
@@ -40,7 +47,7 @@ public class RxTest extends AbstractRedisClientTest {
 
     @Test
     public void auth() throws Exception {
-        List<Throwable> errors = Lists.newArrayList();
+        List<Throwable> errors = new ArrayList<>();
         reactive.auth("error").doOnError(errors::add).subscribe(new TestSubscriber<>());
         Delay.delay(millis(50));
         assertThat(errors).hasSize(1);

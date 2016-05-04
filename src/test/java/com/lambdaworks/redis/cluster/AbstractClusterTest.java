@@ -3,11 +3,11 @@ package com.lambdaworks.redis.cluster;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.internal.LettuceLists;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.AbstractTest;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
@@ -45,7 +45,7 @@ public class AbstractClusterTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClusterClient() throws Exception {
-        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

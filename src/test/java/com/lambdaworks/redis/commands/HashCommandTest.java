@@ -5,13 +5,13 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.*;
 
 public class HashCommandTest extends AbstractRedisClientTest {
@@ -155,7 +155,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void hmset() throws Exception {
-        Map<String, String> hash = Maps.newLinkedHashMap();
+        Map<String, String> hash = new LinkedHashMap<>();
         hash.put("one", "1");
         hash.put("two", "2");
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
@@ -164,7 +164,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void hmsetWithNulls() throws Exception {
-        Map<String, String> hash = Maps.newLinkedHashMap();
+        Map<String, String> hash = new LinkedHashMap<>();
         hash.put("one", null);
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
         assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
@@ -217,7 +217,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
-        assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
+        assertThat(cursor.getMap()).isEqualTo(Collections.singletonMap(key, value));
     }
 
     @Test
@@ -228,7 +228,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
-        assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
+        assertThat(cursor.getMap()).isEqualTo(Collections.singletonMap(key, value));
     }
 
     @Test
@@ -239,7 +239,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
-        assertThat(cursor.getMap()).isEqualTo(ImmutableMap.of(key, value));
+        assertThat(cursor.getMap()).isEqualTo(Collections.singletonMap(key, value));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
-        assertThat(adapter.getMap()).isEqualTo(ImmutableMap.of(key, value));
+        assertThat(adapter.getMap()).isEqualTo(Collections.singletonMap(key, value));
     }
 
     @Test
@@ -294,8 +294,8 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanMultiple() throws Exception {
 
-        Map<String, String> expect = Maps.newLinkedHashMap();
-        Map<String, String> check = Maps.newLinkedHashMap();
+        Map<String, String> expect = new LinkedHashMap<>();
+        Map<String, String> check = new LinkedHashMap<>();
         setup100KeyValues(expect);
 
         MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(5));
@@ -319,7 +319,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanMatch() throws Exception {
 
-        Map<String, String> expect = Maps.newLinkedHashMap();
+        Map<String, String> expect = new LinkedHashMap<>();
         setup100KeyValues(expect);
 
         MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(100).match("key1*"));

@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
@@ -15,7 +16,6 @@ import org.junit.runners.MethodSorters;
 
 import rx.Observable;
 
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
@@ -39,7 +39,7 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
     public static void setupClient() throws Exception {
         setupClusterClient();
         client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass
@@ -81,10 +81,10 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_B, value);
 
         List<String> keysA = getSingle(rx.clusterGetKeysInSlot(SLOT_A, 10).toList());
-        assertThat(keysA).isEqualTo(ImmutableList.of(KEY_A));
+        assertThat(keysA).isEqualTo(Collections.singletonList(KEY_A));
 
         List<String> keysB = getSingle(rx.clusterGetKeysInSlot(SLOT_B, 10).toList());
-        assertThat(keysB).isEqualTo(ImmutableList.of(KEY_B));
+        assertThat(keysB).isEqualTo(Collections.singletonList(KEY_B));
     }
 
     @Test

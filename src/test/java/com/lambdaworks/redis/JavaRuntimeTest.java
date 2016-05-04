@@ -6,20 +6,18 @@ import static org.junit.Assume.*;
 
 import org.junit.Test;
 
-import com.google.common.base.StandardSystemProperty;
-
 public class JavaRuntimeTest {
 
 
     @Test
     public void testJava8() {
-        assumeThat(StandardSystemProperty.JAVA_VERSION.value(), startsWith("1.8"));
+        assumeThat(System.getProperty("java.version"), startsWith("1.8"));
         assertThat(JavaRuntime.AT_LEAST_JDK_8).isTrue();
     }
 
     @Test
     public void testJava9() {
-        assumeThat(StandardSystemProperty.JAVA_VERSION.value(), startsWith("1.9"));
+        assumeThat(System.getProperty("java.version"), startsWith("1.9"));
         assertThat(JavaRuntime.AT_LEAST_JDK_8).isTrue();
     }
 

@@ -1,12 +1,15 @@
 package com.lambdaworks.apigenerator;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -16,9 +19,6 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 
 /**
  * Create sync API based on the templates.
@@ -28,14 +28,14 @@ import com.google.common.collect.Lists;
 @RunWith(Parameterized.class)
 public class CreateSyncNodeSelectionClusterApi {
 
-    private Set<String> FILTER_METHODS = ImmutableSet.of("shutdown", "debugOom", "debugSegfault", "digest", "close", "isOpen",
-            "BaseRedisCommands.reset", "readOnly", "readWrite");
+    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
+            "digest", "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite");
 
     private CompilationUnitFactory factory;
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
-        List<Object[]> result = Lists.newArrayList();
+        List<Object[]> result = new ArrayList<>();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
             if (templateName.contains("Transactional") || templateName.contains("Sentinel")) {
@@ -116,7 +116,7 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     protected Supplier<List<String>> importSupplier() {
-        return () -> ImmutableList.of();
+        return () -> Collections.emptyList();
     }
 
     @Test

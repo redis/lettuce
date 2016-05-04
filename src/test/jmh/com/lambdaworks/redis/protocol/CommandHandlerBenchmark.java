@@ -13,7 +13,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 
 /**
- * Benchmark for {@link Command}. Test cases:
+ * Benchmark for {@link CommandHandler}. Test cases:
  * <ul>
  * <li>user command writes</li>
  * <li>netty (in-eventloop) writes</li>

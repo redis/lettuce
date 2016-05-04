@@ -1,8 +1,8 @@
 package com.lambdaworks.redis.models.role;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.io.Serializable;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Redis slave instance.
@@ -25,8 +25,8 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
      * @param state slave state, must not be {@literal null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
-        checkArgument(master != null, "master must not be null");
-        checkArgument(state != null, "state must not be null");
+        LettuceAssert.notNull(master, "master must not be null");
+        LettuceAssert.notNull(state, "state must not be null");
         this.master = master;
         this.state = state;
     }
@@ -57,12 +57,12 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     }
 
     public void setMaster(ReplicationPartner master) {
-        checkArgument(master != null, "master must not be null");
+        LettuceAssert.notNull(master, "master must not be null");
         this.master = master;
     }
 
     public void setState(State state) {
-        checkArgument(state != null, "state must not be null");
+        LettuceAssert.notNull(state, "state must not be null");
         this.state = state;
     }
 

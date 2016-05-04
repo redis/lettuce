@@ -136,8 +136,7 @@ class ClusterScanSupport {
      * @return
      */
     private static List<String> getNodeIds(StatefulRedisClusterConnection<?, ?> connection) {
-        List<String> nodeIds;
-        nodeIds = new ArrayList<>();
+        List<String> nodeIds = new ArrayList<>();
 
         PartitionAccessor partitionAccessor = new PartitionAccessor(connection.getPartitions());
         for (RedisClusterNode redisClusterNode : partitionAccessor.getMasters()) {

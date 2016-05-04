@@ -2,11 +2,10 @@
 
 package com.lambdaworks.redis.output;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Abstract representation of the output of a redis command.
@@ -29,7 +28,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param output Initial value of output.
      */
     public CommandOutput(RedisCodec<K, V> codec, T output) {
-        checkArgument(codec != null, "RedisCodec must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
         this.codec = codec;
         this.output = output;
     }

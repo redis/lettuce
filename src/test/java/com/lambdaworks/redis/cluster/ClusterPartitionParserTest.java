@@ -4,13 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.internal.LettuceLists;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -42,7 +42,7 @@ public class ClusterPartitionParserTest {
         assertThat(p1.getUri().getHost()).isEqualTo("127.0.0.1");
         assertThat(p1.getUri().getPort()).isEqualTo(7381);
         assertThat(p1.getSlaveOf()).isNull();
-        assertThat(p1.getFlags()).isEqualTo(ImmutableSet.of(RedisClusterNode.NodeFlag.MASTER));
+        assertThat(p1.getFlags()).isEqualTo(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
         assertThat(p1.getPingSentTimestamp()).isEqualTo(111);
         assertThat(p1.getPongReceivedTimestamp()).isEqualTo(1401258245007L);
         assertThat(p1.getConfigEpoch()).isEqualTo(222);
@@ -96,12 +96,12 @@ public class ClusterPartitionParserTest {
         RedisClusterNode node = new RedisClusterNode();
         node.setConfigEpoch(1);
         node.setConnected(true);
-        node.setFlags(Sets.<RedisClusterNode.NodeFlag> newHashSet());
+        node.setFlags(new HashSet<>());
         node.setNodeId("abcd");
         node.setPingSentTimestamp(2);
         node.setPongReceivedTimestamp(3);
         node.setSlaveOf("me");
-        node.setSlots(ImmutableList.of(1, 2, 3));
+        node.setSlots(LettuceLists.unmodifiableList(1, 2, 3));
         node.setUri(new RedisURI("localhost", 1, 1, TimeUnit.DAYS));
         return node;
     }

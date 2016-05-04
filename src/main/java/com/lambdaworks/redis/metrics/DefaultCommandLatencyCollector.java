@@ -1,8 +1,10 @@
 package com.lambdaworks.redis.metrics;
 
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,7 +16,6 @@ import org.LatencyUtils.LatencyStats;
 import org.LatencyUtils.PauseDetector;
 import org.LatencyUtils.SimplePauseDetector;
 
-import com.google.common.collect.Maps;
 import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import io.netty.channel.local.LocalAddress;
@@ -32,7 +33,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
-    private Map<CommandLatencyId, Latencies> latencyMetrics = Maps.newConcurrentMap();
+    private Map<CommandLatencyId, Latencies> latencyMetrics = new ConcurrentHashMap<>();
 
     public DefaultCommandLatencyCollector(CommandLatencyCollectorOptions options) {
         this.options = options;
@@ -99,7 +100,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     @Override
     public Map<CommandLatencyId, CommandMetrics> retrieveMetrics() {
-        Map<CommandLatencyId, Latencies> copy = Maps.newHashMap();
+        Map<CommandLatencyId, Latencies> copy = new HashMap<>();
         copy.putAll(latencyMetrics);
         if (options.resetLatenciesAfterEvent()) {
             latencyMetrics.clear();
@@ -110,7 +111,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     private Map<CommandLatencyId, CommandMetrics> getMetrics(Map<CommandLatencyId, Latencies> latencyMetrics) {
-        Map<CommandLatencyId, CommandMetrics> latencies = Maps.newTreeMap();
+        Map<CommandLatencyId, CommandMetrics> latencies = new TreeMap<>();
 
         for (Map.Entry<CommandLatencyId, Latencies> entry : latencyMetrics.entrySet()) {
             Histogram firstResponse = entry.getValue().firstResponse.getIntervalHistogram();

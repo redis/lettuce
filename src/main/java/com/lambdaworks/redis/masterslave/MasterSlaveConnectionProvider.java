@@ -7,10 +7,6 @@ import java.util.*;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
@@ -19,6 +15,7 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
@@ -41,7 +38,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     private final StatefulRedisConnection<K, V> masterConnection;
     private final RedisURI initialRedisUri;
 
-    private List<RedisNodeDescription> knownNodes = Lists.newArrayList();
+    private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
     private boolean autoFlushCommands = true;
     private Object stateLock = new Object();
@@ -128,8 +125,8 @@ public class MasterSlaveConnectionProvider<K, V> {
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = Maps.newHashMap(connections.asMap());
-        Set<ConnectionKey> stale = Sets.newHashSet();
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new HashMap<>(connections.asMap());
+        Set<ConnectionKey> stale = new HashSet<>();
 
         for (ConnectionKey connectionKey : map.keySet()) {
 
@@ -183,7 +180,12 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
-        return (Collection) ImmutableSet.builder().addAll(connections.asMap().values()).add(masterConnection).build();
+
+        Set<StatefulRedisConnection<K, V>> connections = LettuceSets
+                .newHashSet(this.connections.asMap().values());
+        connections.add(masterConnection);
+
+        return (Collection) connections;
     }
 
     /**

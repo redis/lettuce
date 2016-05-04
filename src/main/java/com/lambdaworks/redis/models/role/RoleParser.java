@@ -1,13 +1,9 @@
 package com.lambdaworks.redis.models.role;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.*;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.google.common.primitives.Ints;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/role">ROLE</a> command output.
@@ -17,12 +13,26 @@ import com.google.common.primitives.Ints;
  */
 @SuppressWarnings("serial")
 public class RoleParser {
-    protected static final Map<String, RedisInstance.Role> ROLE_MAPPING = ImmutableMap.of("master", RedisInstance.Role.MASTER,
-            "slave", RedisInstance.Role.SLAVE, "sentinel", RedisInstance.Role.SENTINEL);
+    protected static final Map<String, RedisInstance.Role> ROLE_MAPPING;
+    protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING;
 
-    protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING = ImmutableMap.of("connect",
-            RedisSlaveInstance.State.CONNECT, "connected", RedisSlaveInstance.State.CONNECTED, "connecting",
-            RedisSlaveInstance.State.CONNECTING, "sync", RedisSlaveInstance.State.SYNC);
+    static {
+        Map<String, RedisInstance.Role> roleMap = new HashMap<>();
+        roleMap.put("master", RedisInstance.Role.MASTER);
+        roleMap.put("slave", RedisInstance.Role.SLAVE);
+        roleMap.put("sentinel", RedisInstance.Role.SENTINEL);
+
+        ROLE_MAPPING = Collections.unmodifiableMap(roleMap);
+
+        Map<String, RedisSlaveInstance.State> slaveStateMap = new HashMap<>();
+        slaveStateMap.put("connect", RedisSlaveInstance.State.CONNECT);
+        slaveStateMap.put("connected", RedisSlaveInstance.State.CONNECTED);
+        slaveStateMap.put("connecting",
+            RedisSlaveInstance.State.CONNECTING);
+        slaveStateMap.put("sync", RedisSlaveInstance.State.SYNC);
+
+        SLAVE_STATE_MAPPING = Collections.unmodifiableMap(slaveStateMap);
+    }
 
     /**
      * Utility constructor.
@@ -38,8 +48,8 @@ public class RoleParser {
      * @return RedisInstance
      */
     public static RedisInstance parse(List<?> roleOutput) {
-        checkArgument(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
-        checkArgument(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),
+        LettuceAssert.isTrue(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
+        LettuceAssert.isTrue(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),
                 "First role element must be a string (any of " + ROLE_MAPPING.keySet() + ")");
 
         RedisInstance.Role role = ROLE_MAPPING.get(roleOutput.get(0));
@@ -80,7 +90,7 @@ public class RoleParser {
         String stateString = getStringFromIterator(iterator, null);
         long replicationOffset = getLongFromIterator(iterator, 0);
 
-        ReplicationPartner master = new ReplicationPartner(HostAndPort.fromParts(ip, Ints.checkedCast(port)), replicationOffset);
+        ReplicationPartner master = new ReplicationPartner(HostAndPort.fromParts(ip, Math.toIntExact(port)), replicationOffset);
 
         RedisSlaveInstance.State state = SLAVE_STATE_MAPPING.get(stateString);
 
@@ -100,7 +110,7 @@ public class RoleParser {
     }
 
     private static List<String> getMonitoredMasters(Iterator<?> iterator) {
-        List<String> monitoredMasters = Lists.newArrayList();
+        List<String> monitoredMasters = new ArrayList<>();
 
         if (!iterator.hasNext()) {
             return monitoredMasters;
@@ -122,7 +132,7 @@ public class RoleParser {
     }
 
     private static List<ReplicationPartner> getMasterSlaveReplicationPartners(List<?> roleOutput) {
-        List<ReplicationPartner> slaves = Lists.newArrayList();
+        List<ReplicationPartner> slaves = new ArrayList<>();
         if (roleOutput.size() > 2 && roleOutput.get(2) instanceof Collection) {
             Collection<?> slavesOutput = (Collection<?>) roleOutput.get(2);
 
@@ -145,7 +155,7 @@ public class RoleParser {
         long port = getLongFromIterator(iterator, 0);
         long replicationOffset = getLongFromIterator(iterator, 0);
 
-        return new ReplicationPartner(HostAndPort.fromParts(ip, Ints.checkedCast(port)), replicationOffset);
+        return new ReplicationPartner(HostAndPort.fromParts(ip, Math.toIntExact(port)), replicationOffset);
     }
 
     private static long getLongFromIterator(Iterator<?> iterator, long defaultValue) {

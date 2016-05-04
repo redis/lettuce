@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.internal.LettuceLists;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -18,7 +19,6 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.google.common.collect.ImmutableList;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisClient;
@@ -46,7 +46,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(ImmutableList.of(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
 
     }
 

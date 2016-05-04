@@ -2,13 +2,13 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.AsyncCommand;
@@ -52,7 +52,7 @@ public class ClusterCommandInternalsTest {
     @Test
     public void testCompleteListener() throws Exception {
 
-        final List<String> someList = Lists.newArrayList();
+        final List<String> someList = new ArrayList<>();
 
         AsyncCommand<?, ?, ?> asyncCommand = new AsyncCommand<>(sut);
 

@@ -1,8 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
+import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
@@ -17,7 +17,7 @@ class ReadOnlyCommands {
 
     static {
 
-        Set<ProtocolKeyword> set = Sets.newHashSet();
+        Set<ProtocolKeyword> set = new HashSet<ProtocolKeyword>(CommandName.values().length);
 
         for (CommandName commandNames : CommandName.values()) {
             set.add(CommandType.valueOf(commandNames.name()));
