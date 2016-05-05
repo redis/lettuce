@@ -405,8 +405,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                         return;
                     }
 
-                    queuedCommands = new ArrayList<>(commandBuffer);
-                    commandBuffer.removeAll(queuedCommands);
+                    queuedCommands = new ArrayList<>(commandBuffer.size());
+                    RedisCommand<K, V, ?> cmd;
+                    while ((cmd = commandBuffer.poll()) != null) {
+                        queuedCommands.add(cmd);
+                    }
                 } finally {
                     unlockWritersExclusive();
                 }
