@@ -1,11 +1,10 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lambdaworks.redis.cluster.SlotHash;
 
 /**
@@ -34,8 +33,9 @@ import com.lambdaworks.redis.cluster.SlotHash;
  */
 public class Partitions implements Collection<RedisClusterNode> {
 
-    private List<RedisClusterNode> partitions = Lists.newArrayList();
-    private RedisClusterNode slotCache[];
+    private List<RedisClusterNode> partitions = new ArrayList<>();
+    private final static RedisClusterNode[] EMPTY = new RedisClusterNode[SlotHash.SLOT_COUNT];
+    private volatile RedisClusterNode slotCache[] = EMPTY;
 
     /**
      * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
@@ -66,17 +66,19 @@ public class Partitions implements Collection<RedisClusterNode> {
      * Update the partition cache. Updates are necessary after the partition details have changed.
      */
     public synchronized void updateCache() {
-        if (slotCache == null) {
-            slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
-        } else {
-            Arrays.fill(slotCache, null);
+
+        if (partitions.isEmpty()) {
+            this.slotCache = EMPTY;
+            return;
         }
 
+        RedisClusterNode[] slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
         for (RedisClusterNode partition : partitions) {
             for (Integer integer : partition.getSlots()) {
                 slotCache[integer.intValue()] = partition;
             }
         }
+        this.slotCache = slotCache;
     }
 
     @Override
@@ -89,7 +91,7 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     public void addPartition(RedisClusterNode partition) {
-        slotCache = null;
+        slotCache = EMPTY;
         partitions.add(partition);
     }
 
@@ -157,6 +159,7 @@ public class Partitions implements Collection<RedisClusterNode> {
         getPartitions().clear();
         updateCache();
     }
+
     @Override
     public Object[] toArray() {
         return getPartitions().toArray();
