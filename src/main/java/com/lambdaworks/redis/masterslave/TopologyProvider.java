@@ -16,7 +16,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 public interface TopologyProvider {
 
     /**
-     * Lookup the nodes within the topology.
+     * Lookup nodes within the topology.
      * 
      * @return list of {@link RedisNodeDescription} instances
      * @throws RedisException on errors that occured during the lookup

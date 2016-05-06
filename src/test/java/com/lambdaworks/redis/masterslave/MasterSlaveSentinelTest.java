@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisClient;
@@ -15,6 +16,8 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.sentinel.AbstractSentinelTest;
+
+import io.netty.channel.group.ChannelGroup;
 
 /**
  * @author Mark Paluch
@@ -45,6 +48,41 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
         assertThatServerIs(server, "master");
 
         connection.close();
+    }
+
+    @Test
+    public void testMasterSlaveSentinelConnectionCount() throws Exception {
+
+        ChannelGroup channels = (ChannelGroup) ReflectionTestUtils.getField(sentinelClient, "channels");
+        int count = channels.size();
+
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(sentinelClient,
+                new Utf8StringCodec(), sentinelUri);
+
+        connection.sync().ping();
+        connection.setReadFrom(ReadFrom.SLAVE);
+        slaveCall(connection);
+
+        assertThat(channels.size()).isEqualTo(count + 2 /* connections */ + 1 /* sentinel connections */);
+
+        connection.close();
+    }
+
+    @Test
+    public void testMasterSlaveSentinelClosesSentinelConnections() throws Exception {
+
+        ChannelGroup channels = (ChannelGroup) ReflectionTestUtils.getField(sentinelClient, "channels");
+        int count = channels.size();
+
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(sentinelClient,
+                new Utf8StringCodec(), sentinelUri);
+
+        connection.sync().ping();
+        connection.setReadFrom(ReadFrom.SLAVE);
+        slaveCall(connection);
+        connection.close();
+
+        assertThat(channels.size()).isEqualTo(count);
     }
 
     protected void assertThatServerIs(String server, String expectation) {

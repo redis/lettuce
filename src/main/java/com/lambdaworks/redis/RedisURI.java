@@ -639,6 +639,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             return EpollProvider.newSocketAddress(getSocket());
         }
         InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+
         return socketAddress;
     }
 

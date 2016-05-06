@@ -1,22 +1,27 @@
 package com.lambdaworks.redis.masterslave;
 
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.models.role.RedisInstance;
-import com.lambdaworks.redis.models.role.RedisNodeDescription;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Test;
+
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.models.role.RedisInstance;
+import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * @author Mark Paluch
  */
 public class MasterSlaveTopologyProviderTest {
 
-    private MasterSlaveTopologyProvider sut = new MasterSlaveTopologyProvider(null, RedisURI.Builder.redis(TestSettings.host(),
-            TestSettings.port()).build());
+    private StatefulRedisConnection<String, String> connectionMock = mock(StatefulRedisConnection.class);
+
+    private MasterSlaveTopologyProvider sut = new MasterSlaveTopologyProvider(connectionMock,
+            RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
 
     @Test
     public void testMaster() throws Exception {
@@ -37,11 +42,11 @@ public class MasterSlaveTopologyProviderTest {
     @Test
     public void testMasterIsASlave() throws Exception {
 
-        String info = "# Replication\r\n" + "role:slave\r\n" + "connected_slaves:1\r\n" + "master_repl_offset:56276\r\n"
-                + "repl_backlog_active:1\r\n";
+        String info = "# Replication\r\n" + "role:slave\r\n" + "connected_slaves:1\r\n" + "master_host:127.0.0.1\r\n"
+                + "master_port:1234\r\n" + "master_repl_offset:56276\r\n" + "repl_backlog_active:1\r\n";
 
         List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
-        assertThat(result).hasSize(1);
+        assertThat(result).hasSize(2);
 
         RedisNodeDescription redisNodeDescription = result.get(0);
 

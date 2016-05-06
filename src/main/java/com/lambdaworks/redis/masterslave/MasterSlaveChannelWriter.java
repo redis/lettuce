@@ -25,6 +25,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
+
         LettuceAssert.notNull(command, "command must not be null");
 
         if (closed) {
@@ -38,6 +39,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
     }
 
     private MasterSlaveConnectionProvider.Intent getIntent(ProtocolKeyword type) {
+
         for (ProtocolKeyword readOnlyCommand : ReadOnlyCommands.READ_ONLY_COMMANDS) {
             if (readOnlyCommand == type) {
                 return MasterSlaveConnectionProvider.Intent.READ;

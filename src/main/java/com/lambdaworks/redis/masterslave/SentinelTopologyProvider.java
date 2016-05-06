@@ -14,6 +14,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
@@ -28,6 +29,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 4.1
  */
 public class SentinelTopologyProvider implements TopologyProvider {
+
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(SentinelTopologyProvider.class);
 
     private final String masterId;
@@ -36,7 +38,19 @@ public class SentinelTopologyProvider implements TopologyProvider {
     private final long timeout;
     private final TimeUnit timeUnit;
 
+    /**
+     * Creates a new {@link SentinelTopologyProvider}.
+     *
+     * @param masterId must not be empty
+     * @param redisClient must not be {@literal null}.
+     * @param sentinelUri must not be {@literal null}.
+     */
     public SentinelTopologyProvider(String masterId, RedisClient redisClient, RedisURI sentinelUri) {
+
+        LettuceAssert.notEmpty(masterId, "MasterId must not be empty");
+        LettuceAssert.notNull(redisClient, "RedisClient must not be null");
+        LettuceAssert.notNull(sentinelUri, "Sentinel URI must not be null");
+
         this.masterId = masterId;
         this.redisClient = redisClient;
         this.sentinelUri = sentinelUri;
@@ -60,7 +74,8 @@ public class SentinelTopologyProvider implements TopologyProvider {
                 List<Map<String, String>> slaves = slavesFuture.get(timeout, timeUnit);
 
                 result.add(toNode(master, RedisInstance.Role.MASTER));
-                result.addAll(slaves.stream().map(map -> toNode(map, RedisInstance.Role.SLAVE)).collect(Collectors.toList()));
+                result.addAll(slaves.stream().filter(SentinelTopologyProvider::isAvailable)
+                        .map(map -> toNode(map, RedisInstance.Role.SLAVE)).collect(Collectors.toList()));
 
             } catch (ExecutionException | InterruptedException | TimeoutException e) {
                 throw new RedisException(e);
@@ -70,10 +85,22 @@ public class SentinelTopologyProvider implements TopologyProvider {
         }
     }
 
+    private static boolean isAvailable(Map<String, String> map) {
+
+        String flags = map.get("flags");
+        if (flags != null) {
+            if (flags.contains("s_down") || flags.contains("o_down") || flags.contains("disconnected")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private RedisNodeDescription toNode(Map<String, String> map, RedisInstance.Role role) {
+
         String ip = map.get("ip");
         String port = map.get("port");
-        return new RedisMasterSlaveNode(ip, Integer.parseInt(port), role);
+        return new RedisMasterSlaveNode(ip, Integer.parseInt(port), sentinelUri, role);
     }
 
 }

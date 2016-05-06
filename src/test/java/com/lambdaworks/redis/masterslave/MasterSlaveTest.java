@@ -1,6 +1,13 @@
 package com.lambdaworks.redis.masterslave;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.models.role.RedisNodeDescription;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,26 +15,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.models.role.RedisNodeDescription;
-import org.assertj.core.util.Lists;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.internal.LettuceLists;
-import com.lambdaworks.redis.models.role.RedisNodeDescription;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Mark Paluch
  */
 public class MasterSlaveTest extends AbstractRedisClientTest {
 
-    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd).withDatabase(5).build();
+    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd).withDatabase(5)
+            .build();
     private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
     private RedisAsyncCommands<String, String> node1;
     private RedisAsyncCommands<String, String> node2;
@@ -85,6 +81,18 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
         assertThat(redisCommands.get(key)).isEqualTo(value);
     }
 
+    @Test
+    public void testConnectToSlave() throws Exception {
+
+        connection.close();
+
+        RedisURI slaveUri = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).build();
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(), slaveUri);
+
+        RedisCommands<String, String> sync = connection.sync();
+        sync.set(key, value);
+    }
+
     @Test(expected = RedisException.class)
     public void noSlaveForRead() throws Exception {
 
@@ -117,7 +125,7 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
 
         connectionProvider.setKnownNodes(Collections.emptyList());
 
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
+        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
     }
 
     protected static String slaveCall(StatefulRedisMasterSlaveConnection<String, String> connection) {

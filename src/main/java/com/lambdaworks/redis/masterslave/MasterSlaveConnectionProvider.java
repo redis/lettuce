@@ -1,9 +1,5 @@
 package com.lambdaworks.redis.masterslave;
 
-import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
-
-import java.util.*;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -18,9 +14,12 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import java.util.*;
+
+import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
 
 /**
  * Connection provider for master/slave setups. The connection provider
@@ -35,7 +34,6 @@ public class MasterSlaveConnectionProvider<K, V> {
 
     // Contains HostAndPort-identified connections.
     private final LoadingCache<ConnectionKey, StatefulRedisConnection<K, V>> connections;
-    private final StatefulRedisConnection<K, V> masterConnection;
     private final RedisURI initialRedisUri;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
@@ -44,12 +42,25 @@ public class MasterSlaveConnectionProvider<K, V> {
     private Object stateLock = new Object();
     private ReadFrom readFrom;
 
+    @Deprecated
     public MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec,
-                                         StatefulRedisConnection<K, V> masterConnection, RedisURI initialRedisUri) {
-        this.masterConnection = masterConnection;
+            StatefulRedisConnection<K, V> masterConnection, RedisURI initialRedisUri) {
         this.initialRedisUri = initialRedisUri;
         this.debugEnabled = logger.isDebugEnabled();
         this.connections = CacheBuilder.newBuilder().build(new ConnectionFactory<>(redisClient, redisCodec));
+        connections.put(toConnectionKey(initialRedisUri), masterConnection);
+    }
+
+    MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
+            Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
+
+        this.initialRedisUri = initialRedisUri;
+        this.debugEnabled = logger.isDebugEnabled();
+        this.connections = CacheBuilder.newBuilder().build(new ConnectionFactory<>(redisClient, redisCodec));
+
+        for (Map.Entry<RedisURI, StatefulRedisConnection<K, V>> entry : initialConnections.entrySet()) {
+            connections.put(toConnectionKey(entry.getKey()), entry.getValue());
+        }
     }
 
     /**
@@ -81,8 +92,8 @@ public class MasterSlaveConnectionProvider<K, V> {
             });
 
             if (selection.isEmpty()) {
-                throw new RedisException("Cannot determine a node to read (Known nodes: " + knownNodes + ") with setting "
-                        + readFrom);
+                throw new RedisException(
+                        "Cannot determine a node to read (Known nodes: " + knownNodes + ") with setting " + readFrom);
             }
             try {
                 for (RedisNodeDescription redisNodeDescription : selection) {
@@ -97,17 +108,12 @@ public class MasterSlaveConnectionProvider<K, V> {
             }
         }
 
-        return masterConnection;
+        return getConnection(getMaster());
     }
 
     protected StatefulRedisConnection<K, V> getConnection(RedisNodeDescription redisNodeDescription) {
-
-        if (redisNodeDescription.getRole() == RedisInstance.Role.MASTER) {
-            return masterConnection;
-        }
-
-        return connections.getUnchecked(new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription
-                .getUri().getPort()));
+        return connections.getUnchecked(
+                new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription.getUri().getPort()));
     }
 
     /**
@@ -115,8 +121,7 @@ public class MasterSlaveConnectionProvider<K, V> {
      * @return number of connections.
      */
     protected long getConnectionCount() {
-        // +1 because the master connection is static
-        return connections.size() + 1;
+        return connections.size();
     }
 
     /**
@@ -130,7 +135,8 @@ public class MasterSlaveConnectionProvider<K, V> {
 
         for (ConnectionKey connectionKey : map.keySet()) {
 
-            if (connectionKey.host != null && findNodeByHostAndPort(knownNodes, connectionKey.host, connectionKey.port) != null) {
+            if (connectionKey.host != null
+                    && findNodeByHostAndPort(knownNodes, connectionKey.host, connectionKey.port) != null) {
                 continue;
             }
             stale.add(connectionKey);
@@ -181,10 +187,7 @@ public class MasterSlaveConnectionProvider<K, V> {
 
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
 
-        Set<StatefulRedisConnection<K, V>> connections = LettuceSets
-                .newHashSet(this.connections.asMap().values());
-        connections.add(masterConnection);
-
+        Set<StatefulRedisConnection<K, V>> connections = LettuceSets.newHashSet(this.connections.asMap().values());
         return (Collection) connections;
     }
 
@@ -210,6 +213,16 @@ public class MasterSlaveConnectionProvider<K, V> {
         synchronized (stateLock) {
             this.readFrom = readFrom;
         }
+    }
+
+    public RedisNodeDescription getMaster() {
+        for (RedisNodeDescription knownNode : knownNodes) {
+            if (knownNode.getRole() == RedisInstance.Role.MASTER) {
+                return knownNode;
+            }
+        }
+
+        throw new IllegalStateException("Master is currently unknown: " + knownNodes);
     }
 
     private class ConnectionFactory<K, V> extends CacheLoader<ConnectionKey, StatefulRedisConnection<K, V>> {
@@ -241,6 +254,10 @@ public class MasterSlaveConnectionProvider<K, V> {
 
             return connection;
         }
+    }
+
+    private ConnectionKey toConnectionKey(RedisURI redisURI) {
+        return new ConnectionKey(redisURI.getHost(), redisURI.getPort());
     }
 
     /**
