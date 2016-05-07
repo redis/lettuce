@@ -942,6 +942,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<V> spop(K key, long count) {
+        return createDissolvingObservable(() -> commandBuilder.spop(key, count));
+    }
+
+    @Override
     public Observable<V> srandmember(K key) {
         return createObservable(() -> commandBuilder.srandmember(key));
     }

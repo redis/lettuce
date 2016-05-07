@@ -975,6 +975,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SPOP, new ValueOutput<K, V>(codec), key);
     }
 
+    public Command<K, V, Set<V>> spop(K key, long count) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(count);
+        return createCommand(SPOP, new ValueSetOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, V> srandmember(K key) {
         return createCommand(SRANDMEMBER, new ValueOutput<K, V>(codec), key);
     }

@@ -119,6 +119,15 @@ public class SetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void spopMultiple() throws Exception {
+        assertThat(redis.spop(key)).isNull();
+        redis.sadd(key, "a", "b", "c");
+        Set<String> rand = redis.spop(key, 2);
+        assertThat(rand).hasSize(2);
+        assertThat(set("a", "b", "c").containsAll(rand)).isTrue();
+    }
+
+    @Test
     public void srandmember() throws Exception {
         assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c", "d");

@@ -140,7 +140,16 @@ public interface NodeSelectionSetCommands<K, V> {
     Executions<V> spop(K key);
 
     /**
-     * Get one or multiple random members from a set.
+     * Remove and return one or multiple random members from a set.
+     *
+     * @param key the key
+     * @param count number of members to pop
+     * @return V bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
+     */
+    Executions<Set<V>> spop(K key, long count);
+
+    /**
+     * Get one random member from a set.
      * 
      * @param key the key
      * 
