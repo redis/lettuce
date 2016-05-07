@@ -1,6 +1,10 @@
 language: java
 jdk:
   - oraclejdk8
+env:
+  matrix:
+    - PROFILE=netty-40
+    - PROFILE=netty-41next
 sudo: false
 before_install:
   - if [[ ! -f stunnel.tar.gz ]]; then wget -O stunnel.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.29.tar.gz; fi
@@ -8,7 +12,7 @@ before_install:
   - if [[ ! -f ./stunnel-5.29/src/stunnel ]]; then cd ./stunnel-5.29; ./configure; make; cd ..; fi
   - export PATH="$PATH:$(pwd)/stunnel-5.29/src"
 install: make prepare ssl-keys
-script: make test-coveralls
+script: make test-coveralls PROFILE=${PROFILE}
 cache:
   directories:
     - '$HOME/.m2/repository'

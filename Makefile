@@ -4,6 +4,7 @@ STUNNEL_BIN := $(shell which stunnel)
 BREW_BIN := $(shell which brew)
 YUM_BIN := $(shell which yum)
 APT_BIN := $(shell which apt-get)
+PROFILE ?= netty-40
 
 define REDIS_CLUSTER_CONFIG1
 c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 1434887920102 1434887920002 0 connected 12000-16383
@@ -313,11 +314,11 @@ stop:
 	pkill redis-sentinel && sleep 1 || true
 
 test-coveralls: start
-	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:report
+	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:report -P$(PROFILE)
 	$(MAKE) stop
 
 test: start
-	mvn -B -DskipTests=false clean compile test
+	mvn -B -DskipTests=false clean compile test -P$(PROFILE)
 	$(MAKE) stop
 
 prepare: stop
