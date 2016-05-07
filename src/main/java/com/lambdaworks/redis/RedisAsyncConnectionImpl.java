@@ -959,6 +959,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Set<V>> spop(K key, long count) {
+        return dispatch(commandBuilder.spop(key, count));
+    }
+
+    @Override
     public RedisFuture<V> srandmember(K key) {
         return dispatch(commandBuilder.srandmember(key));
     }

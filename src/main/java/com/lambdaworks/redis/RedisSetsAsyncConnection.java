@@ -13,6 +13,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @since 3.0
  */
 public interface RedisSetsAsyncConnection<K, V> {
+
     /**
      * Add one or more members to a set.
      * 
@@ -133,6 +134,15 @@ public interface RedisSetsAsyncConnection<K, V> {
      * @return RedisFuture&lt;V&gt; bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
      */
     RedisFuture<V> spop(K key);
+
+    /**
+     * Remove and return one or multiple random members from a set.
+     *
+     * @param key the key
+     * @param count number of members to pop
+     * @return RedisFuture&lt;Set&lt;V&gt;&gt; bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
+     */
+    RedisFuture<Set<V>> spop(K key, long count);
 
     /**
      * Get one or multiple random members from a set.
