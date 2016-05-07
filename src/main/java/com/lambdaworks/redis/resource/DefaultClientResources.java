@@ -114,12 +114,22 @@ public class DefaultClientResources implements ClientResources {
             eventBus = builder.eventBus;
         }
 
-        if (builder.commandLatencyCollector == null) {
-            if (builder.commandLatencyCollectorOptions != null) {
-                commandLatencyCollector = new DefaultCommandLatencyCollector(builder.commandLatencyCollectorOptions);
-            } else {
-                commandLatencyCollector = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+        if (builder.commandLatencyCollector == null)
+        {
+            if(DefaultCommandLatencyCollector.isAvailable()) {
+                if (builder.commandLatencyCollectorOptions != null) {
+                    commandLatencyCollector = new DefaultCommandLatencyCollector(
+                            builder.commandLatencyCollectorOptions);
+                } else {
+                    commandLatencyCollector = new DefaultCommandLatencyCollector(
+                            DefaultCommandLatencyCollectorOptions.create());
+                }
+            }else{
+                logger.debug("LatencyUtils/HdrUtils are not available, metrics are disabled");
+                builder.commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.disabled();
+                commandLatencyCollector = DefaultCommandLatencyCollector.disabled();
             }
+
             sharedCommandLatencyCollector = false;
         } else {
             sharedCommandLatencyCollector = true;

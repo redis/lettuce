@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assume.*;
 
+import com.lambdaworks.redis.internal.LettuceClassUtils;
 import org.junit.Test;
 
 import com.google.common.base.StandardSystemProperty;
@@ -44,6 +45,6 @@ public class JavaRuntimeTest {
 
     @Test
     public void testNotPresentClass() {
-        assertThat(JavaRuntime.isPresent("total.fancy.class.name")).isFalse();
+        assertThat(LettuceClassUtils.isPresent("total.fancy.class.name")).isFalse();
     }
 }

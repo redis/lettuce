@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.lambdaworks.redis.LettuceStrings.isEmpty;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -37,6 +38,7 @@ import com.lambdaworks.redis.resource.ClientResources;
  */
 public class RedisClient extends AbstractRedisClient {
 
+    private final static boolean POOL_AVAILABLE = isPresent("org.apache.commons.pool2.impl.GenericObjectPool");
     private final RedisURI redisURI;
 
     protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
@@ -177,7 +179,8 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisConnection<String, String>> pool() {
@@ -187,7 +190,8 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
@@ -199,7 +203,8 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -209,6 +214,8 @@ public class RedisClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     public <K, V> RedisConnectionPool<RedisConnection<K, V>> pool(final RedisCodec<K, V> codec, int maxIdle, int maxActive) {
+
+        checkPoolDependency();
         checkForRedisURI();
         checkArgument(codec != null, "RedisCodec must not be null");
 
@@ -243,16 +250,11 @@ public class RedisClient extends AbstractRedisClient {
         return TimeUnit.MILLISECONDS.convert(timeout, unit);
     }
 
-    private void checkForRedisURI() {
-        checkState(this.redisURI != null,
-                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
-        checkValidRedisURI(this.redisURI);
-    }
-
     /**
      * Creates a connection pool for asynchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisAsyncConnection<String, String>> asyncPool() {
@@ -262,7 +264,8 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
@@ -273,8 +276,8 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore.
-     * 
+     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -284,6 +287,8 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> RedisConnectionPool<RedisAsyncConnection<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
             int maxActive) {
+
+        checkPoolDependency();
         checkForRedisURI();
         checkArgument(codec != null, "RedisCodec must not be null");
 
@@ -316,7 +321,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Open a new synchronous connection to a Redis server that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new connection
      */
     public RedisConnection<String, String> connect() {
@@ -777,5 +782,26 @@ public class RedisClient extends AbstractRedisClient {
 
     private static void assertNotNull(ClientResources clientResources) {
         checkArgument(clientResources != null, "ClientResources must not be null");
+    }
+
+    private void checkForRedisURI() {
+        checkState(this.redisURI != null,
+                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
+        checkValidRedisURI(this.redisURI);
+    }
+
+    private void checkPoolDependency() {
+        checkState(POOL_AVAILABLE, "Cannot use connection pooling without the optional Apache commons-pool2 library on the class path");
+    }
+
+    /**
+     * Set the {@link ClientOptions} for the client.
+     *
+     * @param clientOptions the new client options
+     * @throws IllegalArgumentException if {@literal clientOptions} is null
+     */
+    @Override
+    public void setOptions(ClientOptions clientOptions) {
+        super.setOptions(clientOptions);
     }
 }
