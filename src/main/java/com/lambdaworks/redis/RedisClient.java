@@ -2,18 +2,6 @@
 
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.LettuceStrings.isEmpty;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
-
-import java.net.ConnectException;
-import java.net.SocketAddress;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
-
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -31,6 +19,19 @@ import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
+import java.net.ConnectException;
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
  * blocking and transactional operations such as BLPOP and MULTI/EXEC. {@link RedisClient} is an expensive resource. It holds a
@@ -43,6 +44,7 @@ import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 public class RedisClient extends AbstractRedisClient {
 
     private final RedisURI redisURI;
+    private final static boolean POOL_AVAILABLE = isPresent("org.apache.commons.pool2.impl.GenericObjectPool");
 
     protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
         super(clientResources);
@@ -182,6 +184,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore.
+     * Requires Apache commons-pool2 dependency.
      * 
      * @return a new {@link RedisConnectionPool} instance
      */
@@ -192,6 +195,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
+     * Requires Apache commons-pool2 dependency.
      * 
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -204,6 +208,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
+     * Requires Apache commons-pool2 dependency.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
@@ -215,7 +220,9 @@ public class RedisClient extends AbstractRedisClient {
     @SuppressWarnings("unchecked")
     public <K, V> RedisConnectionPool<RedisCommands<K, V>> pool(final RedisCodec<K, V> codec, int maxIdle, int maxActive) {
 
+        checkPoolDependency();
         checkForRedisURI();
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
 
         long maxWait = makeTimeout();
         RedisConnectionPool<RedisCommands<K, V>> pool = new RedisConnectionPool<>(
@@ -243,16 +250,11 @@ public class RedisClient extends AbstractRedisClient {
         return TimeUnit.MILLISECONDS.convert(timeout, unit);
     }
 
-    private void checkForRedisURI() {
-        LettuceAssert.assertState(this.redisURI != null,
-                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
-        checkValidRedisURI(this.redisURI);
-    }
-
     /**
      * Creates a connection pool for asynchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @return a new {@link RedisConnectionPool} instance
      */
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool() {
@@ -262,7 +264,8 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore.
-     * 
+     * Requires Apache commons-pool2 dependency.
+     *
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
@@ -273,8 +276,8 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore.
-     * 
+     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -284,6 +287,8 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
             int maxActive) {
+
+        checkPoolDependency();
         checkForRedisURI();
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
 
@@ -311,7 +316,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Open a new connection to a Redis server that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new stateful Redis connection
      */
     public StatefulRedisConnection<String, String> connect() {
@@ -320,7 +325,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -357,7 +362,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Open a new asynchronous connection to a Redis server that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new connection
      */
     @Deprecated
@@ -368,7 +373,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and
      * values.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -560,7 +565,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to a Redis Sentinel that treats keys and values as UTF-8 strings. You must supply a
      * valid RedisURI containing one or more sentinels.
-     * 
+     *
      * @return a new connection
      * @deprecated Use {@code connectSentinel().async()}
      */
@@ -572,7 +577,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to a Redis Sentinela nd use the supplied {@link RedisCodec codec} to encode/decode
      * keys and values. You must supply a valid RedisURI containing one or more sentinels.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -817,6 +822,16 @@ public class RedisClient extends AbstractRedisClient {
 
     private static void assertNotNull(ClientResources clientResources) {
         LettuceAssert.notNull(clientResources, "ClientResources must not be null");
+    }
+
+    private void checkForRedisURI() {
+        LettuceAssert.assertState(this.redisURI != null,
+                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
+        checkValidRedisURI(this.redisURI);
+    }
+
+    private void checkPoolDependency() {
+        LettuceAssert.assertState(POOL_AVAILABLE, "Cannot use connection pooling without the optional Apache commons-pool2 library on the class path");
     }
 
     /**

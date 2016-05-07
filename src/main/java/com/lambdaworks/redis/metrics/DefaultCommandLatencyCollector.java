@@ -1,6 +1,17 @@
 package com.lambdaworks.redis.metrics;
 
+import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+import io.netty.channel.local.LocalAddress;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import org.HdrHistogram.Histogram;
+import org.LatencyUtils.LatencyStats;
+import org.LatencyUtils.PauseDetector;
+import org.LatencyUtils.SimplePauseDetector;
+
 import java.net.SocketAddress;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,16 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import org.HdrHistogram.Histogram;
-import org.LatencyUtils.LatencyStats;
-import org.LatencyUtils.PauseDetector;
-import org.LatencyUtils.SimplePauseDetector;
-
-import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
-import com.lambdaworks.redis.protocol.ProtocolKeyword;
-import io.netty.channel.local.LocalAddress;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 /**
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
@@ -28,6 +30,8 @@ import io.netty.channel.local.LocalAddress;
 public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private static final AtomicReference<PauseDetectorWrapper> PAUSE_DETECTOR = new AtomicReference<>();
+    private static final boolean LATENCY_UTILS_AVAILABLE = isPresent("org.LatencyUtils.PauseDetector");
+    private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
 
     private static final long MIN_LATENCY = 1000;
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
@@ -151,6 +155,44 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         return percentiles;
     }
 
+    /**
+     * Returns {@literal true} if HdrUtils and LatencyUtils are available on the class path.
+     * 
+     * @return
+     */
+    public static boolean isAvailable() {
+        return LATENCY_UTILS_AVAILABLE && HDR_UTILS_AVAILABLE;
+    }
+
+    /**
+     * Returns a disabled no-op {@link CommandLatencyCollector}.
+     * 
+     * @return
+     */
+    public static CommandLatencyCollector disabled() {
+
+        return new CommandLatencyCollector() {
+            @Override
+            public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
+                    long firstResponseLatency, long completionLatency) {
+            }
+
+            @Override
+            public void shutdown() {
+            }
+
+            @Override
+            public Map<CommandLatencyId, CommandMetrics> retrieveMetrics() {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return false;
+            }
+        };
+    }
+
     private static class Latencies {
 
         public final LatencyStats firstResponse;
@@ -168,7 +210,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         public void initialize() {
 
-            if(counter.getAndIncrement() > 0){
+            if (counter.getAndIncrement() > 0) {
                 InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
                 instance.info("Initialized PauseDetectorWrapper more than once.");
             }

@@ -1,13 +1,15 @@
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assume.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.junit.Assume.assumeThat;
 
+import com.lambdaworks.redis.internal.LettuceClassUtils;
 import org.junit.Test;
 
-public class JavaRuntimeTest {
+import com.lambdaworks.redis.internal.LettuceAssert;
 
+public class JavaRuntimeTest {
 
     @Test
     public void testJava8() {
@@ -23,6 +25,6 @@ public class JavaRuntimeTest {
 
     @Test
     public void testNotPresentClass() {
-        assertThat(JavaRuntime.isPresent("total.fancy.class.name")).isFalse();
+        assertThat(LettuceClassUtils.isPresent("total.fancy.class.name")).isFalse();
     }
 }

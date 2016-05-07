@@ -1,8 +1,8 @@
 package com.lambdaworks.redis.metrics;
 
-import java.util.concurrent.TimeUnit;
-
 import com.lambdaworks.redis.internal.LettuceAssert;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * The default implementation of {@link CommandLatencyCollectorOptions}.

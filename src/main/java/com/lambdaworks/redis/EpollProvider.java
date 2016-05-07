@@ -7,6 +7,7 @@ import java.util.concurrent.ThreadFactory;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 
+import com.lambdaworks.redis.internal.LettuceClassUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.internal.logging.InternalLogger;
@@ -44,7 +45,7 @@ public class EpollProvider {
      */
     private static <T> Class<T> getClass(String className) {
         try {
-            return (Class) JavaRuntime.forName(className);
+            return (Class) LettuceClassUtils.forName(className);
         } catch (ClassNotFoundException e) {
             logger.debug("Cannot load class " + className, e);
         }
