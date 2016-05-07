@@ -21,6 +21,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @since 4.0
  */
 public interface RedisSortedSetCommands<K, V> {
+
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 

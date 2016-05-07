@@ -15,6 +15,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  * @since 4.0
  */
 public interface RedisServerCommands<K, V> {
+
     /**
      * Asynchronously rewrite the append-only file.
      * 
