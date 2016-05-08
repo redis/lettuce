@@ -142,7 +142,7 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>3.9.3</version>
+      <version>4.0.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -269,6 +269,10 @@
             <property>
               <name>derby.stream.error.file</name>
               <value>${project.build.directory}/derby.log</value>
+            </property>
+            <property>
+              <name>com.atomikos.icatch.log_base_dir</name>
+              <value>${project.build.directory}</value>
             </property>
         </systemProperties>
         </configuration>
