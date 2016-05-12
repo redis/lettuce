@@ -20,7 +20,6 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
@@ -30,6 +29,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
+
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -427,7 +428,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     protected SocketAddress getSocketAddress(String nodeId) {
         for (RedisClusterNode partition : partitions) {
             if (partition.getNodeId().equals(nodeId)) {
-                return partition.getUri().getResolvedAddress();
+                return SocketAddressResolver.resolve(partition.getUri(), redisClusterClient.getResources().dnsResolver());
             }
         }
         return null;

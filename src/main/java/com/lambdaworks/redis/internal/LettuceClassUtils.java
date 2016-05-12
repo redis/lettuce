@@ -6,7 +6,7 @@ import com.lambdaworks.redis.JavaRuntime;
  * Miscellaneous class utility methods. Mainly for internal use within the framework.
  *
  * @author Mark Paluch
- * @since 4.2
+ * @since 3.5 (Backported from 4.2)
  */
 public class LettuceClassUtils {
 

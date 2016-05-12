@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+
+import java.net.SocketAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +29,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -225,12 +228,13 @@ class ClusterTopologyRefresh {
         Map<RedisURI, RedisAsyncConnectionImpl<String, String>> connections = Maps.newTreeMap(RedisUriComparator.INSTANCE);
 
         for (RedisURI redisURI : seed) {
-            if (redisURI.getResolvedAddress() == null) {
+            if (redisURI.getHost() == null) {
                 continue;
             }
 
             try {
-                RedisAsyncConnectionImpl<String, String> connection = client.connectAsyncImpl(redisURI.getResolvedAddress());
+                SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, client.getResources().dnsResolver());
+                RedisAsyncConnectionImpl<String, String> connection = client.connectAsyncImpl(socketAddress);
                 if (redisURI.getPassword() != null) {
                     String password = new String(redisURI.getPassword());
                     if (!"".equals(password.trim())) {

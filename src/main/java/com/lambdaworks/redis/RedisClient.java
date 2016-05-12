@@ -26,6 +26,7 @@ import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -331,7 +332,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new synchronous connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and
      * values.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -373,7 +374,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Open a new asynchronous connection to a Redis server that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new connection
      */
     public RedisAsyncConnection<String, String> connectAsync() {
@@ -383,7 +384,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and
      * values.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -517,7 +518,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to a Redis Sentinel that treats keys and values as UTF-8 strings. You must supply a
      * valid RedisURI containing one or more sentinels.
-     * 
+     *
      * @return a new connection
      */
     public RedisSentinelAsyncConnection<String, String> connectSentinelAsync() {
@@ -527,7 +528,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Open a new asynchronous connection to a Redis Sentinela nd use the supplied {@link RedisCodec codec} to encode/decode
      * keys and values. You must supply a valid RedisURI containing one or more sentinels.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -597,7 +598,12 @@ public class RedisClient extends AbstractRedisClient {
                     first = false;
                 }
                 connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
-                logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
+
+                if(logger.isDebugEnabled()) {
+                    SocketAddress socketAddress = SocketAddressResolver
+                            .resolve(redisURI, clientResources.dnsResolver());
+                    logger.debug("Connecting to Sentinel, address: " + socketAddress);
+                }
                 try {
                     initializeChannel(connectionBuilder);
                     connected = true;
@@ -731,7 +737,7 @@ public class RedisClient extends AbstractRedisClient {
             }
 
         } else {
-            redisAddress = redisURI.getResolvedAddress();
+            redisAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
         }
         return redisAddress;
     }

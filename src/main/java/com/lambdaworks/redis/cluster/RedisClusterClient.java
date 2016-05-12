@@ -25,6 +25,7 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.resource.ClientResources;
 
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -32,7 +33,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection. The
  * cluster client handles command routing based on the first key of the command and maintains a view on the cluster that is
  * available when calling the {@link #getPartitions()} method.
- * 
+ *
  * <p>
  * Connections to particular nodes can be obtained by {@link RedisAdvancedClusterConnection#getConnection(String)} providing the
  * node id or {@link RedisAdvancedClusterConnection#getConnection(String, int)} by host and port.
@@ -103,7 +104,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
      * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
-     * 
+     *
      * @param redisURI the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClusterClient}
      */
@@ -115,7 +116,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
      * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
-     * 
+     *
      * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
      * @return a new instance of {@link RedisClusterClient}
      */
@@ -127,7 +128,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied uri with default {@link ClientResources}. You can connect to different
      * Redis servers but you must supply a {@link RedisURI} on connecting.
-     * 
+     *
      * @param uri the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClusterClient}
      */
@@ -140,7 +141,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Create a new client that connects to the supplied {@link RedisURI uri} with shared {@link ClientResources}. You need to
      * shut down the {@link ClientResources} upon shutting down your application.You can connect to different Redis servers but
      * you must supply a {@link RedisURI} on connecting.
-     * 
+     *
      * @param clientResources the client resources, must not be {@literal null}
      * @param redisURI the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClusterClient}
@@ -155,7 +156,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Create a new client that connects to the supplied uri with shared {@link ClientResources}.You need to shut down the
      * {@link ClientResources} upon shutting down your application. You can connect to different Redis servers but you must
      * supply a {@link RedisURI} on connecting.
-     * 
+     *
      * @param clientResources the client resources, must not be {@literal null}
      * @param uri the Redis URI, must not be {@literal null}
      * @return a new instance of {@link RedisClusterClient}
@@ -170,7 +171,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Create a new client that connects to the supplied {@link RedisURI uri} with shared {@link ClientResources}. You need to
      * shut down the {@link ClientResources} upon shutting down your application.You can connect to different Redis servers but
      * you must supply a {@link RedisURI} on connecting.
-     * 
+     *
      * @param clientResources the client resources, must not be {@literal null}
      * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
      * @return a new instance of {@link RedisClusterClient}
@@ -245,7 +246,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param nodeId the nodeId
      * @param clusterWriter global cluster writer
      * @param socketAddressSupplier supplier for the socket address
-     * 
+     *
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection
@@ -376,7 +377,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Retrieve partitions. Nodes within {@link Partitions} are ordered by latency. Lower latency nodes come first.
-     * 
+     *
      * @return Partitions
      */
     protected Partitions loadPartitions() {
@@ -476,17 +477,21 @@ public class RedisClusterClient extends AbstractRedisClient {
             @Override
             public SocketAddress get() {
                 if (partitions != null) {
+
+
+
                     List<RedisClusterNode> ordered = getOrderedPartitions(partitions);
 
                     for (RedisClusterNode partition : ordered) {
-                        if (partition.getUri() != null && partition.getUri().getResolvedAddress() != null) {
-                            SocketAddress resolvedAddress = partition.getUri().getResolvedAddress();
-                            logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, partition.getNodeId());                       return resolvedAddress;
+                        if (partition.getUri() != null && partition.getUri().getHost() != null) {
+                            SocketAddress socketAddress = SocketAddressResolver.resolve(partition.getUri(), clientResources.dnsResolver());
+                            logger.debug("Resolved SocketAddress {} using for Cluster node {}", socketAddress, partition.getNodeId());
+                            return socketAddress;
                         }
                     }
                 }
 
-                SocketAddress socketAddress = getFirstUri().getResolvedAddress();
+                SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
                 logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
                 return socketAddress;
             }
@@ -510,7 +515,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Sets the new cluster topology. The partitions are not applied to existing connections.
-     * 
+     *
      * @param partitions partitions object
      */
     public void setPartitions(Partitions partitions) {
@@ -519,7 +524,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Returns the {@link ClientResources} which are used with that client.
-     * 
+     *
      * @return the {@link ClientResources} for this client
      */
     public ClientResources getResources() {
@@ -547,7 +552,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Set the {@link ClusterClientOptions} for the client.
-     * 
+     *
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
     public void setOptions(ClusterClientOptions clientOptions) {
