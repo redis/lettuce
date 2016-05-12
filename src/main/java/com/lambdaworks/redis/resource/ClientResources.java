@@ -104,4 +104,11 @@ public interface ClientResources {
      */
     CommandLatencyCollector commandLatencyCollector();
 
+    /**
+     * Returns the {@link DnsResolver}.
+     *
+     * @return the DNS resolver
+     */
+    DnsResolver dnsResolver();
+
 }

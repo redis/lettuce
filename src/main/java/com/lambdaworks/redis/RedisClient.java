@@ -15,6 +15,7 @@ import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
@@ -652,7 +653,12 @@ public class RedisClient extends AbstractRedisClient {
                     first = false;
                 }
                 connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
-                logger.debug("Connecting to Sentinel, address: " + uri.getResolvedAddress());
+
+                if(logger.isDebugEnabled()) {
+                    SocketAddress socketAddress = SocketAddressResolver
+                            .resolve(redisURI, clientResources.dnsResolver());
+                    logger.debug("Connecting to Sentinel, address: " + socketAddress);
+                }
                 try {
                     initializeChannel(connectionBuilder);
                     connected = true;
@@ -772,7 +778,7 @@ public class RedisClient extends AbstractRedisClient {
             }
 
         } else {
-            redisAddress = redisURI.getResolvedAddress();
+            redisAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
         }
         return redisAddress;
     }

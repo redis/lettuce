@@ -10,6 +10,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.event.metrics.DefaultCommandLatencyEventPublisher;
 import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
@@ -37,6 +38,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li>
  * <li>a {@code commandLatencyCollector} which is a provided instance of
  * {@link com.lambdaworks.redis.metrics.CommandLatencyCollector}.</li>
+ * <li>a {@code dnsResolver} which is a provided instance of
+ * {@link DnsResolver}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -72,6 +75,7 @@ public class DefaultClientResources implements ClientResources {
     private final boolean sharedCommandLatencyCollector;
     private final EventPublisherOptions commandLatencyPublisherOptions;
     private final MetricEventPublisher metricEventPublisher;
+    private final DnsResolver dnsResolver;
 
     private volatile boolean shutdownCalled = false;
 
@@ -148,6 +152,11 @@ public class DefaultClientResources implements ClientResources {
             metricEventPublisher = null;
         }
 
+        if (builder.dnsResolver == null) {
+            dnsResolver = DnsResolvers.JVM_DEFAULT;
+        } else {
+            dnsResolver = builder.dnsResolver;
+        }
     }
 
     /**
@@ -163,6 +172,7 @@ public class DefaultClientResources implements ClientResources {
         private CommandLatencyCollectorOptions commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.create();
         private CommandLatencyCollector commandLatencyCollector;
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
+        private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
 
         public Builder() {
         }
@@ -262,6 +272,20 @@ public class DefaultClientResources implements ClientResources {
          */
         public Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector) {
             this.commandLatencyCollector = commandLatencyCollector;
+            return this;
+        }
+
+        /**
+         * Sets the {@link DnsResolver} that can that can be used across different instances of the RedisClient to resolve
+         * hostnames to {@link java.net.InetAddress}.
+         *
+         * @param dnsResolver the DNS resolver, must not be {@link null}.
+         * @return this
+         */
+        public Builder dnsResolver(DnsResolver dnsResolver) {
+
+            LettuceAssert.notNull(dnsResolver, "DNSResolver must not be null");
+            this.dnsResolver = dnsResolver;
             return this;
         }
 
@@ -384,6 +408,11 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public EventPublisherOptions commandLatencyPublisherOptions() {
         return commandLatencyPublisherOptions;
+    }
+
+    @Override
+    public DnsResolver dnsResolver() {
+        return dnsResolver;
     }
 
     /**

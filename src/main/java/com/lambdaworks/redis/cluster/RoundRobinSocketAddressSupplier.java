@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -23,16 +25,19 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     private final Collection<RedisClusterNode> partitions;
     private final Collection<RedisClusterNode> clusterNodes = new ArrayList<>();
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort;
+    private final ClientResources clientResources;
     private RoundRobin<? extends RedisClusterNode> roundRobin;
 
     public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
-            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort) {
-        this.sort = sort;
+            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort, ClientResources clientResources) {
+        this.clientResources = clientResources;
         LettuceAssert.notNull(partitions, "Partitions must not be null");
         LettuceAssert.notNull(sort, "Sort-Function must not be null");
+
         this.partitions = partitions;
         this.clusterNodes.addAll(partitions);
         this.roundRobin = new RoundRobin<>(clusterNodes);
+        this.sort = sort;
         resetRoundRobin();
     }
 
@@ -53,8 +58,8 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         roundRobin.offset = null;
     }
 
-    protected static SocketAddress getSocketAddress(RedisClusterNode redisClusterNode) {
-        SocketAddress resolvedAddress = redisClusterNode.getUri().getResolvedAddress();
+    protected SocketAddress getSocketAddress(RedisClusterNode redisClusterNode) {
+        SocketAddress resolvedAddress = SocketAddressResolver.resolve(redisClusterNode.getUri(), clientResources.dnsResolver());
         logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, redisClusterNode.getNodeId());
         return resolvedAddress;
     }

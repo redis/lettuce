@@ -31,6 +31,7 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -779,10 +780,11 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private Supplier<SocketAddress> getSocketAddressSupplier(
             Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort) {
-        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions, sort);
+        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions, sort,
+                clientResources);
         return () -> {
             if (partitions.isEmpty()) {
-                SocketAddress socketAddress = getFirstUri().getResolvedAddress();
+                SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
                 logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
                 return socketAddress;
             }

@@ -21,6 +21,7 @@ import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -415,7 +416,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     protected SocketAddress getSocketAddress(String nodeId) {
         for (RedisClusterNode partition : partitions) {
             if (partition.getNodeId().equals(nodeId)) {
-                return partition.getUri().getResolvedAddress();
+                return SocketAddressResolver.resolve(partition.getUri(), redisClusterClient.getResources().dnsResolver());
             }
         }
         return null;

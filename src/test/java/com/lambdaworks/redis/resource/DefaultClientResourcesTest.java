@@ -3,24 +3,26 @@ package com.lambdaworks.redis.resource;
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import rx.observers.TestSubscriber;
-
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.Event;
+import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
+import rx.observers.TestSubscriber;
 
 /**
  * @author Mark Paluch
@@ -68,6 +70,16 @@ public class DefaultClientResourcesTest {
         assertThat(sut.commandLatencyCollector().isEnabled()).isFalse();
 
         assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
+    }
+
+    @Test
+    public void testDnsResolver() throws Exception {
+
+        DirContextDnsResolver dirContextDnsResolver = new DirContextDnsResolver("8.8.8.8");
+
+        DefaultClientResources sut = new DefaultClientResources.Builder().dnsResolver(dirContextDnsResolver).build();
+
+        assertThat(sut.dnsResolver()).isEqualTo(dirContextDnsResolver);
     }
 
     @Test

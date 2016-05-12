@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.RedisClusterClient.applyUriConnectionSettings;
 
+import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +22,7 @@ import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
 
+import com.lambdaworks.redis.resource.SocketAddressResolver;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -339,12 +341,13 @@ class ClusterTopologyRefresh {
         Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(RedisUriComparator.INSTANCE);
 
         for (RedisURI redisURI : seed) {
-            if (redisURI.getResolvedAddress() == null) {
+            if (redisURI.getHost() == null) {
                 continue;
             }
 
             try {
-                StatefulRedisConnection<String, String> connection = client.connectToNode(redisURI.getResolvedAddress());
+                SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, client.getResources().dnsResolver());
+                StatefulRedisConnection<String, String> connection = client.connectToNode(socketAddress);
                 if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
                     connection.sync().auth(new String(redisURI.getPassword()));
                 }
