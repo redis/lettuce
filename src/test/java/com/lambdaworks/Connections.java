@@ -7,6 +7,7 @@ import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+
 import io.netty.channel.Channel;
 
 /**
@@ -14,10 +15,16 @@ import io.netty.channel.Channel;
  */
 public class Connections {
 
-    public static ConnectionWatchdog getConnectionWatchdog(StatefulConnection<?, ?> connection) {
+    public static Channel getChannel(StatefulConnection<?, ?> connection) {
         RedisChannelHandler<?, ?> channelHandler = (RedisChannelHandler<?, ?>) connection;
 
         Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
+        return channel;
+    }
+
+    public static ConnectionWatchdog getConnectionWatchdog(StatefulConnection<?, ?> connection) {
+
+        Channel channel = getChannel(connection);
         return channel.pipeline().get(ConnectionWatchdog.class);
     }
 

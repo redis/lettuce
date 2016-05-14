@@ -10,6 +10,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandEncoder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.ReconnectionListener;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.bootstrap.Bootstrap;
@@ -38,9 +39,51 @@ public class ConnectionBuilder {
     private TimeUnit timeUnit;
     private ClientResources clientResources;
     private char[] password;
+    private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
+    }
+
+    protected List<ChannelHandler> buildHandlers() {
+
+        LettuceAssert.assertState(channelGroup != null, "channelGroup must be set");
+        LettuceAssert.assertState(connectionEvents != null, "connectionEvents must be set");
+        LettuceAssert.assertState(connection != null, "connection must be set");
+        LettuceAssert.assertState(clientResources != null, "clientResources must be set");
+
+        List<ChannelHandler> handlers = new ArrayList<>();
+        if (clientOptions.isAutoReconnect()) {
+            handlers.add(createConnectionWatchdog());
+        }
+
+        connection.setOptions(clientOptions);
+
+        handlers.add(new ChannelGroupListener(channelGroup));
+        handlers.add(new CommandEncoder());
+        handlers.add(commandHandler);
+        handlers.add(connection);
+        handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
+
+        return handlers;
+    }
+
+    protected ConnectionWatchdog createConnectionWatchdog() {
+
+        LettuceAssert.assertState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
+        LettuceAssert.assertState(timer != null, "timer must be set for autoReconnect=true");
+        LettuceAssert.assertState(socketAddressSupplier != null, "socketAddressSupplier must be set for autoReconnect=true");
+
+        ConnectionWatchdog watchdog = new ConnectionWatchdog(clientOptions, bootstrap, timer, workerPool,
+                socketAddressSupplier, reconnectionListener);
+
+        watchdog.setListenOnChannelInactive(true);
+        return watchdog;
+    }
+
+    public RedisChannelInitializer build() {
+        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), password(), buildHandlers(),
+                clientResources.eventBus());
     }
 
     public ConnectionBuilder socketAddressSupplier(Supplier<SocketAddress> socketAddressSupplier) {
@@ -65,6 +108,13 @@ public class ConnectionBuilder {
 
     public TimeUnit getTimeUnit() {
         return timeUnit;
+    }
+
+    public ConnectionBuilder reconnectionListener(ReconnectionListener reconnectionListener) {
+
+        LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
+        this.reconnectionListener = reconnectionListener;
+        return this;
     }
 
     public ConnectionBuilder clientOptions(ClientOptions clientOptions) {
@@ -117,42 +167,6 @@ public class ConnectionBuilder {
         return this;
     }
 
-    protected List<ChannelHandler> buildHandlers() {
-        LettuceAssert.assertState(channelGroup != null, "channelGroup must be set");
-        LettuceAssert.assertState(connectionEvents != null, "connectionEvents must be set");
-        LettuceAssert.assertState(connection != null, "connection must be set");
-        LettuceAssert.assertState(clientResources != null, "clientResources must be set");
-
-        List<ChannelHandler> handlers = new ArrayList<>();
-        if (clientOptions.isAutoReconnect()) {
-            LettuceAssert.assertState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
-            LettuceAssert.assertState(timer != null, "timer must be set for autoReconnect=true");
-            LettuceAssert.assertState(socketAddressSupplier != null,
-                    "socketAddressSupplier must be set for autoReconnect=true");
-
-            ConnectionWatchdog watchdog = new ConnectionWatchdog(clientOptions, bootstrap, timer, workerPool,
-                    socketAddressSupplier);
-
-            watchdog.setListenOnChannelInactive(true);
-            handlers.add(watchdog);
-        }
-
-        connection.setOptions(clientOptions);
-
-        handlers.add(new ChannelGroupListener(channelGroup));
-        handlers.add(new CommandEncoder());
-        handlers.add(commandHandler);
-        handlers.add(connection);
-        handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
-
-        return handlers;
-    }
-
-    public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), password(), buildHandlers(),
-                clientResources.eventBus());
-    }
-
     public RedisChannelHandler<?, ?> connection() {
         return connection;
     }
@@ -177,4 +191,7 @@ public class ConnectionBuilder {
         return password;
     }
 
+    public EventExecutorGroup workerPool() {
+        return workerPool;
+    }
 }

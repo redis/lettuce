@@ -118,11 +118,11 @@ public class DirContextDnsResolverTest {
     public void shouldResolveCname() throws Exception {
 
         resolver = new DirContextDnsResolver();
-        InetAddress[] resolved = resolver.resolve("redis.paluch.biz");
+        InetAddress[] resolved = resolver.resolve("www.github.io");
 
         assertThat(resolved.length).isGreaterThan(0);
         assertThat(resolved[0]).isInstanceOf(InetAddress.class);
-        assertThat(resolved[0].getHostName()).isEqualTo("redis.paluch.biz");
+        assertThat(resolved[0].getHostName()).isEqualTo("www.github.io");
     }
 
     @Test

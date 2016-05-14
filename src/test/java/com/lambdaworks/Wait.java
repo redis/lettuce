@@ -123,7 +123,7 @@ public class Wait {
 
             if (o instanceof Number && expectation instanceof Number) {
                 Number actualNumber = (Number) o;
-                Number expectedNumber = (Number) o;
+                Number expectedNumber = (Number) expectation;
 
                 if (actualNumber.doubleValue() == expectedNumber.doubleValue()) {
                     return true;

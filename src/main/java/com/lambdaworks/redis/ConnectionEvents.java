@@ -63,4 +63,19 @@ public class ConnectionEvents {
     public static class Activated {
     }
 
+    /**
+     * Internal event when a reconnect is initiated.
+     */
+    public static class Reconnect {
+
+        private final int attempt;
+
+        public Reconnect(int attempt) {
+            this.attempt = attempt;
+        }
+
+        public int getAttempt() {
+            return attempt;
+        }
+    }
 }

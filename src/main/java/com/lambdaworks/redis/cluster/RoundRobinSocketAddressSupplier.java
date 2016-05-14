@@ -16,7 +16,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Round-Robin socket address supplier. Cluster nodes are iterated circular/infinitely.
- * 
+ *
  * @author Mark Paluch
  */
 class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
@@ -24,20 +24,21 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
     private final Collection<RedisClusterNode> partitions;
     private final Collection<RedisClusterNode> clusterNodes = new ArrayList<>();
-    private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort;
+    private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction;
     private final ClientResources clientResources;
     private RoundRobin<? extends RedisClusterNode> roundRobin;
 
     public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
-            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sort, ClientResources clientResources) {
-        this.clientResources = clientResources;
+            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction, ClientResources clientResources) {
+
         LettuceAssert.notNull(partitions, "Partitions must not be null");
-        LettuceAssert.notNull(sort, "Sort-Function must not be null");
+        LettuceAssert.notNull(sortFunction, "Sort-Function must not be null");
 
         this.partitions = partitions;
         this.clusterNodes.addAll(partitions);
         this.roundRobin = new RoundRobin<>(clusterNodes);
-        this.sort = sort;
+        this.sortFunction = sortFunction;
+        this.clientResources = clientResources;
         resetRoundRobin();
     }
 
@@ -49,12 +50,11 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
         RedisClusterNode redisClusterNode = roundRobin.next();
         return getSocketAddress(redisClusterNode);
-
     }
 
     protected void resetRoundRobin() {
         clusterNodes.clear();
-        clusterNodes.addAll(sort.apply(partitions));
+        clusterNodes.addAll(sortFunction.apply(partitions));
         roundRobin.offset = null;
     }
 

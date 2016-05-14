@@ -22,20 +22,28 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
-    private RedisChannelWriter<K, V> defaultWriter;
+    private final RedisChannelWriter<K, V> defaultWriter;
+    private final ClusterEventListener clusterEventListener;
+    private final int executionLimit;
     private ClusterConnectionProvider clusterConnectionProvider;
     private boolean closed = false;
-    private int executionLimit = 5;
-    
+
     long p20, p21, p22, p23, p24, p25, p26;
     long p30, p31, p32, p33, p34, p35, p36, p37;
 
-    public ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter<K, V> defaultWriter) {
+    public ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter<K, V> defaultWriter,
+            ClusterEventListener clusterEventListener) {
+
         this.defaultWriter = defaultWriter;
 
         if (clientOptions instanceof ClusterClientOptions) {
-            executionLimit = ((ClusterClientOptions) clientOptions).getMaxRedirects();
+            this.executionLimit = ((ClusterClientOptions) clientOptions).getMaxRedirects();
+        } else {
+            this.executionLimit = 5;
         }
+
+        this.clusterEventListener = clusterEventListener;
+
     }
 
     @Override
@@ -64,13 +72,15 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
                 HostAndPort target;
                 if (clusterCommand.isMoved()) {
                     target = getMoveTarget(clusterCommand.getError());
+                    clusterEventListener.onMovedRedirection();
                 } else {
                     target = getAskTarget(clusterCommand.getError());
+                    clusterEventListener.onAskRedirection();
                 }
 
                 commandToSend.getOutput().setError((String) null);
-                RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(
-                        ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
+                RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider
+                        .getConnection(ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
                 channelWriter = connection.getChannelWriter();
 
                 if (clusterCommand.isAsk()) {
@@ -96,7 +106,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             channelWriter = writer.defaultWriter;
         }
 
-        if(command.getOutput() != null){
+        if (command.getOutput() != null) {
             commandToSend.getOutput().setError((String) null);
         }
 
@@ -123,12 +133,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         LettuceAssert.notEmpty(errorMessage, "errorMessage must not be empty");
         LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
-                "errorMessage must start with "
-                + CommandKeyword.MOVED);
+                "errorMessage must start with " + CommandKeyword.MOVED);
 
         String[] movedMessageParts = errorMessage.split(" ");
-        LettuceAssert.isTrue(movedMessageParts.length >= 3,
-                "errorMessage must consist of 3 tokens (" + errorMessage + ")");
+        LettuceAssert.isTrue(movedMessageParts.length >= 3, "errorMessage must consist of 3 tokens (" + errorMessage + ")");
 
         return HostAndPort.parse(movedMessageParts[2]);
     }
@@ -140,8 +148,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
                 "errorMessage must start with " + CommandKeyword.ASK);
 
         String[] movedMessageParts = errorMessage.split(" ");
-        LettuceAssert.isTrue(movedMessageParts.length >= 3,
-                "errorMessage must consist of 3 tokens (" + errorMessage + ")");
+        LettuceAssert.isTrue(movedMessageParts.length >= 3, "errorMessage must consist of 3 tokens (" + errorMessage + ")");
 
         return HostAndPort.parse(movedMessageParts[2]);
     }
@@ -157,7 +164,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         if (defaultWriter != null) {
             defaultWriter.close();
-            defaultWriter = null;
         }
 
         if (clusterConnectionProvider != null) {

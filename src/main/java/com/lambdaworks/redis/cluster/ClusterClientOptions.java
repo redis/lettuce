@@ -18,31 +18,37 @@ public class ClusterClientOptions extends ClientOptions {
     public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
     public static final int DEFAULT_MAX_REDIRECTS = 5;
 
-    private final boolean refreshClusterView;
-    private final long refreshPeriod;
-    private final TimeUnit refreshPeriodUnit;
-    private final boolean closeStaleConnections;
     private final boolean validateClusterNodeMembership;
     private final int maxRedirects;
+    private final ClusterTopologyRefreshOptions topologyRefreshOptions;
 
     protected ClusterClientOptions(Builder builder) {
+
         super(builder);
-        this.refreshClusterView = builder.refreshClusterView;
-        this.refreshPeriod = builder.refreshPeriod;
-        this.refreshPeriodUnit = builder.refreshPeriodUnit;
-        this.closeStaleConnections = builder.closeStaleConnections;
+
         this.validateClusterNodeMembership = builder.validateClusterNodeMembership;
         this.maxRedirects = builder.maxRedirects;
+
+        ClusterTopologyRefreshOptions refreshOptions = builder.topologyRefreshOptions;
+
+        if (refreshOptions == null) {
+            refreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+                    .enablePeriodicRefresh(builder.refreshClusterView)//
+                    .refreshPeriod(builder.refreshPeriod, builder.refreshPeriodUnit)//
+                    .closeStaleConnections(builder.closeStaleConnections)//
+                    .build();
+        }
+
+        this.topologyRefreshOptions = refreshOptions;
     }
 
     protected ClusterClientOptions(ClusterClientOptions original) {
+
         super(original);
-        this.refreshClusterView = original.refreshClusterView;
-        this.refreshPeriod = original.refreshPeriod;
-        this.refreshPeriodUnit = original.refreshPeriodUnit;
-        this.closeStaleConnections = original.closeStaleConnections;
+
         this.validateClusterNodeMembership = original.validateClusterNodeMembership;
         this.maxRedirects = original.maxRedirects;
+        this.topologyRefreshOptions = original.topologyRefreshOptions;
     }
 
     /**
@@ -66,6 +72,7 @@ public class ClusterClientOptions extends ClientOptions {
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
         private boolean validateClusterNodeMembership = DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP;
         private int maxRedirects = DEFAULT_MAX_REDIRECTS;
+        private ClusterTopologyRefreshOptions topologyRefreshOptions = null;
 
         /**
          * Enable regular cluster topology updates. The client starts updating the cluster topology in the intervals of
@@ -75,7 +82,10 @@ public class ClusterClientOptions extends ClientOptions {
          * @param refreshClusterView {@literal true} enable regular cluster topology updates or {@literal false} to disable
          *        auto-updating
          * @return {@code this}
+         * @deprecated Use {@link #topologyRefreshOptions}, see
+         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#enablePeriodicRefresh(boolean)}
          */
+        @Deprecated
         public Builder refreshClusterView(boolean refreshClusterView) {
             this.refreshClusterView = refreshClusterView;
             return this;
@@ -88,7 +98,10 @@ public class ClusterClientOptions extends ClientOptions {
          * @param refreshPeriod period for triggering topology updates
          * @param refreshPeriodUnit unit for {@code refreshPeriod}
          * @return {@code this}
+         * @deprecated Use {@link #topologyRefreshOptions}, see
+         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#refreshPeriod(long, TimeUnit)}
          */
+        @Deprecated
         public Builder refreshPeriod(long refreshPeriod, TimeUnit refreshPeriodUnit) {
             this.refreshPeriod = refreshPeriod;
             this.refreshPeriodUnit = refreshPeriodUnit;
@@ -102,7 +115,10 @@ public class ClusterClientOptions extends ClientOptions {
          *
          * @param closeStaleConnections {@literal true} if stale connections are cleaned up after cluster topology updates
          * @return {@code this}
+         * @deprecated Use {@link #topologyRefreshOptions}, see
+         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#closeStaleConnections(boolean)}
          */
+        @Deprecated
         public Builder closeStaleConnections(boolean closeStaleConnections) {
             this.closeStaleConnections = closeStaleConnections;
             return this;
@@ -129,6 +145,17 @@ public class ClusterClientOptions extends ClientOptions {
          */
         public Builder maxRedirects(int maxRedirects) {
             this.maxRedirects = maxRedirects;
+            return this;
+        }
+
+        /**
+         * Sets the {@link ClusterTopologyRefreshOptions} for detailed control of topology updates.
+         *
+         * @param topologyRefreshOptions the {@link ClusterTopologyRefreshOptions}
+         * @return {@code this}
+         */
+        public Builder topologyRefreshOptions(ClusterTopologyRefreshOptions topologyRefreshOptions) {
+            this.topologyRefreshOptions = topologyRefreshOptions;
             return this;
         }
 
@@ -180,40 +207,44 @@ public class ClusterClientOptions extends ClientOptions {
 
     /**
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
-     * intervals of {@link #getRefreshPeriod()} /{@link #getRefreshPeriodUnit()}. Defaults to {@literal false}.
+     * intervals of {@link #getRefreshPeriod()} /{@link #getRefreshPeriodUnit()}. Defaults to {@literal false}. Returns the
+     * value from {@link ClusterTopologyRefreshOptions} if provided.
      * 
      * @return {@literal true} it the cluster topology view is updated periodically
      */
     public boolean isRefreshClusterView() {
-        return refreshClusterView;
+        return topologyRefreshOptions.isPeriodicRefreshEnabled();
     }
 
     /**
-     * Period between the regular cluster topology updates. Defaults to {@literal 60}.
+     * Period between the regular cluster topology updates. Defaults to {@literal 60}. Returns the value from
+     * {@link ClusterTopologyRefreshOptions} if provided.
      * 
      * @return the period between the regular cluster topology updates
      */
     public long getRefreshPeriod() {
-        return refreshPeriod;
+        return topologyRefreshOptions.getRefreshPeriod();
     }
 
     /**
-     * Unit for the {@link #getRefreshPeriod()}. Defaults to {@link TimeUnit#SECONDS}.
+     * Unit for the {@link #getRefreshPeriod()}. Defaults to {@link TimeUnit#SECONDS}. Returns the value from
+     * {@link ClusterTopologyRefreshOptions} if provided.
      * 
      * @return unit for the {@link #getRefreshPeriod()}
      */
     public TimeUnit getRefreshPeriodUnit() {
-        return refreshPeriodUnit;
+        return topologyRefreshOptions.getRefreshPeriodUnit();
     }
 
     /**
      * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes only
-     * into effect if {@link #isRefreshClusterView()} is {@literal true}.
+     * into effect if {@link #isRefreshClusterView()} is {@literal true}. Returns the value from
+     * {@link ClusterTopologyRefreshOptions} if provided.
      * 
      * @return {@literal true} if stale connections are cleaned up after cluster topology updates
      */
     public boolean isCloseStaleConnections() {
-        return closeStaleConnections;
+        return topologyRefreshOptions.isCloseStaleConnections();
     }
 
     /**
@@ -233,6 +264,15 @@ public class ClusterClientOptions extends ClientOptions {
      */
     public int getMaxRedirects() {
         return maxRedirects;
+    }
+
+    /**
+     * The {@link ClusterTopologyRefreshOptions} for detailed control of topology updates.
+     * 
+     * @return the {@link ClusterTopologyRefreshOptions}.
+     */
+    public ClusterTopologyRefreshOptions getTopologyRefreshOptions() {
+        return topologyRefreshOptions;
     }
 
     /**

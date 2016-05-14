@@ -100,8 +100,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             RedisClusterAsyncConnection<String, String> nodeId = commands.getConnection(redisClusterNode.getNodeId());
-            RedisClusterAsyncConnection<String, String> hostAndPort = commands.getConnection(redisClusterNode.getUri()
-                    .getHost(), redisClusterNode.getUri().getPort());
+            RedisClusterAsyncConnection<String, String> hostAndPort = commands
+                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -110,8 +110,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
-            StatefulRedisConnection<String, String> hostAndPort = statefulConnection.getConnection(redisClusterNode.getUri()
-                    .getHost(), redisClusterNode.getUri().getPort());
+            StatefulRedisConnection<String, String> hostAndPort = statefulConnection
+                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -401,6 +401,9 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             sync.set("A", "value");// 6373
         } catch (Exception e) {
             assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("Unable to connect to");
+        } finally {
+            clusterClient.getPartitions().clear();
+            clusterClient.reloadPartitions();
         }
         sync.close();
     }
@@ -426,6 +429,9 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             sync.set("A", "value");// 6373
         } catch (Exception e) {
             assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("not allowed");
+        } finally {
+            clusterClient.getPartitions().clear();
+            clusterClient.reloadPartitions();
         }
         sync.close();
     }
@@ -579,8 +585,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList()).containsAll(
-                RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(adapter.getList())
+                .containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 

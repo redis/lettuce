@@ -1,19 +1,18 @@
 package com.lambdaworks.redis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.concurrent.*;
+
+import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.lambdaworks.Connections;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.ReconnectionListener;
 import com.lambdaworks.redis.server.RandomResponseServer;
-import io.netty.channel.Channel;
-import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Mark Paluch
@@ -58,8 +57,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 120000)
     public void pingBeforeConnectFailOnReconnect() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true)
-                .suspendReconnectOnProtocolFailure(true).build());
+        client.setOptions(
+                new ClientOptions.Builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -93,6 +92,57 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     }
 
     /**
+     * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect.
+     *
+     * Expectation: {@link com.lambdaworks.redis.ConnectionEvents.Reconnect} events are sent.
+     *
+     * @throws Exception
+     */
+    @Test(timeout = 120000)
+    public void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true)
+                .suspendReconnectOnProtocolFailure(false).build());
+
+        RandomResponseServer ts = getRandomResponseServer();
+
+        RedisURI redisUri = defaultRedisUri;
+        redisUri.setTimeout(5);
+        redisUri.setUnit(TimeUnit.SECONDS);
+
+        try {
+            final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
+
+            RedisAsyncCommands<String, String> connection = client.connectAsync(redisUri);
+            ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
+
+            ReconnectionListener reconnectionListener = new ReconnectionListener() {
+                @Override
+                public void onReconnect(ConnectionEvents.Reconnect reconnect) {
+                    events.add(reconnect);
+                }
+            };
+
+            ReflectionTestUtils.setField(connectionWatchdog, "reconnectionListener", reconnectionListener);
+
+            redisUri.setPort(TestSettings.nonexistentPort());
+
+            connection.quit();
+            Wait.untilTrue(() -> events.size() > 1).waitOrTimeout();
+            connection.close();
+
+            ConnectionEvents.Reconnect event1 = events.take();
+            assertThat(event1.getAttempt()).isEqualTo(1);
+
+            ConnectionEvents.Reconnect event2 = events.take();
+            assertThat(event2.getAttempt()).isEqualTo(2);
+
+        } finally {
+            ts.shutdown();
+        }
+    }
+
+    /**
      * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect. Meanwhile a command
      * is fired to the connection and the watchdog is triggered afterwards to reconnect.
      *
@@ -103,8 +153,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 10000)
     public void cancelCommandsOnReconnectFailure() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true)
-                .build());
+        client.setOptions(
+                new ClientOptions.Builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 

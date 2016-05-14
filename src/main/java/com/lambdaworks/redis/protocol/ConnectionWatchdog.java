@@ -4,13 +4,11 @@ package com.lambdaworks.redis.protocol;
 
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelInitializer;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.bootstrap.Bootstrap;
@@ -28,6 +26,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
  * 
  * @author Will Glozer
+ * @author Mark Paluch
  */
 @ChannelHandler.Sharable
 public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements TimerTask {
@@ -38,51 +37,68 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionWatchdog.class);
 
     private final EventExecutorGroup reconnectWorkers;
-    private final ClientOptions clientOptions;
     private final Bootstrap bootstrap;
+    private final ReconnectionHandler reconnectionHandler;
+    private final ReconnectionListener reconnectionListener;
     private boolean listenOnChannelInactive;
-    private boolean reconnectSuspended;
 
     private Channel channel;
     private final Timer timer;
 
-    private final Supplier<SocketAddress> socketAddressSupplier;
     private SocketAddress remoteAddress;
     private int attempts;
     private long lastReconnectionLogging = -1;
     private String logPrefix;
 
-    private TimeUnit timeoutUnit = TimeUnit.SECONDS;
-    private long timeout = 60;
-
-    private volatile ChannelFuture currentFuture;
-
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
-     *
+     * 
      * @param clientOptions client options for the current connection, must not be {@literal null}
      * @param bootstrap Configuration for new channels, must not be {@literal null}
      * @param timer Timer used for delayed reconnect, must not be {@literal null}
      * @param reconnectWorkers executor group for reconnect tasks, must not be {@literal null}
      * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@literal null}
+     * @param reconnectionListener the reconnection listener, must not be {@literal null}
      */
     public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
-            EventExecutorGroup reconnectWorkers, Supplier<SocketAddress> socketAddressSupplier) {
+            EventExecutorGroup reconnectWorkers, Supplier<SocketAddress> socketAddressSupplier,
+            ReconnectionListener reconnectionListener) {
+
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
         LettuceAssert.notNull(timer, "Timer must not be null");
         LettuceAssert.notNull(reconnectWorkers, "reconnectWorkers must not be null");
+        LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
 
-        this.clientOptions = clientOptions;
         this.bootstrap = bootstrap;
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
-        this.socketAddressSupplier = socketAddressSupplier;
+        this.reconnectionListener = reconnectionListener;
+        Supplier<SocketAddress> wrappedSocketAddressSupplier = new Supplier<SocketAddress>() {
+            @Override
+            public SocketAddress get() {
+
+                if (socketAddressSupplier != null) {
+                    try {
+                        remoteAddress = socketAddressSupplier.get();
+                    } catch (RuntimeException e) {
+                        logger.warn("Cannot retrieve the current address from socketAddressSupplier: " + e.toString()
+                                + ", reusing old address " + remoteAddress);
+                    }
+                }
+
+                return remoteAddress;
+            }
+        };
+
+        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
+
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+
         logger.debug("{} userEventTriggered({}, {})", logPrefix(), ctx, evt);
         if (evt instanceof ConnectionEvents.PrepareClose) {
 
@@ -91,10 +107,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             setReconnectSuspended(true);
             prepareClose.getPrepareCloseFuture().complete(true);
 
-            if (currentFuture != null && !currentFuture.isDone()) {
-                currentFuture.cancel(true);
-            }
+            reconnectionHandler.prepareClose();
         }
+
+        if (evt instanceof ConnectionEvents.Activated) {
+            attempts = 0;
+        }
+
         super.userEventTriggered(ctx, evt);
     }
 
@@ -103,7 +122,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         logger.debug("{} channelActive({})", logPrefix(), ctx);
         channel = ctx.channel();
-        attempts = 0;
         remoteAddress = channel.remoteAddress();
 
         super.channelActive(ctx);
@@ -114,11 +132,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         logger.debug("{} channelInactive({})", logPrefix(), ctx);
         channel = null;
-        if (listenOnChannelInactive && !reconnectSuspended) {
+        if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
             RedisChannelHandler<?, ?> channelHandler = ctx.pipeline().get(RedisChannelHandler.class);
             if (channelHandler != null) {
-                timeout = channelHandler.getTimeout();
-                timeoutUnit = channelHandler.getTimeoutUnit();
+                reconnectionHandler.setTimeout(channelHandler.getTimeout());
+                reconnectionHandler.setTimeoutUnit(channelHandler.getTimeoutUnit());
             }
 
             scheduleReconnect();
@@ -133,6 +151,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Schedule reconnect if channel is not available/not active.
      */
     public void scheduleReconnect() {
+
         logger.debug("{} scheduleReconnect()", logPrefix());
 
         if (!isEventLoopGroupActive()) {
@@ -194,6 +213,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
 
         try {
+            reconnectionListener.onReconnect(new ConnectionEvents.Reconnect(attempts));
             reconnect(infoLevel, warnLevel);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -206,79 +226,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
     }
 
-    private void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws Exception {
+    protected void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws Exception {
 
         logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
-
-        if (socketAddressSupplier != null) {
-            try {
-                remoteAddress = socketAddressSupplier.get();
-            } catch (RuntimeException e) {
-                logger.log(warnLevel, "Cannot retrieve the current address from socketAddressSupplier: " + e.toString()
-                        + ", reusing old address " + remoteAddress);
-            }
-        }
-
-        try {
-            long timeLeft = timeoutUnit.toNanos(timeout);
-            long start = System.nanoTime();
-            logger.debug("Connecting to Redis at {}", remoteAddress);
-            currentFuture = bootstrap.connect(remoteAddress);
-            if (!currentFuture.await(timeLeft, TimeUnit.NANOSECONDS)) {
-                if (currentFuture.isCancellable()) {
-                    currentFuture.cancel(true);
-                }
-
-                throw new TimeoutException("Reconnection attempt exceeded timeout of " + timeout + " " + timeoutUnit);
-            }
-            currentFuture.sync();
-
-            RedisChannelInitializer channelInitializer = currentFuture.channel().pipeline().get(RedisChannelInitializer.class);
-            CommandHandler<?, ?> commandHandler = currentFuture.channel().pipeline().get(CommandHandler.class);
-
-            if (channelInitializer == null) {
-                logger.warn("Reconnection attempt without a RedisChannelInitializer in the channel pipeline");
-                closeChannel();
-                return;
-            }
-
-            if (commandHandler == null) {
-                logger.warn("Reconnection attempt without a CommandHandler in the channel pipeline");
-                closeChannel();
-                return;
-            }
-
-            try {
-                timeLeft -= System.nanoTime() - start;
-                channelInitializer.channelInitialized().get(Math.max(0, timeLeft), TimeUnit.NANOSECONDS);
-                logger.log(infoLevel, "Reconnected to {}", remoteAddress);
-            } catch (TimeoutException e) {
-                channelInitializer.channelInitialized().cancel(true);
-            } catch (Exception e) {
-                if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                    commandHandler.reset();
-                }
-
-                if (clientOptions.isSuspendReconnectOnProtocolFailure()) {
-                    logger.error("Cannot initialize channel. Disabling autoReconnect", e);
-                    setReconnectSuspended(true);
-                } else {
-                    logger.error("Cannot initialize channel.", e);
-                    throw e;
-                }
-            }
-        } finally {
-            currentFuture = null;
-        }
-    }
-
-    private void closeChannel() {
-        if (channel != null && channel.isOpen()) {
-            channel.close();
-        }
+        reconnectionHandler.reconnect(infoLevel);
     }
 
     private boolean isEventLoopGroupActive() {
+
         if (!isEventLoopGroupActive(bootstrap.group()) || !isEventLoopGroupActive(reconnectWorkers)) {
             return false;
         }
@@ -286,8 +241,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         return true;
     }
 
-    private boolean isEventLoopGroupActive(EventExecutorGroup executorService){
-      if (executorService.isShutdown() || executorService.isTerminated() || executorService.isShuttingDown()) {
+    private boolean isEventLoopGroupActive(EventExecutorGroup executorService) {
+
+        if (executorService.isShutdown() || executorService.isTerminated() || executorService.isShuttingDown()) {
             return false;
         }
 
@@ -314,11 +270,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     public boolean isReconnectSuspended() {
-        return reconnectSuspended;
+        return reconnectionHandler.isReconnectSuspended();
     }
 
     public void setReconnectSuspended(boolean reconnectSuspended) {
-        this.reconnectSuspended = reconnectSuspended;
+        reconnectionHandler.setReconnectSuspended(true);
     }
 
     private String logPrefix() {

@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster.event;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -22,8 +23,8 @@ public class ClusterTopologyChangedEvent implements Event {
      * @param after the cluster topology view after the topology changed, must not be {@literal null}
      */
     public ClusterTopologyChangedEvent(List<RedisClusterNode> before, List<RedisClusterNode> after) {
-        this.before = before;
-        this.after = after;
+        this.before = Collections.unmodifiableList(before);
+        this.after = Collections.unmodifiableList(after);
     }
 
     /**

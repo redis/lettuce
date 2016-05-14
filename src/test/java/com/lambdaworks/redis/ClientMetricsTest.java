@@ -2,26 +2,46 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.Timeout.timeout;
+import static com.lambdaworks.redis.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.google.code.tempusfugit.temporal.Condition;
+import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.event.Event;
+import com.lambdaworks.redis.event.EventBus;
+import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
+import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
 
 import rx.Subscription;
 import rx.functions.Func1;
 import rx.observers.TestSubscriber;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
-import com.lambdaworks.redis.event.EventBus;
-import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
-import com.lambdaworks.redis.event.Event;
-
 /**
  * @author Mark Paluch
  */
-public class ClientMetricsTest extends AbstractRedisClientTest {
+public class ClientMetricsTest extends AbstractTest {
+
+    private RedisCommands<String, String> redis;
+
+    @BeforeClass
+    public static void setupClient() {
+        client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+    }
+
+    @Before
+    public void before() throws Exception {
+        redis = client.connect().sync();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        FastShutdown.shutdown(client);
+    }
 
     @Test
     public void testMetricsEvent() throws Exception {
