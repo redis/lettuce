@@ -15,7 +15,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Output of all commands within a MULTI block.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -55,6 +55,14 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     }
 
     @Override
+    public void multi(int count) {
+
+        if (count == -1 && !queue.isEmpty()) {
+            queue.peek().getOutput().multi(count);
+        }
+    }
+
+    @Override
     public void setError(ByteBuffer error) {
         CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
         output.setError(decodeAscii(error));
@@ -62,8 +70,14 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void complete(int depth) {
+
         if (queue.isEmpty()) {
             return;
+        }
+
+        if (depth >= 1) {
+            RedisCommand<K, V, ?> cmd = queue.peek();
+            cmd.getOutput().complete(depth - 1);
         }
 
         if (depth == 1) {

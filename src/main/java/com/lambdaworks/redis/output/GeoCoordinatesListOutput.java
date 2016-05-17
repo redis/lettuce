@@ -12,7 +12,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * A list output that creates a list with {@link GeoCoordinates}'s.
- * 
+ *
  * @author Mark Paluch
  */
 public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<GeoCoordinates>> {
@@ -25,6 +25,11 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        if (output == null) {
+            output = Lists.newArrayList();
+        }
+
         Double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
 
         if (x == null) {
