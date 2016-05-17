@@ -61,14 +61,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(key).add(start).add(end);
         return createCommand(BITCOUNT, new IntegerOutput<K, V>(codec), args);
     }
-    
+
     public Command<K, V, List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs) {
         LettuceAssert.notNull(bitFieldArgs, "bitFieldArgs must not be null");
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.addKey(key);
 
         bitFieldArgs.build(args);
-        
+
         return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<K, V>(codec), args);
     }
 
@@ -1114,7 +1114,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -1858,6 +1858,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<String>> geohash(K key, V... members) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
+        return createCommand(GEOHASH, new StringListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Set<V>> georadius(K key, double longitude, double latitude, double distance, String unit) {

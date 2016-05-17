@@ -81,4 +81,9 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     @Override
     public void geoposWithTransaction() throws Exception {
     }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void geohashWithTransaction() throws Exception {
+    }
 }

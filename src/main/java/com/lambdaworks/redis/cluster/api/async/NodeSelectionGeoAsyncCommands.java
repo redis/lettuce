@@ -1,7 +1,6 @@
 package com.lambdaworks.redis.cluster.api.async;
 
 import com.lambdaworks.redis.GeoArgs;
-import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoRadiusStoreArgs;
 import com.lambdaworks.redis.GeoWithin;
@@ -39,6 +38,15 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
     AsyncExecutions<Long> geoadd(K key, Object... lngLatMember);
 
     /**
+     * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a geospatial index.
+     *
+     * @param key the key of the geo set
+     * @param members the members
+     * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
+     */
+    AsyncExecutions<List<String>> geohash(K key, V... members);
+
+    /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
      *
      * @param key the key of the geo set
@@ -61,12 +69,10 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @param geoArgs args to control the result
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}
      */
-    AsyncExecutions<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
-            GeoArgs geoArgs);
+    AsyncExecutions<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a
-     * sorted set.
+     * Perform a {@link #georadius(Object, double, double, double, Unit, GeoArgs)} query and store the results in a sorted set.
      *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
@@ -77,8 +83,7 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result
      */
-    AsyncExecutions<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
-            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    AsyncExecutions<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
@@ -107,8 +112,7 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
     AsyncExecutions<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadiusbymember(Object, Object, double, Unit, GeoArgs)} query and store the results in a
-     * sorted set.
+     * Perform a {@link #georadiusbymember(Object, Object, double, Unit, GeoArgs)} query and store the results in a sorted set.
      *
      * @param key the key of the geo set
      * @param member reference member
@@ -118,8 +122,7 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result
      */
-    AsyncExecutions<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
-            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    AsyncExecutions<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Get geo coordinates for the {@code members}.

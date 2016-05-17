@@ -9,7 +9,7 @@ import java.util.Set;
 
 /**
  * ${intent} for the Geo-API.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */
@@ -17,7 +17,7 @@ public interface RedisGeoCommands<K, V> {
 
     /**
      * Single geo add.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -28,7 +28,7 @@ public interface RedisGeoCommands<K, V> {
 
     /**
      * Multi geo add.
-     * 
+     *
      * @param key the key of the geo set
      * @param lngLatMember triplets of double longitude, double latitude and V member
      * @return Long integer-reply the number of elements that were added to the set
@@ -36,8 +36,17 @@ public interface RedisGeoCommands<K, V> {
     Long geoadd(K key, Object... lngLatMember);
 
     /**
+     * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a geospatial index.
+     *
+     * @param key the key of the geo set
+     * @param members the members
+     * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
+     */
+    List<String> geohash(K key, V... members);
+
+    /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -49,7 +58,7 @@ public interface RedisGeoCommands<K, V> {
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -77,7 +86,7 @@ public interface RedisGeoCommands<K, V> {
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
-     * 
+     *
      * @param key the key of the geo set
      * @param member reference member
      * @param distance radius distance
@@ -90,7 +99,7 @@ public interface RedisGeoCommands<K, V> {
      *
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
-     * 
+     *
      * @param key the key of the geo set
      * @param member reference member
      * @param distance radius distance

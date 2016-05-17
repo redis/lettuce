@@ -4,7 +4,7 @@ package com.lambdaworks.redis.protocol;
 
 /**
  * Redis commands.
- * 
+ *
  * @author Will Glozer
  */
 public enum CommandType implements ProtocolKeyword {
@@ -65,7 +65,7 @@ public enum CommandType implements ProtocolKeyword {
     BITCOUNT, BITFIELD, BITOP, GETBIT, SETBIT, BITPOS,
 
     // Geo
-    GEOADD, GEORADIUS, GEORADIUSBYMEMBER, GEOENCODE, GEODECODE, GEOPOS, GEODIST,
+    GEOADD, GEORADIUS, GEORADIUSBYMEMBER, GEOENCODE, GEODECODE, GEOPOS, GEODIST, GEOHASH,
 
     // Others
     TIME, WAIT,

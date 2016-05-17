@@ -215,6 +215,41 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void geohash() throws Exception {
+
+        prepareGeo();
+
+        List<String> geohash = redis.geohash(key, "Weinheim", "Bahn", "dunno");
+
+        assertThat(geohash).containsSequence("u0y1v0kffz0", "u0y1vhvuvm0", null);
+    }
+
+    @Test
+    public void geohashUnknownKey() throws Exception {
+
+        prepareGeo();
+
+        List<String> geohash = redis.geohash("dunno");
+
+        assertThat(geohash).isEmpty();
+    }
+
+    @Test
+    public void geohashWithTransaction() throws Exception {
+
+        prepareGeo();
+
+        redis.multi();
+        redis.geohash(key, "Weinheim", "Bahn", "dunno");
+        redis.geohash(key, "Weinheim", "Bahn", "dunno");
+        List<Object> exec = redis.exec();
+
+        List<String> geohash = (List) exec.get(1);
+
+        assertThat(geohash).containsSequence("u0y1v0kffz0", "u0y1vhvuvm0", null);
+    }
+
+    @Test
     public void georadiusStore() throws Exception {
 
         prepareGeo();

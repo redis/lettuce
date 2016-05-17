@@ -82,7 +82,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> bitcount(K key, long start, long end) {
         return createObservable(() -> commandBuilder.bitcount(key, start, end));
     }
-    
+
     @Override
     public Observable<Long> bitfield(K key, BitFieldArgs args) {
         return createDissolvingObservable(() -> commandBuilder.bitfield(key, args));
@@ -1035,7 +1035,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
         return createObservable(() -> commandBuilder.zadd(key, zAddArgs, scoresAndValues));
     }
-    
+
     @Override
     public Observable<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
         return createObservable(() -> commandBuilder.zadd(key, zAddArgs, scoredValues));
@@ -1689,6 +1689,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<String> geohash(K key, V... members) {
+        return createDissolvingObservable(() -> commandBuilder.geohash(key, members));
+    }
+
+    @Override
     public Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return createDissolvingObservable(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
     }
@@ -1755,7 +1760,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     /**
      * Emits just {@link Success#Success} or the {@link Throwable} after the inner observable is completed.
-     * 
+     *
      * @param observable inner observable
      * @param <T> used for type inference
      * @return Success observable

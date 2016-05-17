@@ -36,6 +36,15 @@ public interface RedisGeoConnection<K, V> {
     Long geoadd(K key, Object... lngLatMember);
 
     /**
+     * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a geospatial index.
+     *
+     * @param key the key of the geo set
+     * @param members the members
+     * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
+     */
+    List<String> geohash(K key, V... members);
+
+    /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
      *
      * @param key the key of the geo set

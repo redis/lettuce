@@ -1714,6 +1714,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<List<String>> geohash(K key, V... members) {
+        return dispatch(commandBuilder.geohash(key, members));
+    }
+
+    @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
     }

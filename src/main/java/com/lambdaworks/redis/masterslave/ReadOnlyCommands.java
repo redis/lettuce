@@ -8,7 +8,7 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 /**
  * Contains all command names that are read-only commands.
- * 
+ *
  * @author Mark Paluch
  */
 class ReadOnlyCommands {
@@ -28,7 +28,7 @@ class ReadOnlyCommands {
 
     enum CommandName {
         ASKING, BITCOUNT, BITPOS, CLIENT, COMMAND, DUMP, ECHO, EXISTS,
-        /**/GEODIST, GEOPOS, GEORADIUS, GEORADIUSBYMEMBER, GET, GETBIT,
+        /**/GEODIST, GEOPOS, GEORADIUS, GEORADIUSBYMEMBER, GEOHASH, GET, GETBIT,
         /**/GETRANGE, HEXISTS, HGET, HGETALL, HKEYS, HLEN, HMGET, HSCAN, HSTRLEN,
         /**/HVALS, INFO, KEYS, LINDEX, LLEN, LRANGE, MGET, MULTI, PFCOUNT, PTTL,
         /**/RANDOMKEY, READWRITE, SCAN, SCARD, SCRIPT,
