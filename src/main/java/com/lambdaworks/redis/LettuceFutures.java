@@ -52,8 +52,11 @@ public class LettuceFutures {
                 throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
             }
             throw new RedisException(e.getCause());
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
+        } catch (Exception e) {
+            throw new RedisCommandExecutionException(e);
         }
 
         return complete;
@@ -67,7 +70,7 @@ public class LettuceFutures {
      * @param timeout Maximum time to wait for futures to complete
      * @param unit Unit of time for the timeout
      * @param <T> Result type
-     * 
+     *
      * @return Result of the command.
      */
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
