@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.CommandOutput;
 
 /**
  * A list output that creates a list with either double/long or {@link GeoCoordinates}'s.
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  */
 public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>> {
@@ -51,6 +51,10 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        if (output == null) {
+            output = Lists.newArrayList();
+        }
 
         if (member == null) {
             member = codec.decodeValue(bytes);

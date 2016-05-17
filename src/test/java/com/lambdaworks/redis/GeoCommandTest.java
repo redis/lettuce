@@ -26,11 +26,30 @@ public class GeoCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void geoaddWithTransaction() throws Exception {
+
+        redis.multi();
+        redis.geoadd(key, -73.9454966, 40.747533, "lic market");
+        redis.geoadd(key, -73.9454966, 40.747533, "lic market");
+
+        assertThat(redis.exec()).containsSequence(1L, 0L);
+    }
+
+    @Test
     public void geoaddMulti() throws Exception {
 
         Long result = redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302,
                 "Bahn");
         assertThat(result).isEqualTo(3);
+    }
+
+    @Test
+    public void geoaddMultiWithTransaction() throws Exception {
+
+        redis.multi();
+        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
+
+        assertThat(redis.exec()).contains(3L);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -53,7 +72,23 @@ public class GeoCommandTest extends AbstractCommandTest {
 
         Set<String> largerGeoradius = redis.georadius(key, 8.6582861, 49.5285695, 5, GeoArgs.Unit.km);
         assertThat(largerGeoradius).hasSize(2).contains("Weinheim").contains("Bahn");
+    }
 
+    @Test
+    public void georadiusWithTransaction() throws Exception {
+
+        prepareGeo();
+
+        redis.multi();
+        redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.km);
+        redis.georadius(key, 8.6582861, 49.5285695, 5, GeoArgs.Unit.km);
+
+        List<Object> exec = redis.exec();
+        Set<String> georadius = (Set<String>) exec.get(0);
+        Set<String> largerGeoradius = (Set<String>) exec.get(1);
+
+        assertThat(georadius).hasSize(1).contains("Weinheim");
+        assertThat(largerGeoradius).hasSize(2).contains("Weinheim").contains("Bahn");
     }
 
     @Test
@@ -62,6 +97,19 @@ public class GeoCommandTest extends AbstractCommandTest {
         prepareGeo();
 
         Double result = redis.geodist(key, "Weinheim", "Bahn", GeoArgs.Unit.km);
+        // 10 mins with the bike
+        assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
+    }
+
+    @Test
+    public void geodistWithTransaction() throws Exception {
+
+        prepareGeo();
+
+        redis.multi();
+        redis.geodist(key, "Weinheim", "Bahn", GeoArgs.Unit.km);
+        Double result = (Double) redis.exec().get(0);
+
         // 10 mins with the bike
         assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
 
@@ -73,6 +121,22 @@ public class GeoCommandTest extends AbstractCommandTest {
         prepareGeo();
 
         List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
+
+        assertThat(geopos).hasSize(3);
+        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(1)).isNull();
+        assertThat(geopos.get(2)).isNotNull();
+    }
+
+    @Test
+    public void geoposWithTransaction() throws Exception {
+
+        prepareGeo();
+
+        redis.multi();
+        redis.geopos(key, "Weinheim", "foobar", "Bahn");
+        redis.geopos(key, "Weinheim", "foobar", "Bahn");
+        List<GeoCoordinates> geopos = (List) redis.exec().get(1);
 
         assertThat(geopos).hasSize(3);
         assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
@@ -111,6 +175,44 @@ public class GeoCommandTest extends AbstractCommandTest {
         assertThat(bahn.coordinates).isNull();
     }
 
+    @Test
+    public void georadiusWithArgsAndTransaction() throws Exception {
+
+        prepareGeo();
+
+        redis.multi();
+        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().withCount(1).desc();
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, geoArgs);
+        redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, geoArgs);
+        List<Object> exec = redis.exec();
+
+        assertThat(exec).hasSize(2);
+
+        List<GeoWithin<String>> result = (List) exec.get(1);
+        assertThat(result).hasSize(1);
+
+        GeoWithin<String> weinheim = result.get(0);
+
+        assertThat(weinheim.member).isEqualTo("Weinheim");
+        assertThat(weinheim.geohash).isEqualTo(3666615932941099L);
+
+        assertThat(weinheim.distance).isEqualTo(2.7882, offset(0.5));
+        assertThat(weinheim.coordinates.x.doubleValue()).isEqualTo(8.663875, offset(0.5));
+        assertThat(weinheim.coordinates.y.doubleValue()).isEqualTo(49.52825, offset(0.5));
+
+        result = redis.georadius(key, 8.665351, 49.553302, 1, GeoArgs.Unit.km, new GeoArgs());
+        assertThat(result).hasSize(1);
+
+        GeoWithin<String> bahn = result.get(0);
+
+        assertThat(bahn.member).isEqualTo("Bahn");
+        assertThat(bahn.geohash).isNull();
+
+        assertThat(bahn.distance).isNull();
+        assertThat(bahn.coordinates).isNull();
+    }
+
+
     @Test(expected = IllegalArgumentException.class)
     public void georadiusWithNullArgs() throws Exception {
         redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, null);
@@ -133,18 +235,84 @@ public class GeoCommandTest extends AbstractCommandTest {
 
         prepareGeo();
 
-        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().desc();
-
-        List<GeoWithin<String>> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, geoArgs);
+        List<GeoWithin<String>> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km,
+                new GeoArgs().withHash().withCoordinates().withDistance().desc());
         assertThat(empty).isNotEmpty();
 
-        List<GeoWithin<String>> georadiusbymember = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, geoArgs);
-        assertThat(georadiusbymember).hasSize(2);
+        List<GeoWithin<String>> withDistanceAndCoordinates = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
+                new GeoArgs().withCoordinates().withDistance().desc());
+        assertThat(withDistanceAndCoordinates).hasSize(2);
 
-        GeoWithin<String> weinheim = georadiusbymember.get(0);
+        GeoWithin<String> weinheim = withDistanceAndCoordinates.get(0);
         assertThat(weinheim.member).isEqualTo("Weinheim");
+        assertThat(weinheim.geohash).isNull();
         assertThat(weinheim.distance).isNotNull();
         assertThat(weinheim.coordinates).isNotNull();
+
+        List<GeoWithin<String>> withDistanceAndHash = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
+                new GeoArgs().withDistance().withHash().desc());
+        assertThat(withDistanceAndHash).hasSize(2);
+
+        GeoWithin<String> weinheimDistanceHash = withDistanceAndHash.get(0);
+        assertThat(weinheimDistanceHash.member).isEqualTo("Weinheim");
+        assertThat(weinheimDistanceHash.geohash).isNotNull();
+        assertThat(weinheimDistanceHash.distance).isNotNull();
+        assertThat(weinheimDistanceHash.coordinates).isNull();
+
+        List<GeoWithin<String>> withCoordinates = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
+                new GeoArgs().withCoordinates().desc());
+        assertThat(withCoordinates).hasSize(2);
+
+        GeoWithin<String> weinheimCoordinates = withCoordinates.get(0);
+        assertThat(weinheimCoordinates.member).isEqualTo("Weinheim");
+        assertThat(weinheimCoordinates.geohash).isNull();
+        assertThat(weinheimCoordinates.distance).isNull();
+        assertThat(weinheimCoordinates.coordinates).isNotNull();
+    }
+
+    @Test
+    public void georadiusbymemberWithArgsAndTransaction() throws Exception {
+
+        prepareGeo();
+
+        redis.multi();
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km,
+                new GeoArgs().withHash().withCoordinates().withDistance().desc());
+        redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs().withCoordinates().withDistance().desc());
+        redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs().withDistance().withHash().desc());
+        redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs().withCoordinates().desc());
+
+        List<Object> exec = redis.exec();
+
+        List<GeoWithin<String>> empty = (List) exec.get(0);
+        assertThat(empty).isNotEmpty();
+
+        List<GeoWithin<String>> withDistanceAndCoordinates = (List) exec.get(1);
+        assertThat(withDistanceAndCoordinates).hasSize(2);
+
+        GeoWithin<String> weinheim = withDistanceAndCoordinates.get(0);
+        assertThat(weinheim.member).isEqualTo("Weinheim");
+        assertThat(weinheim.geohash).isNull();
+        assertThat(weinheim.distance).isNotNull();
+        assertThat(weinheim.coordinates).isNotNull();
+
+        List<GeoWithin<String>> withDistanceAndHash = (List) exec.get(2);
+        assertThat(withDistanceAndHash).hasSize(2);
+
+        GeoWithin<String> weinheimDistanceHash = withDistanceAndHash.get(0);
+        assertThat(weinheimDistanceHash.member).isEqualTo("Weinheim");
+        assertThat(weinheimDistanceHash.geohash).isNotNull();
+        assertThat(weinheimDistanceHash.distance).isNotNull();
+        assertThat(weinheimDistanceHash.coordinates).isNull();
+
+        List<GeoWithin<String>> withCoordinates = (List) exec.get(3);
+        assertThat(withCoordinates).hasSize(2);
+
+        GeoWithin<String> weinheimCoordinates = withCoordinates.get(0);
+        assertThat(weinheimCoordinates.member).isEqualTo("Weinheim");
+        assertThat(weinheimCoordinates.geohash).isNull();
+        assertThat(weinheimCoordinates.distance).isNull();
+        assertThat(weinheimCoordinates.coordinates).isNotNull();
     }
 
     @Test(expected = IllegalArgumentException.class)
