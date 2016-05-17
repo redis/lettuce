@@ -5,10 +5,10 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DnsResolver;
 import com.lambdaworks.redis.resource.EventLoopGroupProvider;
 import io.netty.util.concurrent.*;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,6 +61,11 @@ public class EmptyClientResources implements ClientResources {
 
     @Override
     public CommandLatencyCollector commandLatencyCollector() {
+        return null;
+    }
+
+    @Override
+    public DnsResolver dnsResolver() {
         return null;
     }
 }
