@@ -2,18 +2,19 @@ package com.lambdaworks.redis.cluster.commands;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushDatabaseOfAllNodes;
 
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
-import com.lambdaworks.redis.commands.GeoCommandTest;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.commands.GeoCommandTest;
 
 /**
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
@@ -24,7 +25,8 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = new RedisClusterClient(
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass
@@ -45,4 +47,38 @@ public class GeoClusterCommandTest extends GeoCommandTest {
         return ClusterTestUtil.redisCommandsOverCluster(clusterConnection);
     }
 
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void geoaddWithTransaction() throws Exception {
+    }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void geoaddMultiWithTransaction() throws Exception {
+    }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void georadiusWithTransaction() throws Exception {
+    }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void geodistWithTransaction() throws Exception {
+    }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void georadiusWithArgsAndTransaction() throws Exception {
+    }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void georadiusbymemberWithArgsAndTransaction() throws Exception {
+    }
+
+    @Ignore("MULTI not available on Redis Cluster")
+    @Override
+    public void geoposWithTransaction() throws Exception {
+    }
 }
