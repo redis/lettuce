@@ -16,7 +16,8 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>  implements StreamingOutput<GeoWithin<V>>{
+public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>
+        implements StreamingOutput<GeoWithin<V>> {
 
     private V member;
     private Double distance;
@@ -28,14 +29,14 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     private boolean withDistance;
     private boolean withHash;
     private boolean withCoordinates;
-	private Subscriber<GeoWithin<V>> subscriber;
+    private Subscriber<GeoWithin<V>> subscriber;
 
-	public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
+    public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
         super(codec, new ArrayList<>());
         this.withDistance = withDistance;
         this.withHash = withHash;
         this.withCoordinates = withCoordinates;
-		setSubscriber(ListSubscriber.of(output));
+        setSubscriber(ListSubscriber.of(output));
     }
 
     @Override
@@ -88,14 +89,14 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
         }
     }
 
-	@Override
-	public void setSubscriber(Subscriber<GeoWithin<V>> subscriber) {
+    @Override
+    public void setSubscriber(Subscriber<GeoWithin<V>> subscriber) {
         LettuceAssert.notNull(subscriber, "subscriber must not be null");
-		this.subscriber = subscriber;
-	}
+        this.subscriber = subscriber;
+    }
 
-	@Override
-	public Subscriber<GeoWithin<V>> getSubscriber() {
-		return subscriber;
-	}
+    @Override
+    public Subscriber<GeoWithin<V>> getSubscriber() {
+        return subscriber;
+    }
 }

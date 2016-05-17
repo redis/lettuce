@@ -27,6 +27,7 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
 
     @Override
     public void set(ByteBuffer bytes) {
+
         Double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
 
         if (x == null) {
