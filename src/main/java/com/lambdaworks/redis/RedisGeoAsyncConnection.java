@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Synchronous executed commands for Geo-Commands.
- * 
+ * Asynchronous executed commands for Geo-Commands.
+ *
  * @author Mark Paluch
  * @since 3.3
  */
@@ -13,7 +13,7 @@ public interface RedisGeoAsyncConnection<K, V> {
 
     /**
      * Single geo add.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -24,7 +24,7 @@ public interface RedisGeoAsyncConnection<K, V> {
 
     /**
      * Multi geo add.
-     * 
+     *
      * @param key the key of the geo set
      * @param lngLatMember triplets of double longitude, double latitude and V member
      * @return Long integer-reply the number of elements that were added to the set
@@ -32,8 +32,17 @@ public interface RedisGeoAsyncConnection<K, V> {
     RedisFuture<Long> geoadd(K key, Object... lngLatMember);
 
     /**
+     * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a geospatial index.
+     *
+     * @param key the key of the geo set
+     * @param members the members
+     * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
+     */
+    RedisFuture<List<String>> geohash(K key, V... members);
+
+    /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -45,7 +54,7 @@ public interface RedisGeoAsyncConnection<K, V> {
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
-     * 
+     *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
      * @param latitude the latitude coordinate according to WGS84
@@ -76,7 +85,7 @@ public interface RedisGeoAsyncConnection<K, V> {
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
-     * 
+     *
      * @param key the key of the geo set
      * @param member reference member
      * @param distance radius distance
@@ -89,7 +98,7 @@ public interface RedisGeoAsyncConnection<K, V> {
      *
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
-     * 
+     *
      * @param key the key of the geo set
      * @param member reference member
      * @param distance radius distance
@@ -116,7 +125,7 @@ public interface RedisGeoAsyncConnection<K, V> {
 
     /**
      * Get geo coordinates for the {@code members}.
-     * 
+     *
      * @param key the key of the geo set
      * @param members the members
      *
