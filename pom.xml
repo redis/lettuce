@@ -142,7 +142,7 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>4.0.2</version>
+      <version>4.0.3</version>
       <scope>test</scope>
     </dependency>
 
@@ -177,7 +177,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>3.0.5</version>
+      <version>3.0.6</version>
       <scope>test</scope>
     </dependency>
 
@@ -191,7 +191,7 @@
     <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
-      <version>2.3.3</version>
+      <version>2.3.4</version>
       <scope>test</scope>
     </dependency>
 
