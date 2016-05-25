@@ -1,21 +1,20 @@
 package com.lambdaworks.redis.masterslave;
 
+import static com.lambdaworks.redis.TestSettings.port;
 import static com.lambdaworks.redis.masterslave.MasterSlaveTest.slaveCall;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.*;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.sentinel.AbstractSentinelTest;
+import com.lambdaworks.redis.sentinel.SentinelRule;
 
 import io.netty.channel.group.ChannelGroup;
 
@@ -24,12 +23,20 @@ import io.netty.channel.group.ChannelGroup;
  */
 public class MasterSlaveSentinelTest extends AbstractSentinelTest {
 
+    static {
+        sentinelClient = RedisClient
+            .create(TestClientResources.create(), RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+    }
+
+    @Rule
+    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
+
     private RedisURI sentinelUri = RedisURI.Builder.sentinel(TestSettings.host(), 26379, MASTER_ID).build();
     private Pattern pattern = Pattern.compile("role:(\\w+)");
 
-    @BeforeClass
-    public static void setupClient() {
-        sentinelClient = RedisClient.create(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+    @Before
+    public void before() throws Exception {
+        sentinelRule.needMasterWithSlave(MASTER_ID, port(3), port(4));
     }
 
     @Test

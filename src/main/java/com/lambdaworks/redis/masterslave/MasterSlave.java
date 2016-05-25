@@ -1,23 +1,26 @@
 package com.lambdaworks.redis.masterslave;
 
+import java.util.*;
+
 import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
+
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import java.util.*;
 
 /**
  * Master-Slave connection API.
  * <p>
- * This API allows connections to Redis Master/Slave setups which run either Standalone or are managed by Redis Sentinel.
- * Master-Slave connections incorporate topology discovery and source selection for read operations using
- * {@link com.lambdaworks.redis.ReadFrom}. Regular Standalone connections using {@link RedisClient#connect()} are single-node
- * connections without balancing/topology discovery.
+ * This API allows connections to Redis Master/Slave setups which run either Redis Standalone or are managed by Redis Sentinel.
+ * Master-Slave connections can discover topologies and select a source for read operations using
+ * {@link com.lambdaworks.redis.ReadFrom}.
  * </p>
  * <p>
  *
@@ -36,25 +39,30 @@ import java.util.*;
  *   }
  * </pre>
  * </p>
- * <h3>Topology discovery</h3>
+ * <h3>Topology Discovery</h3>
  * <p>
- * Master-Slave topologies are either static or semi-static. Redis Standalone instances with attached slaves feature no
- * failover/HA mechanism and are static setups. Redis Sentinel managed instances are controlled by Redis Sentinel and allow
- * failover (which include master promotion). The {@link MasterSlave} API supports both mechanisms. The topology is provided by
- * a {@link TopologyProvider}:
+ * Master-Slave topologies are either static or semi-static. Redis Standalone instances with attached slaves provide no
+ * failover/HA mechanism. Redis Sentinel managed instances are controlled by Redis Sentinel and allow failover (which include
+ * master promotion). The {@link MasterSlave} API supports both mechanisms. The topology is provided by a
+ * {@link TopologyProvider}:
  *
  * <ul>
- * <li>{@link MasterSlaveTopologyProvider}: Topology lookup using the {@code INFO REPLICATION} output. Slaves are listed as
- * {@code slaveN=...} entries.</li>
- * <li>{@link SentinelTopologyProvider}: Topology lookup using the Redis Sentinel API. In particular {@code SENTINEL MASTER} and
- * {@code SENTINEL SLAVES} output.</li>
+ * <li>{@link MasterSlaveTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Slaves are listed
+ * as {@code slaveN=...} entries. The initial connection can either point to a master or a slave and the topology provider will
+ * discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Slave failover or topology
+ * changes.</li>
+ * <li>{@link StaticMasterSlaveTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the {@code ROLE}
+ * output. MasterSlave uses only the supplied nodes and won't discover additional nodes in the setup. The connection needs to be
+ * re-established outside of lettuce in a case of Master/Slave failover or topology changes.</li>
+ * <li>{@link SentinelTopologyProvider}: Dynamic topology lookup using the Redis Sentinel API. In particular,
+ * {@code SENTINEL MASTER} and {@code SENTINEL SLAVES} output. Master/Slave failover is handled by lettuce.</li>
  * </ul>
  *
  * <p>
- * Topology updates
+ * Topology Updates
  * </p>
  * <ul>
- * <li>Standalone Master/Slave: Performs a one-time topology lookup which remains static afterwards</li>
+ * <li>Standalone Master/Slave: Performs a one-time topology lookup which remains static afterward</li>
  * <li>Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub messages to trigger topology refreshing</li>
  * </ul>
  * </p>
@@ -84,10 +92,47 @@ public class MasterSlave {
     public static <K, V> StatefulRedisMasterSlaveConnection<K, V> connect(RedisClient redisClient, RedisCodec<K, V> codec,
             RedisURI redisURI) {
 
+        LettuceAssert.notNull(redisClient, "RedisClient must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
         if (isSentinel(redisURI)) {
             return connectSentinel(redisClient, codec, redisURI);
         } else {
             return connectMasterSlave(redisClient, codec, redisURI);
+        }
+    }
+
+    /**
+     * Open a new connection to a Redis Master-Slave server/servers using the supplied {@link RedisURI} and the supplied
+     * {@link RedisCodec codec} to encode/decode keys.
+     * <p>
+     * This {@link MasterSlave} performs auto-discovery of nodes if the URI is a Redis Sentinel URI. Master/Slave URIs will be
+     * treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Slave will
+     * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
+     * </p>
+     *
+     * @param redisClient the Redis client
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURIs the Redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     */
+    public static <K, V> StatefulRedisMasterSlaveConnection<K, V> connect(RedisClient redisClient, RedisCodec<K, V> codec,
+            Iterable<RedisURI> redisURIs) {
+
+        LettuceAssert.notNull(redisClient, "RedisClient must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
+        LettuceAssert.notNull(redisURIs, "RedisURIs must not be null");
+
+        List<RedisURI> uriList = LettuceLists.newList(redisURIs);
+        LettuceAssert.isTrue(!uriList.isEmpty(), "RedisURIs must not be empty");
+
+        if (isSentinel(uriList.get(0))) {
+            return connectSentinel(redisClient, codec, uriList.get(0));
+        } else {
+            return connectStaticMasterSlave(redisClient, codec, uriList);
         }
     }
 
@@ -166,6 +211,42 @@ public class MasterSlave {
 
             StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout(), redisURI.getUnit());
+
+            return connection;
+
+        } catch (RuntimeException e) {
+            for (StatefulRedisConnection<K, V> connection : initialConnections.values()) {
+                connection.close();
+            }
+            throw e;
+        }
+    }
+
+    private static <K, V> StatefulRedisMasterSlaveConnection<K, V> connectStaticMasterSlave(RedisClient redisClient,
+            RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
+
+        Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new HashMap<>();
+
+        try {
+            TopologyProvider topologyProvider = new StaticMasterSlaveTopologyProvider(redisClient, redisURIs);
+
+            RedisURI seedNode = redisURIs.iterator().next();
+
+            MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(redisClient, topologyProvider);
+            MasterSlaveConnectionProvider<K, V> connectionProvider = new MasterSlaveConnectionProvider<>(redisClient, codec,
+                    seedNode, initialConnections);
+
+            List<RedisNodeDescription> nodes = refresh.getNodes(seedNode);
+            if (nodes.isEmpty()) {
+                throw new RedisException(String.format("Cannot determine topology from %s", redisURIs));
+            }
+
+            connectionProvider.setKnownNodes(nodes);
+
+            MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
+
+            StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
+                    channelWriter, codec, seedNode.getTimeout(), seedNode.getUnit());
 
             return connection;
 

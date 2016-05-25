@@ -56,8 +56,8 @@ public class SentinelRule implements TestRule {
 
         log.info("[Sentinel] Connecting to sentinels: " + Arrays.toString(sentinelPorts));
         for (int port : sentinelPorts) {
-            RedisSentinelAsyncCommands<String, String> connection = redisClient.connectSentinelAsync(RedisURI.Builder.redis(
-                    TestSettings.host(), port).build());
+            RedisSentinelAsyncCommands<String, String> connection = redisClient
+                    .connectSentinelAsync(RedisURI.Builder.redis(TestSettings.host(), port).build());
             sentinelConnections.put(port, connection.getStatefulConnection().sync());
         }
     }
@@ -120,8 +120,9 @@ public class SentinelRule implements TestRule {
             flush();
             int masterPort = setupMasterSlave(redisPorts);
             monitor(masterId, TestSettings.hostAddr(), masterPort, 1, true);
-            waitForConnectedSlaves(masterId);
         }
+
+        waitForConnectedSlaves(masterId);
     }
 
     /**
@@ -217,8 +218,8 @@ public class SentinelRule implements TestRule {
 
         Map<Integer, RedisCommands<String, String>> connections = new HashMap<>();
         for (int redisPort : redisPorts) {
-            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build())
-                    .sync());
+            connections.put(redisPort,
+                    redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build()).sync());
         }
 
         try {
@@ -286,8 +287,8 @@ public class SentinelRule implements TestRule {
         log.info("[Sentinel] Create a master with slaves on ports " + Arrays.toString(redisPorts));
         Map<Integer, RedisCommands<String, String>> connections = new HashMap<>();
         for (int redisPort : redisPorts) {
-            connections.put(redisPort, redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build())
-                    .sync());
+            connections.put(redisPort,
+                    redisClient.connect(RedisURI.Builder.redis(TestSettings.hostAddr(), redisPort).build()).sync());
         }
 
         for (RedisCommands<String, String> commands : connections.values()) {

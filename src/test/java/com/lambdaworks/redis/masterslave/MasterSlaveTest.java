@@ -81,6 +81,7 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
         assertThat(redisCommands.get(key)).isEqualTo(value);
     }
 
+
     @Test
     public void testConnectToSlave() throws Exception {
 

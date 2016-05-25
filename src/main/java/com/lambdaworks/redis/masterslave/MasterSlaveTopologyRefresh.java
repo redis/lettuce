@@ -251,7 +251,5 @@ class MasterSlaveTopologyRefresh {
 
             return 0;
         }
-
     }
-
 }

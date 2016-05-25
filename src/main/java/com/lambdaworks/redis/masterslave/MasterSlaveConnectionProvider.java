@@ -1,5 +1,9 @@
 package com.lambdaworks.redis.masterslave;
 
+import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
+
+import java.util.*;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -14,12 +18,9 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
+
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import java.util.*;
-
-import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
 
 /**
  * Connection provider for master/slave setups. The connection provider
@@ -92,8 +93,8 @@ public class MasterSlaveConnectionProvider<K, V> {
             });
 
             if (selection.isEmpty()) {
-                throw new RedisException(
-                        "Cannot determine a node to read (Known nodes: " + knownNodes + ") with setting " + readFrom);
+                throw new RedisException(String.format("Cannot determine a node to read (Known nodes: %s) with setting %s",
+                        knownNodes, readFrom));
             }
             try {
                 for (RedisNodeDescription redisNodeDescription : selection) {
@@ -222,7 +223,7 @@ public class MasterSlaveConnectionProvider<K, V> {
             }
         }
 
-        throw new IllegalStateException("Master is currently unknown: " + knownNodes);
+        throw new RedisException(String.format("Master is currently unknown: %s", knownNodes));
     }
 
     private class ConnectionFactory<K, V> extends CacheLoader<ConnectionKey, StatefulRedisConnection<K, V>> {
