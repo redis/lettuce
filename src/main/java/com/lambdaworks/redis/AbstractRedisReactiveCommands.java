@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.protocol.*;
 import rx.Observable;
 import rx.Subscriber;
 
@@ -16,10 +18,6 @@ import com.lambdaworks.redis.api.rx.*;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -1737,6 +1735,25 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
         return createDissolvingObservable(() -> commandBuilder.geodist(key, from, to, unit));
+    }
+
+    @Override
+    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+
+        return createDissolvingObservable(() -> new Command<>(type, output));
+    }
+
+    @Override
+    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+        LettuceAssert.notNull(args, "CommandArgs type must not be null");
+
+        return createDissolvingObservable(() -> new Command<>(type, output, args));
     }
 
     protected <T> Observable<T> createObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {

@@ -2,13 +2,7 @@
 
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.GeoArgs.Unit;
-import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.async.*;
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.*;
+import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.util.Date;
 import java.util.List;
@@ -16,7 +10,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import com.lambdaworks.redis.GeoArgs.Unit;
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.async.*;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.*;
 
 /**
  * An asynchronous and thread-safe API for a Redis connection.
@@ -25,17 +26,16 @@ import static com.lambdaworks.redis.protocol.CommandType.EXEC;
  * @param <V> Value type.
  * @author Will Glozer
  */
-public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsyncConnection<K, V>,
-        RedisKeysAsyncConnection<K, V>, RedisStringsAsyncConnection<K, V>, RedisListsAsyncConnection<K, V>,
-        RedisSetsAsyncConnection<K, V>, RedisSortedSetsAsyncConnection<K, V>, RedisScriptingAsyncConnection<K, V>,
-        RedisServerAsyncConnection<K, V>, RedisHLLAsyncConnection<K, V>, BaseRedisAsyncConnection<K, V>,
-        RedisClusterAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>,
+public abstract class AbstractRedisAsyncCommands<K, V>
+        implements RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>, RedisStringsAsyncConnection<K, V>,
+        RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>, RedisSortedSetsAsyncConnection<K, V>,
+        RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>, RedisHLLAsyncConnection<K, V>,
+        BaseRedisAsyncConnection<K, V>, RedisClusterAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>,
 
-        RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
-        RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
-        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,
-        BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
-        RedisClusterAsyncCommands<K, V> {
+        RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
+        RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>,
+        RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>,
+        RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
     protected MultiOutput<K, V> multi;
     protected RedisCommandBuilder<K, V> commandBuilder;
@@ -1557,7 +1557,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
         return dispatch(commandBuilder.pfcount(keys));
     }
 
-
     @Override
     public RedisFuture<String> clusterBumpepoch() {
         return dispatch(commandBuilder.clusterBumpepoch());
@@ -1760,6 +1759,25 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public RedisFuture<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
         return dispatch(commandBuilder.geodist(key, from, to, unit));
+    }
+
+    @Override
+    public <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+
+        return dispatch(new AsyncCommand<>(new Command<>(type, output)));
+    }
+
+    @Override
+    public <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+        LettuceAssert.notNull(args, "CommandArgs type must not be null");
+
+        return dispatch(new AsyncCommand<>(new Command<>(type, output, args)));
     }
 
     protected <T> RedisFuture<T> dispatch(CommandType type, CommandOutput<K, V, T> output) {

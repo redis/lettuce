@@ -1,8 +1,11 @@
 package com.lambdaworks.redis;
 
-import java.lang.AutoCloseable;
 import java.util.List;
 import java.util.Map;
+
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+import com.lambdaworks.redis.output.CommandOutput;
 
 /**
  * 
@@ -106,6 +109,27 @@ public interface BaseRedisCommands<K, V> extends AutoCloseable {
      * @return number of replicas
      */
     Long waitForReplication(int replicas, long timeout);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param args the command arguments, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.

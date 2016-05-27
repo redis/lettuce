@@ -1,8 +1,11 @@
 package com.lambdaworks.redis.api.rx;
 
-import java.lang.AutoCloseable;
-import java.util.List;
 import java.util.Map;
+
+import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+
 import rx.Observable;
 
 /**
@@ -67,8 +70,8 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional
-     *         elements are role-specific.
+     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional elements are
+     *         role-specific.
      */
     Observable<Object> role();
 
@@ -108,6 +111,27 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @return number of replicas
      */
     Observable<Long> waitForReplication(int replicas, long timeout);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param args the command arguments, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.

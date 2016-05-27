@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.api.async.BaseRedisAsyncCommands;
+import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 /**
  * 
@@ -145,6 +148,27 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
      * @return number of replicas
      */
     RedisFuture<Long> waitForReplication(int replicas, long timeout);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param args the command arguments, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.
