@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.lambdaworks.redis.protocol.CommandType.EXEC;
 
 import java.security.MessageDigest;
@@ -20,13 +21,7 @@ import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.MultiOutput;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.SetArgs;
+import com.lambdaworks.redis.protocol.*;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -1740,7 +1735,26 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
         return dispatch(commandBuilder.geodist(key, from, to, unit));
     }
 
-    protected <T> RedisCommand<K, V, T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
+    @Override
+    public <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output) {
+
+        checkNotNull(type, "Command type must not be null");
+        checkNotNull(output, "CommandOutput type must not be null");
+
+        return dispatch(new Command<K, V, T>(type, output, new CommandArgs<K, V>(codec)));
+    }
+
+    @Override
+    public <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+
+        checkNotNull(type, "Command type must not be null");
+        checkNotNull(output, "CommandOutput type must not be null");
+        checkNotNull(args, "CommandArgs type must not be null");
+
+        return dispatch(new Command<K, V, T>(type, output, args));
+    }
+
+    protected <T> RedisFuture<T> dispatch(CommandType type, CommandOutput<K, V, T> output) {
         return dispatch(type, output, null);
     }
 
