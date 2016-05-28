@@ -37,7 +37,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     public static final String SLOT_1_KEY = "8HMdi";
     public static final String SLOT_16352_KEY = "UyAa4KqoWgPGKa";
 
-    public static RedisURI redisURI = new RedisURI.Builder().redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
+    public static RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
             .withSsl(true).withVerifyPeer(false).build();
     public static RedisClusterClient redisClient = RedisClusterClient.create(redisURI);
 
@@ -121,7 +121,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     @Test
     public void connectionWithoutPasswordShouldFail() throws Exception {
 
-        RedisURI redisURI = new RedisURI.Builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
+        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
                 .build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
 
@@ -137,7 +137,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     @Test
     public void connectionWithoutPasswordShouldFail2() throws Exception {
 
-        RedisURI redisURI = new RedisURI.Builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
+        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
                 .build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
 

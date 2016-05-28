@@ -12,7 +12,7 @@ public class ClusterClientOptionsTest {
     @Test
     public void testCopy() throws Exception {
 
-        ClusterClientOptions options = new ClusterClientOptions.Builder().closeStaleConnections(true).refreshClusterView(true)
+        ClusterClientOptions options = ClusterClientOptions.builder().closeStaleConnections(true).refreshClusterView(true)
                 .autoReconnect(false).requestQueueSize(100).suspendReconnectOnProtocolFailure(true).maxRedirects(1234)
                 .validateClusterNodeMembership(false).build();
 

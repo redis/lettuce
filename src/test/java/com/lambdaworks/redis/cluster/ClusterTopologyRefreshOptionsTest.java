@@ -16,7 +16,7 @@ public class ClusterTopologyRefreshOptionsTest {
     @Test
     public void testBuilder() throws Exception {
 
-        ClusterTopologyRefreshOptions options = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions options = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
                 .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
@@ -39,7 +39,7 @@ public class ClusterTopologyRefreshOptionsTest {
     @Test
     public void testCopy() throws Exception {
 
-        ClusterTopologyRefreshOptions master = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions master = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
                 .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//

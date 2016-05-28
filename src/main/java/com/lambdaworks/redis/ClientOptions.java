@@ -2,6 +2,8 @@ package com.lambdaworks.redis;
 
 import java.io.Serializable;
 
+import com.lambdaworks.redis.cluster.ClusterClientOptions;
+
 /**
  * Client Options to control the behavior of {@link RedisClient}.
  * 
@@ -23,16 +25,6 @@ public class ClientOptions implements Serializable {
     private final int requestQueueSize;
     private final DisconnectedBehavior disconnectedBehavior;
 
-    /**
-     * Create a copy of {@literal options}
-     * 
-     * @param options the original
-     * @return A new instance of {@link ClientOptions} containing the values of {@literal options}
-     */
-    public static ClientOptions copyOf(ClientOptions options) {
-        return new ClientOptions(options);
-    }
-
     protected ClientOptions(Builder builder) {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -52,12 +44,31 @@ public class ClientOptions implements Serializable {
     }
 
     /**
+     * Create a copy of {@literal options}
+     *
+     * @param options the original
+     * @return A new instance of {@link ClientOptions} containing the values of {@literal options}
+     */
+    public static ClientOptions copyOf(ClientOptions options) {
+        return new ClientOptions(options);
+    }
+
+    /**
+     * Returns a new {@link ClientOptions.Builder} to construct {@link ClientOptions}.
+     *
+     * @return a new {@link ClientOptions.Builder} to construct {@link ClientOptions}.
+     */
+    public static ClientOptions.Builder builder() {
+        return new ClientOptions.Builder();
+    }
+
+    /**
      * Create a new instance of {@link ClientOptions} with default settings.
      * 
      * @return a new instance of {@link ClientOptions} with default settings
      */
     public static ClientOptions create() {
-        return new Builder().build();
+        return builder().build();
     }
 
     /**
@@ -71,6 +82,13 @@ public class ClientOptions implements Serializable {
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
+
+        /**
+         * @deprecated Use {@link ClientOptions#builder()}
+         */
+        @Deprecated
+        public Builder() {
+        }
 
         /**
          * Sets the {@literal PING} before activate connection flag. Defaults to {@literal false}. See
@@ -136,8 +154,8 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to
-         * {@literal true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@literal true}.
+         * See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
          * 
          * @param disconnectedBehavior true/false
          * @return {@code this}

@@ -32,7 +32,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * See {@link #create(String)} for more options</li>
  * <li>Use the Builder:
  * <p>
- * {@code RedisURI.Builder.redis("localhost", 6379).auth("password").database(1).build(); }
+ * {@code RedisURI.Builder.redis("localhost", 6379).withPassword("password").withDatabase(1).build(); }
  * </p>
  * See {@link com.lambdaworks.redis.RedisURI.Builder#redis(String)} and
  * {@link com.lambdaworks.redis.RedisURI.Builder#sentinel(String)} for more options.</li>
@@ -42,7 +42,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * </p>
  * or
  * <p>
- *     {@code RedisURI uri = new RedisURI();
+ * {@code RedisURI uri = new RedisURI();
  *     uri.setHost("localhost");
  *     }
  * </p>
@@ -51,23 +51,21 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  *
  * <h3>URI syntax</h3>
  *
- * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
- * </b><i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&database=database</i>]] </blockquote>
+ * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
+ * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
+ * <i>&database=database</i>]] </blockquote>
  *
- * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
- * </b><i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&database=database</i>]] </blockquote>
+ * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
+ * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
+ * <i>&database=database</i>]] </blockquote>
  *
- * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://}
- * </b>[<i>password@</i>]<i>path</i>[<b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>]]
- * </blockquote>
+ * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://} </b>[<i>password@</i>]<i>path</i>[
+ * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>]] </blockquote>
  *
- * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :}
- * </b><i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /}
- * </b><i>database</i>][<b>{@code ?}
- * </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>]]
- * </blockquote>
+ * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
+ * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
+ * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
+ * <i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>]] </blockquote>
  *
  * <p>
  * <b>Schemes</b>
@@ -179,6 +177,15 @@ public class RedisURI implements Serializable, ConnectionPoint {
         this.port = port;
         this.timeout = timeout;
         this.unit = unit;
+    }
+
+    /**
+     * Returns a new {@link RedisURI.Builder} to construct a {@link RedisURI}.
+     *
+     * @return a new {@link RedisURI.Builder} to construct a {@link RedisURI}.
+     */
+    public static RedisURI.Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -348,8 +355,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private static Builder configureStandalone(URI uri) {
         Builder builder;
-        Set<String> allowedSchemes = LettuceSets.unmodifiableSet(URI_SCHEME_REDIS, URI_SCHEME_REDIS_SECURE, URI_SCHEME_REDIS_SOCKET,
-                URI_SCHEME_REDIS_SOCKET_ALT, URI_SCHEME_REDIS_SECURE_ALT, URI_SCHEME_REDIS_TLS_ALT);
+        Set<String> allowedSchemes = LettuceSets.unmodifiableSet(URI_SCHEME_REDIS, URI_SCHEME_REDIS_SECURE,
+                URI_SCHEME_REDIS_SOCKET, URI_SCHEME_REDIS_SOCKET_ALT, URI_SCHEME_REDIS_SECURE_ALT, URI_SCHEME_REDIS_TLS_ALT);
 
         if (!allowedSchemes.contains(uri.getScheme())) {
             throw new IllegalArgumentException("Scheme " + uri.getScheme() + " not supported");
@@ -719,6 +726,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private long timeout = 60;
         private TimeUnit unit = TimeUnit.SECONDS;
         private final List<HostAndPort> sentinels = new ArrayList<>();
+
+        /**
+         * @deprecated Use {@link RedisURI#builder()}
+         */
+        @Deprecated
+        public Builder() {
+        }
 
         /**
          * Set Redis socket. Creates a new builder.

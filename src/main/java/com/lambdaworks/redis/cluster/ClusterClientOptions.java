@@ -62,6 +62,24 @@ public class ClusterClientOptions extends ClientOptions {
     }
 
     /**
+     * Returns a new {@link ClusterClientOptions.Builder} to construct {@link ClusterClientOptions}.
+     *
+     * @return a new {@link ClusterClientOptions.Builder} to construct {@link ClusterClientOptions}.
+     */
+    public static ClusterClientOptions.Builder builder() {
+        return new ClusterClientOptions.Builder();
+    }
+
+    /**
+     * Create a new {@link ClusterClientOptions} using default settings.
+     *
+     * @return a new instance of default cluster client client options.
+     */
+    public static ClusterClientOptions create() {
+        return builder().build();
+    }
+
+    /**
      * Builder for {@link ClusterClientOptions}.
      */
     public static class Builder extends ClientOptions.Builder {
@@ -73,6 +91,13 @@ public class ClusterClientOptions extends ClientOptions {
         private boolean validateClusterNodeMembership = DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP;
         private int maxRedirects = DEFAULT_MAX_REDIRECTS;
         private ClusterTopologyRefreshOptions topologyRefreshOptions = null;
+
+        /**
+         * @deprecated Use {@link ClusterClientOptions#builder()}
+         */
+        @Deprecated
+        public Builder() {
+        }
 
         /**
          * Enable regular cluster topology updates. The client starts updating the cluster topology in the intervals of
@@ -275,12 +300,4 @@ public class ClusterClientOptions extends ClientOptions {
         return topologyRefreshOptions;
     }
 
-    /**
-     * Create a new {@link ClusterClientOptions} using default settings.
-     *
-     * @return a new instance of default cluster client client options.
-     */
-    public static ClusterClientOptions create() {
-        return new Builder().build();
-    }
 }

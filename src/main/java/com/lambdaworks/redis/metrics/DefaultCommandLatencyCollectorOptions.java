@@ -1,8 +1,9 @@
 package com.lambdaworks.redis.metrics;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
-
 import java.util.concurrent.TimeUnit;
+
+import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * The default implementation of {@link CommandLatencyCollectorOptions}.
@@ -17,7 +18,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
     public static final boolean DEFAULT_ENABLED = true;
 
-    private static final DefaultCommandLatencyCollectorOptions DISABLED = new Builder().disable().build();
+    private static final DefaultCommandLatencyCollectorOptions DISABLED = builder().disable().build();
 
     private final TimeUnit targetUnit;
     private final double[] targetPercentiles;
@@ -34,6 +35,35 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     }
 
     /**
+     * Returns a new {@link DefaultCommandLatencyCollectorOptions.Builder} to construct
+     * {@link DefaultCommandLatencyCollectorOptions}.
+     *
+     * @return a new {@link DefaultCommandLatencyCollectorOptions.Builder} to construct
+     *         {@link DefaultCommandLatencyCollectorOptions}.
+     */
+    public static DefaultCommandLatencyCollectorOptions.Builder builder() {
+        return new DefaultCommandLatencyCollectorOptions.Builder();
+    }
+
+    /**
+     * Create a new {@link DefaultCommandLatencyCollectorOptions} instance using default settings.
+     *
+     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} instance using default settings
+     */
+    public static DefaultCommandLatencyCollectorOptions create() {
+        return builder().build();
+    }
+
+    /**
+     * Create a {@link DefaultCommandLatencyCollectorOptions} instance with disabled event emission.
+     *
+     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} with disabled event emission
+     */
+    public static DefaultCommandLatencyCollectorOptions disabled() {
+        return DISABLED;
+    }
+
+    /**
      * Builder for {@link DefaultCommandLatencyCollectorOptions}.
      */
     public static class Builder {
@@ -44,6 +74,10 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         private boolean localDistinction = DEFAULT_LOCAL_DISTINCTION;
         private boolean enabled = DEFAULT_ENABLED;
 
+        /**
+         * @deprecated Use {@link ClientOptions#builder()}
+         */
+        @Deprecated
         public Builder() {
         }
 
@@ -150,21 +184,4 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         return enabled;
     }
 
-    /**
-     * Create a new {@link DefaultCommandLatencyCollectorOptions} instance using default settings.
-     * 
-     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} instance using default settings
-     */
-    public static DefaultCommandLatencyCollectorOptions create() {
-        return new Builder().build();
-    }
-
-    /**
-     * Create a {@link DefaultCommandLatencyCollectorOptions} instance with disabled event emission.
-     * 
-     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} with disabled event emission
-     */
-    public static DefaultCommandLatencyCollectorOptions disabled() {
-        return DISABLED;
-    }
 }

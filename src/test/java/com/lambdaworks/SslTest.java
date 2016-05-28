@@ -59,7 +59,7 @@ public class SslTest extends AbstractTest {
     @Test
     public void pingBeforeActivate() throws Exception {
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
-        redisClient.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
         RedisConnection<String, String> connection = redisClient.connect(redisUri).sync();
         connection.set("key", "value");
@@ -115,7 +115,7 @@ public class SslTest extends AbstractTest {
 
         RedisURI redisUri = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
 
-        redisClient.setOptions(new ClientOptions.Builder().suspendReconnectOnProtocolFailure(true).build());
+        redisClient.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(true).build());
 
         RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisUri).async();
         connection.subscribe("c1").get();

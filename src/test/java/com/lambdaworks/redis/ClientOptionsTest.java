@@ -23,12 +23,12 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
     @Test
     public void testBuilder() throws Exception {
-        checkAssertions(new ClientOptions.Builder().build());
+        checkAssertions(ClientOptions.builder().build());
     }
 
     @Test
     public void testCopy() throws Exception {
-        checkAssertions(ClientOptions.copyOf(new ClientOptions.Builder().build()));
+        checkAssertions(ClientOptions.copyOf(ClientOptions.builder().build()));
     }
 
     protected void checkAssertions(ClientOptions sut) {
@@ -46,7 +46,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
 
-        client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
+        client.setOptions(ClientOptions.builder().autoReconnect(false).build());
         RedisAsyncCommands<String, String> connection = client.connect().async();
         assertThat(getStatefulConnection(connection).getOptions().isAutoReconnect()).isFalse();
 
@@ -57,7 +57,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     @Test
     public void requestQueueSize() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().requestQueueSize(10).build());
+        client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
         getConnectionWatchdog(connection.getStatefulConnection()).setListenOnChannelInactive(false);
@@ -83,7 +83,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     @Test
     public void disconnectedWithoutReconnect() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
+        client.setOptions(ClientOptions.builder().autoReconnect(false).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
@@ -101,7 +101,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     @Test
     public void disconnectedRejectCommands() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+        client.setOptions(ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
                 .build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
@@ -121,7 +121,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     @Test
     public void disconnectedAcceptCommands() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().autoReconnect(false)
+        client.setOptions(ClientOptions.builder().autoReconnect(false)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
@@ -136,7 +136,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     public void pingBeforeConnect() throws Exception {
 
         redis.set(key, value);
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
         RedisCommands<String, String> connection = client.connect().sync();
 
         try {
@@ -154,8 +154,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             @Override
             protected void run(RedisClient client) throws Exception {
 
-                client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-                RedisURI redisURI = new RedisURI.Builder().redis(host, port).withPassword(passwd).build();
+                client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+                RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).build();
 
                 RedisCommands<String, String> connection = client.connect(redisURI).sync();
 
@@ -177,8 +177,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             @Override
             protected void run(RedisClient client) throws Exception {
 
-                client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-                RedisURI redisURI = new RedisURI.Builder().redis(host, 6443).withPassword(passwd).withVerifyPeer(false)
+                client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+                RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withPassword(passwd).withVerifyPeer(false)
                         .withSsl(true).build();
 
                 RedisCommands<String, String> connection = client.connect(redisURI).sync();
@@ -201,8 +201,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             @Override
             protected void run(RedisClient client) throws Exception {
 
-                client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-                RedisURI redisURI = new RedisURI.Builder().redis(host, port).build();
+                client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+                RedisURI redisURI = RedisURI.builder().redis(host, port).build();
 
                 try {
                     client.connect(redisURI);
@@ -221,8 +221,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             @Override
             protected void run(RedisClient client) throws Exception {
 
-                client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
-                RedisURI redisURI = new RedisURI.Builder().redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
+                client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+                RedisURI redisURI = RedisURI.builder().redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
 
                 try {
                     client.connect(redisURI);

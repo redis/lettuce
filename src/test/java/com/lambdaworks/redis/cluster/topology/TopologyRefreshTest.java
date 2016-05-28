@@ -58,11 +58,11 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void changeTopologyWhileOperations() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(true)//
                 .refreshPeriod(1, TimeUnit.SECONDS)//
                 .build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterClient.getPartitions().clear();
@@ -78,7 +78,7 @@ public class TopologyRefreshTest extends AbstractTest {
     public void dynamicSourcesProvidesClientCountForAllNodes() throws Exception {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.create();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
@@ -94,9 +94,9 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void staticSourcesProvidesClientCountForSeedNodes() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .dynamicRefreshSources(false).build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         Partitions partitions = clusterClient.getPartitions();
@@ -142,12 +142,12 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTopologyUpdateIsRateLimited() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .adaptiveRefreshTriggersTimeout(1, TimeUnit.HOURS)//
                 .refreshTriggersReconnectAttempts(0)//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterClient.getPartitions().clear();
@@ -170,12 +170,12 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTopologyUpdatetUsesTimeout() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .adaptiveRefreshTriggersTimeout(500, TimeUnit.MILLISECONDS)//
                 .refreshTriggersReconnectAttempts(0)//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterConnection.quit();
@@ -198,10 +198,10 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTriggerDoesNotFireOnSingleReconnect() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterClient.getPartitions().clear();
@@ -216,10 +216,10 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTriggerOnMoveRedirection() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)//
                 .build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = connection.async();
@@ -253,11 +253,11 @@ public class TopologyRefreshTest extends AbstractTest {
             BiFunction<RedisAdvancedClusterAsyncCommands<String, String>, RedisClusterNode, BaseRedisAsyncCommands> function)
             throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .refreshTriggersReconnectAttempts(0)//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
-        clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         RedisClusterNode node = clusterClient.getPartitions().getPartition(0);

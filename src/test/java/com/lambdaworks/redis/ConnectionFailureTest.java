@@ -29,7 +29,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 10000)
     public void pingBeforeConnectFails() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -58,7 +58,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     public void pingBeforeConnectFailOnReconnect() throws Exception {
 
         client.setOptions(
-                new ClientOptions.Builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(true).build());
+                ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -101,7 +101,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 120000)
     public void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
 
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true)
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true)
                 .suspendReconnectOnProtocolFailure(false).build());
 
         RandomResponseServer ts = getRandomResponseServer();
@@ -154,7 +154,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     public void cancelCommandsOnReconnectFailure() throws Exception {
 
         client.setOptions(
-                new ClientOptions.Builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true).build());
+                ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 

@@ -230,7 +230,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @SuppressWarnings({ "rawtypes" })
     public void testClusterRedirectionLimit() throws Exception {
 
-        clusterClient.setOptions(new ClusterClientOptions.Builder().maxRedirects(0).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().maxRedirects(0).build());
         RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
         Partitions partitions = clusterClient.getPartitions();
 

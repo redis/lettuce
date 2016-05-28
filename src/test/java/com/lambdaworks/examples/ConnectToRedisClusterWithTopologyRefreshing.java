@@ -16,12 +16,12 @@ public class ConnectToRedisClusterWithTopologyRefreshing {
         // Syntax: redis://[password@]host[:port]
 
         RedisClusterClient redisClient = RedisClusterClient.create("redis://password@localhost:7379");
-        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(30, TimeUnit.MINUTES)//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
 
-        ClusterClientOptions clusterClientOptions = new ClusterClientOptions.Builder()//
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()//
                 .topologyRefreshOptions(clusterTopologyRefreshOptions)//
                 .build();
 

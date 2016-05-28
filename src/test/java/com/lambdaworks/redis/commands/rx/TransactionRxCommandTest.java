@@ -31,7 +31,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
     @Before
     public void openConnection() throws Exception {
-        client.setOptions(new ClientOptions.Builder().build());
+        client.setOptions(ClientOptions.builder().build());
         redis = connect();
         redis.flushall();
         redis.flushdb();

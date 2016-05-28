@@ -451,7 +451,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void getConnectionToNotAClusterMemberAllowed() throws Exception {
 
-        clusterClient.setOptions(new ClusterClientOptions.Builder().validateClusterNodeMembership(false).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().validateClusterNodeMembership(false).build());
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
         connection.getConnection(TestSettings.host(), TestSettings.port());
         connection.close();

@@ -38,8 +38,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li>
  * <li>a {@code commandLatencyCollector} which is a provided instance of
  * {@link com.lambdaworks.redis.metrics.CommandLatencyCollector}.</li>
- * <li>a {@code dnsResolver} which is a provided instance of
- * {@link DnsResolver}.</li>
+ * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -121,17 +120,15 @@ public class DefaultClientResources implements ClientResources {
             eventBus = builder.eventBus;
         }
 
-        if (builder.commandLatencyCollector == null)
-        {
-            if(DefaultCommandLatencyCollector.isAvailable()) {
+        if (builder.commandLatencyCollector == null) {
+            if (DefaultCommandLatencyCollector.isAvailable()) {
                 if (builder.commandLatencyCollectorOptions != null) {
-                    commandLatencyCollector = new DefaultCommandLatencyCollector(
-                            builder.commandLatencyCollectorOptions);
+                    commandLatencyCollector = new DefaultCommandLatencyCollector(builder.commandLatencyCollectorOptions);
                 } else {
                     commandLatencyCollector = new DefaultCommandLatencyCollector(
                             DefaultCommandLatencyCollectorOptions.create());
                 }
-            }else{
+            } else {
                 logger.debug("LatencyUtils/HdrUtils are not available, metrics are disabled");
                 builder.commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.disabled();
                 commandLatencyCollector = DefaultCommandLatencyCollector.disabled();
@@ -160,6 +157,24 @@ public class DefaultClientResources implements ClientResources {
     }
 
     /**
+     * Returns a new {@link DefaultClientResources.Builder} to construct {@link DefaultClientResources}.
+     *
+     * @return a new {@link DefaultClientResources.Builder} to construct {@link DefaultClientResources}.
+     */
+    public static DefaultClientResources.Builder builder() {
+        return new DefaultClientResources.Builder();
+    }
+
+    /**
+     * Create a new {@link DefaultClientResources} using default settings.
+     *
+     * @return a new instance of a default client resources.
+     */
+    public static DefaultClientResources create() {
+        return builder().build();
+    }
+
+    /**
      * Builder for {@link DefaultClientResources}.
      */
     public static class Builder {
@@ -174,6 +189,10 @@ public class DefaultClientResources implements ClientResources {
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
         private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
 
+        /**
+         * @deprecated Use {@link DefaultClientResources#builder()}
+         */
+        @Deprecated
         public Builder() {
         }
 
@@ -413,15 +432,6 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public DnsResolver dnsResolver() {
         return dnsResolver;
-    }
-
-    /**
-     * Create a new {@link DefaultClientResources} using default settings.
-     * 
-     * @return a new instance of a default client resources.
-     */
-    public static DefaultClientResources create() {
-        return new Builder().build();
     }
 
 }

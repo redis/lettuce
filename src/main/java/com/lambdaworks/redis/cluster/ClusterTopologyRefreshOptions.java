@@ -70,6 +70,33 @@ public class ClusterTopologyRefreshOptions {
     }
 
     /**
+     * Returns a new {@link ClusterTopologyRefreshOptions.Builder} to construct {@link ClusterTopologyRefreshOptions}.
+     *
+     * @return a new {@link ClusterTopologyRefreshOptions.Builder} to construct {@link ClusterTopologyRefreshOptions}.
+     */
+    public static ClusterTopologyRefreshOptions.Builder builder() {
+        return new ClusterTopologyRefreshOptions.Builder();
+    }
+
+    /**
+     * Create a new {@link ClusterTopologyRefreshOptions} using default settings.
+     *
+     * @return a new instance of default cluster client client options.
+     */
+    public static ClusterTopologyRefreshOptions create() {
+        return builder().build();
+    }
+
+    /**
+     * Create a new {@link ClusterTopologyRefreshOptions} using default settings with enabled periodic and adaptive refresh.
+     *
+     * @return a new instance of default cluster client client options.
+     */
+    public static ClusterTopologyRefreshOptions enabled() {
+        return builder().enablePeriodicRefresh().enableAllAdaptiveRefreshTriggers().build();
+    }
+
+    /**
      * Builder for {@link ClusterTopologyRefreshOptions}.
      */
     public static class Builder {
@@ -83,6 +110,13 @@ public class ClusterTopologyRefreshOptions {
         private long adaptiveRefreshTimeout = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT;
         private TimeUnit adaptiveRefreshTimeoutUnit = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT;
         private int refreshTriggersReconnectAttempts = DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS;
+
+        /**
+         * @deprecated Use {@link ClusterTopologyRefreshOptions#builder()}
+         */
+        @Deprecated
+        public Builder() {
+        }
 
         /**
          * Enables periodic cluster topology updates. The client starts updating the cluster topology in the intervals of
@@ -199,7 +233,7 @@ public class ClusterTopologyRefreshOptions {
 
         /**
          * Set the timeout for adaptive topology updates. This timeout is to rate-limit topology updates initiated by refresh
-         * triggers to one topology refresh per timeout. Defaults to {@literal 60 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD}
+         * triggers to one topology refresh per timeout. Defaults to {@literal 30 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD}
          * and {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
          *
          * @param timeout timeout for rate-limit adaptive topology updates
@@ -325,24 +359,6 @@ public class ClusterTopologyRefreshOptions {
      */
     public int getRefreshTriggersReconnectAttempts() {
         return refreshTriggersReconnectAttempts;
-    }
-
-    /**
-     * Create a new {@link ClusterTopologyRefreshOptions} using default settings.
-     *
-     * @return a new instance of default cluster client client options.
-     */
-    public static ClusterTopologyRefreshOptions create() {
-        return new Builder().build();
-    }
-
-    /**
-     * Create a new {@link ClusterTopologyRefreshOptions} using default settings with enabled periodic and adaptive refresh.
-     *
-     * @return a new instance of default cluster client client options.
-     */
-    public static ClusterTopologyRefreshOptions enabled() {
-        return new Builder().enablePeriodicRefresh().enableAllAdaptiveRefreshTriggers().build();
     }
 
     /**

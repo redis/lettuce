@@ -31,7 +31,7 @@ public class DefaultDefaultCommandLatencyCollectorOptionsTest {
     @Test
     public void testBuilder() throws Exception {
 
-        DefaultCommandLatencyCollectorOptions sut = new DefaultCommandLatencyCollectorOptions.Builder()
+        DefaultCommandLatencyCollectorOptions sut = DefaultCommandLatencyCollectorOptions.builder()
                 .targetUnit(TimeUnit.HOURS).targetPercentiles(new double[] { 1, 2, 3 }).build();
 
         assertThat(sut.targetPercentiles()).hasSize(3);

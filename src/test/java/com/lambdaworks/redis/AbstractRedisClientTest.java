@@ -29,7 +29,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
 
     @Before
     public void openConnection() throws Exception {
-        client.setOptions(new ClientOptions.Builder().build());
+        client.setOptions(ClientOptions.builder().build());
         redis = connect();
         boolean scriptRunning;
         do {

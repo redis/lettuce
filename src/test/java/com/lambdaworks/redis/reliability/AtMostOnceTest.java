@@ -49,7 +49,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
     @Before
     public void before() throws Exception {
-        client.setOptions(new ClientOptions.Builder().autoReconnect(false).build());
+        client.setOptions(ClientOptions.builder().autoReconnect(false).build());
 
         // needs to be increased on slow systems...perhaps...
         client.setDefaultTimeout(3, TimeUnit.SECONDS);
