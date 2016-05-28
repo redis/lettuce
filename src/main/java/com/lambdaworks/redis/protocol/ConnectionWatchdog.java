@@ -11,6 +11,8 @@ import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
@@ -32,12 +34,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements TimerTask {
 
     public static final long LOGGING_QUIET_TIME_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
-    public static final int RETRY_TIMEOUT_MAX = 14;
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionWatchdog.class);
 
-    private final EventExecutorGroup reconnectWorkers;
+    private final Delay reconnectDelay;
     private final Bootstrap bootstrap;
+    private final EventExecutorGroup reconnectWorkers;
     private final ReconnectionHandler reconnectionHandler;
     private final ReconnectionListener reconnectionListener;
     private boolean listenOnChannelInactive;
@@ -54,6 +56,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
      * 
+     * @param reconnectDelay reconnect delay, must not be {@literal null}
      * @param clientOptions client options for the current connection, must not be {@literal null}
      * @param bootstrap Configuration for new channels, must not be {@literal null}
      * @param timer Timer used for delayed reconnect, must not be {@literal null}
@@ -61,16 +64,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@literal null}
      * @param reconnectionListener the reconnection listener, must not be {@literal null}
      */
-    public ConnectionWatchdog(ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
+    public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Supplier<SocketAddress> socketAddressSupplier,
             ReconnectionListener reconnectionListener) {
 
+        LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
         LettuceAssert.notNull(timer, "Timer must not be null");
         LettuceAssert.notNull(reconnectWorkers, "reconnectWorkers must not be null");
         LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
 
+        this.reconnectDelay = reconnectDelay;
         this.bootstrap = bootstrap;
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
@@ -160,10 +165,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
 
         if (channel == null || !channel.isActive()) {
-            if (attempts < RETRY_TIMEOUT_MAX) {
-                attempts++;
-            }
-            int timeout = 2 << attempts;
+            attempts++;
+
+            int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempts));
             timer.newTimeout(new TimerTask() {
                 @Override
                 public void run(final Timeout timeout) throws Exception {

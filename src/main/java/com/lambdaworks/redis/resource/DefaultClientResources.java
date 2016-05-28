@@ -54,6 +54,8 @@ public class DefaultClientResources implements ClientResources {
     public static final int DEFAULT_IO_THREADS;
     public static final int DEFAULT_COMPUTATION_THREADS;
 
+    public static final Delay DEFAULT_RECONNECT_DELAY = Delay.exponential();
+
     static {
         int threads = Math.max(1,
                 SystemPropertyUtil.getInt("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors()));
@@ -75,6 +77,7 @@ public class DefaultClientResources implements ClientResources {
     private final EventPublisherOptions commandLatencyPublisherOptions;
     private final MetricEventPublisher metricEventPublisher;
     private final DnsResolver dnsResolver;
+    private final Delay reconnectDelay;
 
     private volatile boolean shutdownCalled = false;
 
@@ -154,6 +157,8 @@ public class DefaultClientResources implements ClientResources {
         } else {
             dnsResolver = builder.dnsResolver;
         }
+
+        reconnectDelay = builder.reconnectDelay;
     }
 
     /**
@@ -188,6 +193,7 @@ public class DefaultClientResources implements ClientResources {
         private CommandLatencyCollector commandLatencyCollector;
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
         private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
+        private Delay reconnectDelay = DEFAULT_RECONNECT_DELAY;
 
         /**
          * @deprecated Use {@link DefaultClientResources#builder()}
@@ -295,8 +301,8 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link DnsResolver} that can that can be used across different instances of the RedisClient to resolve
-         * hostnames to {@link java.net.InetAddress}.
+         * Sets the {@link DnsResolver} that can that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
+         * {@link DnsResolvers#JVM_DEFAULT}
          *
          * @param dnsResolver the DNS resolver, must not be {@link null}.
          * @return this
@@ -304,7 +310,23 @@ public class DefaultClientResources implements ClientResources {
         public Builder dnsResolver(DnsResolver dnsResolver) {
 
             LettuceAssert.notNull(dnsResolver, "DNSResolver must not be null");
+
             this.dnsResolver = dnsResolver;
+            return this;
+        }
+
+        /**
+         * Sets the reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped at
+         * {@literal 30 SECONDS}.
+         *
+         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @return this
+         */
+        public Builder reconnectDelay(Delay reconnectDelay) {
+
+            LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
+
+            this.reconnectDelay = reconnectDelay;
             return this;
         }
 
@@ -434,4 +456,8 @@ public class DefaultClientResources implements ClientResources {
         return dnsResolver;
     }
 
+    @Override
+    public Delay reconnectDelay() {
+        return reconnectDelay;
+    }
 }

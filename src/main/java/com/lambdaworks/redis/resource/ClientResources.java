@@ -56,8 +56,8 @@ public interface ClientResources {
      * {@link io.netty.channel.nio.NioEventLoopGroup} for TCP/IP connections and
      * {@link io.netty.channel.epoll.EpollEventLoopGroup} for unix domain socket connections (epoll).
      * 
-     * @return the {@link EventLoopGroupProvider} which provides access to the particular
-     *         {@link io.netty.channel.EventLoopGroup event loop groups}
+     * @return the {@link EventLoopGroupProvider} which provides access to the particular {@link io.netty.channel.EventLoopGroup
+     *         event loop groups}
      */
     EventLoopGroupProvider eventLoopGroupProvider();
 
@@ -110,5 +110,12 @@ public interface ClientResources {
      * @return the DNS resolver
      */
     DnsResolver dnsResolver();
+
+    /**
+     * Returns the {@link Delay} for reconnect attempts. Each connection uses its own attempt counter.
+     *
+     * @return the reconnect {@link Delay}.
+     */
+    Delay reconnectDelay();
 
 }

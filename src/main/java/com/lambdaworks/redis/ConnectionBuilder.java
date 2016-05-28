@@ -74,8 +74,8 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(timer != null, "timer must be set for autoReconnect=true");
         LettuceAssert.assertState(socketAddressSupplier != null, "socketAddressSupplier must be set for autoReconnect=true");
 
-        ConnectionWatchdog watchdog = new ConnectionWatchdog(clientOptions, bootstrap, timer, workerPool,
-                socketAddressSupplier, reconnectionListener);
+        ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap, timer,
+                workerPool, socketAddressSupplier, reconnectionListener);
 
         watchdog.setListenOnChannelInactive(true);
         return watchdog;
