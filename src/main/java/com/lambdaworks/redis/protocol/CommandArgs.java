@@ -15,7 +15,19 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 
 /**
- * Redis command arguments.
+ * Redis command arguments. {@link CommandArgs} is a container for multiple singular arguments. Key and Value arguments are
+ * encoded using the {@link RedisCodec} to their byte representation. {@link CommandArgs} provides a fluent style of adding
+ * multiple arguments. A {@link CommandArgs} instance can be reused across multiple commands and invocations.
+ *
+ * <p>
+ * Usage
+ * </p>
+ * 
+ * <pre>
+ *     <code>
+ *         new CommandArgs<>(codec).addKey(key).addValue(value).add(CommandKeyword.FORCE);
+ *     </code>
+ * </pre>
  * 
  * @param <K> Key type.
  * @param <V> Value type.
@@ -24,10 +36,9 @@ import io.netty.buffer.UnpooledByteBufAllocator;
  */
 public class CommandArgs<K, V> {
 
-    protected final RedisCodec<K, V> codec;
-
     static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
+    protected final RedisCodec<K, V> codec;
     private final List<SingularArgument> singularArguments = new ArrayList<>(10);
     private Long firstInteger;
     private String firstString;
@@ -39,54 +50,120 @@ public class CommandArgs<K, V> {
      * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
      */
     public CommandArgs(RedisCodec<K, V> codec) {
+
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
         this.codec = codec;
     }
 
+    /**
+     *
+     * @return the number of arguments.
+     */
     public int count() {
         return singularArguments.size();
     }
 
+    /**
+     * Adds a key argument.
+     * 
+     * @param key the key
+     * @return the command args.
+     */
     public CommandArgs<K, V> addKey(K key) {
 
         if (firstKey == null) {
             firstKey = key;
         }
 
-        singularArguments.add(new KeyArgument<>(key, codec));
+        singularArguments.add(KeyArgument.of(key, codec));
         return this;
     }
 
+    /**
+     * Add multiple key arguments.
+     * 
+     * @param keys must not be {@literal null}.
+     * @return the command args.
+     */
     public CommandArgs<K, V> addKeys(Iterable<K> keys) {
 
+        LettuceAssert.notNull(keys, "Keys must not be null");
+
         for (K key : keys) {
             addKey(key);
         }
         return this;
     }
 
+    /**
+     * Add multiple key arguments.
+     * 
+     * @param keys must not be {@literal null}.
+     * @return the command args.
+     */
     public CommandArgs<K, V> addKeys(K... keys) {
 
+        LettuceAssert.notNull(keys, "Keys must not be null");
+
         for (K key : keys) {
             addKey(key);
         }
         return this;
     }
 
+    /**
+     * Add a value argument.
+     * 
+     * @param value the value
+     * @return the command args.
+     */
     public CommandArgs<K, V> addValue(V value) {
 
-        singularArguments.add(new ValueArgument<>(value, codec));
+        singularArguments.add(ValueArgument.of(value, codec));
         return this;
     }
 
-    public CommandArgs<K, V> addValues(V... values) {
+    /**
+     * Add multiple value arguments.
+     * 
+     * @param values must not be {@literal null}.
+     * @return the command args.
+     */
+    public CommandArgs<K, V> addValues(Iterable<V> values) {
+
+        LettuceAssert.notNull(values, "Values must not be null");
+
         for (V value : values) {
             addValue(value);
         }
         return this;
     }
 
+    /**
+     * Add multiple value arguments.
+     * 
+     * @param values must not be {@literal null}.
+     * @return the command args.
+     */
+    public CommandArgs<K, V> addValues(V... values) {
+
+        LettuceAssert.notNull(values, "Values must not be null");
+
+        for (V value : values) {
+            addValue(value);
+        }
+        return this;
+    }
+
+    /**
+     * Add a map (hash) argument.
+     * 
+     * @param map the map, must not be {@literal null}.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(Map<K, V> map) {
+
+        LettuceAssert.notNull(map, "Map must not be null");
 
         for (Map.Entry<K, V> entry : map.entrySet()) {
             addKey(entry.getKey()).addValue(entry.getValue());
@@ -95,47 +172,95 @@ public class CommandArgs<K, V> {
         return this;
     }
 
+    /**
+     * Add a string argument. The argument is represented as bulk string.
+     * 
+     * @param s the string.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(String s) {
 
         if (firstString == null) {
             firstString = s;
         }
 
-        singularArguments.add(new StringArgument(s));
+        singularArguments.add(StringArgument.of(s));
         return this;
     }
 
+    /**
+     * Add an 64-bit integer (long) argument.
+     * 
+     * @param n the argument.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(long n) {
 
         if (firstInteger == null) {
             firstInteger = n;
         }
 
-        singularArguments.add(new IntegerArgument(n));
+        singularArguments.add(IntegerArgument.of(n));
         return this;
     }
 
+    /**
+     * Add a double argument.
+     * 
+     * @param n the double argument.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(double n) {
 
-        singularArguments.add(new DoubleArgument(n));
+        singularArguments.add(DoubleArgument.of(n));
         return this;
     }
 
+    /**
+     * Add a byte-array argument. The argument is represented as bulk string.
+     * 
+     * @param value the byte-array.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(byte[] value) {
 
-        singularArguments.add(new BytesArgument(value));
+        singularArguments.add(BytesArgument.of(value));
         return this;
     }
 
+    /**
+     * Add a {@link CommandKeyword} argument. The argument is represented as bulk string.
+     * 
+     * @param keyword must not be {@literal null}.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(CommandKeyword keyword) {
+
+        LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
         return add(keyword.bytes);
     }
 
+    /**
+     * Add a {@link CommandType} argument. The argument is represented as bulk string.
+     * 
+     * @param type must not be {@literal null}.
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(CommandType type) {
+
+        LettuceAssert.notNull(type, "CommandType must not be null");
         return add(type.bytes);
     }
 
+    /**
+     * Add a {@link ProtocolKeyword} argument. The argument is represented as bulk string.
+     * 
+     * @param keyword the keyword, must not be {@literal null}
+     * @return the command args.
+     */
     public CommandArgs<K, V> add(ProtocolKeyword keyword) {
+
+        LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
         return add(keyword.getBytes());
     }
 
@@ -158,24 +283,29 @@ public class CommandArgs<K, V> {
         return sb.toString();
     }
 
+    /**
+     * Returns the first integer argument.
+     * 
+     * @return the first integer argument or {@literal null}.
+     */
     public Long getFirstInteger() {
-
-        if (firstInteger == null) {
-            return null;
-        }
-
         return firstInteger;
     }
 
+    /**
+     * Returns the first string argument.
+     * 
+     * @return the first string argument or {@literal null}.
+     */
     public String getFirstString() {
-
-        if (firstString == null) {
-            return null;
-        }
-
         return firstString;
     }
 
+    /**
+     * Returns the first key argument in its byte-encoded representation.
+     * 
+     * @return the first key argument in its byte-encoded representation or {@literal null}.
+     */
     public ByteBuffer getFirstEncodedKey() {
 
         if (firstKey == null) {
@@ -189,6 +319,11 @@ public class CommandArgs<K, V> {
         return firstEncodedKey.duplicate();
     }
 
+    /**
+     * Encode the {@link CommandArgs} and write the arguments to the {@link ByteBuf}.
+     * 
+     * @param buf the target buffer.
+     */
     public void encode(ByteBuf buf) {
 
         for (SingularArgument singularArgument : singularArguments) {
@@ -210,10 +345,15 @@ public class CommandArgs<K, V> {
     }
 
     static class BytesArgument extends SingularArgument {
-        private final byte[] val;
 
-        public BytesArgument(byte[] val) {
+        final byte[] val;
+
+        private BytesArgument(byte[] val) {
             this.val = val;
+        }
+
+        static BytesArgument of(byte[] val) {
+            return new BytesArgument(val);
         }
 
         @Override
@@ -249,10 +389,20 @@ public class CommandArgs<K, V> {
 
     static class IntegerArgument extends SingularArgument {
 
-        private final long val;
+        static IntegerCache integerCache = new IntegerCache();
+        final long val;
 
-        public IntegerArgument(long val) {
+        private IntegerArgument(long val) {
             this.val = val;
+        }
+
+        static IntegerArgument of(long val) {
+
+            if (val >= 0 && val < integerCache.cache.length) {
+                return integerCache.cache[(int) val];
+            }
+
+            return new IntegerArgument(val);
         }
 
         @Override
@@ -275,12 +425,29 @@ public class CommandArgs<K, V> {
         }
     }
 
+    static class IntegerCache {
+
+        final static IntegerArgument cache[];
+
+        static {
+            int high = Integer.getInteger("biz.paluch.redis.CommandArgs.IntegerCache", 128);
+            cache = new IntegerArgument[high];
+            for (int i = 0; i < high; i++) {
+                cache[i] = new IntegerArgument(i);
+            }
+        }
+    }
+
     static class DoubleArgument extends SingularArgument {
 
-        private final double val;
+        final double val;
 
-        public DoubleArgument(double val) {
+        private DoubleArgument(double val) {
             this.val = val;
+        }
+
+        static DoubleArgument of(double val) {
+            return new DoubleArgument(val);
         }
 
         @Override
@@ -291,10 +458,14 @@ public class CommandArgs<K, V> {
 
     static class StringArgument extends SingularArgument {
 
-        private final String val;
+        final String val;
 
-        public StringArgument(String val) {
+        private StringArgument(String val) {
             this.val = val;
+        }
+
+        static StringArgument of(String val) {
+            return new StringArgument(val);
         }
 
         @Override
@@ -318,22 +489,26 @@ public class CommandArgs<K, V> {
 
     static class KeyArgument<K, V> extends SingularArgument {
 
-        final K val;
+        final K key;
         final RedisCodec<K, V> codec;
 
-        public KeyArgument(K val, RedisCodec<K, V> codec) {
-            this.val = val;
+        private KeyArgument(K key, RedisCodec<K, V> codec) {
+            this.key = key;
             this.codec = codec;
+        }
+
+        static <K, V> KeyArgument<K, V> of(K key, RedisCodec<K, V> codec) {
+            return new KeyArgument<>(key, codec);
         }
 
         @Override
         void encode(ByteBuf target) {
 
             if (codec == ExperimentalByteArrayCodec.INSTANCE) {
-                ((ExperimentalByteArrayCodec) codec).encodeKey(target, (byte[]) val);
+                ((ExperimentalByteArrayCodec) codec).encodeKey(target, (byte[]) key);
                 return;
             }
-            ByteBufferArgument.writeByteBuffer(target, codec.encodeKey(val));
+            ByteBufferArgument.writeByteBuffer(target, codec.encodeKey(key));
         }
     }
 
@@ -342,9 +517,13 @@ public class CommandArgs<K, V> {
         final V val;
         final RedisCodec<K, V> codec;
 
-        public ValueArgument(V val, RedisCodec<K, V> codec) {
+        private ValueArgument(V val, RedisCodec<K, V> codec) {
             this.val = val;
             this.codec = codec;
+        }
+
+        static <K, V> ValueArgument<K, V> of(V val, RedisCodec<K, V> codec) {
+            return new ValueArgument<>(val, codec);
         }
 
         @Override
@@ -360,7 +539,8 @@ public class CommandArgs<K, V> {
     }
 
     /**
-     * This codec writes directly {@code byte[]} to the target buffer.
+     * This codec writes directly {@code byte[]} to the target buffer without wrapping it in a {@link ByteBuffer} to reduce GC
+     * pressure.
      */
     public final static class ExperimentalByteArrayCodec extends ByteArrayCodec {
 
@@ -378,5 +558,4 @@ public class CommandArgs<K, V> {
             target.writeBytes(value);
         }
     }
-
 }

@@ -1,12 +1,13 @@
 package com.lambdaworks.redis.pubsub;
 
+import java.nio.ByteBuffer;
+
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
-import java.nio.ByteBuffer;
-
 /**
- * PubSub keys are not keys from the key-space.
+ *
+ * Command args for Pub/Sub connections. This implementation hides the first key as PubSub keys are not keys from the key-space.
  * 
  * @author Mark Paluch
  * @since 4.2
@@ -20,6 +21,10 @@ class PubSubCommandArgs<K, V> extends CommandArgs<K, V> {
         super(codec);
     }
 
+    /**
+     *
+     * @return always {@literal null}.
+     */
     @Override
     public ByteBuffer getFirstEncodedKey() {
         return null;

@@ -4,10 +4,12 @@ package com.lambdaworks.redis.protocol;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.CommandOutput;
+
 import io.netty.buffer.ByteBuf;
 
 /**
- * A redis command and its result. All successfully executed commands will eventually return a {@link CommandOutput} object.
+ * A Redis command with a {@link ProtocolKeyword command type}, {@link CommandArgs arguments} and an optional {@link CommandOutput
+ * output}. All successfully executed commands will eventually return a {@link CommandOutput} object.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -16,7 +18,7 @@ import io.netty.buffer.ByteBuf;
  * @author Will Glozer
  * @author Mark Paluch
  */
-public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency{
+public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
 
     private final ProtocolKeyword type;
 
@@ -158,35 +160,35 @@ public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency{
         return completed;
     }
 
-	@Override
-	public void sent(long timeNs) {
-		sentNs = timeNs;
-		firstResponseNs = -1;
-		completedNs = -1;
-	}
+    @Override
+    public void sent(long timeNs) {
+        sentNs = timeNs;
+        firstResponseNs = -1;
+        completedNs = -1;
+    }
 
-	@Override
-	public void firstResponse(long timeNs) {
-		firstResponseNs = timeNs;
-	}
+    @Override
+    public void firstResponse(long timeNs) {
+        firstResponseNs = timeNs;
+    }
 
-	@Override
-	public void completed(long timeNs) {
-		completedNs = timeNs; 
-	}
+    @Override
+    public void completed(long timeNs) {
+        completedNs = timeNs;
+    }
 
-	@Override
-	public long getSent() {
-		return sentNs;
-	}
+    @Override
+    public long getSent() {
+        return sentNs;
+    }
 
-	@Override
-	public long getFirstResponse() {
-		return firstResponseNs;
-	}
+    @Override
+    public long getFirstResponse() {
+        return firstResponseNs;
+    }
 
-	@Override
-	public long getCompleted() {
-		return completedNs;
-	}
+    @Override
+    public long getCompleted() {
+        return completedNs;
+    }
 }
