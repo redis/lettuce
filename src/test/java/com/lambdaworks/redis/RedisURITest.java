@@ -196,4 +196,5 @@ public class RedisURITest {
 
         assertThat(redisURI.toURI().toString()).isEqualTo("redis://host:1234");
     }
+
 }

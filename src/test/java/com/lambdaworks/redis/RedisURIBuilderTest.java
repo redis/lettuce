@@ -17,12 +17,31 @@ public class RedisURIBuilderTest {
         assertThat(result.getUnit()).isEqualTo(TimeUnit.HOURS);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void sentinelWithHostShouldFail() throws Exception {
+        RedisURI.builder().sentinel("localhost").withHost("localhost");
+    }
+
     @Test
     public void sentinelWithPort() throws Exception {
         RedisURI result = RedisURI.Builder.sentinel("localhost", 1).withTimeout(2, TimeUnit.HOURS).build();
         assertThat(result.getSentinels()).hasSize(1);
         assertThat(result.getTimeout()).isEqualTo(2);
         assertThat(result.getUnit()).isEqualTo(TimeUnit.HOURS);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailIfBuilderIsEmpty() throws Exception {
+        RedisURI.builder().build();
+    }
+
+    @Test
+    public void redisWithHostAndPort() throws Exception {
+        RedisURI result = RedisURI.builder().withHost("localhost").withPort(1234).build();
+
+        assertThat(result.getSentinels()).isEmpty();
+        assertThat(result.getHost()).isEqualTo("localhost");
+        assertThat(result.getPort()).isEqualTo(1234);
     }
 
     @Test
@@ -32,6 +51,16 @@ public class RedisURIBuilderTest {
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getHost()).isEqualTo("localhost");
         assertThat(result.getPort()).isEqualTo(1234);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void redisHostAndPortWithInvalidPort() throws Exception {
+        RedisURI.Builder.redis("localhost", -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void redisWithInvalidPort() throws Exception {
+        RedisURI.Builder.redis("localhost").withPort(65536);
     }
 
     @Test
@@ -52,7 +81,6 @@ public class RedisURIBuilderTest {
 
         redisURI = RedisURI.create("redis://h:@localhost.com:14589");
         assertThat(redisURI.getPassword()).isNull();
-
     }
 
     @Test
@@ -115,6 +143,21 @@ public class RedisURIBuilderTest {
 
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void redisSentinelWithInvalidPort() throws Exception {
+        RedisURI.Builder.sentinel("a", 65536);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void redisSentinelWithMasterIdAndInvalidPort() throws Exception {
+        RedisURI.Builder.sentinel("a", 65536, "");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void redisSentinelWithNullMasterId() throws Exception {
+        RedisURI.Builder.sentinel("a", 1, null);
+    }
+
     @Test(expected = IllegalStateException.class)
     public void redisSentinelWithSSLNotPossible() throws Exception {
         RedisURI.Builder.sentinel("a", 1, "master").withSsl(true);
@@ -155,4 +198,5 @@ public class RedisURIBuilderTest {
         assertThat(result.getPort()).isEqualTo(0);
         assertThat(result.isSsl()).isFalse();
     }
+
 }

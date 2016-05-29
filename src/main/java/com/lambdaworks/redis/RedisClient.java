@@ -44,12 +44,18 @@ import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
  */
 public class RedisClient extends AbstractRedisClient {
 
-    private final RedisURI redisURI;
+    private final static RedisURI EMPTY_URI = new RedisURI();
     private final static boolean POOL_AVAILABLE = isPresent("org.apache.commons.pool2.impl.GenericObjectPool");
+
+    private final RedisURI redisURI;
 
     protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
         super(clientResources);
+
+        assertNotNull(redisURI);
+
         this.redisURI = redisURI;
+        setDefaultTimeout(redisURI.getTimeout(), redisURI.getUnit());
     }
 
     /**
@@ -60,9 +66,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisClient() {
-        super(null);
-        redisURI = null;
-        setDefaultTimeout(60, TimeUnit.MINUTES);
+        this(EMPTY_URI);
     }
 
     /**
@@ -98,9 +102,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisClient(RedisURI redisURI) {
-        super();
-        this.redisURI = redisURI;
-        setDefaultTimeout(redisURI.getTimeout(), redisURI.getUnit());
+        this(null, redisURI);
     }
 
     /**
@@ -111,7 +113,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create() {
-        return new RedisClient(null, null);
+        return new RedisClient(null, EMPTY_URI);
     }
 
     /**
@@ -148,7 +150,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public static RedisClient create(ClientResources clientResources) {
         assertNotNull(clientResources);
-        return new RedisClient(clientResources, null);
+        return new RedisClient(clientResources, EMPTY_URI);
     }
 
     /**
@@ -831,7 +833,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkForRedisURI() {
-        LettuceAssert.assertState(this.redisURI != null,
+        LettuceAssert.assertState(this.redisURI != EMPTY_URI,
                 "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
     }

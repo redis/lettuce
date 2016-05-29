@@ -67,7 +67,7 @@ public abstract class AbstractRedisClient {
     protected ConnectionEvents connectionEvents = new ConnectionEvents();
     protected Set<Closeable> closeableResources = new ConcurrentSet<>();
 
-    protected volatile ClientOptions clientOptions = new ClientOptions.Builder().build();
+    protected volatile ClientOptions clientOptions = ClientOptions.builder().build();
 
     private final boolean sharedResources;
 
@@ -86,6 +86,7 @@ public abstract class AbstractRedisClient {
      *        client resources and keep track of them.
      */
     protected AbstractRedisClient(ClientResources clientResources) {
+
         if (clientResources == null) {
             sharedResources = false;
             this.clientResources = DefaultClientResources.create();
@@ -280,24 +281,22 @@ public abstract class AbstractRedisClient {
 
         List<Future<?>> closeFutures = new ArrayList<>();
 
-        if (channels != null) {
-            for (Channel c : channels) {
-                ChannelPipeline pipeline = c.pipeline();
+        for (Channel c : channels) {
+            ChannelPipeline pipeline = c.pipeline();
 
-                CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
-                if (commandHandler != null && !commandHandler.isClosed()) {
-                    commandHandler.close();
-                }
-
-                PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
-                if (psCommandHandler != null && !psCommandHandler.isClosed()) {
-                    psCommandHandler.close();
-                }
+            CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
+            if (commandHandler != null && !commandHandler.isClosed()) {
+                commandHandler.close();
             }
 
-            ChannelGroupFuture closeFuture = channels.close();
-            closeFutures.add(closeFuture);
+            PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
+            if (psCommandHandler != null && !psCommandHandler.isClosed()) {
+                psCommandHandler.close();
+            }
         }
+
+        ChannelGroupFuture closeFuture = channels.close();
+        closeFutures.add(closeFuture);
 
         if (!sharedResources) {
             clientResources.shutdown(quietPeriod, timeout, timeUnit);
