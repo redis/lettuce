@@ -69,7 +69,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <p>
  * Cluster commands can be issued to multiple hosts in parallel by using the {@link NodeSelectionSupport} API. A set of nodes is
  * selected using a {@link java.util.function.Predicate} and commands can be issued to the node selection
- * 
+ *
  * <code><pre>
    AsyncExecutions<String> ping = commands.masters().commands().ping();
    Collection<RedisClusterNode> nodes = ping.nodes();
@@ -80,7 +80,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link RedisClusterClient} is an expensive resource. Reuse this instance or the {@link ClientResources} as much as possible.
  *
  *
- * 
+ *
  * @author <a href="mailto:mpaluch@paluch.biz">Mark Paluch</a>
  * @since 3.0
  */
@@ -224,7 +224,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Connect to a Redis Cluster and treat keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new stateful Redis Cluster connection
      */
     public StatefulRedisClusterConnection<String, String> connect() {
@@ -233,7 +233,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Connect to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -246,7 +246,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Open a new synchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
-     * 
+     *
      * @return A new connection
      * @deprecated Use {@code connect().sync()}
      */
@@ -313,7 +313,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param nodeId the nodeId
      * @param clusterWriter global cluster writer
      * @param socketAddressSupplier supplier for the socket address
-     * 
+     *
      * @param <K> Key type
      * @param <V> Value type
      * @return A new connection
@@ -333,13 +333,18 @@ public class RedisClusterClient extends AbstractRedisClient {
                 clusterWriter);
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
 
-        connectAsyncImpl(handler, connection, socketAddressSupplier);
+        try {
+            connectAsyncImpl(handler, connection, socketAddressSupplier);
 
-        connection.registerCloseables(closeableResources, connection);
+            connection.registerCloseables(closeableResources, connection);
 
-        RedisURI redisURI = initialUris.iterator().next();
-        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-            connection.async().auth(new String(redisURI.getPassword()));
+            RedisURI redisURI = initialUris.iterator().next();
+            if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                connection.async().auth(new String(redisURI.getPassword()));
+            }
+        } catch (RedisException e) {
+            connection.close();
+            throw e;
         }
 
         return connection;
@@ -347,7 +352,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Create a clustered connection with command distributor.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
@@ -460,7 +465,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Retrieve partitions. Nodes within {@link Partitions} are ordered by latency. Lower latency nodes come first.
-     * 
+     *
      * @return Partitions
      */
     protected Partitions loadPartitions() {
@@ -503,7 +508,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Check if the {@link #genericWorkerPool} is active
-     * 
+     *
      * @return false if the worker pool is terminating, shutdown or terminated
      */
     protected boolean isEventLoopActive() {
@@ -540,7 +545,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Sets the new cluster topology. The partitions are not applied to existing connections.
-     * 
+     *
      * @param partitions partitions object
      */
     public void setPartitions(Partitions partitions) {
@@ -570,7 +575,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Set the {@link ClusterClientOptions} for the client.
-     * 
+     *
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
     public void setOptions(ClusterClientOptions clientOptions) {
