@@ -86,6 +86,11 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
             Collection<RedisCommand<K, V, ?>> commands = shiftCommands(commandBuffer);
             for (RedisCommand<K, V, ?> queuedCommand : commands) {
+
+                if (queuedCommand == null) {
+                    continue;
+                }
+
                 try {
                     clusterChannelWriter.write(queuedCommand);
                 } catch (RedisException e) {
