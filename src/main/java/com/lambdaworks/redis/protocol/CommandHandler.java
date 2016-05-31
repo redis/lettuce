@@ -54,7 +54,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected final Object stateLock = new Object();
 
     // all access to the commandBuffer is synchronized
-    protected final Queue<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
+    protected final Deque<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
@@ -495,14 +495,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 setStateIfNotClosed(LifecycleState.CONNECTED);
 
                 try {
-                    executeQueuedCommands(ctx);
+                    // Move queued commands to buffer before issuing any commands because of connection activation.
+                    // That's necessary to prepend queued commands first as some commands might get into the queue
+                    // after the connection was disconnected. They need to be prepended to the command buffer
+                    moveQueuedCommandsToCommandBuffer();
+                    activateCommandHandlerAndExecuteBufferedCommands(ctx);
                 } catch (Exception e) {
+
                     if (debugEnabled) {
                         logger.debug("{} channelActive() ran into an exception", logPrefix());
                     }
+
                     if (clientOptions.isCancelCommandsOnReconnectFailure()) {
                         reset();
                     }
+
                     throw e;
                 }
             } finally {
@@ -525,17 +532,27 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    protected void executeQueuedCommands(ChannelHandlerContext ctx) {
+    private void moveQueuedCommandsToCommandBuffer() {
+
+        List<RedisCommand<K, V, ?>> queuedCommands = new ArrayList<>(queue);
+        queue.removeAll(queuedCommands);
+
+        Collections.reverse(queuedCommands);
+
+        for (RedisCommand<K, V, ?> queuedCommand : queuedCommands) {
+            commandBuffer.addFirst(queuedCommand);
+        }
+    }
+
+    protected void activateCommandHandlerAndExecuteBufferedCommands(ChannelHandlerContext ctx) {
 
         connectionError = null;
 
         if (debugEnabled) {
-            logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), commandBuffer.size());
+            logger.debug("{} activateCommandHandlerAndExecuteBufferedCommands {} command(s) queued", logPrefix(), commandBuffer.size());
         }
 
-        synchronized (stateLock) {
-            channel = ctx.channel();
-        }
+        channel = ctx.channel();
 
         if (redisChannelHandler != null) {
             if (debugEnabled) {

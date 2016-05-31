@@ -142,8 +142,48 @@ public class CommandHandlerTest {
 
         assertThat(atomicLong.get()).isEqualTo(0);
         assertThat(ReflectionTestUtils.getField(sut, "exclusiveLockOwner")).isNull();
+        assertThat(q).containsSequence(pingCommand, bufferedCommand);
 
         verify(pipeline).fireUserEventTriggered(any(ConnectionEvents.Activated.class));
+    }
+
+    @Test
+    public void testChannelActiveWithBufferedAndQueuedCommandsRetainsOrder() throws Exception {
+
+        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
+            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
+            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
+            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
+            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        q.add(queuedCommand1);
+        q.add(queuedCommand2);
+
+        Collection buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        buffer.add(bufferedCommand1);
+        buffer.add(bufferedCommand2);
+
+        reset(channel);
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> new DefaultChannelPromise(channel));
+        when(channel.eventLoop()).thenReturn(eventLoop);
+        when(channel.pipeline()).thenReturn(pipeline);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        assertThat(q).isEmpty();
+        assertThat(buffer).isEmpty();
+
+        ArgumentCaptor<Object> objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(channel).writeAndFlush(objectArgumentCaptor.capture());
+
+        assertThat((Collection) objectArgumentCaptor.getValue()).containsSequence(queuedCommand1, queuedCommand2, bufferedCommand1, bufferedCommand2);
     }
 
     @Test
