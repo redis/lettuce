@@ -6,12 +6,15 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.Future;
 
+import com.lambdaworks.redis.RedisChannelHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -26,6 +29,7 @@ import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommandHandlerTest {
@@ -55,6 +59,9 @@ public class CommandHandlerTest {
     @Mock
     private ClientResources clientResources;
 
+    @Mock
+    private RedisChannelHandler channelHandler;
+
     @Before
     public void before() throws Exception {
         when(context.channel()).thenReturn(channel);
@@ -73,6 +80,14 @@ public class CommandHandlerTest {
         when(channel.write(any())).thenAnswer(new Answer<ChannelPromise>() {
             @Override
             public ChannelPromise answer(InvocationOnMock invocation) throws Throwable {
+
+                if (invocation.getArguments()[0] instanceof RedisCommand) {
+                q.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                q.addAll((Collection) invocation.getArguments()[0]);
+            }
                 return new DefaultChannelPromise(channel);
             }
         });
@@ -80,11 +95,20 @@ public class CommandHandlerTest {
         when(channel.writeAndFlush(any())).thenAnswer(new Answer<ChannelPromise>() {
             @Override
             public ChannelPromise answer(InvocationOnMock invocation) throws Throwable {
+
+                if (invocation.getArguments()[0] instanceof RedisCommand) {
+                q.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                q.addAll((Collection) invocation.getArguments()[0]);
+            }
                 return new DefaultChannelPromise(channel);
             }
         });
 
         sut = new CommandHandler<String, String>(ClientOptions.create(), clientResources, q);
+        sut.setRedisChannelHandler(channelHandler);
     }
 
     @Test
@@ -95,6 +119,112 @@ public class CommandHandlerTest {
 
         verify(pipeline).fireUserEventTriggered(any(ConnectionEvents.Activated.class));
 
+    }
+
+    @Test
+    public void testChannelActiveWithBufferedAndQueuedCommands() throws Exception {
+
+        Command<String, String, String> bufferedCommand = new Command<String, String, String>(CommandType.GET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        final Command<String, String, String> pingCommand = new Command<String, String, String>(CommandType.PING,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+        q.add(bufferedCommand);
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                sut.write(pingCommand);
+                return null;
+            }
+        }).when(channelHandler).activated();
+        when(channel.isActive()).thenReturn(true);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        assertThat(q).containsSequence(pingCommand, bufferedCommand);
+
+        verify(pipeline).fireUserEventTriggered(any(ConnectionEvents.Activated.class));
+    }
+
+    @Test
+    public void testChannelActiveWithBufferedAndQueuedCommandsRetainsOrder() throws Exception {
+
+        Command<String, String, String> bufferedCommand1 = new Command<String, String, String>(CommandType.SET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> bufferedCommand2 = new Command<String, String, String>(CommandType.GET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand1 = new Command<String, String, String>(CommandType.PING,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand2 = new Command<String, String, String>(CommandType.AUTH,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        q.add(queuedCommand1);
+        q.add(queuedCommand2);
+
+        Collection buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        buffer.add(bufferedCommand1);
+        buffer.add(bufferedCommand2);
+
+        reset(channel);
+        when(channel.writeAndFlush(any())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return new DefaultChannelPromise(channel);
+            }
+        });
+
+        when(channel.eventLoop()).thenReturn(eventLoop);
+        when(channel.pipeline()).thenReturn(pipeline);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        assertThat(q).isEmpty();
+
+        buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        assertThat(buffer).isEmpty();
+
+        ArgumentCaptor<Object> objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(channel).writeAndFlush(objectArgumentCaptor.capture());
+
+        assertThat((Collection) objectArgumentCaptor.getValue()).containsSequence(queuedCommand1, queuedCommand2,
+                bufferedCommand1, bufferedCommand2);
+    }
+
+    @Test
+    public void testChannelActiveReplayBufferedCommands() throws Exception {
+
+        Command<String, String, String> bufferedCommand1 = new Command<String, String, String>(CommandType.SET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> bufferedCommand2 = new Command<String, String, String>(CommandType.GET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand1 = new Command<String, String, String>(CommandType.PING,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand2 = new Command<String, String, String>(CommandType.AUTH,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        q.add(queuedCommand1);
+        q.add(queuedCommand2);
+
+        Collection buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        buffer.add(bufferedCommand1);
+        buffer.add(bufferedCommand2);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        assertThat(q).containsSequence(queuedCommand1, queuedCommand2, bufferedCommand1, bufferedCommand2);
+
+        buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        assertThat(buffer).isEmpty();
     }
 
     @Test

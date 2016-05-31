@@ -8,13 +8,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
@@ -60,8 +54,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      * better way to distinguish) and log them at DEBUG rather than WARN, since they are generally caused by unclean client
      * disconnects rather than an actual problem.
      */
-    private static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = ImmutableSet.of("Connection reset by peer",
-            "Broken pipe", "Connection timed out");
+    private static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = ImmutableSet.of("Connection reset by peer", "Broken pipe",
+            "Connection timed out");
 
     protected final ClientOptions clientOptions;
     protected final ClientResources clientResources;
@@ -69,7 +63,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected final ReentrantLock writeLock = new ReentrantLock();
 
     // all access to the commandBuffer is synchronized
-    protected volatile Queue<RedisCommand<K, V, ?>> commandBuffer = newCommandBuffer();
+    protected volatile Deque<RedisCommand<K, V, ?>> commandBuffer = newCommandBuffer();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
@@ -314,8 +308,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             if (reliability == Reliability.AT_MOST_ONCE) {
                 // cancel on exceptions and remove from queue, because there is no housekeeping
-                channel.writeAndFlush(queuedCommands).addListener(
-                        new AtMostOnceWriteListener(queuedCommands, this.queue, sentTimes));
+                channel.writeAndFlush(queuedCommands)
+                        .addListener(new AtMostOnceWriteListener(queuedCommands, this.queue, sentTimes));
             }
 
             if (reliability == Reliability.AT_LEAST_ONCE) {
@@ -383,15 +377,25 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         setStateIfNotClosed(LifecycleState.CONNECTED);
 
         try {
-            executeQueuedCommands(ctx);
+            writeLock.lock();
+            // Move queued commands to buffer before issuing any commands because of connection activation.
+            // That's necessary to prepend queued commands first as some commands might get into the queue
+            // after the connection was disconnected. They need to be prepended to the command buffer
+            moveQueuedCommandsToCommandBuffer();
+            activateCommandHandlerAndExecuteBufferedCommands(ctx);
         } catch (Exception e) {
+
             if (debugEnabled) {
                 logger.debug("{} channelActive() ran into an exception", logPrefix());
             }
+
             if (clientOptions.isCancelCommandsOnReconnectFailure()) {
                 reset();
             }
+
             throw e;
+        } finally {
+            writeLock.unlock();
         }
 
         super.channelActive(ctx);
@@ -409,20 +413,28 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    protected void executeQueuedCommands(ChannelHandlerContext ctx) {
-        Queue<RedisCommand<K, V, ?>> tmp = newCommandBuffer();
+    private void moveQueuedCommandsToCommandBuffer() {
+
+        List<RedisCommand<K, V, ?>> queuedCommands = new ArrayList<RedisCommand<K, V, ?>>(queue);
+        queue.removeAll(queuedCommands);
+
+        Collections.reverse(queuedCommands);
+
+        for (RedisCommand<K, V, ?> queuedCommand : queuedCommands) {
+            commandBuffer.addFirst(queuedCommand);
+        }
+    }
+
+    protected void activateCommandHandlerAndExecuteBufferedCommands(ChannelHandlerContext ctx) {
 
         try {
             writeLock.lock();
             connectionError = null;
 
-            tmp.addAll(commandBuffer);
-
             sentTimes.clear();
-            commandBuffer = tmp;
 
             if (debugEnabled) {
-                logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), tmp.size());
+                logger.debug("{} activateCommandHandlerAndExecuteBufferedCommands {} command(s) buffered", logPrefix(), commandBuffer.size());
             }
 
             synchronized (stateLock) {
@@ -471,7 +483,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             // Shift all commands to the commandBuffer so the queue is empty.
             // Allows to run onConnect commands before executing buffered commands
             commandBuffer.addAll(queue);
-            queue.clear();
+            queue.removeAll(commandBuffer);
 
         } finally {
             writeLock.unlock();
