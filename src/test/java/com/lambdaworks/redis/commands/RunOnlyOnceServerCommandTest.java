@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.lambdaworks.redis.*;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -75,6 +76,7 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
      * @throws Exception
      */
     @Test
+    @Ignore
     public void shutdown() throws Exception {
 
         final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(2))

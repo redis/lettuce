@@ -236,6 +236,36 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void testWriteChannelDisconnected() throws Exception {
+
+        when(channel.isActive()).thenReturn(true);
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.setState(CommandHandler.LifecycleState.DISCONNECTED);
+
+        sut.write(command);
+
+        Collection buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        assertThat(buffer).containsOnly(command);
+    }
+
+    @Test(expected = RedisException.class)
+    public void testWriteChannelDisconnectedWithoutReconnect() throws Exception {
+
+        sut = new CommandHandler<String, String>(ClientOptions.builder().autoReconnect(false).build(), clientResources, q);
+        sut.setRedisChannelHandler(channelHandler);
+
+        when(channel.isActive()).thenReturn(true);
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.setState(CommandHandler.LifecycleState.DISCONNECTED);
+
+        sut.write(command);
+    }
+
+    @Test
     public void testExceptionChannelInactive() throws Exception {
         sut.setState(CommandHandler.LifecycleState.DISCONNECTED);
         sut.exceptionCaught(context, new Exception());
@@ -274,6 +304,69 @@ public class CommandHandlerTest {
 
         sut.exceptionCaught(context, new Exception());
         verifyZeroInteractions(context);
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForNOT_CONNECTED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.NOT_CONNECTED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForREGISTERED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.REGISTERED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportTrueForCONNECTED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.CONNECTED);
+        assertThat(sut.isConnected()).isTrue();
+    }
+
+    @Test
+    public void isConnectedShouldReportTrueForACTIVATING() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.ACTIVATING);
+        assertThat(sut.isConnected()).isTrue();
+    }
+
+    @Test
+    public void isConnectedShouldReportTrueForACTIVE() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.ACTIVE);
+        assertThat(sut.isConnected()).isTrue();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForDISCONNECTED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.DISCONNECTED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForDEACTIVATING() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.DEACTIVATING);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForDEACTIVATED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.DEACTIVATED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForCLOSED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.CLOSED);
+        assertThat(sut.isConnected()).isFalse();
     }
 
     @Test
@@ -461,7 +554,6 @@ public class CommandHandlerTest {
 
         public MTCConcurrentConcurrentWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
-
 
                 @Override
                 protected <C extends RedisCommand<String, String, T>, T> void writeToBuffer(C command) {
