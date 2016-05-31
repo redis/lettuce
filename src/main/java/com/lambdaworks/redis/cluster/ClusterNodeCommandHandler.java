@@ -36,7 +36,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
-     * 
+     *
      * @param clientOptions client options for this connection
      * @param clientResources client resources for this connection
      * @param queue The command queue

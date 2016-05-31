@@ -477,7 +477,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             // Shift all commands to the commandBuffer so the queue is empty.
             // Allows to run onConnect commands before executing buffered commands
             commandBuffer.addAll(queue);
-            queue.clear();
+            queue.removeAll(commandBuffer);
 
         } finally {
             writeLock.unlock();
