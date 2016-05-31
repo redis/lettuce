@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -121,16 +122,10 @@ public class CommandHandlerTest {
                 new StatusOutput<String, String>(new Utf8StringCodec()), null);
         q.add(bufferedCommand);
 
-        AtomicLong atomicLong = (AtomicLong) ReflectionTestUtils.getField(sut, "writers");
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-
-                assertThat(atomicLong.get()).isEqualTo(-1);
-                assertThat(ReflectionTestUtils.getField(sut, "exclusiveLockOwner")).isNotNull();
-
                 sut.write(pingCommand);
-
                 return null;
             }
         }).when(channelHandler).activated();
@@ -139,10 +134,82 @@ public class CommandHandlerTest {
         sut.channelRegistered(context);
         sut.channelActive(context);
 
-        assertThat(atomicLong.get()).isEqualTo(0);
-        assertThat(ReflectionTestUtils.getField(sut, "exclusiveLockOwner")).isNull();
+        assertThat(q).containsSequence(pingCommand, bufferedCommand);
 
         verify(pipeline).fireUserEventTriggered(any(ConnectionEvents.Activated.class));
+    }
+
+    @Test
+    public void testChannelActiveWithBufferedAndQueuedCommandsRetainsOrder() throws Exception {
+
+        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        q.add(queuedCommand1);
+        q.add(queuedCommand2);
+
+        Collection buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        buffer.add(bufferedCommand1);
+        buffer.add(bufferedCommand2);
+
+        reset(channel);
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> new DefaultChannelPromise(channel));
+        when(channel.eventLoop()).thenReturn(eventLoop);
+        when(channel.pipeline()).thenReturn(pipeline);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        assertThat(q).isEmpty();
+
+        buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        assertThat(buffer).isEmpty();
+
+        ArgumentCaptor<Object> objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(channel).writeAndFlush(objectArgumentCaptor.capture());
+
+        assertThat((Collection) objectArgumentCaptor.getValue()).containsSequence(queuedCommand1, queuedCommand2,
+                bufferedCommand1, bufferedCommand2);
+    }
+
+    @Test
+    public void testChannelActiveReplayBufferedCommands() throws Exception {
+
+        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        q.add(queuedCommand1);
+        q.add(queuedCommand2);
+
+        Collection buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        buffer.add(bufferedCommand1);
+        buffer.add(bufferedCommand2);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        assertThat(q).containsSequence(queuedCommand1, queuedCommand2, bufferedCommand1, bufferedCommand2);
+
+        buffer = (Collection) ReflectionTestUtils.getField(sut, "commandBuffer");
+        assertThat(buffer).isEmpty();
     }
 
     @Test
