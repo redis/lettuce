@@ -261,13 +261,18 @@ public class RedisClusterClient extends AbstractRedisClient {
                 clusterWriter);
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
-        connectAsyncImpl(handler, connection, socketAddressSupplier);
+        try {
+            connectAsyncImpl(handler, connection, socketAddressSupplier);
 
-        connection.registerCloseables(closeableResources, connection);
+            connection.registerCloseables(closeableResources, connection);
 
-        RedisURI redisURI = initialUris.iterator().next();
-        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-            connection.auth(new String(redisURI.getPassword()));
+            RedisURI redisURI = initialUris.iterator().next();
+            if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+                connection.auth(new String(redisURI.getPassword()));
+            }
+        } catch (RedisException e) {
+            connection.close();
+            throw e;
         }
         return connection;
     }
