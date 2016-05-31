@@ -130,11 +130,15 @@ public class AtMostOnceTest extends AbstractCommandTest {
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
 
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+
         Command<String, String, Object> command = new Command<String, String, Object>(CommandType.INCR,
                 new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)) {
 
             @Override
             public void encode(ByteBuf buf) {
+
+                countDownLatch.countDown();
                 throw new IllegalStateException("I want to break free");
             }
         };
@@ -147,6 +151,8 @@ public class AtMostOnceTest extends AbstractCommandTest {
         assertThat(command.getException()).isInstanceOf(EncoderException.class);
 
         assertThat(connection.get(key)).isEqualTo("2");
+
+        countDownLatch.await(2, TimeUnit.SECONDS);
 
         assertThat(getQueue(getRedisChannelHandler(connection))).isEmpty();
         assertThat(getCommandBuffer(getRedisChannelHandler(connection))).isEmpty();

@@ -33,7 +33,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     private CloseEvents closeEvents = new CloseEvents();
     private boolean closed;
     private final RedisChannelWriter<K, V> channelWriter;
-    private boolean active = true;
+    private volatile boolean active = true;
     private ClientOptions clientOptions;
 
     /**
