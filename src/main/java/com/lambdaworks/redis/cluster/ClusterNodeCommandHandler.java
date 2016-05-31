@@ -36,7 +36,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
-     * 
+     *
      * @param clientOptions client options for this connection
      * @param clientResources client resources for this connection
      * @param queue The command queue
@@ -101,16 +101,22 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
      * Retrieve commands within a lock to prevent concurrent modification
      */
     private Collection<RedisCommand<K, V, ?>> shiftCommands(Collection<RedisCommand<K, V, ?>> source) {
-        
-        try {
-            lockWritersExclusive();
+
+        synchronized (stateLock) {
+
             try {
-                return new ArrayList<>(source);
+
+                lockWritersExclusive();
+
+                try {
+                    return new ArrayList<>(source);
+                } finally {
+                    source.clear();
+                }
+
             } finally {
-                source.clear();
+                unlockWritersExclusive();
             }
-        } finally {
-            unlockWritersExclusive();
         }
     }
 

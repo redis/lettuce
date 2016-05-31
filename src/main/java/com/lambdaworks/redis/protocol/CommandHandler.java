@@ -340,6 +340,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected void lockWritersExclusive() {
 
         if (exclusiveLockOwner == Thread.currentThread()) {
+            writers.decrementAndGet();
             return;
         }
 
@@ -358,8 +359,12 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      * Unlock writers.
      */
     protected void unlockWritersExclusive() {
-        exclusiveLockOwner = null;
-        writers.set(0);
+
+        if (exclusiveLockOwner == Thread.currentThread()) {
+            if (writers.incrementAndGet() == 0) {
+                exclusiveLockOwner = null;
+            }
+        }
     }
 
     private boolean isRejectCommand() {
@@ -553,26 +558,28 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             logger.debug("{} channelInactive()", logPrefix());
         }
 
-        try {
-            lockWritersExclusive();
-            setStateIfNotClosed(LifecycleState.DISCONNECTED);
+        synchronized (stateLock) {
+            try {
+                lockWritersExclusive();
+                setStateIfNotClosed(LifecycleState.DISCONNECTED);
 
-            if (redisChannelHandler != null) {
-                if (debugEnabled) {
-                    logger.debug("{} deactivating channel handler", logPrefix());
+                if (redisChannelHandler != null) {
+                    if (debugEnabled) {
+                        logger.debug("{} deactivating channel handler", logPrefix());
+                    }
+                    setStateIfNotClosed(LifecycleState.DEACTIVATING);
+                    redisChannelHandler.deactivated();
                 }
-                setStateIfNotClosed(LifecycleState.DEACTIVATING);
-                redisChannelHandler.deactivated();
+                setStateIfNotClosed(LifecycleState.DEACTIVATED);
+
+                // Shift all commands to the commandBuffer so the queue is empty.
+                // Allows to run onConnect commands before executing buffered commands
+                commandBuffer.addAll(queue);
+                queue.clear();
+
+            } finally {
+                unlockWritersExclusive();
             }
-            setStateIfNotClosed(LifecycleState.DEACTIVATED);
-
-            // Shift all commands to the commandBuffer so the queue is empty.
-            // Allows to run onConnect commands before executing buffered commands
-            commandBuffer.addAll(queue);
-            queue.clear();
-
-        } finally {
-            unlockWritersExclusive();
         }
 
         if (buffer != null) {
