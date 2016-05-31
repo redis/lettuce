@@ -8,6 +8,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -214,22 +215,23 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         LettuceAssert.notNull(command, "command must not be null");
 
-        if (lifecycleState == LifecycleState.CLOSED) {
-            throw new RedisException("Connection is closed");
-        }
-
-        if (clientOptions.getRequestQueueSize() != Integer.MAX_VALUE
-                && commandBuffer.size() + queue.size() >= clientOptions.getRequestQueueSize()) {
-            throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
-                    + ". Commands are not accepted until the queue size drops.");
-        }
-
-        if ((channel == null || !isConnected()) && isRejectCommand()) {
-            throw new RedisException("Currently not connected. Commands are rejected.");
-        }
 
         try {
             incrementWriters();
+
+            if (lifecycleState == LifecycleState.CLOSED) {
+                throw new RedisException("Connection is closed");
+            }
+
+            if (clientOptions.getRequestQueueSize() != Integer.MAX_VALUE
+                    && commandBuffer.size() + queue.size() >= clientOptions.getRequestQueueSize()) {
+                throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
+                        + ". Commands are not accepted until the queue size drops.");
+            }
+
+            if ((channel == null || !isConnected()) && isRejectCommand()) {
+                throw new RedisException("Currently not connected. Commands are rejected.");
+            }
 
             /**
              * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
@@ -611,12 +613,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     protected void setStateIfNotClosed(LifecycleState lifecycleState) {
+
         if (this.lifecycleState != LifecycleState.CLOSED) {
             setState(lifecycleState);
         }
     }
 
     protected void setState(LifecycleState lifecycleState) {
+
         synchronized (stateLock) {
             this.lifecycleState = lifecycleState;
         }
