@@ -201,19 +201,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         checkArgument(command != null, "command must not be null");
 
-        if (lifecycleState == LifecycleState.CLOSED) {
-            throw new RedisException("Connection is closed");
-        }
-
-        if (commandBuffer.size() + queue.size() >= clientOptions.getRequestQueueSize()) {
-            throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
-                    + ". Commands are not accepted until the queue size drops.");
-        }
-
-        if ((channel == null || !isConnected()) && isRejectCommand()) {
-            throw new RedisException("Currently not connected. Commands are rejected.");
-        }
-
         try {
             /**
              * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
@@ -221,6 +208,20 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
              */
 
             writeLock.lock();
+
+            if (lifecycleState == LifecycleState.CLOSED) {
+                throw new RedisException("Connection is closed");
+            }
+
+            if (commandBuffer.size() + queue.size() >= clientOptions.getRequestQueueSize()) {
+                throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
+                        + ". Commands are not accepted until the queue size drops.");
+            }
+
+            if ((channel == null || !isConnected()) && isRejectCommand()) {
+                throw new RedisException("Currently not connected. Commands are rejected.");
+            }
+
             Channel channel = this.channel;
             if (autoFlushCommands) {
 
