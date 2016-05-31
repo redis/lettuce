@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.After;
 import org.junit.Before;
@@ -220,6 +221,7 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
         });
 
         CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null).get();
+        Wait.untilEquals(1, () -> t.size()).waitOrTimeout();
 
         assertThat(t).hasSize(1);
         assertThat(strings).hasSize(1).contains(value);
