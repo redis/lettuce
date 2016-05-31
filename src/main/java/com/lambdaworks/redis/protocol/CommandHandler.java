@@ -299,10 +299,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         commandBuffer.add(command);
     }
 
-    private boolean isConnected() {
+    boolean isConnected() {
         synchronized (lifecycleState) {
             return lifecycleState.ordinal() >= LifecycleState.CONNECTED.ordinal()
-                    && lifecycleState.ordinal() <= LifecycleState.DISCONNECTED.ordinal();
+                    && lifecycleState.ordinal() < LifecycleState.DISCONNECTED.ordinal();
         }
     }
 
