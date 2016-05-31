@@ -461,7 +461,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
 
             connection.registerCloseables(closeableResources, connection);
-        } catch (RedisCommandExecutionException e) {
+        } catch (RedisException e) {
             connection.close();
             throw e;
         }
