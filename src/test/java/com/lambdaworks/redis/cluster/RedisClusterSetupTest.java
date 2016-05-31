@@ -117,7 +117,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         redis1.clusterForget(redis2.clusterMyId());
 
-        Wait.untilEquals(1, () -> ClusterPartitionParser.parse(redis1.clusterNodes()).size());
+        Wait.untilEquals(1, () -> ClusterPartitionParser.parse(redis1.clusterNodes()).size()).waitOrTimeout();
 
         Partitions partitionsAfterForget = ClusterPartitionParser.parse(redis1.clusterNodes());
         assertThat(partitionsAfterForget.getPartitions()).hasSize(1);
@@ -130,7 +130,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         redis1.clusterDelSlots(1, 2, 5, 6);
 
-        Wait.untilEquals(16380, () -> getOwnPartition(redis1).getSlots().size());
+        Wait.untilEquals(11996, () -> getOwnPartition(redis1).getSlots().size()).waitOrTimeout();
     }
 
     @Test

@@ -34,7 +34,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
                 // ignore
             }
             redis.ping();
-        });
+        }).waitOrTimeout();
 
     }
 

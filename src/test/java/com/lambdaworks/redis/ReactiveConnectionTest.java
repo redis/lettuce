@@ -110,7 +110,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         incr.subscribe();
         incr.subscribe();
 
-        Wait.untilEquals("4", () -> redis.get(key));
+        Wait.untilEquals("4", () -> redis.get(key)).waitOrTimeout();
 
         assertThat(redis.get(key)).isEqualTo("4");
     }
