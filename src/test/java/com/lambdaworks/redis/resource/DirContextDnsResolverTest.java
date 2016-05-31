@@ -61,7 +61,7 @@ public class DirContextDnsResolverTest {
     @Test
     public void shouldResolveWithDnsServer() throws Exception {
 
-        resolver = new DirContextDnsResolver("8.8.8.8");
+        resolver = new DirContextDnsResolver(Arrays.asList("[2001:4860:4860::8888]", "8.8.8.8"));
 
         InetAddress[] resolved = resolver.resolve("google.com");
 
@@ -109,7 +109,7 @@ public class DirContextDnsResolverTest {
     @Test(expected = UnknownHostException.class)
     public void shouldFailWithUnknownHost() throws Exception {
 
-        resolver = new DirContextDnsResolver(Arrays.asList("8.8.8.8"));
+        resolver = new DirContextDnsResolver("8.8.8.8");
 
         resolver.resolve("unknown-domain-name");
     }
