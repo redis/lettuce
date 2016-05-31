@@ -28,7 +28,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -53,7 +53,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected final ReentrantLock writeLock = new ReentrantLock();
 
     // all access to the commandBuffer is synchronized
-    protected Queue<RedisCommand<K, V, ?>> commandBuffer = newCommandBuffer();
+    protected volatile Queue<RedisCommand<K, V, ?>> commandBuffer = newCommandBuffer();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
@@ -94,7 +94,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     /**
-     * 
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRegistered(io.netty.channel.ChannelHandlerContext)
      */
     @Override
@@ -120,7 +120,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     /**
-     * 
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
      */
     @Override
@@ -423,9 +423,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             connectionError = null;
 
             tmp.addAll(commandBuffer);
-            tmp.addAll(queue);
 
-            queue.clear();
             sentTimes.clear();
             commandBuffer = tmp;
 
@@ -441,6 +439,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 if (debugEnabled) {
                     logger.debug("{} activating channel handler", logPrefix());
                 }
+                // Commands after this line are executed (queue) and not buffered.
                 setStateIfNotClosed(LifecycleState.ACTIVATING);
                 redisChannelHandler.activated();
             }
@@ -453,7 +452,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     /**
-     * 
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelInactive(io.netty.channel.ChannelHandlerContext)
      */
     @Override
@@ -461,16 +460,28 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (debugEnabled) {
             logger.debug("{} channelInactive()", logPrefix());
         }
-        setStateIfNotClosed(LifecycleState.DISCONNECTED);
 
-        if (redisChannelHandler != null) {
-            if (debugEnabled) {
-                logger.debug("{} deactivating channel handler", logPrefix());
+        try {
+            writeLock.lock();
+            setStateIfNotClosed(LifecycleState.DISCONNECTED);
+
+            if (redisChannelHandler != null) {
+                if (debugEnabled) {
+                    logger.debug("{} deactivating channel handler", logPrefix());
+                }
+                setStateIfNotClosed(LifecycleState.DEACTIVATING);
+                redisChannelHandler.deactivated();
             }
-            setStateIfNotClosed(LifecycleState.DEACTIVATING);
-            redisChannelHandler.deactivated();
+            setStateIfNotClosed(LifecycleState.DEACTIVATED);
+
+            // Shift all commands to the commandBuffer so the queue is empty.
+            // Allows to run onConnect commands before executing buffered commands
+            commandBuffer.addAll(queue);
+            queue.clear();
+
+        } finally {
+            writeLock.unlock();
         }
-        setStateIfNotClosed(LifecycleState.DEACTIVATED);
 
         if (buffer != null) {
             rsm.reset();

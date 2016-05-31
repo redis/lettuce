@@ -192,8 +192,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
-        assertThat(getQueue(getRedisChannelHandler(connection))).isNotEmpty().contains(command);
-        assertThat(getCommandBuffer(getRedisChannelHandler(connection))).isEmpty();
+        assertThat(getQueue(getRedisChannelHandler(connection))).isEmpty();
+        assertThat(getCommandBuffer(getRedisChannelHandler(connection))).isNotEmpty().contains(command);
 
         connection.close();
     }

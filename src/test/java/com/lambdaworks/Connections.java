@@ -21,6 +21,13 @@ public class Connections {
         return channel.pipeline().get(ConnectionWatchdog.class);
     }
 
+    public static Channel getChannel(StatefulConnection<?, ?> connection) {
+        RedisChannelHandler<?, ?> channelHandler = (RedisChannelHandler<?, ?>) connection;
+
+        Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
+        return channel;
+    }
+
     public static <K, V> StatefulRedisConnectionImpl<K, V> getStatefulConnection(RedisAsyncCommands<K, V> connection) {
         return (StatefulRedisConnectionImpl<K, V>) connection.getStatefulConnection();
     }
