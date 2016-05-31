@@ -44,8 +44,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      * better way to distinguish) and log them at DEBUG rather than WARN, since they are generally caused by unclean client
      * disconnects rather than an actual problem.
      */
-    private static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = LettuceSets.unmodifiableSet("Connection reset by peer", "Broken pipe",
-            "Connection timed out");
+    private static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = LettuceSets.unmodifiableSet("Connection reset by peer",
+            "Broken pipe", "Connection timed out");
 
     protected final ClientOptions clientOptions;
     protected final ClientResources clientResources;
@@ -484,18 +484,25 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             logger.debug("{} channelActive()", logPrefix());
         }
 
-        setStateIfNotClosed(LifecycleState.CONNECTED);
+        synchronized (stateLock) {
+            try {
+                lockWritersExclusive();
+                setStateIfNotClosed(LifecycleState.CONNECTED);
 
-        try {
-            executeQueuedCommands(ctx);
-        } catch (Exception e) {
-            if (debugEnabled) {
-                logger.debug("{} channelActive() ran into an exception", logPrefix());
+                try {
+                    executeQueuedCommands(ctx);
+                } catch (Exception e) {
+                    if (debugEnabled) {
+                        logger.debug("{} channelActive() ran into an exception", logPrefix());
+                    }
+                    if (clientOptions.isCancelCommandsOnReconnectFailure()) {
+                        reset();
+                    }
+                    throw e;
+                }
+            } finally {
+                unlockWritersExclusive();
             }
-            if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                reset();
-            }
-            throw e;
         }
 
         super.channelActive(ctx);
@@ -515,35 +522,24 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     protected void executeQueuedCommands(ChannelHandlerContext ctx) {
 
-        synchronized (stateLock) {
-            try {
-                lockWritersExclusive();
+        connectionError = null;
 
-                connectionError = null;
-
-                commandBuffer.addAll(queue);
-                queue.removeAll(commandBuffer);
-
-                if (debugEnabled) {
-                    logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), commandBuffer.size());
-                }
-
-                synchronized (stateLock) {
-                    channel = ctx.channel();
-                }
-
-                if (redisChannelHandler != null) {
-                    if (debugEnabled) {
-                        logger.debug("{} activating channel handler", logPrefix());
-                    }
-                    setStateIfNotClosed(LifecycleState.ACTIVATING);
-                    redisChannelHandler.activated();
-                }
-                setStateIfNotClosed(LifecycleState.ACTIVE);
-            } finally {
-                unlockWritersExclusive();
-            }
+        if (debugEnabled) {
+            logger.debug("{} executeQueuedCommands {} command(s) queued", logPrefix(), commandBuffer.size());
         }
+
+        synchronized (stateLock) {
+            channel = ctx.channel();
+        }
+
+        if (redisChannelHandler != null) {
+            if (debugEnabled) {
+                logger.debug("{} activating channel handler", logPrefix());
+            }
+            setStateIfNotClosed(LifecycleState.ACTIVATING);
+            redisChannelHandler.activated();
+        }
+        setStateIfNotClosed(LifecycleState.ACTIVE);
 
         flushCommands();
     }
@@ -556,16 +552,28 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (debugEnabled) {
             logger.debug("{} channelInactive()", logPrefix());
         }
-        setStateIfNotClosed(LifecycleState.DISCONNECTED);
 
-        if (redisChannelHandler != null) {
-            if (debugEnabled) {
-                logger.debug("{} deactivating channel handler", logPrefix());
+        try {
+            lockWritersExclusive();
+            setStateIfNotClosed(LifecycleState.DISCONNECTED);
+
+            if (redisChannelHandler != null) {
+                if (debugEnabled) {
+                    logger.debug("{} deactivating channel handler", logPrefix());
+                }
+                setStateIfNotClosed(LifecycleState.DEACTIVATING);
+                redisChannelHandler.deactivated();
             }
-            setStateIfNotClosed(LifecycleState.DEACTIVATING);
-            redisChannelHandler.deactivated();
+            setStateIfNotClosed(LifecycleState.DEACTIVATED);
+
+            // Shift all commands to the commandBuffer so the queue is empty.
+            // Allows to run onConnect commands before executing buffered commands
+            commandBuffer.addAll(queue);
+            queue.clear();
+
+        } finally {
+            unlockWritersExclusive();
         }
-        setStateIfNotClosed(LifecycleState.DEACTIVATED);
 
         if (buffer != null) {
             rsm.reset();

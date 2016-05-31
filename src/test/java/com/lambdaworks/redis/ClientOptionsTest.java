@@ -1,15 +1,24 @@
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.Connections.getChannel;
 import static com.lambdaworks.Connections.getConnectionWatchdog;
 import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.*;
+
+import io.netty.channel.Channel;
 
 /**
  * @author Mark Paluch
@@ -233,5 +242,90 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
             }
         };
+    }
+
+    @Test(timeout = 10000)
+    public void pingBeforeConnectWithQueuedCommandsAndReconnect() throws Exception {
+
+        StatefulRedisConnection<String, String> controlConnection = client.connect();
+
+        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+        Utf8StringCodec codec = new Utf8StringCodec();
+
+        StatefulRedisConnection<String, String> redisConnection = client.connect(RedisURI.create("redis://localhost:6479/5"));
+        redisConnection.async().set("key1", "value1");
+        redisConnection.async().set("key2", "value2");
+
+        RedisFuture<String> sleep = controlConnection.dispatch(new AsyncCommand<>(
+                new Command<>(CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
+
+        sleep.await(100, TimeUnit.MILLISECONDS);
+
+        Channel channel = getChannel(redisConnection);
+        ConnectionWatchdog connectionWatchdog = getConnectionWatchdog(redisConnection);
+        connectionWatchdog.setReconnectSuspended(true);
+
+        channel.close().get();
+        sleep.get();
+
+        redisConnection.async().get(key).cancel(true);
+
+        RedisFuture<String> getFuture1 = redisConnection.async().get("key1");
+        RedisFuture<String> getFuture2 = redisConnection.async().get("key2");
+        getFuture1.await(100, TimeUnit.MILLISECONDS);
+
+        connectionWatchdog.setReconnectSuspended(false);
+        connectionWatchdog.scheduleReconnect();
+
+        assertThat(getFuture1.get()).isEqualTo("value1");
+        assertThat(getFuture2.get()).isEqualTo("value2");
+    }
+
+    @Test(timeout = 10000)
+    public void authenticatedPingBeforeConnectWithQueuedCommandsAndReconnect() throws Exception {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) throws Exception {
+
+                RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).withDatabase(5).build();
+                StatefulRedisConnection<String, String> controlConnection = client.connect(redisURI);
+
+                client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+
+                Utf8StringCodec codec = new Utf8StringCodec();
+
+                StatefulRedisConnection<String, String> redisConnection = client.connect(redisURI);
+                redisConnection.async().set("key1", "value1");
+                redisConnection.async().set("key2", "value2");
+
+                RedisFuture<String> sleep = controlConnection.dispatch(new AsyncCommand<>(new Command<>(CommandType.DEBUG,
+                        new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
+
+                sleep.await(100, TimeUnit.MILLISECONDS);
+
+                Channel channel = getChannel(redisConnection);
+                ConnectionWatchdog connectionWatchdog = getConnectionWatchdog(redisConnection);
+                connectionWatchdog.setReconnectSuspended(true);
+
+                channel.close().get();
+                sleep.get();
+
+                redisConnection.async().get(key).cancel(true);
+
+                RedisFuture<String> getFuture1 = redisConnection.async().get("key1");
+                RedisFuture<String> getFuture2 = redisConnection.async().get("key2");
+                getFuture1.await(100, TimeUnit.MILLISECONDS);
+
+                connectionWatchdog.setReconnectSuspended(false);
+                connectionWatchdog.scheduleReconnect();
+
+                assertThat(getFuture1.get()).isEqualTo("value1");
+                assertThat(getFuture2.get()).isEqualTo("value2");
+            }
+        };
+
     }
 }
