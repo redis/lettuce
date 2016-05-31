@@ -9,8 +9,6 @@ import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
-import static sun.java2d.opengl.OGLRenderQueue.sync;
-
 public abstract class AbstractSentinelTest extends AbstractTest {
 
     public static final String MASTER_ID = "mymaster";

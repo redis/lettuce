@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -8,12 +7,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.lambdaworks.Wait;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.Delay;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
@@ -118,16 +116,16 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @Test
     public void connectToOneNode() throws Exception {
-        RedisSentinelCommands<String, String> connection = sentinelClient.connectSentinel(
-                RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
+        RedisSentinelCommands<String, String> connection = sentinelClient
+                .connectSentinel(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.close();
     }
 
     @Test
     public void deprecatedConnectToOneNode() throws Exception {
-        RedisSentinelAsyncCommands<String, String> connection = sentinelClient.connectSentinelAsync(RedisURI.Builder.sentinel(
-                TestSettings.host(), MASTER_ID).build());
+        RedisSentinelAsyncCommands<String, String> connection = sentinelClient
+                .connectSentinelAsync(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
         assertThat(connection.ping().get()).isEqualTo("PONG");
         connection.close();
     }

@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -9,17 +8,15 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.Wait;
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.lambdaworks.Delay;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 public class SentinelCommandTest extends AbstractSentinelTest {
@@ -78,8 +75,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWith() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID)
-                .withSentinel(TestSettings.host()).build());
+        RedisClient client = new RedisClient(
+                RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID).withSentinel(TestSettings.host()).build());
 
         RedisSentinelAsyncCommands<String, String> sentinelConnection = client.connectSentinelAsync();
         assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
@@ -100,8 +97,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWrongMaster() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent")
-                .withSentinel(TestSettings.host()).build());
+        RedisClient client = new RedisClient(
+                RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host()).build());
         try {
             client.connect();
             fail("missing RedisConnectionException");
