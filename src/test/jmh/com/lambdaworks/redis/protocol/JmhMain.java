@@ -11,8 +11,9 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 /**
+ * Manual JMH Test Launcher.
+ * 
  * @author Mark Paluch
- * @soundtrack E-Rotic - Willy Use A Billy Boy (Extended Version)
  */
 public class JmhMain {
 
@@ -20,11 +21,11 @@ public class JmhMain {
 
         // run selectively
         // runCommandBenchmark();
-        // runCommandHandlerBenchmark();
-        runRedisStateMachineBenchmark();
+        runCommandHandlerBenchmark();
+        // runRedisStateMachineBenchmark();
 
         // or all
-        //runBenchmarks();
+        // runBenchmarks();
     }
 
     private static void runBenchmarks() throws RunnerException {

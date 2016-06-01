@@ -5,6 +5,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.Delay;
 import com.lambdaworks.redis.resource.DnsResolver;
 import com.lambdaworks.redis.resource.EventLoopGroupProvider;
 import io.netty.util.concurrent.*;
@@ -66,6 +67,11 @@ public class EmptyClientResources implements ClientResources {
 
     @Override
     public DnsResolver dnsResolver() {
+        return null;
+    }
+
+    @Override
+    public Delay reconnectDelay() {
         return null;
     }
 }
