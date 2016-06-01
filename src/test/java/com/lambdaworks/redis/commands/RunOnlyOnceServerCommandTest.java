@@ -7,7 +7,9 @@ import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.TestSettings.host;
 import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
+import com.lambdaworks.CanConnect;
 import com.lambdaworks.redis.*;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -16,6 +18,7 @@ import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import org.springframework.util.SocketUtils;
 
 import java.util.Arrays;
 
@@ -30,6 +33,9 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
      */
     @Test
     public void debugSegfault() throws Exception {
+
+        assumeTrue(CanConnect.to(host(), port(1)));
+
         final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(1))
                 .build());
         connection.debugSegfault();
@@ -40,11 +46,14 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
 
     /**
      * Executed in order: 2
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void migrate() throws Exception {
+
+        assumeTrue(CanConnect.to(host(), port(2)));
+
         redis.set(key, value);
 
         String result = redis.migrate("localhost", TestSettings.port(2), key, 0, 10);
@@ -58,6 +67,9 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
      */
     @Test
     public void migrateCopyReplace() throws Exception {
+
+        assumeTrue(CanConnect.to(host(), port(2)));
+
         redis.set(key, value);
         redis.set("key1", value);
         redis.set("key2", value);
@@ -72,12 +84,13 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
     /**
      * Executed in order: 4 this test causes a stop of the redis. This means, you cannot repeat the test without restarting your
      * redis.
-     * 
+     *
      * @throws Exception
      */
     @Test
-    @Ignore
     public void shutdown() throws Exception {
+
+        assumeTrue(CanConnect.to(host(), port(2)));
 
         final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(2))
                 .build());
