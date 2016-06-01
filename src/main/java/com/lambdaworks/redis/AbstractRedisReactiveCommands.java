@@ -1738,7 +1738,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output) {
+    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
         LettuceAssert.notNull(output, "CommandOutput type must not be null");
@@ -1747,7 +1747,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
         LettuceAssert.notNull(output, "CommandOutput type must not be null");

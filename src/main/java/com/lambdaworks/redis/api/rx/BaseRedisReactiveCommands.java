@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.api.rx;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.lambdaworks.redis.output.CommandOutput;
@@ -120,7 +121,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @param <T> response type
      * @return the command response
      */
-    <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+    <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output);
 
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
@@ -131,7 +132,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @param <T> response type
      * @return the command response
      */
-    <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
+    <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args);
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.
