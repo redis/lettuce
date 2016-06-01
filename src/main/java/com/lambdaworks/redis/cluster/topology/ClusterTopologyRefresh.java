@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
@@ -14,12 +15,9 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.protocol.AsyncCommand;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.SocketAddressResolver;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -61,7 +59,7 @@ public class ClusterTopologyRefresh {
 
             if (discovery) {
                 Set<RedisURI> allKnownUris = nodeSpecificViews.getClusterNodes();
-                Set<RedisURI> discoveredNodes = difference(allKnownUris, connections.nodes());
+                Set<RedisURI> discoveredNodes = difference(allKnownUris, toSet(seed));
 
                 if (!discoveredNodes.isEmpty()) {
                     Connections discoveredConnections = getConnections(discoveredNodes);
@@ -85,6 +83,10 @@ public class ClusterTopologyRefresh {
         } finally {
             connections.close();
         }
+    }
+
+    private Set<RedisURI> toSet(Iterable<RedisURI> seed) {
+        return StreamSupport.stream(seed.spliterator(), false).collect(Collectors.toCollection(HashSet::new));
     }
 
     protected NodeTopologyViews getNodeSpecificViews(Requests requestedTopology, Requests requestedClients,
@@ -175,7 +177,7 @@ public class ClusterTopologyRefresh {
         Connections connections = new Connections();
 
         for (RedisURI redisURI : redisURIs) {
-            if (redisURI.getHost() == null) {
+            if (redisURI.getHost() == null || connections.connectedNodes().contains(redisURI)) {
                 continue;
             }
 
@@ -189,6 +191,7 @@ public class ClusterTopologyRefresh {
 
                 connections.addConnection(redisURI, connection);
             } catch (RedisConnectionException e) {
+
                 if (logger.isDebugEnabled()) {
                     logger.debug(e.getMessage(), e);
                 } else {

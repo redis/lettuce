@@ -2,6 +2,8 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 
 /**
@@ -28,5 +30,16 @@ public class ClusterClientOptionsTest {
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
+    }
+
+    @Test
+    public void enablesRefreshUsingDeprecatedMethods() throws Exception {
+
+        ClusterClientOptions options = ClusterClientOptions.builder().refreshClusterView(true)
+                .refreshPeriod(10, TimeUnit.MINUTES).build();
+
+        assertThat(options.getRefreshPeriod()).isEqualTo(10);
+        assertThat(options.getRefreshPeriodUnit()).isEqualTo(TimeUnit.MINUTES);
+        assertThat(options.isRefreshClusterView()).isEqualTo(true);
     }
 }

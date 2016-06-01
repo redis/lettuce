@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster.topology;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -27,6 +28,12 @@ class Connections {
         this.connections = connections;
     }
 
+    /**
+     * Add a connection for a {@link RedisURI}
+     *
+     * @param redisURI
+     * @param connection
+     */
     public void addConnection(RedisURI redisURI, StatefulRedisConnection<String, String> connection) {
         connections.put(redisURI, connection);
     }
@@ -45,8 +52,7 @@ class Connections {
             CommandArgs<String, String> args = new CommandArgs<>(ClusterTopologyRefresh.CODEC).add(CommandKeyword.NODES);
             Command<String, String, String> command = new Command<>(CommandType.CLUSTER,
                     new StatusOutput<>(ClusterTopologyRefresh.CODEC), args);
-            TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(
-                    command);
+            TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
             entry.getValue().dispatch(timedCommand);
             requests.addRequest(entry.getKey(), timedCommand);
@@ -69,8 +75,7 @@ class Connections {
             CommandArgs<String, String> args = new CommandArgs<>(ClusterTopologyRefresh.CODEC).add(CommandKeyword.LIST);
             Command<String, String, String> command = new Command<>(CommandType.CLIENT,
                     new StatusOutput<>(ClusterTopologyRefresh.CODEC), args);
-            TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(
-                    command);
+            TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
             entry.getValue().dispatch(timedCommand);
             requests.addRequest(entry.getKey(), timedCommand);
@@ -88,7 +93,11 @@ class Connections {
         }
     }
 
-    public Set<RedisURI> nodes() {
+    /**
+     *
+     * @return a set of {@link RedisURI} for which {@link Connections} has a connection.
+     */
+    public Set<RedisURI> connectedNodes() {
         return connections.keySet();
     }
 
