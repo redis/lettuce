@@ -25,6 +25,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -116,10 +117,12 @@ public class RedisClusterClient extends AbstractRedisClient {
             getResources());
 
     private Partitions partitions;
-    private Iterable<RedisURI> initialUris = Collections.emptySet();
+    private final Iterable<RedisURI> initialUris;
 
     private RedisClusterClient() {
+
         setOptions(ClusterClientOptions.create());
+        this.initialUris = Collections.emptyList();
     }
 
     /**
@@ -156,14 +159,16 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@literal null} and not empty.
      */
     protected RedisClusterClient(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
+
         super(clientResources);
+
         assertNotEmpty(redisURIs);
         assertSameOptions(redisURIs);
 
-        this.initialUris = redisURIs;
+        this.initialUris = Collections.unmodifiableList(LettuceLists.newList(redisURIs));
 
         setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
-        setOptions(new ClusterClientOptions.Builder().build());
+        setOptions(ClusterClientOptions.builder().build());
     }
 
     private static void assertSameOptions(Iterable<RedisURI> redisURIs) {
@@ -759,8 +764,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             ClusterClientOptions options = (ClusterClientOptions) getOptions();
             ClusterTopologyRefreshOptions topologyRefreshOptions = options.getTopologyRefreshOptions();
 
-            if (!topologyRefreshOptions.isPeriodicRefreshEnabled()
-                    || clusterTopologyRefreshActivated.get()) {
+            if (!topologyRefreshOptions.isPeriodicRefreshEnabled() || clusterTopologyRefreshActivated.get()) {
                 return;
             }
 
@@ -777,8 +781,17 @@ public class RedisClusterClient extends AbstractRedisClient {
         return iterator.next();
     }
 
-    private Supplier<SocketAddress> getSocketAddressSupplier(
-            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction) {
+    /**
+     * Returns a {@link Supplier} for {@link SocketAddress connection points}.
+     * 
+     * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
+     *        parameter but create a new collection with the desired order, must not be {@literal null}.
+     * @return {@link Supplier} for {@link SocketAddress connection points}.
+     */
+    protected Supplier<SocketAddress> getSocketAddressSupplier(
+            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+
+        LettuceAssert.notNull(sortFunction, "Sort function must not be null");
 
         final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
                 sortFunction, clientResources);
@@ -834,6 +847,15 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public void setOptions(ClusterClientOptions clientOptions) {
         super.setOptions(clientOptions);
+    }
+
+    /**
+     * Returns the initial {@link RedisURI URIs}.
+     * 
+     * @return the initial {@link RedisURI URIs}
+     */
+    protected Iterable<RedisURI> getInitialUris() {
+        return initialUris;
     }
 
     ClusterClientOptions getClusterClientOptions() {

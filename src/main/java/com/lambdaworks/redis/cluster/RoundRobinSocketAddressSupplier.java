@@ -29,7 +29,8 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     private RoundRobin<? extends RedisClusterNode> roundRobin;
 
     public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
-            Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction, ClientResources clientResources) {
+            Function<? extends Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction,
+            ClientResources clientResources) {
 
         LettuceAssert.notNull(partitions, "Partitions must not be null");
         LettuceAssert.notNull(sortFunction, "Sort-Function must not be null");
@@ -37,7 +38,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         this.partitions = partitions;
         this.clusterNodes.addAll(partitions);
         this.roundRobin = new RoundRobin<>(clusterNodes);
-        this.sortFunction = sortFunction;
+        this.sortFunction = (Function) sortFunction;
         this.clientResources = clientResources;
         resetRoundRobin();
     }

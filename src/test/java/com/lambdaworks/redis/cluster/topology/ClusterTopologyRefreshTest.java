@@ -9,10 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -27,9 +24,9 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DnsResolvers;
 
@@ -81,7 +78,7 @@ public class ClusterTopologyRefreshTest {
 
         when(connection1.dispatch(any())).thenAnswer(invocation -> {
 
-            RedisCommand command = (RedisCommand) invocation.getArguments()[0];
+            TimedAsyncCommand command = (TimedAsyncCommand) invocation.getArguments()[0];
             if (command.getType() == CommandType.CLUSTER) {
                 command.getOutput().set(ByteBuffer.wrap(NODE_1_VIEW.getBytes()));
                 command.complete();
@@ -92,21 +89,27 @@ public class ClusterTopologyRefreshTest {
                 command.complete();
             }
 
+            command.encodedAtNs = 10;
+            command.completedAtNs = 50;
+
             return command;
         });
 
         when(connection2.dispatch(any())).thenAnswer(invocation -> {
 
-            RedisCommand command = (RedisCommand) invocation.getArguments()[0];
+            TimedAsyncCommand command = (TimedAsyncCommand) invocation.getArguments()[0];
             if (command.getType() == CommandType.CLUSTER) {
                 command.getOutput().set(ByteBuffer.wrap(NODE_2_VIEW.getBytes()));
                 command.complete();
             }
 
             if (command.getType() == CommandType.CLIENT) {
-                command.getOutput().set(ByteBuffer.wrap("c1\nc2\n".getBytes()));
+                command.getOutput().set(ByteBuffer.wrap("".getBytes()));
                 command.complete();
             }
+
+            command.encodedAtNs = 10;
+            command.completedAtNs = 20;
 
             return command;
         });
@@ -117,11 +120,8 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void getNodeSpecificViewsNode1IsFasterThanNode2() throws Exception {
 
-        String nodes1 = NODE_1_VIEW;
-        Requests requests = createClusterNodesRequests(1, nodes1);
-
-        String nodes2 = NODE_2_VIEW;
-        requests = createClusterNodesRequests(2, nodes2).mergeWith(requests);
+        Requests requests = createClusterNodesRequests(1, NODE_1_VIEW);
+        requests = createClusterNodesRequests(2, NODE_2_VIEW).mergeWith(requests);
 
         Requests clientRequests = createClientListRequests(1, "c1\nc2\n").mergeWith(createClientListRequests(2, "c1\nc2\n"));
 
@@ -236,7 +236,8 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void shouldNotFailOnDuplicateSeedNodes() throws Exception {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381), RedisURI.create("127.0.0.1", 7381));
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381),
+                RedisURI.create("127.0.0.1", 7381));
 
         when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn((StatefulRedisConnection) connection1);
@@ -250,6 +251,81 @@ public class ClusterTopologyRefreshTest {
         verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
     }
 
+    @Test
+    public void undiscoveredAdditionalNodesShouldBeLastUsingClientCount() throws Exception {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+
+        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn((StatefulRedisConnection) connection1);
+
+        Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, false);
+
+        Partitions partitions = partitionsMap.values().iterator().next();
+
+        List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
+
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
+                RedisURI.create("127.0.0.1", 7381));
+    }
+
+    @Test
+    public void discoveredAdditionalNodesShouldBeOrderedUsingClientCount() throws Exception {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+
+        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn((StatefulRedisConnection) connection1);
+        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn((StatefulRedisConnection) connection2);
+
+        Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, true);
+
+        Partitions partitions = partitionsMap.values().iterator().next();
+
+        List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
+
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
+                seed.get(0));
+    }
+
+    @Test
+    public void undiscoveredAdditionalNodesShouldBeLastUsingLatency() throws Exception {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+
+        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn((StatefulRedisConnection) connection1);
+
+        Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, false);
+
+        Partitions partitions = partitionsMap.values().iterator().next();
+
+        List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
+
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
+                RedisURI.create("127.0.0.1", 7381));
+    }
+
+    @Test
+    public void discoveredAdditionalNodesShouldBeOrderedUsingLatency() throws Exception {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+
+        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn((StatefulRedisConnection) connection1);
+        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn((StatefulRedisConnection) connection2);
+
+        Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, true);
+
+        Partitions partitions = partitionsMap.values().iterator().next();
+
+        List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
+
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
+                seed.get(0));
+    }
 
     protected Requests createClusterNodesRequests(int duration, String nodes) {
 

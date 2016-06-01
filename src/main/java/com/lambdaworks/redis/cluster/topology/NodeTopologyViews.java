@@ -46,7 +46,7 @@ class NodeTopologyViews {
 
     public Map<RedisURI, Partitions> toMap() {
 
-        Map<RedisURI, Partitions> nodeSpecificViews = new TreeMap<>(TopologyComparators.RedisUriComparator.INSTANCE);
+        Map<RedisURI, Partitions> nodeSpecificViews = new TreeMap<>(TopologyComparators.RedisURIComparator.INSTANCE);
 
         for (NodeTopologyView view : views) {
             nodeSpecificViews.put(view.getRedisURI(), view.getPartitions());

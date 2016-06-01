@@ -14,7 +14,7 @@ import com.lambdaworks.redis.RedisURI;
 class Requests {
 
     Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
-            TopologyComparators.RedisUriComparator.INSTANCE);
+            TopologyComparators.RedisURIComparator.INSTANCE);
 
     Requests() {
     }
@@ -64,7 +64,7 @@ class Requests {
     Requests mergeWith(Requests requests) {
 
         Map<RedisURI, TimedAsyncCommand<String, String, String>> result = new TreeMap<>(
-                TopologyComparators.RedisUriComparator.INSTANCE);
+                TopologyComparators.RedisURIComparator.INSTANCE);
         result.putAll(this.rawViews);
         result.putAll(requests.rawViews);
 

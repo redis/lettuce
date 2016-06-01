@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.cluster.topology;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -19,7 +18,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 class Connections {
 
     private Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
-            TopologyComparators.RedisUriComparator.INSTANCE);
+            TopologyComparators.RedisURIComparator.INSTANCE);
 
     public Connections() {
     }
@@ -104,7 +103,7 @@ class Connections {
     public Connections mergeWith(Connections discoveredConnections) {
 
         Map<RedisURI, StatefulRedisConnection<String, String>> result = new TreeMap<>(
-                TopologyComparators.RedisUriComparator.INSTANCE);
+                TopologyComparators.RedisURIComparator.INSTANCE);
         result.putAll(this.connections);
         result.putAll(discoveredConnections.connections);
 

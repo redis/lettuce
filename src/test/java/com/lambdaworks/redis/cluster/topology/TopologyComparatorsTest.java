@@ -4,11 +4,9 @@ import static com.lambdaworks.redis.cluster.topology.TopologyComparators.isChang
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.lambdaworks.redis.RedisURI;
 import org.junit.Test;
 
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
@@ -28,6 +26,7 @@ public class TopologyComparatorsTest {
     private static RedisClusterNodeSnapshot createNode(String nodeId) {
         RedisClusterNodeSnapshot result = new RedisClusterNodeSnapshot();
         result.setNodeId(nodeId);
+        result.setUri(RedisURI.create("localhost", Integer.parseInt(nodeId)));
         return result;
     }
 
@@ -174,6 +173,42 @@ public class TopologyComparatorsTest {
         Collections.sort(list, TopologyComparators.LatencyComparator.INSTANCE);
 
         assertThat(list).containsSequence(node1, node3, node2);
+    }
+
+    @Test
+    public void testFixedOrdering1() throws Exception {
+
+        List<RedisClusterNode> list = LettuceLists.newList(node2, node3, node1);
+        List<RedisURI> fixedOrder = LettuceLists.newList(node1.getUri(), node2.getUri(), node3.getUri());
+
+        assertThat(TopologyComparators.predefinedSort(list, fixedOrder)).containsSequence(node1, node2, node3);
+    }
+
+    @Test
+    public void testFixedOrdering2() throws Exception {
+
+        List<RedisClusterNode> list = LettuceLists.newList(node2, node3, node1);
+        List<RedisURI> fixedOrder = LettuceLists.newList(node3.getUri(), node2.getUri(), node1.getUri());
+
+        assertThat(TopologyComparators.predefinedSort(list, fixedOrder)).containsSequence(node3, node2, node1);
+    }
+
+    @Test
+    public void testFixedOrderingNoFixedPart() throws Exception {
+
+        List<RedisClusterNode> list = LettuceLists.newList(node2, node3, node1);
+        List<RedisURI> fixedOrder = LettuceLists.newList();
+
+        assertThat(TopologyComparators.predefinedSort(list, fixedOrder)).containsSequence(node1, node2, node3);
+    }
+
+    @Test
+    public void testFixedOrderingPartiallySpecifiedOrder() throws Exception {
+
+        List<RedisClusterNode> list = LettuceLists.newList(node2, node3, node1);
+        List<RedisURI> fixedOrder = LettuceLists.newList(node3.getUri(), node1.getUri());
+
+        assertThat(TopologyComparators.predefinedSort(list, fixedOrder)).containsSequence(node3, node1, node2);
     }
 
     @Test

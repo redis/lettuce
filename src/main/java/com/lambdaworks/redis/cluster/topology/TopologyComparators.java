@@ -3,10 +3,12 @@ package com.lambdaworks.redis.cluster.topology;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.internal.LettuceSets;
 
@@ -18,14 +20,52 @@ import com.lambdaworks.redis.internal.LettuceSets;
 public class TopologyComparators {
 
     /**
+     * Sort partitions by a {@code fixedOrder} and by {@link RedisURI}. Nodes are sorted as provided in {@code fixedOrder}.
+     * {@link RedisURI RedisURIs}s not contained in {@code fixedOrder} are ordered after the fixed sorting and sorted wihin the
+     * block by comparing {@link RedisURI}.
+     *
+     * @param clusterNodes the sorting input
+     * @param fixedOrder the fixed order part
+     * @return List containing {@link RedisClusterNode}s ordered by {@code fixedOrder} and {@link RedisURI}
+     * @see #sortByUri(Iterable)
+     */
+    public static List<RedisClusterNode> predefinedSort(Iterable<RedisClusterNode> clusterNodes,
+            Iterable<RedisURI> fixedOrder) {
+
+        LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
+        LettuceAssert.notNull(fixedOrder, "Fixed order must not be null");
+
+        List<RedisURI> fixedOrderList = LettuceLists.newList(fixedOrder);
+        List<RedisClusterNode> withOrderSpecification = LettuceLists.newList(clusterNodes)//
+                .stream()//
+                .filter(redisClusterNode -> fixedOrderList.contains(redisClusterNode.getUri()))//
+                .collect(Collectors.toList());
+
+        List<RedisClusterNode> withoutSpecification = LettuceLists.newList(clusterNodes)//
+                .stream()//
+                .filter(redisClusterNode -> !fixedOrderList.contains(redisClusterNode.getUri()))//
+                .collect(Collectors.toList());
+
+        Collections.sort(withOrderSpecification, new PredefinedRedisClusterNodeComparator(fixedOrderList));
+        Collections.sort(withoutSpecification, (o1, o2) -> RedisURIComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
+
+        withOrderSpecification.addAll(withoutSpecification);
+
+        return withOrderSpecification;
+    }
+
+    /**
      * Sort partitions by RedisURI.
      *
      * @param clusterNodes
      * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}
      */
     public static List<RedisClusterNode> sortByUri(Iterable<RedisClusterNode> clusterNodes) {
+
+        LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
+
         List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
-        Collections.sort(ordered, (o1, o2) -> RedisUriComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
+        Collections.sort(ordered, (o1, o2) -> RedisURIComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
         return ordered;
     }
 
@@ -37,6 +77,8 @@ public class TopologyComparators {
      */
     public static List<RedisClusterNode> sortByClientCount(Iterable<RedisClusterNode> clusterNodes) {
 
+        LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
+
         List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
         Collections.sort(ordered, ClientCountComparator.INSTANCE);
         return ordered;
@@ -46,7 +88,7 @@ public class TopologyComparators {
      * Sort partitions by latency.
      *
      * @param clusterNodes
-     * @return List containing {@link RedisClusterNode}s ordered by lastency
+     * @return List containing {@link RedisClusterNode}s ordered by latency
      */
     public static List<RedisClusterNode> sortByLatency(Iterable<RedisClusterNode> clusterNodes) {
 
@@ -118,6 +160,23 @@ public class TopologyComparators {
         return true;
     }
 
+    static class PredefinedRedisClusterNodeComparator implements Comparator<RedisClusterNode> {
+        private final List<RedisURI> fixedOrder;
+
+        public PredefinedRedisClusterNodeComparator(List<RedisURI> fixedOrder) {
+            this.fixedOrder = fixedOrder;
+        }
+
+        @Override
+        public int compare(RedisClusterNode o1, RedisClusterNode o2) {
+
+            int index1 = fixedOrder.indexOf(o1.getUri());
+            int index2 = fixedOrder.indexOf(o2.getUri());
+
+            return Integer.compare(index1, index2);
+        }
+    }
+
     /**
      * Compare {@link RedisClusterNodeSnapshot} based on their latency. Lowest comes first. Objects of type
      * {@link RedisClusterNode} cannot be compared and yield to a result of {@literal 0}.
@@ -185,7 +244,7 @@ public class TopologyComparators {
     /**
      * Compare {@link RedisURI} based on their host and port representation.
      */
-    enum RedisUriComparator implements Comparator<RedisURI> {
+    enum RedisURIComparator implements Comparator<RedisURI> {
 
         INSTANCE;
 
