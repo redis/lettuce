@@ -493,7 +493,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectCluster(" + initialUris + ")");
         Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByLatency);
+        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
 
