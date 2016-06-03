@@ -13,9 +13,10 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 public class ConnectToRedisClusterWithTopologyRefreshing {
 
     public static void main(String[] args) {
-        // Syntax: redis://[password@]host[:port]
 
+        // Syntax: redis://[password@]host[:port]
         RedisClusterClient redisClient = RedisClusterClient.create("redis://password@localhost:7379");
+
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(30, TimeUnit.MINUTES)//
                 .enableAllAdaptiveRefreshTriggers()//

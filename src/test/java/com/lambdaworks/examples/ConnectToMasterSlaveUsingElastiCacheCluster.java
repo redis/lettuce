@@ -17,6 +17,7 @@ import com.lambdaworks.redis.masterslave.StatefulRedisMasterSlaveConnection;
 public class ConnectToMasterSlaveUsingElastiCacheCluster {
 
     public static void main(String[] args) {
+
         // Syntax: redis://[password@]host[:port][/databaseNumber]
         RedisClient redisClient = RedisClient.create();
 

@@ -11,9 +11,10 @@ import com.lambdaworks.redis.resource.DirContextDnsResolver;
 public class ConnectToElastiCacheMaster {
 
     public static void main(String[] args) {
+
         // Syntax: redis://[password@]host[:port][/databaseNumber]
 
-        DefaultClientResources clientResources = new DefaultClientResources.Builder() //
+        DefaultClientResources clientResources = DefaultClientResources.builder() //
                 .dnsResolver(new DirContextDnsResolver()) // Does not cache DNS lookups
                 .build();
 
