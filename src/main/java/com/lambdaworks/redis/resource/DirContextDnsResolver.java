@@ -43,6 +43,9 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
     private static final String INITIAL_TIMEOUT = "com.sun.jndi.dns.timeout.initial";
     private static final String LOOKUP_RETRIES = "com.sun.jndi.dns.timeout.retries";
 
+    private static final String DEFAULT_INITIAL_TIMEOUT = "1000";
+    private static final String DEFAULT_RETRIES = "4";
+
     private final boolean preferIpv4;
     private final boolean preferIpv6;
     private final Properties properties;
@@ -104,11 +107,11 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
         hashtable.put(InitialContext.INITIAL_CONTEXT_FACTORY, CTX_FACTORY_NAME);
 
         if (!hashtable.containsKey(INITIAL_TIMEOUT)) {
-            hashtable.put(INITIAL_TIMEOUT, "5000");
+            hashtable.put(INITIAL_TIMEOUT, DEFAULT_INITIAL_TIMEOUT);
         }
 
         if (!hashtable.containsKey(LOOKUP_RETRIES)) {
-            hashtable.put(LOOKUP_RETRIES, "1");
+            hashtable.put(LOOKUP_RETRIES, DEFAULT_RETRIES);
         }
 
         try {
