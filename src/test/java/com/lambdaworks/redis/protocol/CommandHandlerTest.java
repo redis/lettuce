@@ -5,9 +5,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.Future;
 
 import com.lambdaworks.redis.RedisChannelHandler;
@@ -286,4 +284,59 @@ public class CommandHandlerTest {
         verifyZeroInteractions(context);
     }
 
+    @Test
+    public void shouldNotWriteCancelledCommands() throws Exception {
+
+        command.cancel(true);
+        sut.write(context, command, null);
+
+        verifyZeroInteractions(context);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+    }
+
+    @Test
+    public void shouldWriteActiveCommands() throws Exception {
+
+        sut.write(context, command, null);
+
+        verify(context).write(command, null);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+    }
+
+    @Test
+    public void shouldNotWriteCancelledCommandBatch() throws Exception {
+
+        command.cancel(true);
+        sut.write(context, Arrays.asList(command), null);
+
+        verifyZeroInteractions(context);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+    }
+
+    @Test
+    public void shouldWriteActiveCommandsInBatch() throws Exception {
+
+        List<Command<String, String, String>> commands = Arrays.asList(command);
+        sut.write(context, commands, null);
+
+        verify(context).write(commands, null);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+    }
+
+    @Test
+    public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
+
+        Command<String, String, String> command2 = new Command<String, String, String>(CommandType.APPEND,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        command.cancel(true);
+
+        sut.write(context, Arrays.asList(command, command2), null);
+
+        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        verify(context).write(captor.capture(), any(ChannelPromise.class));
+
+        assertThat(captor.getValue()).containsOnly(command2);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command2);
+    }
 }
