@@ -285,6 +285,69 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void isConnectedShouldReportFalseForNOT_CONNECTED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.NOT_CONNECTED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForREGISTERED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.REGISTERED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportTrueForCONNECTED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.CONNECTED);
+        assertThat(sut.isConnected()).isTrue();
+    }
+
+    @Test
+    public void isConnectedShouldReportTrueForACTIVATING() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.ACTIVATING);
+        assertThat(sut.isConnected()).isTrue();
+    }
+
+    @Test
+    public void isConnectedShouldReportTrueForACTIVE() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.ACTIVE);
+        assertThat(sut.isConnected()).isTrue();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForDISCONNECTED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.DISCONNECTED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForDEACTIVATING() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.DEACTIVATING);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForDEACTIVATED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.DEACTIVATED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void isConnectedShouldReportFalseForCLOSED() throws Exception {
+
+        sut.setState(CommandHandler.LifecycleState.CLOSED);
+        assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
     public void shouldNotWriteCancelledCommands() throws Exception {
 
         command.cancel(true);
