@@ -38,7 +38,7 @@ public class CommandHandlerTest {
 
     private CommandHandler<String, String> sut;
 
-    public static final Command<String, String, String> command = new Command<>(CommandType.APPEND,
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
             new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
     @Mock
@@ -368,20 +368,76 @@ public class CommandHandlerTest {
         sut.setState(CommandHandler.LifecycleState.CLOSED);
         assertThat(sut.isConnected()).isFalse();
     }
+    
+    @Test
+    public void shouldNotWriteCancelledCommands() throws Exception {
+
+        command.cancel();
+        sut.write(context, command, null);
+
+        verifyZeroInteractions(context);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+    }
+
+    @Test
+    public void shouldWriteActiveCommands() throws Exception {
+
+        sut.write(context, command, null);
+
+        verify(context).write(command, null);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+    }
+
+    @Test
+    public void shouldNotWriteCancelledCommandBatch() throws Exception {
+
+        command.cancel();
+        sut.write(context, Arrays.asList(command), null);
+
+        verifyZeroInteractions(context);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+    }
+
+    @Test
+    public void shouldWriteActiveCommandsInBatch() throws Exception {
+
+        List<Command<String, String, String>> commands = Arrays.asList(command);
+        sut.write(context, commands, null);
+
+        verify(context).write(commands, null);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+    }
+
+    @Test
+    public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
+
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND,
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+
+        command.cancel();
+
+        sut.write(context, Arrays.asList(command, command2), null);
+
+        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        verify(context).write(captor.capture(), any());
+
+        assertThat(captor.getValue()).containsOnly(command2);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command2);
+    }
 
     @Test
     public void testMTCConcurrentWriteThenReset() throws Throwable {
-        TestFramework.runOnce(new MTCConcurrentWriteThenReset(clientResources, q));
+        TestFramework.runOnce(new MTCConcurrentWriteThenReset(clientResources, q, command));
     }
 
     @Test
     public void testMTCConcurrentResetThenWrite() throws Throwable {
-        TestFramework.runOnce(new MTCConcurrentResetThenWrite(clientResources, q));
+        TestFramework.runOnce(new MTCConcurrentResetThenWrite(clientResources, q, command));
     }
 
     @Test
     public void testMTCConcurrentConcurrentWrite() throws Throwable {
-        TestFramework.runOnce(new MTCConcurrentConcurrentWrite(clientResources, q));
+        TestFramework.runOnce(new MTCConcurrentConcurrentWrite(clientResources, q, command));
     }
 
     /**
@@ -389,12 +445,16 @@ public class CommandHandlerTest {
      */
     static class MTCConcurrentWriteThenReset extends MultithreadedTestCase {
 
+        private final Command<String, String, String> command;
         private TestableCommandHandler handler;
         private List<Thread> expectedThreadOrder = Collections.synchronizedList(new ArrayList<>());
         private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
         private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
 
-        public MTCConcurrentWriteThenReset(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
+        public MTCConcurrentWriteThenReset(ClientResources clientResources,
+                                           Queue<RedisCommand<String, String, ?>> queue,
+                                           Command<String, String, String> command) {
+            this.command = command;
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
 
                 @Override
@@ -470,12 +530,16 @@ public class CommandHandlerTest {
      */
     static class MTCConcurrentResetThenWrite extends MultithreadedTestCase {
 
+        private final Command<String, String, String> command;
         private TestableCommandHandler handler;
         private List<Thread> expectedThreadOrder = Collections.synchronizedList(new ArrayList<>());
         private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
         private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
 
-        public MTCConcurrentResetThenWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
+        public MTCConcurrentResetThenWrite(ClientResources clientResources,
+                                           Queue<RedisCommand<String, String, ?>> queue,
+                                           Command<String, String, String> command) {
+            this.command = command;
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
 
                 @Override
@@ -550,9 +614,13 @@ public class CommandHandlerTest {
      */
     static class MTCConcurrentConcurrentWrite extends MultithreadedTestCase {
 
+        private final Command<String, String, String> command;
         private TestableCommandHandler handler;
 
-        public MTCConcurrentConcurrentWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue) {
+        public MTCConcurrentConcurrentWrite(ClientResources clientResources,
+                                            Queue<RedisCommand<String, String, ?>> queue,
+                                            Command<String, String, String> command) {
+            this.command = command;
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
 
                 @Override

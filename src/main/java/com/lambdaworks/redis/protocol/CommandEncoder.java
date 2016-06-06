@@ -74,9 +74,6 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
         if (msg instanceof Collection) {
             Collection<RedisCommand<?, ?, ?>> commands = (Collection<RedisCommand<?, ?, ?>>) msg;
             for (RedisCommand<?, ?, ?> command : commands) {
-                if (command.isCancelled()) {
-                    continue;
-                }
                 encode(ctx, out, command);
             }
         }
