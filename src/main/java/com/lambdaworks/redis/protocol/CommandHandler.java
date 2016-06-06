@@ -329,37 +329,81 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
-        if (msg instanceof Collection) {
-            Collection<RedisCommand<K, V, ?>> commands = (Collection<RedisCommand<K, V, ?>>) msg;
-            for (RedisCommand<K, V, ?> command : commands) {
-                queueCommand(promise, command);
-            }
-            ctx.write(commands, promise);
+        if (msg instanceof RedisCommand) {
+            writeSingleCommand(ctx, (RedisCommand<K, V, ?>) msg, promise);
             return;
         }
 
-        RedisCommand<K, V, ?> cmd = (RedisCommand<K, V, ?>) msg;
-        queueCommand(promise, cmd);
-        ctx.write(cmd, promise);
+        if (msg instanceof Collection) {
+            writeBatch(ctx, (Collection<RedisCommand<K, V, ?>>) msg, promise);
+        }
     }
 
-    private void queueCommand(ChannelPromise promise, RedisCommand<K, V, ?> cmd) throws Exception {
-        if (cmd.isCancelled()) {
+    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command, ChannelPromise promise)
+            throws Exception {
+
+        if (command.isCancelled()) {
             return;
         }
 
-        try {
-            if (cmd.getOutput() == null) {
+        queueCommand(command, promise);
+        ctx.write(command, promise);
+    }
+    
+    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<K, V, ?>> msg, ChannelPromise promise)
+            throws Exception {
 
+        Collection<RedisCommand<K, V, ?>> commands = msg;
+        Collection<RedisCommand<K, V, ?>> toWrite = commands;
+
+        boolean cancelledCommands = false;
+        for (RedisCommand<K, V, ?> command : commands) {
+            if (command.isCancelled()) {
+                cancelledCommands = true;
+                break;
+            }
+        }
+
+        if (cancelledCommands) {
+
+            toWrite = new ArrayList<RedisCommand<K, V, ?>>(commands.size());
+
+            for (RedisCommand<K, V, ?> command : commands) {
+
+                if (command.isCancelled()) {
+                    continue;
+                }
+
+                toWrite.add(command);
+                queueCommand(command, promise);
+            }
+        } else {
+
+            for (RedisCommand<K, V, ?> command : toWrite) {
+                queueCommand(command, promise);
+            }
+        }
+
+        if (!toWrite.isEmpty()) {
+            ctx.write(toWrite, promise);
+        }
+    }
+
+    private void queueCommand(RedisCommand<K, V, ?> command, ChannelPromise promise) throws Exception {
+
+        try {
+
+            if (command.getOutput() == null) {
                 // fire&forget commands are excluded from metrics
-                cmd.complete();
+                command.complete();
             } else {
-                sentTimes.put(cmd, new SentReceived(nanoTime()));
-                queue.add(cmd);
+
+                sentTimes.put(command, new SentReceived(nanoTime()));
+                queue.add(command);
             }
         } catch (Exception e) {
-            cmd.setException(e);
-            cmd.cancel(true);
+            command.setException(e);
+            command.cancel(true);
             promise.setFailure(e);
             throw e;
         }
