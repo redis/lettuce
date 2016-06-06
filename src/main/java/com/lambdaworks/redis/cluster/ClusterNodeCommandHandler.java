@@ -72,34 +72,34 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
         logger.debug("{} close()", logPrefix());
 
         if (clusterChannelWriter != null) {
+            
             if (isAutoReconnect() && !CHANNEL_OPEN_STATES.contains(getState())) {
+               
                 Collection<RedisCommand<K, V, ?>> commands = shiftCommands(queue);
-                for (RedisCommand<K, V, ?> queuedCommand : commands) {
-                    try {
-                        clusterChannelWriter.write(queuedCommand);
-                    } catch (RedisException e) {
-                        queuedCommand.completeExceptionally(e);
-                        queuedCommand.complete();
-                    }
-                }
+                retriggerCommands(commands);
             }
 
             Collection<RedisCommand<K, V, ?>> commands = shiftCommands(commandBuffer);
-            for (RedisCommand<K, V, ?> queuedCommand : commands) {
-
-                if (queuedCommand == null) {
-                    continue;
-                }
-
-                try {
-                    clusterChannelWriter.write(queuedCommand);
-                } catch (RedisException e) {
-                    queuedCommand.completeExceptionally(e);
-                }
-            }
+            retriggerCommands(commands);
         }
 
         super.close();
+    }
+
+    protected void retriggerCommands(Collection<RedisCommand<K, V, ?>> commands) {
+        
+        for (RedisCommand<K, V, ?> queuedCommand : commands) {
+            
+            if (queuedCommand == null || queuedCommand.isCancelled()) {
+                continue;
+            }
+            
+            try {
+                clusterChannelWriter.write(queuedCommand);
+            } catch (RedisException e) {
+                queuedCommand.completeExceptionally(e);
+            }
+        }
     }
 
     /**
