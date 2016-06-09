@@ -12,6 +12,7 @@ import com.lambdaworks.redis.api.sync.RedisKeyCommands;
 import com.lambdaworks.redis.api.sync.RedisScriptingCommands;
 import com.lambdaworks.redis.api.sync.RedisServerCommands;
 import com.lambdaworks.redis.api.sync.RedisStringCommands;
+import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -36,8 +37,10 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     RedisClusterCommands<K, V> getConnection(String nodeId);
 
     /**
-     * Retrieve a connection to the specified cluster node using the nodeId. In contrast to the
-     * {@link RedisAdvancedClusterCommands}, node-connections do not route commands to other cluster nodes
+     * Retrieve a connection to the specified cluster node using host and port. In contrast to the
+     * {@link RedisAdvancedClusterCommands}, node-connections do not route commands to other cluster nodes. Host and port
+     * connections are verified by default for cluster membership, see
+     * {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      * 
      * @param host the host
      * @param port the port
@@ -75,8 +78,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return API with synchronous executed commands on a selection of slave cluster nodes.
      */
     default NodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }
 
     /**
