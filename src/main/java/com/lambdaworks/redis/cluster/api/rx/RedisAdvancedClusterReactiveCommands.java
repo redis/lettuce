@@ -2,15 +2,16 @@ package com.lambdaworks.redis.cluster.api.rx;
 
 import java.util.Map;
 
-import rx.Observable;
-
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.api.rx.*;
+import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
+
+import rx.Observable;
 
 /**
  * Advanced reactive and thread-safe Redis Cluster API.
@@ -31,8 +32,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     RedisClusterReactiveCommands<K, V> getConnection(String nodeId);
 
     /**
-     * Retrieve a connection to the specified cluster node using the nodeId. In contrast to the
-     * {@link RedisAdvancedClusterReactiveCommands}, node-connections do not route commands to other cluster nodes
+     * Retrieve a connection to the specified cluster node using host and port. In contrast to the
+     * {@link RedisAdvancedClusterReactiveCommands}, node-connections do not route commands to other cluster nodes. Host and
+     * port connections are verified by default for cluster membership, see
+     * {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
      * @param host the host
      * @param port the port

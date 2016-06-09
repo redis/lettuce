@@ -9,6 +9,7 @@ import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
+import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -21,8 +22,8 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsyncCommands<K, V>,
-        RedisAdvancedClusterAsyncConnection<K, V> {
+public interface RedisAdvancedClusterAsyncCommands<K, V>
+        extends RedisClusterAsyncCommands<K, V>, RedisAdvancedClusterAsyncConnection<K, V> {
 
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list.
@@ -36,8 +37,10 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisClusterAsyncCommands<K, V> getConnection(String nodeId);
 
     /**
-     * Retrieve a connection to the specified cluster node using the nodeId. In contrast to the
-     * {@link RedisAdvancedClusterAsyncCommands}, node-connections do not route commands to other cluster nodes
+     * Retrieve a connection to the specified cluster node using host and port. In contrast to the
+     * {@link RedisAdvancedClusterAsyncCommands}, node-connections do not route commands to other cluster nodes. Host and port
+     * connections are verified by default for cluster membership, see
+     * {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
      * @param host the host
      * @param port the port
@@ -75,8 +78,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return API with asynchronous executed commands on a selection of slave cluster nodes.
      */
     default AsyncNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }
 
     /**

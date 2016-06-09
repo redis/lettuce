@@ -1,9 +1,10 @@
 package com.lambdaworks.redis.cluster.api;
 
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.ReadFrom;
+import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -61,13 +62,12 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     StatefulRedisConnection<K, V> getConnection(String nodeId);
 
     /**
-     * Retrieve a connection to the specified cluster node using the nodeId. This connection is bound to a host and port.
+     * Retrieve a connection to the specified cluster node using host and port. This connection is bound to a host and port.
      * Updates to the cluster topology view can close the connection once the host, identified by {@code host} and {@code port},
      * are no longer part of the cluster.
      *
-     * Do not close the connections. Otherwise, unpredictable behavior will occur. The node must be part of the cluster and
-     * host/port are validated (exact check) against the current topology view in
-     * {@link com.lambdaworks.redis.cluster.models.partitions.Partitions}.
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
+     * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
