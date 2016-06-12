@@ -258,6 +258,76 @@ c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7580 master - 0 1434887920102
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
+# SSL CLUSTER REDIS NODES
+define REDIS_CLUSTER_NODE1_SSL_CONF
+daemonize yes
+port 7479
+cluster-node-timeout 50
+pidfile work/redis-cluster-node-7479.pid
+logfile work/redis-cluster-node-7479.log
+save ""
+appendonly no
+cluster-enabled yes
+cluster-config-file work/redis-cluster-config-7479.conf
+unixsocket $(ROOT_DIR)/work/socket-7479
+cluster-announce-port 7443
+requirepass foobared
+unixsocketperm 777
+endef
+
+define REDIS_CLUSTER_CONFIG_SSL_1
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 myself,master - 0 1434887920102 1 connected 0-10000
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
+define REDIS_CLUSTER_NODE2_SSL_CONF
+daemonize yes
+port 7480
+cluster-node-timeout 50
+pidfile work/redis-cluster-node-7480.pid
+logfile work/redis-cluster-node-7480.log
+save ""
+appendonly no
+cluster-enabled yes
+cluster-config-file work/redis-cluster-config-7480.conf
+unixsocket $(ROOT_DIR)/work/socket-7480
+cluster-announce-port 7444
+requirepass foobared
+unixsocketperm 777
+endef
+
+define REDIS_CLUSTER_CONFIG_SSL_2
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 master - 0 1434887920102 1 connected 0-10000
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 myself,slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
+define REDIS_CLUSTER_NODE3_SSL_CONF
+daemonize yes
+port 7481
+cluster-node-timeout 50
+pidfile work/redis-cluster-node-7481.pid
+logfile work/redis-cluster-node-7481.log
+save ""
+appendonly no
+cluster-enabled yes
+cluster-config-file work/redis-cluster-config-7481.conf
+unixsocket $(ROOT_DIR)/work/socket-7481
+cluster-announce-port 7445
+requirepass foobared
+unixsocketperm 777
+endef
+
+define REDIS_CLUSTER_CONFIG_SSL_3
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 master - 0 1434887920102 1 connected 0-10000
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 myself,master  - 0 0 2 connected 10001-16384
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
 define STUNNEL_CONF
 cert=$(ROOT_DIR)/work/cert.pem
 key=$(ROOT_DIR)/work/key.pem
@@ -270,6 +340,18 @@ foreground = no
 [stunnel]
 accept = 127.0.0.1:6443
 connect = 127.0.0.1:6479
+
+[ssl-cluster-node-1]
+accept = 127.0.0.1:7443
+connect = 127.0.0.1:7479
+
+[ssl-cluster-node-2]
+accept = 127.0.0.1:7444
+connect = 127.0.0.1:7480
+
+[ssl-cluster-node-3]
+accept = 127.0.0.1:7445
+connect = 127.0.0.1:7481
 
 endef
 
@@ -296,6 +378,14 @@ export REDIS_CLUSTER_NODE6_CONF
 export REDIS_CLUSTER_NODE8_CONF
 export REDIS_CLUSTER_CONFIG8
 
+export REDIS_CLUSTER_NODE1_SSL_CONF
+export REDIS_CLUSTER_NODE2_SSL_CONF
+export REDIS_CLUSTER_NODE3_SSL_CONF
+
+export REDIS_CLUSTER_CONFIG_SSL_1
+export REDIS_CLUSTER_CONFIG_SSL_2
+export REDIS_CLUSTER_CONFIG_SSL_3
+
 export STUNNEL_CONF
 
 start: cleanup
@@ -315,6 +405,9 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_CONFIG3" > work/redis-cluster-config3-7381.conf
 	echo "$$REDIS_CLUSTER_CONFIG4" > work/redis-cluster-config4-7382.conf
 	echo "$$REDIS_CLUSTER_CONFIG8" > work/redis-cluster-config8-7582.conf
+	echo "$$REDIS_CLUSTER_CONFIG_SSL_1" > work/redis-cluster-config-7479.conf
+	echo "$$REDIS_CLUSTER_CONFIG_SSL_2" > work/redis-cluster-config-7480.conf
+	echo "$$REDIS_CLUSTER_CONFIG_SSL_3" > work/redis-cluster-config-7481.conf
 
 	echo "$$REDIS_CLUSTER_NODE1_CONF" > work/redis-clusternode1-7379.conf && redis-server work/redis-clusternode1-7379.conf
 	echo "$$REDIS_CLUSTER_NODE2_CONF" > work/redis-clusternode2-7380.conf && redis-server work/redis-clusternode2-7380.conf
@@ -323,6 +416,10 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_NODE5_CONF" > work/redis-clusternode5-7383.conf && redis-server work/redis-clusternode5-7383.conf
 	echo "$$REDIS_CLUSTER_NODE6_CONF" > work/redis-clusternode6-7384.conf && redis-server work/redis-clusternode6-7384.conf
 	echo "$$REDIS_CLUSTER_NODE8_CONF" > work/redis-clusternode8-7582.conf && redis-server work/redis-clusternode8-7582.conf
+	echo "$$REDIS_CLUSTER_NODE1_SSL_CONF" > work/redis-clusternode-7479.conf && redis-server work/redis-clusternode-7479.conf
+	echo "$$REDIS_CLUSTER_NODE2_SSL_CONF" > work/redis-clusternode-7480.conf && redis-server work/redis-clusternode-7480.conf
+	echo "$$REDIS_CLUSTER_NODE3_SSL_CONF" > work/redis-clusternode-7481.conf && redis-server work/redis-clusternode-7481.conf
+
 	echo "$$STUNNEL_CONF" > work/stunnel.conf
 	which stunnel4 >/dev/null 2>&1 && stunnel4 work/stunnel.conf || stunnel work/stunnel.conf
 
