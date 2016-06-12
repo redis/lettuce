@@ -51,69 +51,6 @@ class ClusterTopologyRefresh {
     }
 
     /**
-     * Check if properties changed which are essential for cluster operations.
-     *
-     * @param o1 the first object to be compared.
-     * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
-     */
-    public static boolean isChanged(Partitions o1, Partitions o2) {
-
-        if (o1.size() != o2.size()) {
-            return true;
-        }
-
-        for (RedisClusterNode base : o2) {
-            if (!essentiallyEqualsTo(base, o1.getPartitionByNodeId(base.getNodeId()))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check for {@code MASTER} or {@code SLAVE} flags and whether the responsible slots changed.
-     *
-     * @param o1 the first object to be compared.
-     * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
-     */
-    protected static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
-
-        if (o2 == null) {
-            return false;
-        }
-
-        if (!sameFlags(o1, o2, RedisClusterNode.NodeFlag.MASTER)) {
-            return false;
-        }
-
-        if (!sameFlags(o1, o2, RedisClusterNode.NodeFlag.SLAVE)) {
-            return false;
-        }
-
-        if (!Sets.newHashSet(o1.getSlots()).equals(Sets.newHashSet(o2.getSlots()))) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private static boolean sameFlags(RedisClusterNode base, RedisClusterNode other, RedisClusterNode.NodeFlag flag) {
-        if (base.getFlags().contains(flag)) {
-            if (!other.getFlags().contains(flag)) {
-                return false;
-            }
-        } else {
-            if (other.getFlags().contains(flag)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Load partition views from a collection of {@link RedisURI}s and return the view per {@link RedisURI}. Partitions contain
      * an ordered list of {@link RedisClusterNode}s. The sort key is the latency. Nodes with lower latency come first.
      * 

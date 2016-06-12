@@ -446,7 +446,13 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
-        initializeChannel(connectionBuilder);
+
+        try {
+            initializeChannel(connectionBuilder);
+        } catch (RuntimeException e) {
+            connection.close();
+            throw e;
+        }
 
         if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
             connection.auth(new String(redisURI.getPassword()));
@@ -586,7 +592,12 @@ public class RedisClient extends AbstractRedisClient {
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);
-            initializeChannel(connectionBuilder);
+            try {
+                initializeChannel(connectionBuilder);
+            } catch (RuntimeException e) {
+                connection.close();
+                throw e;
+            }
         } else {
             boolean connected = false;
             boolean first = true;
@@ -617,6 +628,7 @@ public class RedisClient extends AbstractRedisClient {
                 }
             }
             if (!connected) {
+                connection.close();
                 throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(),
                         causingException);
             }

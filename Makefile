@@ -235,6 +235,29 @@ unixsocket $(ROOT_DIR)/work/socket-7384
 unixsocketperm 777
 endef
 
+
+define REDIS_CLUSTER_NODE8_CONF
+daemonize yes
+port 7582
+cluster-node-timeout 50
+pidfile work/redis-cluster-node8-7582.pid
+logfile work/redis-cluster-node8-7582.log
+save ""
+appendonly no
+cluster-enabled yes
+cluster-config-file work/redis-cluster-config8-7582.conf
+unixsocket $(ROOT_DIR)/work/socket-7582
+unixsocketperm 777
+endef
+
+define REDIS_CLUSTER_CONFIG8
+c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7580 master - 0 1434887920102 0 connected
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7581 master - 0 1434887920102 3 connected 10001-16384
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7582 myself,master - 0 0 2 connected 0-10000
+27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7579 master - 0 1434887920102 1 connected
+vars currentEpoch 3 lastVoteEpoch 0
+endef
+
 define STUNNEL_CONF
 cert=$(ROOT_DIR)/work/cert.pem
 key=$(ROOT_DIR)/work/key.pem
@@ -270,6 +293,8 @@ export REDIS_CLUSTER_NODE4_CONF
 export REDIS_CLUSTER_CONFIG4
 export REDIS_CLUSTER_NODE5_CONF
 export REDIS_CLUSTER_NODE6_CONF
+export REDIS_CLUSTER_NODE8_CONF
+export REDIS_CLUSTER_CONFIG8
 
 export STUNNEL_CONF
 
@@ -289,6 +314,7 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_CONFIG2" > work/redis-cluster-config2-7380.conf
 	echo "$$REDIS_CLUSTER_CONFIG3" > work/redis-cluster-config3-7381.conf
 	echo "$$REDIS_CLUSTER_CONFIG4" > work/redis-cluster-config4-7382.conf
+	echo "$$REDIS_CLUSTER_CONFIG8" > work/redis-cluster-config8-7582.conf
 
 	echo "$$REDIS_CLUSTER_NODE1_CONF" > work/redis-clusternode1-7379.conf && redis-server work/redis-clusternode1-7379.conf
 	echo "$$REDIS_CLUSTER_NODE2_CONF" > work/redis-clusternode2-7380.conf && redis-server work/redis-clusternode2-7380.conf
@@ -296,6 +322,7 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_NODE4_CONF" > work/redis-clusternode4-7382.conf && redis-server work/redis-clusternode4-7382.conf
 	echo "$$REDIS_CLUSTER_NODE5_CONF" > work/redis-clusternode5-7383.conf && redis-server work/redis-clusternode5-7383.conf
 	echo "$$REDIS_CLUSTER_NODE6_CONF" > work/redis-clusternode6-7384.conf && redis-server work/redis-clusternode6-7384.conf
+	echo "$$REDIS_CLUSTER_NODE8_CONF" > work/redis-clusternode8-7582.conf && redis-server work/redis-clusternode8-7582.conf
 	echo "$$STUNNEL_CONF" > work/stunnel.conf
 	which stunnel4 >/dev/null 2>&1 && stunnel4 work/stunnel.conf || stunnel work/stunnel.conf
 

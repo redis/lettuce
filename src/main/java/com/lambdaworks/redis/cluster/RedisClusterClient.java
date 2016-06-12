@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -52,10 +53,11 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(this);
     private Partitions partitions;
-    private Iterable<RedisURI> initialUris = ImmutableSet.of();
+    private final Iterable<RedisURI> initialUris;
 
     private RedisClusterClient() {
         setOptions(ClusterClientOptions.create());
+        initialUris = ImmutableSet.of();
     }
 
     /**
@@ -94,11 +96,47 @@ public class RedisClusterClient extends AbstractRedisClient {
     protected RedisClusterClient(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
         super(clientResources);
         assertNotEmpty(redisURIs);
+        assertSameOptions(redisURIs);
 
         this.initialUris = redisURIs;
 
         setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
         setOptions(new ClusterClientOptions.Builder().build());
+    }
+
+    private static void assertSameOptions(Iterable<RedisURI> redisURIs) {
+
+        Boolean ssl = null;
+        Boolean startTls = null;
+        Boolean verifyPeer = null;
+
+        for (RedisURI redisURI : redisURIs) {
+
+            if (ssl == null) {
+                ssl = redisURI.isSsl();
+            }
+            if (startTls == null) {
+                startTls = redisURI.isStartTls();
+            }
+            if (verifyPeer == null) {
+                verifyPeer = redisURI.isVerifyPeer();
+            }
+
+            if (ssl.booleanValue() != redisURI.isSsl()) {
+                throw new IllegalArgumentException(
+                        "RedisURI " + redisURI + " SSL is not consistent with the other seed URI SSL settings");
+            }
+
+            if (startTls.booleanValue() != redisURI.isStartTls()) {
+                throw new IllegalArgumentException(
+                        "RedisURI " + redisURI + " StartTLS is not consistent with the other seed URI StartTLS settings");
+            }
+
+            if (verifyPeer.booleanValue() != redisURI.isVerifyPeer()) {
+                throw new IllegalArgumentException(
+                        "RedisURI " + redisURI + " VerifyPeer is not consistent with the other seed URI VerifyPeer settings");
+            }
+        }
     }
 
     /**
@@ -122,6 +160,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public static RedisClusterClient create(Iterable<RedisURI> redisURIs) {
         assertNotEmpty(redisURIs);
+        assertSameOptions(redisURIs);
         return new RedisClusterClient(null, redisURIs);
     }
 
@@ -179,6 +218,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     public static RedisClusterClient create(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
         assertNotNull(clientResources);
         assertNotEmpty(redisURIs);
+        assertSameOptions(redisURIs);
         return new RedisClusterClient(clientResources, redisURIs);
     }
 
@@ -213,7 +253,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection.
      */
     public RedisAdvancedClusterAsyncConnection<String, String> connectClusterAsync() {
-        return connectClusterAsyncImpl(newStringStringCodec(), getSocketAddressSupplier());
+        return connectClusterAsyncImpl(newStringStringCodec());
     }
 
     /**
@@ -227,7 +267,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public <K, V> RedisAdvancedClusterAsyncConnection<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
         assertNotNull(codec);
-        return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
+        return connectClusterAsyncImpl(codec);
     }
 
     protected RedisAsyncConnectionImpl<String, String> connectAsyncImpl(final SocketAddress socketAddress) {
@@ -254,6 +294,11 @@ public class RedisClusterClient extends AbstractRedisClient {
     <K, V> RedisAsyncConnectionImpl<K, V> connectNode(RedisCodec<K, V> codec, String nodeId,
             RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
 
+        assertNotNull(codec);
+        assertNotEmpty(initialUris);
+
+        checkArgument(socketAddressSupplier != null, "SocketAddressSupplier must not be null");
+
         logger.debug("connectNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
 
@@ -262,36 +307,26 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisAsyncConnectionImpl<K, V> connection = newRedisAsyncConnectionImpl(handler, codec, timeout, unit);
 
         try {
-            connectAsyncImpl(handler, connection, socketAddressSupplier);
+            connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
 
             connection.registerCloseables(closeableResources, connection);
-
-            RedisURI redisURI = initialUris.iterator().next();
-            if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-                connection.auth(new String(redisURI.getPassword()));
-            }
-        } catch (RedisException e) {
+        } catch (RuntimeException e) {
             connection.close();
             throw e;
         }
-        return connection;
-    }
 
-    <K, V> RedisAsyncConnectionImpl<K, V> connectClusterAsyncImpl(RedisCodec<K, V> codec) {
-        return connectClusterAsyncImpl(codec, getSocketAddressSupplier());
+        return connection;
     }
 
     /**
      * Create a clustered connection with command distributor.
      *
      * @param codec the codec to use
-     * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection
      */
-    <K, V> RedisAdvancedClusterAsyncConnectionImpl<K, V> connectClusterAsyncImpl(RedisCodec<K, V> codec,
-            final Supplier<SocketAddress> socketAddressSupplier) {
+    <K, V> RedisAdvancedClusterAsyncConnectionImpl<K, V> connectClusterAsyncImpl(RedisCodec<K, V> codec) {
 
         if (partitions == null) {
             initializePartitions();
@@ -299,8 +334,16 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         activateTopologyRefreshIfNeeded();
 
-        logger.debug("connectCluster(" + socketAddressSupplier.get() + ")");
+        logger.debug("connectCluster(" + initialUris + ")");
         Queue<RedisCommand<K, V, ?>> queue = new ArrayDeque<RedisCommand<K, V, ?>>();
+
+        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(
+
+                new Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>>() {
+                    public Collection<RedisClusterNode> apply(Collection<RedisClusterNode> input) {
+                        return TopologyComparators.predefinedSort(input, initialUris);
+                    }
+                });
 
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
 
@@ -314,17 +357,85 @@ public class RedisClusterClient extends AbstractRedisClient {
                 codec, timeout, unit);
 
         connection.setReadFrom(ReadFrom.MASTER);
-
         connection.setPartitions(partitions);
-        connectAsyncImpl(handler, connection, socketAddressSupplier);
+
+        boolean connected = false;
+        RedisException causingException = null;
+        int connectionAttempts = Math.max(1, partitions.size());
+
+        for (int i = 0; i < connectionAttempts; i++) {
+            try {
+                connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+                connected = true;
+                break;
+            } catch (RedisException e) {
+                logger.warn(e.getMessage());
+                causingException = e;
+            }
+        }
+
+        if (!connected) {
+            connection.close();
+            if (causingException != null) {
+                throw causingException;
+            }
+        }
 
         connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
 
-        if (getFirstUri().getPassword() != null) {
-            connection.auth(new String(getFirstUri().getPassword()));
+        return connection;
+    }
+
+    /**
+     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
+     * {@code connectionSettings}.
+     *
+     * @param handler
+     * @param connection
+     * @param connectionSettings
+     * @param socketAddressSupplier
+     * @param <K>
+     * @param <V>
+     */
+    private <K, V> void connectStateful(CommandHandler<K, V> handler, RedisAsyncConnectionImpl<K, V> connection,
+            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
+
+        connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
+
+        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
+            connection.auth(new String(connectionSettings.getPassword()));
+        }
+    }
+
+    /**
+     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (SSL) from {@code
+     * connectionSettings}.
+     *
+     * @param handler
+     * @param connection
+     * @param connectionSettings
+     * @param socketAddressSupplier
+     * @param <K>
+     * @param <V>
+     */
+    private <K, V> void connectStateful0(CommandHandler<K, V> handler, RedisChannelHandler<K, V> connection,
+            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
+
+        ConnectionBuilder connectionBuilder;
+        if (connectionSettings.isSsl()) {
+            SslConnectionBuilder sslConnectionBuilder = SslConnectionBuilder.sslConnectionBuilder();
+            sslConnectionBuilder.ssl(connectionSettings);
+            connectionBuilder = sslConnectionBuilder;
+        } else {
+            connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
-        return connection;
+        connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder.clientResources(clientResources);
+        connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, connectionSettings);
+        channelType(connectionBuilder, connectionSettings);
+
+        initializeChannel(connectionBuilder);
     }
 
     /**
@@ -336,7 +447,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             partitions.updateCache();
         } else {
             Partitions loadedPartitions = loadPartitions();
-            if (ClusterTopologyRefresh.isChanged(getPartitions(), loadedPartitions)) {
+            if (TopologyComparators.isChanged(getPartitions(), loadedPartitions)) {
                 List<RedisClusterNode> before = ImmutableList.copyOf(getPartitions());
                 List<RedisClusterNode> after = ImmutableList.copyOf(loadedPartitions);
 
@@ -397,8 +508,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisURI viewedBy = refresh.getViewedBy(partitions, loadedPartitions);
 
         for (RedisClusterNode partition : loadedPartitions) {
-            if (viewedBy != null && viewedBy.getPassword() != null) {
-                partition.getUri().setPassword(new String(viewedBy.getPassword()));
+            if (partition.getUri() != null) {
+                applyUriConnectionSettings(viewedBy, partition.getUri());
             }
         }
 
@@ -477,28 +588,29 @@ public class RedisClusterClient extends AbstractRedisClient {
         return iterator.next();
     }
 
-    private Supplier<SocketAddress> getSocketAddressSupplier() {
+    /**
+     * Returns a {@link Supplier} for {@link SocketAddress connection points}.
+     *
+     * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
+     *        parameter but create a new collection with the desired order, must not be {@literal null}.
+     * @return {@link Supplier} for {@link SocketAddress connection points}.
+     */
+    protected Supplier<SocketAddress> getSocketAddressSupplier(
+            Function<? extends Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction) {
+
+        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
+                sortFunction, clientResources);
+
         return new Supplier<SocketAddress>() {
             @Override
             public SocketAddress get() {
-                if (partitions != null) {
-
-
-
-                    List<RedisClusterNode> ordered = getOrderedPartitions(partitions);
-
-                    for (RedisClusterNode partition : ordered) {
-                        if (partition.getUri() != null && partition.getUri().getHost() != null) {
-                            SocketAddress socketAddress = SocketAddressResolver.resolve(partition.getUri(), clientResources.dnsResolver());
-                            logger.debug("Resolved SocketAddress {} using for Cluster node {}", socketAddress, partition.getNodeId());
-                            return socketAddress;
-                        }
-                    }
-                }
-
+                if (partitions.isEmpty()) {
                 SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
                 logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
                 return socketAddress;
+            }
+
+                return socketAddressSupplier.get();
             }
         };
     }
@@ -603,7 +715,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             logger.debug("ClusterTopologyRefreshTask requesting partitions from {}", seed);
             Map<RedisURI, Partitions> partitions = refresh.loadViews(seed);
             List<Partitions> values = Lists.newArrayList(partitions.values());
-            if (!values.isEmpty() && ClusterTopologyRefresh.isChanged(getPartitions(), values.get(0))) {
+            if (!values.isEmpty() && TopologyComparators.isChanged(getPartitions(), values.get(0))) {
                 logger.debug("Using a new cluster topology");
 
                 List<RedisClusterNode> before = ImmutableList.copyOf(getPartitions());
@@ -638,6 +750,19 @@ public class RedisClusterClient extends AbstractRedisClient {
                 });
             }
         }
+    }
+
+    static void applyUriConnectionSettings(RedisURI from, RedisURI to) {
+
+        if (from.getPassword() != null && from.getPassword().length != 0) {
+            to.setPassword(new String(from.getPassword()));
+        }
+
+        to.setTimeout(from.getTimeout());
+        to.setUnit(from.getUnit());
+        to.setSsl(from.isSsl());
+        to.setStartTls(from.isStartTls());
+        to.setVerifyPeer(from.isVerifyPeer());
     }
 
     boolean expireStaleConnections() {

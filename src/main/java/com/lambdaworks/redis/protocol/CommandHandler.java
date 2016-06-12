@@ -686,6 +686,23 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
+    /**
+     * Reset the command-handler to the initial not-connected state.
+     */
+    public void initialState() {
+
+        setState(LifecycleState.NOT_CONNECTED);
+        queue.clear();
+        commandBuffer.clear();
+
+        Channel currentChannel = this.channel;
+        if (currentChannel != null) {
+            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
+            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
+            currentChannel.pipeline().close();
+        }
+    }
+
     @Override
     public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
         this.redisChannelHandler = redisChannelHandler;

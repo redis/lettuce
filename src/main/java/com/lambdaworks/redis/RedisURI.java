@@ -24,14 +24,12 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, password and
  * timeouts within the RedisURI.
- * 
+ *
  * You have following possibilities to create a {@link RedisURI}:
- * 
+ *
  * <ul>
  * <li>Use an URI:
  * <p>
@@ -50,7 +48,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  * or
  * <p>
- *     {@code RedisURI uri = new RedisURI();
+ * {@code RedisURI uri = new RedisURI();
  *     uri.setHost("localhost");
  *     }
  * </p>
@@ -59,23 +57,21 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <h3>URI syntax</h3>
  *
- * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
- * </b><i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&database=database</i>]] </blockquote>
+ * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
+ * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
+ * <i>&database=database</i>]] </blockquote>
  *
- * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :}
- * </b><i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&database=database</i>]] </blockquote>
+ * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
+ * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
+ * <i>&database=database</i>]] </blockquote>
  *
- * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://}
- * </b>[<i>password@</i>]<i>path</i>[<b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>]]
- * </blockquote>
+ * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://} </b>[<i>password@</i>]<i>path</i>[
+ * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>]] </blockquote>
  *
- * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :}
- * </b><i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /}
- * </b><i>database</i>][<b>{@code ?}
- * </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [<i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>]]
- * </blockquote>
+ * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
+ * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
+ * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
+ * <i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>]] </blockquote>
  *
  * <p>
  * <b>Schemes</b>
@@ -103,10 +99,10 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <p>
  * Hint: The database parameter within the query part has higher precedence than the database in the path.
  * </p>
- * 
- * 
+ *
+ *
  * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -187,6 +183,17 @@ public class RedisURI implements Serializable, ConnectionPoint {
         this.port = port;
         this.timeout = timeout;
         this.unit = unit;
+    }
+
+    /**
+     * Create a Redis URI from host and port.
+     *
+     * @param host the host
+     * @param port the port
+     * @return An instance of {@link RedisURI} containing details from the {@code host} and {@code port}.
+     */
+    public static RedisURI create(String host, int port) {
+        return new Builder().redis(host, port).build();
     }
 
     /**
