@@ -168,6 +168,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             attempts++;
 
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempts));
+            logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempts, timeout);
             timer.newTimeout(new TimerTask() {
                 @Override
                 public void run(final Timeout timeout) throws Exception {

@@ -85,7 +85,12 @@ class ReconnectionHandler {
             try {
                 timeLeft -= System.nanoTime() - start;
                 channelInitializer.channelInitialized().get(Math.max(0, timeLeft), TimeUnit.NANOSECONDS);
-                logger.log(infoLevel, "Reconnected to {}", remoteAddress);
+                if (logger.isDebugEnabled()) {
+                    logger.log(infoLevel, "Reconnected to {}, Channel {}", remoteAddress,
+                            ChannelLogDescriptor.logDescriptor(channel));
+                } else {
+                    logger.log(infoLevel, "Reconnected to {}", remoteAddress);
+                }
                 return true;
             } catch (TimeoutException e) {
                 channelInitializer.channelInitialized().cancel(true);
