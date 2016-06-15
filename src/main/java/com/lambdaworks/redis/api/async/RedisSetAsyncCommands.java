@@ -105,7 +105,7 @@ public interface RedisSetAsyncCommands<K, V> {
     /**
      * Move a member from one set to another.
      * 
-     * @param source the source type: key
+     * @param source the source key
      * @param destination the destination type: key
      * @param member the member type: value
      * @return Boolean integer-reply specifically:

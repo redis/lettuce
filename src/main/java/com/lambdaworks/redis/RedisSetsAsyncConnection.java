@@ -103,7 +103,7 @@ public interface RedisSetsAsyncConnection<K, V> {
     /**
      * Move a member from one set to another.
      * 
-     * @param source the source type: key
+     * @param source the source key
      * @param destination the destination type: key
      * @param member the member type: value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
