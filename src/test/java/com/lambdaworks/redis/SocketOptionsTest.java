@@ -3,7 +3,7 @@ package com.lambdaworks.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -55,14 +55,16 @@ public class SocketOptionsTest extends AbstractRedisClientTest {
             fail("Missing RedisConnectionException");
         } catch (RedisConnectionException e) {
 
-            if (e.getCause() instanceof NoRouteToHostException) {
-                assertThat(e).hasRootCauseInstanceOf(NoRouteToHostException.class);
-                assertThat(e.getCause()).hasMessageContaining("No route to host");
+            if (e.getCause() instanceof ConnectTimeoutException) {
+                assertThat(e).hasRootCauseInstanceOf(ConnectTimeoutException.class);
+                assertThat(e.getCause()).hasMessageContaining("connection timed out");
                 return;
             }
 
-            assertThat(e).hasRootCauseInstanceOf(ConnectTimeoutException.class);
-            assertThat(e.getCause()).hasMessageContaining("connection timed out");
+            if (e.getCause() instanceof SocketException) {
+                // Network is unreachable or No route to host are OK as well.
+                return;
+            }
         }
     }
 }
