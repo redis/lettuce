@@ -16,6 +16,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     @BeforeClass
     public static void setupClient() {
         client = DefaultRedisClient.get();
+        client.setOptions(ClientOptions.create());
     }
 
     protected static RedisClient newRedisClient() {

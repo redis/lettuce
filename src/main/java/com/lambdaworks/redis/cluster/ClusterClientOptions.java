@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.SocketOptions;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -217,6 +218,12 @@ public class ClusterClientOptions extends ClientOptions {
         @Override
         public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
             super.disconnectedBehavior(disconnectedBehavior);
+            return this;
+        }
+
+        @Override
+        public ClientOptions.Builder socketOptions(SocketOptions socketOptions) {
+            super.socketOptions(socketOptions);
             return this;
         }
 

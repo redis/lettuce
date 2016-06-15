@@ -2,7 +2,7 @@ package com.lambdaworks.redis;
 
 import java.io.Serializable;
 
-import com.lambdaworks.redis.cluster.ClusterClientOptions;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -17,6 +17,7 @@ public class ClientOptions implements Serializable {
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
+    public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
 
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
@@ -24,6 +25,7 @@ public class ClientOptions implements Serializable {
     private final boolean suspendReconnectOnProtocolFailure;
     private final int requestQueueSize;
     private final DisconnectedBehavior disconnectedBehavior;
+    private final SocketOptions socketOptions;
 
     protected ClientOptions(Builder builder) {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -32,15 +34,17 @@ public class ClientOptions implements Serializable {
         suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         requestQueueSize = builder.requestQueueSize;
         disconnectedBehavior = builder.disconnectedBehavior;
+        socketOptions = builder.socketOptions;
     }
 
     protected ClientOptions(ClientOptions original) {
-        this.pingBeforeActivateConnection = original.pingBeforeActivateConnection;
-        this.autoReconnect = original.autoReconnect;
-        this.cancelCommandsOnReconnectFailure = original.cancelCommandsOnReconnectFailure;
-        this.suspendReconnectOnProtocolFailure = original.suspendReconnectOnProtocolFailure;
-        this.requestQueueSize = original.requestQueueSize;
-        this.disconnectedBehavior = original.disconnectedBehavior;
+        this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
+        this.autoReconnect = original.isAutoReconnect();
+        this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
+        this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
+        this.requestQueueSize = original.getRequestQueueSize();
+        this.disconnectedBehavior = original.getDisconnectedBehavior();
+        this.socketOptions = original.getSocketOptions();
     }
 
     /**
@@ -82,6 +86,7 @@ public class ClientOptions implements Serializable {
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
+        private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
 
         /**
          * @deprecated Use {@link ClientOptions#builder()}
@@ -157,11 +162,27 @@ public class ClientOptions implements Serializable {
          * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@literal true}.
          * See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
          * 
-         * @param disconnectedBehavior true/false
+         * @param disconnectedBehavior must not be {@literal null}.
          * @return {@code this}
          */
         public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
+
+            LettuceAssert.notNull(disconnectedBehavior, "DisconnectedBehavior must not be null");
             this.disconnectedBehavior = disconnectedBehavior;
+            return this;
+        }
+
+        /**
+         * Sets the low-level {@link SocketOptions} for the connections kept to Redis servers. See
+         * {@link #DEFAULT_SOCKET_OPTIONS}.
+         *
+         * @param socketOptions must not be {@literal null}.
+         * @return {@code this}
+         */
+        public Builder socketOptions(SocketOptions socketOptions) {
+
+            LettuceAssert.notNull(socketOptions, "SocketOptions must not be null");
+            this.socketOptions = socketOptions;
             return this;
         }
 
@@ -238,6 +259,15 @@ public class ClientOptions implements Serializable {
      */
     public DisconnectedBehavior getDisconnectedBehavior() {
         return disconnectedBehavior;
+    }
+
+    /**
+     * Returns the {@link SocketOptions}.
+     * 
+     * @return the {@link SocketOptions}.
+     */
+    public SocketOptions getSocketOptions() {
+        return socketOptions;
     }
 
     /**

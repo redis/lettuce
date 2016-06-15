@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
-import io.netty.channel.ChannelHandler;
-
 import java.util.concurrent.Future;
+
+import io.netty.channel.ChannelHandler;
 
 /**
  * Channel initializer to set up the transport before a Redis connection can be used. This is part of the internal API. This

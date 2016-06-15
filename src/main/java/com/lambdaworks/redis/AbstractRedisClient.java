@@ -6,9 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -28,6 +26,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -143,12 +142,16 @@ public abstract class AbstractRedisClient {
         redisBootstrap.option(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 8 * 1024);
         redisBootstrap.option(ChannelOption.ALLOCATOR, BUF_ALLOCATOR);
 
+        SocketOptions socketOptions = getOptions().getSocketOptions();
+
+        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                (int) socketOptions.getConnectTimeoutUnit().toMillis(socketOptions.getConnectTimeout()));
+        redisBootstrap.option(ChannelOption.SO_KEEPALIVE, socketOptions.isKeepAlive());
+        redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
+
         if (redisURI == null) {
-            redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) unit.toMillis(timeout));
             connectionBuilder.timeout(timeout, unit);
         } else {
-            redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) redisURI.getUnit()
-                    .toMillis(redisURI.getTimeout()));
             connectionBuilder.timeout(redisURI.getTimeout(), redisURI.getUnit());
             connectionBuilder.password(redisURI.getPassword());
         }

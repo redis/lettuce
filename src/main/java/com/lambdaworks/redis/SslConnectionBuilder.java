@@ -127,7 +127,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                     private AsyncCommand<?, ?, ?> pingCommand;
 
                     @Override
-                    public Future<Boolean> channelInitialized() {
+                    public CompletableFuture<Boolean> channelInitialized() {
                         return initializedFuture;
                     }
 
@@ -200,7 +200,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         }
 
         @Override
-        public Future<Boolean> channelInitialized() {
+        public CompletableFuture<Boolean> channelInitialized() {
             return initializedFuture;
         }
     }

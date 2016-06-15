@@ -5,7 +5,6 @@ import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.event.EventBus;
@@ -49,7 +48,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 private AsyncCommand<?, ?, ?> pingCommand;
 
                 @Override
-                public Future<Boolean> channelInitialized() {
+                public CompletableFuture<Boolean> channelInitialized() {
                     return initializedFuture;
                 }
 
@@ -132,7 +131,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
     }
 
     @Override
-    public Future<Boolean> channelInitialized() {
+    public CompletableFuture<Boolean> channelInitialized() {
         return initializedFuture;
     }
 
