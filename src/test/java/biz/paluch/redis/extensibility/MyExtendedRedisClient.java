@@ -7,6 +7,7 @@ import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 
 import javax.enterprise.inject.Alternative;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Demo code for extending a RedisClient.
@@ -32,7 +33,7 @@ public class MyExtendedRedisClient extends RedisClient {
 
     @Override
     protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
-            PubSubCommandHandler<K, V> handler, RedisCodec<K, V> codec) {
-        return new MyPubSubConnection<>(handler, codec, timeout, unit);
+            PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        return new MyPubSubConnection<>(commandHandler, codec, timeout, unit);
     }
 }

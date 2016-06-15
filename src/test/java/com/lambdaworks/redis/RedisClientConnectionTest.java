@@ -1,10 +1,19 @@
 package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.RedisURI.Builder.redis;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * @author Mark Paluch
@@ -12,6 +21,13 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
     public static final Utf8StringCodec CODEC = new Utf8StringCodec();
+    public static final int EXPECTED_TIMEOUT = 500;
+    public static final TimeUnit EXPECTED_TIME_UNIT = TimeUnit.MILLISECONDS;
+
+    @Before
+    public void before() throws Exception {
+        client.setDefaultTimeout(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+    }
 
     /*
      * Pool/Sync
@@ -53,18 +69,26 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
      * Standalone/Stateful
      */
     @Test
-    public void connectClienturi() throws Exception {
-        client.connect().close();
+    public void connectClientUri() throws Exception {
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+        assertTimeout(connection, EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+        connection.close();
     }
 
     @Test
     public void connectCodecClientUri() throws Exception {
-        client.connect(CODEC).close();
+        StatefulRedisConnection<String, String> connection = client.connect(CODEC);
+        assertTimeout(connection, EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+        connection.close();
     }
 
     @Test
     public void connectOwnUri() throws Exception {
-        client.connect(redis(host, port).build()).close();
+        RedisURI redisURI = redis(host, port).build();
+        StatefulRedisConnection<String, String> connection = client.connect(redisURI);
+        assertTimeout(connection, redisURI.getTimeout(), redisURI.getUnit());
+        connection.close();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -79,7 +103,10 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void connectCodecOwnUri() throws Exception {
-        client.connect(CODEC, redis(host, port).build()).close();
+        RedisURI redisURI = redis(host, port).build();
+        StatefulRedisConnection<String, String> connection = client.connect(CODEC, redisURI);
+        assertTimeout(connection, redisURI.getTimeout(), redisURI.getUnit());
+        connection.close();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -120,17 +147,24 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
      */
     @Test
     public void connectPubSubClientUri() throws Exception {
-        client.connectPubSub().close();
+        StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub();
+        assertTimeout(connection, EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+        connection.close();
     }
 
     @Test
     public void connectPubSubCodecClientUri() throws Exception {
-        client.connectPubSub(CODEC).close();
+        StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub(CODEC);
+        assertTimeout(connection, EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+        connection.close();
     }
 
     @Test
     public void connectPubSubOwnUri() throws Exception {
-        client.connectPubSub(redis(host, port).build()).close();
+        RedisURI redisURI = redis(host, port).build();
+        StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub(redisURI);
+        assertTimeout(connection, redisURI.getTimeout(), redisURI.getUnit());
+        connection.close();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -145,7 +179,10 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void connectPubSubCodecOwnUri() throws Exception {
-        client.connectPubSub(CODEC, redis(host, port).build()).close();
+        RedisURI redisURI = redis(host, port).build();
+        StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub(CODEC, redisURI);
+        assertTimeout(connection, redisURI.getTimeout(), redisURI.getUnit());
+        connection.close();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -163,12 +200,16 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
      */
     @Test
     public void connectSentinelClientUri() throws Exception {
-        client.connectSentinel().close();
+        StatefulRedisSentinelConnection<String, String> connection = client.connectSentinel();
+        assertTimeout(connection, EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+        connection.close();
     }
 
     @Test
     public void connectSentinelCodecClientUri() throws Exception {
-        client.connectSentinel(CODEC).close();
+        StatefulRedisSentinelConnection<String, String> connection = client.connectSentinel(CODEC);
+        assertTimeout(connection, EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT);
+        connection.close();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -183,12 +224,18 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void connectSentinelOwnUri() throws Exception {
-        client.connectSentinel(redis(host, port).build()).close();
+        RedisURI redisURI = redis(host, port).build();
+        StatefulRedisSentinelConnection<String, String> connection = client.connectSentinel(redisURI);
+        assertTimeout(connection, redisURI.getTimeout(), redisURI.getUnit());
+        connection.close();
     }
 
     @Test
     public void connectSentinelCodecOwnUri() throws Exception {
-        client.connectSentinel(CODEC, redis(host, port).build()).close();
+        RedisURI redisURI = redis(host, port).build();
+        StatefulRedisSentinelConnection<String, String> connection = client.connectSentinel(CODEC, redisURI);
+        assertTimeout(connection, redisURI.getTimeout(), redisURI.getUnit());
+        connection.close();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -229,5 +276,11 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
         redisURI.getSentinels().add(new RedisURI());
 
         return redisURI;
+    }
+
+    private void assertTimeout(StatefulConnection<?, ?> connection, long expectedTimeout, TimeUnit expectedTimeUnit) {
+
+        assertThat(ReflectionTestUtils.getField(connection, "timeout")).isEqualTo(expectedTimeout);
+        assertThat(ReflectionTestUtils.getField(connection, "unit")).isEqualTo(expectedTimeUnit);
     }
 }

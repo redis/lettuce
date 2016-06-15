@@ -186,8 +186,8 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
-     * in mind to free all collections and close the pool once you do not need it anymore.
-     * Requires Apache commons-pool2 dependency.
+     * in mind to free all collections and close the pool once you do not need it anymore. Requires Apache commons-pool2
+     * dependency.
      * 
      * @return a new {@link RedisConnectionPool} instance
      */
@@ -197,8 +197,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore.
-     * Requires Apache commons-pool2 dependency.
+     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
      * 
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -210,8 +209,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore.
-     * Requires Apache commons-pool2 dependency.
+     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
      * 
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
@@ -255,8 +253,8 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for asynchronous connections. 5 max idle connections and 20 max active connections. Please keep
-     * in mind to free all collections and close the pool once you do not need it anymore.
-     * Requires Apache commons-pool2 dependency.
+     * in mind to free all collections and close the pool once you do not need it anymore. Requires Apache commons-pool2
+     * dependency.
      *
      * @return a new {@link RedisConnectionPool} instance
      */
@@ -266,8 +264,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore.
-     * Requires Apache commons-pool2 dependency.
+     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
      *
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -300,7 +297,7 @@ public class RedisClient extends AbstractRedisClient {
                 new RedisConnectionPool.RedisConnectionProvider<RedisAsyncCommands<K, V>>() {
                     @Override
                     public RedisAsyncCommands<K, V> createConnection() {
-                        return connectStandalone(codec, redisURI).async();
+                        return connectStandalone(codec, redisURI, defaultTimeout()).async();
                     }
 
                     @Override
@@ -336,7 +333,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return connect(codec, this.redisURI);
+        return connectStandalone(codec, this.redisURI, defaultTimeout());
     }
 
     /**
@@ -346,7 +343,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection
      */
     public StatefulRedisConnection<String, String> connect(RedisURI redisURI) {
-        return connect(newStringStringCodec(), redisURI);
+        return connectStandalone(newStringStringCodec(), redisURI, Timeout.from(redisURI));
     }
 
     /**
@@ -360,7 +357,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection
      */
     public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return connectStandalone(codec, redisURI);
+        return connectStandalone(codec, redisURI, Timeout.from(redisURI));
     }
 
     /**
@@ -385,7 +382,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec) {
-        return connect(codec, redisURI).async();
+        return connectStandalone(codec, redisURI, defaultTimeout()).async();
     }
 
     /**
@@ -398,7 +395,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisAsyncCommands<String, String> connectAsync(RedisURI redisURI) {
-        return connect(newStringStringCodec(), redisURI).async();
+        return connectStandalone(newStringStringCodec(), redisURI, Timeout.from(redisURI)).async();
     }
 
     /**
@@ -414,10 +411,11 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return connect(codec, redisURI).async();
+        return connectStandalone(codec, redisURI, Timeout.from(redisURI)).async();
     }
 
-    private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI) {
+    private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI, Timeout timeout) {
+
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
@@ -425,7 +423,8 @@ public class RedisClient extends AbstractRedisClient {
 
         CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec);
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec, timeout.timeout,
+                timeout.timeUnit);
         connectStateful(handler, connection, redisURI);
         return connection;
     }
@@ -464,7 +463,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new stateful pub/sub connection
      */
     public StatefulRedisPubSubConnection<String, String> connectPubSub() {
-        return connectPubSub(newStringStringCodec());
+        return connectPubSub(newStringStringCodec(), redisURI, defaultTimeout());
     }
 
     /**
@@ -475,7 +474,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new stateful pub/sub connection
      */
     public StatefulRedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
-        return connectPubSub(newStringStringCodec(), redisURI);
+        return connectPubSub(newStringStringCodec(), redisURI, Timeout.from(redisURI));
     }
 
     /**
@@ -489,7 +488,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return connectPubSub(codec, redisURI);
+        return connectPubSub(codec, redisURI, defaultTimeout());
     }
 
     /**
@@ -503,6 +502,11 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection
      */
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
+        return connectPubSub(codec, redisURI, Timeout.from(redisURI));
+    }
+
+    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI,
+            Timeout timeout) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
@@ -510,7 +514,8 @@ public class RedisClient extends AbstractRedisClient {
         Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
-        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec);
+        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec, timeout.timeout,
+                timeout.timeUnit);
 
         connectStateful(handler, connection, redisURI);
 
@@ -537,7 +542,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return connectSentinelImpl(codec, redisURI);
+        return connectSentinel(codec, redisURI, defaultTimeout());
     }
 
     /**
@@ -548,7 +553,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection
      */
     public StatefulRedisSentinelConnection<String, String> connectSentinel(RedisURI redisURI) {
-        return connectSentinelImpl(newStringStringCodec(), redisURI);
+        return connectSentinel(newStringStringCodec(), redisURI, Timeout.from(redisURI));
     }
 
     /**
@@ -562,7 +567,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new connection
      */
     public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return connectSentinelImpl(codec, redisURI);
+        return connectSentinel(codec, redisURI, Timeout.from(redisURI));
     }
 
     /**
@@ -574,7 +579,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisSentinelAsyncCommands<String, String> connectSentinelAsync() {
-        return connectSentinel(newStringStringCodec()).async();
+        return connectSentinel(newStringStringCodec(), redisURI, defaultTimeout()).async();
     }
 
     /**
@@ -590,7 +595,7 @@ public class RedisClient extends AbstractRedisClient {
     @Deprecated
     public <K, V> RedisSentinelAsyncCommands<K, V> connectSentinelAsync(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return connectSentinelImpl(codec, redisURI).async();
+        return connectSentinel(codec, redisURI, defaultTimeout()).async();
     }
 
     /**
@@ -603,7 +608,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public RedisSentinelAsyncCommands<String, String> connectSentinelAsync(RedisURI redisURI) {
-        return connectSentinelImpl(newStringStringCodec(), redisURI).async();
+        return connectSentinel(newStringStringCodec(), redisURI, Timeout.from(redisURI)).async();
     }
 
     /**
@@ -620,10 +625,11 @@ public class RedisClient extends AbstractRedisClient {
      */
     @Deprecated
     public <K, V> RedisSentinelAsyncCommands<K, V> connectSentinelAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return connectSentinelImpl(codec, redisURI).async();
+        return connectSentinel(codec, redisURI, Timeout.from(redisURI)).async();
     }
 
-    private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinelImpl(RedisCodec<K, V> codec, RedisURI redisURI) {
+    private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI,
+            Timeout timeout) {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
@@ -635,7 +641,8 @@ public class RedisClient extends AbstractRedisClient {
 
         final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, clientResources, queue);
 
-        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(commandHandler, codec);
+        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(commandHandler, codec,
+                timeout.timeout, timeout.timeUnit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
@@ -656,9 +663,8 @@ public class RedisClient extends AbstractRedisClient {
                 }
                 connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
 
-                if(logger.isDebugEnabled()) {
-                    SocketAddress socketAddress = SocketAddressResolver
-                            .resolve(redisURI, clientResources.dnsResolver());
+                if (logger.isDebugEnabled()) {
+                    SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
                     logger.debug("Connecting to Sentinel, address: " + socketAddress);
                 }
                 try {
@@ -690,9 +696,27 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisPubSubConnectionImpl
+     * @deprecated Use {@link #newStatefulRedisPubSubConnection(PubSubCommandHandler, RedisCodec, long, TimeUnit)}
      */
+    @Deprecated
     protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
             PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec) {
+        return newStatefulRedisPubSubConnection(commandHandler, codec, timeout, unit);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
+     *
+     * @param commandHandler the command handler
+     * @param codec codec
+     * @param timeout default timeout
+     * @param unit default timeout unit
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisPubSubConnectionImpl
+     */
+    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
+            PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new StatefulRedisPubSubConnectionImpl<>(commandHandler, codec, timeout, unit);
     }
 
@@ -704,9 +728,27 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisSentinelConnectionImpl
+     * @deprecated Use {@link #newStatefulRedisSentinelConnection(CommandHandler, RedisCodec, long, TimeUnit)}
      */
+    @Deprecated
     protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
             CommandHandler<K, V> commandHandler, RedisCodec<K, V> codec) {
+        return newStatefulRedisSentinelConnection(commandHandler, codec, timeout, unit);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
+     *
+     * @param commandHandler the command handler
+     * @param codec codec
+     * @param timeout default timeout
+     * @param unit default timeout unit
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisSentinelConnectionImpl
+     */
+    protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
+            CommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new StatefulRedisSentinelConnectionImpl<>(commandHandler, codec, timeout, unit);
     }
 
@@ -718,9 +760,27 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisConnectionImpl
+     * @deprecated use {@link #newStatefulRedisConnection(CommandHandler, RedisCodec, long, TimeUnit)}
      */
+    @Deprecated
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(CommandHandler<K, V> commandHandler,
             RedisCodec<K, V> codec) {
+        return newStatefulRedisConnection(commandHandler, codec, timeout, unit);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
+     *
+     * @param commandHandler the command handler
+     * @param codec codec
+     * @param timeout default timeout
+     * @param unit default timeout unit
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisConnectionImpl
+     */
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(CommandHandler<K, V> commandHandler,
+            RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new StatefulRedisConnectionImpl<>(commandHandler, codec, timeout, unit);
     }
 
@@ -739,13 +799,12 @@ public class RedisClient extends AbstractRedisClient {
         if (unixDomainSocket && inetSocket) {
             throw new RedisConnectionException("You cannot mix unix domain socket and IP socket URI's");
         }
-
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier(final RedisURI redisURI) {
         return () -> {
             try {
-                SocketAddress socketAddress =  getSocketAddress(redisURI);
+                SocketAddress socketAddress = getSocketAddress(redisURI);
                 logger.debug("Resolved SocketAddress {} using {}", socketAddress, redisURI);
                 return socketAddress;
             } catch (InterruptedException e) {
@@ -771,7 +830,8 @@ public class RedisClient extends AbstractRedisClient {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
-            logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(), redisURI.getSentinelMasterId());
+            logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
+                    redisURI.getSentinelMasterId());
             redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {
@@ -839,7 +899,8 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkPoolDependency() {
-        LettuceAssert.assertState(POOL_AVAILABLE, "Cannot use connection pooling without the optional Apache commons-pool2 library on the class path");
+        LettuceAssert.assertState(POOL_AVAILABLE,
+                "Cannot use connection pooling without the optional Apache commons-pool2 library on the class path");
     }
 
     /**
@@ -851,5 +912,30 @@ public class RedisClient extends AbstractRedisClient {
     @Override
     public void setOptions(ClientOptions clientOptions) {
         super.setOptions(clientOptions);
+    }
+
+    private Timeout defaultTimeout() {
+        return Timeout.of(timeout, unit);
+    }
+
+    private static class Timeout {
+
+        final long timeout;
+        final TimeUnit timeUnit;
+
+        private Timeout(long timeout, TimeUnit timeUnit) {
+            this.timeout = timeout;
+            this.timeUnit = timeUnit;
+        }
+
+        private static Timeout of(long timeout, TimeUnit timeUnit) {
+            return new Timeout(timeout, timeUnit);
+        }
+
+        private static Timeout from(RedisURI redisURI) {
+
+            LettuceAssert.notNull(redisURI, "A valid RedisURI is needed");
+            return new Timeout(redisURI.getTimeout(), redisURI.getUnit());
+        }
     }
 }

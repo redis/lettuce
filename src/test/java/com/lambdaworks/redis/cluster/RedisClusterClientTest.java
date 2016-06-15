@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
+import static com.lambdaworks.redis.RedisClientConnectionTest.CODEC;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -9,11 +10,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -22,6 +25,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -96,6 +100,54 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public void statefulConnectionFromAsync() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
+    }
+
+    @Test
+    public void shouldApplyTimeoutOnRegularConnection() throws Exception {
+
+        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
+
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+
+        assertTimeout(connection, 1, TimeUnit.MINUTES);
+        assertTimeout(connection.getConnection(host, port1), 1, TimeUnit.MINUTES);
+
+        connection.close();
+    }
+
+    @Test
+    public void shouldApplyTimeoutOnRegularConnectionUsingCodec() throws Exception {
+
+        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
+
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(CODEC);
+
+        assertTimeout(connection, 1, TimeUnit.MINUTES);
+        assertTimeout(connection.getConnection(host, port1), 1, TimeUnit.MINUTES);
+
+        connection.close();
+    }
+
+    @Test
+    public void shouldApplyTimeoutOnPubSubConnection() throws Exception {
+
+        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
+
+        StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub();
+
+        assertTimeout(connection, 1, TimeUnit.MINUTES);
+        connection.close();
+    }
+
+    @Test
+    public void shouldApplyTimeoutOnPubSubConnectionUsingCodec() throws Exception {
+
+        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
+
+        StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(CODEC);
+
+        assertTimeout(connection, 1, TimeUnit.MINUTES);
+        connection.close();
     }
 
     @Test
@@ -273,8 +325,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test
     public void clusterAuth() throws Exception {
 
-        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), port7)
-                .withPassword("foobared").build());
+        RedisClusterClient clusterClient = new RedisClusterClient(
+                RedisURI.Builder.redis(TestSettings.host(), port7).withPassword("foobared").build());
 
         try (RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster()) {
 
@@ -338,8 +390,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_A, value);
         sync.set(KEY_B, "d");
 
-        StatefulRedisConnection<String, String> statefulRedisConnection = sync.getStatefulConnection().getConnection(
-                TestSettings.hostAddr(), port2);
+        StatefulRedisConnection<String, String> statefulRedisConnection = sync.getStatefulConnection()
+                .getConnection(TestSettings.hostAddr(), port2);
 
         RedisClusterCommands<String, String> connection = statefulRedisConnection.sync();
 
@@ -484,5 +536,11 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(connection.pfcount("key8885")).isEqualTo(3);
 
         connection.close();
+    }
+
+    private void assertTimeout(StatefulConnection<?, ?> connection, long expectedTimeout, TimeUnit expectedTimeUnit) {
+
+        AssertionsForClassTypes.assertThat(ReflectionTestUtils.getField(connection, "timeout")).isEqualTo(expectedTimeout);
+        AssertionsForClassTypes.assertThat(ReflectionTestUtils.getField(connection, "unit")).isEqualTo(expectedTimeUnit);
     }
 }
