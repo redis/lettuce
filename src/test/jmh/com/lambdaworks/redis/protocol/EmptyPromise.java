@@ -110,6 +110,16 @@ class EmptyPromise implements ChannelPromise{
     }
 
     @Override
+    public boolean isVoid() {
+        return false;
+    }
+
+    @Override
+    public ChannelPromise unvoid() {
+        return null;
+    }
+
+    @Override
     public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
         return false;
     }

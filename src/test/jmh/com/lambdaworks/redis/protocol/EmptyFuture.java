@@ -60,6 +60,11 @@ class EmptyFuture implements ChannelFuture {
     }
 
     @Override
+    public boolean isVoid() {
+        return false;
+    }
+
+    @Override
     public boolean isSuccess() {
         return false;
     }

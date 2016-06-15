@@ -225,4 +225,9 @@ class EmptyContext implements ChannelHandlerContext {
     public <T> Attribute<T> attr(AttributeKey<T> key) {
         return null;
     }
+
+    @Override
+    public <T> boolean hasAttr(AttributeKey<T> attributeKey) {
+        return false;
+    }
 }
