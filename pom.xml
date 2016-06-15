@@ -105,7 +105,7 @@
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <spring.version>4.2.6.RELEASE</spring.version>
+    <spring.version>4.3.0.RELEASE</spring.version>
   </properties>
 
   <dependencies>
