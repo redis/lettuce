@@ -14,11 +14,12 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * @since 3.0
  */
 public interface RedisListsConnection<K, V> {
+
     /**
      * Remove and get the first element in a list, or block until one is available.
      * 
-     * @param timeout the key
-     * @param keys the timeout type: long
+     * @param timeout the timeout in seconds
+     * @param keys the keys
      * @return KeyValue&lt;K,V&gt; array-reply specifically:
      * 
      *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
@@ -30,8 +31,8 @@ public interface RedisListsConnection<K, V> {
     /**
      * Remove and get the last element in a list, or block until one is available.
      * 
-     * @param timeout the key
-     * @param keys the timeout type: long
+     * @param timeout the timeout in seconds
+     * @param keys the keys
      * @return KeyValue&lt;K,V&gt; array-reply specifically:
      * 
      *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
@@ -43,9 +44,9 @@ public interface RedisListsConnection<K, V> {
     /**
      * Pop a value from a list, push it to another list and return it; or block until one is available.
      * 
-     * @param timeout the source type: key
-     * @param source the destination type: key
-     * @param destination the timeout type: long
+     * @param timeout the timeout in seconds
+     * @param source the source key
+     * @param destination the destination type: key
      * @return V bulk-string-reply the element being popped from {@code source} and pushed to {@code destination}. If
      *         {@code timeout} is reached, a
      */
@@ -168,7 +169,7 @@ public interface RedisListsConnection<K, V> {
     /**
      * Remove the last element in a list, append it to another list and return it.
      * 
-     * @param source the source type: key
+     * @param source the source key
      * @param destination the destination type: key
      * @return V bulk-string-reply the element being popped and pushed.
      */
