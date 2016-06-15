@@ -12,8 +12,9 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.output.CommandOutput;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufProcessor;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.util.ByteProcessor;
+import io.netty.util.Version;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -45,8 +46,9 @@ public class RedisStateMachine<K, V> {
 
     // If DEBUG level logging has been enabled at startup.
     private final boolean debugEnabled;
-    private final ToLongProcessor toLongProcessor = new ToLongProcessor();
+    private final ToLongProcessor toLongProcessor;
     private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
+    private final boolean useNetty40ByteBufCompatibility;
 
     /**
      * Initialize a new instance.
@@ -54,6 +56,24 @@ public class RedisStateMachine<K, V> {
     public RedisStateMachine() {
         stack = new State[32];
         debugEnabled = logger.isDebugEnabled();
+
+        Version nettyBufferVersion = Version.identify().get("netty-buffer");
+        if(nettyBufferVersion != null) {
+            useNetty40ByteBufCompatibility = nettyBufferVersion.artifactVersion().startsWith("4.0");
+        } else {
+            useNetty40ByteBufCompatibility = false;
+        }
+
+        ToLongProcessor toLongProcessor = null;
+        if (!useNetty40ByteBufCompatibility) {
+            try {
+                toLongProcessor = (ToLongProcessor) Class
+                        .forName("com.lambdaworks.redis.protocol.RedisStateMachine$Netty41ToLongProcessor").newInstance();
+            } catch (ReflectiveOperationException e) {
+                throw new RedisException("Cannot create Netty41ToLongProcessor instance", e);
+            }
+        }
+        this.toLongProcessor = toLongProcessor;
     }
 
     /**
@@ -195,7 +215,7 @@ public class RedisStateMachine<K, V> {
     /**
      * Close the state machine to free resources.
      */
-    public void close(){
+    public void close() {
         responseElementBuffer.release();
     }
 
@@ -226,10 +246,30 @@ public class RedisStateMachine<K, V> {
 
     private long readLong(ByteBuf buffer, int start, int end) {
 
+        if (useNetty40ByteBufCompatibility) {
+
+            long value = 0;
+
+            boolean negative = buffer.getByte(start) == '-';
+            int offset = negative ? start + 1 : start;
+            while (offset < end - 1) {
+                int digit = buffer.getByte(offset++) - '0';
+                value = value * 10 - digit;
+            }
+            if (!negative) {
+                value = -value;
+            }
+
+            buffer.readerIndex(end + 1);
+            buffer.markReaderIndex();
+            return value;
+        }
+
         toLongProcessor.result = 0;
         toLongProcessor.first = true;
 
-        buffer.forEachByte(start, end - start - 1, toLongProcessor);
+        buffer.forEachByte(start, end - start - 1, (ByteProcessor) toLongProcessor);
+
         if (!toLongProcessor.negative) {
             toLongProcessor.result = -toLongProcessor.result;
         }
@@ -410,11 +450,15 @@ public class RedisStateMachine<K, V> {
         }
     }
 
-    static class ToLongProcessor implements ByteBufProcessor {
+    static class ToLongProcessor {
 
         long result;
         boolean negative;
         boolean first;
+    }
+
+    @SuppressWarnings("unused")
+    static class Netty41ToLongProcessor extends ToLongProcessor implements ByteProcessor {
 
         @Override
         public boolean process(byte value) throws Exception {
