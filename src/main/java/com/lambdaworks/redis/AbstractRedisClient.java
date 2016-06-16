@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -44,7 +45,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * You can set the number of threads per {@link NioEventLoopGroup} by setting the {@code io.netty.eventLoopThreads} system
  * property to a reasonable number of threads.
  * </p>
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -72,6 +73,7 @@ public abstract class AbstractRedisClient {
     protected volatile ClientOptions clientOptions = new ClientOptions.Builder().build();
 
     private final boolean sharedResources;
+    private final AtomicBoolean shutdown = new AtomicBoolean();
 
     /**
      * @deprecated use {@link #AbstractRedisClient(ClientResources)}
@@ -83,7 +85,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Create a new instance with client resources.
-     * 
+     *
      * @param clientResources the client resources. If {@literal null}, the client will create a new dedicated instance of
      *        client resources and keep track of them.
      */
@@ -236,8 +238,8 @@ public abstract class AbstractRedisClient {
             try {
                 initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
             } catch (TimeoutException e) {
-                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout()
-                        + " " + connectionBuilder.getTimeUnit(), e);
+                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout() + " "
+                        + connectionBuilder.getTimeUnit(), e);
             }
             connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
@@ -269,17 +271,19 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
-        timer.stop();
+        if (shutdown.compareAndSet(false, true)) {
 
-        while (!closeableResources.isEmpty()) {
-            Closeable closeableResource = closeableResources.iterator().next();
-            try {
-                closeableResource.close();
-            } catch (Exception e) {
-                logger.debug("Exception on Close: " + e.getMessage(), e);
+            timer.stop();
+
+            while (!closeableResources.isEmpty()) {
+                Closeable closeableResource = closeableResources.iterator().next();
+                try {
+                    closeableResource.close();
+                } catch (Exception e) {
+                    logger.debug("Exception on Close: " + e.getMessage(), e);
+                }
+                closeableResources.remove(closeableResource);
             }
-            closeableResources.remove(closeableResource);
-        }
 
         List<Future<?>> closeFutures = Lists.newArrayList();
 
@@ -314,11 +318,12 @@ public abstract class AbstractRedisClient {
             }
         }
 
-        for (Future<?> future : closeFutures) {
-            try {
-                future.get();
-            } catch (Exception e) {
-                throw new RedisException(e);
+            for (Future<?> future : closeFutures) {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    throw new RedisException(e);
+                }
             }
         }
     }

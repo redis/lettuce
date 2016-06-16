@@ -11,9 +11,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.util.concurrent.ScheduledFuture;
 import org.junit.*;
 
+import org.springframework.test.util.ReflectionTestUtils;
 import rx.Subscription;
 import rx.functions.Func1;
 import rx.observers.TestSubscriber;
@@ -215,6 +219,34 @@ public class RedisClusterSetupTest {
 
         clusterConnection.close();
 
+    }
+
+     @Test
+    public void shouldUnsubscribeTopologyRefresh() throws Exception {
+
+         clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(true)
+                .build());
+
+        RedisAdvancedClusterConnection<String, String> clusterConnection = clusterClient.connectCluster();
+
+        AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils
+                .getField(clusterClient, "clusterTopologyRefreshActivated");
+
+        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils
+                .getField(clusterClient, "clusterTopologyRefreshFuture");
+
+        assertThat(clusterTopologyRefreshActivated.get()).isTrue();
+        assertThat(clusterTopologyRefreshFuture.get()).isNotNull();
+
+        ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
+
+        clusterConnection.close();
+
+        FastShutdown.shutdown(clusterClient);
+
+        assertThat(clusterTopologyRefreshActivated.get()).isFalse();
+        assertThat(clusterTopologyRefreshFuture.get()).isNull();
+        assertThat(scheduledFuture.isCancelled()).isTrue();
     }
 
     protected void setup2Masters() throws InterruptedException, TimeoutException {

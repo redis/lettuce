@@ -62,7 +62,7 @@ public class RedisClientTest {
         redisClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
         assertThat(executor.isShutdown()).isFalse();
         connectAndClose(redisClient2);
-        redisClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        redisClient2.shutdown(0, 0, TimeUnit.MILLISECONDS);
 
         // then
         assertThat(eventLoopGroups).isEmpty();
