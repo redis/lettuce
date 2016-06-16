@@ -140,8 +140,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         try {
             buffer.writeBytes(input);
 
-            if (traceEnabled) {
-                logger.trace("{} Received: {}", logPrefix(), buffer.toString(Charset.defaultCharset()).trim());
+            if (debugEnabled) {
+                if (traceEnabled) {
+                    logger.trace("{} Received: {}", logPrefix(), buffer.toString(Charset.defaultCharset()).trim());
+                }
+
+                if (debugEnabled) {
+                    logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
+                }
             }
 
             decode(ctx, buffer);
@@ -266,7 +272,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (connectionError != null) {
             if (debugEnabled) {
-                logger.debug("{} write() completing Command {} due to connection error", logPrefix(), command);
+                logger.debug("{} writeToBuffer() Completing command {} due to connection error", logPrefix(), command);
             }
             command.completeExceptionally(connectionError);
 
@@ -278,9 +284,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     protected <C extends RedisCommand<K, V, T>, T> void writeToChannel(C command, Channel channel) {
 
-        if (debugEnabled) {
-            logger.debug("{} write() writeAndFlush Command {}", logPrefix(), command);
-        }
 
         if (reliability == Reliability.AT_MOST_ONCE) {
             // cancel on exceptions and remove from queue, because there is no housekeeping
@@ -296,7 +299,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected void bufferCommand(RedisCommand<K, V, ?> command) {
 
         if (debugEnabled) {
-            logger.debug("{} write() buffering Command {}", logPrefix(), command);
+            logger.debug("{} write() buffering command {}", logPrefix(), command);
         }
 
         commandBuffer.add(command);
@@ -400,6 +403,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void flushCommands() {
 
+        if (debugEnabled) {
+            logger.debug("{} flushCommands()", logPrefix());
+        }
+
         if (channel != null && isConnected()) {
             List<RedisCommand<K, V, ?>> queuedCommands;
 
@@ -421,6 +428,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 }
             }
 
+            if (debugEnabled) {
+                logger.debug("{} flushCommands() Flushing {} commands", logPrefix(), queuedCommands.size());
+            }
+
             if (reliability == Reliability.AT_MOST_ONCE) {
                 // cancel on exceptions and remove from queue, because there is no housekeeping
                 writeAndFlush(queuedCommands).addListener(new AtMostOnceWriteListener(queuedCommands, this.queue));
@@ -436,7 +447,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(List<C> commands) {
 
         if (debugEnabled) {
-            logger.debug("{} write() writeAndFlush Commands {}", logPrefix(), commands);
+            logger.debug("{} write() writeAndFlush commands {}", logPrefix(), commands);
         }
 
         transportBuffer.addAll(commands);
@@ -446,7 +457,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(C command) {
 
         if (debugEnabled) {
-            logger.debug("{} write() writeAndFlush Command {}", logPrefix(), command);
+            logger.debug("{} write() writeAndFlush command {}", logPrefix(), command);
         }
 
         transportBuffer.add(command);
@@ -460,6 +471,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+        if (debugEnabled) {
+            logger.debug("{} write(ctx, {}, promise)", logPrefix(), msg);
+        }
 
         if (msg instanceof RedisCommand) {
             writeSingleCommand(ctx, (RedisCommand<K, V, ?>) msg, promise);
@@ -639,7 +654,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         connectionError = null;
 
         if (debugEnabled) {
-            logger.debug("{} activateCommandHandlerAndExecuteBufferedCommands {} command(s) buffered", logPrefix(), commandBuffer.size());
+            logger.debug("{} activateCommandHandlerAndExecuteBufferedCommands {} command(s) buffered", logPrefix(),
+                    commandBuffer.size());
         }
 
         channel = ctx.channel();
