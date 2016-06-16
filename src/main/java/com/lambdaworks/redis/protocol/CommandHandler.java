@@ -64,6 +64,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     // all access to the commandBuffer is synchronized
     protected volatile Deque<RedisCommand<K, V, ?>> commandBuffer = newCommandBuffer();
+    protected final Deque<RedisCommand<K, V, ?>> transportBuffer = newCommandBuffer();
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
@@ -244,12 +245,12 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
                     if (reliability == Reliability.AT_MOST_ONCE) {
                         // cancel on exceptions and remove from queue, because there is no housekeeping
-                        channel.writeAndFlush(command).addListener(new AtMostOnceWriteListener(command, queue, sentTimes));
+                        writeAndFlush(command).addListener(new AtMostOnceWriteListener(command, queue, sentTimes));
                     }
 
                     if (reliability == Reliability.AT_LEAST_ONCE) {
                         // commands are ok to stay within the queue, reconnect will retrigger them
-                        channel.writeAndFlush(command).addListener(WRITE_LOG_LISTENER);
+                        writeAndFlush(command).addListener(WRITE_LOG_LISTENER);
                     }
                 } else {
 
@@ -299,7 +300,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void flushCommands() {
         if (channel != null && isConnected()) {
-            Queue<RedisCommand<?, ?, ?>> queuedCommands;
+            Queue<RedisCommand<K, V, ?>> queuedCommands;
             try {
                 writeLock.lock();
                 queuedCommands = (Queue) commandBuffer;
@@ -310,15 +311,35 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             if (reliability == Reliability.AT_MOST_ONCE) {
                 // cancel on exceptions and remove from queue, because there is no housekeeping
-                channel.writeAndFlush(queuedCommands)
+                writeAndFlush(queuedCommands)
                         .addListener(new AtMostOnceWriteListener(queuedCommands, this.queue, sentTimes));
             }
 
             if (reliability == Reliability.AT_LEAST_ONCE) {
                 // commands are ok to stay within the queue, reconnect will retrigger them
-                channel.writeAndFlush(queuedCommands).addListener(WRITE_LOG_LISTENER);
+                writeAndFlush(queuedCommands).addListener(WRITE_LOG_LISTENER);
             }
         }
+    }
+
+    private ChannelFuture writeAndFlush(Collection<RedisCommand<K, V, ?>> commands) {
+
+        if (debugEnabled) {
+            logger.debug("{} write() writeAndFlush Commands {}", logPrefix(), commands);
+        }
+
+        transportBuffer.addAll(commands);
+        return channel.writeAndFlush(commands);
+    }
+
+    private ChannelFuture writeAndFlush(RedisCommand<K, V, ?> command) {
+
+        if (debugEnabled) {
+            logger.debug("{} write() writeAndFlush Command {}", logPrefix(), command);
+        }
+
+        transportBuffer.add(command);
+        return channel.writeAndFlush(command);
     }
 
     /**
@@ -344,6 +365,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throws Exception {
 
         if (command.isCancelled()) {
+            transportBuffer.remove(command);
             return;
         }
 
@@ -372,6 +394,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             for (RedisCommand<K, V, ?> command : commands) {
 
                 if (command.isCancelled()) {
+                    transportBuffer.remove(command);
                     continue;
                 }
 
@@ -402,6 +425,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 sentTimes.put(command, new SentReceived(nanoTime()));
                 queue.add(command);
             }
+            transportBuffer.remove(command);
         } catch (Exception e) {
             command.setException(e);
             command.cancel(true);
@@ -474,15 +498,27 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private void moveQueuedCommandsToCommandBuffer() {
 
-        List<RedisCommand<K, V, ?>> queuedCommands = new ArrayList<RedisCommand<K, V, ?>>(queue);
-
-        queue.removeAll(queuedCommands);
-
+        List<RedisCommand<K, V, ?>> queuedCommands = drainCommands(queue);
         Collections.reverse(queuedCommands);
 
-        for (RedisCommand<K, V, ?> queuedCommand : queuedCommands) {
-            commandBuffer.addFirst(queuedCommand);
+        List<RedisCommand<K, V, ?>> transportBufferCommands = drainCommands(transportBuffer);
+        Collections.reverse(transportBufferCommands);
+
+        // Queued commands first because they reached the queue before commands that are still in the transport buffer.
+        queuedCommands.addAll(transportBufferCommands);
+
+        logger.debug("{} moveQueuedCommandsToCommandBuffer {} command(s) added to buffer", logPrefix(), queuedCommands.size());
+        for (RedisCommand<K, V, ?> command : queuedCommands) {
+            commandBuffer.addFirst(command);
         }
+    }
+
+    private List<RedisCommand<K, V, ?>> drainCommands(Collection<RedisCommand<K, V, ?>> source) {
+
+        List<RedisCommand<K, V, ?>> target = new ArrayList<RedisCommand<K, V, ?>>(source.size());
+        target.addAll(source);
+        source.removeAll(target);
+        return target;
     }
 
     protected void activateCommandHandlerAndExecuteBufferedCommands(ChannelHandlerContext ctx) {
@@ -523,6 +559,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+
         if (debugEnabled) {
             logger.debug("{} channelInactive()", logPrefix());
         }
@@ -532,12 +569,15 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             setStateIfNotClosed(LifecycleState.DISCONNECTED);
 
             if (redisChannelHandler != null) {
+
                 if (debugEnabled) {
                     logger.debug("{} deactivating channel handler", logPrefix());
                 }
+
                 setStateIfNotClosed(LifecycleState.DEACTIVATING);
                 redisChannelHandler.deactivated();
             }
+
             setStateIfNotClosed(LifecycleState.DEACTIVATED);
 
             // Shift all commands to the commandBuffer so the queue is empty.
