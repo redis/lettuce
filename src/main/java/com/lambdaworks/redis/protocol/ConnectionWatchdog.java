@@ -11,7 +11,6 @@ import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
-import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -50,7 +49,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private SocketAddress remoteAddress;
     private int attempts;
     private long lastReconnectionLogging = -1;
-    private String logPrefix;
+    private volatile String logPrefix;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -131,8 +130,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        logger.debug("{} channelActive({})", logPrefix(), ctx);
+        logPrefix = null;
         channel = ctx.channel();
+        logger.debug("{} channelActive({})", logPrefix(), ctx);
         remoteAddress = channel.remoteAddress();
 
         super.channelActive(ctx);
@@ -155,6 +155,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
             logger.debug("");
         }
+
         super.channelInactive(ctx);
     }
 

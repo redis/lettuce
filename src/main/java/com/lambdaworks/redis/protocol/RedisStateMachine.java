@@ -102,7 +102,7 @@ public class RedisStateMachine<K, V> {
         ByteBuffer bytes;
 
         if (debugEnabled) {
-            logger.debug("Decode " + command);
+            logger.debug("Decode {}",command);
         }
 
         if (isEmpty(stack)) {
@@ -199,7 +199,7 @@ public class RedisStateMachine<K, V> {
         }
 
         if (debugEnabled) {
-            logger.debug("Decoded " + command + ", empty stack: " + isEmpty(stack));
+            logger.debug("Decoded {}, empty stack: {}", command, isEmpty(stack));
         }
 
         return isEmpty(stack);
