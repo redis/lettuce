@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.*;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -86,6 +87,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
                 assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
                 assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
             }
+            connection.close();
         } finally {
             ts.shutdown();
         }
@@ -203,9 +205,45 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
                 assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
                 assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
             }
+
+            connection.close();
         } finally {
             ts.shutdown();
         }
+    }
+
+    /**
+     * Expect to disable {@link ConnectionWatchdog} when closing a broken connection.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void closingDisconnectedConnectionShouldDisableConnectionWatchdog() throws Exception {
+
+        client.setOptions(ClientOptions.create());
+
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
+                .withTimeout(10, TimeUnit.MINUTES).build();
+
+        StatefulRedisConnection<String, String> connection = client.connect(redisUri);
+
+        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection);
+
+        assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
+        assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+
+        connection.sync().ping();
+
+        redisUri.setPort(TestSettings.nonexistentPort() + 5);
+
+        connection.async().quit();
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+        connection.close();
+
+        assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
+        assertThat(connectionWatchdog.isListenOnChannelInactive()).isFalse();
     }
 
     protected RandomResponseServer getRandomResponseServer() throws InterruptedException {

@@ -105,14 +105,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
         logger.debug("{} userEventTriggered({}, {})", logPrefix(), ctx, evt);
+
         if (evt instanceof ConnectionEvents.PrepareClose) {
 
             ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
-            setListenOnChannelInactive(false);
-            setReconnectSuspended(true);
-            prepareClose.getPrepareCloseFuture().complete(true);
-
-            reconnectionHandler.prepareClose();
+            prepareClose(prepareClose);
         }
 
         if (evt instanceof ConnectionEvents.Activated) {
@@ -120,6 +117,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
 
         super.userEventTriggered(ctx, evt);
+    }
+
+    void prepareClose(ConnectionEvents.PrepareClose prepareClose) {
+
+        setListenOnChannelInactive(false);
+        setReconnectSuspended(true);
+        prepareClose.getPrepareCloseFuture().complete(true);
+
+        reconnectionHandler.prepareClose();
     }
 
     @Override

@@ -38,10 +38,14 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
 
         final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(1))
                 .build());
-        connection.debugSegfault();
+        try {
+            connection.debugSegfault();
 
-        WaitFor.waitOrTimeout(() -> !connection.isOpen(), timeout(seconds(5)));
-        assertThat(connection.isOpen()).isFalse();
+            WaitFor.waitOrTimeout(() -> !connection.isOpen(), timeout(seconds(5)));
+            assertThat(connection.isOpen()).isFalse();
+        } finally {
+            connection.close();
+        }
     }
 
     /**
@@ -105,7 +109,5 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
         } finally {
             connection.close();
         }
-
     }
-
 }
