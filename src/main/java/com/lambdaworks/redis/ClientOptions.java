@@ -18,6 +18,7 @@ public class ClientOptions implements Serializable {
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
+    public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
 
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
@@ -26,6 +27,7 @@ public class ClientOptions implements Serializable {
     private final int requestQueueSize;
     private final DisconnectedBehavior disconnectedBehavior;
     private final SocketOptions socketOptions;
+    private final SslOptions sslOptions;
 
     protected ClientOptions(Builder builder) {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -35,6 +37,7 @@ public class ClientOptions implements Serializable {
         requestQueueSize = builder.requestQueueSize;
         disconnectedBehavior = builder.disconnectedBehavior;
         socketOptions = builder.socketOptions;
+        sslOptions = builder.sslOptions;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -45,6 +48,7 @@ public class ClientOptions implements Serializable {
         this.requestQueueSize = original.getRequestQueueSize();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
         this.socketOptions = original.getSocketOptions();
+        this.sslOptions = original.getSslOptions();
     }
 
     /**
@@ -87,6 +91,7 @@ public class ClientOptions implements Serializable {
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
+        private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
 
         /**
          * @deprecated Use {@link ClientOptions#builder()}
@@ -187,6 +192,19 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the {@link SslOptions} for SSL connections kept to Redis servers. See {@link #DEFAULT_SSL_OPTIONS}.
+         *
+         * @param sslOptions must not be {@literal null}.
+         * @return {@code this}
+         */
+        public Builder sslOptions(SslOptions sslOptions) {
+
+            LettuceAssert.notNull(sslOptions, "SslOptions must not be null");
+            this.sslOptions = sslOptions;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          * 
          * @return new instance of {@link ClientOptions}
@@ -268,6 +286,15 @@ public class ClientOptions implements Serializable {
      */
     public SocketOptions getSocketOptions() {
         return socketOptions;
+    }
+
+    /**
+     * Returns the {@link SslOptions}.
+     *
+     * @return the {@link SslOptions}.
+     */
+    public SslOptions getSslOptions() {
+        return sslOptions;
     }
 
     /**

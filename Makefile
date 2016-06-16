@@ -239,6 +239,13 @@ work/stunnel.conf:
 	@echo [stunnel] >> $@
 	@echo accept = 127.0.0.1:6443 >> $@
 	@echo connect = 127.0.0.1:6479 >> $@
+
+	@echo [stunnel-2] >> $@
+	@echo accept = 127.0.0.1:6444 >> $@
+	@echo connect = 127.0.0.1:6479 >> $@
+	@echo cert=$(ROOT_DIR)/work/localhost.pem >> $@
+	@echo capath=$(ROOT_DIR)/work/localhost.pem >> $@
+	@echo cafile=$(ROOT_DIR)/work/localhost.pem >> $@
 	
 	@echo [ssl-cluster-node-1] >> $@
 	@echo accept = 127.0.0.1:7443 >> $@
@@ -298,13 +305,17 @@ work/key.pem work/cert.pem:
 	@mkdir -p $(@D)
 	openssl genrsa -out work/key.pem 4096
 	openssl req -new -x509 -key work/key.pem -out work/cert.pem -days 365 -subj "/O=lettuce/ST=Some-State/C=DE/CN=lettuce-test"
+	openssl req -new -x509 -key work/key.pem -out work/localhost.pem -days 365 -subj "/O=lettuce/ST=Some-State/C=DE/CN=localhost"
 	chmod go-rwx work/key.pem
 	chmod go-rwx work/cert.pem
+	chmod go-rwx work/localhost.pem
 	- rm -f work/keystore.jks
+	- rm -f work/keystore-localhost.jks
 
 work/keystore.jks:
 	@mkdir -p $(@D)
 	$$JAVA_HOME/bin/keytool -importcert -keystore work/keystore.jks -file work/cert.pem -noprompt -storepass changeit
+	$$JAVA_HOME/bin/keytool -importcert -keystore work/keystore-localhost.jks -file work/localhost.pem -noprompt -storepass different
 
 ssl-keys: work/key.pem work/cert.pem work/keystore.jks
 

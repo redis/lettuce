@@ -6,14 +6,14 @@ import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUI
 import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
 import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLParameters;
+import javax.net.ssl.*;
 
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
@@ -26,7 +26,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.ssl.*;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
@@ -60,7 +63,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         final List<ChannelHandler> channelHandlers = buildHandlers();
 
         return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), channelHandlers, redisURI,
-                clientResources().eventBus());
+                clientResources().eventBus(), clientOptions().getSslOptions());
     }
 
     /**
@@ -72,14 +75,16 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         private final List<ChannelHandler> handlers;
         private final RedisURI redisURI;
         private final EventBus eventBus;
+        private final SslOptions sslOptions;
         private CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
         public SslChannelInitializer(boolean pingBeforeActivate, List<ChannelHandler> handlers, RedisURI redisURI,
-                EventBus eventBus) {
+                EventBus eventBus, SslOptions sslOptions) {
             this.pingBeforeActivate = pingBeforeActivate;
             this.handlers = handlers;
             this.redisURI = redisURI;
             this.eventBus = eventBus;
+            this.sslOptions = sslOptions;
         }
 
         @Override
@@ -87,11 +92,17 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SSLParameters sslParams = new SSLParameters();
 
-            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(SslProvider.JDK);
+            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(sslOptions.getSslProvider());
             if (redisURI.isVerifyPeer()) {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            }
+
+            if (sslOptions.getTruststore() != null) {
+                try (InputStream is = sslOptions.getTruststore().openStream()) {
+                    sslContextBuilder.trustManager(createTrustManagerFactory(is, null));
+                }
             }
 
             SslContext sslContext = sslContextBuilder.build();
@@ -153,7 +164,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             if (event.isSuccess()) {
                                 if (pingBeforeActivate) {
                                     if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-                                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword())));
+                                        pingCommand = new AsyncCommand<>(
+                                                INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword())));
                                     } else {
                                         pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                                     }
@@ -196,12 +208,30 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                 removeIfExists(channel.pipeline(), handler.getClass());
                 channel.pipeline().addLast(handler);
             }
-
         }
 
         @Override
         public CompletableFuture<Boolean> channelInitialized() {
             return initializedFuture;
         }
+
+        private static TrustManagerFactory createTrustManagerFactory(InputStream inputStream, char[] storePassword)
+                throws GeneralSecurityException, IOException {
+
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+            try {
+                trustStore.load(inputStream, null);
+            } finally {
+                inputStream.close();
+            }
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory
+                    .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+
+            return trustManagerFactory;
+        }
+
     }
 }

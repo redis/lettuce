@@ -102,4 +102,12 @@ public class TestSettings {
         return port() + offset;
     }
 
+    /**
+     *
+     * @param offset
+     * @return {@link #sslPort()} with added {@literal offset}
+     */
+    public static int sslPort(int offset) {
+        return sslPort() + offset;
+    }
 }

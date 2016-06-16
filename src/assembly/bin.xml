@@ -22,7 +22,7 @@
         </dependencySet>
         <dependencySet>
             <includes>
-                <include>io.netty:*</include>
+                <include>io.netty:netty-transport-native-epoll</include>
             </includes>
             <scope>provided</scope>
             <outputDirectory>dependencies</outputDirectory>
