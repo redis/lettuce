@@ -3,8 +3,11 @@ package com.lambdaworks.redis.cluster.topology;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
+import io.netty.util.concurrent.ScheduledFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,6 +26,7 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test for topology refreshing.
@@ -53,6 +57,37 @@ public class TopologyRefreshTest extends AbstractTest {
         redis1.close();
         redis2.close();
         FastShutdown.shutdown(clusterClient);
+    }
+
+    @Test
+    public void shouldUnsubscribeTopologyRefresh() throws Exception {
+
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
+                .enablePeriodicRefresh(true) //
+                .build();
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
+
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+
+        AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils
+                .getField(clusterClient, "clusterTopologyRefreshActivated");
+
+        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils
+                .getField(clusterClient, "clusterTopologyRefreshFuture");
+
+        assertThat(clusterTopologyRefreshActivated.get()).isTrue();
+        assertThat(clusterTopologyRefreshFuture.get()).isNotNull();
+
+        ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
+
+        clusterConnection.close();
+
+        FastShutdown.shutdown(clusterClient);
+
+        assertThat(clusterTopologyRefreshActivated.get()).isFalse();
+        assertThat(clusterTopologyRefreshFuture.get()).isNull();
+        assertThat(scheduledFuture.isCancelled()).isTrue();
+
     }
 
     @Test

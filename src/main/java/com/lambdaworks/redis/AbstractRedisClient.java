@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -70,6 +71,7 @@ public abstract class AbstractRedisClient {
     protected volatile ClientOptions clientOptions = ClientOptions.builder().build();
 
     private final boolean sharedResources;
+    private final AtomicBoolean shutdown = new AtomicBoolean();
 
     /**
      * @deprecated use {@link #AbstractRedisClient(ClientResources)}
@@ -234,8 +236,8 @@ public abstract class AbstractRedisClient {
             try {
                 initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
             } catch (TimeoutException e) {
-                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout()
-                        + " " + connectionBuilder.getTimeUnit(), e);
+                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout() + " "
+                        + connectionBuilder.getTimeUnit(), e);
             }
             connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
 
@@ -267,52 +269,55 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
-        timer.stop();
+        if (shutdown.compareAndSet(false, true)) {
 
-        while (!closeableResources.isEmpty()) {
-            Closeable closeableResource = closeableResources.iterator().next();
-            try {
-                closeableResource.close();
-            } catch (Exception e) {
-                logger.debug("Exception on Close: " + e.getMessage(), e);
-            }
-            closeableResources.remove(closeableResource);
-        }
+            timer.stop();
 
-        List<Future<?>> closeFutures = new ArrayList<>();
-
-        for (Channel c : channels) {
-            ChannelPipeline pipeline = c.pipeline();
-
-            CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
-            if (commandHandler != null && !commandHandler.isClosed()) {
-                commandHandler.close();
+            while (!closeableResources.isEmpty()) {
+                Closeable closeableResource = closeableResources.iterator().next();
+                try {
+                    closeableResource.close();
+                } catch (Exception e) {
+                    logger.debug("Exception on Close: " + e.getMessage(), e);
+                }
+                closeableResources.remove(closeableResource);
             }
 
-            PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
-            if (psCommandHandler != null && !psCommandHandler.isClosed()) {
-                psCommandHandler.close();
+            List<Future<?>> closeFutures = new ArrayList<>();
+
+            for (Channel c : channels) {
+                ChannelPipeline pipeline = c.pipeline();
+
+                CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
+                if (commandHandler != null && !commandHandler.isClosed()) {
+                    commandHandler.close();
+                }
+
+                PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
+                if (psCommandHandler != null && !psCommandHandler.isClosed()) {
+                    psCommandHandler.close();
+                }
             }
-        }
 
-        ChannelGroupFuture closeFuture = channels.close();
-        closeFutures.add(closeFuture);
+            ChannelGroupFuture closeFuture = channels.close();
+            closeFutures.add(closeFuture);
 
-        if (!sharedResources) {
-            clientResources.shutdown(quietPeriod, timeout, timeUnit);
-        } else {
-            for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
-                Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
-                        timeout, timeUnit);
-                closeFutures.add(groupCloseFuture);
+            if (!sharedResources) {
+                clientResources.shutdown(quietPeriod, timeout, timeUnit);
+            } else {
+                for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
+                    Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
+                            timeout, timeUnit);
+                    closeFutures.add(groupCloseFuture);
+                }
             }
-        }
 
-        for (Future<?> future : closeFutures) {
-            try {
-                future.get();
-            } catch (Exception e) {
-                throw new RedisException(e);
+            for (Future<?> future : closeFutures) {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    throw new RedisException(e);
+                }
             }
         }
     }
