@@ -3,7 +3,9 @@ package com.lambdaworks.redis.cluster;
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -35,6 +37,7 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.SocketAddressResolver;
 
+import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -111,6 +114,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
 
     protected AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
+    protected AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = new AtomicReference<>();
 
     private final ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(new NodeConnectionFactoryImpl(), getResources());
     private final ClusterTopologyRefreshScheduler clusterTopologyRefreshScheduler = new ClusterTopologyRefreshScheduler(this,
@@ -769,8 +773,10 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
 
             if (clusterTopologyRefreshActivated.compareAndSet(false, true)) {
-                genericWorkerPool.scheduleAtFixedRate(clusterTopologyRefreshScheduler, options.getRefreshPeriod(),
-                        options.getRefreshPeriod(), options.getRefreshPeriodUnit());
+                ScheduledFuture<?> scheduledFuture = genericWorkerPool
+                        .scheduleAtFixedRate(clusterTopologyRefreshScheduler, options.getRefreshPeriod(),
+                                options.getRefreshPeriod(), options.getRefreshPeriodUnit());
+                clusterTopologyRefreshFuture.set(scheduledFuture);
             }
         }
     }
@@ -826,6 +832,32 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public ClientResources getResources() {
         return clientResources;
+    }
+
+    /**
+     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     *
+     * @param quietPeriod the quiet period as described in the documentation
+     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
+     *        during the quiet period
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     */
+    @Override
+    public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
+
+        if(clusterTopologyRefreshActivated.compareAndSet(true, false)){
+
+            ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
+
+            try {
+                scheduledFuture.cancel(false);
+                clusterTopologyRefreshFuture.set(null);
+            } catch (Exception e) {
+                logger.debug("Could not unschedule Cluster topology refresh", e);
+            }
+        }
+
+        super.shutdown(quietPeriod, timeout, timeUnit);
     }
 
     protected void forEachClusterConnection(Consumer<StatefulRedisClusterConnectionImpl<?, ?>> function) {
