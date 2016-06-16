@@ -8,7 +8,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -59,6 +58,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
+    private volatile ConnectionWatchdog connectionWatchdog;
 
     // If TRACE level logging has been enabled at startup.
     private final boolean traceEnabled;
@@ -154,7 +154,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         while (!queue.isEmpty()) {
 
             RedisCommand<K, V, ?> command = queue.peek();
-
             if (debugEnabled) {
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
@@ -214,7 +213,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
         LettuceAssert.notNull(command, "command must not be null");
-
 
         try {
             incrementWriters();
@@ -462,7 +460,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         queueCommand(command, promise);
         ctx.write(command, promise);
     }
-    
+
     private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<K, V, ?>> msg, ChannelPromise promise)
             throws Exception {
 
@@ -527,9 +525,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
         logPrefix = null;
+        connectionWatchdog = null;
 
         if (debugEnabled) {
             logger.debug("{} channelActive()", logPrefix());
+        }
+
+        if (ctx != null && ctx.pipeline() != null) {
+
+            Map<String, ChannelHandler> map = ctx.pipeline().toMap();
+
+            for (ChannelHandler handler : map.values()) {
+                if (handler instanceof ConnectionWatchdog) {
+                    connectionWatchdog = (ConnectionWatchdog) handler;
+                }
+            }
         }
 
         synchronized (stateLock) {
@@ -578,6 +588,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private void moveQueuedCommandsToCommandBuffer() {
 
         List<RedisCommand<K, V, ?>> queuedCommands = new ArrayList<>(queue);
+
         queue.removeAll(queuedCommands);
 
         Collections.reverse(queuedCommands);
@@ -772,6 +783,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (currentChannel.isOpen()) {
                 close.syncUninterruptibly();
             }
+        } else if (connectionWatchdog != null) {
+            connectionWatchdog.prepareClose(new ConnectionEvents.PrepareClose());
         }
     }
 
