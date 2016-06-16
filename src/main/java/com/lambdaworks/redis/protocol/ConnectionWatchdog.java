@@ -65,7 +65,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true.
-     * 
+     *
      * @param clientOptions client options for the current connection
      * @param bootstrap Configuration for new channels.
      * @param reconnectWorkers executor group for reconnect tasks.
@@ -100,15 +100,21 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         if (evt instanceof ConnectionEvents.PrepareClose) {
 
             ConnectionEvents.PrepareClose prepareClose = (ConnectionEvents.PrepareClose) evt;
-            setListenOnChannelInactive(false);
-            setReconnectSuspended(true);
-            prepareClose.getPrepareCloseFuture().set(true);
+            prepareClose(prepareClose);
 
-            if (currentFuture != null && !currentFuture.isDone()) {
-                currentFuture.cancel(true);
-            }
         }
         super.userEventTriggered(ctx, evt);
+    }
+
+    void prepareClose(ConnectionEvents.PrepareClose prepareClose) {
+
+        setListenOnChannelInactive(false);
+        setReconnectSuspended(true);
+        prepareClose.getPrepareCloseFuture().set(true);
+
+        if (currentFuture != null && !currentFuture.isDone()) {
+                currentFuture.cancel(true);
+        }
     }
 
     @Override

@@ -67,6 +67,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected ByteBuf buffer;
     protected RedisStateMachine<K, V> rsm;
     protected Channel channel;
+    private volatile ConnectionWatchdog connectionWatchdog;
 
     // If TRACE level logging has been enabled at startup.
     private final boolean traceEnabled;
@@ -349,7 +350,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         queueCommand(command, promise);
         ctx.write(command, promise);
     }
-    
+
     private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<K, V, ?>> msg, ChannelPromise promise)
             throws Exception {
 
@@ -415,11 +416,24 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        connectionWatchdog = null;
         logPrefix = null;
         if (debugEnabled) {
             logger.debug("{} channelActive()", logPrefix());
         }
         setStateIfNotClosed(LifecycleState.CONNECTED);
+
+        if (ctx != null && ctx.pipeline() != null) {
+
+            Map<String, ChannelHandler> map = ctx.pipeline().toMap();
+
+            for (ChannelHandler handler : map.values()) {
+                if (handler instanceof ConnectionWatchdog) {
+                    connectionWatchdog = (ConnectionWatchdog) handler;
+                }
+            }
+        }
 
         try {
             writeLock.lock();
@@ -461,6 +475,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private void moveQueuedCommandsToCommandBuffer() {
 
         List<RedisCommand<K, V, ?>> queuedCommands = new ArrayList<RedisCommand<K, V, ?>>(queue);
+
         queue.removeAll(queuedCommands);
 
         Collections.reverse(queuedCommands);
@@ -650,6 +665,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (currentChannel.isOpen()) {
                 close.syncUninterruptibly();
             }
+        } else if (connectionWatchdog != null) {
+            connectionWatchdog.prepareClose(new ConnectionEvents.PrepareClose());
         }
     }
 

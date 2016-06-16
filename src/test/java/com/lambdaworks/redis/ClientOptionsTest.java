@@ -219,4 +219,38 @@ public class ClientOptionsTest extends AbstractCommandTest {
         };
 
     }
+
+    /**
+     * Expect to disable {@link ConnectionWatchdog} when closing a broken connection.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void closingDisconnectedConnectionShouldDisableConnectionWatchdog() throws Exception {
+
+        client.setOptions(ClientOptions.create());
+
+
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
+                .withTimeout(10, TimeUnit.MINUTES).build();
+
+        RedisAsyncConnection<String, String> connection = client.connectAsync(redisUri);
+
+        ConnectionWatchdog connectionWatchdog = getConnectionWatchdog(connection);
+
+        assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
+        assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+
+        connection.ping().get();
+
+        redisUri.setPort(TestSettings.port(123));
+
+        connection.quit();
+        Thread.sleep(500);
+
+        connection.close();
+
+        assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
+        assertThat(connectionWatchdog.isListenOnChannelInactive()).isFalse();
+    }
 }
