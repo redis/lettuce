@@ -647,8 +647,18 @@
                                 </relocation>
 
                                 <relocation>
-                                    <pattern>org</pattern>
-                                    <shadedPattern>com.lambdaworks.org</shadedPattern>
+                                    <pattern>org.HdrHistogram</pattern>
+                                    <shadedPattern>com.lambdaworks.org.HdrHistogram</shadedPattern>
+                                </relocation>
+
+                                <relocation>
+                                    <pattern>org.LatencyUtils</pattern>
+                                    <shadedPattern>com.lambdaworks.org.LatencyUtils</shadedPattern>
+                                </relocation>
+
+                                <relocation>
+                                    <pattern>org.apache.commons.pool2</pattern>
+                                    <shadedPattern>com.lambdaworks.org.apache.commons.pool2</shadedPattern>
                                 </relocation>
 
                                 <relocation>
