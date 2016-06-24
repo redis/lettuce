@@ -10,7 +10,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import rx.Observable;
-import rx.internal.operators.OperatorConcat;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
@@ -97,7 +96,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.mget(entry.getValue()));
         }
-        Observable<V> observable = Observable.from(observables).lift(OperatorConcat.instance());
+        Observable<V> observable = Observable.concat(Observable.from(observables));
 
         Observable<List<V>> map = observable.toList().map(vs -> {
 
