@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster.api.sync;
 import java.util.Date;
 import java.util.List;
 import com.lambdaworks.redis.KeyScanCursor;
+import com.lambdaworks.redis.MigrateArgs;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.SortArgs;
@@ -117,6 +118,18 @@ public interface NodeSelectionKeyCommands<K, V> {
      * @return String simple-string-reply The command returns OK on success.
      */
     Executions<String> migrate(String host, int port, K key, int db, long timeout);
+
+    /**
+     * Atomically transfer one or more keys from a Redis instance to another one.
+     *
+     * @param host the host
+     * @param port the port
+     * @param db the database
+     * @param timeout the timeout in milliseconds
+     * @param migrateArgs migrate args that allow to configure further options
+     * @return String simple-string-reply The command returns OK on success.
+     */
+    Executions<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs);
 
     /**
      * Move a key to another database.
@@ -292,8 +305,16 @@ public interface NodeSelectionKeyCommands<K, V> {
     Executions<Long> sortStore(K key, SortArgs sortArgs, K destination);
 
     /**
-     * Get the time to live for a key.
+     * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
      * 
+     * @param keys the keys
+     * @return Long integer-reply the number of found keys.
+     */
+    Executions<Long> touch(K... keys);
+
+    /**
+     * Get the time to live for a key.
+     *
      * @param key the key
      * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
      */
