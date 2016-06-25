@@ -1004,6 +1004,11 @@ public class RedisAsyncConnectionImpl<K, V> extends RedisChannelHandler<K, V> im
     }
 
     @Override
+    public RedisFuture<Long> touch(K... keys) {
+        return dispatch(commandBuilder.touch(keys));
+    }
+
+    @Override
     public RedisFuture<Long> ttl(K key) {
         return dispatch(commandBuilder.ttl(key));
     }

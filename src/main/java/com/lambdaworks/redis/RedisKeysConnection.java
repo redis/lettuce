@@ -311,6 +311,14 @@ public interface RedisKeysConnection<K, V> {
     Long sortStore(K key, SortArgs sortArgs, K destination);
 
     /**
+     * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
+     *
+     * @param keys the keys
+     * @return Long integer-reply the number of found keys.
+     */
+    Long touch(K... keys);
+
+    /**
      * Get the time to live for a key.
      * 
      * @param key the key

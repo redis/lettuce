@@ -1018,6 +1018,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRLEN, new IntegerOutput<K, V>(codec), key);
     }
 
+    public Command<K, V, Long> touch(K... keys) {
+
+        LettuceAssert.notEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(TOUCH, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> ttl(K key) {
         return createCommand(TTL, new IntegerOutput<K, V>(codec), key);
     }

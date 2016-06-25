@@ -232,6 +232,13 @@ public class KeyCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void touch() throws Exception {
+        assertThat((long) redis.touch(key)).isEqualTo(0);
+        redis.set(key, value);
+        assertThat((long) redis.touch(key, "key2")).isEqualTo(1);
+    }
+
+    @Test
     public void ttl() throws Exception {
         assertThat((long) redis.ttl(key)).isEqualTo(-2);
         redis.set(key, value);
