@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.junit.Test;
 
 import com.lambdaworks.redis.codec.Utf8StringCodec;
@@ -83,7 +84,83 @@ public class CommandArgsTest {
     @Test
     public void addByteUsingDirectByteCodec() throws Exception {
 
-        CommandArgs<byte[], byte[]> args = new CommandArgs<>(CommandArgs.ExperimentalByteArrayCodec.INSTANCE).add("one".getBytes());
+        CommandArgs<byte[], byte[]> args = new CommandArgs<>(CommandArgs.ExperimentalByteArrayCodec.INSTANCE)
+                .add("one".getBytes());
+
+        ByteBuf buffer = Unpooled.buffer();
+        args.encode(buffer);
+
+        ByteBuf expected = Unpooled.buffer();
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
+
+        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+    }
+
+    @Test
+    public void addValueUsingDirectByteCodec() throws Exception {
+
+        CommandArgs<byte[], byte[]> args = new CommandArgs<>(CommandArgs.ExperimentalByteArrayCodec.INSTANCE)
+                .addValue("one".getBytes());
+
+        ByteBuf buffer = Unpooled.buffer();
+        args.encode(buffer);
+
+        ByteBuf expected = Unpooled.buffer();
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
+
+        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+    }
+
+    @Test
+    public void addKeyUsingDirectByteCodec() throws Exception {
+
+        CommandArgs<byte[], byte[]> args = new CommandArgs<>(CommandArgs.ExperimentalByteArrayCodec.INSTANCE)
+                .addValue("one".getBytes());
+
+        ByteBuf buffer = Unpooled.buffer();
+        args.encode(buffer);
+
+        ByteBuf expected = Unpooled.buffer();
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
+
+        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+    }
+
+    @Test
+    public void addByteUsingByteCodec() throws Exception {
+
+        CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                .add("one".getBytes());
+
+        ByteBuf buffer = Unpooled.buffer();
+        args.encode(buffer);
+
+        ByteBuf expected = Unpooled.buffer();
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
+
+        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+    }
+
+    @Test
+    public void addValueUsingByteCodec() throws Exception {
+
+        CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                .addValue("one".getBytes());
+
+        ByteBuf buffer = Unpooled.buffer();
+        args.encode(buffer);
+
+        ByteBuf expected = Unpooled.buffer();
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
+
+        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+    }
+
+    @Test
+    public void addKeyUsingByteCodec() throws Exception {
+
+        CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                .addValue("one".getBytes());
 
         ByteBuf buffer = Unpooled.buffer();
         args.encode(buffer);
