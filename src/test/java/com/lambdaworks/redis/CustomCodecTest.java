@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.protocol.CommandArgs;
 import org.junit.Test;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
@@ -79,6 +80,17 @@ public class CustomCodecTest extends AbstractRedisClientTest {
     @Test
     public void testByteCodec() throws Exception {
         RedisConnection<byte[], byte[]> connection = client.connect(new ByteArrayCodec()).sync();
+        String value = "üöäü+#";
+        connection.set(key.getBytes(), value.getBytes());
+        assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());
+
+        List<byte[]> keys = connection.keys(key.getBytes());
+        assertThat(keys).contains(key.getBytes());
+    }
+
+    @Test
+    public void testExperimentalByteCodec() throws Exception {
+        RedisConnection<byte[], byte[]> connection = client.connect(CommandArgs.ExperimentalByteArrayCodec.INSTANCE).sync();
         String value = "üöäü+#";
         connection.set(key.getBytes(), value.getBytes());
         assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());

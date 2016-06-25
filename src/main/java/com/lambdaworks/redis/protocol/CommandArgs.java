@@ -551,11 +551,17 @@ public class CommandArgs<K, V> {
         }
 
         public void encodeKey(ByteBuf target, byte[] key) {
+            target.writeByte('$');
+
+            IntegerArgument.writeInteger(target, key.length);
+            target.writeBytes(CRLF);
+
             target.writeBytes(key);
+            target.writeBytes(CRLF);
         }
 
         public void encodeValue(ByteBuf target, byte[] value) {
-            target.writeBytes(value);
+            encodeKey(target, value);
         }
     }
 }

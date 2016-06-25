@@ -121,7 +121,7 @@ public class CommandArgsTest {
         args.encode(buffer);
 
         ByteBuf expected = Unpooled.buffer();
-        expected.writeBytes(("one").getBytes());
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
 
         assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
     }
@@ -136,7 +136,7 @@ public class CommandArgsTest {
         args.encode(buffer);
 
         ByteBuf expected = Unpooled.buffer();
-        expected.writeBytes(("one").getBytes());
+        expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
 
         assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
     }
