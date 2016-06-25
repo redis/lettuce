@@ -108,11 +108,7 @@ class SentinelTopologyRefresh implements Closeable {
         }
 
         Timeout timeout = new Timeout(this.timeout, this.timeUnit);
-        if (timeoutRef.compareAndSet(existingTimeout, timeout)) {
-            return true;
-        }
-
-        return false;
+        return timeoutRef.compareAndSet(existingTimeout, timeout);
     }
 
     protected EventExecutorGroup getEventExecutor() {

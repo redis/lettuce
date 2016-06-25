@@ -46,6 +46,12 @@ public class ServerRxCommandTest extends ServerCommandTest {
     }
 
     @Test
+    public void debugRestart() throws Exception {
+        reactive.debugRestart(1L);
+        assertThat(reactive.isOpen()).isTrue();
+    }
+
+    @Test
     public void migrate() throws Exception {
         reactive.migrate("host", 1234, "key", 1, 10);
         assertThat(reactive.isOpen()).isTrue();

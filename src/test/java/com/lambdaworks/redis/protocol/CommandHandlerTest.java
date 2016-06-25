@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -8,7 +9,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -28,8 +34,10 @@ import com.lambdaworks.redis.resource.ClientResources;
 
 import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommandHandlerTest {
@@ -61,6 +69,18 @@ public class CommandHandlerTest {
 
     @Mock
     private RedisChannelHandler channelHandler;
+
+    @BeforeClass
+    public static void beforeClass() {
+        Logger logger = LogManager.getLoggerRepository().getLogger(CommandHandler.class.getName());
+        logger.setLevel(Level.ALL);
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        Logger logger = LogManager.getLoggerRepository().getLogger(CommandHandler.class.getName());
+        logger.setLevel(null);
+    }
 
     @Before
     public void before() throws Exception {
@@ -113,13 +133,35 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void testChannelActiveFailureShouldCancelCommands() throws Exception {
+
+        ClientOptions clientOptions = ClientOptions.builder().cancelCommandsOnReconnectFailure(true).build();
+
+        sut = new CommandHandler<String, String>(clientOptions, clientResources, q);
+        sut.setRedisChannelHandler(channelHandler);
+
+        sut.channelRegistered(context);
+        sut.write(command);
+
+        reset(context);
+        when(context.channel()).thenThrow(new RuntimeException());
+        try {
+            sut.channelActive(context);
+            fail("Missing RuntimeException");
+        } catch (RuntimeException e) {
+        }
+
+        assertThat(command.isCancelled()).isTrue();
+    }
+
+    @Test
     public void testChannelActiveWithBufferedAndQueuedCommands() throws Exception {
 
         Command<String, String, String> bufferedCommand = new Command<>(CommandType.GET,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> pingCommand = new Command<>(CommandType.PING,
-                        new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
         q.add(bufferedCommand);
 
         AtomicLong atomicLong = (AtomicLong) ReflectionTestUtils.getField(sut, "writers");
@@ -151,16 +193,16 @@ public class CommandHandlerTest {
     public void testChannelActiveWithBufferedAndQueuedCommandsRetainsOrder() throws Exception {
 
         Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         q.add(queuedCommand1);
         q.add(queuedCommand2);
@@ -183,23 +225,24 @@ public class CommandHandlerTest {
         ArgumentCaptor<Object> objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
         verify(channel).writeAndFlush(objectArgumentCaptor.capture());
 
-        assertThat((Collection) objectArgumentCaptor.getValue()).containsSequence(queuedCommand1, queuedCommand2, bufferedCommand1, bufferedCommand2);
+        assertThat((Collection) objectArgumentCaptor.getValue()).containsSequence(queuedCommand1, queuedCommand2,
+                bufferedCommand1, bufferedCommand2);
     }
 
     @Test
     public void testChannelActiveReplayBufferedCommands() throws Exception {
 
         Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<String, String>(new Utf8StringCodec()), null);
 
         q.add(queuedCommand1);
         q.add(queuedCommand2);
@@ -253,7 +296,8 @@ public class CommandHandlerTest {
     @Test(expected = RedisException.class)
     public void testWriteChannelDisconnectedWithoutReconnect() throws Exception {
 
-        sut = new CommandHandler<String, String>(ClientOptions.builder().autoReconnect(false).build(), clientResources, q);
+        sut = new CommandHandler<String, String>(ClientOptions.builder().autoReconnect(false).build(), clientResources,
+                q);
         sut.setRedisChannelHandler(channelHandler);
 
         when(channel.isActive()).thenReturn(true);
@@ -368,7 +412,7 @@ public class CommandHandlerTest {
         sut.setState(CommandHandler.LifecycleState.CLOSED);
         assertThat(sut.isConnected()).isFalse();
     }
-    
+
     @Test
     public void shouldNotWriteCancelledCommands() throws Exception {
 
@@ -377,6 +421,46 @@ public class CommandHandlerTest {
 
         verifyZeroInteractions(context);
         assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+    }
+
+    @Test
+    public void shouldCancelCommandOnQueueSingleFailure() throws Exception {
+
+        Command<String, String, String> commandMock = mock(Command.class);
+
+        RuntimeException exception = new RuntimeException();
+        when(commandMock.getOutput()).thenThrow(exception);
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(null, ImmediateEventExecutor.INSTANCE);
+        try {
+            sut.write(context, commandMock, channelPromise);
+            fail("Missing RuntimeException");
+        } catch (RuntimeException e) {
+            assertThat(e).isSameAs(exception);
+        }
+
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+        verify(commandMock).completeExceptionally(exception);
+    }
+
+    @Test
+    public void shouldCancelCommandOnQueueBatchFailure() throws Exception {
+
+        Command<String, String, String> commandMock = mock(Command.class);
+
+        RuntimeException exception = new RuntimeException();
+        when(commandMock.getOutput()).thenThrow(exception);
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(null, ImmediateEventExecutor.INSTANCE);
+        try {
+            sut.write(context, Arrays.asList(commandMock), channelPromise);
+            fail("Missing RuntimeException");
+        } catch (RuntimeException e) {
+            assertThat(e).isSameAs(exception);
+        }
+
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+        verify(commandMock).completeExceptionally(exception);
     }
 
     @Test
@@ -423,6 +507,17 @@ public class CommandHandlerTest {
 
         assertThat(captor.getValue()).containsOnly(command2);
         assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command2);
+    }
+
+    @Test
+    public void shouldIgnoreNonReadableBuffers() throws Exception {
+
+        ByteBuf byteBufMock = mock(ByteBuf.class);
+        when(byteBufMock.isReadable()).thenReturn(false);
+
+        sut.channelRead(context, byteBufMock);
+
+        verify(byteBufMock, never()).release();
     }
 
     @Test
@@ -651,7 +746,7 @@ public class CommandHandlerTest {
 
     static class TestableCommandHandler extends CommandHandler<String, String> {
         public TestableCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
-                Queue<RedisCommand<String, String, ?>> queue) {
+                                      Queue<RedisCommand<String, String, ?>> queue) {
             super(clientOptions, clientResources, queue);
         }
     }

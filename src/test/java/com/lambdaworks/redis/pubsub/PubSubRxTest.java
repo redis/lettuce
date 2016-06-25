@@ -98,8 +98,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         pubsub.observeChannels().doOnNext(channelMessages::add).subscribe().unsubscribe();
 
-        redis.publish(channel, message);
-        redis.publish(channel, message);
+        redis.getStatefulConnection().reactive().publish(channel, message).toBlocking().single();
+        redis.getStatefulConnection().reactive().publish(channel, message).toBlocking().single();
 
         Delay.delay(millis(500));
         assertThat(channelMessages).isEmpty();

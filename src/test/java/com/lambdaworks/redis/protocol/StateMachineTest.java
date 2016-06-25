@@ -10,7 +10,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.lambdaworks.redis.output.CommandOutput;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisException;
@@ -31,6 +36,18 @@ public class StateMachineTest {
     protected CommandOutput<String, String, String> output;
     protected RedisStateMachine<String, String> rsm;
 
+    @BeforeClass
+    public static void beforeClass() {
+        Logger logger = LogManager.getLoggerRepository().getLogger(RedisStateMachine.class.getName());
+        logger.setLevel(Level.ALL);
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        Logger logger = LogManager.getLoggerRepository().getLogger(RedisStateMachine.class.getName());
+        logger.setLevel(null);
+    }
+
     @Before
     public final void createStateMachine() throws Exception {
         output = new StatusOutput<String, String>(codec);
@@ -47,6 +64,13 @@ public class StateMachineTest {
     public void error() throws Exception {
         assertThat(rsm.decode(buffer("-ERR\r\n"), output)).isTrue();
         assertThat(output.getError()).isEqualTo("ERR");
+    }
+
+    @Test
+    public void errorWithoutLineBreak() throws Exception {
+        assertThat(rsm.decode(buffer("-ERR"), output)).isFalse();
+        assertThat(rsm.decode(buffer("\r\n"), output)).isTrue();
+        assertThat(output.getError()).isEqualTo("");
     }
 
     @Test
