@@ -227,7 +227,7 @@ public class GeoCommandTest extends AbstractCommandTest {
 
         prepareGeo();
 
-        List<String> geohash = redis.geohash("dunno");
+        List<String> geohash = redis.geohash("dunno", "member");
 
         assertThat(geohash).isEmpty();
     }

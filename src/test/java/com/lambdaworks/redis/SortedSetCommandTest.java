@@ -416,13 +416,13 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getValues().get(0)).isEqualTo(sv(1, value));
 
-        ScoredValueScanCursor<String> cursor2 = redis.zscan(key, cursor);
+        ScoredValueScanCursor<String> cursor2 = redis.zscan(key, new ScanCursor());
 
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
         assertThat(cursor2.getValues().get(0)).isEqualTo(sv(1, value));
 
-        ScoredValueScanCursor<String> cursor3 = redis.zscan(key, cursor, ScanArgs.Builder.limit(5));
+        ScoredValueScanCursor<String> cursor3 = redis.zscan(key, new ScanCursor(), ScanArgs.Builder.limit(5));
 
         assertThat(cursor3.getCursor()).isEqualTo("0");
         assertThat(cursor3.isFinished()).isTrue();
@@ -442,13 +442,13 @@ public class SortedSetCommandTest extends AbstractCommandTest {
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getList().get(0)).isEqualTo(value);
 
-        StreamScanCursor cursor2 = redis.zscan(adapter, key, cursor);
+        StreamScanCursor cursor2 = redis.zscan(adapter, key, new ScanCursor());
 
         assertThat(cursor2.getCount()).isEqualTo(1);
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        StreamScanCursor cursor3 = redis.zscan(adapter, key, cursor, ScanArgs.Builder.matches("*").limit(100));
+        StreamScanCursor cursor3 = redis.zscan(adapter, key, new ScanCursor(), ScanArgs.Builder.matches("*").limit(100));
 
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");

@@ -196,13 +196,13 @@ public class SetCommandTest extends AbstractCommandTest {
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getValues()).isEqualTo(list(value));
 
-        ValueScanCursor<String> cursor2 = redis.sscan(key, cursor);
+        ValueScanCursor<String> cursor2 = redis.sscan(key, new ScanCursor());
 
         assertThat(cursor2.getValues()).hasSize(1);
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        ValueScanCursor<String> cursor3 = redis.sscan(key, cursor, ScanArgs.Builder.limit(5));
+        ValueScanCursor<String> cursor3 = redis.sscan(key, new ScanCursor(), ScanArgs.Builder.limit(5));
 
         assertThat(cursor3.getValues()).hasSize(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
@@ -222,13 +222,13 @@ public class SetCommandTest extends AbstractCommandTest {
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getList()).isEqualTo(list(value));
 
-        StreamScanCursor cursor2 = redis.sscan(adapter, key, cursor);
+        StreamScanCursor cursor2 = redis.sscan(adapter, key, new ScanCursor());
 
         assertThat(cursor2.getCount()).isEqualTo(1);
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        StreamScanCursor cursor3 = redis.sscan(adapter, key, cursor, ScanArgs.Builder.limit(5));
+        StreamScanCursor cursor3 = redis.sscan(adapter, key, new ScanCursor(), ScanArgs.Builder.limit(5));
 
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");

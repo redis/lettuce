@@ -278,7 +278,7 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getKeys()).isEqualTo(list(key));
 
-        RedisFuture<KeyScanCursor<String>> future2 = async.scan(future.get(), ScanArgs.Builder.limit(10));
+        RedisFuture<KeyScanCursor<String>> future2 = async.scan(new ScanCursor(), ScanArgs.Builder.limit(10));
         KeyScanCursor<String> cursor2 = future2.get();
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
@@ -297,13 +297,13 @@ public class KeyCommandTest extends AbstractCommandTest {
         assertThat(cursor.isFinished()).isTrue();
         assertThat(adapter.getList()).isEqualTo(list(key));
 
-        StreamScanCursor cursor2 = redis.scan(adapter, cursor);
+        StreamScanCursor cursor2 = redis.scan(adapter, new ScanCursor());
 
         assertThat(cursor2.getCount()).isEqualTo(1);
         assertThat(cursor2.getCursor()).isEqualTo("0");
         assertThat(cursor2.isFinished()).isTrue();
 
-        StreamScanCursor cursor3 = redis.scan(adapter, cursor, ScanArgs.Builder.limit(5));
+        StreamScanCursor cursor3 = redis.scan(adapter, new ScanCursor(), ScanArgs.Builder.limit(5));
 
         assertThat(cursor3.getCount()).isEqualTo(1);
         assertThat(cursor3.getCursor()).isEqualTo("0");
