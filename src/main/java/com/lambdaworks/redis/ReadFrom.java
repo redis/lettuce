@@ -49,7 +49,7 @@ public abstract class ReadFrom {
      */
     public static ReadFrom valueOf(String name) {
         if (LettuceStrings.isEmpty(name)) {
-            throw new IllegalArgumentException("name must not be empty");
+            throw new IllegalArgumentException("Name must not be empty");
         }
 
         if (name.equalsIgnoreCase("master")) {

@@ -33,7 +33,7 @@ public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> implements
 
     @Override
     public void setSubscriber(Subscriber<K> subscriber) {
-        LettuceAssert.notNull(subscriber, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
         this.subscriber = subscriber;
     }
 

@@ -136,7 +136,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(String uri) {
-        LettuceAssert.notEmpty(uri, "uri must not be empty");
+        LettuceAssert.notEmpty(uri, "URI must not be empty");
         return new RedisClient(null, RedisURI.create(uri));
     }
 
@@ -165,7 +165,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public static RedisClient create(ClientResources clientResources, String uri) {
         assertNotNull(clientResources);
-        LettuceAssert.notEmpty(uri, "uri must not be empty");
+        LettuceAssert.notEmpty(uri, "URI must not be empty");
         return create(clientResources, RedisURI.create(uri));
     }
 

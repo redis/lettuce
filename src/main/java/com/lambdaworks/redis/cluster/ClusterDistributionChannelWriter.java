@@ -50,7 +50,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     @SuppressWarnings("unchecked")
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
-        LettuceAssert.notNull(command, "command must not be null");
+        LettuceAssert.notNull(command, "Command must not be null");
 
         if (closed) {
             throw new RedisException("Connection is closed");
@@ -131,24 +131,24 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
     private HostAndPort getMoveTarget(String errorMessage) {
 
-        LettuceAssert.notEmpty(errorMessage, "errorMessage must not be empty");
+        LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
         LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
-                "errorMessage must start with " + CommandKeyword.MOVED);
+                "ErrorMessage must start with " + CommandKeyword.MOVED);
 
         String[] movedMessageParts = errorMessage.split(" ");
-        LettuceAssert.isTrue(movedMessageParts.length >= 3, "errorMessage must consist of 3 tokens (" + errorMessage + ")");
+        LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
 
         return HostAndPort.parse(movedMessageParts[2]);
     }
 
     private HostAndPort getAskTarget(String errorMessage) {
 
-        LettuceAssert.notEmpty(errorMessage, "errorMessage must not be empty");
+        LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
         LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()),
-                "errorMessage must start with " + CommandKeyword.ASK);
+                "ErrorMessage must start with " + CommandKeyword.ASK);
 
         String[] movedMessageParts = errorMessage.split(" ");
-        LettuceAssert.isTrue(movedMessageParts.length >= 3, "errorMessage must consist of 3 tokens (" + errorMessage + ")");
+        LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
 
         return HostAndPort.parse(movedMessageParts[2]);
     }

@@ -25,7 +25,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withStore(K storeKey) {
-        LettuceAssert.notNull(storeKey, "storeKey must not be null");
+        LettuceAssert.notNull(storeKey, "StoreKey must not be null");
         this.storeKey = storeKey;
         return this;
     }
@@ -38,7 +38,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withStoreDist(K storeKey) {
-        LettuceAssert.notNull(storeKey, "storeKey must not be null");
+        LettuceAssert.notNull(storeKey, "StoreKey must not be null");
         this.storeDistKey = storeKey;
         return this;
     }
@@ -50,7 +50,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs withCount(long count) {
-        LettuceAssert.isTrue(count > 0, "count must be greater 0");
+        LettuceAssert.isTrue(count > 0, "Count must be greater 0");
         this.count = count;
         return this;
     }
@@ -96,7 +96,7 @@ public class GeoRadiusStoreArgs<K> {
      * @return {@code this}
      */
     public GeoRadiusStoreArgs sort(Sort sort) {
-        LettuceAssert.notNull(sort, "sort must not be null");
+        LettuceAssert.notNull(sort, "Sort must not be null");
 
         this.sort = sort;
         return this;

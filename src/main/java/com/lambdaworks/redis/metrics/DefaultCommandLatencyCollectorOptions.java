@@ -100,7 +100,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          *
          */
         public Builder targetUnit(TimeUnit targetUnit) {
-            LettuceAssert.notNull(targetUnit, "targetUnit must not be null");
+            LettuceAssert.notNull(targetUnit, "TargetUnit must not be null");
             this.targetUnit = targetUnit;
             return this;
         }
@@ -114,7 +114,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          * @return this
          */
         public Builder targetPercentiles(double[] targetPercentiles) {
-            LettuceAssert.notNull(targetPercentiles, "targetPercentiles must not be null");
+            LettuceAssert.notNull(targetPercentiles, "TargetPercentiles must not be null");
             this.targetPercentiles = targetPercentiles;
             return this;
         }

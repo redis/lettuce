@@ -372,7 +372,7 @@ public abstract class AbstractRedisClient {
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
     protected void setOptions(ClientOptions clientOptions) {
-        LettuceAssert.notNull(clientOptions, "clientOptions must not be null");
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         this.clientOptions = clientOptions;
     }
 }

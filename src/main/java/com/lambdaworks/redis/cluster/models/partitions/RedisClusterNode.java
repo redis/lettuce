@@ -84,7 +84,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param uri the {@link RedisURI}, must not be {@literal null}
      */
     public void setUri(RedisURI uri) {
-        LettuceAssert.notNull(uri, "uri must not be null");
+        LettuceAssert.notNull(uri, "RedisURI must not be null");
         this.uri = uri;
     }
 
@@ -98,7 +98,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param nodeId the {@code nodeId}
      */
     public void setNodeId(String nodeId) {
-        LettuceAssert.notNull(nodeId, "nodeId must not be null");
+        LettuceAssert.notNull(nodeId, "NodeId must not be null");
         this.nodeId = nodeId;
     }
 
@@ -180,7 +180,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param slots list of slots, must not be {@literal null} but may be empty
      */
     public void setSlots(List<Integer> slots) {
-        LettuceAssert.notNull(slots, "slots must not be null");
+        LettuceAssert.notNull(slots, "Slots must not be null");
 
         this.slots = slots;
     }

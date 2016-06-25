@@ -47,10 +47,10 @@ public class ConnectionBuilder {
 
     protected List<ChannelHandler> buildHandlers() {
 
-        LettuceAssert.assertState(channelGroup != null, "channelGroup must be set");
-        LettuceAssert.assertState(connectionEvents != null, "connectionEvents must be set");
-        LettuceAssert.assertState(connection != null, "connection must be set");
-        LettuceAssert.assertState(clientResources != null, "clientResources must be set");
+        LettuceAssert.assertState(channelGroup != null, "ChannelGroup must be set");
+        LettuceAssert.assertState(connectionEvents != null, "ConnectionEvents must be set");
+        LettuceAssert.assertState(connection != null, "Connection must be set");
+        LettuceAssert.assertState(clientResources != null, "ClientResources must be set");
 
         List<ChannelHandler> handlers = new ArrayList<>();
         if (clientOptions.isAutoReconnect()) {
@@ -70,9 +70,9 @@ public class ConnectionBuilder {
 
     protected ConnectionWatchdog createConnectionWatchdog() {
 
-        LettuceAssert.assertState(bootstrap != null, "bootstrap must be set for autoReconnect=true");
-        LettuceAssert.assertState(timer != null, "timer must be set for autoReconnect=true");
-        LettuceAssert.assertState(socketAddressSupplier != null, "socketAddressSupplier must be set for autoReconnect=true");
+        LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
+        LettuceAssert.assertState(timer != null, "Timer must be set for autoReconnect=true");
+        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap, timer,
                 workerPool, socketAddressSupplier, reconnectionListener);
@@ -92,7 +92,7 @@ public class ConnectionBuilder {
     }
 
     public SocketAddress socketAddress() {
-        LettuceAssert.assertState(socketAddressSupplier != null, "socketAddressSupplier must be set");
+        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
         return socketAddressSupplier.get();
     }
 

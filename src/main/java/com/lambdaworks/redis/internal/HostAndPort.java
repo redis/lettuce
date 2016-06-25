@@ -63,7 +63,7 @@ public class HostAndPort {
      */
     public static HostAndPort parse(String hostPortString) {
 
-        LettuceAssert.notNull(hostPortString, "hostPortString must not be null");
+        LettuceAssert.notNull(hostPortString, "HostPortString must not be null");
         String host;
         String portString = null;
 

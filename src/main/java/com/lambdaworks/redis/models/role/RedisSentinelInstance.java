@@ -25,7 +25,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
      * @param monitoredMasters list of monitored masters, must not be {@literal null} but may be empty
      */
     public RedisSentinelInstance(List<String> monitoredMasters) {
-        LettuceAssert.notNull(monitoredMasters, "list of monitoredMasters must not be null");
+        LettuceAssert.notNull(monitoredMasters, "List of monitoredMasters must not be null");
         this.monitoredMasters = monitoredMasters;
     }
 
@@ -47,7 +47,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
     }
 
     public void setMonitoredMasters(List<String> monitoredMasters) {
-        LettuceAssert.notNull(monitoredMasters, "list of monitoredMasters must not be null");
+        LettuceAssert.notNull(monitoredMasters, "List of monitoredMasters must not be null");
         this.monitoredMasters = monitoredMasters;
     }
 

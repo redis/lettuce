@@ -14,8 +14,8 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
     private final SocketAddress remote;
 
     ConnectionEventSupport(SocketAddress local, SocketAddress remote) {
-        LettuceAssert.notNull(local, "local must not be null");
-        LettuceAssert.notNull(remote, "remote must not be null");
+        LettuceAssert.notNull(local, "Local must not be null");
+        LettuceAssert.notNull(remote, "Remote must not be null");
 
         this.local = local;
         this.remote = remote;

@@ -28,7 +28,7 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
      * @param slaves list of slaves, must not be {@literal null} but may be empty
      */
     public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> slaves) {
-        LettuceAssert.notNull(slaves, "slaves must not be null");
+        LettuceAssert.notNull(slaves, "Slaves must not be null");
         this.replicationOffset = replicationOffset;
         this.slaves = slaves;
     }
@@ -55,7 +55,7 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
     }
 
     public void setSlaves(List<ReplicationPartner> slaves) {
-        LettuceAssert.notNull(slaves, "slaves must not be null");
+        LettuceAssert.notNull(slaves, "Slaves must not be null");
         this.slaves = slaves;
     }
 

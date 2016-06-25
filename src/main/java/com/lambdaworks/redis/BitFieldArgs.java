@@ -28,7 +28,7 @@ public class BitFieldArgs {
     }
 
     private BitFieldArgs(List<SubCommand> commands) {
-        LettuceAssert.notNull(commands, "commands must not be null");
+        LettuceAssert.notNull(commands, "Commands must not be null");
         this.commands = commands;
     }
 
@@ -116,7 +116,7 @@ public class BitFieldArgs {
      * @param subCommand
      */
     private BitFieldArgs addSubCommand(SubCommand subCommand) {
-        LettuceAssert.notNull(subCommand, "subCommand must not be null");
+        LettuceAssert.notNull(subCommand, "SubCommand must not be null");
         commands.add(subCommand);
         return this;
     }
@@ -299,8 +299,8 @@ public class BitFieldArgs {
 
         private Set(BitFieldType bitFieldType, int offset, long value) {
 
-            LettuceAssert.notNull(bitFieldType, "bitFieldType must not be null");
-            LettuceAssert.isTrue(offset > -1, "offset must be greater or equal to 0");
+            LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
+            LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
             this.offset = offset;
             this.bitFieldType = bitFieldType;
@@ -323,8 +323,8 @@ public class BitFieldArgs {
 
         private Get(BitFieldType bitFieldType, int offset) {
 
-            LettuceAssert.notNull(bitFieldType, "bitFieldType must not be null");
-            LettuceAssert.isTrue(offset > -1, "offset must be greater or equal to 0");
+            LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
+            LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
             this.offset = offset;
             this.bitFieldType = bitFieldType;
@@ -347,8 +347,8 @@ public class BitFieldArgs {
 
         private IncrBy(BitFieldType bitFieldType, int offset, long value) {
 
-            LettuceAssert.notNull(bitFieldType, "bitFieldType must not be null");
-            LettuceAssert.isTrue(offset > -1, "offset must be greater or equal to 0");
+            LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
+            LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
             this.offset = offset;
             this.bitFieldType = bitFieldType;
@@ -370,7 +370,7 @@ public class BitFieldArgs {
 
         private Overflow(OverflowType overflowType) {
 
-            LettuceAssert.notNull(overflowType, "overflowType must not be null");
+            LettuceAssert.notNull(overflowType, "OverflowType must not be null");
             this.overflowType = overflowType;
         }
 
@@ -423,7 +423,7 @@ public class BitFieldArgs {
 
         private BitFieldType(boolean signed, int bits) {
 
-            LettuceAssert.isTrue(bits > 0, "bits must be greater 0");
+            LettuceAssert.isTrue(bits > 0, "Bits must be greater 0");
 
             if (signed) {
                 LettuceAssert.isTrue(bits < 65, "Signed integers support only up to 64 bits");

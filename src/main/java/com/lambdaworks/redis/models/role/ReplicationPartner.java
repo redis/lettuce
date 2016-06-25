@@ -27,7 +27,7 @@ public class ReplicationPartner implements Serializable {
      * @param replicationOffset the replication offset
      */
     public ReplicationPartner(HostAndPort host, long replicationOffset) {
-        LettuceAssert.notNull(host, "host must not be null");
+        LettuceAssert.notNull(host, "Host must not be null");
         this.host = host;
         this.replicationOffset = replicationOffset;
     }
@@ -49,7 +49,7 @@ public class ReplicationPartner implements Serializable {
     }
 
     public void setHost(HostAndPort host) {
-        LettuceAssert.notNull(host, "host must not be null");
+        LettuceAssert.notNull(host, "Host must not be null");
         this.host = host;
     }
 

@@ -48,7 +48,7 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
 
 	@Override
 	public void setSubscriber(Subscriber<GeoCoordinates> subscriber) {
-        LettuceAssert.notNull(subscriber, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
 		this.subscriber = subscriber;
 	}
 

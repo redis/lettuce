@@ -51,8 +51,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
     @Override
     protected List<ChannelHandler> buildHandlers() {
-        LettuceAssert.assertState(redisURI != null, "redisURI must not be null");
-        LettuceAssert.assertState(redisURI.isSsl(), "redisURI is not configured for SSL (ssl is false)");
+        LettuceAssert.assertState(redisURI != null, "RedisURI must not be null");
+        LettuceAssert.assertState(redisURI.isSsl(), "RedisURI is not configured for SSL (ssl is false)");
 
         return super.buildHandlers();
     }

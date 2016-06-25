@@ -48,8 +48,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     public NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, boolean sync, long timeout, TimeUnit unit) {
         if (sync) {
-            LettuceAssert.isTrue(timeout > 0, "timeout must be greater 0 when using sync mode");
-            LettuceAssert.notNull(unit, "unit must not be null when using sync mode");
+            LettuceAssert.isTrue(timeout > 0, "Timeout must be greater 0 when using sync mode");
+            LettuceAssert.notNull(unit, "Unit must not be null when using sync mode");
         }
 
         this.selection = selection;

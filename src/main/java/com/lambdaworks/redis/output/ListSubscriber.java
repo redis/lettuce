@@ -16,7 +16,7 @@ class ListSubscriber<T> implements Subscriber<T> {
 
     private ListSubscriber(List<T> target) {
 
-        LettuceAssert.notNull(target, "target must not be null");
+        LettuceAssert.notNull(target, "Target must not be null");
 		this.target = target;
     }
 

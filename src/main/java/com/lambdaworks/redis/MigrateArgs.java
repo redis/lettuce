@@ -62,13 +62,13 @@ public class MigrateArgs<K> {
     }
 
     public MigrateArgs<K> key(K key) {
-        LettuceAssert.notNull(key, "key must not be null");
+        LettuceAssert.notNull(key, "Key must not be null");
         this.keys.add(key);
         return this;
     }
 
     public MigrateArgs<K> keys(K... keys) {
-        LettuceAssert.notEmpty(keys, "keys must not be empty");
+        LettuceAssert.notEmpty(keys, "Keys must not be empty");
         for (K key : keys) {
             this.keys.add(key);
         }
@@ -76,7 +76,7 @@ public class MigrateArgs<K> {
     }
 
     public MigrateArgs<K> keys(Iterable<K> keys) {
-        LettuceAssert.notNull(keys, "keys must not be null");
+        LettuceAssert.notNull(keys, "Keys must not be null");
         Iterator<K> iterator = keys.iterator();
         while (iterator.hasNext()) {
             this.keys.add(iterator.next());

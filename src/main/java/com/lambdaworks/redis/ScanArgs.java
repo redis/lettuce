@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
@@ -56,6 +57,7 @@ public class ScanArgs {
      * @return the current instance of {@link ScanArgs}
      */
     public ScanArgs match(String match) {
+        LettuceAssert.notNull(match, "Match must not be null");
         this.match = match;
         return this;
     }

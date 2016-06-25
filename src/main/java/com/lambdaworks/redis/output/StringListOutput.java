@@ -32,7 +32,7 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
 
 	@Override
 	public void setSubscriber(Subscriber<String> subscriber) {
-        LettuceAssert.notNull(subscriber, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
 		this.subscriber = subscriber;
 	}
 

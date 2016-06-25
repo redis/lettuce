@@ -19,9 +19,9 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     private final ProtocolKeyword commandType;
 
     protected CommandLatencyId(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
-        LettuceAssert.notNull(localAddress, "localAddress must not be null");
-        LettuceAssert.notNull(remoteAddress, "remoteAddress must not be null");
-        LettuceAssert.notNull(commandType, "commandType must not be null");
+        LettuceAssert.notNull(localAddress, "LocalAddress must not be null");
+        LettuceAssert.notNull(remoteAddress, "RemoteAddress must not be null");
+        LettuceAssert.notNull(commandType, "CommandType must not be null");
 
         this.localAddress = localAddress;
         this.remoteAddress = remoteAddress;

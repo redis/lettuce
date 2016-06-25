@@ -1,5 +1,7 @@
 package com.lambdaworks.redis;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
+
 /**
  * Generic Cursor data structure.
  * 
@@ -52,6 +54,8 @@ public class ScanCursor {
      * @param cursor the cursor id
      */
     public void setCursor(String cursor) {
+        LettuceAssert.notEmpty(cursor, "Cursor must not be empty");
+
         this.cursor = cursor;
     }
 

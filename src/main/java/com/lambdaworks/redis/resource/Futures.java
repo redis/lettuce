@@ -68,7 +68,7 @@ class Futures {
          * @param aggregatePromise the {@link Promise} to notify
          */
         public PromiseAggregator(Promise<V> aggregatePromise) {
-            LettuceAssert.notNull(aggregatePromise, "aggregatePromise must not be null");
+            LettuceAssert.notNull(aggregatePromise, "AggregatePromise must not be null");
             this.aggregatePromise = aggregatePromise;
         }
 
@@ -103,7 +103,7 @@ class Futures {
         @SafeVarargs
         public final PromiseAggregator<V, F> add(Promise<V>... promises) {
 
-            LettuceAssert.notNull(promises, "promises must not be null");
+            LettuceAssert.notNull(promises, "Promises must not be null");
             LettuceAssert.assertState(armed,
                     "Aggregator is not armed and does not allow adding promises in that state. Call arm() first.");
 

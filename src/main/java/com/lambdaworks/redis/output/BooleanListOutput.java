@@ -31,7 +31,7 @@ public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> 
 
     @Override
     public void setSubscriber(Subscriber<Boolean> subscriber) {
-        LettuceAssert.notNull(subscriber, "subscriber must not be null");
+        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
         this.subscriber = subscriber;
     }
 

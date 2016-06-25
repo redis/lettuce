@@ -48,8 +48,8 @@ public class ClusterSlotRange implements Serializable {
     @Deprecated
     public ClusterSlotRange(int from, int to, HostAndPort master, List<HostAndPort> slaves) {
 
-        LettuceAssert.notNull(master, "master must not be null");
-        LettuceAssert.notNull(slaves, "slaves must not be null");
+        LettuceAssert.notNull(master, "Master must not be null");
+        LettuceAssert.notNull(slaves, "Slaves must not be null");
 
         this.from = from;
         this.to = to;
@@ -69,8 +69,8 @@ public class ClusterSlotRange implements Serializable {
      */
     public ClusterSlotRange(int from, int to, RedisClusterNode masterNode, List<RedisClusterNode> slaveNodes) {
 
-        LettuceAssert.notNull(masterNode, "masterNode must not be null");
-        LettuceAssert.notNull(slaveNodes, "slaveNodes must not be null");
+        LettuceAssert.notNull(masterNode, "MasterNode must not be null");
+        LettuceAssert.notNull(slaveNodes, "SlaveNodes must not be null");
 
         this.from = from;
         this.to = to;
@@ -161,13 +161,13 @@ public class ClusterSlotRange implements Serializable {
     }
 
     public void setMaster(HostAndPort master) {
-        LettuceAssert.notNull(master, "master must not be null");
+        LettuceAssert.notNull(master, "Master must not be null");
         this.master = master;
     }
 
     public void setSlaves(List<HostAndPort> slaves) {
 
-        LettuceAssert.notNull(slaves, "slaves must not be null");
+        LettuceAssert.notNull(slaves, "Slaves must not be null");
         this.slaves = slaves;
     }
 

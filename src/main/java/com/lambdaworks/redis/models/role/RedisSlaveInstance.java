@@ -25,8 +25,8 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
      * @param state slave state, must not be {@literal null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
-        LettuceAssert.notNull(master, "master must not be null");
-        LettuceAssert.notNull(state, "state must not be null");
+        LettuceAssert.notNull(master, "Master must not be null");
+        LettuceAssert.notNull(state, "State must not be null");
         this.master = master;
         this.state = state;
     }
@@ -57,12 +57,12 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     }
 
     public void setMaster(ReplicationPartner master) {
-        LettuceAssert.notNull(master, "master must not be null");
+        LettuceAssert.notNull(master, "Master must not be null");
         this.master = master;
     }
 
     public void setState(State state) {
-        LettuceAssert.notNull(state, "state must not be null");
+        LettuceAssert.notNull(state, "State must not be null");
         this.state = state;
     }
 

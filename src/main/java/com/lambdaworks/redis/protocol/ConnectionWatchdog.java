@@ -72,7 +72,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
         LettuceAssert.notNull(timer, "Timer must not be null");
-        LettuceAssert.notNull(reconnectWorkers, "reconnectWorkers must not be null");
+        LettuceAssert.notNull(reconnectWorkers, "ReconnectWorkers must not be null");
         LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
 
         this.reconnectDelay = reconnectDelay;

@@ -84,9 +84,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Queue<RedisCommand<K, V, ?>> queue) {
 
-        LettuceAssert.notNull(clientOptions, "clientOptions must not be null");
-        LettuceAssert.notNull(clientResources, "clientResources must not be null");
-        LettuceAssert.notNull(queue, "queue must not be null");
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
+        LettuceAssert.notNull(queue, "Queue must not be null");
 
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
@@ -219,7 +219,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
-        LettuceAssert.notNull(command, "command must not be null");
+        LettuceAssert.notNull(command, "Command must not be null");
 
         try {
             incrementWriters();

@@ -46,8 +46,8 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
          * @return this
          */
         public Builder eventEmitInterval(long eventEmitInterval, TimeUnit eventEmitIntervalUnit) {
-            LettuceAssert.isTrue(eventEmitInterval >= 0, "eventEmitInterval must be greater or equal to 0");
-            LettuceAssert.notNull(eventEmitIntervalUnit, "eventEmitIntervalUnit must not be null");
+            LettuceAssert.isTrue(eventEmitInterval >= 0, "EventEmitInterval must be greater or equal to 0");
+            LettuceAssert.notNull(eventEmitIntervalUnit, "EventEmitIntervalUnit must not be null");
 
             this.eventEmitInterval = eventEmitInterval;
             this.eventEmitIntervalUnit = eventEmitIntervalUnit;

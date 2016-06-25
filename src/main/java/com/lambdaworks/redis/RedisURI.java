@@ -208,7 +208,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return An instance of {@link RedisURI} containing details from the URI.
      */
     public static RedisURI create(String uri) {
-        LettuceAssert.notEmpty(uri, "uri must not be empty");
+        LettuceAssert.notEmpty(uri, "URI must not be empty");
         return create(URI.create(uri));
     }
 

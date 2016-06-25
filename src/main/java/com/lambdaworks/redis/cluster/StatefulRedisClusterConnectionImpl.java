@@ -26,6 +26,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.AbstractInvocationHandler;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -209,9 +210,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     @Override
     public void setReadFrom(ReadFrom readFrom) {
-        if (readFrom == null) {
-            throw new IllegalArgumentException("readFrom must not be null");
-        }
+        LettuceAssert.notNull(readFrom, "ReadFrom must not be null");
         getClusterDistributionChannelWriter().setReadFrom(readFrom);
     }
 

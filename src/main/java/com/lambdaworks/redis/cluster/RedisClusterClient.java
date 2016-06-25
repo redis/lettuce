@@ -243,7 +243,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(String uri) {
-        LettuceAssert.notNull(uri, "uri must not be null");
+        LettuceAssert.notNull(uri, "URI must not be null");
         return create(RedisURI.create(uri));
     }
 
@@ -273,7 +273,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public static RedisClusterClient create(ClientResources clientResources, String uri) {
         assertNotNull(clientResources);
-        LettuceAssert.notNull(uri, "uri must not be null");
+        LettuceAssert.notNull(uri, "URI must not be null");
         return create(clientResources, RedisURI.create(uri));
     }
 

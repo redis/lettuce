@@ -200,7 +200,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     public void setOptions(ClientOptions clientOptions) {
-        LettuceAssert.notNull(clientOptions, "clientOptions must not be null");
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         synchronized (this) {
             this.clientOptions = clientOptions;
         }

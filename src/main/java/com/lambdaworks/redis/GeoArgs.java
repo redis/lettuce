@@ -54,7 +54,7 @@ public class GeoArgs {
      * @return {@code this}
      */
     public GeoArgs withCount(long count) {
-        LettuceAssert.isTrue(count > 0, "count must be greater 0");
+        LettuceAssert.isTrue(count > 0, "Count must be greater 0");
         this.count = count;
         return this;
     }
@@ -108,7 +108,7 @@ public class GeoArgs {
      * @return {@code this}
      */
     public GeoArgs sort(Sort sort) {
-        LettuceAssert.notNull(sort, "sort must not be null");
+        LettuceAssert.notNull(sort, "Sort must not be null");
 
         this.sort = sort;
         return this;
@@ -142,7 +142,6 @@ public class GeoArgs {
          * meter.
          */
         m,
-
         /**
          * kilometer.
          */

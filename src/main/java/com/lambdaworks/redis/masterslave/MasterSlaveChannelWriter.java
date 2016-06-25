@@ -26,7 +26,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
     @Override
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
-        LettuceAssert.notNull(command, "command must not be null");
+        LettuceAssert.notNull(command, "Command must not be null");
 
         if (closed) {
             throw new RedisException("Connection is closed");
