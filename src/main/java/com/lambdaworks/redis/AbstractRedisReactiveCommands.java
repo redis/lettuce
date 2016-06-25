@@ -990,6 +990,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> touch(K... keys) {
+        return createObservable(() -> commandBuilder.touch(keys));
+    }
+
+    @Override
     public Observable<Long> ttl(K key) {
         return createObservable(() -> commandBuilder.ttl(key));
     }

@@ -306,8 +306,16 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<Long> sortStore(K key, SortArgs sortArgs, K destination);
 
     /**
-     * Get the time to live for a key.
+     * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
      * 
+     * @param keys the keys
+     * @return Long integer-reply the number of found keys.
+     */
+    RedisFuture<Long> touch(K... keys);
+
+    /**
+     * Get the time to live for a key.
+     *
      * @param key the key
      * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
      */

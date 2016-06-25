@@ -1013,6 +1013,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> touch(K... keys) {
+        return dispatch(commandBuilder.touch(keys));
+    }
+
+    @Override
     public RedisFuture<Long> ttl(K key) {
         return dispatch(commandBuilder.ttl(key));
     }
