@@ -647,10 +647,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(LPUSH, new IntegerOutput<K, V>(codec), key, values);
     }
 
-    public Command<K, V, Long> lpushx(K key, V value) {
+    public Command<K, V, Long> lpushx(K key, V... values) {
         notNullKey(key);
+        notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
 
-        return createCommand(LPUSHX, new IntegerOutput<K, V>(codec), key, value);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
+
+        return createCommand(LPUSHX, new IntegerOutput<K, V>(codec), args);
     }
 
     public Command<K, V, List<V>> lrange(K key, long start, long stop) {
@@ -909,10 +912,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(RPUSH, new IntegerOutput<K, V>(codec), key, values);
     }
 
-    public Command<K, V, Long> rpushx(K key, V value) {
+    public Command<K, V, Long> rpushx(K key, V... values) {
         notNullKey(key);
+        notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
 
-        return createCommand(RPUSHX, new IntegerOutput<K, V>(codec), key, value);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
+        return createCommand(RPUSHX, new IntegerOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> sadd(K key, V... members) {

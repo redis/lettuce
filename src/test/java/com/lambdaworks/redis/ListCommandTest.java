@@ -91,6 +91,14 @@ public class ListCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void lpushxVariadic() throws Exception {
+        assertThat((long) redis.lpushx(key, "one", "two")).isEqualTo(0);
+        redis.lpush(key, "two");
+        assertThat((long) redis.lpushx(key, "one", "zero")).isEqualTo(3);
+        assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("zero", "one", "two"));
+    }
+
+    @Test
     public void lrange() throws Exception {
         assertThat(redis.lrange(key, 0, 10).isEmpty()).isTrue();
         redis.rpush(key, "one", "two", "three");
@@ -185,5 +193,13 @@ public class ListCommandTest extends AbstractCommandTest {
         redis.rpush(key, "one");
         assertThat((long) redis.rpushx(key, "two")).isEqualTo(2);
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two"));
+    }
+
+    @Test
+    public void rpushxVariadic() throws Exception {
+        assertThat((long) redis.rpushx(key, "two", "three")).isEqualTo(0);
+        redis.rpush(key, "one");
+        assertThat((long) redis.rpushx(key, "two", "three")).isEqualTo(3);
+        assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two", "three"));
     }
 }
