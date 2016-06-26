@@ -7,16 +7,16 @@ env:
     - PROFILE=netty-41next
 sudo: false
 before_install:
-  - if [[ ! -f stunnel.tar.gz ]]; then wget -O stunnel.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.29.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.29/configure ]]; then tar -xzf stunnel.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.29/src/stunnel ]]; then cd ./stunnel-5.29; ./configure; make; cd ..; fi
-  - export PATH="$PATH:$(pwd)/stunnel-5.29/src"
+  - if [[ ! -f stunnel.tar.gz ]]; then wget -O stunnel.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.33.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.33/configure ]]; then tar -xzf stunnel.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.33/src/stunnel ]]; then cd ./stunnel-5.33; ./configure; make; cd ..; fi
+  - export PATH="$PATH:$(pwd)/stunnel-5.33/src"
 install: make prepare ssl-keys
 script: make test-coveralls PROFILE=${PROFILE}
 cache:
   directories:
     - '$HOME/.m2/repository'
-    - '$TRAVIS_BUILD_DIR/stunnel-5.29'
+    - '$TRAVIS_BUILD_DIR/stunnel-5.33'
 notifications:
   webhooks:
     urls:
