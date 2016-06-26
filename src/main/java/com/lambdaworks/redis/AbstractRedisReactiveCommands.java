@@ -548,6 +548,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> lpushx(K key, V... values) {
+        return createObservable(() -> commandBuilder.lpushx(key, values));
+    }
+
+    @Override
     public Observable<V> lrange(K key, long start, long stop) {
         return createDissolvingObservable(() -> commandBuilder.lrange(key, start, stop));
     }
@@ -748,6 +753,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<Long> rpushx(K key, V value) {
         return createObservable(() -> commandBuilder.rpushx(key, value));
+    }
+
+    @Override
+    public Observable<Long> rpushx(K key, V... values) {
+        return createObservable(() -> commandBuilder.rpushx(key, values));
     }
 
     @Override

@@ -108,8 +108,19 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param value the value
      * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operation.
+     * @deprecated Use {@link #lpushx(Object, Object[])}
      */
+    @Deprecated
     RedisFuture<Long> lpushx(K key, V value);
+
+    /**
+     * Prepend values to a list, only if the list exists.
+     *
+     * @param key the key
+     * @param values the values
+     * @return Long integer-reply the length of the list after the push operation.
+     */
+    RedisFuture<Long> lpushx(K key, V... values);
 
     /**
      * Get a range of elements from a list.
@@ -195,6 +206,17 @@ public interface RedisListsAsyncConnection<K, V> {
      * @param key the key
      * @param value the value
      * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operation.
+     * @deprecated Use {@link #rpushx(java.lang.Object, java.lang.Object[])}
      */
+    @Deprecated
     RedisFuture<Long> rpushx(K key, V value);
+
+    /**
+     * Append values to a list, only if the list exists.
+     *
+     * @param key the key
+     * @param values the values
+     * @return RedisFuture&lt;Long&gt; integer-reply the length of the list after the push operation.
+     */
+    RedisFuture<Long> rpushx(K key, V... values);
 }

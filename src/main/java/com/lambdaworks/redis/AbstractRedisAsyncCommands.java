@@ -558,6 +558,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> lpushx(K key, V... values) {
+        return dispatch(commandBuilder.lpushx(key, values));
+    }
+
+    @Override
     public RedisFuture<List<V>> lrange(K key, long start, long stop) {
         return dispatch(commandBuilder.lrange(key, start, stop));
     }
@@ -760,6 +765,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<Long> rpushx(K key, V value) {
         return dispatch(commandBuilder.rpushx(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> rpushx(K key, V... values) {
+        return dispatch(commandBuilder.rpushx(key, values));
     }
 
     @Override
