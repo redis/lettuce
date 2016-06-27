@@ -22,6 +22,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <V>
  * @author Mark Paluch
  */
+@SuppressWarnings({"unchecked", "Convert2Diamond", "WeakerAccess"})
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
@@ -39,6 +40,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> auth(String password) {
+        LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(password, "Password " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
@@ -168,6 +170,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> clientKill(String addr) {
+        LettuceAssert.notNull(addr, "Addr " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(addr, "Addr " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL).add(addr);
@@ -198,6 +201,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<Object>> commandInfo(String... commands) {
+        LettuceAssert.notNull(commands, "Commands " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(commands, "Commands " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(commands, "Commands " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
@@ -222,6 +226,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<String>> configGet(String parameter) {
+        LettuceAssert.notNull(parameter, "Parameter " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(parameter, "Parameter " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET).add(parameter);
@@ -234,6 +239,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> configSet(String parameter, String value) {
+        LettuceAssert.notNull(parameter, "Parameter " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(parameter, "Parameter " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(value, "Value " + MUST_NOT_BE_NULL);
 
@@ -352,6 +358,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public <T> Command<K, V, T> eval(String script, ScriptOutputType type, K... keys) {
+        LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(script, "Script " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
@@ -363,6 +370,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public <T> Command<K, V, T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
+        LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(script, "Script " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
@@ -375,6 +383,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K... keys) {
+        LettuceAssert.notNull(digest, "Digest " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(digest, "Digest " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
@@ -386,6 +395,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
+        LettuceAssert.notNull(digest, "Digest " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(digest, "Digest " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
@@ -467,6 +477,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Long> hdel(K key, K... fields) {
         notNullKey(key);
+        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
@@ -547,6 +558,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, List<V>> hmget(K key, K... fields) {
         notNullKey(key);
+        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
@@ -555,6 +567,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
         notNullKey(key);
+        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
         notNull(channel);
 
@@ -677,14 +690,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Long> lpush(K key, V... values) {
         notNullKey(key);
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        notEmptyValues(values);
 
         return createCommand(LPUSH, new IntegerOutput<K, V>(codec), key, values);
     }
 
     public Command<K, V, Long> lpushx(K key, V... values) {
         notNullKey(key);
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
 
@@ -728,6 +741,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> migrate(String host, int port, K key, int db, long timeout) {
+        LettuceAssert.notNull(host, "Host " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(host, "Host " + MUST_NOT_BE_EMPTY);
         notNullKey(key);
 
@@ -737,6 +751,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
+        LettuceAssert.notNull(host, "Host " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(host, "Host " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(migrateArgs, "migrateArgs " + MUST_NOT_BE_NULL);
 
@@ -894,6 +909,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Command<K, V, Map<K, Long>> pubsubNumsub(K... pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(pattern, "Pattern " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(NUMSUB).addKeys(pattern);
@@ -957,21 +973,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Long> rpush(K key, V... values) {
         notNullKey(key);
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        notEmptyValues(values);
 
         return createCommand(RPUSH, new IntegerOutput<K, V>(codec), key, values);
     }
 
     public Command<K, V, Long> rpushx(K key, V... values) {
         notNullKey(key);
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
         return createCommand(RPUSHX, new IntegerOutput<K, V>(codec), args);
     }
 
+
     public Command<K, V, Long> sadd(K key, V... members) {
         notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
 
         return createCommand(SADD, new IntegerOutput<K, V>(codec), key, members);
@@ -988,8 +1006,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<Boolean>> scriptExists(String... digests) {
-        LettuceAssert.notEmpty(digests, "digests " + MUST_NOT_BE_EMPTY);
-        LettuceAssert.noNullElements(digests, "digests " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        LettuceAssert.notNull(digests, "Digests " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(digests, "Digests " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(digests, "Digests " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(EXISTS);
         for (String sha : digests) {
@@ -1137,7 +1156,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> slaveof(String host, int port) {
-        LettuceAssert.notEmpty(host, "host " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(host, "Host " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(host, "Host " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(host).add(port);
         return createCommand(SLAVEOF, new StatusOutput<K, V>(codec), args);
@@ -1258,6 +1278,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Long> srem(K key, V... members) {
         notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
 
         return createCommand(SREM, new IntegerOutput<K, V>(codec), key, members);
@@ -1358,6 +1379,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SuppressWarnings("unchecked")
     public Command<K, V, Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
         notNullKey(key);
+        LettuceAssert.notNull(scoresAndValues, "ScoresAndValues " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(scoresAndValues, "ScoresAndValues " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(scoresAndValues, "ScoresAndValues " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
@@ -1589,6 +1611,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Long> zrem(K key, V... members) {
         notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
 
         return createCommand(ZREM, new IntegerOutput<K, V>(codec), key, members);
@@ -2095,6 +2118,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Long> pfadd(K key, V value, V... moreValues) {
+        notNullKey(key);
         LettuceAssert.notNull(value, "Value " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(moreValues, "MoreValues " + MUST_NOT_BE_NULL);
         LettuceAssert.noNullElements(moreValues, "MoreValues " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
@@ -2104,7 +2128,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Long> pfadd(K key, V... values) {
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        notNullKey(key);
+        notEmptyValues(values);
         LettuceAssert.noNullElements(values, "Values " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(values);
@@ -2121,7 +2146,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Long> pfcount(K... keys) {
-        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
@@ -2130,10 +2154,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SuppressWarnings("unchecked")
     public Command<K, V, String> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
-        LettuceAssert.notNull(destkey, "destkey " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(sourcekey, "sourcekey " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(moreSourceKeys, "moreSourceKeys " + MUST_NOT_BE_NULL);
-        LettuceAssert.noNullElements(moreSourceKeys, "moreSourceKeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        LettuceAssert.notNull(destkey, "Destkey " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sourcekey, "Sourcekey " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(moreSourceKeys, "MoreSourceKeys " + MUST_NOT_BE_NULL);
+        LettuceAssert.noNullElements(moreSourceKeys, "MoreSourceKeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKey(sourcekey).addKeys(moreSourceKeys);
         return createCommand(PFMERGE, new StatusOutput<K, V>(codec), args);
@@ -2141,9 +2165,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SuppressWarnings("unchecked")
     public Command<K, V, String> pfmerge(K destkey, K... sourcekeys) {
-        LettuceAssert.notNull(destkey, "destkey " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(sourcekeys, "sourcekeys " + MUST_NOT_BE_EMPTY);
-        LettuceAssert.noNullElements(sourcekeys, "sourcekeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        LettuceAssert.notNull(destkey, "Destkey " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sourcekeys, "Sourcekeys " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(sourcekeys, "Sourcekeys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(sourcekeys, "Sourcekeys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(destkey).addKeys(sourcekeys);
         return createCommand(PFMERGE, new StatusOutput<K, V>(codec), args);
@@ -2155,21 +2180,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> clusterMeet(String ip, int port) {
-        LettuceAssert.notEmpty(ip, "ip " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(ip, "IP " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(ip, "IP " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(MEET).add(ip).add(port);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterForget(String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FORGET).add(nodeId);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterAddslots(int[] slots) {
-        LettuceAssert.notEmpty(slots, "slots " + MUST_NOT_BE_EMPTY);
+        notEmptySlots(slots);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(ADDSLOTS);
 
@@ -2180,7 +2206,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> clusterDelslots(int[] slots) {
-        LettuceAssert.notEmpty(slots, "slots " + MUST_NOT_BE_EMPTY);
+        notEmptySlots(slots);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(DELSLOTS);
 
@@ -2219,7 +2245,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Long> clusterCountFailureReports(String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("COUNT-FAILURE-REPORTS").add(nodeId);
         return createCommand(CLUSTER, new IntegerOutput<K, V>(codec), args);
@@ -2246,7 +2272,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> clusterSetSlotNode(int slot, String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(NODE).add(nodeId);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
@@ -2259,21 +2285,21 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, String> clusterSetSlotMigrating(int slot, String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(MIGRATING).add(nodeId);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterSetSlotImporting(int slot, String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETSLOT).add(slot).add(IMPORTING).add(nodeId);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> clusterReplicate(String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(REPLICATE).add(nodeId);
         return createCommand(CLUSTER, new StatusOutput<K, V>(codec), args);
@@ -2292,7 +2318,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<String>> clusterSlaves(String nodeId) {
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+        assertNodeId(nodeId);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLAVES).add(nodeId);
         return createCommand(CLUSTER, new StringListOutput<K, V>(codec), args);
@@ -2328,6 +2354,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, Long> geoadd(K key, Object[] lngLatMember) {
 
         notNullKey(key);
+        LettuceAssert.notNull(lngLatMember, "LngLatMember " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(lngLatMember, "LngLatMember " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(lngLatMember, "LngLatMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
         LettuceAssert.isTrue(lngLatMember.length % 3 == 0, "LngLatMember.length must be a multiple of 3 and contain a "
@@ -2346,6 +2373,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, List<String>> geohash(K key, V... members) {
         notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
@@ -2354,6 +2382,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, Set<V>> georadius(K key, double longitude, double latitude, double distance, String unit) {
         notNullKey(key);
+        LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
@@ -2364,6 +2393,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             GeoArgs geoArgs) {
 
         notNullKey(key);
+        LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(geoArgs, "GeoArgs " + MUST_NOT_BE_NULL);
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
@@ -2377,6 +2407,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
 
         notNullKey(key);
+        LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(geoRadiusStoreArgs, "GeoRadiusStoreArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
@@ -2391,6 +2422,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, Set<V>> georadiusbymember(K key, V member, double distance, String unit) {
 
         notNullKey(key);
+        LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
@@ -2401,6 +2433,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         notNullKey(key);
         LettuceAssert.notNull(geoArgs, "GeoArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
@@ -2415,6 +2448,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         notNullKey(key);
         LettuceAssert.notNull(geoRadiusStoreArgs, "GeoRadiusStoreArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.isTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
                 "At least STORE key or STORDIST key is required");
@@ -2428,6 +2462,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Command<K, V, List<GeoCoordinates>> geopos(K key, V[] members) {
         notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
 
@@ -2474,6 +2509,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     private void notEmpty(K[] keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(keys, "Keys " + MUST_NOT_BE_EMPTY);
+    }
+
+    private void notEmptyValues(V[] values) {
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+    }
+
+    private void assertNodeId(String nodeId) {
+        LettuceAssert.notNull(nodeId, "NodeId " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
+    }
+
+    private void notEmptySlots(int[] slots) {
+        LettuceAssert.notNull(slots, "Slots " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(slots, "Slots " + MUST_NOT_BE_EMPTY);
     }
 }
