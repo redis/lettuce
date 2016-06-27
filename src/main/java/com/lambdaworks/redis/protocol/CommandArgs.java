@@ -551,7 +551,13 @@ public class CommandArgs<K, V> {
         }
 
         public void encodeKey(ByteBuf target, byte[] key) {
+
             target.writeByte('$');
+
+            if(key == null) {
+                target.writeBytes("0\r\n\r\n".getBytes());
+                return;
+            }
 
             IntegerArgument.writeInteger(target, key.length);
             target.writeBytes(CRLF);

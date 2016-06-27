@@ -9,6 +9,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -81,7 +82,15 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
 
     private void encode(ChannelHandlerContext ctx, ByteBuf out, RedisCommand<?, ?, ?> command) {
 
-        command.encode(out);
+        try {
+            out.markWriterIndex();
+            command.encode(out);
+        } catch (RuntimeException e) {
+            out.resetWriterIndex();
+            command.completeExceptionally(new EncoderException(
+                    "Cannot encode command. Please close the connection as the connection state may be out of sync.",
+                    e));
+        }
 
         if (debugEnabled) {
             logger.debug("{} writing command {}", logPrefix(ctx.channel()), command);

@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

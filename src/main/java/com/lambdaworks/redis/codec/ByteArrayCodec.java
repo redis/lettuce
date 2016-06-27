@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
 
     public final static ByteArrayCodec INSTANCE = new ByteArrayCodec();
+    private final static byte[] EMPTY = new byte[0];
 
     @Override
     public byte[] decodeKey(ByteBuffer bytes) {
@@ -24,11 +25,21 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
 
     @Override
     public ByteBuffer encodeKey(byte[] key) {
+
+        if(key == null){
+            return ByteBuffer.wrap(EMPTY);
+        }
+
         return ByteBuffer.wrap(key);
     }
 
     @Override
     public ByteBuffer encodeValue(byte[] value) {
+
+        if(value == null){
+            return ByteBuffer.wrap(EMPTY);
+        }
+
         return ByteBuffer.wrap(value);
     }
 
