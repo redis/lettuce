@@ -165,6 +165,7 @@ public class SslTest extends AbstractTest {
         connection.quit();
         Thread.sleep(200);
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
+        Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
 
