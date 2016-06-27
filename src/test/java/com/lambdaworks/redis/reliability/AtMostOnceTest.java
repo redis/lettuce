@@ -149,6 +149,7 @@ public class AtMostOnceTest extends AbstractCommandTest {
         assertThat(command.isCancelled()).isTrue();
         assertThat(command.isDone()).isTrue();
         assertThat(command.getException()).isInstanceOf(EncoderException.class);
+        getQueue(getRedisChannelHandler(connection)).clear();
 
         assertThat(connection.get(key)).isEqualTo("2");
 

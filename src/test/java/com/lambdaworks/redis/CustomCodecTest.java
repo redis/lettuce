@@ -60,6 +60,8 @@ public class CustomCodecTest extends AbstractCommandTest {
         String value = "üöäü+#";
         connection.set(key.getBytes(), value.getBytes());
         assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());
+        connection.set(key.getBytes(), null);
+        assertThat(connection.get(key.getBytes())).isEqualTo(new byte[0]);
 
         List<byte[]> keys = connection.keys(key.getBytes());
         assertThat(keys).contains(key.getBytes());

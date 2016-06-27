@@ -14,6 +14,7 @@ public class ByteArrayCodec extends RedisCodec<byte[], byte[]> {
      * Static held instance ready to use. The {@link ByteArrayCodec} is thread-safe.
      */
     public final static ByteArrayCodec INSTANCE = new ByteArrayCodec();
+    private final static byte[] EMPTY = new byte[0];
 
     @Override
     public byte[] decodeKey(ByteBuffer bytes) {
@@ -27,11 +28,21 @@ public class ByteArrayCodec extends RedisCodec<byte[], byte[]> {
 
     @Override
     public byte[] encodeKey(byte[] key) {
+
+        if (key == null){
+            return EMPTY;
+        }
+
         return key;
     }
 
     @Override
     public byte[] encodeValue(byte[] value) {
+
+        if (value == null){
+            return EMPTY;
+        }
+
         return value;
     }
 

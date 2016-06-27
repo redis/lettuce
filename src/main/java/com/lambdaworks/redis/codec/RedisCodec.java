@@ -18,36 +18,36 @@ public abstract class RedisCodec<K, V> {
     /**
      * Decode the key output by redis.
      *
-     * @param bytes Raw bytes of the key.
+     * @param bytes Raw bytes of the key, must not be {@literal null}.
      *
-     * @return The decoded key.
+     * @return The decoded key, may be {@literal null}.
      */
     public abstract K decodeKey(ByteBuffer bytes);
 
     /**
      * Decode the value output by redis.
      *
-     * @param bytes Raw bytes of the value.
+     * @param bytes Raw bytes of the value, must not be {@literal null}.
      *
-     * @return The decoded value.
+     * @return The decoded value, may be {@literal null}.
      */
     public abstract V decodeValue(ByteBuffer bytes);
 
     /**
      * Encode the key for output to redis.
      *
-     * @param key Key.
+     * @param key the key, may be {@literal null}.
      *
-     * @return The encoded key.
+     * @return The encoded key, never {@literal null}.
      */
     public abstract byte[] encodeKey(K key);
 
     /**
      * Encode the value for output to redis.
      *
-     * @param value Value.
+     * @param value the value, may be {@literal null}.
      *
-     * @return The encoded value.
+     * @return The encoded value, never {@literal null}.
      */
     public abstract byte[] encodeValue(V value);
 }
