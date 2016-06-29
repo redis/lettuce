@@ -277,12 +277,12 @@
     <profiles>
         <profile>
             <id>netty-40</id>
+            <properties>
+               <netty-version>4.0.37.Final</netty-version>
+            </properties>
         </profile>
         <profile>
-            <id>netty-41next</id>
-            <properties>
-               <netty-version>4.1.0.CR7</netty-version>
-            </properties>
+            <id>netty-41</id>
         </profile>
 
         <profile>
