@@ -31,6 +31,7 @@
         <dependencySet>
             <includes>
                 <include>io.netty:*</include>
+                <include>io.reactivex:*</include>
                 <include>com.google.guava:*</include>
                 <include>org.apache.commons:*</include>
                 <include>org.latencyutils:*</include>
