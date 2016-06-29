@@ -1,16 +1,17 @@
 package com.lambdaworks.redis.reliability;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.lambdaworks.redis.output.StatusOutput;
 import io.netty.handler.codec.EncoderException;
+import io.netty.util.Version;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -25,7 +26,6 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
@@ -163,6 +163,8 @@ public class AtMostOnceTest extends AbstractCommandTest {
 
     @Test
     public void commandNotExecutedChannelClosesWhileFlush() throws Exception {
+
+        assumeTrue(Version.identify().get("netty-transport").artifactVersion().startsWith("4.0.2"));
 
         RedisConnection<String, String> connection = client.connect();
         RedisConnection<String, String> verificationConnection = client.connect();
