@@ -9,7 +9,7 @@ operations such as `BLPOP` and  `MULTI`/`EXEC`.
 lettuce is built with [netty](https://github.com/netty/netty).
 Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Reconnect and Redis data models.
 
-This version of lettuce has been tested against Redis 3.2 RC3.
+This version of lettuce has been tested against the latest Redis source-build.
 
 * lettuce 3.x works with Java 6, 7 and 8, lettuce 4.x requires Java 8
 * [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage
@@ -66,20 +66,37 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
+      <groupId>io.reactivex</groupId>
+      <artifactId>rxjava</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.latencyutils</groupId>
+      <artifactId>LatencyUtils</artifactId>
+    </exclusion>
+    <exclusion>
       <groupId>io.netty</groupId>
       <artifactId>netty-common</artifactId>
     </exclusion>
-
     <exclusion>
       <groupId>io.netty</groupId>
       <artifactId>netty-transport</artifactId>
     </exclusion>
-
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec</artifactId>
+    </exclusion>
     <exclusion>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </exclusion>
-
+    <exclusion>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport-native-epoll</artifactId>
+    </exclusion>
     <exclusion>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-pool2</artifactId>
