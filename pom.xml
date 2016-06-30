@@ -113,7 +113,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.4.0</version>
+      <version>3.4.1</version>
       <scope>provided</scope>
     </dependency>
 
@@ -156,14 +156,14 @@
     <dependency>
       <groupId>ognl</groupId>
       <artifactId>ognl</artifactId>
-      <version>3.1.7</version>
+      <version>3.1.9</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>cglib</groupId>
       <artifactId>cglib</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.4</version>
       <scope>test</scope>
     </dependency>
 
