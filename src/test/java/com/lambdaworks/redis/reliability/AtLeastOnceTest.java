@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.Connections;
+import io.netty.handler.codec.EncoderException;
 import io.netty.util.Version;
 import org.junit.Before;
 import org.junit.Test;
@@ -150,8 +151,9 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         channelWriter.write(command);
 
+        assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
-        assertThat(command.isDone()).isFalse();
+        assertThat(getException(command)).isInstanceOf(EncoderException.class);
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 

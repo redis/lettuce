@@ -46,12 +46,12 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
                 new Utf8StringCodec(), sentinelUri);
 
         connection.setReadFrom(ReadFrom.SLAVE);
-        String server = slaveCall(connection);
 
+        String server = connection.sync().info("replication");
         assertThatServerIs(server, "slave");
 
         connection.setReadFrom(ReadFrom.MASTER);
-        server = slaveCall(connection);
+        server = connection.sync().info("replication");
         assertThatServerIs(server, "master");
 
         connection.close();

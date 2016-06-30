@@ -150,8 +150,8 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
-        assertThat(command.isDone()).isTrue();
         assertThat(getException(command)).isInstanceOf(EncoderException.class);
+        assertThat(getQueue(getRedisChannelHandler(connection))).isNotEmpty();
         getQueue(getRedisChannelHandler(connection)).clear();
 
         assertThat(connection.get(key)).isEqualTo("2");
@@ -226,7 +226,6 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
-        assertThat(command.isDone()).isTrue();
         assertThat(getException(command)).isInstanceOf(IllegalStateException.class);
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
