@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -69,7 +70,6 @@ public class SslTest extends AbstractTest {
     @Test
     public void standaloneWithJdkSsl() throws Exception {
 
-
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .truststore(new File(LOCALHOST_KEYSTORE)) //
@@ -80,11 +80,23 @@ public class SslTest extends AbstractTest {
     }
 
     @Test
-    public void standaloneWithJdkSslUsingTrustroreUrl() throws Exception {
+    public void standaloneWithJdkSslUsingTruststoreUrl() throws Exception {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .truststore(new File(LOCALHOST_KEYSTORE).toURI().toURL()) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyConnection(URI_VERIFY);
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void standaloneWithJdkSslUsingTruststoreUrlWithWrongPassword() throws Exception {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(new File(LOCALHOST_KEYSTORE).toURI().toURL(), "knödel") //
                 .build();
         setOptions(sslOptions);
 

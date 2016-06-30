@@ -22,10 +22,7 @@ import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.*;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
@@ -101,7 +98,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             if (sslOptions.getTruststore() != null) {
                 try (InputStream is = sslOptions.getTruststore().openStream()) {
-                    sslContextBuilder.trustManager(createTrustManagerFactory(is, null));
+                    sslContextBuilder.trustManager(createTrustManagerFactory(is,
+                            sslOptions.getTruststorePassword().length == 0 ? null : sslOptions.getTruststorePassword()));
                 }
             }
 
@@ -221,7 +219,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
             try {
-                trustStore.load(inputStream, null);
+                trustStore.load(inputStream, storePassword);
             } finally {
                 inputStream.close();
             }
