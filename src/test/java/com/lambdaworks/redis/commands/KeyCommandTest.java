@@ -150,19 +150,19 @@ public class KeyCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void pexpire() throws Exception {
-        assertThat(redis.pexpire(key, 500)).isFalse();
+        assertThat(redis.pexpire(key, 5000)).isFalse();
         redis.set(key, value);
-        assertThat(redis.pexpire(key, 500)).isTrue();
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(500);
+        assertThat(redis.pexpire(key, 5000)).isTrue();
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
     }
 
     @Test
     public void pexpireat() throws Exception {
-        Date expiration = new Date(System.currentTimeMillis() + 500);
+        Date expiration = new Date(System.currentTimeMillis() + 5000);
         assertThat(redis.pexpireat(key, expiration)).isFalse();
         redis.set(key, value);
         assertThat(redis.pexpireat(key, expiration)).isTrue();
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(500);
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
     }
 
     @Test
@@ -170,8 +170,8 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         assertThat((long) redis.pttl(key)).isEqualTo(-2);
         redis.set(key, value);
         assertThat((long) redis.pttl(key)).isEqualTo(-1);
-        redis.pexpire(key, 500);
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(500);
+        redis.pexpire(key, 5000);
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
     }
 
     @Test
