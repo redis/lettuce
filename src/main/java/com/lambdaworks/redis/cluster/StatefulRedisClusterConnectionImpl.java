@@ -5,13 +5,12 @@ import static com.lambdaworks.redis.protocol.CommandType.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -30,6 +29,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
+
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -42,8 +42,8 @@ import io.netty.channel.ChannelHandler;
  * @since 4.0
  */
 @ChannelHandler.Sharable
-public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
-        StatefulRedisClusterConnection<K, V> {
+public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
+        implements StatefulRedisClusterConnection<K, V> {
 
     private Partitions partitions;
 
@@ -233,8 +233,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         private final StatefulRedisClusterConnection<K, V> connection;
         private final Object asyncApi;
-        private final LoadingCache<Method, Method> apiMethodCache;
-        private final LoadingCache<Method, Method> connectionMethodCache;
+        private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>();
+        private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>();
 
         private final static Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
 
@@ -253,20 +253,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         public ClusterFutureSyncInvocationHandler(StatefulRedisClusterConnection<K, V> connection, Object asyncApi) {
             this.connection = connection;
             this.asyncApi = asyncApi;
-
-            apiMethodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
-                @Override
-                public Method load(Method key) throws Exception {
-                    return asyncApi.getClass().getMethod(key.getName(), key.getParameterTypes());
-                }
-            });
-
-            connectionMethodCache = CacheBuilder.newBuilder().build(new CacheLoader<Method, Method>() {
-                @Override
-                public Method load(Method key) throws Exception {
-                    return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
-                }
-            });
         }
 
         public static MethodHandles.Lookup privateMethodHandleLookup(Class<?> declaringClass) {
@@ -302,7 +288,14 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                 }
 
                 if (method.getName().equals("getConnection") && args.length > 0) {
-                    Method targetMethod = connectionMethodCache.get(method);
+                    Method targetMethod = connectionMethodCache.computeIfAbsent(method, key -> {
+                        try {
+                            return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
+                        } catch (NoSuchMethodException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    });
+
                     Object result = targetMethod.invoke(connection, args);
                     if (result instanceof StatefulRedisClusterConnection) {
                         StatefulRedisClusterConnection<K, V> connection = (StatefulRedisClusterConnection<K, V>) result;
@@ -328,7 +321,14 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                             (Boolean) args[1]);
                 }
 
-                Method targetMethod = apiMethodCache.get(method);
+                Method targetMethod = apiMethodCache.computeIfAbsent(method, key -> {
+
+                    try {
+                        return asyncApi.getClass().getMethod(key.getName(), key.getParameterTypes());
+                    } catch (NoSuchMethodException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
 
                 Object result = targetMethod.invoke(asyncApi, args);
 
@@ -360,10 +360,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                 selection = new StaticSyncNodeSelection<>(connection, predicate, intent);
             }
 
-            NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler(
-                    (AbstractNodeSelection<?, ?, ?, ?>) selection, true, connection.getTimeout(), connection.getTimeoutUnit());
-            return (NodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
-                    NodeSelectionCommands.class, NodeSelection.class }, h);
+            NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
+                    true, connection.getTimeout(), connection.getTimeoutUnit());
+            return (NodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
+                    new Class<?>[] { NodeSelectionCommands.class, NodeSelection.class }, h);
         }
     }
 }

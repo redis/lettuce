@@ -3,10 +3,9 @@ package com.lambdaworks.redis.masterslave;
 import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
@@ -34,7 +33,8 @@ public class MasterSlaveConnectionProvider<K, V> {
     private final boolean debugEnabled;
 
     // Contains HostAndPort-identified connections.
-    private final LoadingCache<ConnectionKey, StatefulRedisConnection<K, V>> connections;
+    private final Map<ConnectionKey, StatefulRedisConnection<K, V>> connections = new ConcurrentHashMap<>();
+    private final ConnectionFactory<K, V> connectionFactory;
     private final RedisURI initialRedisUri;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
@@ -48,7 +48,7 @@ public class MasterSlaveConnectionProvider<K, V> {
             StatefulRedisConnection<K, V> masterConnection, RedisURI initialRedisUri) {
         this.initialRedisUri = initialRedisUri;
         this.debugEnabled = logger.isDebugEnabled();
-        this.connections = CacheBuilder.newBuilder().build(new ConnectionFactory<>(redisClient, redisCodec));
+        this.connectionFactory = new ConnectionFactory<>(redisClient, redisCodec);
         connections.put(toConnectionKey(initialRedisUri), masterConnection);
     }
 
@@ -57,7 +57,7 @@ public class MasterSlaveConnectionProvider<K, V> {
 
         this.initialRedisUri = initialRedisUri;
         this.debugEnabled = logger.isDebugEnabled();
-        this.connections = CacheBuilder.newBuilder().build(new ConnectionFactory<>(redisClient, redisCodec));
+        this.connectionFactory = new ConnectionFactory<>(redisClient, redisCodec);
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<K, V>> entry : initialConnections.entrySet()) {
             connections.put(toConnectionKey(entry.getKey()), entry.getValue());
@@ -113,8 +113,9 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     protected StatefulRedisConnection<K, V> getConnection(RedisNodeDescription redisNodeDescription) {
-        return connections.getUnchecked(
-                new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription.getUri().getPort()));
+        return connections.computeIfAbsent(
+                new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription.getUri().getPort()),
+                connectionFactory);
     }
 
     /**
@@ -131,7 +132,7 @@ public class MasterSlaveConnectionProvider<K, V> {
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new HashMap<>(connections.asMap());
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new HashMap<>(connections);
         Set<ConnectionKey> stale = new HashSet<>();
 
         for (ConnectionKey connectionKey : map.keySet()) {
@@ -154,9 +155,9 @@ public class MasterSlaveConnectionProvider<K, V> {
         Set<ConnectionKey> stale = getStaleConnectionKeys();
 
         for (ConnectionKey connectionKey : stale) {
-            StatefulRedisConnection<K, V> connection = connections.getIfPresent(connectionKey);
+            StatefulRedisConnection<K, V> connection = connections.get(connectionKey);
             if (connection != null) {
-                connections.invalidate(connectionKey);
+                connections.remove(connectionKey);
                 connection.close();
             }
         }
@@ -173,7 +174,7 @@ public class MasterSlaveConnectionProvider<K, V> {
      */
     public void close() {
         allConnections().forEach(StatefulRedisConnection::close);
-        connections.invalidateAll();
+        connections.clear();
     }
 
     public void flushCommands() {
@@ -188,7 +189,7 @@ public class MasterSlaveConnectionProvider<K, V> {
 
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
 
-        Set<StatefulRedisConnection<K, V>> connections = LettuceSets.newHashSet(this.connections.asMap().values());
+        Set<StatefulRedisConnection<K, V>> connections = LettuceSets.newHashSet(this.connections.values());
         return (Collection) connections;
     }
 
@@ -226,7 +227,7 @@ public class MasterSlaveConnectionProvider<K, V> {
         throw new RedisException(String.format("Master is currently unknown: %s", knownNodes));
     }
 
-    private class ConnectionFactory<K, V> extends CacheLoader<ConnectionKey, StatefulRedisConnection<K, V>> {
+    private class ConnectionFactory<K, V> implements Function<ConnectionKey, StatefulRedisConnection<K, V>> {
 
         private final RedisClient redisClient;
         private final RedisCodec<K, V> redisCodec;
@@ -237,7 +238,7 @@ public class MasterSlaveConnectionProvider<K, V> {
         }
 
         @Override
-        public StatefulRedisConnection<K, V> load(ConnectionKey key) throws Exception {
+        public StatefulRedisConnection<K, V> apply(ConnectionKey key) {
 
             RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port);
 

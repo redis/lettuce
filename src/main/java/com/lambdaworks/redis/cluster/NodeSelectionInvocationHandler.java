@@ -6,8 +6,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisCommandTimeoutException;
@@ -29,8 +27,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     private boolean sync;
     private long timeout;
     private TimeUnit unit;
-    private Cache<Method, Method> nodeSelectionMethods = CacheBuilder.newBuilder().build();
-    private Cache<Method, Method> connectionMethod = CacheBuilder.newBuilder().build();
+    private final Map<Method, Method> nodeSelectionMethods = new ConcurrentHashMap<>();
+    private final Map<Method, Method> connectionMethod = new ConcurrentHashMap<>();
     public final static Method NULL_MARKER_METHOD;
 
     static {
@@ -198,9 +196,9 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         return buffer.toString();
     }
 
-    private Method findMethod(Class<?> type, Method method, Cache<Method, Method> cache) {
+    private Method findMethod(Class<?> type, Method method, Map<Method, Method> cache) {
 
-        Method result = cache.getIfPresent(method);
+        Method result = cache.get(method);
         if (result != null && result != NULL_MARKER_METHOD) {
             return result;
         }
