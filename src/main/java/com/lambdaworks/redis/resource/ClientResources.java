@@ -51,10 +51,12 @@ public interface ClientResources {
     Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit);
 
     /**
-     * Return s the {@link EventLoopGroupProvider} which provides access to the particular
-     * {@link io.netty.channel.EventLoopGroup event loop groups}. lettuce needs at least two implementations:
-     * {@link io.netty.channel.nio.NioEventLoopGroup} for TCP/IP connections and
-     * {@link io.netty.channel.epoll.EpollEventLoopGroup} for unix domain socket connections (epoll).
+     * Returns the {@link EventLoopGroupProvider} that provides access to the particular {@link io.netty.channel.EventLoopGroup
+     * event loop groups}. lettuce requires at least two implementations: {@link io.netty.channel.nio.NioEventLoopGroup} for
+     * TCP/IP connections and {@link io.netty.channel.epoll.EpollEventLoopGroup} for unix domain socket connections (epoll).
+     *
+     * You can use {@link DefaultEventLoopGroupProvider} as default implementation or implement an own
+     * {@link EventLoopGroupProvider} to share existing {@link io.netty.channel.EventLoopGroup EventLoopGroup's} with lettuce.
      * 
      * @return the {@link EventLoopGroupProvider} which provides access to the particular {@link io.netty.channel.EventLoopGroup
      *         event loop groups}
@@ -62,7 +64,8 @@ public interface ClientResources {
     EventLoopGroupProvider eventLoopGroupProvider();
 
     /**
-     * Returns the computation pool used for internal operations.
+     * Returns the computation pool used for internal operations. Such tasks are periodic Redis Cluster and Redis Sentinel
+     * topology updates and scheduling of connection reconnection by {@link com.lambdaworks.redis.protocol.ConnectionWatchdog}.
      * 
      * @return the computation pool used for internal operations
      */
