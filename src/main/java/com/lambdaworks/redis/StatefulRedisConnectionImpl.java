@@ -37,10 +37,10 @@ import io.netty.channel.ChannelHandler;
 @ChannelHandler.Sharable
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
 
-    protected RedisCodec<K, V> codec;
-    protected RedisCommands<K, V> sync;
-    protected RedisAsyncCommandsImpl<K, V> async;
-    protected RedisReactiveCommandsImpl<K, V> reactive;
+    protected final RedisCodec<K, V> codec;
+    protected final RedisCommands<K, V> sync;
+    protected final RedisAsyncCommandsImpl<K, V> async;
+    protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     protected MultiOutput<K, V> multi;
     private char[] password;
@@ -58,23 +58,28 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public StatefulRedisConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(writer, timeout, unit);
         this.codec = codec;
+        this.async = newRedisAsyncCommandsImpl();
+        this.sync = newRedisSyncCommandsImpl();
+        this.reactive = newRedisReactiveCommandsImpl();
     }
 
+    @Override
     public RedisAsyncCommands<K, V> async() {
-        return getAsyncCommands();
-    }
-
-    protected RedisAsyncCommandsImpl<K, V> getAsyncCommands() {
-        if (async == null) {
-            async = newRedisAsyncCommandsImpl();
-        }
-
         return async;
     }
 
     /**
+     * Create a new instance of {@link RedisCommands}. Can be overriden to extend.
+     *
+     * @return a new instance
+     */
+    protected RedisCommands<K, V> newRedisSyncCommandsImpl() {
+        return syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
+    }
+
+    /**
      * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
-     * 
+     *
      * @return a new instance
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
@@ -83,14 +88,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     @Override
     public RedisReactiveCommands<K, V> reactive() {
-        return getReactiveCommands();
-    }
-
-    protected RedisReactiveCommandsImpl<K, V> getReactiveCommands() {
-        if (reactive == null) {
-            reactive = newRedisReactiveCommandsImpl();
-        }
-
         return reactive;
     }
 
@@ -103,10 +100,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return new RedisReactiveCommandsImpl<>(this, codec);
     }
 
+    @Override
     public RedisCommands<K, V> sync() {
-        if (sync == null) {
-            sync = syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
-        }
         return sync;
     }
 
@@ -121,15 +116,15 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            getAsyncCommands().authAsync(new String(password));
+            async.authAsync(new String(password));
         }
 
         if (db != 0) {
-            getAsyncCommands().selectAsync(db);
+            async.selectAsync(db);
         }
 
         if (readOnly) {
-            getAsyncCommands().readOnly();
+            async.readOnly();
         }
     }
 
