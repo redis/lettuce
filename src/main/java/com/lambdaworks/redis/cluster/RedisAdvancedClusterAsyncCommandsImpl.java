@@ -90,8 +90,8 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<V>> mget(K... keys) {
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    public RedisFuture<List<V>> mget(Iterable<K> keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.mget(keys);
@@ -118,6 +118,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
             return result;
         });
+    }
+
+    @Override
+    public RedisFuture<List<V>> mget(K... keys) {
+        return mget(Arrays.asList(keys));
     }
 
     @Override
