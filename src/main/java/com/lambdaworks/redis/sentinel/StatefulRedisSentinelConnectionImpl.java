@@ -19,15 +19,18 @@ import io.netty.channel.ChannelHandler;
 public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
         StatefulRedisSentinelConnection<K, V> {
 
-    protected RedisCodec<K, V> codec;
-    protected RedisSentinelCommands<K, V> sync;
-    protected RedisSentinelAsyncCommands<K, V> async;
-    protected RedisSentinelReactiveCommands<K, V> reactive;
+    protected final RedisCodec<K, V> codec;
+    protected final RedisSentinelCommands<K, V> sync;
+    protected final RedisSentinelAsyncCommands<K, V> async;
+    protected final RedisSentinelReactiveCommands<K, V> reactive;
 
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
             TimeUnit unit) {
         super(writer, timeout, unit);
         this.codec = codec;
+        async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
+        sync = syncHandler(async, RedisSentinelCommands.class);
+        reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec);
     }
 
     @Override
@@ -36,25 +39,16 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     }
 
     public RedisSentinelCommands<K, V> sync() {
-        if (sync == null) {
-            sync = syncHandler(async(), RedisSentinelCommands.class);
-        }
         return sync;
     }
 
     @Override
     public RedisSentinelAsyncCommands<K, V> async() {
-        if (async == null) {
-            async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
-        }
         return async;
     }
 
     @Override
     public RedisSentinelReactiveCommands<K, V> reactive() {
-        if (reactive == null) {
-            reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec);
-        }
         return reactive;
     }
 }
