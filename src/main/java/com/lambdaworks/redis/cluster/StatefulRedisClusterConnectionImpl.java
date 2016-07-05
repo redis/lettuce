@@ -50,10 +50,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     private char[] password;
     private boolean readOnly;
 
-    protected RedisCodec<K, V> codec;
-    protected RedisAdvancedClusterCommands<K, V> sync;
-    protected RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
-    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
+    protected final RedisCodec<K, V> codec;
+    protected final RedisAdvancedClusterCommands<K, V> sync;
+    protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
+    protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     /**
      * Initialize a new connection.
@@ -67,16 +67,15 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             TimeUnit unit) {
         super(writer, timeout, unit);
         this.codec = codec;
+        async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
+        InvocationHandler h = syncInvocationHandler();
+        sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
+                new Class<?>[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
+        reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
     }
 
     @Override
     public RedisAdvancedClusterCommands<K, V> sync() {
-        if (sync == null) {
-            InvocationHandler h = syncInvocationHandler();
-            sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                    new Class<?>[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
-        }
-
         return sync;
     }
 
@@ -86,13 +85,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     @Override
     public RedisAdvancedClusterAsyncCommands<K, V> async() {
-        return getAsyncConnection();
-    }
-
-    protected RedisAdvancedClusterAsyncCommandsImpl<K, V> getAsyncConnection() {
-        if (async == null) {
-            async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
-        }
         return async;
     }
 
@@ -102,9 +94,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> getReactiveCommands() {
-        if (reactive == null) {
-            reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
-        }
         return reactive;
     }
 
@@ -150,11 +139,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            getAsyncConnection().authAsync(new String(password));
+            async.authAsync(new String(password));
         }
 
         if (readOnly) {
-            getAsyncConnection().readOnly();
+            async.readOnly();
         }
     }
 
