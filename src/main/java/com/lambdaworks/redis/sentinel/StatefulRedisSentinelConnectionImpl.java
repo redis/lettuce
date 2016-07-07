@@ -27,10 +27,11 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
             TimeUnit unit) {
         super(writer, timeout, unit);
+
         this.codec = codec;
-        async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
-        sync = syncHandler(async, RedisSentinelCommands.class);
-        reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec);
+        this.async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
+        this.sync = syncHandler(async, RedisSentinelCommands.class);
+        this.reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec);
     }
 
     @Override
@@ -38,6 +39,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         return super.dispatch(cmd);
     }
 
+    @Override
     public RedisSentinelCommands<K, V> sync() {
         return sync;
     }

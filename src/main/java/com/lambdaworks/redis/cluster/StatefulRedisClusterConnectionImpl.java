@@ -67,11 +67,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             TimeUnit unit) {
         super(writer, timeout, unit);
         this.codec = codec;
-        async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
-        InvocationHandler h = syncInvocationHandler();
-        sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                new Class<?>[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, h);
-        reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
+
+        this.async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
+        this.sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
+                new Class<?>[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, syncInvocationHandler());
+        this.reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
     }
 
     @Override
@@ -90,9 +90,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     @Override
     public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
-        return getReactiveCommands();
+        return reactive;
     }
 
+    @Deprecated
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> getReactiveCommands() {
         return reactive;
     }
@@ -109,24 +110,22 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     @Override
     public StatefulRedisConnection<K, V> getConnection(String nodeId) {
+
         RedisURI redisURI = lookup(nodeId);
+
         if (redisURI == null) {
             throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
         }
 
-        StatefulRedisConnection<K, V> connection = getClusterDistributionChannelWriter().getClusterConnectionProvider()
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
                 .getConnection(ClusterConnectionProvider.Intent.WRITE, nodeId);
-
-        return connection;
     }
 
     @Override
     public StatefulRedisConnection<K, V> getConnection(String host, int port) {
 
-        StatefulRedisConnection<K, V> connection = getClusterDistributionChannelWriter().getClusterConnectionProvider()
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
                 .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
-
-        return connection;
     }
 
     public ClusterDistributionChannelWriter<K, V> getClusterDistributionChannelWriter() {
@@ -272,8 +271,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
                 if (method.isDefault()) {
 
-                    Object o = getDefaultMethodHandle(method).bindTo(proxy).invokeWithArguments(args);
-                    return o;
+                    return getDefaultMethodHandle(method).bindTo(proxy).invokeWithArguments(args);
                 }
 
                 if (method.getName().equals("getConnection") && args.length > 0) {
