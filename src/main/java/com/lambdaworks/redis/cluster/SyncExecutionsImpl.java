@@ -19,7 +19,7 @@ class SyncExecutionsImpl<T> implements Executions<T> {
     public SyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<T>> executions) throws ExecutionException,
             InterruptedException {
 
-        Map<RedisClusterNode, T> result = new HashMap<>();
+        Map<RedisClusterNode, T> result = new HashMap<>(executions.size(), 1);
         for (Map.Entry<RedisClusterNode, CompletionStage<T>> entry : executions.entrySet()) {
             result.put(entry.getKey(), entry.getValue().toCompletableFuture().get());
         }

@@ -26,8 +26,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEventLoopGroupProvider.class);
 
-    private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<Class<? extends EventExecutorGroup>, EventExecutorGroup>();
-    private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<>();
+    private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+    private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<>(2);
 
     private final int numberOfThreads;
 

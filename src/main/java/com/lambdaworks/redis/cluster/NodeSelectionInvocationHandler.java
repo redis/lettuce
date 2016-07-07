@@ -65,7 +65,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         try {
             Method targetMethod = findMethod(RedisClusterAsyncCommands.class, method, connectionMethod);
 
-            Map<RedisClusterNode, StatefulRedisConnection<?, ?>> connections = new HashMap<>(selection.statefulMap());
+            Map<RedisClusterNode, StatefulRedisConnection<?, ?>> connections = new HashMap<>(selection.size(), 1);
+            connections.putAll(selection.statefulMap());
 
             if (targetMethod != null) {
 
@@ -78,13 +79,11 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
                 if (sync) {
                     if (!awaitAll(timeout, unit, executions.values())) {
-                        RedisCommandTimeoutException e = createTimeoutException(executions);
-                        throw e;
+                        throw createTimeoutException(executions);
                     }
 
                     if (atLeastOneFailed(executions)) {
-                        RedisCommandExecutionException e = createExecutionException(executions);
-                        throw e;
+                        throw createExecutionException(executions);
                     }
 
                     return new SyncExecutionsImpl(executions);

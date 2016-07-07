@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.metrics;
 
 import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
+import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.internal.logging.InternalLogger;
@@ -37,7 +38,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
-    private Map<CommandLatencyId, Latencies> latencyMetrics = new ConcurrentHashMap<>();
+    private Map<CommandLatencyId, Latencies> latencyMetrics = new ConcurrentHashMap<>(CommandType.values().length);
 
     public DefaultCommandLatencyCollector(CommandLatencyCollectorOptions options) {
         this.options = options;
