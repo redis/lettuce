@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.RedisConnectionException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
@@ -56,11 +57,25 @@ class SentinelTopologyRefresh implements Closeable {
     void bind(Runnable runnable) {
 
         Utf8StringCodec codec = new Utf8StringCodec();
+        AtomicReference<RedisConnectionException> ref = new AtomicReference<>();
+
         sentinels.forEach(redisURI -> {
 
-            StatefulRedisPubSubConnection<String, String> pubSubConnection = redisClient.connectPubSub(codec, redisURI);
-            pubSubConnections.add(pubSubConnection);
+            try {
+                StatefulRedisPubSubConnection<String, String> pubSubConnection = redisClient.connectPubSub(codec, redisURI);
+                pubSubConnections.add(pubSubConnection);
+            } catch (RedisConnectionException e) {
+                if (ref.get() == null) {
+                    ref.set(e);
+                } else {
+                    ref.get().addSuppressed(e);
+                }
+            }
         });
+
+        if (sentinels.isEmpty() && ref.get() != null) {
+            throw ref.get();
+        }
 
         adapter = new RedisPubSubAdapter<String, String>() {
 
