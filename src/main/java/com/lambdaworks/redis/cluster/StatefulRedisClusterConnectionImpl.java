@@ -21,6 +21,7 @@ import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands
 import com.lambdaworks.redis.cluster.api.sync.NodeSelection;
 import com.lambdaworks.redis.cluster.api.sync.NodeSelectionCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -205,7 +206,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public ReadFrom getReadFrom() {
         return getClusterDistributionChannelWriter().getReadFrom();
-
     }
 
     /**
@@ -217,12 +217,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @author Mark Paluch
      * @since 3.0
      */
+    @SuppressWarnings("unchecked")
     private static class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
         private final StatefulRedisClusterConnection<K, V> connection;
         private final Object asyncApi;
-        private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>();
-        private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>();
+        private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>(RedisClusterCommands.class.getMethods().length, 1);
+        private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>(5, 1);
 
         private final static Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
 
@@ -238,12 +239,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             }
         }
 
-        public ClusterFutureSyncInvocationHandler(StatefulRedisClusterConnection<K, V> connection, Object asyncApi) {
+        ClusterFutureSyncInvocationHandler(StatefulRedisClusterConnection<K, V> connection, Object asyncApi) {
             this.connection = connection;
             this.asyncApi = asyncApi;
         }
 
-        public static MethodHandles.Lookup privateMethodHandleLookup(Class<?> declaringClass) {
+        static MethodHandles.Lookup privateMethodHandleLookup(Class<?> declaringClass) {
             try {
                 return LOOKUP_CONSTRUCTOR.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -251,7 +252,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             }
         }
 
-        public static MethodHandle getDefaultMethodHandle(Method method) {
+        static MethodHandle getDefaultMethodHandle(Method method) {
             Class<?> declaringClass = method.getDeclaringClass();
             try {
                 return privateMethodHandleLookup(declaringClass).unreflectSpecial(method, declaringClass);
@@ -270,7 +271,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             try {
 
                 if (method.isDefault()) {
-
                     return getDefaultMethodHandle(method).bindTo(proxy).invokeWithArguments(args);
                 }
 

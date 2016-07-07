@@ -57,7 +57,7 @@ public abstract class AbstractRedisClient {
     protected EventLoopGroup eventLoopGroup;
     protected EventExecutorGroup genericWorkerPool;
 
-    protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<Class<? extends EventLoopGroup>, EventLoopGroup>();;
+    protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
     protected final HashedWheelTimer timer;
     protected final ChannelGroup channels;
     protected final ClientResources clientResources;
