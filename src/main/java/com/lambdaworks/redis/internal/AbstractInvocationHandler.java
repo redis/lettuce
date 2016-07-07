@@ -109,7 +109,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
 
     protected static class MethodTranslator {
 
-        private final Map<Method, Method> map = new HashMap<>();
+        private final Map<Method, Method> map;
 
         public MethodTranslator(Class<?> delegate, Class<?>... methodSources) {
 
@@ -117,6 +117,8 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
             for (Class<?> sourceClass : methodSources) {
                 methods.addAll(getMethods(sourceClass));
             }
+
+            map = new HashMap<>(methods.size(), 1.0f);
 
             for (Method method : methods) {
 
