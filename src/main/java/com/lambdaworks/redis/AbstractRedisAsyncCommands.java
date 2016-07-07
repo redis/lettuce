@@ -62,8 +62,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public String auth(String password) {
         AsyncCommand<K, V, String> cmd = authAsync(password);
-        String status = LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
-        return status;
+        return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
     }
 
     public AsyncCommand<K, V, String> authAsync(String password) {
