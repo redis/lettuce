@@ -38,6 +38,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  * @author Mark Paluch
  * @since 3.3
  */
+@SuppressWarnings("unchecked")
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncConnection<K, V>, RedisAdvancedClusterAsyncCommands<K, V> {
 
@@ -55,7 +56,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> del(K... keys) {
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+        return del(Arrays.asList(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> del(Iterable<K> keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.del(keys);
@@ -73,7 +79,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> unlink(K... keys) {
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+        return unlink(Arrays.asList(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> unlink(Iterable<K> keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.unlink(keys);
@@ -87,6 +98,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<List<V>> mget(K... keys) {
+        return mget(Arrays.asList(keys));
     }
 
     @Override
@@ -121,13 +137,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<V>> mget(K... keys) {
-        return mget(Arrays.asList(keys));
+    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+       return mget(channel, Arrays.asList(keys));
     }
 
     @Override
-    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.mget(channel, keys);
