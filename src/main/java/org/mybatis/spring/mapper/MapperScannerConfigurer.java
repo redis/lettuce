@@ -37,7 +37,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.util.StringUtils;
 
 /**
@@ -328,8 +328,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   private void processPropertyPlaceHolders() {
     Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class);
 
-    if (!prcs.isEmpty() && applicationContext instanceof GenericApplicationContext) {
-      BeanDefinition mapperScannerBean = ((GenericApplicationContext) applicationContext)
+    if (!prcs.isEmpty() && applicationContext instanceof AbstractApplicationContext) {
+      BeanDefinition mapperScannerBean = ((AbstractApplicationContext) applicationContext)
           .getBeanFactory().getBeanDefinition(beanName);
 
       // PropertyResourceConfigurer does not expose any methods to explicitly perform
