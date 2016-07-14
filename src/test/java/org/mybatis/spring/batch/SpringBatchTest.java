@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2016 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -69,8 +69,8 @@ public class SpringBatchTest {
     }
     writer.write(employees);
 
-    assertEquals(20000, session.selectOne("checkSalarySum"));
-    assertEquals(employees.size(), session.selectOne("checkEmployeeCount"));
+    assertEquals(Integer.valueOf(20000), session.selectOne("checkSalarySum"));
+    assertEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
   }
 
   @Test
@@ -87,7 +87,7 @@ public class SpringBatchTest {
     writer.write(employees);
 
     // Assert that we have a WRONG employee count
-    assertNotEquals(employees.size(), session.selectOne("checkEmployeeCount"));
+    assertNotEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
   }
 
   @Test
@@ -104,8 +104,8 @@ public class SpringBatchTest {
       }
       writer.write(employees);
 
-      assertEquals(20000, session.selectOne("checkSalarySum"));
-      assertEquals(employees.size(), session.selectOne("checkEmployeeCount"));
+      assertEquals(Integer.valueOf(20000), session.selectOne("checkSalarySum"));
+      assertEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
     } finally {
       cursorNoNestedItemReader.doClose();
     }
@@ -125,8 +125,8 @@ public class SpringBatchTest {
       }
       writer.write(employees);
 
-      assertEquals(20000, session.selectOne("checkSalarySum"));
-      assertEquals(employees.size(), session.selectOne("checkEmployeeCount"));
+      assertEquals(Integer.valueOf(20000), session.selectOne("checkSalarySum"));
+      assertEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
     } finally {
       cursorNestedItemReader.doClose();
     }
