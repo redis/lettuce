@@ -53,8 +53,8 @@ public class DefaultClientResources implements ClientResources {
     public static final int DEFAULT_COMPUTATION_THREADS;
 
     static {
-        int threads = Math.max(1,
-                SystemPropertyUtil.getInt("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors()));
+        int threads = Math.max(1, SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
+                Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
 
         DEFAULT_IO_THREADS = threads;
         DEFAULT_COMPUTATION_THREADS = threads;
