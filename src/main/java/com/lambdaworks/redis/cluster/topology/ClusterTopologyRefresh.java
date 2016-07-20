@@ -122,7 +122,10 @@ public class ClusterTopologyRefresh {
                 for (RedisClusterNodeSnapshot partition : nodeWithStats) {
 
                     if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                        partition.setUri(node);
+
+                        if(partition.getUri() == null){
+                            partition.setUri(node);
+                        }
 
                         // record latency for later partition ordering
                         latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
