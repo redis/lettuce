@@ -227,7 +227,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         Map<String, Long> result = pubsub2.pubsubNumsub(channel).toBlocking().first();
         assertThat(result).hasSize(1);
-        assertThat(result.get(channel)).isEqualTo(1L);
+        assertThat(result.get(channel)).isGreaterThan(0);
     }
 
     @Test
@@ -239,7 +239,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         Wait.untilEquals(1L, () -> redis.pubsubNumpat()).waitOrTimeout();
 
         Long result = pubsub2.pubsubNumpat().toBlocking().first();
-        assertThat(result.longValue()).isEqualTo(1L);
+        assertThat(result.longValue()).isGreaterThan(0);
     }
 
     @Test(timeout = 2000)
@@ -254,7 +254,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void subscribe() throws Exception {
         pubsub.subscribe(channel).subscribe();
         assertThat(channels.take()).isEqualTo(channel);
-        assertThat((long) counts.take()).isEqualTo(1);
+        assertThat((long) counts.take()).isGreaterThan(0);
     }
 
     @Test(timeout = 2000)
