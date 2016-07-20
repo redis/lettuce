@@ -174,12 +174,6 @@ class ClusterTopologyRefresh {
             try {
                 SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, client.getResources().dnsResolver());
                 RedisAsyncConnectionImpl<String, String> connection = client.connectAsyncImpl(socketAddress);
-                if (redisURI.getPassword() != null) {
-                    String password = new String(redisURI.getPassword());
-                    if (!"".equals(password.trim())) {
-                        connection.auth(password);
-                    }
-                }
                 connections.put(redisURI, connection);
             } catch (RuntimeException e) {
                 logger.warn("Cannot connect to " + redisURI, e);
