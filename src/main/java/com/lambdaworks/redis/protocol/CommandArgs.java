@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.codec.ToByteBufEncoder;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -385,6 +386,17 @@ public class CommandArgs<K, V> {
             target.writeBytes(value);
             target.writeBytes(CRLF);
         }
+
+        static void writeByteBuf(ByteBuf target, ByteBuf value) {
+
+            target.writeByte('$');
+
+            IntegerArgument.writeInteger(target, value.readableBytes());
+            target.writeBytes(CRLF);
+
+            target.writeBytes(value);
+            target.writeBytes(CRLF);
+        }
     }
 
     static class IntegerArgument extends SingularArgument {
@@ -508,6 +520,19 @@ public class CommandArgs<K, V> {
                 ((ExperimentalByteArrayCodec) codec).encodeKey(target, (byte[]) key);
                 return;
             }
+
+            if (codec instanceof ToByteBufEncoder) {
+
+                ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
+                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key));
+                toByteBufEncoder.encodeKey(key, temporaryBuffer);
+
+                ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+                temporaryBuffer.release();
+
+                return;
+            }
+
             ByteBufferArgument.writeByteBuffer(target, codec.encodeKey(key));
         }
     }
@@ -534,6 +559,18 @@ public class CommandArgs<K, V> {
                 return;
             }
 
+            if (codec instanceof ToByteBufEncoder) {
+
+                ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
+                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val));
+                toByteBufEncoder.encodeValue(val, temporaryBuffer);
+
+                ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+                temporaryBuffer.release();
+
+                return;
+            }
+
             ByteBufferArgument.writeByteBuffer(target, codec.encodeValue(val));
         }
     }
@@ -554,7 +591,7 @@ public class CommandArgs<K, V> {
 
             target.writeByte('$');
 
-            if(key == null) {
+            if (key == null) {
                 target.writeBytes("0\r\n\r\n".getBytes());
                 return;
             }

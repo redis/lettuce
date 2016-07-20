@@ -24,6 +24,7 @@ import com.lambdaworks.redis.cluster.topology.ClusterTopologyRefresh;
 import com.lambdaworks.redis.cluster.topology.NodeConnectionFactory;
 import com.lambdaworks.redis.cluster.topology.TopologyComparators;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceFactories;
@@ -812,8 +813,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         };
     }
 
-    protected Utf8StringCodec newStringStringCodec() {
-        return new Utf8StringCodec();
+    protected RedisCodec<String, String> newStringStringCodec() {
+        return StringCodec.UTF8;
     }
 
     /**

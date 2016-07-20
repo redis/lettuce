@@ -6,6 +6,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceFactories;
@@ -876,8 +877,8 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    protected Utf8StringCodec newStringStringCodec() {
-        return new Utf8StringCodec();
+    protected RedisCodec<String, String> newStringStringCodec() {
+        return StringCodec.UTF8;
     }
 
     private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
