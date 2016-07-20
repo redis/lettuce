@@ -187,9 +187,6 @@ public class ClusterTopologyRefresh {
             try {
                 SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
                 StatefulRedisConnection<String, String> connection = nodeConnectionFactory.connectToNode(CODEC, socketAddress);
-                if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-                    connection.sync().auth(new String(redisURI.getPassword()));
-                }
                 connection.async().clientSetname("lettuce#ClusterTopologyRefresh");
 
                 connections.addConnection(redisURI, connection);
