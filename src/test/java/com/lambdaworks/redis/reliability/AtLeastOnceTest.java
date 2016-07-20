@@ -150,9 +150,6 @@ public class AtLeastOnceTest extends AbstractCommandTest {
 
         channelWriter.write(command);
 
-        assertThat(command.isCancelled()).isFalse();
-        assertThat(command.isDone()).isFalse();
-
         assertThat(verificationConnection.get(key)).isEqualTo("2");
         countDownLatch.await(2, TimeUnit.SECONDS);
 
