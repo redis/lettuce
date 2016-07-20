@@ -102,7 +102,10 @@ class ClusterTopologyRefresh {
                         badNodes.add(partition);
                     }
                     if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                        partition.setUri(entry.getKey());
+
+                        if (partition.getUri() == null) {
+                            partition.setUri(entry.getKey());
+                        }
 
                         // record latency for later partition ordering
                         latencies.put(partition.getNodeId(), entry.getValue().duration());
