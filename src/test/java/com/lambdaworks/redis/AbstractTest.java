@@ -7,7 +7,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.junit.Rule;
 
-import com.lambdaworks.CapturingLogRule;
 import com.lambdaworks.LoggingTestRule;
 import com.lambdaworks.redis.internal.LettuceSets;
 
@@ -19,9 +18,6 @@ public class AbstractTest {
     public static final String host = TestSettings.host();
     public static final int port = TestSettings.port();
     public static final String passwd = TestSettings.password();
-
-    @Rule
-    public CapturingLogRule capturingLogRule = new CapturingLogRule();
 
     @Rule
     public LoggingTestRule loggingTestRule = new LoggingTestRule(false);

@@ -7,21 +7,18 @@ import java.util.concurrent.*;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
-
-import rx.Observable;
+import org.junit.*;
 
 import com.google.common.io.Resources;
-import com.lambdaworks.CapturingLogAppender;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+
+import rx.Observable;
 
 /**
  * @author Mark Paluch
  */
+@Ignore
 public class LettucePerformanceTest {
 
     private static RedisClient redisClient = new RedisClient(TestSettings.host(), TestSettings.port());
@@ -32,12 +29,10 @@ public class LettucePerformanceTest {
     public void before() throws Exception {
         LogManager.resetConfiguration();
         LogManager.getRootLogger().setLevel(Level.WARN);
-        CapturingLogAppender.disable();
     }
 
     @After
     public void after() throws Exception {
-        CapturingLogAppender.enable();
         PropertyConfigurator.configure(Resources.getResource("log4j.properties"));
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.MINUTES);
@@ -190,8 +185,8 @@ public class LettucePerformanceTest {
 
     }
 
-    protected void submitObservableTasks(int threads, List<Future<List<Observable<String>>>> futurama,
-            final int callsPerThread, final boolean connectionPerThread) {
+    protected void submitObservableTasks(int threads, List<Future<List<Observable<String>>>> futurama, final int callsPerThread,
+            final boolean connectionPerThread) {
         final StatefulRedisConnection<String, String> sharedConnection;
         if (!connectionPerThread) {
             sharedConnection = redisClient.connectAsync().getStatefulConnection();
