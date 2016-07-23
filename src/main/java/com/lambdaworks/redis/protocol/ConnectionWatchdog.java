@@ -50,7 +50,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private SocketAddress remoteAddress;
     private int attempts;
     private long lastReconnectionLogging = -1;
-    private volatile String logPrefix;
+    private CommandHandler<?, ?> commandHandler;
+
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -98,13 +99,21 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         };
 
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
+    }
 
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+
+        if(commandHandler == null) {
+            this.commandHandler = ctx.pipeline().get(CommandHandler.class);
+        }
+        super.channelRegistered(ctx);
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
-        logger.debug("{} userEventTriggered({}, {})", logPrefix(), ctx, evt);
+        logger.debug("{} userEventTriggered({}, {})", commandHandler.logPrefix(), ctx, evt);
 
         if (evt instanceof ConnectionEvents.PrepareClose) {
 
@@ -131,9 +140,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        logPrefix = null;
         channel = ctx.channel();
-        logger.debug("{} channelActive({})", logPrefix(), ctx);
+        logger.debug("{} channelActive({})", commandHandler.logPrefix(), ctx);
         remoteAddress = channel.remoteAddress();
 
         super.channelActive(ctx);
@@ -142,8 +150,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
-        logger.debug("{} channelInactive({})", logPrefix(), ctx);
+        logger.debug("{} channelInactive({})", commandHandler.logPrefix(), ctx);
         channel = null;
+
+
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
             RedisChannelHandler<?, ?> channelHandler = ctx.pipeline().get(RedisChannelHandler.class);
             if (channelHandler != null) {
@@ -153,7 +163,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
             scheduleReconnect();
         } else {
-            logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
+            logger.debug("{} Reconnect scheduling disabled", commandHandler.logPrefix(), ctx);
         }
 
         super.channelInactive(ctx);
@@ -164,10 +174,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      */
     public void scheduleReconnect() {
 
-        logger.debug("{} scheduleReconnect()", logPrefix());
+        logger.debug("{} scheduleReconnect()", commandHandler.logPrefix());
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");
+            return;
+        }
+
+        if (commandHandler.isClosed()) {
+            logger.debug("Skip reconnect scheduling, CommandHandler is closed");
             return;
         }
 
@@ -175,7 +190,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             attempts++;
 
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempts));
-            logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempts, timeout);
+            logger.debug("{} Reconnect attempt {}, delay {}ms", commandHandler.logPrefix(), attempts, timeout);
             timer.newTimeout(new TimerTask() {
                 @Override
                 public void run(final Timeout timeout) throws Exception {
@@ -192,7 +207,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 }
             }, timeout, TimeUnit.MILLISECONDS);
         } else {
-            logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
+            logger.debug("{} Skipping scheduleReconnect() because I have an active channel", commandHandler.logPrefix());
         }
     }
 
@@ -209,6 +224,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");
+            return;
+        }
+
+        if (commandHandler.isClosed()) {
+            logger.debug("Skip reconnect scheduling, CommandHandler is closed");
             return;
         }
 
@@ -291,15 +311,5 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     ReconnectionHandler getReconnectionHandler() {
         return reconnectionHandler;
-    }
-
-    private String logPrefix() {
-
-        if (logPrefix != null) {
-            return logPrefix;
-        }
-        StringBuffer buffer = new StringBuffer(64);
-        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
-        return logPrefix = buffer.toString();
     }
 }

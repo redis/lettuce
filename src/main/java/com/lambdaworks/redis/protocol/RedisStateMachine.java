@@ -7,6 +7,7 @@ import static com.lambdaworks.redis.protocol.RedisStateMachine.State.Type.*;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.output.CommandOutput;
@@ -21,7 +22,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
  * Request Protocol (RESP)</a>.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -48,6 +49,7 @@ public class RedisStateMachine<K, V> {
     private final boolean debugEnabled;
     private final LongProcessor longProcessor;
     private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     /**
      * Initialize a new instance.
@@ -80,7 +82,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Decode a command using the input buffer.
-     * 
+     *
      * @param buffer Buffer containing data from the server.
      * @param output Current command output.
      * @return true if a complete response was read.
@@ -91,11 +93,10 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Attempt to decode a redis response and return a flag indicating whether a complete response was read.
-     * 
+     *
      * @param buffer Buffer containing data from the server.
      * @param command the command itself
      * @param output Current command output.
-     * 
      * @return true if a complete response was read.
      */
     public boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command, CommandOutput<K, V, ?> output) {
@@ -218,7 +219,9 @@ public class RedisStateMachine<K, V> {
      * Close the state machine to free resources.
      */
     public void close() {
-        responseElementBuffer.release();
+        if(closed.compareAndSet(false, true)) {
+            responseElementBuffer.release();
+        }
     }
 
     private int findLineEnd(ByteBuf buffer) {
@@ -296,7 +299,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Remove the head element from the stack.
-     * 
+     *
      * @param stack
      */
     private void remove(State[] stack) {
@@ -306,7 +309,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Add the element to the stack to be the new head element.
-     * 
+     *
      * @param stack
      * @param state
      */
@@ -316,7 +319,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Returns the head element without removing it.
-     * 
+     *
      * @param stack
      * @return
      */
@@ -326,7 +329,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Add a state as tail element. This method shifts the whole stack if the stack is not empty.
-     * 
+     *
      * @param stack
      * @param state
      */
@@ -341,7 +344,6 @@ public class RedisStateMachine<K, V> {
     }
 
     /**
-     * 
      * @param stack
      * @return number of stack elements.
      */
@@ -350,7 +352,6 @@ public class RedisStateMachine<K, V> {
     }
 
     /**
-     * 
      * @param stack
      * @return true if the stack is empty.
      */
@@ -360,7 +361,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Safely sets {@link CommandOutput#set(long)}. Completes a command exceptionally in case an exception occurs.
-     * 
+     *
      * @param output
      * @param integer
      * @param command
@@ -376,7 +377,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
-     * 
+     *
      * @param output
      * @param bytes
      * @param command
@@ -392,7 +393,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Safely sets {@link CommandOutput#multi(int)}. Completes a command exceptionally in case an exception occurs.
-     * 
+     *
      * @param output
      * @param count
      * @param command
@@ -408,7 +409,7 @@ public class RedisStateMachine<K, V> {
 
     /**
      * Safely sets {@link CommandOutput#setError(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
-     * 
+     *
      * @param output
      * @param bytes
      * @param command
