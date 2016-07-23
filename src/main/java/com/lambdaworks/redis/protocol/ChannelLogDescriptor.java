@@ -23,7 +23,11 @@ class ChannelLogDescriptor {
         }
 
         if (!channel.isActive()) {
-            buffer.append(" (inactive)");
+            if(buffer.length() != 0){
+                buffer.append(' ');
+            }
+
+            buffer.append("(inactive)");
         }
 
         return buffer.toString();
