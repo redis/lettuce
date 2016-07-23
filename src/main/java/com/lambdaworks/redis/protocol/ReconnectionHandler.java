@@ -150,4 +150,8 @@ class ReconnectionHandler {
             currentFuture.cancel(true);
         }
     }
+
+    ClientOptions getClientOptions() {
+        return clientOptions;
+    }
 }

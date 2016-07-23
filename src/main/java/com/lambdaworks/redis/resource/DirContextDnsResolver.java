@@ -190,6 +190,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
      * @return
      * @throws NamingException
      */
+    @SuppressWarnings("rawtypes")
     private List<InetAddress> resolveCname(String hostname) throws NamingException {
 
         List<InetAddress> inetAddresses = new ArrayList<>();
@@ -230,6 +231,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
      * @throws NamingException
      * @throws UnknownHostException
      */
+    @SuppressWarnings("rawtypes")
     private List<InetAddress> resolve(String hostname, String attrName) throws NamingException, UnknownHostException {
 
         Attributes attrs = context.getAttributes(hostname, new String[] { attrName });

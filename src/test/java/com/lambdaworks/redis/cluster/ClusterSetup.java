@@ -10,6 +10,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -39,6 +40,23 @@ public class ClusterSetup {
             return clusterRule.getClusterClient().getPartitions().size() == 2;
 
         }).waitOrTimeout();
+
+        Partitions partitions = clusterRule.getClusterClient().getPartitions();
+        for (RedisClusterNode partition : partitions) {
+
+            if (!partition.getSlots().isEmpty()) {
+                RedisClusterAsyncCommands<String, String> nodeConnection = connection.getConnection(partition.getNodeId());
+
+                for (Integer slot : partition.getSlots()) {
+
+                    try {
+                        nodeConnection.clusterDelSlots(slot);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        }
+
 
         RedisClusterAsyncCommands<String, String> node1 = connection.getConnection(AbstractClusterTest.host,
                 AbstractClusterTest.port5);

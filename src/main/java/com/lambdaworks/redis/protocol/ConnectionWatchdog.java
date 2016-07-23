@@ -154,7 +154,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             scheduleReconnect();
         } else {
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
-            logger.debug("");
         }
 
         super.channelInactive(ctx);
@@ -288,6 +287,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     public void setReconnectSuspended(boolean reconnectSuspended) {
         reconnectionHandler.setReconnectSuspended(true);
+    }
+
+    ReconnectionHandler getReconnectionHandler() {
+        return reconnectionHandler;
     }
 
     private String logPrefix() {

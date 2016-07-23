@@ -130,7 +130,7 @@ class MasterSlaveTopologyRefresh {
     }
 
     protected TimedAsyncCommand<String, String, String> createPingCommand() {
-        CommandArgs<String, String> args = new CommandArgs<>(MasterSlaveUtils.CODEC).add(CommandKeyword.NODES);
+        CommandArgs<String, String> args = new CommandArgs<>(MasterSlaveUtils.CODEC);
         Command<String, String, String> command = new Command<>(CommandType.PING, new StatusOutput<>(MasterSlaveUtils.CODEC),
                 args);
         return new TimedAsyncCommand<>(command);

@@ -1,9 +1,10 @@
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.*;
 
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -11,8 +12,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.lambdaworks.Connections;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.ReconnectionListener;
 import com.lambdaworks.redis.server.RandomResponseServer;
 
 /**
@@ -58,12 +57,13 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 120000)
     public void pingBeforeConnectFailOnReconnect() throws Exception {
 
-        client.setOptions(
-                ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(true).build());
+        ClientOptions clientOptions = ClientOptions.builder().pingBeforeActivateConnection(true)
+                .suspendReconnectOnProtocolFailure(true).build();
+        client.setOptions(clientOptions);
 
         RandomResponseServer ts = getRandomResponseServer();
 
-        RedisURI redisUri = defaultRedisUri;
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
         redisUri.setTimeout(5);
         redisUri.setUnit(TimeUnit.SECONDS);
 
@@ -73,6 +73,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
+            assertThat(clientOptions.isSuspendReconnectOnProtocolFailure()).isTrue();
+            assertThat(connectionWatchdog.getReconnectionHandler().getClientOptions()).isSameAs(clientOptions);
 
             redisUri.setPort(TestSettings.nonexistentPort());
 

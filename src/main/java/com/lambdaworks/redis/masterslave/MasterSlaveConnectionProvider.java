@@ -104,6 +104,8 @@ public class MasterSlaveConnectionProvider<K, V> {
                     }
                     return readerCandidate;
                 }
+
+                return getConnection(selection.get(0));
             } catch (RuntimeException e) {
                 throw new RedisException(e);
             }

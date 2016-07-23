@@ -16,8 +16,6 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
     private static final Object[] NO_ARGS = {};
 
     /**
-     * {@inheritDoc}
-     *
      * <p>
      * <ul>
      * <li>{@code proxy.hashCode()} delegates to {@link AbstractInvocationHandler#hashCode}
@@ -29,6 +27,19 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
      * </ul>
      * <li>other method calls are dispatched to {@link #handleInvocation}.
      * </ul>
+     * 
+     * @param proxy the proxy instance that the method was invoked on
+     *
+     * @param method the {@code Method} instance corresponding to the interface method invoked on the proxy instance. The
+     *        declaring class of the {@code Method} object will be the interface that the method was declared in, which may be a
+     *        superinterface of the proxy interface that the proxy class inherits the method through.
+     *
+     * @param args an array of objects containing the values of the arguments passed in the method invocation on the proxy
+     *        instance, or {@code null} if interface method takes no arguments. Arguments of primitive types are wrapped in
+     *        instances of the appropriate primitive wrapper class, such as {@code java.lang.Integer} or
+     *        {@code java.lang.Boolean}.
+     * @return the invocation result value
+     * @throws Throwable the exception to throw from the method invocation on the proxy instance.
      */
     @Override
     public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -60,6 +71,19 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
      * 
      * <p>
      * Unlike {@link #invoke}, {@code args} will never be null. When the method has no parameter, an empty array is passed in.
+     *
+     * @param proxy the proxy instance that the method was invoked on
+     *
+     * @param method the {@code Method} instance corresponding to the interface method invoked on the proxy instance. The
+     *        declaring class of the {@code Method} object will be the interface that the method was declared in, which may be a
+     *        superinterface of the proxy interface that the proxy class inherits the method through.
+     *
+     * @param args an array of objects containing the values of the arguments passed in the method invocation on the proxy
+     *        instance, or {@code null} if interface method takes no arguments. Arguments of primitive types are wrapped in
+     *        instances of the appropriate primitive wrapper class, such as {@code java.lang.Integer} or
+     *        {@code java.lang.Boolean}.
+     * @return the invocation result value
+     * @throws Throwable the exception to throw from the method invocation on the proxy instance.
      */
     protected abstract Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable;
 
@@ -72,6 +96,9 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
      * </ul>
      * <p>
      * Subclasses can override this method to provide custom equality.
+     *
+     * @param obj the reference object with which to compare.
+     * @return {@code true} if this object is the same as the obj argument; {@code false} otherwise.
      */
     @Override
     public boolean equals(Object obj) {
@@ -81,6 +108,8 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
     /**
      * By default delegates to {@link Object#hashCode}. The dynamic proxies' {@code hashCode()} will delegate to this method.
      * Subclasses can override this method to provide custom equality.
+     * 
+     * @return a hash code value for this object.
      */
     @Override
     public int hashCode() {
@@ -90,6 +119,8 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
     /**
      * By default delegates to {@link Object#toString}. The dynamic proxies' {@code toString()} will delegate to this method.
      * Subclasses can override this method to provide custom string representation for the proxies.
+     * 
+     * @return a string representation of the object.
      */
     @Override
     public String toString() {

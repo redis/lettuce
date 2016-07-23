@@ -51,13 +51,8 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
         StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(sentinelClient,
                 new Utf8StringCodec(), uri);
 
-        connection.setReadFrom(ReadFrom.SLAVE);
-        String server = slaveCall(connection);
-
-        assertThatServerIs(server, "slave");
-
         connection.setReadFrom(ReadFrom.MASTER);
-        server = slaveCall(connection);
+        String server = slaveCall(connection);
         assertThatServerIs(server, "master");
 
         connection.close();
@@ -71,13 +66,8 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
         StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(sentinelClient,
                 new Utf8StringCodec(), uri);
 
-        connection.setReadFrom(ReadFrom.SLAVE);
-
-        String server = connection.sync().info("replication");
-        assertThatServerIs(server, "slave");
-
         connection.setReadFrom(ReadFrom.MASTER);
-        server = connection.sync().info("replication");
+        String server = connection.sync().info("replication");
         assertThatServerIs(server, "master");
 
         connection.close();
@@ -138,5 +128,4 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
         assertThat(matcher.find()).isTrue();
         assertThat(matcher.group(1)).isEqualTo(expectation);
     }
-
 }

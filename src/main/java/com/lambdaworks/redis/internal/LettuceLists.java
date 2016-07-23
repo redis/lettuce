@@ -9,28 +9,27 @@ import java.util.*;
  * @author Mark Paluch
  * @since 4.2
  */
-public class LettuceLists {
+public final class LettuceLists {
 
     /**
      * prevent instances.
      */
     private LettuceLists() {
-
     }
 
     /**
      * Creates a new {@link ArrayList} containing all elements from {@code elements}.
      * 
      * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
     @SafeVarargs
-    public final static <T> List<T> newList(T... elements) {
+    public static <T> List<T> newList(T... elements) {
+
         LettuceAssert.notNull(elements, "Elements must not be null");
         List<T> list = new ArrayList<>(elements.length);
-        for (T element : elements) {
-            list.add(element);
-        }
+        Collections.addAll(list, elements);
 
         return list;
     }
@@ -39,13 +38,15 @@ public class LettuceLists {
      * Creates a new {@link ArrayList} containing all elements from {@code elements}.
      * 
      * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
-    public final static <E> List<E> newList(Iterable<? extends E> elements) {
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> newList(Iterable<? extends T> elements) {
         LettuceAssert.notNull(elements, "Iterable must not be null");
 
         if (elements instanceof Collection<?>) {
-            return new ArrayList<>((Collection<? extends E>) elements);
+            return new ArrayList<>((Collection<? extends T>) elements);
         }
 
         return newList(elements.iterator());
@@ -55,12 +56,13 @@ public class LettuceLists {
      * Creates a new {@link ArrayList} containing all elements from {@code elements}.
      * 
      * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
-    public final static <E> List<E> newList(Iterator<? extends E> elements) {
+    public static <T> List<T> newList(Iterator<? extends T> elements) {
         LettuceAssert.notNull(elements, "Iterator must not be null");
 
-        List<E> objects = new ArrayList<>();
+        List<T> objects = new ArrayList<>();
         while (elements.hasNext()) {
             objects.add(elements.next());
         }
@@ -72,9 +74,11 @@ public class LettuceLists {
      * Creates a new unmodifiable {@link ArrayList} containing all elements from {@code elements}.
      *
      * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
-    public static <E> List<E> unmodifiableList(E... elements) {
+    @SafeVarargs
+    public static <T> List<T> unmodifiableList(T... elements) {
         return Collections.unmodifiableList(newList(elements));
     }
 
@@ -82,10 +86,10 @@ public class LettuceLists {
      * Creates a new unmodifiable {@link ArrayList} containing all elements from {@code elements}.
      *
      * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
-    public static <E> List<E> unmodifiableList(
-            Collection<? extends E> elements) {
+    public static <T> List<T> unmodifiableList(Collection<? extends T> elements) {
         return Collections.unmodifiableList(new ArrayList<>(elements));
     }
 }

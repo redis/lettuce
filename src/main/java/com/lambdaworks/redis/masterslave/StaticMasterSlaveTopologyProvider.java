@@ -39,6 +39,7 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public List<RedisNodeDescription> getNodes() {
 
         List<StatefulRedisConnection<String, String>> connections = new ArrayList<>();

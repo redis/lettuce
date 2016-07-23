@@ -6,13 +6,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Static utility methods for {@link Set} instances.This class is part of the internal API and may change without further
+ * Static utility methods for {@link Set} instances. This class is part of the internal API and may change without further
  * notice.
  * 
  * @author Mark Paluch
  * @since 4.2
  */
-public class LettuceSets {
+public final class LettuceSets {
 
     /**
      * prevent instances.
@@ -25,12 +25,13 @@ public class LettuceSets {
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      * 
      * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
-    public static <E> Set<E> newHashSet(Collection<? extends E> elements) {
+    public static <T> Set<T> newHashSet(Collection<? extends T> elements) {
         LettuceAssert.notNull(elements, "Collection must not be null");
 
-        HashSet<E> set = new HashSet<E>(elements.size());
+        HashSet<T> set = new HashSet<>(elements.size());
         set.addAll(elements);
         return set;
     }
@@ -39,17 +40,19 @@ public class LettuceSets {
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      * 
      * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
-    public static <E> Set<E> newHashSet(Iterable<? extends E> elements) {
+    @SuppressWarnings("unchecked")
+    public static <T> Set<T> newHashSet(Iterable<? extends T> elements) {
         LettuceAssert.notNull(elements, "Iterable must not be null");
 
         if (elements instanceof Collection<?>) {
-            return newHashSet((Collection<E>) elements);
+            return newHashSet((Collection<T>) elements);
         }
 
-        Set<E> set = new HashSet<>();
-        for (E e : elements) {
+        Set<T> set = new HashSet<>();
+        for (T e : elements) {
             set.add(e);
         }
         return set;
@@ -59,15 +62,16 @@ public class LettuceSets {
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      * 
      * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
-    public static <E> Set<E> newHashSet(E... elements) {
+    @SafeVarargs
+    public static <T> Set<T> newHashSet(T... elements) {
+
         LettuceAssert.notNull(elements, "Elements must not be null");
 
-        HashSet<E> set = new HashSet<E>(elements.length);
-        for (E element : elements) {
-            set.add(element);
-        }
+        HashSet<T> set = new HashSet<>(elements.length);
+        Collections.addAll(set, elements);
         return set;
     }
 
@@ -75,9 +79,11 @@ public class LettuceSets {
      * Creates a new unmodifiable {@code HashSet} containing all elements from {@code elements}.
      *
      * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
-    public static <K> Set<K> unmodifiableSet(K... elements) {
+    @SafeVarargs
+    public static <T> Set<T> unmodifiableSet(T... elements) {
         return Collections.unmodifiableSet(newHashSet(elements));
     }
 }

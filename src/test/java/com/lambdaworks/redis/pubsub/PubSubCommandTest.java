@@ -279,7 +279,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 10000)
     public void resubscribeChannelsOnReconnect() throws Exception {
         pubsub.subscribe(channel);
         assertThat(channels.take()).isEqualTo(channel);
@@ -297,7 +297,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 10000)
     public void resubscribePatternsOnReconnect() throws Exception {
         pubsub.psubscribe(pattern);
         assertThat(patterns.take()).isEqualTo(pattern);

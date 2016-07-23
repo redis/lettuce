@@ -44,6 +44,7 @@ public class ClusterTopologyRefresh {
      * an ordered list of {@link RedisClusterNode}s. The sort key is latency. Nodes with lower latency come first.
      *
      * @param seed collection of {@link RedisURI}s
+     * @param discovery {@literal true} to discover additional nodes
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
     public Map<RedisURI, Partitions> loadViews(Iterable<RedisURI> seed, boolean discovery) {
@@ -89,18 +90,16 @@ public class ClusterTopologyRefresh {
         return StreamSupport.stream(seed.spliterator(), false).collect(Collectors.toCollection(HashSet::new));
     }
 
-    protected NodeTopologyViews getNodeSpecificViews(Requests requestedTopology, Requests requestedClients,
-            long commandTimeoutNs) throws InterruptedException {
+    NodeTopologyViews getNodeSpecificViews(Requests requestedTopology, Requests requestedClients,
+                                           long commandTimeoutNs) throws InterruptedException {
 
         List<RedisClusterNodeSnapshot> allNodes = new ArrayList<>();
-
-        long timeout = commandTimeoutNs;
 
         Map<String, Long> latencies = new HashMap<>();
         Map<String, Integer> clientCountByNodeId = new HashMap<>();
 
-        long waitTime = requestedTopology.await(timeout, TimeUnit.NANOSECONDS);
-        requestedClients.await(timeout - waitTime, TimeUnit.NANOSECONDS);
+        long waitTime = requestedTopology.await(commandTimeoutNs, TimeUnit.NANOSECONDS);
+        requestedClients.await(commandTimeoutNs - waitTime, TimeUnit.NANOSECONDS);
 
         Set<RedisURI> nodes = requestedTopology.nodes();
 
@@ -117,7 +116,7 @@ public class ClusterTopologyRefresh {
                 List<RedisClusterNodeSnapshot> nodeWithStats = nodeTopologyView.getPartitions() //
                         .stream() //
                         .filter(ClusterTopologyRefresh::validNode) //
-                        .map(n -> new RedisClusterNodeSnapshot(n)).collect(Collectors.toList());
+                        .map(RedisClusterNodeSnapshot::new).collect(Collectors.toList());
 
                 for (RedisClusterNodeSnapshot partition : nodeWithStats) {
 
@@ -224,19 +223,8 @@ public class ClusterTopologyRefresh {
 
     private static <E> Set<E> difference(Set<E> set1, Set<E> set2) {
 
-        Set<E> result = new HashSet<>();
-
-        for (E e : set1) {
-            if (!set2.contains(e)) {
-                result.add(e);
-            }
-        }
-
-        for (E e : set2) {
-            if (!set1.contains(e)) {
-                result.add(e);
-            }
-        }
+        Set<E> result = set1.stream().filter(e -> !set2.contains(e)).collect(Collectors.toSet());
+        result.addAll(set2.stream().filter(e -> !set1.contains(e)).collect(Collectors.toList()));
 
         return result;
     }
@@ -246,5 +234,4 @@ public class ClusterTopologyRefresh {
         RedisURI redisURI = redisURIs.iterator().next();
         return redisURI.getUnit().toNanos(redisURI.getTimeout());
     }
-
 }
