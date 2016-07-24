@@ -288,6 +288,7 @@ public interface RedisServerAsyncConnection<K, V> {
      * 
      * @return RedisFuture&lt;String&gt;
      */
+    @Deprecated
     RedisFuture<String> sync();
 
     /**

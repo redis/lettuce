@@ -316,8 +316,9 @@ public interface RedisServerAsyncCommands<K, V> {
     /**
      * Internal command used for replication.
      * 
-     * @return String simple-string-reply The commands returns OK on success.
+     * @return String simple-string-reply
      */
+    @Deprecated
     RedisFuture<String> sync();
 
     /**
