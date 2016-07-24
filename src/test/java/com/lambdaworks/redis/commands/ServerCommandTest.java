@@ -328,11 +328,4 @@ public class ServerCommandTest extends AbstractRedisClientTest {
 
         redis.configSet("slowlog-log-slower-than", "10000");
     }
-
-    @Test
-    @Ignore("Run me manually, I eat up 5 seconds.")
-    public void sync() throws Exception {
-        assertThat(redis.sync().startsWith("REDIS")).isTrue();
-    }
-
 }
