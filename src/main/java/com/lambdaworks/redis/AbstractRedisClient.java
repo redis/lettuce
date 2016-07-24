@@ -241,7 +241,7 @@ public abstract class AbstractRedisClient {
                 throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout() + " "
                         + connectionBuilder.getTimeUnit(), e);
             }
-            connection.registerCloseables(closeableResources, connection, connectionBuilder.commandHandler());
+            connection.registerCloseables(closeableResources, connection);
 
             return (T) connection;
         } catch (RedisException e) {

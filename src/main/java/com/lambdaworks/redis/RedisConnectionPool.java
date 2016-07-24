@@ -188,8 +188,8 @@ public class RedisConnectionPool<T> implements Closeable {
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
             if (DISABLED_METHODS.contains(method.getName())) {
-                throw new UnsupportedOperationException("Calls to " + method.getName()
-                        + " are not supported on pooled connections");
+                throw new UnsupportedOperationException(
+                        "Calls to " + method.getName() + " are not supported on pooled connections");
             }
 
             if (connection == null) {
@@ -197,6 +197,9 @@ public class RedisConnectionPool<T> implements Closeable {
             }
 
             if (method.getName().equals("close")) {
+                if (pool.objectPool == null) {
+                    return method.invoke(connection, args);
+                }
                 pool.freeConnection((T) proxy);
                 return null;
             }
