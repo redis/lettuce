@@ -24,6 +24,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  * @author Mark Paluch
  * @since 4.2
  */
+@SuppressWarnings("varargs")
 class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     static final String MUST_NOT_BE_EMPTY = "must not be empty";
@@ -47,7 +48,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(NUMSUB).addKeys(patterns);
-        return createCommand(PUBSUB, (MapOutput) new MapOutput<>((RedisCodec) codec), args);
+        return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
     }
 
     @SafeVarargs

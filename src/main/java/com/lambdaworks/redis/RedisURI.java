@@ -196,7 +196,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return An instance of {@link RedisURI} containing details from the {@code host} and {@code port}.
      */
     public static RedisURI create(String host, int port) {
-        return builder().redis(host, port).build();
+        return Builder.redis(host, port).build();
     }
 
     /**

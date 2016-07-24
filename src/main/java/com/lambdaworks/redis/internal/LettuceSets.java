@@ -12,6 +12,7 @@ import java.util.Set;
  * @author Mark Paluch
  * @since 4.2
  */
+@SuppressWarnings("varargs")
 public final class LettuceSets {
 
     /**

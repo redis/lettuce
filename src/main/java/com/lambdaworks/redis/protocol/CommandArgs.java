@@ -401,7 +401,6 @@ public class CommandArgs<K, V> {
 
     static class IntegerArgument extends SingularArgument {
 
-        static IntegerCache integerCache = new IntegerCache();
         final long val;
 
         private IntegerArgument(long val) {
@@ -410,8 +409,8 @@ public class CommandArgs<K, V> {
 
         static IntegerArgument of(long val) {
 
-            if (val >= 0 && val < integerCache.cache.length) {
-                return integerCache.cache[(int) val];
+            if (val >= 0 && val < IntegerCache.cache.length) {
+                return IntegerCache.cache[(int) val];
             }
 
             return new IntegerArgument(val);

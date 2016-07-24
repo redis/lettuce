@@ -31,23 +31,24 @@ public class MigrateArgs<K> {
         }
 
         public static <K> MigrateArgs<K> copy() {
-            return new MigrateArgs().copy();
+            return new MigrateArgs<K>().copy();
         }
 
         public static <K> MigrateArgs<K> replace() {
-            return new MigrateArgs().replace();
+            return new MigrateArgs<K>().replace();
         }
 
         public static <K> MigrateArgs<K> key(K key) {
-            return new MigrateArgs().key(key);
+            return new MigrateArgs<K>().key(key);
         }
 
+        @SafeVarargs
         public static <K> MigrateArgs<K> keys(K... keys) {
-            return new MigrateArgs().keys(keys);
+            return new MigrateArgs<K>().keys(keys);
         }
 
         public static <K> MigrateArgs<K> keys(Iterable<K> keys) {
-            return new MigrateArgs().keys(keys);
+            return new MigrateArgs<K>().keys(keys);
         }
     }
 
@@ -67,7 +68,8 @@ public class MigrateArgs<K> {
         return this;
     }
 
-    public MigrateArgs<K> keys(K... keys) {
+    @SafeVarargs
+    public final MigrateArgs<K> keys(K... keys) {
         LettuceAssert.notEmpty(keys, "Keys must not be empty");
         for (K key : keys) {
             this.keys.add(key);
@@ -84,6 +86,7 @@ public class MigrateArgs<K> {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (copy) {

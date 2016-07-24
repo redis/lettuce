@@ -22,7 +22,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <V>
  * @author Mark Paluch
  */
-@SuppressWarnings({"unchecked", "Convert2Diamond", "WeakerAccess"})
+@SuppressWarnings({"unchecked", "Convert2Diamond", "WeakerAccess", "varargs"})
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";

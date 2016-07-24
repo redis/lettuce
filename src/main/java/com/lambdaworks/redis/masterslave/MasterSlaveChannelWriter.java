@@ -16,10 +16,10 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
-    private MasterSlaveConnectionProvider masterSlaveConnectionProvider;
+    private MasterSlaveConnectionProvider<K, V> masterSlaveConnectionProvider;
     private boolean closed = false;
 
-    public MasterSlaveChannelWriter(MasterSlaveConnectionProvider masterSlaveConnectionProvider) {
+    public MasterSlaveChannelWriter(MasterSlaveConnectionProvider<K, V> masterSlaveConnectionProvider) {
         this.masterSlaveConnectionProvider = masterSlaveConnectionProvider;
     }
 
