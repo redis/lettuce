@@ -357,11 +357,6 @@ public class ServerCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    public void sync() throws Exception {
-        assertThat(redis.sync().startsWith("REDIS")).isTrue();
-    }
-
-    @Test
     public void migrate() throws Exception {
         redis.set(key, value);
 
