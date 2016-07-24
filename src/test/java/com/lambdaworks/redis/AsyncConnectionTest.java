@@ -91,6 +91,8 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
 
         assertThat(run).hasSize(1);
 
+        connection.close();
+
     }
 
     @Test(timeout = 1000)
@@ -114,6 +116,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
 
         assertThat(run).hasSize(1);
 
+        connection.close();
     }
 
     @Test(timeout = 500)

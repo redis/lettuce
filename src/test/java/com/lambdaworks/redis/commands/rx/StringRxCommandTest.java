@@ -26,5 +26,7 @@ public class StringRxCommandTest extends StringCommandTest {
         Observable<String> mget = connection.reactive().mget(key, "key1", "key2");
         String first = mget.toBlocking().first();
         assertThat(first).isEqualTo(value);
+
+        connection.close();
     }
 }

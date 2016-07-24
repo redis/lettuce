@@ -94,12 +94,14 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public void statefulConnectionFromSync() throws Exception {
         RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
         assertThat(sync.getStatefulConnection().sync()).isSameAs(sync);
+        sync.close();
     }
 
     @Test
     public void statefulConnectionFromAsync() throws Exception {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
+        async.close();
     }
 
     @Test

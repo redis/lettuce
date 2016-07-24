@@ -61,6 +61,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
 
+        plain.close();
+        connection.close();
     }
 
     @Test
@@ -280,6 +282,9 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         assertThat(getFuture1.get()).isEqualTo("value1");
         assertThat(getFuture2.get()).isEqualTo("value2");
+
+        controlConnection.close();
+        redisConnection.close();
     }
 
     @Test(timeout = 10000)
@@ -324,6 +329,9 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
                 assertThat(getFuture1.get()).isEqualTo("value1");
                 assertThat(getFuture2.get()).isEqualTo("value2");
+
+                controlConnection.close();
+                redisConnection.close();
             }
         };
 

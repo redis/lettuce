@@ -60,12 +60,14 @@ public class ClientTest extends AbstractRedisClientTest {
     public void statefulConnectionFromAsync() throws Exception {
         RedisAsyncCommands<String, String> async = client.connect().async();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
+        async.close();
     }
 
     @Test
     public void statefulConnectionFromReactive() throws Exception {
         RedisAsyncCommands<String, String> async = client.connect().async();
         assertThat(async.getStatefulConnection().reactive().getStatefulConnection()).isSameAs(async.getStatefulConnection());
+        async.close();
     }
 
     @Test

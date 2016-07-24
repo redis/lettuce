@@ -25,6 +25,10 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         String result2 = c2.ping();
         assertThat(result1).isEqualTo("PONG");
         assertThat(result2).isEqualTo("PONG");
+
+        c1.close();
+        c2.close();
+        pool.close();
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -33,7 +37,12 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         RedisConnectionPool<RedisCommands<String, String>> pool = client.pool();
         RedisCommands<String, String> c1 = pool.allocateConnection();
 
-        c1.getStatefulConnection();
+        try {
+            c1.getStatefulConnection();
+        } finally {
+            c1.close();
+            pool.close();
+        }
     }
 
     @Test
@@ -45,6 +54,9 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
 
         RedisConnection<String, String> c2 = pool.allocateConnection();
         assertThat(c2).isSameAs(c1);
+
+        c2.close();
+        pool.close();
     }
 
     @Test
@@ -59,6 +71,9 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
 
         RedisConnection<String, String> actualConnection2 = assertConnectionStillThere(c2);
         assertThat(actualConnection1).isSameAs(actualConnection2);
+
+        c2.close();
+        pool.close();
     }
 
     @SuppressWarnings("unchecked")
@@ -112,6 +127,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         pool.close();
 
         c1.ping();
+        c1.close();
     }
 
     @Test
@@ -124,6 +140,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         pool.close();
 
         c1.ping();
+        c1.close();
     }
 
     @Test
@@ -142,18 +159,18 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
         pool1.allocateConnection();
 
         assertThat(redisClient.getChannelCount()).isEqualTo(1);
-        assertThat(redisClient.getResourceCount()).isEqualTo(3);
+        assertThat(redisClient.getResourceCount()).isEqualTo(2);
 
         RedisConnectionPool<RedisCommands<String, String>> pool2 = redisClient.pool();
 
-        assertThat(redisClient.getResourceCount()).isEqualTo(4);
+        assertThat(redisClient.getResourceCount()).isEqualTo(3);
 
         pool2.allocateConnection();
 
-        assertThat(redisClient.getResourceCount()).isEqualTo(6);
+        assertThat(redisClient.getResourceCount()).isEqualTo(4);
 
         redisClient.pool().close();
-        assertThat(redisClient.getResourceCount()).isEqualTo(6);
+        assertThat(redisClient.getResourceCount()).isEqualTo(4);
 
         FastShutdown.shutdown(redisClient);
 
@@ -179,6 +196,9 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
 
         log.info("syncPoolPerformanceTest Duration: " + elapsed + "ms");
 
+        c1.close();
+        pool.close();
+
     }
 
     @Test
@@ -198,6 +218,7 @@ public class PoolConnectionTest extends AbstractRedisClientTest {
 
         log.info("asyncPoolPerformanceTest Duration: " + elapsed + "ms");
 
+        c1.close();
+        pool.close();
     }
-
 }

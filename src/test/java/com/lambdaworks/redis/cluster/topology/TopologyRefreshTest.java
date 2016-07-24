@@ -305,6 +305,7 @@ public class TopologyRefreshTest extends AbstractTest {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
+        closeable.close();
         clusterConnection.close();
     }
 }

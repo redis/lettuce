@@ -22,6 +22,7 @@ public class MultiConnectionTest extends AbstractRedisClientTest {
 
         assertThat(members.get()).hasSize(2);
 
+        connection1.close();
+        connection2.close();
     }
-
 }
