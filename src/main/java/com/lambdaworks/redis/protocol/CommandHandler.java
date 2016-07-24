@@ -105,7 +105,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
 
-        if(isClosed()) {
+        if (isClosed()) {
             logger.debug("{} Dropping register for a closed channel", logPrefix());
         }
 
@@ -160,7 +160,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return;
         }
 
-        if(debugEnabled) {
+        if (debugEnabled) {
             logger.debug("{} Received: {} bytes, {} queued commands", logPrefix(), input.readableBytes(), queue.size());
         }
 
@@ -576,7 +576,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 // fire&forget commands are excluded from metrics
                 command.complete();
             } else {
+
                 queue.add(command);
+
+                if (clientResources.commandLatencyCollector().isEnabled()) {
+                    RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+                    if (unwrappedCommand instanceof WithLatency) {
+                        WithLatency withLatency = (WithLatency) unwrappedCommand;
+                        withLatency.firstResponse(-1);
+                        withLatency.sent(nanoTime());
+                    }
+                }
             }
             transportBuffer.remove(command);
         } catch (Exception e) {

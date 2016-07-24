@@ -8,6 +8,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,6 +79,9 @@ public class CommandHandlerTest {
             r.run();
             return null;
         });
+
+        when(clientResources.commandLatencyCollector()).thenReturn(new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.create()));
 
         when(channel.write(any())).thenAnswer(invocation -> {
 
@@ -368,7 +377,7 @@ public class CommandHandlerTest {
         sut.setState(CommandHandler.LifecycleState.CLOSED);
         assertThat(sut.isConnected()).isFalse();
     }
-    
+
     @Test
     public void shouldNotWriteCancelledCommands() throws Exception {
 
@@ -423,6 +432,15 @@ public class CommandHandlerTest {
 
         assertThat(captor.getValue()).containsOnly(command2);
         assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command2);
+    }
+
+    @Test
+    public void shouldSetLatency() throws Exception {
+
+        sut.write(context, Arrays.asList(command), null);
+
+        assertThat(command.sentNs).isNotEqualTo(-1);
+        assertThat(command.firstResponseNs).isEqualTo(-1);
     }
 
     @Test
