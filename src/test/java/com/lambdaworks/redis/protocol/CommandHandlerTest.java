@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -93,6 +95,9 @@ public class CommandHandlerTest {
             r.run();
             return null;
         });
+
+        when(clientResources.commandLatencyCollector()).thenReturn(new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.create()));
 
         when(channel.write(any())).thenAnswer(invocation -> {
 
@@ -518,6 +523,15 @@ public class CommandHandlerTest {
         sut.channelRead(context, byteBufMock);
 
         verify(byteBufMock, never()).release();
+    }
+
+    @Test
+    public void shouldSetLatency() throws Exception {
+
+        sut.write(context, Arrays.asList(command), null);
+
+        assertThat(command.sentNs).isNotEqualTo(-1);
+        assertThat(command.firstResponseNs).isEqualTo(-1);
     }
 
     @Test
