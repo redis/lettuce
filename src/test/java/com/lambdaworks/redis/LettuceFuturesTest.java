@@ -1,9 +1,9 @@
 package com.lambdaworks.redis;
 
-import com.google.common.util.concurrent.SettableFuture;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,8 +21,8 @@ public class LettuceFuturesTest {
     @Test(expected = RedisCommandExecutionException.class)
     public void awaitAllShouldThrowRedisCommandExecutionException() throws Exception {
 
-        SettableFuture<String> f = SettableFuture.create();
-        f.setException(new RedisCommandExecutionException("error"));
+        CompletableFuture<String> f = new CompletableFuture<>();
+        f.completeExceptionally(new RedisCommandExecutionException("error"));
 
         LettuceFutures.awaitAll(1, TimeUnit.SECONDS, f);
     }
@@ -30,7 +30,7 @@ public class LettuceFuturesTest {
     @Test(expected = RedisCommandInterruptedException.class)
     public void awaitAllShouldThrowRedisCommandInterruptedException() throws Exception {
 
-        SettableFuture<String> f = SettableFuture.create();
+        CompletableFuture<String> f = new CompletableFuture<>();
         Thread.currentThread().interrupt();
 
         LettuceFutures.awaitAll(1, TimeUnit.SECONDS, f);
@@ -39,7 +39,7 @@ public class LettuceFuturesTest {
     @Test
     public void awaitAllShouldSetInterruptedBit() throws Exception {
 
-        SettableFuture<String> f = SettableFuture.create();
+        CompletableFuture<String> f = new CompletableFuture<>();
         Thread.currentThread().interrupt();
 
         try {

@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
@@ -48,9 +48,10 @@ public class ClusterSlotRange implements Serializable {
     }
 
     private RedisClusterNode toRedisClusterNode(HostAndPort hostAndPort, String slaveOf, Set<RedisClusterNode.NodeFlag> flags) {
+
+        int port = hostAndPort.hasPort() ? hostAndPort.getPort() : RedisURI.DEFAULT_REDIS_PORT;
         RedisClusterNode redisClusterNode = new RedisClusterNode();
-        redisClusterNode
-                .setUri(RedisURI.create(hostAndPort.getHostText(), hostAndPort.getPortOrDefault(RedisURI.DEFAULT_REDIS_PORT)));
+        redisClusterNode.setUri(RedisURI.create(hostAndPort.getHostText(), port));
         redisClusterNode.setSlaveOf(slaveOf);
         redisClusterNode.setFlags(flags);
         return redisClusterNode;

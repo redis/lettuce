@@ -2,7 +2,7 @@ package com.lambdaworks.redis.models.role;
 
 import java.io.Serializable;
 
-import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.internal.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**

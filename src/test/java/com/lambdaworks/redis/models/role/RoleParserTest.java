@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.internal.HostAndPort;
 import org.junit.Test;
 
-import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceLists;
 
 public class RoleParserTest {
@@ -146,7 +146,7 @@ public class RoleParserTest {
         assertThat(sentinel.toString()).contains(RedisSentinelInstance.class.getSimpleName());
 
         ReplicationPartner partner = new ReplicationPartner();
-        partner.setHost(HostAndPort.fromHost("localhost"));
+        partner.setHost(HostAndPort.parse("localhost"));
         partner.setReplicationOffset(12);
 
         assertThat(partner.toString()).contains(ReplicationPartner.class.getSimpleName());

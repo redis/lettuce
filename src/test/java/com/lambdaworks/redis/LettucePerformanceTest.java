@@ -16,6 +16,8 @@ import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
 import rx.Observable;
 
+import javax.annotation.Resources;
+
 /**
  * @author Mark Paluch
  */

@@ -2,7 +2,7 @@ package com.lambdaworks.redis.models.role;
 
 import java.util.*;
 
-import com.google.common.net.HostAndPort;
+import com.lambdaworks.redis.internal.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
@@ -90,7 +90,7 @@ public class RoleParser {
         String stateString = getStringFromIterator(iterator, null);
         long replicationOffset = getLongFromIterator(iterator, 0);
 
-        ReplicationPartner master = new ReplicationPartner(HostAndPort.fromParts(ip, Math.toIntExact(port)), replicationOffset);
+        ReplicationPartner master = new ReplicationPartner(HostAndPort.of(ip, Math.toIntExact(port)), replicationOffset);
 
         RedisSlaveInstance.State state = SLAVE_STATE_MAPPING.get(stateString);
 
@@ -155,7 +155,7 @@ public class RoleParser {
         long port = getLongFromIterator(iterator, 0);
         long replicationOffset = getLongFromIterator(iterator, 0);
 
-        return new ReplicationPartner(HostAndPort.fromParts(ip, Math.toIntExact(port)), replicationOffset);
+        return new ReplicationPartner(HostAndPort.of(ip, Math.toIntExact(port)), replicationOffset);
     }
 
     private static long getLongFromIterator(Iterator<?> iterator, long defaultValue) {
