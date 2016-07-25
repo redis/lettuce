@@ -32,7 +32,7 @@ public class DefaultEventPublisherOptionsTest {
     @Test
     public void testBuilder() throws Exception {
 
-        DefaultEventPublisherOptions sut = new DefaultEventPublisherOptions.Builder().eventEmitInterval(1, TimeUnit.SECONDS)
+        DefaultEventPublisherOptions sut = DefaultEventPublisherOptions.builder().eventEmitInterval(1, TimeUnit.SECONDS)
                 .build();
 
         assertThat(sut.eventEmitInterval()).isEqualTo(1);

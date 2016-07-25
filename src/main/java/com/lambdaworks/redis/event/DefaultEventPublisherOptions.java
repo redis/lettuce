@@ -20,9 +20,18 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
     private final long eventEmitInterval;
     private final TimeUnit eventEmitIntervalUnit;
 
-    protected DefaultEventPublisherOptions(Builder builder) {
+    private DefaultEventPublisherOptions(Builder builder) {
         this.eventEmitInterval = builder.eventEmitInterval;
         this.eventEmitIntervalUnit = builder.eventEmitIntervalUnit;
+    }
+
+    /**
+     * Returns a new {@link DefaultEventPublisherOptions.Builder} to construct {@link DefaultEventPublisherOptions}.
+     *
+     * @return a new {@link DefaultEventPublisherOptions.Builder} to construct {@link DefaultEventPublisherOptions}.
+     */
+    public static Builder builder(){
+        return new Builder();
     }
 
     /**
@@ -33,7 +42,7 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
         private long eventEmitInterval = DEFAULT_EMIT_INTERVAL;
         private TimeUnit eventEmitIntervalUnit = DEFAULT_EMIT_INTERVAL_UNIT;
 
-        public Builder() {
+        private Builder() {
         }
 
         /**
