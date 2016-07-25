@@ -2,21 +2,16 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.lambdaworks.redis.ReadFrom;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import java.util.Collections;
+
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
-
-import java.util.Collections;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -28,7 +23,7 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        clusterClient = new RedisClusterClient(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

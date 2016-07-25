@@ -111,11 +111,7 @@ public class ClusterTopologyRefreshOptions {
         private TimeUnit adaptiveRefreshTimeoutUnit = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT;
         private int refreshTriggersReconnectAttempts = DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS;
 
-        /**
-         * @deprecated Use {@link ClusterTopologyRefreshOptions#builder()}
-         */
-        @Deprecated
-        public Builder() {
+        private Builder() {
         }
 
         /**

@@ -30,7 +30,7 @@ public class StringClusterCommandTest extends StringCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass
@@ -47,7 +47,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     @Override
     @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
-        clusterConnection = redisClusterClient.connectCluster().getStatefulConnection();
+        clusterConnection = redisClusterClient.connect();
         return ClusterTestUtil.redisCommandsOverCluster(clusterConnection);
     }
 

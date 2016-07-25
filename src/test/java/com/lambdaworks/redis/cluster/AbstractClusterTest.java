@@ -1,16 +1,14 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.internal.LettuceLists;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 
 import com.lambdaworks.redis.AbstractTest;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * @author Mark Paluch
@@ -37,6 +35,7 @@ public class AbstractClusterTest extends AbstractTest {
     public static final int port7 = port1 + 6;
     public static final String KEY_A = "a";
     public static final String KEY_B = "b";
+    public static final String KEY_D = "d";
 
     protected static RedisClusterClient clusterClient;
 

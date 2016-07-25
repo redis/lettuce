@@ -9,10 +9,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import rx.Observable;
-import rx.observables.BlockingObservable;
-import rx.observers.TestSubscriber;
-
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
@@ -20,13 +16,17 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.TransactionCommandTest;
 import com.lambdaworks.redis.internal.LettuceLists;
 
+import rx.Observable;
+import rx.observables.BlockingObservable;
+import rx.observers.TestSubscriber;
+
 public class TransactionRxCommandTest extends TransactionCommandTest {
 
     private RedisReactiveCommands<String, String> commands;
 
     @Override
     protected RedisCommands<String, String> connect() {
-        return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());
+        return RxSyncInvocationHandler.sync(client.connect());
     }
 
     @Before

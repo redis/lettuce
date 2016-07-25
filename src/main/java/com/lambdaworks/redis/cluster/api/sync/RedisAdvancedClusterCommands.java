@@ -10,7 +10,6 @@ import com.lambdaworks.redis.api.sync.RedisScriptingCommands;
 import com.lambdaworks.redis.api.sync.RedisServerCommands;
 import com.lambdaworks.redis.api.sync.RedisStringCommands;
 import com.lambdaworks.redis.cluster.ClusterClientOptions;
-import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -22,7 +21,7 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands<K, V>, RedisAdvancedClusterConnection<K, V> {
+public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands<K, V> {
 
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. In

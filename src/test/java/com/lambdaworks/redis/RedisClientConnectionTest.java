@@ -30,42 +30,6 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     }
 
     /*
-     * Pool/Sync
-     */
-    @Test
-    public void poolClientUri() throws Exception {
-        client.pool().close();
-    }
-
-    @Test
-    public void poolClientUriConfig() throws Exception {
-        client.pool(1, 1).close();
-    }
-
-    @Test
-    public void poolCodecClientUriConfig() throws Exception {
-        client.pool(CODEC, 1, 1).close();
-    }
-
-    /*
-     * Pool/Async
-     */
-    @Test
-    public void asyncPoolClientUri() throws Exception {
-        client.asyncPool().close();
-    }
-
-    @Test
-    public void asyncPoolClientUriConfig() throws Exception {
-        client.asyncPool(1, 1).close();
-    }
-
-    @Test
-    public void asyncPoolCodecClientUriConfig() throws Exception {
-        client.asyncPool(CODEC, 1, 1).close();
-    }
-
-    /*
      * Standalone/Stateful
      */
     @Test
@@ -117,29 +81,6 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     @Test(expected = IllegalArgumentException.class)
     public void connectcodecSentinelMissingHostAndSocketUri() throws Exception {
         client.connect(CODEC, invalidSentinel());
-    }
-
-    /*
-     * Deprecated: Standalone/Async
-     */
-    @Test
-    public void connectAsyncClientUri() throws Exception {
-        client.connectAsync().close();
-    }
-
-    @Test
-    public void connectAsyncCodecClientUri() throws Exception {
-        client.connectAsync(CODEC).close();
-    }
-
-    @Test
-    public void connectAsyncOwnUri() throws Exception {
-        client.connectAsync(redis(host, port).build()).close();
-    }
-
-    @Test
-    public void connectAsyncCodecOwnUri() throws Exception {
-        client.connectAsync(CODEC, redis(host, port).build()).close();
     }
 
     /*
@@ -246,29 +187,6 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     @Test(expected = IllegalArgumentException.class)
     public void connectSentinelCodecSentinelMissingHostAndSocketUri() throws Exception {
         client.connectSentinel(CODEC, invalidSentinel());
-    }
-
-    /*
-     * Deprecated: Sentinel/Async
-     */
-    @Test
-    public void connectSentinelAsyncClientUri() throws Exception {
-        client.connectSentinelAsync().close();
-    }
-
-    @Test
-    public void connectSentinelAsyncCodecClientUri() throws Exception {
-        client.connectSentinelAsync(CODEC).close();
-    }
-
-    @Test
-    public void connectSentineAsynclOwnUri() throws Exception {
-        client.connectSentinelAsync(redis(host, port).build()).close();
-    }
-
-    @Test
-    public void connectSentinelAsyncCodecOwnUri() throws Exception {
-        client.connectSentinelAsync(CODEC, redis(host, port).build()).close();
     }
 
     private RedisURI invalidSentinel() {

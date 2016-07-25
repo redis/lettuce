@@ -1,8 +1,10 @@
 package com.lambdaworks.redis.cluster.api.sync;
 
-import java.lang.AutoCloseable;
 import java.util.List;
 import java.util.Map;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+import com.lambdaworks.redis.output.CommandOutput;
 
 /**
  * 
@@ -93,4 +95,19 @@ public interface BaseNodeSelectionCommands<K, V> extends AutoCloseable {
      * @return number of replicas
      */
     Executions<Long> waitForReplication(int replicas, long timeout);
+
+    /**
+     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
+     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
+     *
+     * @param autoFlush state of autoFlush.
+     */
+    Executions<Void> setAutoFlushCommands(boolean autoFlush);
+
+    /**
+     * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
+     * achieve batching. No-op if channel is not connected.
+     */
+    Executions<Void> flushCommands();
 }

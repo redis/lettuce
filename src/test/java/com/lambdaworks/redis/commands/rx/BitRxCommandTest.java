@@ -9,8 +9,8 @@ import com.lambdaworks.redis.commands.BitCommandTest;
 public class BitRxCommandTest extends BitCommandTest {
     @Override
     protected RedisCommands<String, String> connect() {
-        bitstring = RxSyncInvocationHandler.sync(client.connectAsync(new BitStringCodec()).getStatefulConnection());
-        return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());
+        bitstring = RxSyncInvocationHandler.sync(client.connect(new BitStringCodec()));
+        return RxSyncInvocationHandler.sync(client.connect());
     }
 
 }

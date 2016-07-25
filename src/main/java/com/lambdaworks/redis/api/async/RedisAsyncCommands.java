@@ -2,7 +2,6 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 
@@ -18,7 +17,7 @@ public interface RedisAsyncCommands<K, V> extends RedisHashAsyncCommands<K, V>, 
         RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>,
-        RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisAsyncConnection<K, V> {
+        RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V> {
 
     /**
      * Set the default timeout for operations.

@@ -50,7 +50,7 @@ public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResour
 
     @Override
     protected ClientResources createInstance() throws Exception {
-        return new DefaultClientResources.Builder().computationThreadPoolSize(computationThreadPoolSize)
+        return DefaultClientResources.builder().computationThreadPoolSize(computationThreadPoolSize)
                 .ioThreadPoolSize(ioThreadPoolSize).build();
     }
 

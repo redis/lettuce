@@ -61,8 +61,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
 
-        plain.close();
-        connection.close();
+        plain.getStatefulConnection().close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -75,7 +75,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         connection.quit();
 
-        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
 
         for (int i = 0; i < 10; i++) {
             connection.ping();
@@ -88,7 +88,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             assertThat(e).hasMessageContaining("Request queue size exceeded");
         }
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -99,13 +99,13 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
         connection.quit();
-        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
         try {
             connection.get(key);
         } catch (Exception e) {
             assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("not connected");
         } finally {
-            connection.close();
+            connection.getStatefulConnection().close();
         }
     }
 
@@ -119,13 +119,13 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         getConnectionWatchdog(connection.getStatefulConnection()).setListenOnChannelInactive(false);
         connection.quit();
-        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
         try {
             connection.get(key);
         } catch (Exception e) {
             assertThat(e).isInstanceOf(RedisException.class).hasMessageContaining("not connected");
         } finally {
-            connection.close();
+            connection.getStatefulConnection().close();
         }
     }
 
@@ -138,9 +138,9 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
         connection.quit();
-        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
         connection.get(key);
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test(timeout = 10000)
@@ -154,7 +154,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             String result = connection.get(key);
             assertThat(result).isEqualTo(value);
         } finally {
-            connection.close();
+            connection.getStatefulConnection().close();
         }
     }
 
@@ -174,7 +174,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                     String result = connection.info();
                     assertThat(result).contains("memory");
                 } finally {
-                    connection.close();
+                    connection.getStatefulConnection().close();
                 }
 
             }
@@ -198,7 +198,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                     String result = connection.info();
                     assertThat(result).contains("memory");
                 } finally {
-                    connection.close();
+                    connection.getStatefulConnection().close();
                 }
 
             }
@@ -241,7 +241,6 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                 } catch (RedisConnectionException e) {
                     assertThat(e).hasRootCauseInstanceOf(RedisCommandExecutionException.class);
                 }
-
             }
         };
     }
@@ -251,7 +250,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> controlConnection = client.connect();
 
-        client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
         Utf8StringCodec codec = new Utf8StringCodec();
 
@@ -298,7 +297,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                 RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).withDatabase(5).build();
                 StatefulRedisConnection<String, String> controlConnection = client.connect(redisURI);
 
-                client.setOptions(new ClientOptions.Builder().pingBeforeActivateConnection(true).build());
+                client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
                 Utf8StringCodec codec = new Utf8StringCodec();
 

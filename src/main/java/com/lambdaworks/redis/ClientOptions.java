@@ -93,11 +93,7 @@ public class ClientOptions implements Serializable {
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
 
-        /**
-         * @deprecated Use {@link ClientOptions#builder()}
-         */
-        @Deprecated
-        public Builder() {
+        protected Builder() {
         }
 
         /**

@@ -1,8 +1,10 @@
 package com.lambdaworks.redis.cluster.api.async;
 
-import java.lang.AutoCloseable;
 import java.util.List;
 import java.util.Map;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.RedisFuture;
 
 /**
@@ -94,4 +96,40 @@ public interface BaseNodeSelectionAsyncCommands<K, V> extends AutoCloseable {
      * @return number of replicas
      */
     AsyncExecutions<Long> waitForReplication(int replicas, long timeout);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param args the command arguments, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     */
+    <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
+
+    /**
+     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
+     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
+     *
+     * @param autoFlush state of autoFlush.
+     */
+    AsyncExecutions<Void> setAutoFlushCommands(boolean autoFlush);
+
+    /**
+     * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
+     * achieve batching. No-op if channel is not connected.
+     */
+    AsyncExecutions<Void> flushCommands();
 }

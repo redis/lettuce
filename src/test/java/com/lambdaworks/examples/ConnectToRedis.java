@@ -1,8 +1,6 @@
 package com.lambdaworks.examples;
 
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 
 /**

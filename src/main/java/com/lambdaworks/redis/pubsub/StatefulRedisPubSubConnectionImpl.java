@@ -8,14 +8,15 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
+import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.ConcurrentSet;
 
@@ -91,7 +92,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     @Override
     protected RedisPubSubCommands<K, V> newRedisSyncCommandsImpl() {
-        return syncHandler(async(), RedisConnection.class, RedisClusterConnection.class, RedisPubSubCommands.class);
+        return syncHandler(async(), RedisPubSubCommands.class);
     }
 
     @Override

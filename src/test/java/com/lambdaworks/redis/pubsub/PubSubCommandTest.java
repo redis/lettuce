@@ -98,7 +98,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     public void pipelinedMessage() throws Exception {
         pubsub.subscribe(channel);
         assertThat(channels.take()).isEqualTo(channel);
-        RedisAsyncCommands<String, String> connection = client.connectAsync();
+        RedisAsyncCommands<String, String> connection = client.connect().async();
 
         connection.setAutoFlushCommands(false);
         connection.publish(channel, message);

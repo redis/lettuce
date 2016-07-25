@@ -1,14 +1,17 @@
 package biz.paluch.redis.extensibility;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 public class LettuceGeoDemo {
 
     public static void main(String[] args) {
 
         RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
-        RedisConnection<String, String> redis = (RedisConnection<String, String>) redisClient.connect();
+        RedisCommands<String, String> redis = redisClient.connect().sync();
         String key = "my-geo-set";
 
         redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "Office tower", 8.665351, 49.553302,

@@ -2,7 +2,6 @@ package com.lambdaworks.redis.metrics;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
@@ -74,11 +73,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         private boolean localDistinction = DEFAULT_LOCAL_DISTINCTION;
         private boolean enabled = DEFAULT_ENABLED;
 
-        /**
-         * @deprecated Use {@link ClientOptions#builder()}
-         */
-        @Deprecated
-        public Builder() {
+        private Builder() {
         }
 
         /**

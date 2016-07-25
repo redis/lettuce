@@ -171,11 +171,15 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugOom();
 
     /**
      * Make the server crash: Invalid pointer access.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugSegfault();
 
@@ -309,14 +313,6 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply The commands returns OK on success.
      */
     String slowlogReset();
-
-    /**
-     * Internal command used for replication.
-     * 
-     * @return String simple-string-reply
-     *
-     * @Deprecated/
-    String sync();
 
     /**
      * Return the current server time.

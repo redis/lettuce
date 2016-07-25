@@ -7,8 +7,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,6 +21,7 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * @author Mark Paluch
@@ -148,7 +147,7 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
     @Test
     public void testAsynchronicityOfMultiNodeExecution() throws Exception {
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection2 = clusterClient.connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> connection2 = clusterClient.connect().async();
 
         AsyncNodeSelection<String, String> masters = connection2.masters();
         CompletableFuture.allOf(masters.commands().configSet("lua-time-limit", "10").futures()).get();

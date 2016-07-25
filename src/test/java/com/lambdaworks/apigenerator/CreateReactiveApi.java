@@ -27,7 +27,7 @@ public class CreateReactiveApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet(
             "digest", "close", "isOpen", "BaseRedisCommands.reset",
-            "getStatefulConnection");
+            "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     private CompilationUnitFactory factory;
 

@@ -2,12 +2,22 @@
 
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+
+import java.net.ConnectException;
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.protocol.CommandHandler;
@@ -19,20 +29,6 @@ import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.SocketAddressResolver;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-
-import java.net.ConnectException;
-import java.net.SocketAddress;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
-
-import static com.lambdaworks.redis.LettuceStrings.isEmpty;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
-import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -62,48 +58,9 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a uri-less RedisClient. You can connect to different Redis servers but you must supply a {@link RedisURI} on
      * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
-     *
-     * @deprecated Use the factory method {@link #create()}
      */
-    @Deprecated
-    public RedisClient() {
-        this(EMPTY_URI);
-    }
-
-    /**
-     * Create a new client that connects to the supplied host on the default port.
-     * 
-     * @param host Server hostname.
-     * @deprecated Use the factory method {@link #create(String)}
-     */
-    @Deprecated
-    public RedisClient(String host) {
-        this(host, RedisURI.DEFAULT_REDIS_PORT);
-    }
-
-    /**
-     * Create a new client that connects to the supplied host and port. Connection attempts and non-blocking commands will
-     * {@link #setDefaultTimeout timeout} after 60 seconds.
-     * 
-     * @param host Server hostname.
-     * @param port Server port.
-     * @deprecated Use the factory method {@link #create(RedisURI)}
-     */
-    @Deprecated
-    public RedisClient(String host, int port) {
-        this(RedisURI.Builder.redis(host, port).build());
-    }
-
-    /**
-     * Create a new client that connects to the supplied host and port. Connection attempts and non-blocking commands will
-     * {@link #setDefaultTimeout timeout} after 60 seconds.
-     * 
-     * @param redisURI Redis URI.
-     * @deprecated Use the factory method {@link #create(RedisURI)}
-     */
-    @Deprecated
-    public RedisClient(RedisURI redisURI) {
-        this(null, redisURI);
+    protected RedisClient() {
+        this(null, EMPTY_URI);
     }
 
     /**
@@ -186,136 +143,6 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
-     * in mind to free all collections and close the pool once you do not need it anymore. Requires Apache commons-pool2
-     * dependency.
-     * 
-     * @return a new {@link RedisConnectionPool} instance
-     */
-    public RedisConnectionPool<RedisCommands<String, String>> pool() {
-        return pool(5, 20);
-    }
-
-    /**
-     * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     * 
-     * @param maxIdle max idle connections in pool
-     * @param maxActive max active connections in pool
-     * @return a new {@link RedisConnectionPool} instance
-     */
-    public RedisConnectionPool<RedisCommands<String, String>> pool(int maxIdle, int maxActive) {
-        return pool(newStringStringCodec(), maxIdle, maxActive);
-    }
-
-    /**
-     * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     * 
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param maxIdle max idle connections in pool
-     * @param maxActive max active connections in pool
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return a new {@link RedisConnectionPool} instance
-     */
-    @SuppressWarnings("unchecked")
-    public <K, V> RedisConnectionPool<RedisCommands<K, V>> pool(final RedisCodec<K, V> codec, int maxIdle, int maxActive) {
-
-        checkPoolDependency();
-        checkForRedisURI();
-        LettuceAssert.notNull(codec, "RedisCodec must not be null");
-
-        long maxWait = makeTimeout();
-        RedisConnectionPool<RedisCommands<K, V>> pool = new RedisConnectionPool<>(
-                new RedisConnectionPool.RedisConnectionProvider<RedisCommands<K, V>>() {
-                    @Override
-                    public RedisCommands<K, V> createConnection() {
-                        return connect(codec, redisURI).sync();
-                    }
-
-                    @Override
-                    @SuppressWarnings("rawtypes")
-                    public Class<? extends RedisCommands<K, V>> getComponentType() {
-                        return (Class) RedisCommands.class;
-                    }
-                }, maxActive, maxIdle, maxWait);
-
-        pool.addListener(closeableResources::remove);
-
-        closeableResources.add(pool);
-
-        return pool;
-    }
-
-    protected long makeTimeout() {
-        return TimeUnit.MILLISECONDS.convert(timeout, unit);
-    }
-
-    /**
-     * Creates a connection pool for asynchronous connections. 5 max idle connections and 20 max active connections. Please keep
-     * in mind to free all collections and close the pool once you do not need it anymore. Requires Apache commons-pool2
-     * dependency.
-     *
-     * @return a new {@link RedisConnectionPool} instance
-     */
-    public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool() {
-        return asyncPool(5, 20);
-    }
-
-    /**
-     * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     *
-     * @param maxIdle max idle connections in pool
-     * @param maxActive max active connections in pool
-     * @return a new {@link RedisConnectionPool} instance
-     */
-    public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool(int maxIdle, int maxActive) {
-        return asyncPool(newStringStringCodec(), maxIdle, maxActive);
-    }
-
-    /**
-     * Creates a connection pool for asynchronous connections. Please keep in mind to free all collections and close the pool
-     * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param maxIdle max idle connections in pool
-     * @param maxActive max active connections in pool
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return a new {@link RedisConnectionPool} instance
-     */
-    public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
-            int maxActive) {
-
-        checkPoolDependency();
-        checkForRedisURI();
-        LettuceAssert.notNull(codec, "RedisCodec must not be null");
-
-        long maxWait = makeTimeout();
-        RedisConnectionPool<RedisAsyncCommands<K, V>> pool = new RedisConnectionPool<>(
-                new RedisConnectionPool.RedisConnectionProvider<RedisAsyncCommands<K, V>>() {
-                    @Override
-                    public RedisAsyncCommands<K, V> createConnection() {
-                        return connectStandalone(codec, redisURI, defaultTimeout()).async();
-                    }
-
-                    @Override
-                    @SuppressWarnings({ "rawtypes", "unchecked" })
-                    public Class<? extends RedisAsyncCommands<K, V>> getComponentType() {
-                        return (Class) RedisAsyncCommands.class;
-                    }
-                }, maxActive, maxIdle, maxWait);
-
-        pool.addListener(closeableResources::remove);
-
-        closeableResources.add(pool);
-
-        return pool;
-    }
-
-    /**
      * Open a new connection to a Redis server that treats keys and values as UTF-8 strings.
      *
      * @return A new stateful Redis connection
@@ -361,59 +188,6 @@ public class RedisClient extends AbstractRedisClient {
         return connectStandalone(codec, redisURI, Timeout.from(redisURI));
     }
 
-    /**
-     * Open a new asynchronous connection to a Redis server that treats keys and values as UTF-8 strings.
-     *
-     * @return A new connection
-     */
-    @Deprecated
-    public RedisAsyncCommands<String, String> connectAsync() {
-        return connect(newStringStringCodec()).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and
-     * values.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
-     * @deprecated Use {@code connect(codec).async()}
-     */
-    @Deprecated
-    public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec) {
-        return connectStandalone(codec, redisURI, defaultTimeout()).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis server using the supplied {@link RedisURI} that treats keys and values as
-     * UTF-8 strings.
-     *
-     * @param redisURI the Redis server to connect to, must not be {@literal null}
-     * @return A new connection
-     * @deprecated Use {@code connect(redisURI).async()}
-     */
-    @Deprecated
-    public RedisAsyncCommands<String, String> connectAsync(RedisURI redisURI) {
-        return connectStandalone(newStringStringCodec(), redisURI, Timeout.from(redisURI)).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis server using the supplied {@link RedisURI} and the supplied
-     * {@link RedisCodec codec} to encode/decode keys.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param redisURI the Redis server to connect to, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
-     * @deprecated Use {@code connect(codec, redisURI).async()}
-     */
-    @Deprecated
-    public <K, V> RedisAsyncCommands<K, V> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return connectStandalone(codec, redisURI, Timeout.from(redisURI)).async();
-    }
 
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI, Timeout timeout) {
 
@@ -571,64 +345,6 @@ public class RedisClient extends AbstractRedisClient {
         return connectSentinel(codec, redisURI, Timeout.from(redisURI));
     }
 
-    /**
-     * Open a new asynchronous connection to a Redis Sentinel that treats keys and values as UTF-8 strings. You must supply a
-     * valid RedisURI containing one or more sentinels.
-     *
-     * @return a new connection
-     * @deprecated Use {@code connectSentinel().async()}
-     */
-    @Deprecated
-    public RedisSentinelAsyncCommands<String, String> connectSentinelAsync() {
-        return connectSentinel(newStringStringCodec(), redisURI, defaultTimeout()).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis Sentinela nd use the supplied {@link RedisCodec codec} to encode/decode
-     * keys and values. You must supply a valid RedisURI containing one or more sentinels.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return a new connection
-     * @deprecated Use {@code connectSentinel(codec).async()}
-     */
-    @Deprecated
-    public <K, V> RedisSentinelAsyncCommands<K, V> connectSentinelAsync(RedisCodec<K, V> codec) {
-        checkForRedisURI();
-        return connectSentinel(codec, redisURI, defaultTimeout()).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis Sentinel using the supplied {@link RedisURI} that treats keys and values as
-     * UTF-8 strings. You must supply a valid RedisURI containing a redis host or one or more sentinels.
-     *
-     * @param redisURI the Redis server to connect to, must not be {@literal null}
-     * @return A new connection
-     * @deprecated Use {@code connectSentinel(redisURI).async()}
-     */
-    @Deprecated
-    public RedisSentinelAsyncCommands<String, String> connectSentinelAsync(RedisURI redisURI) {
-        return connectSentinel(newStringStringCodec(), redisURI, Timeout.from(redisURI)).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis Sentinel using the supplied {@link RedisURI} and use the supplied
-     * {@link RedisCodec codec} to encode/decode keys and values. You must supply a valid RedisURI containing a redis host or
-     * one or more sentinels.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param redisURI the Redis server to connect to, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
-     * @deprecated Use {@code connectSentinel(codec, redisURI).async()}
-     */
-    @Deprecated
-    public <K, V> RedisSentinelAsyncCommands<K, V> connectSentinelAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
-        return connectSentinel(codec, redisURI, Timeout.from(redisURI)).async();
-    }
-
     private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI,
             Timeout timeout) {
         assertNotNull(codec);
@@ -694,22 +410,6 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @param commandHandler the command handler
      * @param codec codec
-     * @param <K> Key-Type
-     * @param <V> Value Type
-     * @return new instance of StatefulRedisPubSubConnectionImpl
-     * @deprecated Use {@link #newStatefulRedisPubSubConnection(PubSubCommandHandler, RedisCodec, long, TimeUnit)}
-     */
-    @Deprecated
-    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
-            PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec) {
-        return newStatefulRedisPubSubConnection(commandHandler, codec, timeout, unit);
-    }
-
-    /**
-     * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
-     *
-     * @param commandHandler the command handler
-     * @param codec codec
      * @param timeout default timeout
      * @param unit default timeout unit
      * @param <K> Key-Type
@@ -726,22 +426,6 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @param commandHandler the command handler
      * @param codec codec
-     * @param <K> Key-Type
-     * @param <V> Value Type
-     * @return new instance of StatefulRedisSentinelConnectionImpl
-     * @deprecated Use {@link #newStatefulRedisSentinelConnection(CommandHandler, RedisCodec, long, TimeUnit)}
-     */
-    @Deprecated
-    protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
-            CommandHandler<K, V> commandHandler, RedisCodec<K, V> codec) {
-        return newStatefulRedisSentinelConnection(commandHandler, codec, timeout, unit);
-    }
-
-    /**
-     * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
-     *
-     * @param commandHandler the command handler
-     * @param codec codec
      * @param timeout default timeout
      * @param unit default timeout unit
      * @param <K> Key-Type
@@ -751,22 +435,6 @@ public class RedisClient extends AbstractRedisClient {
     protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
             CommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new StatefulRedisSentinelConnectionImpl<>(commandHandler, codec, timeout, unit);
-    }
-
-    /**
-     * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
-     *
-     * @param commandHandler the command handler
-     * @param codec codec
-     * @param <K> Key-Type
-     * @param <V> Value Type
-     * @return new instance of StatefulRedisConnectionImpl
-     * @deprecated use {@link #newStatefulRedisConnection(CommandHandler, RedisCodec, long, TimeUnit)}
-     */
-    @Deprecated
-    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(CommandHandler<K, V> commandHandler,
-            RedisCodec<K, V> codec) {
-        return newStatefulRedisConnection(commandHandler, codec, timeout, unit);
     }
 
     /**
@@ -826,7 +494,7 @@ public class RedisClient extends AbstractRedisClient {
         return clientResources;
     }
 
-    protected SocketAddress getSocketAddress(RedisURI redisURI)
+    private SocketAddress getSocketAddress(RedisURI redisURI)
             throws InterruptedException, TimeoutException, ExecutionException {
         SocketAddress redisAddress;
 
@@ -847,9 +515,10 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private SocketAddress lookupRedis(RedisURI sentinelUri) throws InterruptedException, TimeoutException, ExecutionException {
-        RedisSentinelAsyncCommands<String, String> connection = connectSentinel(sentinelUri).async();
+        StatefulRedisSentinelConnection<String, String> connection = connectSentinel(
+                sentinelUri);
         try {
-            return connection.getMasterAddrByName(sentinelUri.getSentinelMasterId()).get(timeout, unit);
+            return connection.async().getMasterAddrByName(sentinelUri.getSentinelMasterId()).get(timeout, unit);
         } finally {
             connection.close();
         }

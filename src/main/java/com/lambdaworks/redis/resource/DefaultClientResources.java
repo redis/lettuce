@@ -195,11 +195,7 @@ public class DefaultClientResources implements ClientResources {
         private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
         private Delay reconnectDelay = DEFAULT_RECONNECT_DELAY;
 
-        /**
-         * @deprecated Use {@link DefaultClientResources#builder()}
-         */
-        @Deprecated
-        public Builder() {
+        private Builder() {
         }
 
         /**

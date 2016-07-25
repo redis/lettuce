@@ -25,7 +25,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(
+        redisClusterClient = RedisClusterClient.create(
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
@@ -43,7 +43,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     @Override
     @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
-        clusterConnection = redisClusterClient.connectCluster().getStatefulConnection();
+        clusterConnection = redisClusterClient.connect();
         return ClusterTestUtil.redisCommandsOverCluster(clusterConnection);
     }
 

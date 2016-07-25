@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.AUTH;
+import static com.lambdaworks.redis.protocol.CommandType.READONLY;
+import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -71,7 +73,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         this.async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
         this.sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                new Class<?>[] { RedisAdvancedClusterConnection.class, RedisAdvancedClusterCommands.class }, syncInvocationHandler());
+                new Class<?>[] { RedisAdvancedClusterCommands.class }, syncInvocationHandler());
         this.reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
     }
 
@@ -91,11 +93,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     @Override
     public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
-        return reactive;
-    }
-
-    @Deprecated
-    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> getReactiveCommands() {
         return reactive;
     }
 

@@ -22,41 +22,10 @@ public class ClusterSlotRange implements Serializable {
     private int from;
     private int to;
 
-    @Deprecated
-    private HostAndPort master;
-
     private RedisClusterNode masterNode;
-
-    @Deprecated
-    private List<HostAndPort> slaves = Collections.emptyList();
-
     private List<RedisClusterNode> slaveNodes = Collections.emptyList();
 
     public ClusterSlotRange() {
-
-    }
-
-    /**
-     * Constructs a {@link ClusterSlotRange}
-     * 
-     * @param from from slot
-     * @param to to slot
-     * @param master master for the slots, may be {@literal null}
-     * @param slaves list of slaves must not be {@literal null} but may be empty
-     * @deprecated Use {@link #ClusterSlotRange(int, int, RedisClusterNode, List)}
-     */
-    @Deprecated
-    public ClusterSlotRange(int from, int to, HostAndPort master, List<HostAndPort> slaves) {
-
-        LettuceAssert.notNull(master, "Master must not be null");
-        LettuceAssert.notNull(slaves, "Slaves must not be null");
-
-        this.from = from;
-        this.to = to;
-        this.masterNode = toRedisClusterNode(master, null, Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
-        this.slaveNodes = toRedisClusterNodes(slaves, null, Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
-        this.master = master;
-        this.slaves = slaves;
     }
 
     /**
@@ -74,35 +43,21 @@ public class ClusterSlotRange implements Serializable {
 
         this.from = from;
         this.to = to;
-        this.master = toHostAndPort(masterNode);
-        this.slaves = toHostAndPorts(slaveNodes);
         this.masterNode = masterNode;
         this.slaveNodes = slaveNodes;
     }
 
-    private HostAndPort toHostAndPort(RedisClusterNode redisClusterNode) {
-        RedisURI uri = redisClusterNode.getUri();
-        return HostAndPort.fromParts(uri.getHost(), uri.getPort());
-    }
-
-    private List<HostAndPort> toHostAndPorts(List<RedisClusterNode> nodes) {
-        List<HostAndPort> result = new ArrayList<>();
-        for (RedisClusterNode node : nodes) {
-            result.add(toHostAndPort(node));
-        }
-        return result;
-    }
-
     private RedisClusterNode toRedisClusterNode(HostAndPort hostAndPort, String slaveOf, Set<RedisClusterNode.NodeFlag> flags) {
         RedisClusterNode redisClusterNode = new RedisClusterNode();
-        redisClusterNode.setUri(RedisURI
-                .create(hostAndPort.getHostText(), hostAndPort.getPortOrDefault(RedisURI.DEFAULT_REDIS_PORT)));
+        redisClusterNode
+                .setUri(RedisURI.create(hostAndPort.getHostText(), hostAndPort.getPortOrDefault(RedisURI.DEFAULT_REDIS_PORT)));
         redisClusterNode.setSlaveOf(slaveOf);
         redisClusterNode.setFlags(flags);
         return redisClusterNode;
     }
 
-    private List<RedisClusterNode> toRedisClusterNodes(List<HostAndPort> hostAndPorts, String slaveOf, Set<RedisClusterNode.NodeFlag> flags) {
+    private List<RedisClusterNode> toRedisClusterNodes(List<HostAndPort> hostAndPorts, String slaveOf,
+            Set<RedisClusterNode.NodeFlag> flags) {
         List<RedisClusterNode> result = new ArrayList<>();
         for (HostAndPort hostAndPort : hostAndPorts) {
             result.add(toRedisClusterNode(hostAndPort, slaveOf, flags));
@@ -116,24 +71,6 @@ public class ClusterSlotRange implements Serializable {
 
     public int getTo() {
         return to;
-    }
-
-    /**
-     * @deprecated Use {@link #getMasterNode()} to retrieve the {@code nodeId} and the {@code slaveOf} details.
-     * @return the master host and port
-     */
-    @Deprecated
-    public HostAndPort getMaster() {
-        return master;
-    }
-
-    /**
-     * @deprecated Use {@link #getSlaveNodes()} to retrieve the {@code nodeId} and the {@code slaveOf} details.
-     * @return the master host and port
-     */
-    @Deprecated
-    public List<HostAndPort> getSlaves() {
-        return slaves;
     }
 
     public RedisClusterNode getMasterNode() {
@@ -158,17 +95,6 @@ public class ClusterSlotRange implements Serializable {
 
     public void setTo(int to) {
         this.to = to;
-    }
-
-    public void setMaster(HostAndPort master) {
-        LettuceAssert.notNull(master, "Master must not be null");
-        this.master = master;
-    }
-
-    public void setSlaves(List<HostAndPort> slaves) {
-
-        LettuceAssert.notNull(slaves, "Slaves must not be null");
-        this.slaves = slaves;
     }
 
     @Override

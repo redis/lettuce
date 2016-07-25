@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -50,11 +52,6 @@ public abstract class AbstractRedisClient {
     protected static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
 
-    /**
-     * @deprecated use map eventLoopGroups instead.
-     */
-    @Deprecated
-    protected EventLoopGroup eventLoopGroup;
     protected EventExecutorGroup genericWorkerPool;
 
     protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
@@ -70,14 +67,6 @@ public abstract class AbstractRedisClient {
 
     private final boolean sharedResources;
     private final AtomicBoolean shutdown = new AtomicBoolean();
-
-    /**
-     * @deprecated use {@link #AbstractRedisClient(ClientResources)}
-     */
-    @Deprecated
-    protected AbstractRedisClient() {
-        this(null);
-    }
 
     /**
      * Create a new instance with client resources.
@@ -103,7 +92,7 @@ public abstract class AbstractRedisClient {
     }
 
     /**
-     * Set the default timeout for {@link com.lambdaworks.redis.RedisConnection connections} created by this client. The timeout
+     * Set the default timeout for connections created by this client. The timeout
      * applies to connection attempts and non-blocking commands.
      * 
      * @param timeout Default connection timeout.
@@ -179,12 +168,7 @@ public abstract class AbstractRedisClient {
 
         if ((connectionPoint == null || connectionPoint.getSocket() == null)
                 && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
-
-            if (eventLoopGroup == null) {
-                eventLoopGroup = clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
-            }
-
-            eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
+            eventLoopGroups.put(NioEventLoopGroup.class, clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class));
         }
 
         if (connectionPoint != null && connectionPoint.getSocket() != null) {

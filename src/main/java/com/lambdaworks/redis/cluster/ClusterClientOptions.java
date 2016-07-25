@@ -33,7 +33,7 @@ public class ClusterClientOptions extends ClientOptions {
         ClusterTopologyRefreshOptions refreshOptions = builder.topologyRefreshOptions;
 
         if (refreshOptions == null) {
-            refreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+            refreshOptions = ClusterTopologyRefreshOptions.builder() //
                     .enablePeriodicRefresh(builder.refreshClusterView)//
                     .refreshPeriod(builder.refreshPeriod, builder.refreshPeriodUnit)//
                     .closeStaleConnections(builder.closeStaleConnections)//
@@ -93,61 +93,7 @@ public class ClusterClientOptions extends ClientOptions {
         private int maxRedirects = DEFAULT_MAX_REDIRECTS;
         private ClusterTopologyRefreshOptions topologyRefreshOptions = null;
 
-        /**
-         * @deprecated Use {@link ClusterClientOptions#builder()}
-         */
-        @Deprecated
-        public Builder() {
-        }
-
-        /**
-         * Enable regular cluster topology updates. The client starts updating the cluster topology in the intervals of
-         * {@link Builder#refreshPeriod} /{@link Builder#refreshPeriodUnit}. Defaults to {@literal false}. See
-         * {@link #DEFAULT_REFRESH_CLUSTER_VIEW}.
-         *
-         * @param refreshClusterView {@literal true} enable regular cluster topology updates or {@literal false} to disable
-         *        auto-updating
-         * @return {@code this}
-         * @deprecated Use {@link #topologyRefreshOptions}, see
-         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#enablePeriodicRefresh(boolean)}
-         */
-        @Deprecated
-        public Builder refreshClusterView(boolean refreshClusterView) {
-            this.refreshClusterView = refreshClusterView;
-            return this;
-        }
-
-        /**
-         * Set the refresh period. Defaults to {@literal 60 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD} and
-         * {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
-         *
-         * @param refreshPeriod period for triggering topology updates
-         * @param refreshPeriodUnit unit for {@code refreshPeriod}
-         * @return {@code this}
-         * @deprecated Use {@link #topologyRefreshOptions}, see
-         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#refreshPeriod(long, TimeUnit)}
-         */
-        @Deprecated
-        public Builder refreshPeriod(long refreshPeriod, TimeUnit refreshPeriodUnit) {
-            this.refreshPeriod = refreshPeriod;
-            this.refreshPeriodUnit = refreshPeriodUnit;
-            return this;
-        }
-
-        /**
-         * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes
-         * only into effect if {@link #isRefreshClusterView()} is {@literal true}. See
-         * {@link ClusterClientOptions#DEFAULT_CLOSE_STALE_CONNECTIONS}.
-         *
-         * @param closeStaleConnections {@literal true} if stale connections are cleaned up after cluster topology updates
-         * @return {@code this}
-         * @deprecated Use {@link #topologyRefreshOptions}, see
-         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#closeStaleConnections(boolean)}
-         */
-        @Deprecated
-        public Builder closeStaleConnections(boolean closeStaleConnections) {
-            this.closeStaleConnections = closeStaleConnections;
-            return this;
+        protected Builder() {
         }
 
         /**

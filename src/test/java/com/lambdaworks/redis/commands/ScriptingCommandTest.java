@@ -16,8 +16,8 @@ import org.junit.runners.MethodSorters;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ScriptingCommandTest extends AbstractRedisClientTest {
@@ -112,13 +112,13 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
         assertThat(redis.scriptExists(digest1, digest2)).isEqualTo(list(false, false));
 
         redis.configSet("lua-time-limit", "10");
-        RedisAsyncConnection<String, String> async = client.connectAsync();
+        StatefulRedisConnection<String, String> connection = client.connect();
         try {
-            async.eval("while true do end", STATUS, new String[0]);
+            connection.async().eval("while true do end", STATUS, new String[0]);
             Thread.sleep(100);
             assertThat(redis.scriptKill()).isEqualTo("OK");
         } finally {
-            async.close();
+            connection.close();
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.pubsub.api.sync;
 
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;

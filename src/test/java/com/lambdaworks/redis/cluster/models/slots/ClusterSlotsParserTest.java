@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.google.common.net.HostAndPort;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.internal.LettuceLists;
 
@@ -40,7 +39,6 @@ public class ClusterSlotsParserTest {
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
 
-        assertThat(result.get(0).getMaster()).isNotNull();
         assertThat(result.get(0).getMasterNode()).isNotNull();
     }
 
@@ -52,10 +50,6 @@ public class ClusterSlotsParserTest {
         assertThat(result).hasSize(1);
         ClusterSlotRange clusterSlotRange = result.get(0);
 
-        assertThat(clusterSlotRange.getMaster()).isNotNull();
-        assertThat(clusterSlotRange.getMaster().getHostText()).isEqualTo("1");
-        assertThat(clusterSlotRange.getMaster().getPort()).isEqualTo(2);
-
         RedisClusterNode masterNode = clusterSlotRange.getMasterNode();
         assertThat(masterNode).isNotNull();
         assertThat(masterNode.getNodeId()).isEqualTo("nodeId1");
@@ -66,13 +60,7 @@ public class ClusterSlotsParserTest {
         assertThat(masterNode.getSlots()).doesNotContain(99, 201);
         assertThat(masterNode.getSlots()).hasSize(101);
 
-
-        assertThat(clusterSlotRange.getSlaves()).hasSize(1);
         assertThat(clusterSlotRange.getSlaveNodes()).hasSize(1);
-
-        HostAndPort slave = clusterSlotRange.getSlaves().get(0);
-        assertThat(slave.getHostText()).isEqualTo("1");
-        assertThat(slave.getPort()).isEqualTo(2);
 
         RedisClusterNode slaveNode = clusterSlotRange.getSlaveNodes().get(0);
 
@@ -105,43 +93,6 @@ public class ClusterSlotsParserTest {
         assertThat(masterNode.getSlots()).hasSize(201);
     }
 
-    @Test
-    public void testHostAndPortConstructor() throws Exception {
-
-        ClusterSlotRange clusterSlotRange = new ClusterSlotRange(100, 200, HostAndPort.fromParts("1", 2), LettuceLists.newList(
-                HostAndPort.fromParts("1", 2)));
-
-        RedisClusterNode masterNode = clusterSlotRange.getMasterNode();
-        assertThat(masterNode).isNotNull();
-        assertThat(masterNode.getNodeId()).isNull();
-        assertThat(masterNode.getUri().getHost()).isEqualTo("1");
-        assertThat(masterNode.getUri().getPort()).isEqualTo(2);
-        assertThat(masterNode.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-
-        assertThat(clusterSlotRange.getSlaves()).hasSize(1);
-        assertThat(clusterSlotRange.getSlaveNodes()).hasSize(1);
-
-        HostAndPort slave = clusterSlotRange.getSlaves().get(0);
-        assertThat(slave.getHostText()).isEqualTo("1");
-        assertThat(slave.getPort()).isEqualTo(2);
-
-        RedisClusterNode slaveNode = clusterSlotRange.getSlaveNodes().get(0);
-
-        assertThat(slaveNode.getNodeId()).isNull();
-        assertThat(slaveNode.getSlaveOf()).isNull();
-        assertThat(slaveNode.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-
-    }
-
-    @Test
-    public void testParseWithSlaveAndNodeIds() throws Exception {
-        List<?> list = Arrays.asList(LettuceLists.newList("0", "1", LettuceLists.newList("1", "2"), LettuceLists.newList("1", 2)));
-        List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getMaster()).isNotNull();
-        assertThat(result.get(0).getSlaves()).hasSize(1);
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void testParseInvalidMaster() throws Exception {
         List<?> list = Arrays.asList(LettuceLists.newList("0", "1", LettuceLists.newList("1")));
@@ -160,8 +111,6 @@ public class ClusterSlotsParserTest {
         ClusterSlotRange range = new ClusterSlotRange();
         range.setFrom(1);
         range.setTo(2);
-        range.setSlaves(new ArrayList<>());
-        range.setMaster(HostAndPort.fromHost("localhost"));
 
         assertThat(range.toString()).contains(ClusterSlotRange.class.getSimpleName());
     }

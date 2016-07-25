@@ -15,20 +15,22 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+
 public class AsyncConnectionTest extends AbstractRedisClientTest {
-    private RedisAsyncConnection<String, String> async;
+    private RedisAsyncCommands<String, String> async;
 
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
     @Before
     public void openAsyncConnection() throws Exception {
-        async = client.connectAsync();
+        async = client.connect().async();
     }
 
     @After
     public void closeAsyncConnection() throws Exception {
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test(timeout = 10000)
@@ -76,7 +78,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
             redis.lpush(key, "" + i);
         }
 
-        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        RedisAsyncCommands<String, String> connection = client.connect().async();
 
         Long len = connection.llen(key).get();
         assertThat(len.intValue()).isEqualTo(1000);
@@ -91,7 +93,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
 
         assertThat(run).hasSize(1);
 
-        connection.close();
+        connection.getStatefulConnection().close();
 
     }
 
@@ -107,7 +109,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
             }
         };
 
-        RedisAsyncConnection<String, String> connection = client.connectAsync();
+        RedisAsyncCommands<String, String> connection = client.connect().async();
 
         RedisFuture<String> set = connection.set(key, value);
         set.get();
@@ -116,7 +118,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
 
         assertThat(run).hasSize(1);
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test(timeout = 500)

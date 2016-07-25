@@ -16,7 +16,7 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
 public class TestClientResources {
 
     public static ClientResources create() {
-        final DefaultClientResources resources = new DefaultClientResources.Builder().eventLoopGroupProvider(
+        final DefaultClientResources resources = DefaultClientResources.builder().eventLoopGroupProvider(
                 new TestEventLoopGroupProvider()).build();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {

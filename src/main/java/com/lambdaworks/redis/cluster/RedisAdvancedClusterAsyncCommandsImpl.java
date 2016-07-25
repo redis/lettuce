@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisKeyAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
@@ -40,7 +41,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  */
 @SuppressWarnings("unchecked")
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
-        RedisAdvancedClusterAsyncConnection<K, V>, RedisAdvancedClusterAsyncCommands<K, V> {
+         RedisAdvancedClusterAsyncCommands<K, V> {
 
     private Random random = new Random();
 
@@ -239,15 +240,15 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         Map<String, RedisFuture<String>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
-            RedisClusterAsyncCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
+            StatefulRedisConnection<K, V> byNodeId = getStatefulConnection().getConnection(redisClusterNode.getNodeId());
             if (byNodeId.isOpen()) {
-                executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.clientSetname(name));
+                executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.async().clientSetname(name));
             }
 
             RedisURI uri = redisClusterNode.getUri();
-            RedisClusterAsyncCommands<K, V> byHost = getConnection(uri.getHost(), uri.getPort());
+            StatefulRedisConnection<K, V> byHost = getStatefulConnection().getConnection(uri.getHost(), uri.getPort());
             if (byHost.isOpen()) {
-                executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.clientSetname(name));
+                executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.async().clientSetname(name));
             }
         }
 
@@ -374,7 +375,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     /**
      * Run a command on all available masters,
-     * 
+     *
      * @param function function producing the command
      * @param <T> result type
      * @return map of a key (counter) and commands.
@@ -386,7 +387,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     /**
      * Run a command on all available nodes that match {@code filter}.
-     * 
+     *
      * @param function function producing the command
      * @param filter filter function for the node selection
      * @param <T> result type
@@ -403,9 +404,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             }
 
             RedisURI uri = redisClusterNode.getUri();
-            RedisClusterAsyncCommands<K, V> connection = getConnection(uri.getHost(), uri.getPort());
+            StatefulRedisConnection<K, V> connection = getStatefulConnection().getConnection(uri.getHost(), uri.getPort());
             if (connection.isOpen()) {
-                executions.put(redisClusterNode.getNodeId(), function.apply(connection));
+                executions.put(redisClusterNode.getNodeId(), function.apply(connection.async()));
             }
         }
         return executions;

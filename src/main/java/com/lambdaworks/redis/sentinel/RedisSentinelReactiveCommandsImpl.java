@@ -94,12 +94,12 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
         return createObservable(() -> commandBuilder.ping());
     }
 
-    @Override
+    //@Override
     public void close() {
         connection.close();
     }
 
-    @Override
+    //@Override
     public boolean isOpen() {
         return connection.isOpen();
     }

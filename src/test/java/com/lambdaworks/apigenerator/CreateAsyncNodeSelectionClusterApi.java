@@ -69,7 +69,7 @@ public class CreateAsyncNodeSelectionClusterApi {
     }
 
     /**
-     * Mutate type to async result.
+     * Method filter
      *
      * @return
      */

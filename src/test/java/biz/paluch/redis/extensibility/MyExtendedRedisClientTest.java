@@ -1,15 +1,17 @@
 package biz.paluch.redis.extensibility;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.pubsub.RedisPubSubAsyncCommandsImpl;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
@@ -20,7 +22,7 @@ public class MyExtendedRedisClientTest {
     public static final int port = TestSettings.port();
 
     protected static MyExtendedRedisClient client;
-    protected RedisConnection<String, String> redis;
+    protected RedisCommands<String, String> redis;
     protected String key = "key";
     protected String value = "value";
 
@@ -30,7 +32,7 @@ public class MyExtendedRedisClientTest {
     }
 
     protected static MyExtendedRedisClient getRedisClient() {
-        return new MyExtendedRedisClient(host, port);
+        return new MyExtendedRedisClient(null, RedisURI.create(host, port));
     }
 
     @AfterClass
@@ -40,11 +42,12 @@ public class MyExtendedRedisClientTest {
 
     @Test
     public void testPubsub() throws Exception {
-        RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-        assertThat(connection).isInstanceOf(RedisPubSubAsyncCommandsImpl.class);
-        assertThat(connection.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
-        connection.set("key", "value").get();
+        StatefulRedisPubSubConnection<String, String> connection = client
+                .connectPubSub();
+        RedisPubSubAsyncCommands<String, String> commands = connection.async();
+        assertThat(commands).isInstanceOf(RedisPubSubAsyncCommandsImpl.class);
+        assertThat(commands.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
+        commands.set("key", "value").get();
         connection.close();
-
     }
 }

@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisSentinelAsyncConnection;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -26,8 +25,7 @@ import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
  * @author Mark Paluch
  * @since 3.0
  */
-public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncCommands<K, V>,
-        RedisSentinelAsyncConnection<K, V> {
+public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncCommands<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
     private final StatefulConnection<K, V> connection;

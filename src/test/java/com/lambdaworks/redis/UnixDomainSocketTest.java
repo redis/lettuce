@@ -16,7 +16,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.sentinel.SentinelRule;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+
 import io.netty.util.internal.SystemPropertyUtil;
 
 /**
@@ -112,9 +115,9 @@ public class UnixDomainSocketTest {
 
         connection.close();
 
-        RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient.connectSentinelAsync();
+        StatefulRedisSentinelConnection<String, String> sentinelConnection = redisClient.connectSentinel();
 
-        assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
+        assertThat(sentinelConnection.sync().ping()).isEqualTo("PONG");
         sentinelConnection.close();
 
         FastShutdown.shutdown(redisClient);
@@ -137,9 +140,9 @@ public class UnixDomainSocketTest {
 
         connection.close();
 
-        RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient.connectSentinelAsync(uri);
+        StatefulRedisSentinelConnection<String, String> sentinelConnection = redisClient.connectSentinel(uri);
 
-        assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
+        assertThat(sentinelConnection.sync().ping()).isEqualTo("PONG");
         sentinelConnection.close();
 
         FastShutdown.shutdown(redisClient);
@@ -156,11 +159,11 @@ public class UnixDomainSocketTest {
         uri.getSentinels().add(RedisURI.create(RedisURI.URI_SCHEME_REDIS + "://" + TestSettings.host() + ":26379"));
         uri.setSentinelMasterId(MASTER_ID);
 
-        RedisClient redisClient = new RedisClient(uri);
+        RedisClient redisClient = RedisClient.create(uri);
 
-        RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient
-                .connectSentinelAsync(getSentinelSocketRedisUri());
-        log.info("Masters: " + sentinelConnection.masters().get());
+        StatefulRedisSentinelConnection<String, String> sentinelConnection = redisClient
+                .connectSentinel(getSentinelSocketRedisUri());
+        log.info("Masters: " + sentinelConnection.sync().masters());
 
         try {
             redisClient.connect();
@@ -173,7 +176,7 @@ public class UnixDomainSocketTest {
 
     }
 
-    private void someRedisAction(RedisConnection<String, String> connection) {
+    private void someRedisAction(RedisCommands<String, String> connection) {
         connection.set(key, value);
         String result = connection.get(key);
 
@@ -181,6 +184,6 @@ public class UnixDomainSocketTest {
     }
 
     protected static RedisClient getRedisSentinelClient() {
-        return new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        return RedisClient.create(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 }

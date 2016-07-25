@@ -28,7 +28,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
@@ -121,25 +121,9 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.close();
     }
-
-    @Test
-    public void deprecatedConnectToOneNode() throws Exception {
-        RedisSentinelAsyncCommands<String, String> connection = sentinelClient
-                .connectSentinelAsync(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
-        assertThat(connection.ping().get()).isEqualTo("PONG");
-        connection.close();
-    }
-
     @Test
     public void connectWithByteCodec() throws Exception {
         RedisSentinelCommands<byte[], byte[]> connection = sentinelClient.connectSentinel(new ByteArrayCodec()).sync();
-        assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
-        connection.close();
-    }
-
-    @Test
-    public void deprecatedConnectWithByteCodec() throws Exception {
-        RedisSentinelAsyncCommands<byte[], byte[]> connection = sentinelClient.connectSentinelAsync(new ByteArrayCodec());
         assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
         connection.close();
     }

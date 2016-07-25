@@ -1115,11 +1115,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SETRANGE, new IntegerOutput<K, V>(codec), args);
     }
 
-    @Deprecated
-    public Command<K, V, String> shutdown() {
-        return createCommand(SHUTDOWN, new StatusOutput<K, V>(codec));
-    }
-
     public Command<K, V, String> shutdown(boolean save) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         return createCommand(SHUTDOWN, new StatusOutput<K, V>(codec), save ? args.add(SAVE) : args.add(NOSAVE));

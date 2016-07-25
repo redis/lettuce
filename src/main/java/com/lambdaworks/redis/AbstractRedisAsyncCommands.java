@@ -27,12 +27,7 @@ import com.lambdaworks.redis.protocol.*;
  * @author Will Glozer
  */
 public abstract class AbstractRedisAsyncCommands<K, V>
-        implements RedisHashesAsyncConnection<K, V>, RedisKeysAsyncConnection<K, V>, RedisStringsAsyncConnection<K, V>,
-        RedisListsAsyncConnection<K, V>, RedisSetsAsyncConnection<K, V>, RedisSortedSetsAsyncConnection<K, V>,
-        RedisScriptingAsyncConnection<K, V>, RedisServerAsyncConnection<K, V>, RedisHLLAsyncConnection<K, V>,
-        BaseRedisAsyncConnection<K, V>, RedisClusterAsyncConnection<K, V>, RedisGeoAsyncConnection<K, V>,
-
-        RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
+        implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
         RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>,
         RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>,
         RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
@@ -327,11 +322,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Boolean> exists(K key) {
-        return dispatch(commandBuilder.exists(key));
-    }
-
-    @Override
     public RedisFuture<Long> exists(K... keys) {
         return dispatch(commandBuilder.exists(keys));
     }
@@ -556,11 +546,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> lpushx(K key, V value) {
-        return dispatch(commandBuilder.lpushx(key, value));
-    }
-
-    @Override
     public RedisFuture<Long> lpushx(K key, V... values) {
         return dispatch(commandBuilder.lpushx(key, values));
     }
@@ -766,11 +751,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> rpushx(K key, V value) {
-        return dispatch(commandBuilder.rpushx(key, value));
-    }
-
-    @Override
     public RedisFuture<Long> rpushx(K key, V... values) {
         return dispatch(commandBuilder.rpushx(key, values));
     }
@@ -868,11 +848,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<Long> setrange(K key, long offset, V value) {
         return dispatch(commandBuilder.setrange(key, offset, value));
-    }
-
-    @Deprecated
-    public void shutdown() {
-        dispatch(commandBuilder.shutdown());
     }
 
     @Override
@@ -1013,11 +988,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<Long> sunionstore(K destination, K... keys) {
         return dispatch(commandBuilder.sunionstore(destination, keys));
-    }
-
-    @Override
-    public RedisFuture<String> sync() {
-        return dispatch(commandBuilder.sync());
     }
 
     @Override
@@ -1550,28 +1520,13 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> pfadd(K key, V value, V... moreValues) {
-        return dispatch(commandBuilder.pfadd(key, value, moreValues));
-    }
-
-    @Override
     public RedisFuture<Long> pfadd(K key, V... values) {
         return dispatch(commandBuilder.pfadd(key, values));
     }
 
     @Override
-    public RedisFuture<String> pfmerge(K destkey, K sourcekey, K... moreSourceKeys) {
-        return dispatch(commandBuilder.pfmerge(destkey, sourcekey, moreSourceKeys));
-    }
-
-    @Override
     public RedisFuture<String> pfmerge(K destkey, K... sourcekeys) {
         return dispatch(commandBuilder.pfmerge(destkey, sourcekeys));
-    }
-
-    @Override
-    public RedisFuture<Long> pfcount(K key, K... moreKeys) {
-        return dispatch(commandBuilder.pfcount(key, moreKeys));
     }
 
     @Override

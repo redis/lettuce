@@ -13,6 +13,7 @@ import com.lambdaworks.redis.internal.LettuceLists;
 import rx.Observable;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
@@ -25,6 +26,8 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+
+import rx.Observable;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -224,15 +227,15 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         List<Observable<String>> observables = new ArrayList<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
-            RedisClusterReactiveCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
+            StatefulRedisConnection<K, V> byNodeId = getStatefulConnection().getConnection(redisClusterNode.getNodeId());
             if (byNodeId.isOpen()) {
-                observables.add(byNodeId.clientSetname(name));
+                observables.add(byNodeId.reactive().clientSetname(name));
             }
 
-            RedisClusterReactiveCommands<K, V> byHost = getConnection(redisClusterNode.getUri().getHost(), redisClusterNode
+            StatefulRedisConnection<K, V> byHost = getStatefulConnection().getConnection(redisClusterNode.getUri().getHost(), redisClusterNode
                     .getUri().getPort());
             if (byHost.isOpen()) {
-                observables.add(byHost.clientSetname(name));
+                observables.add(byHost.reactive().clientSetname(name));
             }
         }
 
@@ -354,9 +357,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             }
 
             RedisURI uri = redisClusterNode.getUri();
-            RedisClusterReactiveCommands<K, V> connection = getConnection(uri.getHost(), uri.getPort());
+            StatefulRedisConnection<K, V> connection = getStatefulConnection().getConnection(uri.getHost(), uri.getPort());
             if (connection.isOpen()) {
-                executions.put(redisClusterNode.getNodeId(), function.apply(connection));
+                executions.put(redisClusterNode.getNodeId(), function.apply(connection.reactive()));
             }
         }
         return executions;

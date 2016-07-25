@@ -32,7 +32,7 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(
+        redisClusterClient = RedisClusterClient.create(
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 

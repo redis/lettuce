@@ -43,15 +43,6 @@ public class MasterSlaveConnectionProvider<K, V> {
     private Object stateLock = new Object();
     private ReadFrom readFrom;
 
-    @Deprecated
-    public MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec,
-            StatefulRedisConnection<K, V> masterConnection, RedisURI initialRedisUri) {
-        this.initialRedisUri = initialRedisUri;
-        this.debugEnabled = logger.isDebugEnabled();
-        this.connectionFactory = new ConnectionFactory<>(redisClient, redisCodec);
-        connections.put(toConnectionKey(initialRedisUri), masterConnection);
-    }
-
     MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
             Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 

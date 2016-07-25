@@ -20,7 +20,7 @@ public class CustomRxCommandTest extends CustomCommandTest {
 
     @Override
     protected RedisCommands<String, String> connect() {
-        return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());
+        return RxSyncInvocationHandler.sync(client.connect());
     }
 
     @Test

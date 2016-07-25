@@ -57,7 +57,7 @@ public class DefaultClientResourcesTest {
     @Test
     public void testBuilder() throws Exception {
 
-        DefaultClientResources sut = new DefaultClientResources.Builder().ioThreadPoolSize(4).computationThreadPoolSize(4)
+        DefaultClientResources sut = DefaultClientResources.builder().ioThreadPoolSize(4).computationThreadPoolSize(4)
                 .commandLatencyCollectorOptions(DefaultCommandLatencyCollectorOptions.disabled()).build();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
@@ -77,7 +77,7 @@ public class DefaultClientResourcesTest {
 
         DirContextDnsResolver dirContextDnsResolver = new DirContextDnsResolver("8.8.8.8");
 
-        DefaultClientResources sut = new DefaultClientResources.Builder().dnsResolver(dirContextDnsResolver).build();
+        DefaultClientResources sut = DefaultClientResources.builder().dnsResolver(dirContextDnsResolver).build();
 
         assertThat(sut.dnsResolver()).isEqualTo(dirContextDnsResolver);
     }
@@ -90,7 +90,7 @@ public class DefaultClientResourcesTest {
         EventBus eventBusMock = mock(EventBus.class);
         CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
 
-        DefaultClientResources sut = new DefaultClientResources.Builder().eventExecutorGroup(executorMock)
+        DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).eventBus(eventBusMock).commandLatencyCollector(latencyCollectorMock)
                 .build();
 
@@ -109,8 +109,7 @@ public class DefaultClientResourcesTest {
     @Test
     public void testSmallPoolSize() throws Exception {
 
-        DefaultClientResources sut = new DefaultClientResources.Builder().ioThreadPoolSize(1).computationThreadPoolSize(1)
-                .build();
+        DefaultClientResources sut = DefaultClientResources.builder().ioThreadPoolSize(1).computationThreadPoolSize(1).build();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
         NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);

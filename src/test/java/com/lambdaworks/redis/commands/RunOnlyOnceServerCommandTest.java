@@ -9,18 +9,19 @@ import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import com.lambdaworks.CanConnect;
-import com.lambdaworks.redis.*;
+import java.util.Arrays;
+
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
-import org.springframework.util.SocketUtils;
-
-import java.util.Arrays;
+import com.lambdaworks.CanConnect;
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.MigrateArgs;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
@@ -36,15 +37,15 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
 
         assumeTrue(CanConnect.to(host(), port(1)));
 
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(1))
-                .build());
+        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(1))
+                .build()).async();
         try {
-            connection.debugSegfault();
+            commands.debugSegfault();
 
-            WaitFor.waitOrTimeout(() -> !connection.isOpen(), timeout(seconds(5)));
-            assertThat(connection.isOpen()).isFalse();
+            WaitFor.waitOrTimeout(() -> !commands.getStatefulConnection().isOpen(), timeout(seconds(5)));
+            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
         } finally {
-            connection.close();
+            commands.getStatefulConnection().close();
         }
     }
 
@@ -96,18 +97,18 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
 
         assumeTrue(CanConnect.to(host(), port(2)));
 
-        final RedisAsyncConnection<String, String> connection = client.connectAsync(RedisURI.Builder.redis(host(), port(2))
-                .build());
+        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(2))
+                .build()).async();
         try {
 
-            connection.shutdown(true);
-            connection.shutdown(false);
-            WaitFor.waitOrTimeout(() -> !connection.isOpen(), timeout(seconds(5)));
+            commands.shutdown(true);
+            commands.shutdown(false);
+            WaitFor.waitOrTimeout(() -> !commands.getStatefulConnection().isOpen(), timeout(seconds(5)));
 
-            assertThat(connection.isOpen()).isFalse();
+            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
 
         } finally {
-            connection.close();
+            commands.getStatefulConnection().close();
         }
     }
 }

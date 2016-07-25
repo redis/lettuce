@@ -6,6 +6,6 @@ import com.lambdaworks.redis.commands.SortCommandTest;
 public class SortRxCommandTest extends SortCommandTest {
     @Override
     protected RedisCommands<String, String> connect() {
-        return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());
+        return RxSyncInvocationHandler.sync(client.connect());
     }
 }

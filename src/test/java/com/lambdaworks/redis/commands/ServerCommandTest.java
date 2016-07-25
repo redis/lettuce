@@ -3,7 +3,7 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 import java.util.Date;
@@ -18,8 +18,8 @@ import org.junit.runners.MethodSorters;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.KillArgs;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.models.command.CommandDetail;
 import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
@@ -70,7 +70,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void clientKillExtended() throws Exception {
 
-        RedisConnection<String, String> connection2 = client.connect().sync();
+        RedisCommands<String, String> connection2 = client.connect().sync();
         connection2.clientSetname("killme");
 
         Pattern p = Pattern.compile("^.*addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
@@ -86,7 +86,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         assertThat(redis.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
         assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
 
-        connection2.close();
+        connection2.getStatefulConnection().close();
     }
 
     @Test

@@ -1,9 +1,7 @@
 package com.lambdaworks.redis.pubsub.api.async;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
@@ -15,7 +13,7 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
  * @author Mark Paluch
  * @since 3.0
  */
-public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>, RedisPubSubConnection<K, V> {
+public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V> {
 
     /**
      * Add a new listener.

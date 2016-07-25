@@ -2,8 +2,6 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Test;
 
 /**
@@ -14,7 +12,7 @@ public class ClusterClientOptionsTest {
     @Test
     public void testCopy() throws Exception {
 
-        ClusterClientOptions options = ClusterClientOptions.builder().closeStaleConnections(true).refreshClusterView(true)
+        ClusterClientOptions options = ClusterClientOptions.builder()
                 .autoReconnect(false).requestQueueSize(100).suspendReconnectOnProtocolFailure(true).maxRedirects(1234)
                 .validateClusterNodeMembership(false).build();
 
@@ -30,16 +28,5 @@ public class ClusterClientOptionsTest {
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
-    }
-
-    @Test
-    public void enablesRefreshUsingDeprecatedMethods() throws Exception {
-
-        ClusterClientOptions options = ClusterClientOptions.builder().refreshClusterView(true)
-                .refreshPeriod(10, TimeUnit.MINUTES).build();
-
-        assertThat(options.getRefreshPeriod()).isEqualTo(10);
-        assertThat(options.getRefreshPeriodUnit()).isEqualTo(TimeUnit.MINUTES);
-        assertThat(options.isRefreshClusterView()).isEqualTo(true);
     }
 }

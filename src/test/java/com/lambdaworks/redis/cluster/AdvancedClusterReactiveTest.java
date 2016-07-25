@@ -15,8 +15,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import rx.Observable;
-
 import com.lambdaworks.RandomKeys;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -28,6 +26,8 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 import com.lambdaworks.redis.internal.LettuceLists;
+
+import rx.Observable;
 
 /**
  * @author Mark Paluch
@@ -42,7 +42,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     @Before
     public void before() throws Exception {
-        commands = clusterClient.connectClusterAsync().getStatefulConnection().reactive();
+        commands = clusterClient.connect().reactive();
         syncCommands = RxSyncInvocationHandler.sync(commands.getStatefulConnection());
     }
 

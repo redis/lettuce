@@ -315,14 +315,6 @@ public interface RedisServerCommands<K, V> {
     String slowlogReset();
 
     /**
-     * Internal command used for replication.
-     * 
-     * @return String simple-string-reply
-     */
-    @Deprecated
-    String sync();
-
-    /**
      * Return the current server time.
      * 
      * @return List&lt;V&gt; array-reply specifically:
@@ -332,5 +324,4 @@ public interface RedisServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     List<V> time();
-
 }

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.junit.*;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
 import rx.Observable;
@@ -21,7 +22,7 @@ import rx.Observable;
 @Ignore
 public class LettucePerformanceTest {
 
-    private static RedisClient redisClient = new RedisClient(TestSettings.host(), TestSettings.port());
+    private static RedisClient redisClient = RedisClient.create(RedisURI.create(TestSettings.host(), TestSettings.port()));
     private ExecutorService executor;
     private CountDownLatch latch = new CountDownLatch(1);
 
@@ -107,9 +108,9 @@ public class LettucePerformanceTest {
 
     protected void submitExecutionTasks(int threads, List<Future<List<CompletableFuture<String>>>> futurama,
             final int callsPerThread, final boolean connectionPerThread) {
-        final RedisAsyncConnection<String, String> sharedConnection;
+        final RedisAsyncCommands<String, String> sharedConnection;
         if (!connectionPerThread) {
-            sharedConnection = redisClient.connectAsync();
+            sharedConnection = redisClient.connect().async();
         } else {
             sharedConnection = null;
         }
@@ -117,9 +118,9 @@ public class LettucePerformanceTest {
         for (int i = 0; i < threads; i++) {
             Future<List<CompletableFuture<String>>> submit = executor.submit(() -> {
 
-                RedisAsyncConnection<String, String> connection = sharedConnection;
+                RedisAsyncCommands<String, String> connection = sharedConnection;
                 if (connectionPerThread) {
-                    connection = redisClient.connectAsync();
+                    connection = redisClient.connect().async();
                 }
                 connection.ping().get();
 
@@ -193,7 +194,7 @@ public class LettucePerformanceTest {
             final boolean connectionPerThread) {
         final StatefulRedisConnection<String, String> sharedConnection;
         if (!connectionPerThread) {
-            sharedConnection = redisClient.connectAsync().getStatefulConnection();
+            sharedConnection = redisClient.connect();
         } else {
             sharedConnection = null;
         }
@@ -203,7 +204,7 @@ public class LettucePerformanceTest {
 
                 StatefulRedisConnection<String, String> connection = sharedConnection;
                 if (connectionPerThread) {
-                    connection = redisClient.connectAsync().getStatefulConnection();
+                    connection = redisClient.connect();
                 }
                 RedisReactiveCommands<String, String> reactive = connection.reactive();
 

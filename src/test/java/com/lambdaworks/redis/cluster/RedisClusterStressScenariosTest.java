@@ -21,6 +21,8 @@ import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
@@ -118,7 +120,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     public void testClusterConnectionStability() throws Exception {
 
         RedisAdvancedClusterAsyncCommandsImpl<String, String> connection = (RedisAdvancedClusterAsyncCommandsImpl<String, String>) clusterClient
-                .connectClusterAsync();
+                .connect().async();
 
         RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) connection.getStatefulConnection();
 
@@ -129,7 +131,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         StatefulRedisConnectionImpl<Object, Object> statefulSlotConnection = (StatefulRedisConnectionImpl) writer
                 .getClusterConnectionProvider().getConnection(ClusterConnectionProvider.Intent.WRITE, 3300);
 
-        final RedisAsyncConnection<Object, Object> slotConnection = statefulSlotConnection.async();
+        final RedisAsyncCommands<Object, Object> slotConnection = statefulSlotConnection.async();
 
         slotConnection.set("a", "b");
         slotConnection.close();
@@ -156,7 +158,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     @Test(timeout = 20000)
     public void distributedClusteredAccessAsync() throws Exception {
 
-        RedisClusterAsyncConnection<String, String> connection = clusterClient.connectClusterAsync();
+        RedisClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
 
         List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
@@ -193,7 +195,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     @Test
     public void distributedClusteredAccessSync() throws Exception {
 
-        RedisClusterConnection<String, String> connection = clusterClient.connectCluster();
+        RedisClusterCommands<String, String> connection = clusterClient.connect().sync();
 
         for (int i = 0; i < 100; i++) {
             connection.set("a" + i, "myValue1" + i);

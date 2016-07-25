@@ -33,7 +33,7 @@ public class ClusterSetup {
         clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port5);
         clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port6);
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connect().async();
         Wait.untilTrue(() -> {
 
             clusterRule.getClusterClient().reloadPartitions();
@@ -96,7 +96,7 @@ public class ClusterSetup {
         clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port5);
         clusterRule.meet(AbstractClusterTest.host, AbstractClusterTest.port6);
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connect().async();
         StatefulRedisClusterConnection<String, String> statefulConnection = connection.getStatefulConnection();
 
         Wait.untilEquals(2, () -> {

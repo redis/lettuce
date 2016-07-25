@@ -125,32 +125,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private RedisClusterClient() {
 
-        setOptions(ClusterClientOptions.create());
-        this.initialUris = Collections.emptyList();
-    }
+        super(null);
 
-    /**
-     * Initialize the client with an initial cluster URI.
-     *
-     * @param initialUri initial cluster URI
-     * @deprecated Use {@link #create(RedisURI)}
-     */
-    @Deprecated
-    public RedisClusterClient(RedisURI initialUri) {
-        this(Collections.singletonList(assertNotNull(initialUri)));
-    }
-
-    /**
-     * Initialize the client with a list of cluster URI's. All uris are tried in sequence for connecting initially to the
-     * cluster. If any uri is successful for connection, the others are not tried anymore. The initial uri is needed to discover
-     * the cluster structure for distributing the requests.
-     *
-     * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@literal null} and not empty.
-     * @deprecated Use {@link #create(Iterable)}
-     */
-    @Deprecated
-    public RedisClusterClient(List<RedisURI> redisURIs) {
-        this(null, redisURIs);
+        initialUris = Collections.emptyList();
     }
 
     /**
@@ -378,58 +355,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectClusterPubSubImpl(codec);
     }
 
-    /**
-     * Open a new synchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
-     *
-     * @return A new connection
-     * @deprecated Use {@code connect().sync()}
-     */
-    @Deprecated
-    public RedisAdvancedClusterCommands<String, String> connectCluster() {
-        return connectCluster(newStringStringCodec());
-    }
-
-    /**
-     * Open a new synchronous connection to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and
-     * values.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
-     * @deprecated @deprecated Use {@code connect(codec).sync()}
-     */
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public <K, V> RedisAdvancedClusterCommands<K, V> connectCluster(RedisCodec<K, V> codec) {
-        return connectClusterImpl(codec).sync();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis Cluster that treats keys and values as UTF-8 strings.
-     *
-     * @return A new connection
-     * @deprecated Use {@code connect().async()}
-     */
-    @Deprecated
-    public RedisAdvancedClusterAsyncCommands<String, String> connectClusterAsync() {
-        return connectClusterImpl(newStringStringCodec()).async();
-    }
-
-    /**
-     * Open a new asynchronous connection to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
-     * @deprecated @deprecated Use {@code connect(codec).async()}
-     */
-    @Deprecated
-    public <K, V> RedisAdvancedClusterAsyncCommands<K, V> connectClusterAsync(RedisCodec<K, V> codec) {
-        return connectClusterImpl(codec).async();
-    }
 
     protected StatefulRedisConnection<String, String> connectToNode(final SocketAddress socketAddress) {
         return connectToNode(newStringStringCodec(), socketAddress.toString(), null, new Supplier<SocketAddress>() {

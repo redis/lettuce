@@ -2,7 +2,7 @@
 
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
@@ -13,8 +13,8 @@ import org.junit.rules.ExpectedException;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisCommandExecutionException;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 public class TransactionCommandTest extends AbstractRedisClientTest {
     @Rule
@@ -40,9 +40,9 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     public void watch() throws Exception {
         assertThat(redis.watch(key)).isEqualTo("OK");
 
-        RedisConnection<String, String> redis2 = client.connect().sync();
+        RedisCommands<String, String> redis2 = client.connect().sync();
         redis2.set(key, value + "X");
-        redis2.close();
+        redis2.getStatefulConnection().close();
 
         redis.multi();
         redis.append(key, "foo");

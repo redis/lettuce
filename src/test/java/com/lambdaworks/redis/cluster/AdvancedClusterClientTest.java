@@ -16,6 +16,7 @@ import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -55,7 +56,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(clusterClient.getPartitions()).hasSize(4);
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterAsyncConnection<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncCommands<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
 
             String myid = nodeConnection.clusterMyId().get();
             assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
@@ -86,11 +87,11 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         assertThat(clusterClient.getPartitions()).hasSize(4);
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterAsyncConnection<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncCommands<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
 
             nodeConnection.close();
 
-            RedisClusterAsyncConnection<String, String> nextConnection = commands.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncCommands<String, String> nextConnection = commands.getConnection(redisClusterNode.getNodeId());
             assertThat(commands).isNotSameAs(nextConnection);
         }
     }
@@ -99,8 +100,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void differentConnections() throws Exception {
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterAsyncConnection<String, String> nodeId = commands.getConnection(redisClusterNode.getNodeId());
-            RedisClusterAsyncConnection<String, String> hostAndPort = commands
+            RedisClusterAsyncCommands<String, String> nodeId = commands.getConnection(redisClusterNode.getNodeId());
+            RedisClusterAsyncCommands<String, String> hostAndPort = commands
                     .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
@@ -439,7 +440,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void getConnectionToNotAClusterMemberForbidden() throws Exception {
 
-        RedisAdvancedClusterConnection<String, String> sync = clusterClient.connectCluster();
+        StatefulRedisClusterConnection<String, String> sync = clusterClient.connect();
         try {
             sync.getConnection(TestSettings.host(), TestSettings.port());
         } catch (RedisException e) {
@@ -485,19 +486,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         }
 
         verificationConnection.close();
-
-    }
-
-    @Test
-    public void transactions() throws Exception {
-
-        commands.multi();
-        commands.set(key, value);
-        commands.discard();
-
-        commands.multi();
-        commands.set(key, value);
-        commands.exec();
     }
 
     @Test

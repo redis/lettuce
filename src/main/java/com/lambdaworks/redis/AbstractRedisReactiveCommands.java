@@ -547,11 +547,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> lpushx(K key, V value) {
-        return createObservable(() -> commandBuilder.lpushx(key, value));
-    }
-
-    @Override
     public Observable<Long> lpushx(K key, V... values) {
         return createObservable(() -> commandBuilder.lpushx(key, values));
     }
@@ -752,11 +747,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<Long> rpush(K key, V... values) {
         return createObservable(() -> commandBuilder.rpush(key, values));
-    }
-
-    @Override
-    public Observable<Long> rpushx(K key, V value) {
-        return createObservable(() -> commandBuilder.rpushx(key, value));
     }
 
     @Override
@@ -991,11 +981,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<Long> sunionstore(K destination, K... keys) {
         return createObservable(() -> commandBuilder.sunionstore(destination, keys));
-    }
-
-    @Override
-    public Observable<String> sync() {
-        return createObservable(commandBuilder::sync);
     }
 
     @Override
@@ -1760,7 +1745,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createDissolvingObservable(() -> commandBuilder.geodist(key, from, to, unit));
     }
 
-    @Override
     public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
@@ -1769,7 +1753,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createDissolvingObservable(() -> new Command<>(type, output));
     }
 
-    @Override
     public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
@@ -1852,5 +1835,15 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     public StatefulConnection<K, V> getConnection() {
         return connection;
+    }
+
+    @Override
+    public void setAutoFlushCommands(boolean autoFlush) {
+        connection.setAutoFlushCommands(autoFlush);
+    }
+
+    @Override
+    public void flushCommands() {
+        connection.flushCommands();
     }
 }

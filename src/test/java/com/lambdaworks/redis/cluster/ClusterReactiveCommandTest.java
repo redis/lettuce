@@ -5,16 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import com.lambdaworks.redis.internal.LettuceLists;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
-
-import rx.Observable;
 
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
@@ -23,6 +15,9 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
+import com.lambdaworks.redis.internal.LettuceLists;
+
+import rx.Observable;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -53,7 +48,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
 
         clusterRule.getClusterClient().reloadPartitions();
 
-        async = client.connectAsync(RedisURI.Builder.redis(host, port1).build());
+        async = client.connect(RedisURI.Builder.redis(host, port1).build()).async();
         reactive = async.getStatefulConnection().reactive();
     }
 
@@ -125,8 +120,6 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
         assertThat(clusterSlotRange.getFrom()).isEqualTo(0);
         assertThat(clusterSlotRange.getTo()).isEqualTo(11999);
 
-        assertThat(clusterSlotRange.getMaster()).isNotNull();
-        assertThat(clusterSlotRange.getSlaves()).isNotNull();
         assertThat(clusterSlotRange.toString()).contains(ClusterSlotRange.class.getSimpleName());
     }
 

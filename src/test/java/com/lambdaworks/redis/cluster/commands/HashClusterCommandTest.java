@@ -1,10 +1,10 @@
 package com.lambdaworks.redis.cluster.commands;
 
-import com.lambdaworks.redis.FastShutdown;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -23,7 +23,7 @@ public class HashClusterCommandTest extends HashCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass
@@ -40,7 +40,7 @@ public class HashClusterCommandTest extends HashCommandTest {
     @Override
     @SuppressWarnings("unchecked")
     protected RedisCommands<String, String> connect() {
-        clusterConnection = redisClusterClient.connectCluster().getStatefulConnection();
+        clusterConnection = redisClusterClient.connect();
         return ClusterTestUtil.redisCommandsOverCluster(clusterConnection);
     }
 }

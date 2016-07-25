@@ -295,14 +295,6 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
     AsyncExecutions<String> slowlogReset();
 
     /**
-     * Internal command used for replication.
-     * 
-     * @return String simple-string-reply
-     */
-    @Deprecated
-    AsyncExecutions<String> sync();
-
-    /**
      * Return the current server time.
      * 
      * @return List&lt;V&gt; array-reply specifically:

@@ -58,7 +58,7 @@ public class SentinelRule implements TestRule {
         log.info("[Sentinel] Connecting to sentinels: " + Arrays.toString(sentinelPorts));
         for (int port : sentinelPorts) {
             RedisSentinelAsyncCommands<String, String> connection = redisClient
-                    .connectSentinelAsync(RedisURI.Builder.redis(TestSettings.host(), port).build());
+                    .connectSentinel(RedisURI.Builder.redis(TestSettings.host(), port).build()).async();
             sentinelConnections.put(port, connection.getStatefulConnection().sync());
         }
     }

@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.api.sync;
 
-
 /**
  * Synchronous executed commands for HyperLogLog (PF* commands).
  * 

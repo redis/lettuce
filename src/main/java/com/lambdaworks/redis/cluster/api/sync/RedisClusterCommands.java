@@ -3,7 +3,6 @@ package com.lambdaworks.redis.cluster.api.sync;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.api.sync.*;
 
 /**
@@ -16,8 +15,7 @@ import com.lambdaworks.redis.api.sync.*;
  */
 public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCommands<K, V>, RedisStringCommands<K, V>,
         RedisListCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisScriptingCommands<K, V>,
-        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, RedisGeoCommands<K, V>, BaseRedisCommands<K, V>, AutoCloseable,
-        RedisClusterConnection<K, V> {
+        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, RedisGeoCommands<K, V>, BaseRedisCommands<K, V> {
 
     /**
      * Set the default timeout for operations.
@@ -34,7 +32,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
      * @return String simple-string-reply
      */
     String auth(String password);
-    
+
     /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
      * persist the configuration on disk before sending packets with the new configuration.
@@ -272,11 +270,4 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
      * @return String simple-string-reply
      */
     String readWrite();
-
-    /**
-     * Close the connection. The connection will become not usable anymore as soon as this method was called.
-     */
-    @Override
-    void close();
-
 }

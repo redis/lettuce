@@ -17,7 +17,7 @@ public class SentinelRxCommandTest extends SentinelCommandTest {
     @Override
     public void openConnection() throws Exception {
 
-        RedisSentinelAsyncCommands<String, String> async = sentinelClient.connectSentinelAsync();
+        RedisSentinelAsyncCommands<String, String> async = sentinelClient.connectSentinel().async();
         RedisSentinelReactiveCommands<String, String> reactive = async.getStatefulConnection().reactive();
         sentinel = RxSyncInvocationHandler.sync(async.getStatefulConnection());
 

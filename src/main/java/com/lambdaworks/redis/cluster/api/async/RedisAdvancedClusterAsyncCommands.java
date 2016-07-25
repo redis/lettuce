@@ -10,7 +10,6 @@ import com.lambdaworks.redis.api.async.RedisScriptingAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
 import com.lambdaworks.redis.cluster.ClusterClientOptions;
-import com.lambdaworks.redis.cluster.RedisAdvancedClusterAsyncConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -23,7 +22,7 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
  * @since 4.0
  */
 public interface RedisAdvancedClusterAsyncCommands<K, V>
-        extends RedisClusterAsyncCommands<K, V>, RedisAdvancedClusterAsyncConnection<K, V> {
+        extends RedisClusterAsyncCommands<K, V> {
 
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list.

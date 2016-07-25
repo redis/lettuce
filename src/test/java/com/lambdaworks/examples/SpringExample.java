@@ -1,11 +1,10 @@
 package com.lambdaworks.examples;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 /**
  * @author Mark Paluch

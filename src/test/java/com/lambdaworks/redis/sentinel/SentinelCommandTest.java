@@ -17,7 +17,8 @@ import org.junit.Test;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 public class SentinelCommandTest extends AbstractSentinelTest {
 
@@ -26,7 +27,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
@@ -75,29 +76,29 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWith() throws Exception {
 
-        RedisClient client = new RedisClient(
+        RedisClient client = RedisClient.create(
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID).withSentinel(TestSettings.host()).build());
 
-        RedisSentinelAsyncCommands<String, String> sentinelConnection = client.connectSentinelAsync();
-        assertThat(sentinelConnection.ping().get()).isEqualTo("PONG");
+        RedisSentinelCommands<String, String> sentinelConnection = client.connectSentinel().sync();
+        assertThat(sentinelConnection.ping()).isEqualTo("PONG");
 
         sentinelConnection.close();
 
-        RedisConnection<String, String> connection2 = client.connect().sync();
+        RedisCommands<String, String> connection2 = client.connect().sync();
         assertThat(connection2.ping()).isEqualTo("PONG");
         connection2.quit();
 
-        Wait.untilTrue(connection2::isOpen).waitOrTimeout();
+        Wait.untilTrue(() -> connection2.getStatefulConnection().isOpen()).waitOrTimeout();
 
         assertThat(connection2.ping()).isEqualTo("PONG");
-        connection2.close();
+        connection2.getStatefulConnection().close();
         FastShutdown.shutdown(client);
     }
 
     @Test
     public void sentinelConnectWrongMaster() throws Exception {
 
-        RedisClient client = new RedisClient(
+        RedisClient client = RedisClient.create(
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host()).build());
         try {
             client.connect();
@@ -111,12 +112,12 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnect() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        RedisClient client = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
 
-        RedisSentinelAsyncCommands<String, String> connection = client.connectSentinelAsync();
-        assertThat(connection.ping().get()).isEqualTo("PONG");
+        RedisSentinelCommands<String, String> connection = client.connectSentinel().sync();
+        assertThat(connection.ping()).isEqualTo("PONG");
 
-        connection.close();
+        connection.getStatefulConnection().close();
         FastShutdown.shutdown(client);
     }
 
@@ -143,7 +144,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
             assertThat(objects.get(0)).isEqualTo("sentinel");
             assertThat(objects.get(1).toString()).isEqualTo("[" + MASTER_ID + "]");
         } finally {
-            connection.close();
+            connection.getStatefulConnection().close();
         }
     }
 
@@ -200,17 +201,17 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Test
     public void connectToRedisUsingSentinel() throws Exception {
-        RedisConnection<String, String> connect = sentinelClient.connect().sync();
+        RedisCommands<String, String> connect = sentinelClient.connect().sync();
         connect.ping();
-        connect.close();
+        connect.getStatefulConnection().close();
     }
 
     @Test
     public void connectToRedisUsingSentinelWithReconnect() throws Exception {
-        RedisConnection<String, String> connect = sentinelClient.connect().sync();
+        RedisCommands<String, String> connect = sentinelClient.connect().sync();
         connect.ping();
         connect.quit();
         connect.ping();
-        connect.close();
+        connect.getStatefulConnection().close();
     }
 }

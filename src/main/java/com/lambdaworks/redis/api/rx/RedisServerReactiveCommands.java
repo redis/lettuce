@@ -267,7 +267,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      * 
      * @param save {@literal true} force save operation
-     * @return nothing because the server shuts down before returning a value
      */
     Observable<Success> shutdown(boolean save);
 
@@ -315,14 +314,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply The commands returns OK on success.
      */
     Observable<String> slowlogReset();
-
-    /**
-     * Internal command used for replication.
-     * 
-     * @return String simple-string-reply
-     */
-    @Deprecated
-    Observable<String> sync();
 
     /**
      * Return the current server time.

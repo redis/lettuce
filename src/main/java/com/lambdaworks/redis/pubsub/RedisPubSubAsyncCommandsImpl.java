@@ -2,20 +2,13 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
+import java.util.List;
+import java.util.Map;
 
 import com.lambdaworks.redis.RedisAsyncCommandsImpl;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
-import rx.Observable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * An asynchronous and thread-safe API for a Redis pub/sub connection.
@@ -24,8 +17,7 @@ import java.util.Map;
  * @param <V> Value type.
  * @author Will Glozer
  */
-public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubConnection<K, V>,
-        RedisPubSubAsyncCommands<K, V> {
+public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubAsyncCommands<K, V> {
 
     private PubSubCommandBuilder<K, V> commandBuilder;
 

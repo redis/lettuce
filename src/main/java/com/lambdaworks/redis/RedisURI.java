@@ -850,11 +850,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private TimeUnit unit = TimeUnit.SECONDS;
         private final List<HostAndPort> sentinels = new ArrayList<>();
 
-        /**
-         * @deprecated Use {@link RedisURI#builder()}
-         */
-        @Deprecated
-        public Builder() {
+        private Builder() {
         }
 
         /**

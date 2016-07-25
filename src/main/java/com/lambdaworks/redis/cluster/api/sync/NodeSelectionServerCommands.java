@@ -294,14 +294,6 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> slowlogReset();
 
     /**
-     * Internal command used for replication.
-     * 
-     * @return String simple-string-reply
-     */
-    @Deprecated
-    Executions<String> sync();
-
-    /**
      * Return the current server time.
      * 
      * @return List&lt;V&gt; array-reply specifically:

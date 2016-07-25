@@ -10,8 +10,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import rx.Observable;
-
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
@@ -23,6 +21,8 @@ import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands
 import com.lambdaworks.redis.commands.StringCommandTest;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 
+import rx.Observable;
+
 /**
  * @author Mark Paluch
  */
@@ -32,7 +32,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass
@@ -48,8 +48,8 @@ public class StringClusterRxCommandTest extends StringCommandTest {
 
     @Override
     protected RedisCommands<String, String> connect() {
-        clusterConnection = redisClusterClient.connectCluster().getStatefulConnection();
-        return RxSyncInvocationHandler.sync(redisClusterClient.connectCluster().getStatefulConnection());
+        clusterConnection = redisClusterClient.connect();
+        return RxSyncInvocationHandler.sync(redisClusterClient.connect());
     }
 
     @Test

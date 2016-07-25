@@ -1,9 +1,9 @@
 package com.lambdaworks.redis;
 
-import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
+
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
@@ -14,7 +14,7 @@ import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisSentinelCommands<K, V> extends Closeable{
+public interface RedisSentinelCommands<K, V> {
 
     /**
      * Return the ip and port number of the master with that name.
@@ -103,7 +103,6 @@ public interface RedisSentinelCommands<K, V> extends Closeable{
     /**
      * close the underlying connection.
      */
-    @Override
     void close();
 
     /**

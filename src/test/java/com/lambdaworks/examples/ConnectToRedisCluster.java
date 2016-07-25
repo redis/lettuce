@@ -1,8 +1,5 @@
 package com.lambdaworks.examples;
 
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.RedisAdvancedClusterConnection;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 

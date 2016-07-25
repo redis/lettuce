@@ -2,9 +2,9 @@
 
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.BitFieldArgs.OverflowType.WRAP;
 import static com.lambdaworks.redis.BitFieldArgs.signed;
 import static com.lambdaworks.redis.BitFieldArgs.unsigned;
+import static com.lambdaworks.redis.BitFieldArgs.OverflowType.WRAP;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
@@ -34,7 +34,7 @@ public class BitCommandTest extends AbstractRedisClientTest {
 
     @Override
     public void closeConnection() throws Exception {
-        bitstring.close();
+        bitstring.getStatefulConnection().close();
         super.closeConnection();
     }
 

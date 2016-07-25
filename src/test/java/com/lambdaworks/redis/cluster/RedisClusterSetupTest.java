@@ -42,7 +42,10 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 @SlowTests
 public class RedisClusterSetupTest extends AbstractTest {
 
-    public static final String host = TestSettings.hostAddr();
+    private static final String host = TestSettings.hostAddr();
+
+    private static final ClusterTopologyRefreshOptions PERIODIC_REFRESH_ENABLED = ClusterTopologyRefreshOptions.builder()
+            .enablePeriodicRefresh(1, TimeUnit.SECONDS).build();
 
     private static RedisClusterClient clusterClient;
     private static RedisClient client = DefaultRedisClient.get();
@@ -166,8 +169,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void clusterTopologyRefresh() throws Exception {
 
-        clusterClient.setOptions(
-                ClusterClientOptions.builder().refreshClusterView(true).refreshPeriod(5, TimeUnit.SECONDS).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         clusterClient.reloadPartitions();
 
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
@@ -187,8 +189,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .enableAllAdaptiveRefreshTriggers().build();
 
-        clusterClient
-                .setOptions(ClusterClientOptions.builder().topologyRefreshOptions(clusterTopologyRefreshOptions).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(clusterTopologyRefreshOptions).build());
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
         RedisAdvancedClusterCommands<String, String> sync = connection.sync();
         RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
@@ -251,11 +252,11 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void disconnectedConnectionRejectTest() throws Exception {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
         clusterClient.setOptions(ClusterClientOptions.builder()
-                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).refreshClusterView(false).build());
+                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
         ClusterSetup.setup2Masters(clusterRule);
 
         assertRoutedExecution(clusterConnection);
@@ -284,10 +285,9 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void atLeastOnceForgetNodeFailover() throws Exception {
 
-        clusterClient.setOptions(
-                ClusterClientOptions.builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
-        clusterClient.setOptions(ClusterClientOptions.builder().refreshClusterView(false).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        clusterClient.setOptions(ClusterClientOptions.create());
         ClusterSetup.setup2Masters(clusterRule);
 
         assertRoutedExecution(clusterConnection);
@@ -315,7 +315,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         redis1.clusterForget(partition2.getNodeId());
         redis2.clusterForget(partition1.getNodeId());
 
-        clusterClient.setOptions(ClusterClientOptions.builder().refreshClusterView(true).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         waitUntilOnlyOnePartition();
 
         Wait.untilTrue(() -> Futures.areAllCompleted(futures)).waitOrTimeout();
@@ -329,9 +329,8 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void expireStaleNodeIdConnections() throws Exception {
 
-        clusterClient.setOptions(
-                ClusterClientOptions.builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         ClusterSetup.setup2Masters(clusterRule);
 
@@ -374,7 +373,8 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void doNotExpireStaleNodeIdConnections() throws Exception {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().closeStaleConnections(false).build());
+        clusterClient.setOptions(ClusterClientOptions.builder()
+                .topologyRefreshOptions(ClusterTopologyRefreshOptions.builder().closeStaleConnections(false).build()).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         ClusterSetup.setup2Masters(clusterRule);
@@ -414,7 +414,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     public void expireStaleHostAndPortConnections() throws Exception {
 
         clusterClient.setOptions(ClusterClientOptions.builder().build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         ClusterSetup.setup2Masters(clusterRule);
 

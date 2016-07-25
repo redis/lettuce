@@ -4,13 +4,9 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.Connections.getConnectionWatchdog;
 import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.FixMethodOrder;
@@ -18,17 +14,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
-import com.lambdaworks.Wait;
-import com.lambdaworks.redis.ClientOptions.DisconnectedBehavior;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.server.RandomResponseServer;
-import io.netty.channel.Channel;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ClientTest extends AbstractRedisClientTest {
@@ -165,18 +155,20 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Test
     public void connectFailure() throws Exception {
-        RedisClient client = new RedisClient("invalid");
+        RedisClient client = RedisClient.create("redis://invalid");
         exception.expect(RedisException.class);
         exception.expectMessage("Unable to connect");
         client.connect();
+        FastShutdown.shutdown(client);
     }
 
     @Test
     public void connectPubSubFailure() throws Exception {
-        RedisClient client = new RedisClient("invalid");
+        RedisClient client = RedisClient.create("redis://invalid");
         exception.expect(RedisException.class);
         exception.expectMessage("Unable to connect");
         client.connectPubSub();
+        FastShutdown.shutdown(client);
     }
 
     private class TestConnectionListener implements RedisConnectionStateListener {
@@ -205,7 +197,7 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test
     public void emptyClient() throws Exception {
 
-        RedisClient client = new RedisClient();
+        RedisClient client = RedisClient.create();
         try {
             client.connect();
         } catch (IllegalStateException e) {
@@ -224,11 +216,6 @@ public class ClientTest extends AbstractRedisClientTest {
             assertThat(e).hasMessageContaining("RedisURI");
         }
 
-        try {
-            client.connectAsync((RedisURI) null);
-        } catch (IllegalArgumentException e) {
-            assertThat(e).hasMessageContaining("RedisURI");
-        }
         FastShutdown.shutdown(client);
     }
 

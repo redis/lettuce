@@ -3,7 +3,6 @@ package com.lambdaworks.redis.cluster;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-import com.lambdaworks.redis.RedisClusterConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;

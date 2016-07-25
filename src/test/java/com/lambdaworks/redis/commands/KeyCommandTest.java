@@ -46,9 +46,9 @@ public class KeyCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void exists() throws Exception {
-        assertThat(redis.exists(key)).isFalse();
+        assertThat(redis.exists(key)).isEqualTo(0);
         redis.set(key, value);
-        assertThat(redis.exists(key)).isTrue();
+        assertThat(redis.exists(key)).isEqualTo(1);
     }
 
     @Test

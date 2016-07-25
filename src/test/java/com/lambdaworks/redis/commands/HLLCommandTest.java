@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisHLLConnection;
 import com.lambdaworks.redis.api.sync.RedisHLLCommands;
 
 public class HLLCommandTest extends AbstractRedisClientTest {
@@ -19,23 +18,12 @@ public class HLLCommandTest extends AbstractRedisClientTest {
         return redis;
     }
 
-    private RedisHLLConnection<String, String> connection() {
-        return redis;
-    }
-
     @Test
     public void pfadd() throws Exception {
 
         assertThat(commands().pfadd(key, value, value)).isEqualTo(1);
         assertThat(commands().pfadd(key, value, value)).isEqualTo(0);
         assertThat(commands().pfadd(key, value)).isEqualTo(0);
-    }
-
-    @Test
-    public void pfaddDeprecated() throws Exception {
-        assertThat(connection().pfadd(key, value, value)).isEqualTo(1);
-        assertThat(connection().pfadd(key, value, value)).isEqualTo(0);
-        assertThat(connection().pfadd(key, value)).isEqualTo(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -74,15 +62,6 @@ public class HLLCommandTest extends AbstractRedisClientTest {
         assertThat(commands().pfcount("key8885")).isEqualTo(3);
     }
 
-    @Test
-    public void pfmergeDeprecated() throws Exception {
-        connection().pfadd(key, value);
-        connection().pfadd("key2", "value2");
-        connection().pfadd("key3", "value3");
-
-        assertThat(connection().pfmerge(key, "key2", "key3")).isEqualTo("OK");
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void pfmergeNoKeys() throws Exception {
         commands().pfmerge(key);
@@ -94,14 +73,6 @@ public class HLLCommandTest extends AbstractRedisClientTest {
         commands().pfadd("key2", "value2");
         assertThat(commands().pfcount(key)).isEqualTo(1);
         assertThat(commands().pfcount(key, "key2")).isEqualTo(2);
-    }
-
-    @Test
-    public void pfcountDeprecated() throws Exception {
-        connection().pfadd(key, value);
-        connection().pfadd("key2", "value2");
-        assertThat(connection().pfcount(key)).isEqualTo(1);
-        assertThat(connection().pfcount(key, "key2")).isEqualTo(2);
     }
 
     @Test(expected = IllegalArgumentException.class)

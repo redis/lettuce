@@ -4,13 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.*;
 
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.Connections;
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.server.RandomResponseServer;
 
@@ -68,7 +68,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         redisUri.setUnit(TimeUnit.SECONDS);
 
         try {
-            RedisAsyncCommands<String, String> connection = client.connectAsync(redisUri);
+            RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
             ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
@@ -89,7 +89,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
                 assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
                 assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
             }
-            connection.close();
+            connection.getStatefulConnection().close();
         } finally {
             ts.shutdown();
         }
@@ -117,7 +117,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         try {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
 
-            RedisAsyncCommands<String, String> connection = client.connectAsync(redisUri);
+            RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
             ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
 
             ReconnectionListener reconnectionListener = new ReconnectionListener() {
@@ -133,7 +133,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
             connection.quit();
             Wait.untilTrue(() -> events.size() > 1).waitOrTimeout();
-            connection.close();
+            connection.getStatefulConnection().close();
 
             ConnectionEvents.Reconnect event1 = events.take();
             assertThat(event1.getAttempt()).isEqualTo(1);
@@ -166,7 +166,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         try {
             RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
-                    .connectAsync(redisUri);
+                    .connect(redisUri).async();
             ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
@@ -175,7 +175,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             redisUri.setPort(TestSettings.nonexistentPort());
 
             connection.quit();
-            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+            Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
 
             RedisFuture<String> set1 = connection.set(key, value);
             RedisFuture<String> set2 = connection.set(key, value);
@@ -183,11 +183,11 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             assertThat(set1.isDone()).isFalse();
             assertThat(set1.isCancelled()).isFalse();
 
-            assertThat(connection.isOpen()).isFalse();
+            assertThat(connection.getStatefulConnection().isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
             connectionWatchdog.run(null);
             Thread.sleep(500);
-            assertThat(connection.isOpen()).isFalse();
+            assertThat(connection.getStatefulConnection().isOpen()).isFalse();
 
             try {
                 set1.get();
@@ -208,7 +208,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
                 assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
             }
 
-            connection.close();
+            connection.getStatefulConnection().close();
         } finally {
             ts.shutdown();
         }
