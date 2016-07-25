@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -16,6 +15,7 @@ import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Create reactive API based on the templates.
@@ -25,9 +25,10 @@ import com.github.javaparser.ast.type.Type;
 @RunWith(Parameterized.class)
 public class CreateReactiveApi {
 
-    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet(
-            "digest", "close", "isOpen", "BaseRedisCommands.reset",
-            "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
+            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+
+    private Set<String> FORCE_OBSERVABLE_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha");
 
     private CompilationUnitFactory factory;
 
@@ -74,8 +75,9 @@ public class CreateReactiveApi {
 
     protected Function<Comment, Comment> methodCommentMutator() {
         return comment -> {
-            if(comment != null && comment.getContent() != null){
-                comment.setContent(comment.getContent().replaceAll("List&lt;(.*)&gt;", "$1").replaceAll("Set&lt;(.*)&gt;", "$1"));
+            if (comment != null && comment.getContent() != null) {
+                comment.setContent(
+                        comment.getContent().replaceAll("List&lt;(.*)&gt;", "$1").replaceAll("Set&lt;(.*)&gt;", "$1"));
             }
             return comment;
         };
@@ -90,33 +92,39 @@ public class CreateReactiveApi {
         return method -> {
 
             ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())
-                    || KEEP_METHOD_RESULT_TYPE.contains(classOfMethod.getName() + "." + method.getName())) {
+            if (methodMatch(KEEP_METHOD_RESULT_TYPE, method, classOfMethod)) {
                 return method.getType();
             }
 
             String typeAsString = method.getType().toStringWithoutComments().trim();
-            if (typeAsString.equals("void")) {
-                typeAsString = "Success";
-            }
-
-            if (typeAsString.startsWith("List<")) {
-                typeAsString = typeAsString.substring(5, typeAsString.length() - 1);
+            if (methodMatch(FORCE_OBSERVABLE_RESULT, method, classOfMethod)) {
+                typeAsString = "Observable<" + typeAsString + ">";
+            } if (typeAsString.equals("void")) {
+                typeAsString = "Completable";
+            } else if (typeAsString.startsWith("List<")) {
+                typeAsString = "Observable<" + typeAsString.substring(5, typeAsString.length() - 1) + ">";
             } else if (typeAsString.startsWith("Set<")) {
-                typeAsString = typeAsString.substring(4, typeAsString.length() - 1);
+                typeAsString = "Observable<" + typeAsString.substring(4, typeAsString.length() - 1) + ">";
+            } else {
+                typeAsString = "Single<" + typeAsString + ">";
             }
 
-            return new ReferenceType(new ClassOrInterfaceType("Observable<" + typeAsString + ">"));
+            return new ReferenceType(new ClassOrInterfaceType(typeAsString));
         };
     }
 
+    private boolean methodMatch(Collection<String> methodNames, MethodDeclaration method,
+            ClassOrInterfaceDeclaration classOfMethod) {
+        return methodNames.contains(method.getName()) || methodNames.contains(classOfMethod.getName() + "." + method.getName());
+    }
+
     /**
-     * Supply addititional imports.
+     * Supply additional imports.
      * 
      * @return
      */
     protected Supplier<List<String>> importSupplier() {
-        return () -> Collections.singletonList("rx.Observable");
+        return () -> Arrays.asList("rx.Observable", "rx.Single", "rx.Completable");
     }
 
     @Test

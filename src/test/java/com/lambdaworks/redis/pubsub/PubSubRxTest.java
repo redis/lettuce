@@ -29,7 +29,9 @@ import com.lambdaworks.redis.pubsub.api.rx.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
+import rx.Completable;
 import rx.Observable;
+import rx.Single;
 import rx.Subscription;
 import rx.observables.BlockingObservable;
 
@@ -189,8 +191,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test(timeout = 2000)
     public void psubscribe() throws Exception {
 
-        Success sucess = first(pubsub.psubscribe(pattern));
-        assertThat(sucess).isEqualTo(Success.Success);
+        block(pubsub.psubscribe(pattern));
 
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
@@ -207,7 +208,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void pubsubChannels() throws Exception {
 
         block(pubsub.subscribe(channel));
-        List<String> result = first(pubsub2.pubsubChannels().toList());
+        List<String> result = single(pubsub2.pubsubChannels().toList());
         assertThat(result).contains(channel);
     }
 
@@ -216,7 +217,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         block(pubsub.subscribe(channel, "channel1", "channel3"));
 
-        List<String> result = first(pubsub2.pubsubChannels().toList());
+        List<String> result = single(pubsub2.pubsubChannels().toList());
         assertThat(result).contains(channel, "channel1", "channel3");
     }
 
@@ -224,9 +225,9 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void pubsubChannelsWithArg() throws Exception {
 
         pubsub.subscribe(channel).subscribe();
-        Wait.untilTrue(() -> first(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s))) != null).waitOrTimeout();
+        Wait.untilTrue(() -> single(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s))) != null).waitOrTimeout();
 
-        String result = first(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s)));
+        String result = single(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s)));
         assertThat(result).isEqualToIgnoringCase(channel);
     }
 
@@ -234,9 +235,9 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     public void pubsubNumsub() throws Exception {
 
         pubsub.subscribe(channel).subscribe();
-        Wait.untilEquals(1, () -> first(pubsub2.pubsubNumsub(channel).toList()).size()).waitOrTimeout();
+        Wait.untilEquals(1, () -> block(pubsub2.pubsubNumsub(channel)).size()).waitOrTimeout();
 
-        Map<String, Long> result = first(pubsub2.pubsubNumsub(channel));
+        Map<String, Long> result = block(pubsub2.pubsubNumsub(channel));
         assertThat(result).hasSize(1);
         assertThat(result.get(channel)).isGreaterThan(0);
     }
@@ -244,12 +245,12 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubNumpat() throws Exception {
 
-        Wait.untilEquals(0L, () -> first(pubsub2.pubsubNumpat())).waitOrTimeout();
+        Wait.untilEquals(0L, () -> block(pubsub2.pubsubNumpat())).waitOrTimeout();
 
         pubsub.psubscribe(pattern).subscribe();
         Wait.untilEquals(1L, () -> redis.pubsubNumpat()).waitOrTimeout();
 
-        Long result = first(pubsub2.pubsubNumpat());
+        Long result = block(pubsub2.pubsubNumpat());
         assertThat(result.longValue()).isGreaterThan(0);
     }
 
@@ -434,11 +435,15 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         counts.add(count);
     }
 
-    protected <T> void block(Observable<T> observable) {
-        observable.toBlocking().last();
+    protected <T> T block(Single<T> single) {
+        return single.toBlocking().value();
     }
 
-    protected <T> T first(Observable<T> observable) {
+    protected <T> void block(Completable completable) {
+        completable.get();
+    }
+
+    protected <T> T single(Observable<T> observable) {
 
         BlockingObservable<T> blocking = observable.toBlocking();
         Iterator<T> iterator = blocking.getIterator();

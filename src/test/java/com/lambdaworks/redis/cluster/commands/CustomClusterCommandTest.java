@@ -20,6 +20,7 @@ import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
 
 import rx.Observable;
+import rx.Single;
 
 /**
  * @author Mark Paluch
@@ -103,7 +104,7 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
         ReactiveCommandDispatcher<String, String, String> dispatcher = new ReactiveCommandDispatcher<>(command,
                 redisClusterConnection, false);
 
-        String result = Observable.create(dispatcher).toBlocking().first();
+        String result = Single.create(dispatcher.getSingleSubscriber()).toBlocking().value();
 
         assertThat(result).isEqualTo("PONG");
     }

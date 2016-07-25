@@ -3,6 +3,8 @@ package com.lambdaworks.redis.api.rx;
 import java.util.List;
 import com.lambdaworks.redis.ScriptOutputType;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Scripting.
@@ -76,14 +78,14 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply
      */
-    Observable<String> scriptFlush();
+    Single<String> scriptFlush();
 
     /**
      * Kill the script currently in execution.
      * 
      * @return String simple-string-reply
      */
-    Observable<String> scriptKill();
+    Single<String> scriptKill();
 
     /**
      * Load the specified Lua script into the script cache.
@@ -91,7 +93,7 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * @param script script content
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
      */
-    Observable<String> scriptLoad(V script);
+    Single<String> scriptLoad(V script);
 
     /**
      * Create a SHA1 digest from a Lua script.

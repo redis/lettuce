@@ -5,8 +5,6 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import rx.Observable;
-
 import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -14,6 +12,9 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
+
+import rx.Observable;
+import rx.Single;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
@@ -34,7 +35,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     }
 
     @Override
-    public Observable<SocketAddress> getMasterAddrByName(K key) {
+    public Single<SocketAddress> getMasterAddrByName(K key) {
 
         Observable<V> observable = createDissolvingObservable(() -> commandBuilder.getMasterAddrByKey(key));
         return observable.buffer(2).map(list -> {
@@ -46,7 +47,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
             String hostname = (String) list.get(0);
             String port = (String) list.get(1);
             return new InetSocketAddress(hostname, Integer.parseInt(port));
-        });
+        }).lastOrDefault(null).cast(SocketAddress.class).toSingle();
     }
 
     @Override
@@ -55,8 +56,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     }
 
     @Override
-    public Observable<Map<K, V>> master(K key) {
-        return createObservable(() -> commandBuilder.master(key));
+    public Single<Map<K, V>> master(K key) {
+        return createSingle(() -> commandBuilder.master(key));
     }
 
     @Override
@@ -65,41 +66,41 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     }
 
     @Override
-    public Observable<Long> reset(K key) {
-        return createObservable(() -> commandBuilder.reset(key));
+    public Single<Long> reset(K key) {
+        return createSingle(() -> commandBuilder.reset(key));
     }
 
     @Override
-    public Observable<String> failover(K key) {
-        return createObservable(() -> commandBuilder.failover(key));
+    public Single<String> failover(K key) {
+        return createSingle(() -> commandBuilder.failover(key));
     }
 
     @Override
-    public Observable<String> monitor(K key, String ip, int port, int quorum) {
-        return createObservable(() -> commandBuilder.monitor(key, ip, port, quorum));
+    public Single<String> monitor(K key, String ip, int port, int quorum) {
+        return createSingle(() -> commandBuilder.monitor(key, ip, port, quorum));
     }
 
     @Override
-    public Observable<String> set(K key, String option, V value) {
-        return createObservable(() -> commandBuilder.set(key, option, value));
+    public Single<String> set(K key, String option, V value) {
+        return createSingle(() -> commandBuilder.set(key, option, value));
     }
 
     @Override
-    public Observable<String> remove(K key) {
-        return createObservable(() -> commandBuilder.remove(key));
+    public Single<String> remove(K key) {
+        return createSingle(() -> commandBuilder.remove(key));
     }
 
     @Override
-    public Observable<String> ping() {
-        return createObservable(() -> commandBuilder.ping());
+    public Single<String> ping() {
+        return createSingle(() -> commandBuilder.ping());
     }
 
-    //@Override
+    // @Override
     public void close() {
         connection.close();
     }
 
-    //@Override
+    // @Override
     public boolean isOpen() {
         return connection.isOpen();
     }
@@ -110,11 +111,17 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     }
 
     public <T> Observable<T> createObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Observable.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false));
+        return Observable
+                .create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false).getObservableSubscriber());
+    }
+
+    public <T> Single<T> createSingle(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+        return Single.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false).getSingleSubscriber());
     }
 
     @SuppressWarnings("unchecked")
     public <T, R> R createDissolvingObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return (R) Observable.create(new ReactiveCommandDispatcher<>(commandSupplier, connection, true));
+        return (R) Observable
+                .create(new ReactiveCommandDispatcher<>(commandSupplier, connection, true).getObservableSubscriber());
     }
 }

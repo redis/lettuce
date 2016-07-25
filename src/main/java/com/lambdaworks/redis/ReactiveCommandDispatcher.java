@@ -2,6 +2,7 @@ package com.lambdaworks.redis;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.lambdaworks.redis.api.StatefulConnection;
@@ -11,7 +12,10 @@ import com.lambdaworks.redis.output.StreamingOutput;
 import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import rx.Observable;
+import rx.Single;
 import rx.Subscriber;
 
 /**
@@ -19,7 +23,9 @@ import rx.Subscriber;
  *
  * @author Mark Paluch
  */
-public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscribe<T> {
+public class ReactiveCommandDispatcher<K, V, T> {
+
+    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(ReactiveCommandDispatcher.class);
 
     private Supplier<? extends RedisCommand<K, V, T>> commandSupplier;
     private volatile RedisCommand<K, V, T> command;
@@ -53,32 +59,71 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         this.connection = connection;
         this.dissolve = dissolve;
         this.command = commandSupplier.get();
+
     }
 
-    @Override
-    public void call(Subscriber<? super T> subscriber) {
+    public Single.OnSubscribe<T> getSingleSubscriber() {
+        return new SingleSubscriber();
+    }
 
-        // Reuse the first command but then discard it.
-        RedisCommand<K, V, T> command = this.command;
-        if (command == null) {
-            command = commandSupplier.get();
-        }
+    public Observable.OnSubscribe<T> getObservableSubscriber() {
+        return new ObservableSubscriber();
+    }
 
-        if (command.getOutput() instanceof StreamingOutput<?>) {
-            StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
+    private class ObservableSubscriber implements Observable.OnSubscribe<T> {
 
-            if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
-                streamingOutput.setSubscriber(new DelegatingWrapper<T>(
-                        Arrays.asList(new ObservableSubscriberWrapper<>(subscriber), streamingOutput.getSubscriber())));
-            } else {
-                streamingOutput.setSubscriber(new ObservableSubscriberWrapper<>(subscriber));
+        @Override
+        public void call(Subscriber<? super T> subscriber) {
+
+            // Reuse the first command but then discard it.
+            RedisCommand<K, V, T> command = ReactiveCommandDispatcher.this.command;
+            if (command == null) {
+                command = commandSupplier.get();
             }
+
+            if (command.getOutput() instanceof StreamingOutput<?>) {
+                StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
+
+                if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
+                    streamingOutput.setSubscriber(new DelegatingWrapper<T>(
+                            Arrays.asList(new ObservableSubscriberWrapper<>(subscriber), streamingOutput.getSubscriber())));
+                } else {
+                    streamingOutput.setSubscriber(new ObservableSubscriberWrapper<>(subscriber));
+                }
+            }
+
+            connection.dispatch(new ObservableCommand<>(command, subscriber, dissolve));
+
+            ReactiveCommandDispatcher.this.command = null;
         }
+    }
 
-        connection.dispatch(new ObservableCommand<>(command, subscriber, dissolve));
+    private class SingleSubscriber implements Single.OnSubscribe<T> {
 
-        this.command = null;
+        @Override
+        public void call(rx.SingleSubscriber<? super T> subscriber) {
 
+            // Reuse the first command but then discard it.
+            RedisCommand<K, V, T> command = ReactiveCommandDispatcher.this.command;
+            if (command == null) {
+                command = commandSupplier.get();
+            }
+
+            if (command.getOutput() instanceof StreamingOutput<?>) {
+                StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
+
+                if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
+                    streamingOutput.setSubscriber(new DelegatingWrapper<T>(
+                            Arrays.asList(new SingleSubscriberWrapper<T>(subscriber), streamingOutput.getSubscriber())));
+                } else {
+                    streamingOutput.setSubscriber(new SingleSubscriberWrapper<T>(subscriber));
+                }
+            }
+
+            connection.dispatch(new SingleCommand<>(command, subscriber));
+
+            ReactiveCommandDispatcher.this.command = null;
+        }
     }
 
     private static class ObservableCommand<K, V, T> extends CommandWrapper<K, V, T> {
@@ -105,6 +150,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
                 if (getOutput() != null) {
                     Object result = getOutput().get();
+
                     if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
 
                         if (dissolve && result instanceof Collection) {
@@ -118,7 +164,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
                     }
 
                     if (getOutput().hasError()) {
-                        subscriber.onError(new RedisCommandExecutionException(getOutput().getError()));
+                        onError(new RedisCommandExecutionException(getOutput().getError()));
                         completed = true;
                         return;
                     }
@@ -142,20 +188,90 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
             }
 
             super.cancel();
-            subscriber.onCompleted();
+
+            onError(new CancellationException());
             completed = true;
         }
 
         @Override
         public boolean completeExceptionally(Throwable throwable) {
+
             if (completed || subscriber.isUnsubscribed()) {
                 return false;
             }
 
             boolean b = super.completeExceptionally(throwable);
-            subscriber.onError(throwable);
+            onError(throwable);
             completed = true;
             return b;
+        }
+
+        private void onError(Throwable throwable) {
+            subscriber.onError(throwable);
+        }
+    }
+
+    private static class SingleCommand<K, V, T> extends CommandWrapper<K, V, T> {
+
+        private final rx.SingleSubscriber<? super T> subscriber;
+        private boolean completed = false;
+
+        public SingleCommand(RedisCommand<K, V, T> command, rx.SingleSubscriber<? super T> subscriber) {
+            super(command);
+            this.subscriber = subscriber;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void complete() {
+            if (completed) {
+                return;
+            }
+
+            super.complete();
+
+            if (getOutput() != null) {
+                Object result = getOutput().get();
+
+                if (getOutput().hasError()) {
+                    onError(new RedisCommandExecutionException(getOutput().getError()));
+                    completed = true;
+                    return;
+                } else if (!(getOutput() instanceof StreamingOutput<?>)) {
+                    subscriber.onSuccess((T) result);
+                }
+            }
+
+            completed = true;
+        }
+
+        @Override
+        public void cancel() {
+
+            if (completed) {
+                return;
+            }
+
+            super.cancel();
+            onError(new CancellationException());
+            completed = true;
+        }
+
+        @Override
+        public boolean completeExceptionally(Throwable throwable) {
+
+            if (completed) {
+                return false;
+            }
+
+            boolean b = super.completeExceptionally(throwable);
+            onError(throwable);
+            completed = true;
+            return b;
+        }
+
+        private void onError(Throwable throwable) {
+            subscriber.onError(throwable);
         }
     }
 
@@ -170,11 +286,25 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         @Override
         public void onNext(T t) {
 
-            if(subscriber.isUnsubscribed()) {
+            if (subscriber.isUnsubscribed()) {
                 return;
             }
 
             subscriber.onNext(t);
+        }
+    }
+
+    static class SingleSubscriberWrapper<T> implements StreamingOutput.Subscriber<T> {
+
+        private rx.SingleSubscriber<? super T> subscriber;
+
+        public SingleSubscriberWrapper(rx.SingleSubscriber<? super T> subscriber) {
+            this.subscriber = subscriber;
+        }
+
+        @Override
+        public void onNext(T t) {
+            subscriber.onSuccess(t);
         }
     }
 

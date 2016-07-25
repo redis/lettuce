@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -16,10 +17,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import rx.Observable;
+import rx.Single;
+import rx.Subscriber;
+
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import rx.observers.TestSubscriber;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -47,7 +53,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void doNotFireCommandUntilObservation() throws Exception {
-        Observable<String> set = reactive.set(key, value);
+        Single<String> set = reactive.set(key, value);
         Delay.delay(millis(200));
         assertThat(redis.get(key)).isNull();
         set.subscribe();
@@ -58,7 +64,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void fireCommandAfterObserve() throws Exception {
-        assertThat(reactive.set(key, value).toBlocking().first()).isEqualTo("OK");
+        assertThat(reactive.set(key, value).toBlocking().value()).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -76,40 +82,60 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     public void testCancelCommand() throws Exception {
 
         List<Object> result = new ArrayList<>();
-        reactive.clientPause(1000).subscribe();
+        reactive.clientPause(2000).subscribe(TestSubscriber.create());
+        Delay.delay(millis(100));
+
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
         Delay.delay(millis(100));
 
         reactive.reset();
-        assertThat(result).hasSize(1).contains("completed");
+        assertThat(result).hasSize(1).hasOnlyElementsOfType(CancellationException.class);
     }
 
     @Test
     public void testEcho() throws Exception {
-        String result = reactive.echo("echo").toBlocking().first();
+        String result = reactive.echo("echo").toBlocking().value();
         assertThat(result).isEqualTo("echo");
     }
 
     @Test
-    public void testMultiCancel() throws Exception {
+    public void testSingleMultiCancel() throws Exception {
 
         List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
-
-        Observable<String> set = reactive.set(key, value);
-        set.subscribe(new CompletionSubscriber(result));
-        set.subscribe(new CompletionSubscriber(result));
-        set.subscribe(new CompletionSubscriber(result));
-
         Delay.delay(millis(100));
+
+        Single<String> set = reactive.set(key, value);
+        set.subscribe(new CompletionSubscriber(result));
+        set.subscribe(new CompletionSubscriber(result));
+        set.subscribe(new CompletionSubscriber(result));
+        Delay.delay(millis(100));
+
         reactive.reset();
-        assertThat(result).hasSize(3).contains("completed");
+        assertThat(result).hasSize(3);
+    }
+
+    @Test
+    public void testObservableMultiCancel() throws Exception {
+
+        List<Object> result = new ArrayList<>();
+        reactive.clientPause(1000).subscribe();
+        Delay.delay(millis(100));
+
+        Observable<String> set = reactive.mget(key, value);
+        set.subscribe(new CompletionSubscriber(result));
+        set.subscribe(new CompletionSubscriber(result));
+        set.subscribe(new CompletionSubscriber(result));
+        Delay.delay(millis(100));
+
+        reactive.reset();
+        assertThat(result).hasSize(3);
     }
 
     @Test
     public void multiSubscribe() throws Exception {
         reactive.set(key, "1").subscribe();
-        Observable<Long> incr = reactive.incr(key);
+        Single<Long> incr = reactive.incr(key);
         incr.subscribe();
         incr.subscribe();
         incr.subscribe();
@@ -147,9 +173,9 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         map.put(key, value);
         map.put("key1", "value1");
 
-        reactive.mset(map).toBlocking().first();
+        reactive.mset(map).toBlocking().value();
 
-        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).toList().subscribeOn(Schedulers.immediate())
+        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s).toObservable()).toList().subscribeOn(Schedulers.immediate())
                 .toBlocking().first();
 
         assertThat(values).hasSize(2).contains(value, "value1");
@@ -166,7 +192,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws Exception {
 
-        Observable.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).toBlocking().last();
+        Single.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).toBlocking().last();
 
         reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
         reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());

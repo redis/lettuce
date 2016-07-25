@@ -3,7 +3,9 @@ package com.lambdaworks.redis.pubsub;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import com.lambdaworks.redis.protocol.Command;
+import rx.Completable;
 import rx.Observable;
+import rx.Single;
 import rx.Subscriber;
 
 import com.lambdaworks.redis.RedisReactiveCommandsImpl;
@@ -109,28 +111,28 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
-    public Observable<Success> psubscribe(K... patterns) {
-        return getSuccessObservable(createObservable(() -> commandBuilder.psubscribe(patterns)));
+    public Completable psubscribe(K... patterns) {
+        return Completable.fromObservable(createObservable(() -> commandBuilder.psubscribe(patterns)));
     }
 
     @Override
-    public Observable<Success> punsubscribe(K... patterns) {
-        return getSuccessObservable(createObservable(() -> commandBuilder.punsubscribe(patterns)));
+    public Completable punsubscribe(K... patterns) {
+        return Completable.fromObservable(createObservable(() -> commandBuilder.punsubscribe(patterns)));
     }
 
     @Override
-    public Observable<Success> subscribe(K... channels) {
-        return getSuccessObservable(createObservable(() -> commandBuilder.subscribe(channels)));
+    public Completable subscribe(K... channels) {
+        return Completable.fromObservable(createObservable(() -> commandBuilder.subscribe(channels)));
     }
 
     @Override
-    public Observable<Success> unsubscribe(K... channels) {
-        return getSuccessObservable(createObservable(() -> commandBuilder.unsubscribe(channels)));
+    public Completable unsubscribe(K... channels) {
+        return Completable.fromObservable(createObservable(() -> commandBuilder.unsubscribe(channels)));
     }
 
     @Override
-    public Observable<Long> publish(K channel, V message) {
-        return createObservable(() -> commandBuilder.publish(channel, message));
+    public Single<Long> publish(K channel, V message) {
+        return createSingle(() -> commandBuilder.publish(channel, message));
     }
 
     @Override
@@ -139,8 +141,8 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
-    public Observable<Map<K, Long>> pubsubNumsub(K... channels) {
-        return createObservable(() -> commandBuilder.pubsubNumsub(channels));
+    public Single<Map<K, Long>> pubsubNumsub(K... channels) {
+        return createSingle(() -> commandBuilder.pubsubNumsub(channels));
     }
 
     @Override

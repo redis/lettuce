@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import rx.Observable;
 
 import com.lambdaworks.redis.api.rx.*;
+import rx.Single;
 
 /**
  * A complete reactive and thread-safe cluster Redis API with 400+ Methods.
@@ -34,7 +35,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param password the password
      * @return String simple-string-reply
      */
-    Observable<String> auth(String password);
+    Single<String> auth(String password);
 
     /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
@@ -43,7 +44,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @return String simple-string-reply If the new config epoch is generated and assigned either BUMPED (epoch) or STILL
      *         (epoch) are returned.
      */
-    Observable<String> clusterBumpepoch();
+    Single<String> clusterBumpepoch();
 
     /**
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
@@ -53,7 +54,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param port port number.
      * @return String simple-string-reply
      */
-    Observable<String> clusterMeet(String ip, int port);
+    Single<String> clusterMeet(String ip, int port);
 
     /**
      * Blacklist and remove the cluster node from the cluster.
@@ -61,7 +62,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param nodeId the node Id
      * @return String simple-string-reply
      */
-    Observable<String> clusterForget(String nodeId);
+    Single<String> clusterForget(String nodeId);
 
     /**
      * Adds slots to the cluster node. The current node will become the master for the specified slots.
@@ -69,7 +70,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
      */
-    Observable<String> clusterAddSlots(int... slots);
+    Single<String> clusterAddSlots(int... slots);
 
     /**
      * Removes slots from the cluster node.
@@ -77,7 +78,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
      */
-    Observable<String> clusterDelSlots(int... slots);
+    Single<String> clusterDelSlots(int... slots);
 
     /**
      * Assign a slot to a node. The command migrates the specified slot from the current node to the specified node in
@@ -87,7 +88,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param nodeId the id of the node that will become the master for the slot
      * @return String simple-string-reply
      */
-    Observable<String> clusterSetSlotNode(int slot, String nodeId);
+    Single<String> clusterSetSlotNode(int slot, String nodeId);
 
     /**
      * Clears migrating / importing state from the slot.
@@ -95,7 +96,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param slot the slot
      * @return String simple-string-reply
      */
-    Observable<String> clusterSetSlotStable(int slot);
+    Single<String> clusterSetSlotStable(int slot);
 
     /**
      * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
@@ -105,7 +106,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param nodeId the id of the node is targeted to become the master for the slot
      * @return String simple-string-reply
      */
-    Observable<String> clusterSetSlotMigrating(int slot, String nodeId);
+    Single<String> clusterSetSlotMigrating(int slot, String nodeId);
 
     /**
      * Flag a slot as {@literal IMPORTING} (incoming) from the node specified in {@code nodeId}.
@@ -114,21 +115,21 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param nodeId the id of the node is the master of the slot
      * @return String simple-string-reply
      */
-    Observable<String> clusterSetSlotImporting(int slot, String nodeId);
+    Single<String> clusterSetSlotImporting(int slot, String nodeId);
 
     /**
      * Get information and statistics about the cluster viewed by the current node.
      *
      * @return String bulk-string-reply as a collection of text lines.
      */
-    Observable<String> clusterInfo();
+    Single<String> clusterInfo();
 
     /**
      * Obtain the nodeId for the currently connected node.
      *
      * @return String simple-string-reply
      */
-    Observable<String> clusterMyId();
+    Single<String> clusterMyId();
 
     /**
      * Obtain details about all cluster nodes. Can be parsed using
@@ -136,7 +137,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      *
      * @return String bulk-string-reply as a collection of text lines
      */
-    Observable<String> clusterNodes();
+    Single<String> clusterNodes();
 
     /**
      * List slaves for a certain node identified by its {@code nodeId}. Can be parsed using
@@ -163,7 +164,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param slot the slot
      * @return Integer reply: The number of keys in the specified hash slot, or an error if the hash slot is invalid.
      */
-    Observable<Long> clusterCountKeysInSlot(int slot);
+    Single<Long> clusterCountKeysInSlot(int slot);
 
     /**
      * Returns the number of failure reports for the specified node. Failure reports are the way Redis Cluster uses in order to
@@ -173,7 +174,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param nodeId the node id
      * @return Integer reply: The number of active failure reports for the node.
      */
-    Observable<Long> clusterCountFailureReports(String nodeId);
+    Single<Long> clusterCountFailureReports(String nodeId);
 
     /**
      * Returns an integer identifying the hash slot the specified key hashes to. This command is mainly useful for debugging and
@@ -183,14 +184,14 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param key the key.
      * @return Integer reply: The hash slot number.
      */
-    Observable<Long> clusterKeyslot(K key);
+    Single<Long> clusterKeyslot(K key);
 
     /**
      * Forces a node to save the nodes.conf configuration on disk.
      *
      * @return String simple-string-reply: {@code OK} or an error if the operation fails.
      */
-    Observable<String> clusterSaveconfig();
+    Single<String> clusterSaveconfig();
 
     /**
      * This command sets a specific config epoch in a fresh node. It only works when:
@@ -202,7 +203,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param configEpoch the config epoch
      * @return String simple-string-reply: {@code OK} or an error if the operation fails.
      */
-    Observable<String> clusterSetConfigEpoch(long configEpoch);
+    Single<String> clusterSetConfigEpoch(long configEpoch);
 
     /**
      * Get array of cluster slots to node mappings.
@@ -217,7 +218,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      *
      * @return String simple-string-reply
      */
-    Observable<String> asking();
+    Single<String> asking();
 
     /**
      * Turn this node into a slave of the node with the id {@code nodeId}.
@@ -225,7 +226,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param nodeId master node id
      * @return String simple-string-reply
      */
-    Observable<String> clusterReplicate(String nodeId);
+    Single<String> clusterReplicate(String nodeId);
 
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its slave.
@@ -233,7 +234,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param force do not coordinate with master if {@literal true}
      * @return String simple-string-reply
      */
-    Observable<String> clusterFailover(boolean force);
+    Single<String> clusterFailover(boolean force);
 
     /**
      * Reset a node performing a soft or hard reset:
@@ -250,14 +251,14 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
      * @return String simple-string-reply
      */
-    Observable<String> clusterReset(boolean hard);
+    Single<String> clusterReset(boolean hard);
 
     /**
      * Delete all the slots associated with the specified node. The number of deleted slots is returned.
      *
      * @return String simple-string-reply
      */
-    Observable<String> clusterFlushslots();
+    Single<String> clusterFlushslots();
 
     /**
      * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
@@ -265,14 +266,14 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      *
      * @return String simple-string-reply
      */
-    Observable<String> readOnly();
+    Single<String> readOnly();
 
     /**
      * Resets readOnly flag.
      *
      * @return String simple-string-reply
      */
-    Observable<String> readWrite();
+    Single<String> readWrite();
 
     /**
      * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
@@ -280,7 +281,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param keys the key
      * @return Observable&lt;Long&gt; integer-reply The number of keys that were removed.
      */
-    Observable<Long> del(K... keys);
+    Single<Long> del(K... keys);
 
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
@@ -298,7 +299,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param map the null
      * @return Observable&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
-    Observable<String> mset(Map<K, V> map);
+    Single<String> mset(Map<K, V> map);
 
     /**
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
@@ -309,5 +310,5 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
-    Observable<Boolean> msetnx(Map<K, V> map);
+    Single<Boolean> msetnx(Map<K, V> map);
 }

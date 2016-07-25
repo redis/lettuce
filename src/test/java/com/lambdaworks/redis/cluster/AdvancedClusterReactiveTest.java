@@ -25,9 +25,9 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
-import com.lambdaworks.redis.internal.LettuceLists;
 
 import rx.Observable;
+import rx.Single;
 
 /**
  * @author Mark Paluch
@@ -80,9 +80,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test
     public void msetCrossSlot() throws Exception {
 
-        Observable<String> mset = commands.mset(RandomKeys.MAP);
-        List<String> result = LettuceLists.newList(mset.toBlocking().toIterable());
-        assertThat(result).hasSize(1).contains("OK");
+        Single<String> mset = commands.mset(RandomKeys.MAP);
+        assertThat(block(mset)).isEqualTo("OK");
 
         for (String mykey : RandomKeys.KEYS) {
             String s1 = syncCommands.get(mykey);
@@ -93,9 +92,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test
     public void msetnxCrossSlot() throws Exception {
 
-        List<Boolean> result = LettuceLists.newList(commands.msetnx(RandomKeys.MAP).toBlocking().toIterable());
-
-        assertThat(result).hasSize(1).contains(true);
+        assertThat(block(commands.msetnx(RandomKeys.MAP))).isTrue();
 
         for (String mykey : RandomKeys.KEYS) {
             String s1 = syncCommands.get(mykey);
@@ -125,8 +122,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
 
-        Observable<Long> observable = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        Long count = getSingle(observable);
+        Single<Long> single = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long count = block(single);
 
         assertThat(result.getList()).hasSize(RandomKeys.COUNT);
         assertThat(count).isEqualTo(RandomKeys.COUNT);
@@ -137,8 +134,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Observable<Long> observable = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        Long result = getSingle(observable);
+        Single<Long> single = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long result = block(single);
 
         assertThat(result).isEqualTo(RandomKeys.COUNT);
 
@@ -153,8 +150,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Observable<Long> observable = commands.unlink(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        Long result = getSingle(observable);
+        Single<Long> single = commands.unlink(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long result = block(single);
 
         assertThat(result).isEqualTo(RandomKeys.COUNT);
 
@@ -171,7 +168,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         assertThat(clusterClient.getPartitions().size()).isGreaterThan(0);
 
-        getSingle(commands.clientSetname(name));
+        block(commands.clientSetname(name));
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             RedisClusterCommands<String, String> nodeConnection = commands.getStatefulConnection().sync()
@@ -182,7 +179,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     @Test(expected = Exception.class)
     public void clientSetnameRunOnError() throws Exception {
-        getSingle(commands.clientSetname("not allowed"));
+        block(commands.clientSetname("not allowed"));
     }
 
     @Test
@@ -190,7 +187,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         writeKeysToTwoNodes();
 
-        Long dbsize = getSingle(commands.dbsize());
+        Long dbsize = block(commands.dbsize());
         assertThat(dbsize).isEqualTo(2);
     }
 
@@ -199,7 +196,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         writeKeysToTwoNodes();
 
-        assertThat(getSingle(commands.flushall())).isEqualTo("OK");
+        assertThat(block(commands.flushall())).isEqualTo("OK");
 
         Long dbsize = syncCommands.dbsize();
         assertThat(dbsize).isEqualTo(0);
@@ -210,7 +207,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         writeKeysToTwoNodes();
 
-        assertThat(getSingle(commands.flushdb())).isEqualTo("OK");
+        assertThat(block(commands.flushdb())).isEqualTo("OK");
 
         Long dbsize = syncCommands.dbsize();
         assertThat(dbsize).isEqualTo(0);
@@ -232,7 +229,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         writeKeysToTwoNodes();
         ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
 
-        assertThat(getSingle(commands.keys(result, "*"))).isEqualTo(2);
+        assertThat(block(commands.keys(result, "*"))).isEqualTo(2);
         assertThat(result.getList()).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
     }
 
@@ -241,17 +238,17 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         writeKeysToTwoNodes();
 
-        assertThat(getSingle(commands.randomkey())).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2);
+        assertThat(block(commands.randomkey())).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2);
     }
 
     @Test
     public void scriptFlush() throws Exception {
-        assertThat(getSingle(commands.scriptFlush())).isEqualTo("OK");
+        assertThat(block(commands.scriptFlush())).isEqualTo("OK");
     }
 
     @Test
     public void scriptKill() throws Exception {
-        assertThat(getSingle(commands.scriptKill())).isEqualTo("OK");
+        assertThat(block(commands.scriptKill())).isEqualTo("OK");
     }
 
     @Test
@@ -264,8 +261,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     public void readFromSlaves() throws Exception {
 
         RedisClusterReactiveCommands<String, String> connection = commands.getConnection(host, port4);
-        connection.readOnly().toBlocking().first();
-        commands.set(key, value).toBlocking().first();
+        block(connection.readOnly());
+        block(commands.set(key, value));
         NodeSelectionAsyncTest.waitForReplication(commands.getStatefulConnection().async(), key, port4);
 
         AtomicBoolean error = new AtomicBoolean();
@@ -273,10 +270,10 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         assertThat(error.get()).isFalse();
 
-        connection.readWrite().toBlocking().first();
+        block(connection.readWrite());
 
         try {
-            connection.get(key).doOnError(throwable -> error.set(true)).toBlocking().first();
+            block(connection.get(key).doOnError(throwable -> error.set(true)));
             fail("Missing exception");
         } catch (Exception e) {
             assertThat(error.get()).isTrue();
@@ -295,9 +292,9 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         do {
 
             if (scanCursor == null) {
-                scanCursor = getSingle(commands.scan());
+                scanCursor = block(commands.scan());
             } else {
-                scanCursor = getSingle(commands.scan(scanCursor));
+                scanCursor = block(commands.scan(scanCursor));
             }
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
@@ -318,9 +315,9 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         do {
 
             if (scanCursor == null) {
-                scanCursor = getSingle(commands.scan(ScanArgs.Builder.matches("a*")));
+                scanCursor = block(commands.scan(ScanArgs.Builder.matches("a*")));
             } else {
-                scanCursor = getSingle(commands.scan(scanCursor, ScanArgs.Builder.matches("a*")));
+                scanCursor = block(commands.scan(scanCursor, ScanArgs.Builder.matches("a*")));
             }
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
@@ -341,9 +338,9 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         do {
 
             if (scanCursor == null) {
-                scanCursor = getSingle(commands.scan(adapter));
+                scanCursor = block(commands.scan(adapter));
             } else {
-                scanCursor = getSingle(commands.scan(adapter, scanCursor));
+                scanCursor = block(commands.scan(adapter, scanCursor));
             }
         } while (!scanCursor.isFinished());
 
@@ -363,9 +360,9 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         do {
 
             if (scanCursor == null) {
-                scanCursor = getSingle(commands.scan(adapter, ScanArgs.Builder.matches("a*")));
+                scanCursor = block(commands.scan(adapter, ScanArgs.Builder.matches("a*")));
             } else {
-                scanCursor = getSingle(commands.scan(adapter, scanCursor, ScanArgs.Builder.matches("a*")));
+                scanCursor = block(commands.scan(adapter, scanCursor, ScanArgs.Builder.matches("a*")));
             }
         } while (!scanCursor.isFinished());
 
@@ -374,9 +371,10 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     }
 
-    private <T> T getSingle(Observable<T> observable) {
-        return observable.toBlocking().single();
+    private <T> T block(Single<T> single) {
+        return single.toBlocking().value();
     }
+
 
     private void writeKeysToTwoNodes() {
         syncCommands.set(KEY_ON_NODE_1, value);

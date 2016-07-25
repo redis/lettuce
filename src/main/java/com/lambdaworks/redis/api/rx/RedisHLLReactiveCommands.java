@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.api.rx;
 
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for HyperLogLog (PF* commands).
@@ -23,7 +25,7 @@ public interface RedisHLLReactiveCommands<K, V> {
      *
      *         1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
      */
-    Observable<Long> pfadd(K key, V... values);
+    Single<Long> pfadd(K key, V... values);
 
     /**
      * Merge N different HyperLogLogs into a single one.
@@ -33,7 +35,7 @@ public interface RedisHLLReactiveCommands<K, V> {
      *
      * @return String simple-string-reply The command just returns {@code OK}.
      */
-    Observable<String> pfmerge(K destkey, K... sourcekeys);
+    Single<String> pfmerge(K destkey, K... sourcekeys);
 
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).
@@ -44,5 +46,5 @@ public interface RedisHLLReactiveCommands<K, V> {
      *
      *         The approximated number of unique elements observed via {@code PFADD}.
      */
-    Observable<Long> pfcount(K... keys);
+    Single<Long> pfcount(K... keys);
 }

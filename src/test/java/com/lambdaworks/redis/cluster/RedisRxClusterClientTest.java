@@ -25,6 +25,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import rx.Single;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -69,10 +70,10 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
     @Test
     public void testClusterCommandRedirection() throws Exception {
         // Command on node within the default connection
-        assertThat(getSingle(rx.set(KEY_B, "myValue1"))).isEqualTo("OK");
+        assertThat(block(rx.set(KEY_B, "myValue1"))).isEqualTo("OK");
 
         // gets redirection to node 3
-        assertThat(getSingle(rx.set(KEY_A, "myValue1"))).isEqualTo("OK");
+        assertThat(block(rx.set(KEY_A, "myValue1"))).isEqualTo("OK");
     }
 
     @Test
@@ -81,10 +82,10 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_A, value);
         sync.set(KEY_B, value);
 
-        List<String> keysA = getSingle(rx.clusterGetKeysInSlot(SLOT_A, 10).toList());
+        List<String> keysA = block(rx.clusterGetKeysInSlot(SLOT_A, 10).toList());
         assertThat(keysA).isEqualTo(Collections.singletonList(KEY_A));
 
-        List<String> keysB = getSingle(rx.clusterGetKeysInSlot(SLOT_B, 10).toList());
+        List<String> keysB = block(rx.clusterGetKeysInSlot(SLOT_B, 10).toList());
         assertThat(keysB).isEqualTo(Collections.singletonList(KEY_B));
     }
 
@@ -94,45 +95,49 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_A, value);
         sync.set(KEY_B, value);
 
-        Long result = getSingle(rx.clusterCountKeysInSlot(SLOT_A));
+        Long result = block(rx.clusterCountKeysInSlot(SLOT_A));
         assertThat(result).isEqualTo(1L);
 
-        result = getSingle(rx.clusterCountKeysInSlot(SLOT_B));
+        result = block(rx.clusterCountKeysInSlot(SLOT_B));
         assertThat(result).isEqualTo(1L);
 
         int slotZZZ = SlotHash.getSlot("ZZZ".getBytes());
-        result = getSingle(rx.clusterCountKeysInSlot(slotZZZ));
+        result = block(rx.clusterCountKeysInSlot(slotZZZ));
         assertThat(result).isEqualTo(0L);
     }
 
     @Test
     public void testClusterCountFailureReports() throws Exception {
         RedisClusterNode ownPartition = getOwnPartition(sync);
-        assertThat(getSingle(rx.clusterCountFailureReports(ownPartition.getNodeId()))).isGreaterThanOrEqualTo(0);
+        assertThat(block(rx.clusterCountFailureReports(ownPartition.getNodeId()))).isGreaterThanOrEqualTo(0);
     }
 
     @Test
     public void testClusterKeyslot() throws Exception {
-        assertThat(getSingle(rx.clusterKeyslot(KEY_A))).isEqualTo(SLOT_A);
+        assertThat(block(rx.clusterKeyslot(KEY_A))).isEqualTo(SLOT_A);
         assertThat(SlotHash.getSlot(KEY_A)).isEqualTo(SLOT_A);
     }
 
     @Test
     public void testClusterSaveconfig() throws Exception {
-        assertThat(getSingle(rx.clusterSaveconfig())).isEqualTo("OK");
+        assertThat(block(rx.clusterSaveconfig())).isEqualTo("OK");
     }
 
     @Test
     public void testClusterSetConfigEpoch() throws Exception {
         try {
-            getSingle(rx.clusterSetConfigEpoch(1L));
+            block(rx.clusterSetConfigEpoch(1L));
         } catch (RedisException e) {
             assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
         }
     }
 
-    private <T> T getSingle(Observable<T> observable) {
+    private <T> T block(Observable<T> observable) {
         return observable.toBlocking().single();
+    }
+
+    private <T> T block(Single<T> observable) {
+        return observable.toBlocking().value();
     }
 
 }

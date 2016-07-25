@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.reliability;
 
+import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static com.lambdaworks.Connections.getCommandBuffer;
 import static com.lambdaworks.Connections.getQueue;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,6 +10,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.code.tempusfugit.temporal.Duration;
+import com.lambdaworks.Delay;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -246,6 +249,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> connection2 = client.connect();
         connection2.async().quit();
+        Delay.delay(millis(100));
 
         try {
 

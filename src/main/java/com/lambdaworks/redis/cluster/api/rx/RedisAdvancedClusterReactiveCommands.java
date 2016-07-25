@@ -8,7 +8,9 @@ import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 
+import rx.Completable;
 import rx.Observable;
+import rx.Single;
 
 /**
  * Advanced reactive and thread-safe Redis Cluster API.
@@ -52,7 +54,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply The number of keys that were removed.
      * @see RedisKeyReactiveCommands#del(Object[])
      */
-    Observable<Long> del(K... keys);
+    Single<Long> del(K... keys);
 
     /**
      * Unlink one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
@@ -61,7 +63,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply The number of keys that were removed.
      * @see RedisKeyReactiveCommands#unlink(Object[])
      */
-    Observable<Long> unlink(K... keys);
+    Single<Long> unlink(K... keys);
 
     /**
      * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
@@ -69,7 +71,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param keys the keys
      * @return Long integer-reply specifically: Number of existing keys
      */
-    Observable<Long> exists(K... keys);
+    Single<Long> exists(K... keys);
 
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
@@ -89,7 +91,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      * @see RedisStringReactiveCommands#mset(Map)
      */
-    Observable<String> mset(Map<K, V> map);
+    Single<String> mset(Map<K, V> map);
 
     /**
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
@@ -102,7 +104,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *
      * @see RedisStringReactiveCommands#msetnx(Map)
      */
-    Observable<Boolean> msetnx(Map<K, V> map);
+    Single<Boolean> msetnx(Map<K, V> map);
 
     /**
      * Set the current connection name on all cluster nodes with pipelining.
@@ -111,7 +113,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @see RedisServerReactiveCommands#clientSetname(Object)
      */
-    Observable<String> clientSetname(K name);
+    Single<String> clientSetname(K name);
 
     /**
      * Remove all keys from all databases on all cluster masters with pipelining.
@@ -119,7 +121,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return String simple-string-reply
      * @see RedisServerReactiveCommands#flushall()
      */
-    Observable<String> flushall();
+    Single<String> flushall();
 
     /**
      * Remove all keys from the current database on all cluster masters with pipelining.
@@ -127,7 +129,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return String simple-string-reply
      * @see RedisServerReactiveCommands#flushdb()
      */
-    Observable<String> flushdb();
+    Single<String> flushdb();
 
     /**
      * Return the number of keys in the selected database on all cluster masters.
@@ -135,7 +137,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply
      * @see RedisServerReactiveCommands#dbsize()
      */
-    Observable<Long> dbsize();
+    Single<Long> dbsize();
 
     /**
      * Find all keys matching the given pattern on all cluster masters.
@@ -154,7 +156,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long array-reply list of keys matching {@code pattern}.
      * @see RedisKeyReactiveCommands#keys(KeyStreamingChannel, Object)
      */
-    Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    Single<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Return a random key from the keyspace on a random master.
@@ -162,7 +164,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
      * @see RedisKeyReactiveCommands#randomkey()
      */
-    Observable<V> randomkey();
+    Single<V> randomkey();
 
     /**
      * Remove all the scripts from the script cache on all cluster nodes.
@@ -170,7 +172,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return String simple-string-reply
      * @see RedisScriptingReactiveCommands#scriptFlush()
      */
-    Observable<String> scriptFlush();
+    Single<String> scriptFlush();
 
     /**
      * Kill the script currently in execution on all cluster nodes. This call does not fail even if no scripts are running.
@@ -178,7 +180,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return String simple-string-reply, always {@literal OK}.
      * @see RedisScriptingReactiveCommands#scriptKill()
      */
-    Observable<String> scriptKill();
+    Single<String> scriptKill();
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
@@ -186,7 +188,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param save {@literal true} force save operation
      * @see RedisServerReactiveCommands#shutdown(boolean)
      */
-    Observable<Success> shutdown(boolean save);
+    Completable shutdown(boolean save);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -194,7 +196,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanArgs)
      */
-    Observable<KeyScanCursor<K>> scan();
+    Single<KeyScanCursor<K>> scan();
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -203,7 +205,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanArgs)
      */
-    Observable<KeyScanCursor<K>> scan(ScanArgs scanArgs);
+    Single<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -214,7 +216,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanCursor, ScanArgs)
      */
-    Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -224,7 +226,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanCursor)
      */
-    Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor);
+    Single<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -233,7 +235,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel)
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -243,7 +245,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanArgs)
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -255,7 +257,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -266,7 +268,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanCursor, ScanArgs)
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 
     /**
      * Touch one or more keys with pipelining. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
@@ -275,6 +277,6 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param keys the keys
      * @return Long integer-reply the number of found keys.
      */
-    Observable<Long> touch(K... keys);
+    Single<Long> touch(K... keys);
 
 }

@@ -6,6 +6,8 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.SetArgs;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Strings.
@@ -25,7 +27,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value
      * @return Long integer-reply the length of the string after the append operation.
      */
-    Observable<Long> append(K key, V value);
+    Single<Long> append(K key, V value);
 
     /**
      * Count set bits in a string.
@@ -34,7 +36,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      * @return Long integer-reply The number of bits set to 1.
      */
-    Observable<Long> bitcount(K key);
+    Single<Long> bitcount(K key);
 
     /**
      * Count set bits in a string.
@@ -45,7 +47,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      * @return Long integer-reply The number of bits set to 1.
      */
-    Observable<Long> bitcount(K key, long start, long end);
+    Single<Long> bitcount(K key, long start, long end);
 
     /**
      * Execute {@code BITFIELD} with its subcommands.
@@ -79,7 +81,7 @@ public interface RedisStringReactiveCommands<K, V> {
      *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
      *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
-    Observable<Long> bitpos(K key, boolean state);
+    Single<Long> bitpos(K key, boolean state);
 
     /**
      * Find first bit set or clear in a string.
@@ -104,7 +106,7 @@ public interface RedisStringReactiveCommands<K, V> {
      *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
      *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
-    Observable<Long> bitpos(K key, boolean state, long start, long end);
+    Single<Long> bitpos(K key, boolean state, long start, long end);
 
     /**
      * Perform bitwise AND between strings.
@@ -114,7 +116,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    Observable<Long> bitopAnd(K destination, K... keys);
+    Single<Long> bitopAnd(K destination, K... keys);
 
     /**
      * Perform bitwise NOT between strings.
@@ -124,7 +126,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    Observable<Long> bitopNot(K destination, K source);
+    Single<Long> bitopNot(K destination, K source);
 
     /**
      * Perform bitwise OR between strings.
@@ -134,7 +136,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    Observable<Long> bitopOr(K destination, K... keys);
+    Single<Long> bitopOr(K destination, K... keys);
 
     /**
      * Perform bitwise XOR between strings.
@@ -144,7 +146,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    Observable<Long> bitopXor(K destination, K... keys);
+    Single<Long> bitopXor(K destination, K... keys);
 
     /**
      * Decrement the integer value of a key by one.
@@ -152,7 +154,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param key the key
      * @return Long integer-reply the value of {@code key} after the decrement
      */
-    Observable<Long> decr(K key);
+    Single<Long> decr(K key);
 
     /**
      * Decrement the integer value of a key by the given number.
@@ -161,7 +163,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param amount the decrement type: long
      * @return Long integer-reply the value of {@code key} after the decrement
      */
-    Observable<Long> decrby(K key, long amount);
+    Single<Long> decrby(K key, long amount);
 
     /**
      * Get the value of a key.
@@ -169,7 +171,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param key the key
      * @return V bulk-string-reply the value of {@code key}, or {@literal null} when {@code key} does not exist.
      */
-    Observable<V> get(K key);
+    Single<V> get(K key);
 
     /**
      * Returns the bit value at offset in the string value stored at key.
@@ -178,7 +180,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param offset the offset type: long
      * @return Long integer-reply the bit value stored at <em>offset</em>.
      */
-    Observable<Long> getbit(K key, long offset);
+    Single<Long> getbit(K key, long offset);
 
     /**
      * Get a substring of the string stored at a key.
@@ -188,7 +190,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param end the end type: long
      * @return V bulk-string-reply
      */
-    Observable<V> getrange(K key, long start, long end);
+    Single<V> getrange(K key, long start, long end);
 
     /**
      * Set the string value of a key and return its old value.
@@ -197,7 +199,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value
      * @return V bulk-string-reply the old value stored at {@code key}, or {@literal null} when {@code key} did not exist.
      */
-    Observable<V> getset(K key, V value);
+    Single<V> getset(K key, V value);
 
     /**
      * Increment the integer value of a key by one.
@@ -205,7 +207,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param key the key
      * @return Long integer-reply the value of {@code key} after the increment
      */
-    Observable<Long> incr(K key);
+    Single<Long> incr(K key);
 
     /**
      * Increment the integer value of a key by the given amount.
@@ -214,7 +216,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param amount the increment type: long
      * @return Long integer-reply the value of {@code key} after the increment
      */
-    Observable<Long> incrby(K key, long amount);
+    Single<Long> incrby(K key, long amount);
 
     /**
      * Increment the float value of a key by the given amount.
@@ -223,7 +225,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param amount the increment type: double
      * @return Double bulk-string-reply the value of {@code key} after the increment.
      */
-    Observable<Double> incrbyfloat(K key, double amount);
+    Single<Double> incrbyfloat(K key, double amount);
 
     /**
      * Get the values of all the given keys.
@@ -241,7 +243,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      * @return Long array-reply list of values at the specified keys.
      */
-    Observable<Long> mget(ValueStreamingChannel<V> channel, K... keys);
+    Single<Long> mget(ValueStreamingChannel<V> channel, K... keys);
 
     /**
      * Set multiple keys to multiple values.
@@ -249,7 +251,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param map the null
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
-    Observable<String> mset(Map<K, V> map);
+    Single<String> mset(Map<K, V> map);
 
     /**
      * Set multiple keys to multiple values, only if none of the keys exist.
@@ -259,7 +261,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
-    Observable<Boolean> msetnx(Map<K, V> map);
+    Single<Boolean> msetnx(Map<K, V> map);
 
     /**
      * Set the string value of a key.
@@ -269,7 +271,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
-    Observable<String> set(K key, V value);
+    Single<String> set(K key, V value);
 
     /**
      * Set the string value of a key.
@@ -280,7 +282,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
-    Observable<String> set(K key, V value, SetArgs setArgs);
+    Single<String> set(K key, V value, SetArgs setArgs);
 
     /**
      * Sets or clears the bit at offset in the string value stored at key.
@@ -290,7 +292,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value type: string
      * @return Long integer-reply the original bit value stored at <em>offset</em>.
      */
-    Observable<Long> setbit(K key, long offset, int value);
+    Single<Long> setbit(K key, long offset, int value);
 
     /**
      * Set the value and expiration of a key.
@@ -300,7 +302,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value
      * @return String simple-string-reply
      */
-    Observable<String> setex(K key, long seconds, V value);
+    Single<String> setex(K key, long seconds, V value);
 
     /**
      * Set the value and expiration in milliseconds of a key.
@@ -310,7 +312,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value
      * @return String simple-string-reply
      */
-    Observable<String> psetex(K key, long milliseconds, V value);
+    Single<String> psetex(K key, long milliseconds, V value);
 
     /**
      * Set the value of a key, only if the key does not exist.
@@ -321,7 +323,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      *         {@code 1} if the key was set {@code 0} if the key was not set
      */
-    Observable<Boolean> setnx(K key, V value);
+    Single<Boolean> setnx(K key, V value);
 
     /**
      * Overwrite part of a string at key starting at the specified offset.
@@ -331,7 +333,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value
      * @return Long integer-reply the length of the string after it was modified by the command.
      */
-    Observable<Long> setrange(K key, long offset, V value);
+    Single<Long> setrange(K key, long offset, V value);
 
     /**
      * Get the length of the value stored in a key.
@@ -339,5 +341,5 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param key the key
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
-    Observable<Long> strlen(K key);
+    Single<Long> strlen(K key);
 }

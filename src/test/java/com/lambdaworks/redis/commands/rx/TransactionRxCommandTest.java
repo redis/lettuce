@@ -17,6 +17,7 @@ import com.lambdaworks.redis.commands.TransactionCommandTest;
 import com.lambdaworks.redis.internal.LettuceLists;
 
 import rx.Observable;
+import rx.Single;
 import rx.observables.BlockingObservable;
 import rx.observers.TestSubscriber;
 
@@ -46,31 +47,31 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
     @Test
     public void discard() throws Exception {
-        assertThat(first(commands.multi())).isEqualTo("OK");
+        assertThat(block(commands.multi())).isEqualTo("OK");
 
         commands.set(key, value);
 
-        assertThat(first(commands.discard())).isEqualTo("OK");
-        assertThat(first(commands.get(key))).isNull();
+        assertThat(block(commands.discard())).isEqualTo("OK");
+        assertThat(block(commands.get(key))).isNull();
     }
 
     @Test
     public void execSingular() throws Exception {
 
-        assertThat(first(commands.multi())).isEqualTo("OK");
+        assertThat(block(commands.multi())).isEqualTo("OK");
 
         redis.set(key, value);
 
         assertThat(first(commands.exec())).isEqualTo("OK");
-        assertThat(first(commands.get(key))).isEqualTo(value);
+        assertThat(block(commands.get(key))).isEqualTo(value);
     }
 
     @Test
     public void errorInMulti() throws Exception {
-        commands.multi().subscribe();
-        commands.set(key, value).subscribe();
-        commands.lpop(key).onExceptionResumeNext(Observable.<String> empty()).subscribe();
-        commands.get(key).subscribe();
+        commands.multi().subscribe(TestSubscriber.create());
+        commands.set(key, value).subscribe(TestSubscriber.create());
+        commands.lpop(key).subscribe(TestSubscriber.create());
+        commands.get(key).subscribe(TestSubscriber.create());
 
         List<Object> values = all(commands.exec());
         assertThat(values.get(0)).isEqualTo("OK");
@@ -126,6 +127,10 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
             return iterator.next();
         }
         return null;
+    }
+
+    protected <T> T block(Single<T> single) {
+        return single.toBlocking().value();
     }
 
     protected <T> List<T> all(Observable<T> observable) {

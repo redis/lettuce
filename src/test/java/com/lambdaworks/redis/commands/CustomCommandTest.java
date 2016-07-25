@@ -92,7 +92,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         ReactiveCommandDispatcher<String, String, String> dispatcher = new ReactiveCommandDispatcher<>(command,
                 getStandaloneConnection(), false);
 
-        String result = Observable.create(dispatcher).toBlocking().first();
+        String result = Observable.create(dispatcher.getObservableSubscriber()).toBlocking().first();
 
         assertThat(result).isEqualTo("PONG");
     }

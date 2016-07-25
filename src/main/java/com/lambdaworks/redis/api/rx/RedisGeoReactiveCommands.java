@@ -7,6 +7,8 @@ import com.lambdaworks.redis.GeoWithin;
 import java.util.List;
 import java.util.Set;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for the Geo-API.
@@ -26,7 +28,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @param member the member to add
      * @return Long integer-reply the number of elements that were added to the set
      */
-    Observable<Long> geoadd(K key, double longitude, double latitude, V member);
+    Single<Long> geoadd(K key, double longitude, double latitude, V member);
 
     /**
      * Multi geo add.
@@ -35,7 +37,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @param lngLatMember triplets of double longitude, double latitude and V member
      * @return Long integer-reply the number of elements that were added to the set
      */
-    Observable<Long> geoadd(K key, Object... lngLatMember);
+    Single<Long> geoadd(K key, Object... lngLatMember);
 
     /**
      * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a geospatial index.
@@ -83,7 +85,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result
      */
-    Observable<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    Single<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
@@ -122,7 +124,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result
      */
-    Observable<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    Single<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Get geo coordinates for the {@code members}.
@@ -148,5 +150,5 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@literal null} is
      *         returned.
      */
-    Observable<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
+    Single<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
 }

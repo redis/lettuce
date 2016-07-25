@@ -15,6 +15,7 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
 import rx.Observable;
+import rx.Single;
 
 import javax.annotation.Resources;
 
@@ -161,7 +162,7 @@ public class LettucePerformanceTest {
 
         executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(totalCalls));
 
-        List<Future<List<Observable<String>>>> futurama = new ArrayList<>();
+        List<Future<List<Single<String>>>> futurama = new ArrayList<>();
 
         preheat(threads);
         final int callsPerThread = totalCalls / threads;
@@ -172,10 +173,10 @@ public class LettucePerformanceTest {
         long start = System.currentTimeMillis();
         latch.countDown();
 
-        for (Future<List<Observable<String>>> listFuture : futurama) {
-            for (Observable<String> future : listFuture.get()) {
+        for (Future<List<Single<String>>> listFuture : futurama) {
+            for (Single<String> future : listFuture.get()) {
                 if (waitForCompletion) {
-                    future.toBlocking().last();
+                    future.toBlocking().value();
                 } else {
                     future.subscribe();
                 }
@@ -192,7 +193,7 @@ public class LettucePerformanceTest {
 
     }
 
-    protected void submitObservableTasks(int threads, List<Future<List<Observable<String>>>> futurama, final int callsPerThread,
+    protected void submitObservableTasks(int threads, List<Future<List<Single<String>>>> futurama, final int callsPerThread,
             final boolean connectionPerThread) {
         final StatefulRedisConnection<String, String> sharedConnection;
         if (!connectionPerThread) {
@@ -202,7 +203,7 @@ public class LettucePerformanceTest {
         }
 
         for (int i = 0; i < threads; i++) {
-            Future<List<Observable<String>>> submit = executor.submit(() -> {
+            Future<List<Single<String>>> submit = executor.submit(() -> {
 
                 StatefulRedisConnection<String, String> connection = sharedConnection;
                 if (connectionPerThread) {
@@ -212,7 +213,7 @@ public class LettucePerformanceTest {
 
                 connection.sync().ping();
 
-                List<Observable<String>> observables = new ArrayList<>(callsPerThread);
+                List<Single<String>> observables = new ArrayList<>(callsPerThread);
                 latch.await();
                 for (int i1 = 0; i1 < callsPerThread; i1++) {
                     observables.add(reactive.ping());

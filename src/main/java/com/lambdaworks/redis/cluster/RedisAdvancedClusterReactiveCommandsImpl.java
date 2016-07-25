@@ -15,9 +15,6 @@ import rx.Observable;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
-import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
-import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
@@ -27,7 +24,9 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
+import rx.Completable;
 import rx.Observable;
+import rx.Single;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -35,8 +34,8 @@ import rx.Observable;
  * @author Mark Paluch
  * @since 4.0
  */
-public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
-        RedisAdvancedClusterReactiveCommands<K, V> {
+public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
+        implements RedisAdvancedClusterReactiveCommands<K, V> {
 
     private Random random = new Random();
 
@@ -46,17 +45,18 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
      */
-    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection,
+            RedisCodec<K, V> codec) {
         super(connection, codec);
     }
 
     @Override
-    public Observable<Long> del(K... keys) {
+    public Single<Long> del(K... keys) {
         return del(Arrays.asList(keys));
     }
 
     @Override
-    public Observable<Long> del(Iterable<K> keys) {
+    public Single<Long> del(Iterable<K> keys) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
@@ -67,19 +67,19 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            observables.add(super.del(entry.getValue()));
+            observables.add(super.del(entry.getValue()).toObservable());
         }
 
-        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+        return Observable.merge(observables).reduce((accu, next) -> accu + next).last().toSingle();
     }
 
     @Override
-    public Observable<Long> unlink(K... keys) {
+    public Single<Long> unlink(K... keys) {
         return unlink(Arrays.asList(keys));
     }
 
     @Override
-    public Observable<Long> unlink(Iterable<K> keys) {
+    public Single<Long> unlink(Iterable<K> keys) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
@@ -90,32 +90,34 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            observables.add(super.unlink(entry.getValue()));
+            observables.add(super.unlink(entry.getValue()).toObservable());
         }
 
-        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+        return Observable.merge(observables).reduce((accu, next) -> accu + next).last().toSingle();
     }
 
     @Override
-    public Observable<Long> exists(K... keys) {
+    public Single<Long> exists(K... keys) {
         return exists(Arrays.asList(keys));
     }
 
-    public Observable<Long> exists(Iterable<K> keys) {
+    public Single<Long> exists(Iterable<K> keys) {
 
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
+        List<K> keyList = LettuceLists.newList(keys);
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
         if (partitioned.size() < 2) {
-            return super.exists(keys);
+            return super.exists(keyList);
         }
 
         List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            observables.add(super.exists(entry.getValue()));
+            observables.add(super.exists(entry.getValue()).toObservable());
         }
 
-        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+        return Observable.merge(observables).reduce((accu, next) -> accu + next).toSingle();
     }
 
     @Override
@@ -166,13 +168,15 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+    public Single<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
         return mget(channel, Arrays.asList(keys));
     }
 
-    public Observable<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+    @Override
+    public Single<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
 
         List<K> keyList = LettuceLists.newList(keys);
+
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
         if (partitioned.size() < 2) {
@@ -182,22 +186,22 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            observables.add(super.mget(channel, entry.getValue()));
+            observables.add(super.mget(channel, entry.getValue()).toObservable());
         }
 
-        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+        return Observable.merge(observables).reduce((accu, next) -> accu + next).last().toSingle();
     }
 
     @Override
-    public Observable<Boolean> msetnx(Map<K, V> map) {
+    public Single<Boolean> msetnx(Map<K, V> map) {
 
-        return pipeliningWithMap(map, kvMap -> super.msetnx(kvMap),
-                booleanObservable -> booleanObservable.reduce((accu, next) -> accu || next));
+        return pipeliningWithMap(map, kvMap -> super.msetnx(kvMap).toObservable(),
+                booleanObservable -> booleanObservable.reduce((accu, next) -> accu || next)).last().toSingle();
     }
 
     @Override
-    public Observable<String> mset(Map<K, V> map) {
-        return pipeliningWithMap(map, kvMap -> super.mset(kvMap), Observable::last);
+    public Single<String> mset(Map<K, V> map) {
+        return pipeliningWithMap(map, kvMap -> super.mset(kvMap).toObservable(), Observable::last).last().toSingle();
     }
 
     @Override
@@ -212,7 +216,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<Long> clusterCountKeysInSlot(int slot) {
+    public Single<Long> clusterCountKeysInSlot(int slot) {
         RedisClusterReactiveCommands<K, V> connectionBySlot = findConnectionBySlot(slot);
 
         if (connectionBySlot != null) {
@@ -223,41 +227,42 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<String> clientSetname(K name) {
+    public Single<String> clientSetname(K name) {
         List<Observable<String>> observables = new ArrayList<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
             StatefulRedisConnection<K, V> byNodeId = getStatefulConnection().getConnection(redisClusterNode.getNodeId());
             if (byNodeId.isOpen()) {
-                observables.add(byNodeId.reactive().clientSetname(name));
+                observables.add(byNodeId.reactive().clientSetname(name).toObservable());
             }
 
-            StatefulRedisConnection<K, V> byHost = getStatefulConnection().getConnection(redisClusterNode.getUri().getHost(), redisClusterNode
-                    .getUri().getPort());
+            StatefulRedisConnection<K, V> byHost = getStatefulConnection().getConnection(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
             if (byHost.isOpen()) {
-                observables.add(byHost.reactive().clientSetname(name));
+                observables.add(byHost.reactive().clientSetname(name).toObservable());
             }
         }
 
-        return Observable.merge(observables).last();
+        return Observable.merge(observables).last().last().toSingle();
     }
 
     @Override
-    public Observable<Long> dbsize() {
-        Map<String, Observable<Long>> observables = executeOnMasters(RedisServerReactiveCommands::dbsize);
-        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next);
+    public Single<Long> dbsize() {
+        Map<String, Observable<Long>> observables = executeOnMasters((commands) -> commands.dbsize().toObservable());
+        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next).toSingle();
     }
 
     @Override
-    public Observable<String> flushall() {
-        Map<String, Observable<String>> observables = executeOnMasters(RedisServerReactiveCommands::flushall);
-        return Observable.merge(observables.values()).last();
+    public Single<String> flushall() {
+        Map<String, Observable<String>> observables = executeOnMasters(
+                (kvRedisClusterReactiveCommancommandss) -> kvRedisClusterReactiveCommancommandss.flushall().toObservable());
+        return Observable.merge(observables.values()).last().last().toSingle();
     }
 
     @Override
-    public Observable<String> flushdb() {
-        Map<String, Observable<String>> observables = executeOnMasters(RedisServerReactiveCommands::flushdb);
-        return Observable.merge(observables.values()).last();
+    public Single<String> flushdb() {
+        Map<String, Observable<String>> observables = executeOnMasters((commands) -> commands.flushdb().toObservable());
+        return Observable.merge(observables.values()).last().last().toSingle();
     }
 
     @Override
@@ -267,13 +272,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
-        Map<String, Observable<Long>> observables = executeOnMasters(commands -> commands.keys(channel, pattern));
-        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next);
+    public Single<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        Map<String, Observable<Long>> observables = executeOnMasters(
+                commands -> commands.keys(channel, pattern).toObservable());
+        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next).last().toSingle();
     }
 
     @Override
-    public Observable<V> randomkey() {
+    public Single<V> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
         int index = random.nextInt(partitions.size());
@@ -283,32 +289,32 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<String> scriptFlush() {
-        Map<String, Observable<String>> observables = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush,
+    public Single<String> scriptFlush() {
+        Map<String, Observable<String>> observables = executeOnNodes((commands) -> commands.scriptFlush().toObservable(),
                 redisClusterNode -> true);
-        return Observable.merge(observables.values()).last();
+        return Observable.merge(observables.values()).last().last().toSingle();
     }
 
     @Override
-    public Observable<String> scriptKill() {
-        Map<String, Observable<String>> observables = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush,
+    public Single<String> scriptKill() {
+        Map<String, Observable<String>> observables = executeOnNodes((commands) -> commands.scriptFlush().toObservable(),
                 redisClusterNode -> true);
-        return Observable.merge(observables.values()).onErrorReturn(throwable -> "OK").last();
+        return Observable.merge(observables.values()).onErrorReturn(throwable -> "OK").last().toSingle();
     }
 
     @Override
-    public Observable<Success> shutdown(boolean save) {
-        Map<String, Observable<Success>> observables = executeOnNodes(commands -> commands.shutdown(save),
+    public Completable shutdown(boolean save) {
+        Map<String, Observable<Boolean>> observables = executeOnNodes(commands -> commands.shutdown(save).toObservable(),
                 redisClusterNode -> true);
-        return Observable.merge(observables.values()).onErrorReturn(throwable -> null).last();
+        return Completable.fromObservable(Observable.merge(observables.values()).onErrorReturn(throwable -> null).last());
     }
 
     @Override
-    public Observable<Long> touch(K... keys) {
+    public Single<Long> touch(K... keys) {
         return touch(Arrays.asList(keys));
     }
 
-    public Observable<Long> touch(Iterable<K> keys) {
+    public Single<Long> touch(Iterable<K> keys) {
 
         List<K> keyList = LettuceLists.newList(keys);
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
@@ -320,10 +326,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         List<Observable<Long>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            observables.add(super.touch(entry.getValue()));
+            observables.add(super.touch(entry.getValue()).toObservable());
         }
 
-        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+        return Observable.merge(observables).reduce((accu, next) -> accu + next).toSingle();
     }
 
     /**
@@ -390,54 +396,54 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan() {
+    public Single<KeyScanCursor<K>> scan() {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), reactiveClusterKeyScanCursorMapper());
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+    public Single<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs),
                 reactiveClusterKeyScanCursorMapper());
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Single<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs),
                 reactiveClusterKeyScanCursorMapper());
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
+    public Single<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor), reactiveClusterKeyScanCursorMapper());
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel),
                 reactiveClusterStreamScanCursorMapper());
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
                 reactiveClusterStreamScanCursorMapper());
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
                 reactiveClusterStreamScanCursorMapper());
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor),
                 reactiveClusterStreamScanCursorMapper());
     }
 
-    private <T extends ScanCursor> Observable<T> clusterScan(ScanCursor cursor,
-            BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
-            ClusterScanSupport.ScanCursorMapper<Observable<T>> resultMapper) {
+    private <T extends ScanCursor> Single<T> clusterScan(ScanCursor cursor,
+            BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Single<T>> scanFunction,
+            ClusterScanSupport.ScanCursorMapper<Single<T>> resultMapper) {
 
         return clusterScan(getStatefulConnection(), cursor, scanFunction, (ClusterScanSupport.ScanCursorMapper) resultMapper);
     }
@@ -446,15 +452,15 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * Perform a SCAN in the cluster.
      * 
      */
-    static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
-            ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
-            ClusterScanSupport.ScanCursorMapper<Observable<T>> mapper) {
+    static <T extends ScanCursor, K, V> Single<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
+            ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Single<T>> scanFunction,
+            ClusterScanSupport.ScanCursorMapper<Single<T>> mapper) {
 
         List<String> nodeIds = ClusterScanSupport.getNodeIds(connection, cursor);
         String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
-        Observable<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).reactive(), continuationCursor);
+        Single<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).reactive(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 

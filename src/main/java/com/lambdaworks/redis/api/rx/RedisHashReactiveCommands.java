@@ -10,6 +10,8 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Hashes (Key-Value pairs).
@@ -30,7 +32,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return Long integer-reply the number of fields that were removed from the hash, not including specified but non existing
      *         fields.
      */
-    Observable<Long> hdel(K key, K... fields);
+    Single<Long> hdel(K key, K... fields);
 
     /**
      * Determine if a hash field exists.
@@ -42,7 +44,7 @@ public interface RedisHashReactiveCommands<K, V> {
      *         {@literal true} if the hash contains {@code field}. {@literal false} if the hash does not contain {@code field},
      *         or {@code key} does not exist.
      */
-    Observable<Boolean> hexists(K key, K field);
+    Single<Boolean> hexists(K key, K field);
 
     /**
      * Get the value of a hash field.
@@ -52,7 +54,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return V bulk-string-reply the value associated with {@code field}, or {@literal null} when {@code field} is not present
      *         in the hash or {@code key} does not exist.
      */
-    Observable<V> hget(K key, K field);
+    Single<V> hget(K key, K field);
 
     /**
      * Increment the integer value of a hash field by the given number.
@@ -62,7 +64,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param amount the increment type: long
      * @return Long integer-reply the value at {@code field} after the increment operation.
      */
-    Observable<Long> hincrby(K key, K field, long amount);
+    Single<Long> hincrby(K key, K field, long amount);
 
     /**
      * Increment the float value of a hash field by the given amount.
@@ -72,7 +74,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param amount the increment type: double
      * @return Double bulk-string-reply the value of {@code field} after the increment.
      */
-    Observable<Double> hincrbyfloat(K key, K field, double amount);
+    Single<Double> hincrbyfloat(K key, K field, double amount);
 
     /**
      * Get all the fields and values in a hash.
@@ -81,7 +83,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return Map&lt;K,V&gt; array-reply list of fields and their values stored in the hash, or an empty list when {@code key}
      *         does not exist.
      */
-    Observable<Map<K, V>> hgetall(K key);
+    Single<Map<K, V>> hgetall(K key);
 
     /**
      * Stream over all the fields and values in a hash.
@@ -91,7 +93,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * 
      * @return Long count of the keys.
      */
-    Observable<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key);
+    Single<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key);
 
     /**
      * Get all the fields in a hash.
@@ -109,7 +111,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * 
      * @return Long count of the keys.
      */
-    Observable<Long> hkeys(KeyStreamingChannel<K> channel, K key);
+    Single<Long> hkeys(KeyStreamingChannel<K> channel, K key);
 
     /**
      * Get the number of fields in a hash.
@@ -117,7 +119,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key
      * @return Long integer-reply number of fields in the hash, or {@code 0} when {@code key} does not exist.
      */
-    Observable<Long> hlen(K key);
+    Single<Long> hlen(K key);
 
     /**
      * Get the values of all the given hash fields.
@@ -137,7 +139,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * 
      * @return Long count of the keys
      */
-    Observable<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields);
+    Single<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields);
 
     /**
      * Set multiple hash fields to multiple values.
@@ -146,7 +148,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param map the null
      * @return String simple-string-reply
      */
-    Observable<String> hmset(K key, Map<K, V> map);
+    Single<String> hmset(K key, Map<K, V> map);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -154,7 +156,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
-    Observable<MapScanCursor<K, V>> hscan(K key);
+    Single<MapScanCursor<K, V>> hscan(K key);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -163,7 +165,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
-    Observable<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs);
+    Single<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -173,7 +175,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
-    Observable<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -182,7 +184,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
-    Observable<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
+    Single<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -191,7 +193,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
+    Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -201,7 +203,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
+    Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -212,7 +214,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -222,7 +224,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
+    Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
 
     /**
      * Set the string value of a hash field.
@@ -235,7 +237,7 @@ public interface RedisHashReactiveCommands<K, V> {
      *         {@literal true} if {@code field} is a new field in the hash and {@code value} was set. {@literal false} if
      *         {@code field} already exists in the hash and the value was updated.
      */
-    Observable<Boolean> hset(K key, K field, V value);
+    Single<Boolean> hset(K key, K field, V value);
 
     /**
      * Set the value of a hash field, only if the field does not exist.
@@ -248,7 +250,7 @@ public interface RedisHashReactiveCommands<K, V> {
      *         {@code 1} if {@code field} is a new field in the hash and {@code value} was set. {@code 0} if {@code field}
      *         already exists in the hash and no operation was performed.
      */
-    Observable<Boolean> hsetnx(K key, K field, V value);
+    Single<Boolean> hsetnx(K key, K field, V value);
 
     /**
      * Get the string length of the field value in a hash.
@@ -258,7 +260,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return Long integer-reply the string length of the {@code field} value, or {@code 0} when {@code field} is not present
      *         in the hash or {@code key} does not exist at all.
      */
-    Observable<Long> hstrlen(K key, K field);
+    Single<Long> hstrlen(K key, K field);
 
     /**
      * Get all the values in a hash.
@@ -276,5 +278,5 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @return Long count of the keys.
      */
-    Observable<Long> hvals(ValueStreamingChannel<V> channel, K key);
+    Single<Long> hvals(ValueStreamingChannel<V> channel, K key);
 }

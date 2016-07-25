@@ -5,13 +5,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
-import rx.Observable;
-import rx.functions.Func1;
-
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
+
+import rx.Observable;
+import rx.Single;
+import rx.functions.Func1;
 
 /**
  * Methods to support a Cluster-wide SCAN operation over multiple hosts.
@@ -53,34 +54,21 @@ class ClusterScanSupport {
     };
 
     /**
-     * Map a {@link Observable} of {@link KeyScanCursor} to a {@link Observable} of {@link ClusterKeyScanCursor}.
+     * Map a {@link Single} of {@link KeyScanCursor} to a {@link Observable} of {@link ClusterKeyScanCursor}.
      */
-    final static ScanCursorMapper<Observable<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = new ScanCursorMapper<Observable<KeyScanCursor<?>>>() {
-        @Override
-        public Observable<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId, Observable<KeyScanCursor<?>> cursor) {
-            return cursor.map(new Func1<KeyScanCursor<?>, KeyScanCursor<?>>() {
-                @Override
-                public KeyScanCursor<?> call(KeyScanCursor<?> keyScanCursor) {
-                    return new ClusterKeyScanCursor<>(nodeIds, currentNodeId, keyScanCursor);
-                }
-            });
-        }
-    };
+    final static ScanCursorMapper<Single<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds, currentNodeId,
+            cursor) -> cursor.map(keyScanCursor -> new ClusterKeyScanCursor<>(nodeIds, currentNodeId, keyScanCursor));
 
     /**
-     * Map a {@link Observable} of {@link StreamScanCursor} to a {@link Observable} of {@link ClusterStreamScanCursor}.
+     * Map a {@link Single} of {@link StreamScanCursor} to a {@link Observable} of {@link ClusterStreamScanCursor}.
      */
-    final static ScanCursorMapper<Observable<StreamScanCursor>> reactiveStreamScanCursorMapper = new ScanCursorMapper<Observable<StreamScanCursor>>() {
-        @Override
-        public Observable<StreamScanCursor> map(List<String> nodeIds, String currentNodeId, Observable<StreamScanCursor> cursor) {
-            return cursor.map(new Func1<StreamScanCursor, StreamScanCursor>() {
+    final static ScanCursorMapper<Single<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
+            cursor) -> cursor.map(new Func1<StreamScanCursor, StreamScanCursor>() {
                 @Override
                 public StreamScanCursor call(StreamScanCursor streamScanCursor) {
                     return new ClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor);
                 }
             });
-        }
-    };
 
     /**
      * Retrieve the cursor to continue the scan.
@@ -202,11 +190,11 @@ class ClusterScanSupport {
         return futureStreamScanCursorMapper;
     }
 
-    static <K> ScanCursorMapper<Observable<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
+    static <K> ScanCursorMapper<Single<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
         return (ScanCursorMapper) reactiveKeyScanCursorMapper;
     }
 
-    static ScanCursorMapper<Observable<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
+    static ScanCursorMapper<Single<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
         return reactiveStreamScanCursorMapper;
     }
 

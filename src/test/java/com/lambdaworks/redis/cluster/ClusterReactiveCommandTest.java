@@ -18,7 +18,7 @@ import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 import com.lambdaworks.redis.internal.LettuceLists;
 
-import rx.Observable;
+import rx.Single;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -61,7 +61,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterBumpEpoch() throws Exception {
 
-        String result = first(reactive.clusterBumpepoch());
+        String result = block(reactive.clusterBumpepoch());
 
         assertThat(result).matches("(BUMPED|STILL).*");
     }
@@ -69,7 +69,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterInfo() throws Exception {
 
-        String status = first(reactive.clusterInfo());
+        String status = block(reactive.clusterInfo());
 
         assertThat(status).contains("cluster_known_nodes:");
         assertThat(status).contains("cluster_slots_fail:0");
@@ -79,7 +79,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterNodes() throws Exception {
 
-        String string = first(reactive.clusterNodes());
+        String string = block(reactive.clusterNodes());
 
         assertThat(string).contains("connected");
         assertThat(string).contains("master");
@@ -89,7 +89,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterNodesSync() throws Exception {
 
-        String string = first(reactive.clusterNodes());
+        String string = block(reactive.clusterNodes());
 
         assertThat(string).contains("connected");
         assertThat(string).contains("master");
@@ -99,13 +99,13 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterSlaves() throws Exception {
 
-        Long replication = first(reactive.waitForReplication(1, 5));
+        Long replication = block(reactive.waitForReplication(1, 5));
         assertThat(replication).isNotNull();
     }
 
     @Test
     public void testAsking() throws Exception {
-        assertThat(first(reactive.asking())).isEqualTo("OK");
+        assertThat(block(reactive.asking())).isEqualTo("OK");
     }
 
     @Test
@@ -133,8 +133,8 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
         assertThat(result.size()).isGreaterThan(0);
     }
 
-    private <T> T first(Observable<T> observable) {
-        return observable.toBlocking().first();
+    private <T> T block(Single<T> single) {
+        return single.toBlocking().value();
     }
 
 }

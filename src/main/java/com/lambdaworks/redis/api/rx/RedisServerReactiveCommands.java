@@ -5,6 +5,8 @@ import java.util.List;
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Server Control.
@@ -22,21 +24,21 @@ public interface RedisServerReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply always {@code OK}.
      */
-    Observable<String> bgrewriteaof();
+    Single<String> bgrewriteaof();
 
     /**
      * Asynchronously save the dataset to disk.
      * 
      * @return String simple-string-reply
      */
-    Observable<String> bgsave();
+    Single<String> bgsave();
 
     /**
      * Get the current connection name.
      * 
      * @return K bulk-string-reply The connection name, or a null bulk reply if no name is set.
      */
-    Observable<K> clientGetname();
+    Single<K> clientGetname();
 
     /**
      * Set the current connection name.
@@ -44,7 +46,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param name the client name
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
-    Observable<String> clientSetname(K name);
+    Single<String> clientSetname(K name);
 
     /**
      * Kill the connection of a client identified by ip:port.
@@ -52,7 +54,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param addr ip:port
      * @return String simple-string-reply {@code OK} if the connection exists and has been closed
      */
-    Observable<String> clientKill(String addr);
+    Single<String> clientKill(String addr);
 
     /**
      * Kill connections of clients which are filtered by {@code killArgs}
@@ -60,7 +62,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param killArgs args for the kill operation
      * @return Long integer-reply number of killed connections
      */
-    Observable<Long> clientKill(KillArgs killArgs);
+    Single<Long> clientKill(KillArgs killArgs);
 
     /**
      * Stop processing commands from clients for some time.
@@ -68,7 +70,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param timeout the timeout value in milliseconds
      * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
-    Observable<String> clientPause(long timeout);
+    Single<String> clientPause(long timeout);
 
     /**
      * Get the list of client connections.
@@ -76,7 +78,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
-    Observable<String> clientList();
+    Single<String> clientList();
 
     /**
      * Returns an array reply of details about all Redis commands.
@@ -106,7 +108,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * 
      * @return Long integer-reply of number of total commands in this Redis server.
      */
-    Observable<Long> commandCount();
+    Single<Long> commandCount();
 
     /**
      * Get the value of a configuration parameter.
@@ -121,7 +123,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply always {@code OK}.
      */
-    Observable<String> configResetstat();
+    Single<String> configResetstat();
 
     /**
      * Rewrite the configuration file with the in memory configuration.
@@ -129,7 +131,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply {@code OK} when the configuration was rewritten properly. Otherwise an error is
      *         returned.
      */
-    Observable<String> configRewrite();
+    Single<String> configRewrite();
 
     /**
      * Set a configuration parameter to the given value.
@@ -138,21 +140,21 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param value the parameter value
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
      */
-    Observable<String> configSet(String parameter, String value);
+    Single<String> configSet(String parameter, String value);
 
     /**
      * Return the number of keys in the selected database.
      * 
      * @return Long integer-reply
      */
-    Observable<Long> dbsize();
+    Single<Long> dbsize();
 
     /**
      * Crash and recover
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
-    Observable<String> debugCrashAndRecover(Long delay);
+    Single<String> debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
@@ -160,7 +162,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param db the database number
      * @return String simple-string-reply
      */
-    Observable<String> debugHtstats(int db);
+    Single<String> debugHtstats(int db);
 
     /**
      * Get debugging information about a key.
@@ -168,35 +170,35 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param key the key
      * @return String simple-string-reply
      */
-    Observable<String> debugObject(K key);
+    Single<String> debugObject(K key);
 
     /**
      * Make the server crash: Out of memory.
      *
      * @return nothing, because the server crashes before returning.
      */
-    Observable<Success> debugOom();
+    Completable debugOom();
 
     /**
      * Make the server crash: Invalid pointer access.
      *
      * @return nothing, because the server crashes before returning.
      */
-    Observable<Success> debugSegfault();
+    Completable debugSegfault();
 
     /**
      * Save RDB, clear the database and reload RDB.
      *
      * @return String simple-string-reply The commands returns OK on success.
      */
-    Observable<String> debugReload();
+    Single<String> debugReload();
 
     /**
      * Restart the server gracefully.
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
-    Observable<String> debugRestart(Long delay);
+    Single<String> debugRestart(Long delay);
 
     /**
      * Get debugging information about the internal SDS length.
@@ -204,42 +206,42 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param key the key
      * @return String simple-string-reply
      */
-    Observable<String> debugSdslen(K key);
+    Single<String> debugSdslen(K key);
 
     /**
      * Remove all keys from all databases.
      * 
      * @return String simple-string-reply
      */
-    Observable<String> flushall();
+    Single<String> flushall();
 
     /**
      * Remove all keys asynchronously from all databases.
      *
      * @return String simple-string-reply
      */
-    Observable<String> flushallAsync();
+    Single<String> flushallAsync();
 
     /**
      * Remove all keys from the current database.
      * 
      * @return String simple-string-reply
      */
-    Observable<String> flushdb();
+    Single<String> flushdb();
 
     /**
      * Remove all keys asynchronously from the current database.
      *
      * @return String simple-string-reply
      */
-    Observable<String> flushdbAsync();
+    Single<String> flushdbAsync();
 
     /**
      * Get information and statistics about the server.
      * 
      * @return String bulk-string-reply as a collection of text lines.
      */
-    Observable<String> info();
+    Single<String> info();
 
     /**
      * Get information and statistics about the server.
@@ -247,28 +249,28 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param section the section type: string
      * @return String bulk-string-reply as a collection of text lines.
      */
-    Observable<String> info(String section);
+    Single<String> info(String section);
 
     /**
      * Get the UNIX time stamp of the last successful save to disk.
      * 
      * @return Date integer-reply an UNIX time stamp.
      */
-    Observable<Date> lastsave();
+    Single<Date> lastsave();
 
     /**
      * Synchronously save the dataset to disk.
      * 
      * @return String simple-string-reply The commands returns OK on success.
      */
-    Observable<String> save();
+    Single<String> save();
 
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      * 
      * @param save {@literal true} force save operation
      */
-    Observable<Success> shutdown(boolean save);
+    Completable shutdown(boolean save);
 
     /**
      * Make the server a slave of another instance, or promote it as master.
@@ -277,14 +279,14 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param port the port type: string
      * @return String simple-string-reply
      */
-    Observable<String> slaveof(String host, int port);
+    Single<String> slaveof(String host, int port);
 
     /**
      * Promote server as master.
      * 
      * @return String simple-string-reply
      */
-    Observable<String> slaveofNoOne();
+    Single<String> slaveofNoOne();
 
     /**
      * Read the slow log.
@@ -306,14 +308,14 @@ public interface RedisServerReactiveCommands<K, V> {
      * 
      * @return Long length of the slow log.
      */
-    Observable<Long> slowlogLen();
+    Single<Long> slowlogLen();
 
     /**
      * Resetting the slow log.
      * 
      * @return String simple-string-reply The commands returns OK on success.
      */
-    Observable<String> slowlogReset();
+    Single<String> slowlogReset();
 
     /**
      * Return the current server time.

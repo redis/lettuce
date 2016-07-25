@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Redis Sentinel.
@@ -23,7 +25,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param key the key
      * @return SocketAddress;
      */
-    Observable<SocketAddress> getMasterAddrByName(K key);
+    Single<SocketAddress> getMasterAddrByName(K key);
 
     /**
      * Enumerates all the monitored masters and their states.
@@ -38,7 +40,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param key the key
      * @return Map&lt;K, V&gt;
      */
-    Observable<Map<K, V>> master(K key);
+    Single<Map<K, V>> master(K key);
 
     /**
      * Provides a list of slaves for the master with the specified name.
@@ -54,7 +56,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param key the key
      * @return Long
      */
-    Observable<Long> reset(K key);
+    Single<Long> reset(K key);
 
     /**
      * Perform a failover.
@@ -62,7 +64,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param key the master id
      * @return String
      */
-    Observable<String> failover(K key);
+    Single<String> failover(K key);
 
     /**
      * This command tells the Sentinel to start monitoring a new master with the specified name, ip, port, and quorum.
@@ -73,7 +75,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param quorum the quorum count
      * @return String
      */
-    Observable<String> monitor(K key, String ip, int port, int quorum);
+    Single<String> monitor(K key, String ip, int port, int quorum);
 
     /**
      * Multiple option / value pairs can be specified (or none at all).
@@ -84,7 +86,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
-    Observable<String> set(K key, String option, V value);
+    Single<String> set(K key, String option, V value);
 
     /**
      * remove the specified master.
@@ -92,14 +94,14 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param key the key
      * @return String
      */
-    Observable<String> remove(K key);
+    Single<String> remove(K key);
 
     /**
      * Ping the server.
      * 
      * @return String simple-string-reply
      */
-    Observable<String> ping();
+    Single<String> ping();
 
     /**
      * close the underlying connection.

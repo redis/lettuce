@@ -4,6 +4,8 @@ import java.util.List;
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Lists.
@@ -27,7 +29,7 @@ public interface RedisListReactiveCommands<K, V> {
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
      */
-    Observable<KeyValue<K, V>> blpop(long timeout, K... keys);
+    Single<KeyValue<K, V>> blpop(long timeout, K... keys);
 
     /**
      * Remove and get the last element in a list, or block until one is available.
@@ -40,7 +42,7 @@ public interface RedisListReactiveCommands<K, V> {
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
      */
-    Observable<KeyValue<K, V>> brpop(long timeout, K... keys);
+    Single<KeyValue<K, V>> brpop(long timeout, K... keys);
 
     /**
      * Pop a value from a list, push it to another list and return it; or block until one is available.
@@ -51,7 +53,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @return V bulk-string-reply the element being popped from {@code source} and pushed to {@code destination}. If
      *         {@code timeout} is reached, a
      */
-    Observable<V> brpoplpush(long timeout, K source, K destination);
+    Single<V> brpoplpush(long timeout, K source, K destination);
 
     /**
      * Get an element from a list by its index.
@@ -60,7 +62,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param index the index type: long
      * @return V bulk-string-reply the requested element, or {@literal null} when {@code index} is out of range.
      */
-    Observable<V> lindex(K key, long index);
+    Single<V> lindex(K key, long index);
 
     /**
      * Insert an element before or after another element in a list.
@@ -72,7 +74,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @return Long integer-reply the length of the list after the insert operation, or {@code -1} when the value {@code pivot}
      *         was not found.
      */
-    Observable<Long> linsert(K key, boolean before, V pivot, V value);
+    Single<Long> linsert(K key, boolean before, V pivot, V value);
 
     /**
      * Get the length of a list.
@@ -80,7 +82,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param key the key
      * @return Long integer-reply the length of the list at {@code key}.
      */
-    Observable<Long> llen(K key);
+    Single<Long> llen(K key);
 
     /**
      * Remove and get the first element in a list.
@@ -88,7 +90,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param key the key
      * @return V bulk-string-reply the value of the first element, or {@literal null} when {@code key} does not exist.
      */
-    Observable<V> lpop(K key);
+    Single<V> lpop(K key);
 
     /**
      * Prepend one or multiple values to a list.
@@ -97,7 +99,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param values the value
      * @return Long integer-reply the length of the list after the push operations.
      */
-    Observable<Long> lpush(K key, V... values);
+    Single<Long> lpush(K key, V... values);
 
     /**
      * Prepend values to a list, only if the list exists.
@@ -106,7 +108,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param values the values
      * @return Long integer-reply the length of the list after the push operation.
      */
-    Observable<Long> lpushx(K key, V... values);
+    Single<Long> lpushx(K key, V... values);
 
     /**
      * Get a range of elements from a list.
@@ -127,7 +129,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param stop the stop type: long
      * @return Long count of elements in the specified range.
      */
-    Observable<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+    Single<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
      * Remove elements from a list.
@@ -137,7 +139,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param value the value
      * @return Long integer-reply the number of removed elements.
      */
-    Observable<Long> lrem(K key, long count, V value);
+    Single<Long> lrem(K key, long count, V value);
 
     /**
      * Set the value of an element in a list by its index.
@@ -147,7 +149,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param value the value
      * @return String simple-string-reply
      */
-    Observable<String> lset(K key, long index, V value);
+    Single<String> lset(K key, long index, V value);
 
     /**
      * Trim a list to the specified range.
@@ -157,7 +159,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param stop the stop type: long
      * @return String simple-string-reply
      */
-    Observable<String> ltrim(K key, long start, long stop);
+    Single<String> ltrim(K key, long start, long stop);
 
     /**
      * Remove and get the last element in a list.
@@ -165,7 +167,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param key the key
      * @return V bulk-string-reply the value of the last element, or {@literal null} when {@code key} does not exist.
      */
-    Observable<V> rpop(K key);
+    Single<V> rpop(K key);
 
     /**
      * Remove the last element in a list, append it to another list and return it.
@@ -174,7 +176,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param destination the destination type: key
      * @return V bulk-string-reply the element being popped and pushed.
      */
-    Observable<V> rpoplpush(K source, K destination);
+    Single<V> rpoplpush(K source, K destination);
 
     /**
      * Append one or multiple values to a list.
@@ -183,7 +185,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param values the value
      * @return Long integer-reply the length of the list after the push operation.
      */
-    Observable<Long> rpush(K key, V... values);
+    Single<Long> rpush(K key, V... values);
 
     /**
      * Append values to a list, only if the list exists.
@@ -192,5 +194,5 @@ public interface RedisListReactiveCommands<K, V> {
      * @param values the values
      * @return Long integer-reply the length of the list after the push operation.
      */
-    Observable<Long> rpushx(K key, V... values);
+    Single<Long> rpushx(K key, V... values);
 }

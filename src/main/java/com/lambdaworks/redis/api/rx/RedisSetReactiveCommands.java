@@ -7,6 +7,8 @@ import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.ValueScanCursor;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Sets.
@@ -27,7 +29,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @return Long integer-reply the number of elements that were added to the set, not including all the elements already
      *         present into the set.
      */
-    Observable<Long> sadd(K key, V... members);
+    Single<Long> sadd(K key, V... members);
 
     /**
      * Get the number of members in a set.
@@ -36,7 +38,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @return Long integer-reply the cardinality (number of elements) of the set, or {@literal false} if {@code key} does not
      *         exist.
      */
-    Observable<Long> scard(K key);
+    Single<Long> scard(K key);
 
     /**
      * Subtract multiple sets.
@@ -53,7 +55,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long count of members of the resulting set.
      */
-    Observable<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
+    Single<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
 
     /**
      * Subtract multiple sets and store the resulting set in a key.
@@ -62,7 +64,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param keys the key
      * @return Long integer-reply the number of elements in the resulting set.
      */
-    Observable<Long> sdiffstore(K destination, K... keys);
+    Single<Long> sdiffstore(K destination, K... keys);
 
     /**
      * Intersect multiple sets.
@@ -79,7 +81,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long count of members of the resulting set.
      */
-    Observable<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
+    Single<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
 
     /**
      * Intersect multiple sets and store the resulting set in a key.
@@ -88,7 +90,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param keys the key
      * @return Long integer-reply the number of elements in the resulting set.
      */
-    Observable<Long> sinterstore(K destination, K... keys);
+    Single<Long> sinterstore(K destination, K... keys);
 
     /**
      * Determine if a given value is a member of a set.
@@ -100,7 +102,7 @@ public interface RedisSetReactiveCommands<K, V> {
      *         {@literal true} if the element is a member of the set. {@literal false} if the element is not a member of the
      *         set, or if {@code key} does not exist.
      */
-    Observable<Boolean> sismember(K key, V member);
+    Single<Boolean> sismember(K key, V member);
 
     /**
      * Move a member from one set to another.
@@ -113,7 +115,7 @@ public interface RedisSetReactiveCommands<K, V> {
      *         {@literal true} if the element is moved. {@literal false} if the element is not a member of {@code source} and no
      *         operation was performed.
      */
-    Observable<Boolean> smove(K source, K destination, V member);
+    Single<Boolean> smove(K source, K destination, V member);
 
     /**
      * Get all the members in a set.
@@ -130,7 +132,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the keys
      * @return Long count of members of the resulting set.
      */
-    Observable<Long> smembers(ValueStreamingChannel<V> channel, K key);
+    Single<Long> smembers(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Remove and return a random member from a set.
@@ -138,7 +140,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the key
      * @return V bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
      */
-    Observable<V> spop(K key);
+    Single<V> spop(K key);
 
     /**
      * Remove and return one or multiple random members from a set.
@@ -157,7 +159,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply with the
      *         randomly selected element, or {@literal null} when {@code key} does not exist.
      */
-    Observable<V> srandmember(K key);
+    Single<V> srandmember(K key);
 
     /**
      * Get one or multiple random members from a set.
@@ -177,7 +179,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param count the count
      * @return Long count of members of the resulting set.
      */
-    Observable<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count);
+    Single<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count);
 
     /**
      * Remove one or more members from a set.
@@ -186,7 +188,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param members the member type: value
      * @return Long integer-reply the number of members that were removed from the set, not including non existing members.
      */
-    Observable<Long> srem(K key, V... members);
+    Single<Long> srem(K key, V... members);
 
     /**
      * Add multiple sets.
@@ -203,7 +205,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long count of members of the resulting set.
      */
-    Observable<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
+    Single<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
 
     /**
      * Add multiple sets and store the resulting set in a key.
@@ -212,7 +214,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param keys the key
      * @return Long integer-reply the number of elements in the resulting set.
      */
-    Observable<Long> sunionstore(K destination, K... keys);
+    Single<Long> sunionstore(K destination, K... keys);
 
     /**
      * Incrementally iterate Set elements.
@@ -220,7 +222,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the key
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
-    Observable<ValueScanCursor<V>> sscan(K key);
+    Single<ValueScanCursor<V>> sscan(K key);
 
     /**
      * Incrementally iterate Set elements.
@@ -229,7 +231,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
-    Observable<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs);
+    Single<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
@@ -239,7 +241,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
-    Observable<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
@@ -248,7 +250,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
-    Observable<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor);
+    Single<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate Set elements.
@@ -257,7 +259,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the key
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key);
+    Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Incrementally iterate Set elements.
@@ -267,7 +269,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
+    Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
@@ -278,7 +280,7 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate Set elements.
@@ -288,5 +290,5 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+    Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 }

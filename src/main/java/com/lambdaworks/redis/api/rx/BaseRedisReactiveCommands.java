@@ -6,6 +6,8 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.output.CommandOutput;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * 
@@ -26,7 +28,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @param message the message type: value
      * @return Long integer-reply the number of clients that received the message.
      */
-    Observable<Long> publish(K channel, V message);
+    Single<Long> publish(K channel, V message);
 
     /**
      * Lists the currently *active channels*.
@@ -49,14 +51,14 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @param channels channel keys
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
-    Observable<Map<K, Long>> pubsubNumsub(K... channels);
+    Single<Map<K, Long>> pubsubNumsub(K... channels);
 
     /**
      * Returns the number of subscriptions to patterns.
      * 
      * @return Long integer-reply the number of patterns all the clients are subscribed to.
      */
-    Observable<Long> pubsubNumpat();
+    Single<Long> pubsubNumpat();
 
     /**
      * Echo the given string.
@@ -64,7 +66,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @param msg the message type: value
      * @return V bulk-string-reply
      */
-    Observable<V> echo(V msg);
+    Single<V> echo(V msg);
 
     /**
      * Return the role of the instance in the context of replication.
@@ -79,28 +81,28 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * 
      * @return String simple-string-reply
      */
-    Observable<String> ping();
+    Single<String> ping();
 
     /**
      * Switch connection to Read-Only mode when connecting to a cluster.
      *
      * @return String simple-string-reply.
      */
-    Observable<String> readOnly();
+    Single<String> readOnly();
 
     /**
      * Switch connection to Read-Write mode (default) when connecting to a cluster.
      *
      * @return String simple-string-reply.
      */
-    Observable<String> readWrite();
+    Single<String> readWrite();
 
     /**
      * Close the connection.
      * 
      * @return String simple-string-reply always OK.
      */
-    Observable<String> quit();
+    Single<String> quit();
 
     /**
      * Wait for replication.
@@ -109,7 +111,7 @@ public interface BaseRedisReactiveCommands<K, V> extends AutoCloseable {
      * @param timeout timeout in milliseconds
      * @return number of replicas
      */
-    Observable<Long> waitForReplication(int replicas, long timeout);
+    Single<Long> waitForReplication(int replicas, long timeout);
 
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.

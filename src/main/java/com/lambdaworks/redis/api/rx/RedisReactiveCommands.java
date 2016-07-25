@@ -6,6 +6,7 @@ import rx.Observable;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import rx.Single;
 
 /**
  * A complete reactive and thread-safe Redis API with 400+ Methods.
@@ -35,7 +36,7 @@ public interface RedisReactiveCommands<K, V> extends RedisHashReactiveCommands<K
      * @param password the password
      * @return String simple-string-reply
      */
-    Observable<String> auth(String password);
+    Single<String> auth(String password);
 
     /**
      * Change the selected database for the current connection.
@@ -43,7 +44,7 @@ public interface RedisReactiveCommands<K, V> extends RedisHashReactiveCommands<K
      * @param db the database number
      * @return String simple-string-reply
      */
-    Observable<String> select(int db);
+    Single<String> select(int db);
 
     /**
      * @return the underlying connection.

@@ -11,6 +11,8 @@ import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Keys (Key manipulation/querying).
@@ -29,7 +31,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
      */
-    Observable<Long> del(K... keys);
+    Single<Long> del(K... keys);
 
     /**
      * Unlink one or more keys (non blocking DEL).
@@ -37,7 +39,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long integer-reply The number of keys that were removed.
      */
-    Observable<Long> unlink(K... keys);
+    Single<Long> unlink(K... keys);
 
     /**
      * Return a serialized version of the value stored at the specified key.
@@ -45,7 +47,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return byte[] bulk-string-reply the serialized value.
      */
-    Observable<byte[]> dump(K key);
+    Single<byte[]> dump(K key);
 
     /**
      * Determine how many keys exist.
@@ -53,7 +55,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long integer-reply specifically: Number of existing keys
      */
-    Observable<Long> exists(K... keys);
+    Single<Long> exists(K... keys);
 
     /**
      * Set a key's time to live in seconds.
@@ -65,7 +67,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
-    Observable<Boolean> expire(K key, long seconds);
+    Single<Boolean> expire(K key, long seconds);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -77,7 +79,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
-    Observable<Boolean> expireat(K key, Date timestamp);
+    Single<Boolean> expireat(K key, Date timestamp);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -89,7 +91,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
-    Observable<Boolean> expireat(K key, long timestamp);
+    Single<Boolean> expireat(K key, long timestamp);
 
     /**
      * Find all keys matching the given pattern.
@@ -106,7 +108,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
      */
-    Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    Single<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.
@@ -118,7 +120,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param timeout the timeout in milliseconds
      * @return String simple-string-reply The command returns OK on success.
      */
-    Observable<String> migrate(String host, int port, K key, int db, long timeout);
+    Single<String> migrate(String host, int port, K key, int db, long timeout);
 
     /**
      * Atomically transfer one or more keys from a Redis instance to another one.
@@ -130,7 +132,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param migrateArgs migrate args that allow to configure further options
      * @return String simple-string-reply The command returns OK on success.
      */
-    Observable<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs);
+    Single<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs);
 
     /**
      * Move a key to another database.
@@ -139,7 +141,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param db the db type: long
      * @return Boolean integer-reply specifically:
      */
-    Observable<Boolean> move(K key, int db);
+    Single<Boolean> move(K key, int db);
 
     /**
      * returns the kind of internal representation used in order to store the value associated with a key.
@@ -147,7 +149,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return String
      */
-    Observable<String> objectEncoding(K key);
+    Single<String> objectEncoding(K key);
 
     /**
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
@@ -156,7 +158,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return number of seconds since the object stored at the specified key is idle.
      */
-    Observable<Long> objectIdletime(K key);
+    Single<Long> objectIdletime(K key);
 
     /**
      * returns the number of references of the value associated with the specified key.
@@ -164,7 +166,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return Long
      */
-    Observable<Long> objectRefcount(K key);
+    Single<Long> objectRefcount(K key);
 
     /**
      * Remove the expiration from a key.
@@ -175,7 +177,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was removed. {@literal false} if {@code key} does not exist or does not have an
      *         associated timeout.
      */
-    Observable<Boolean> persist(K key);
+    Single<Boolean> persist(K key);
 
     /**
      * Set a key's time to live in milliseconds.
@@ -187,7 +189,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
-    Observable<Boolean> pexpire(K key, long milliseconds);
+    Single<Boolean> pexpire(K key, long milliseconds);
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -199,7 +201,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
-    Observable<Boolean> pexpireat(K key, Date timestamp);
+    Single<Boolean> pexpireat(K key, Date timestamp);
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -211,7 +213,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
-    Observable<Boolean> pexpireat(K key, long timestamp);
+    Single<Boolean> pexpireat(K key, long timestamp);
 
     /**
      * Get the time to live for a key in milliseconds.
@@ -220,14 +222,14 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
      *         above).
      */
-    Observable<Long> pttl(K key);
+    Single<Long> pttl(K key);
 
     /**
      * Return a random key from the keyspace.
      * 
      * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
      */
-    Observable<V> randomkey();
+    Single<V> randomkey();
 
     /**
      * Rename a key.
@@ -236,7 +238,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param newKey the newkey type: key
      * @return String simple-string-reply
      */
-    Observable<String> rename(K key, K newKey);
+    Single<String> rename(K key, K newKey);
 
     /**
      * Rename a key, only if the new key does not exist.
@@ -247,7 +249,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * 
      *         {@literal true} if {@code key} was renamed to {@code newkey}. {@literal false} if {@code newkey} already exists.
      */
-    Observable<Boolean> renamenx(K key, K newKey);
+    Single<Boolean> renamenx(K key, K newKey);
 
     /**
      * Create a key using the provided serialized value, previously obtained using DUMP.
@@ -257,7 +259,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param value the serialized-value type: string
      * @return String simple-string-reply The command returns OK on success.
      */
-    Observable<String> restore(K key, long ttl, byte[] value);
+    Single<String> restore(K key, long ttl, byte[] value);
 
     /**
      * Sort the elements in a list, set or sorted set.
@@ -274,7 +276,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return Long number of values.
      */
-    Observable<Long> sort(ValueStreamingChannel<V> channel, K key);
+    Single<Long> sort(ValueStreamingChannel<V> channel, K key);
 
     /**
      * Sort the elements in a list, set or sorted set.
@@ -293,7 +295,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param sortArgs sort arguments
      * @return Long number of values.
      */
-    Observable<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
+    Single<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
     /**
      * Sort the elements in a list, set or sorted set.
@@ -303,7 +305,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param destination the destination key to store sort results
      * @return Long number of values.
      */
-    Observable<Long> sortStore(K key, SortArgs sortArgs, K destination);
+    Single<Long> sortStore(K key, SortArgs sortArgs, K destination);
 
     /**
      * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
@@ -311,7 +313,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param keys the keys
      * @return Long integer-reply the number of found keys.
      */
-    Observable<Long> touch(K... keys);
+    Single<Long> touch(K... keys);
 
     /**
      * Get the time to live for a key.
@@ -319,7 +321,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
      */
-    Observable<Long> ttl(K key);
+    Single<Long> ttl(K key);
 
     /**
      * Determine the type stored at key.
@@ -327,14 +329,14 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key
      * @return String simple-string-reply type of {@code key}, or {@code none} when {@code key} does not exist.
      */
-    Observable<String> type(K key);
+    Single<String> type(K key);
 
     /**
      * Incrementally iterate the keys space.
      * 
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    Observable<KeyScanCursor<K>> scan();
+    Single<KeyScanCursor<K>> scan();
 
     /**
      * Incrementally iterate the keys space.
@@ -342,7 +344,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    Observable<KeyScanCursor<K>> scan(ScanArgs scanArgs);
+    Single<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -351,7 +353,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -359,7 +361,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor);
+    Single<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
     /**
      * Incrementally iterate the keys space.
@@ -367,7 +369,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
      * Incrementally iterate the keys space.
@@ -376,7 +378,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -386,7 +388,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -395,5 +397,5 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return StreamScanCursor scan cursor.
      */
-    Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+    Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }

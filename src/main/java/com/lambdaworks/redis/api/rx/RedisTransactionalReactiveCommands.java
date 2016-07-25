@@ -2,6 +2,8 @@ package com.lambdaworks.redis.api.rx;
 
 import java.util.List;
 import rx.Observable;
+import rx.Single;
+import rx.Completable;
 
 /**
  * Observable commands for Transactions.
@@ -19,7 +21,7 @@ public interface RedisTransactionalReactiveCommands<K, V> {
      * 
      * @return String simple-string-reply always {@code OK}.
      */
-    Observable<String> discard();
+    Single<String> discard();
 
     /**
      * Execute all commands issued after MULTI.
@@ -35,7 +37,7 @@ public interface RedisTransactionalReactiveCommands<K, V> {
      *
      * @return String simple-string-reply always {@code OK}.
      */
-    Observable<String> multi();
+    Single<String> multi();
 
     /**
      * Watch the given keys to determine execution of the MULTI/EXEC block.
@@ -43,12 +45,12 @@ public interface RedisTransactionalReactiveCommands<K, V> {
      * @param keys the key
      * @return String simple-string-reply always {@code OK}.
      */
-    Observable<String> watch(K... keys);
+    Single<String> watch(K... keys);
 
     /**
      * Forget about all watched keys.
      *
      * @return String simple-string-reply always {@code OK}.
      */
-    Observable<String> unwatch();
+    Single<String> unwatch();
 }

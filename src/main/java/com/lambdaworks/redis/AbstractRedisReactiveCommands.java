@@ -9,7 +9,9 @@ import java.util.function.Supplier;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.*;
+import rx.Completable;
 import rx.Observable;
+import rx.Single;
 import rx.Subscriber;
 
 import com.lambdaworks.redis.GeoArgs.Unit;
@@ -51,34 +53,34 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> append(K key, V value) {
-        return createObservable(() -> commandBuilder.append(key, value));
+    public Single<Long> append(K key, V value) {
+        return createSingle(() -> commandBuilder.append(key, value));
     }
 
     @Override
-    public Observable<String> auth(String password) {
-        return createObservable(() -> commandBuilder.auth(password));
+    public Single<String> auth(String password) {
+        return createSingle(() -> commandBuilder.auth(password));
 
     }
 
     @Override
-    public Observable<String> bgrewriteaof() {
-        return createObservable(commandBuilder::bgrewriteaof);
+    public Single<String> bgrewriteaof() {
+        return createSingle(commandBuilder::bgrewriteaof);
     }
 
     @Override
-    public Observable<String> bgsave() {
-        return createObservable(commandBuilder::bgsave);
+    public Single<String> bgsave() {
+        return createSingle(commandBuilder::bgsave);
     }
 
     @Override
-    public Observable<Long> bitcount(K key) {
-        return createObservable(() -> commandBuilder.bitcount(key));
+    public Single<Long> bitcount(K key) {
+        return createSingle(() -> commandBuilder.bitcount(key));
     }
 
     @Override
-    public Observable<Long> bitcount(K key, long start, long end) {
-        return createObservable(() -> commandBuilder.bitcount(key, start, end));
+    public Single<Long> bitcount(K key, long start, long end) {
+        return createSingle(() -> commandBuilder.bitcount(key, start, end));
     }
 
     @Override
@@ -87,78 +89,78 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> bitpos(K key, boolean state) {
-        return createObservable(() -> commandBuilder.bitpos(key, state));
+    public Single<Long> bitpos(K key, boolean state) {
+        return createSingle(() -> commandBuilder.bitpos(key, state));
     }
 
     @Override
-    public Observable<Long> bitpos(K key, boolean state, long start, long end) {
-        return createObservable(() -> commandBuilder.bitpos(key, state, start, end));
+    public Single<Long> bitpos(K key, boolean state, long start, long end) {
+        return createSingle(() -> commandBuilder.bitpos(key, state, start, end));
     }
 
     @Override
-    public Observable<Long> bitopAnd(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.bitopAnd(destination, keys));
+    public Single<Long> bitopAnd(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.bitopAnd(destination, keys));
     }
 
     @Override
-    public Observable<Long> bitopNot(K destination, K source) {
-        return createObservable(() -> commandBuilder.bitopNot(destination, source));
+    public Single<Long> bitopNot(K destination, K source) {
+        return createSingle(() -> commandBuilder.bitopNot(destination, source));
     }
 
     @Override
-    public Observable<Long> bitopOr(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.bitopOr(destination, keys));
+    public Single<Long> bitopOr(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.bitopOr(destination, keys));
     }
 
     @Override
-    public Observable<Long> bitopXor(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.bitopXor(destination, keys));
+    public Single<Long> bitopXor(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.bitopXor(destination, keys));
     }
 
     @Override
-    public Observable<KeyValue<K, V>> blpop(long timeout, K... keys) {
-        return createObservable(() -> commandBuilder.blpop(timeout, keys));
+    public Single<KeyValue<K, V>> blpop(long timeout, K... keys) {
+        return createSingle(() -> commandBuilder.blpop(timeout, keys));
     }
 
     @Override
-    public Observable<KeyValue<K, V>> brpop(long timeout, K... keys) {
-        return createObservable(() -> commandBuilder.brpop(timeout, keys));
+    public Single<KeyValue<K, V>> brpop(long timeout, K... keys) {
+        return createSingle(() -> commandBuilder.brpop(timeout, keys));
     }
 
     @Override
-    public Observable<V> brpoplpush(long timeout, K source, K destination) {
-        return createObservable(() -> commandBuilder.brpoplpush(timeout, source, destination));
+    public Single<V> brpoplpush(long timeout, K source, K destination) {
+        return createSingle(() -> commandBuilder.brpoplpush(timeout, source, destination));
     }
 
     @Override
-    public Observable<K> clientGetname() {
-        return createObservable(commandBuilder::clientGetname);
+    public Single<K> clientGetname() {
+        return createSingle(commandBuilder::clientGetname);
     }
 
     @Override
-    public Observable<String> clientSetname(K name) {
-        return createObservable(() -> commandBuilder.clientSetname(name));
+    public Single<String> clientSetname(K name) {
+        return createSingle(() -> commandBuilder.clientSetname(name));
     }
 
     @Override
-    public Observable<String> clientKill(String addr) {
-        return createObservable(() -> commandBuilder.clientKill(addr));
+    public Single<String> clientKill(String addr) {
+        return createSingle(() -> commandBuilder.clientKill(addr));
     }
 
     @Override
-    public Observable<Long> clientKill(KillArgs killArgs) {
-        return createObservable(() -> commandBuilder.clientKill(killArgs));
+    public Single<Long> clientKill(KillArgs killArgs) {
+        return createSingle(() -> commandBuilder.clientKill(killArgs));
     }
 
     @Override
-    public Observable<String> clientPause(long timeout) {
-        return createObservable(() -> commandBuilder.clientPause(timeout));
+    public Single<String> clientPause(long timeout) {
+        return createSingle(() -> commandBuilder.clientPause(timeout));
     }
 
     @Override
-    public Observable<String> clientList() {
-        return createObservable(commandBuilder::clientList);
+    public Single<String> clientList() {
+        return createSingle(commandBuilder::clientList);
     }
 
     @Override
@@ -182,8 +184,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> commandCount() {
-        return createObservable(commandBuilder::commandCount);
+    public Single<Long> commandCount() {
+        return createSingle(commandBuilder::commandCount);
     }
 
     @Override
@@ -192,106 +194,106 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> configResetstat() {
-        return createObservable(commandBuilder::configResetstat);
+    public Single<String> configResetstat() {
+        return createSingle(commandBuilder::configResetstat);
     }
 
     @Override
-    public Observable<String> configSet(String parameter, String value) {
-        return createObservable(() -> commandBuilder.configSet(parameter, value));
+    public Single<String> configSet(String parameter, String value) {
+        return createSingle(() -> commandBuilder.configSet(parameter, value));
     }
 
     @Override
-    public Observable<String> configRewrite() {
-        return createObservable(commandBuilder::configRewrite);
+    public Single<String> configRewrite() {
+        return createSingle(commandBuilder::configRewrite);
     }
 
     @Override
-    public Observable<Long> dbsize() {
-        return createObservable(commandBuilder::dbsize);
+    public Single<Long> dbsize() {
+        return createSingle(commandBuilder::dbsize);
     }
 
     @Override
-    public Observable<String> debugCrashAndRecover(Long delay) {
-        return createObservable(() -> (commandBuilder.debugCrashAndRecover(delay)));
+    public Single<String> debugCrashAndRecover(Long delay) {
+        return createSingle(() -> (commandBuilder.debugCrashAndRecover(delay)));
     }
 
     @Override
-    public Observable<String> debugHtstats(int db) {
-        return createObservable(() -> commandBuilder.debugHtstats(db));
+    public Single<String> debugHtstats(int db) {
+        return createSingle(() -> commandBuilder.debugHtstats(db));
     }
 
     @Override
-    public Observable<String> debugObject(K key) {
-        return createObservable(() -> commandBuilder.debugObject(key));
+    public Single<String> debugObject(K key) {
+        return createSingle(() -> commandBuilder.debugObject(key));
     }
 
     @Override
-    public Observable<Success> debugOom() {
-        return Observable.just(Success.Success).doOnCompleted(commandBuilder::debugOom);
+    public Completable debugOom() {
+        return Completable.fromObservable(createObservable(commandBuilder::debugOom));
     }
 
     @Override
-    public Observable<String> debugReload() {
-        return createObservable(() -> (commandBuilder.debugReload()));
+    public Single<String> debugReload() {
+        return createSingle(() -> (commandBuilder.debugReload()));
     }
 
     @Override
-    public Observable<String> debugRestart(Long delay) {
-        return createObservable(() -> (commandBuilder.debugRestart(delay)));
+    public Single<String> debugRestart(Long delay) {
+        return createSingle(() -> (commandBuilder.debugRestart(delay)));
     }
 
     @Override
-    public Observable<String> debugSdslen(K key) {
-        return createObservable(() -> (commandBuilder.debugSdslen(key)));
+    public Single<String> debugSdslen(K key) {
+        return createSingle(() -> (commandBuilder.debugSdslen(key)));
     }
 
     @Override
-    public Observable<Success> debugSegfault() {
-        return Observable.just(Success.Success).doOnCompleted(commandBuilder::debugSegfault);
+    public Completable debugSegfault() {
+        return Completable.fromObservable(createObservable(commandBuilder::debugSegfault));
     }
 
     @Override
-    public Observable<Long> decr(K key) {
-        return createObservable(() -> commandBuilder.decr(key));
+    public Single<Long> decr(K key) {
+        return createSingle(() -> commandBuilder.decr(key));
     }
 
     @Override
-    public Observable<Long> decrby(K key, long amount) {
-        return createObservable(() -> commandBuilder.decrby(key, amount));
+    public Single<Long> decrby(K key, long amount) {
+        return createSingle(() -> commandBuilder.decrby(key, amount));
     }
 
     @Override
-    public Observable<Long> del(K... keys) {
-        return createObservable(() -> commandBuilder.del(keys));
+    public Single<Long> del(K... keys) {
+        return createSingle(() -> commandBuilder.del(keys));
     }
 
-    public Observable<Long> del(Iterable<K> keys) {
-        return createObservable(() -> commandBuilder.del(keys));
-    }
-
-    @Override
-    public Observable<Long> unlink(K... keys) {
-        return createObservable(() -> commandBuilder.unlink(keys));
-    }
-
-    public Observable<Long> unlink(Iterable<K> keys) {
-        return createObservable(() -> commandBuilder.unlink(keys));
+    public Single<Long> del(Iterable<K> keys) {
+        return createSingle(() -> commandBuilder.del(keys));
     }
 
     @Override
-    public Observable<String> discard() {
-        return createObservable(commandBuilder::discard);
+    public Single<Long> unlink(K... keys) {
+        return createSingle(() -> commandBuilder.unlink(keys));
+    }
+
+    public Single<Long> unlink(Iterable<K> keys) {
+        return createSingle(() -> commandBuilder.unlink(keys));
     }
 
     @Override
-    public Observable<byte[]> dump(K key) {
-        return createObservable(() -> commandBuilder.dump(key));
+    public Single<String> discard() {
+        return createSingle(commandBuilder::discard);
     }
 
     @Override
-    public Observable<V> echo(V msg) {
-        return createObservable(() -> commandBuilder.echo(msg));
+    public Single<byte[]> dump(K key) {
+        return createSingle(() -> commandBuilder.dump(key));
+    }
+
+    @Override
+    public Single<V> echo(V msg) {
+        return createSingle(() -> commandBuilder.echo(msg));
     }
 
     @Override
@@ -318,31 +320,31 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return (Observable<T>) createObservable(() -> commandBuilder.evalsha(digest, type, keys, values));
     }
 
-    public Observable<Boolean> exists(K key) {
-        return createObservable(() -> commandBuilder.exists(key));
+    public Single<Boolean> exists(K key) {
+        return createSingle(() -> commandBuilder.exists(key));
     }
 
     @Override
-    public Observable<Long> exists(K... keys) {
-        return createObservable(() -> commandBuilder.exists(keys));
+    public Single<Long> exists(K... keys) {
+        return createSingle(() -> commandBuilder.exists(keys));
     }
 
-    public Observable<Long> exists(Iterable<K> keys) {
-        return createObservable(() -> commandBuilder.exists(keys));
-    }
-
-    @Override
-    public Observable<Boolean> expire(K key, long seconds) {
-        return createObservable(() -> commandBuilder.expire(key, seconds));
+    public Single<Long> exists(Iterable<K> keys) {
+        return createSingle(() -> commandBuilder.exists(keys));
     }
 
     @Override
-    public Observable<Boolean> expireat(K key, long timestamp) {
-        return createObservable(() -> commandBuilder.expireat(key, timestamp));
+    public Single<Boolean> expire(K key, long seconds) {
+        return createSingle(() -> commandBuilder.expire(key, seconds));
     }
 
     @Override
-    public Observable<Boolean> expireat(K key, Date timestamp) {
+    public Single<Boolean> expireat(K key, long timestamp) {
+        return createSingle(() -> commandBuilder.expireat(key, timestamp));
+    }
+
+    @Override
+    public Single<Boolean> expireat(K key, Date timestamp) {
         return expireat(key, timestamp.getTime() / 1000);
     }
 
@@ -352,78 +354,78 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> flushall() {
-        return createObservable(commandBuilder::flushall);
+    public Single<String> flushall() {
+        return createSingle(commandBuilder::flushall);
     }
 
     @Override
-    public Observable<String> flushallAsync() {
-        return createObservable(commandBuilder::flushallAsync);
+    public Single<String> flushallAsync() {
+        return createSingle(commandBuilder::flushallAsync);
     }
 
     @Override
-    public Observable<String> flushdb() {
-        return createObservable(commandBuilder::flushdb);
+    public Single<String> flushdb() {
+        return createSingle(commandBuilder::flushdb);
     }
 
     @Override
-    public Observable<String> flushdbAsync() {
-        return createObservable(commandBuilder::flushdbAsync);
+    public Single<String> flushdbAsync() {
+        return createSingle(commandBuilder::flushdbAsync);
     }
 
     @Override
-    public Observable<V> get(K key) {
-        return createObservable(() -> commandBuilder.get(key));
+    public Single<V> get(K key) {
+        return createSingle(() -> commandBuilder.get(key));
     }
 
     @Override
-    public Observable<Long> getbit(K key, long offset) {
-        return createObservable(() -> commandBuilder.getbit(key, offset));
+    public Single<Long> getbit(K key, long offset) {
+        return createSingle(() -> commandBuilder.getbit(key, offset));
     }
 
     @Override
-    public Observable<V> getrange(K key, long start, long end) {
-        return createObservable(() -> commandBuilder.getrange(key, start, end));
+    public Single<V> getrange(K key, long start, long end) {
+        return createSingle(() -> commandBuilder.getrange(key, start, end));
     }
 
     @Override
-    public Observable<V> getset(K key, V value) {
-        return createObservable(() -> commandBuilder.getset(key, value));
+    public Single<V> getset(K key, V value) {
+        return createSingle(() -> commandBuilder.getset(key, value));
     }
 
     @Override
-    public Observable<Long> hdel(K key, K... fields) {
-        return createObservable(() -> commandBuilder.hdel(key, fields));
+    public Single<Long> hdel(K key, K... fields) {
+        return createSingle(() -> commandBuilder.hdel(key, fields));
     }
 
     @Override
-    public Observable<Boolean> hexists(K key, K field) {
-        return createObservable(() -> commandBuilder.hexists(key, field));
+    public Single<Boolean> hexists(K key, K field) {
+        return createSingle(() -> commandBuilder.hexists(key, field));
     }
 
     @Override
-    public Observable<V> hget(K key, K field) {
-        return createObservable(() -> commandBuilder.hget(key, field));
+    public Single<V> hget(K key, K field) {
+        return createSingle(() -> commandBuilder.hget(key, field));
     }
 
     @Override
-    public Observable<Long> hincrby(K key, K field, long amount) {
-        return createObservable(() -> commandBuilder.hincrby(key, field, amount));
+    public Single<Long> hincrby(K key, K field, long amount) {
+        return createSingle(() -> commandBuilder.hincrby(key, field, amount));
     }
 
     @Override
-    public Observable<Double> hincrbyfloat(K key, K field, double amount) {
-        return createObservable(() -> commandBuilder.hincrbyfloat(key, field, amount));
+    public Single<Double> hincrbyfloat(K key, K field, double amount) {
+        return createSingle(() -> commandBuilder.hincrbyfloat(key, field, amount));
     }
 
     @Override
-    public Observable<Map<K, V>> hgetall(K key) {
-        return createObservable(() -> commandBuilder.hgetall(key));
+    public Single<Map<K, V>> hgetall(K key) {
+        return createSingle(() -> commandBuilder.hgetall(key));
     }
 
     @Override
-    public Observable<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
-        return createObservable(() -> commandBuilder.hgetall(channel, key));
+    public Single<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
+        return createSingle(() -> commandBuilder.hgetall(channel, key));
     }
 
     @Override
@@ -432,18 +434,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> hkeys(KeyStreamingChannel<K> channel, K key) {
-        return createObservable(() -> commandBuilder.hkeys(channel, key));
+    public Single<Long> hkeys(KeyStreamingChannel<K> channel, K key) {
+        return createSingle(() -> commandBuilder.hkeys(channel, key));
     }
 
     @Override
-    public Observable<Long> hlen(K key) {
-        return createObservable(() -> commandBuilder.hlen(key));
+    public Single<Long> hlen(K key) {
+        return createSingle(() -> commandBuilder.hlen(key));
     }
 
     @Override
-    public Observable<Long> hstrlen(K key, K field) {
-        return createObservable(() -> commandBuilder.hstrlen(key, field));
+    public Single<Long> hstrlen(K key, K field) {
+        return createSingle(() -> commandBuilder.hstrlen(key, field));
     }
 
     @Override
@@ -452,23 +454,23 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
-        return createObservable(() -> commandBuilder.hmget(channel, key, fields));
+    public Single<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
+        return createSingle(() -> commandBuilder.hmget(channel, key, fields));
     }
 
     @Override
-    public Observable<String> hmset(K key, Map<K, V> map) {
-        return createObservable(() -> commandBuilder.hmset(key, map));
+    public Single<String> hmset(K key, Map<K, V> map) {
+        return createSingle(() -> commandBuilder.hmset(key, map));
     }
 
     @Override
-    public Observable<Boolean> hset(K key, K field, V value) {
-        return createObservable(() -> commandBuilder.hset(key, field, value));
+    public Single<Boolean> hset(K key, K field, V value) {
+        return createSingle(() -> commandBuilder.hset(key, field, value));
     }
 
     @Override
-    public Observable<Boolean> hsetnx(K key, K field, V value) {
-        return createObservable(() -> commandBuilder.hsetnx(key, field, value));
+    public Single<Boolean> hsetnx(K key, K field, V value) {
+        return createSingle(() -> commandBuilder.hsetnx(key, field, value));
     }
 
     @Override
@@ -477,33 +479,33 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> hvals(ValueStreamingChannel<V> channel, K key) {
-        return createObservable(() -> commandBuilder.hvals(channel, key));
+    public Single<Long> hvals(ValueStreamingChannel<V> channel, K key) {
+        return createSingle(() -> commandBuilder.hvals(channel, key));
     }
 
     @Override
-    public Observable<Long> incr(K key) {
-        return createObservable(() -> commandBuilder.incr(key));
+    public Single<Long> incr(K key) {
+        return createSingle(() -> commandBuilder.incr(key));
     }
 
     @Override
-    public Observable<Long> incrby(K key, long amount) {
-        return createObservable(() -> commandBuilder.incrby(key, amount));
+    public Single<Long> incrby(K key, long amount) {
+        return createSingle(() -> commandBuilder.incrby(key, amount));
     }
 
     @Override
-    public Observable<Double> incrbyfloat(K key, double amount) {
-        return createObservable(() -> commandBuilder.incrbyfloat(key, amount));
+    public Single<Double> incrbyfloat(K key, double amount) {
+        return createSingle(() -> commandBuilder.incrbyfloat(key, amount));
     }
 
     @Override
-    public Observable<String> info() {
-        return createObservable(commandBuilder::info);
+    public Single<String> info() {
+        return createSingle(commandBuilder::info);
     }
 
     @Override
-    public Observable<String> info(String section) {
-        return createObservable(() -> commandBuilder.info(section));
+    public Single<String> info(String section) {
+        return createSingle(() -> commandBuilder.info(section));
     }
 
     @Override
@@ -512,43 +514,43 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
-        return createObservable(() -> commandBuilder.keys(channel, pattern));
+    public Single<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        return createSingle(() -> commandBuilder.keys(channel, pattern));
     }
 
     @Override
-    public Observable<Date> lastsave() {
-        return createObservable(commandBuilder::lastsave);
+    public Single<Date> lastsave() {
+        return createSingle(commandBuilder::lastsave);
     }
 
     @Override
-    public Observable<V> lindex(K key, long index) {
-        return createObservable(() -> commandBuilder.lindex(key, index));
+    public Single<V> lindex(K key, long index) {
+        return createSingle(() -> commandBuilder.lindex(key, index));
     }
 
     @Override
-    public Observable<Long> linsert(K key, boolean before, V pivot, V value) {
-        return createObservable(() -> commandBuilder.linsert(key, before, pivot, value));
+    public Single<Long> linsert(K key, boolean before, V pivot, V value) {
+        return createSingle(() -> commandBuilder.linsert(key, before, pivot, value));
     }
 
     @Override
-    public Observable<Long> llen(K key) {
-        return createObservable(() -> commandBuilder.llen(key));
+    public Single<Long> llen(K key) {
+        return createSingle(() -> commandBuilder.llen(key));
     }
 
     @Override
-    public Observable<V> lpop(K key) {
-        return createObservable(() -> commandBuilder.lpop(key));
+    public Single<V> lpop(K key) {
+        return createSingle(() -> commandBuilder.lpop(key));
     }
 
     @Override
-    public Observable<Long> lpush(K key, V... values) {
-        return createObservable(() -> commandBuilder.lpush(key, values));
+    public Single<Long> lpush(K key, V... values) {
+        return createSingle(() -> commandBuilder.lpush(key, values));
     }
 
     @Override
-    public Observable<Long> lpushx(K key, V... values) {
-        return createObservable(() -> commandBuilder.lpushx(key, values));
+    public Single<Long> lpushx(K key, V... values) {
+        return createSingle(() -> commandBuilder.lpushx(key, values));
     }
 
     @Override
@@ -557,33 +559,33 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.lrange(channel, key, start, stop));
+    public Single<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.lrange(channel, key, start, stop));
     }
 
     @Override
-    public Observable<Long> lrem(K key, long count, V value) {
-        return createObservable(() -> commandBuilder.lrem(key, count, value));
+    public Single<Long> lrem(K key, long count, V value) {
+        return createSingle(() -> commandBuilder.lrem(key, count, value));
     }
 
     @Override
-    public Observable<String> lset(K key, long index, V value) {
-        return createObservable(() -> commandBuilder.lset(key, index, value));
+    public Single<String> lset(K key, long index, V value) {
+        return createSingle(() -> commandBuilder.lset(key, index, value));
     }
 
     @Override
-    public Observable<String> ltrim(K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.ltrim(key, start, stop));
+    public Single<String> ltrim(K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.ltrim(key, start, stop));
     }
 
     @Override
-    public Observable<String> migrate(String host, int port, K key, int db, long timeout) {
-        return createObservable(() -> commandBuilder.migrate(host, port, key, db, timeout));
+    public Single<String> migrate(String host, int port, K key, int db, long timeout) {
+        return createSingle(() -> commandBuilder.migrate(host, port, key, db, timeout));
     }
 
     @Override
-    public Observable<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
-        return createObservable(() -> commandBuilder.migrate(host, port, db, timeout, migrateArgs));
+    public Single<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
+        return createSingle(() -> commandBuilder.migrate(host, port, db, timeout, migrateArgs));
     }
 
     @Override
@@ -596,92 +598,92 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
-        return createObservable(() -> commandBuilder.mget(channel, keys));
+    public Single<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+        return createSingle(() -> commandBuilder.mget(channel, keys));
     }
 
-    public Observable<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
-        return createObservable(() -> commandBuilder.mget(channel, keys));
-    }
-
-    @Override
-    public Observable<Boolean> move(K key, int db) {
-        return createObservable(() -> commandBuilder.move(key, db));
+    public Single<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+        return createSingle(() -> commandBuilder.mget(channel, keys));
     }
 
     @Override
-    public Observable<String> multi() {
-        return createObservable(commandBuilder::multi);
+    public Single<Boolean> move(K key, int db) {
+        return createSingle(() -> commandBuilder.move(key, db));
     }
 
     @Override
-    public Observable<String> mset(Map<K, V> map) {
-        return createObservable(() -> commandBuilder.mset(map));
+    public Single<String> multi() {
+        return createSingle(commandBuilder::multi);
     }
 
     @Override
-    public Observable<Boolean> msetnx(Map<K, V> map) {
-        return createObservable(() -> commandBuilder.msetnx(map));
+    public Single<String> mset(Map<K, V> map) {
+        return createSingle(() -> commandBuilder.mset(map));
     }
 
     @Override
-    public Observable<String> objectEncoding(K key) {
-        return createObservable(() -> commandBuilder.objectEncoding(key));
+    public Single<Boolean> msetnx(Map<K, V> map) {
+        return createSingle(() -> commandBuilder.msetnx(map));
     }
 
     @Override
-    public Observable<Long> objectIdletime(K key) {
-        return createObservable(() -> commandBuilder.objectIdletime(key));
+    public Single<String> objectEncoding(K key) {
+        return createSingle(() -> commandBuilder.objectEncoding(key));
     }
 
     @Override
-    public Observable<Long> objectRefcount(K key) {
-        return createObservable(() -> commandBuilder.objectRefcount(key));
+    public Single<Long> objectIdletime(K key) {
+        return createSingle(() -> commandBuilder.objectIdletime(key));
     }
 
     @Override
-    public Observable<Boolean> persist(K key) {
-        return createObservable(() -> commandBuilder.persist(key));
+    public Single<Long> objectRefcount(K key) {
+        return createSingle(() -> commandBuilder.objectRefcount(key));
     }
 
     @Override
-    public Observable<Boolean> pexpire(K key, long milliseconds) {
-        return createObservable(() -> commandBuilder.pexpire(key, milliseconds));
+    public Single<Boolean> persist(K key) {
+        return createSingle(() -> commandBuilder.persist(key));
     }
 
     @Override
-    public Observable<Boolean> pexpireat(K key, Date timestamp) {
+    public Single<Boolean> pexpire(K key, long milliseconds) {
+        return createSingle(() -> commandBuilder.pexpire(key, milliseconds));
+    }
+
+    @Override
+    public Single<Boolean> pexpireat(K key, Date timestamp) {
         return pexpireat(key, timestamp.getTime());
     }
 
     @Override
-    public Observable<Boolean> pexpireat(K key, long timestamp) {
-        return createObservable(() -> commandBuilder.pexpireat(key, timestamp));
+    public Single<Boolean> pexpireat(K key, long timestamp) {
+        return createSingle(() -> commandBuilder.pexpireat(key, timestamp));
     }
 
     @Override
-    public Observable<String> ping() {
-        return createObservable(commandBuilder::ping);
+    public Single<String> ping() {
+        return createSingle(commandBuilder::ping);
     }
 
     @Override
-    public Observable<String> readOnly() {
-        return createObservable(commandBuilder::readOnly);
+    public Single<String> readOnly() {
+        return createSingle(commandBuilder::readOnly);
     }
 
     @Override
-    public Observable<String> readWrite() {
-        return createObservable(commandBuilder::readWrite);
+    public Single<String> readWrite() {
+        return createSingle(commandBuilder::readWrite);
     }
 
     @Override
-    public Observable<Long> pttl(K key) {
-        return createObservable(() -> commandBuilder.pttl(key));
+    public Single<Long> pttl(K key) {
+        return createSingle(() -> commandBuilder.pttl(key));
     }
 
     @Override
-    public Observable<Long> publish(K channel, V message) {
-        return createObservable(() -> commandBuilder.publish(channel, message));
+    public Single<Long> publish(K channel, V message) {
+        return createSingle(() -> commandBuilder.publish(channel, message));
     }
 
     @Override
@@ -695,18 +697,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Map<K, Long>> pubsubNumsub(K... channels) {
-        return createObservable(() -> commandBuilder.pubsubNumsub(channels));
+    public Single<Map<K, Long>> pubsubNumsub(K... channels) {
+        return createSingle(() -> commandBuilder.pubsubNumsub(channels));
     }
 
     @Override
-    public Observable<Long> pubsubNumpat() {
-        return createObservable(commandBuilder::pubsubNumpat);
+    public Single<Long> pubsubNumpat() {
+        return createSingle(commandBuilder::pubsubNumpat);
     }
 
     @Override
-    public Observable<String> quit() {
-        return createObservable(commandBuilder::quit);
+    public Single<String> quit() {
+        return createSingle(commandBuilder::quit);
     }
 
     @Override
@@ -715,58 +717,58 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<V> randomkey() {
-        return createObservable(commandBuilder::randomkey);
+    public Single<V> randomkey() {
+        return createSingle(commandBuilder::randomkey);
     }
 
     @Override
-    public Observable<String> rename(K key, K newKey) {
-        return createObservable(() -> commandBuilder.rename(key, newKey));
+    public Single<String> rename(K key, K newKey) {
+        return createSingle(() -> commandBuilder.rename(key, newKey));
     }
 
     @Override
-    public Observable<Boolean> renamenx(K key, K newKey) {
-        return createObservable(() -> commandBuilder.renamenx(key, newKey));
+    public Single<Boolean> renamenx(K key, K newKey) {
+        return createSingle(() -> commandBuilder.renamenx(key, newKey));
     }
 
     @Override
-    public Observable<String> restore(K key, long ttl, byte[] value) {
-        return createObservable(() -> commandBuilder.restore(key, ttl, value));
+    public Single<String> restore(K key, long ttl, byte[] value) {
+        return createSingle(() -> commandBuilder.restore(key, ttl, value));
     }
 
     @Override
-    public Observable<V> rpop(K key) {
-        return createObservable(() -> commandBuilder.rpop(key));
+    public Single<V> rpop(K key) {
+        return createSingle(() -> commandBuilder.rpop(key));
     }
 
     @Override
-    public Observable<V> rpoplpush(K source, K destination) {
-        return createObservable(() -> commandBuilder.rpoplpush(source, destination));
+    public Single<V> rpoplpush(K source, K destination) {
+        return createSingle(() -> commandBuilder.rpoplpush(source, destination));
     }
 
     @Override
-    public Observable<Long> rpush(K key, V... values) {
-        return createObservable(() -> commandBuilder.rpush(key, values));
+    public Single<Long> rpush(K key, V... values) {
+        return createSingle(() -> commandBuilder.rpush(key, values));
     }
 
     @Override
-    public Observable<Long> rpushx(K key, V... values) {
-        return createObservable(() -> commandBuilder.rpushx(key, values));
+    public Single<Long> rpushx(K key, V... values) {
+        return createSingle(() -> commandBuilder.rpushx(key, values));
     }
 
     @Override
-    public Observable<Long> sadd(K key, V... members) {
-        return createObservable(() -> commandBuilder.sadd(key, members));
+    public Single<Long> sadd(K key, V... members) {
+        return createSingle(() -> commandBuilder.sadd(key, members));
     }
 
     @Override
-    public Observable<String> save() {
-        return createObservable(commandBuilder::save);
+    public Single<String> save() {
+        return createSingle(commandBuilder::save);
     }
 
     @Override
-    public Observable<Long> scard(K key) {
-        return createObservable(() -> commandBuilder.scard(key));
+    public Single<Long> scard(K key) {
+        return createSingle(() -> commandBuilder.scard(key));
     }
 
     @Override
@@ -775,18 +777,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> scriptFlush() {
-        return createObservable(commandBuilder::scriptFlush);
+    public Single<String> scriptFlush() {
+        return createSingle(commandBuilder::scriptFlush);
     }
 
     @Override
-    public Observable<String> scriptKill() {
-        return createObservable(commandBuilder::scriptKill);
+    public Single<String> scriptKill() {
+        return createSingle(commandBuilder::scriptKill);
     }
 
     @Override
-    public Observable<String> scriptLoad(V script) {
-        return createObservable(() -> commandBuilder.scriptLoad(script));
+    public Single<String> scriptLoad(V script) {
+        return createSingle(() -> commandBuilder.scriptLoad(script));
     }
 
     @Override
@@ -795,57 +797,57 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> sdiff(ValueStreamingChannel<V> channel, K... keys) {
-        return createObservable(() -> commandBuilder.sdiff(channel, keys));
+    public Single<Long> sdiff(ValueStreamingChannel<V> channel, K... keys) {
+        return createSingle(() -> commandBuilder.sdiff(channel, keys));
     }
 
     @Override
-    public Observable<Long> sdiffstore(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.sdiffstore(destination, keys));
+    public Single<Long> sdiffstore(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.sdiffstore(destination, keys));
     }
 
-    public Observable<String> select(int db) {
-        return createObservable(() -> commandBuilder.select(db));
-    }
-
-    @Override
-    public Observable<String> set(K key, V value) {
-        return createObservable(() -> commandBuilder.set(key, value));
+    public Single<String> select(int db) {
+        return createSingle(() -> commandBuilder.select(db));
     }
 
     @Override
-    public Observable<String> set(K key, V value, SetArgs setArgs) {
-        return createObservable(() -> commandBuilder.set(key, value, setArgs));
+    public Single<String> set(K key, V value) {
+        return createSingle(() -> commandBuilder.set(key, value));
     }
 
     @Override
-    public Observable<Long> setbit(K key, long offset, int value) {
-        return createObservable(() -> commandBuilder.setbit(key, offset, value));
+    public Single<String> set(K key, V value, SetArgs setArgs) {
+        return createSingle(() -> commandBuilder.set(key, value, setArgs));
     }
 
     @Override
-    public Observable<String> setex(K key, long seconds, V value) {
-        return createObservable(() -> commandBuilder.setex(key, seconds, value));
+    public Single<Long> setbit(K key, long offset, int value) {
+        return createSingle(() -> commandBuilder.setbit(key, offset, value));
     }
 
     @Override
-    public Observable<String> psetex(K key, long milliseconds, V value) {
-        return createObservable(() -> commandBuilder.psetex(key, milliseconds, value));
+    public Single<String> setex(K key, long seconds, V value) {
+        return createSingle(() -> commandBuilder.setex(key, seconds, value));
     }
 
     @Override
-    public Observable<Boolean> setnx(K key, V value) {
-        return createObservable(() -> commandBuilder.setnx(key, value));
+    public Single<String> psetex(K key, long milliseconds, V value) {
+        return createSingle(() -> commandBuilder.psetex(key, milliseconds, value));
     }
 
     @Override
-    public Observable<Long> setrange(K key, long offset, V value) {
-        return createObservable(() -> commandBuilder.setrange(key, offset, value));
+    public Single<Boolean> setnx(K key, V value) {
+        return createSingle(() -> commandBuilder.setnx(key, value));
     }
 
     @Override
-    public Observable<Success> shutdown(boolean save) {
-        return getSuccessObservable(createObservable(() -> commandBuilder.shutdown(save)));
+    public Single<Long> setrange(K key, long offset, V value) {
+        return createSingle(() -> commandBuilder.setrange(key, offset, value));
+    }
+
+    @Override
+    public Completable shutdown(boolean save) {
+        return Completable.fromObservable(createObservable(() -> commandBuilder.shutdown(save)));
     }
 
     @Override
@@ -854,33 +856,33 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> sinter(ValueStreamingChannel<V> channel, K... keys) {
-        return createObservable(() -> commandBuilder.sinter(channel, keys));
+    public Single<Long> sinter(ValueStreamingChannel<V> channel, K... keys) {
+        return createSingle(() -> commandBuilder.sinter(channel, keys));
     }
 
     @Override
-    public Observable<Long> sinterstore(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.sinterstore(destination, keys));
+    public Single<Long> sinterstore(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.sinterstore(destination, keys));
     }
 
     @Override
-    public Observable<Boolean> sismember(K key, V member) {
-        return createObservable(() -> commandBuilder.sismember(key, member));
+    public Single<Boolean> sismember(K key, V member) {
+        return createSingle(() -> commandBuilder.sismember(key, member));
     }
 
     @Override
-    public Observable<Boolean> smove(K source, K destination, V member) {
-        return createObservable(() -> commandBuilder.smove(source, destination, member));
+    public Single<Boolean> smove(K source, K destination, V member) {
+        return createSingle(() -> commandBuilder.smove(source, destination, member));
     }
 
     @Override
-    public Observable<String> slaveof(String host, int port) {
-        return createObservable(() -> commandBuilder.slaveof(host, port));
+    public Single<String> slaveof(String host, int port) {
+        return createSingle(() -> commandBuilder.slaveof(host, port));
     }
 
     @Override
-    public Observable<String> slaveofNoOne() {
-        return createObservable(() -> commandBuilder.slaveofNoOne());
+    public Single<String> slaveofNoOne() {
+        return createSingle(() -> commandBuilder.slaveofNoOne());
     }
 
     @Override
@@ -894,13 +896,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> slowlogLen() {
-        return createObservable(() -> commandBuilder.slowlogLen());
+    public Single<Long> slowlogLen() {
+        return createSingle(() -> commandBuilder.slowlogLen());
     }
 
     @Override
-    public Observable<String> slowlogReset() {
-        return createObservable(() -> commandBuilder.slowlogReset());
+    public Single<String> slowlogReset() {
+        return createSingle(() -> commandBuilder.slowlogReset());
     }
 
     @Override
@@ -909,8 +911,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> smembers(ValueStreamingChannel<V> channel, K key) {
-        return createObservable(() -> commandBuilder.smembers(channel, key));
+    public Single<Long> smembers(ValueStreamingChannel<V> channel, K key) {
+        return createSingle(() -> commandBuilder.smembers(channel, key));
     }
 
     @Override
@@ -919,8 +921,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> sort(ValueStreamingChannel<V> channel, K key) {
-        return createObservable(() -> commandBuilder.sort(channel, key));
+    public Single<Long> sort(ValueStreamingChannel<V> channel, K key) {
+        return createSingle(() -> commandBuilder.sort(channel, key));
     }
 
     @Override
@@ -929,18 +931,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
-        return createObservable(() -> commandBuilder.sort(channel, key, sortArgs));
+    public Single<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        return createSingle(() -> commandBuilder.sort(channel, key, sortArgs));
     }
 
     @Override
-    public Observable<Long> sortStore(K key, SortArgs sortArgs, K destination) {
-        return createObservable(() -> commandBuilder.sortStore(key, sortArgs, destination));
+    public Single<Long> sortStore(K key, SortArgs sortArgs, K destination) {
+        return createSingle(() -> commandBuilder.sortStore(key, sortArgs, destination));
     }
 
     @Override
-    public Observable<V> spop(K key) {
-        return createObservable(() -> commandBuilder.spop(key));
+    public Single<V> spop(K key) {
+        return createSingle(() -> commandBuilder.spop(key));
     }
 
     @Override
@@ -949,8 +951,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<V> srandmember(K key) {
-        return createObservable(() -> commandBuilder.srandmember(key));
+    public Single<V> srandmember(K key) {
+        return createSingle(() -> commandBuilder.srandmember(key));
     }
 
     @Override
@@ -959,13 +961,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
-        return createObservable(() -> commandBuilder.srandmember(channel, key, count));
+    public Single<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
+        return createSingle(() -> commandBuilder.srandmember(channel, key, count));
     }
 
     @Override
-    public Observable<Long> srem(K key, V... members) {
-        return createObservable(() -> commandBuilder.srem(key, members));
+    public Single<Long> srem(K key, V... members) {
+        return createSingle(() -> commandBuilder.srem(key, members));
     }
 
     @Override
@@ -974,112 +976,112 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
-        return createObservable(() -> commandBuilder.sunion(channel, keys));
+    public Single<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
+        return createSingle(() -> commandBuilder.sunion(channel, keys));
     }
 
     @Override
-    public Observable<Long> sunionstore(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.sunionstore(destination, keys));
+    public Single<Long> sunionstore(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.sunionstore(destination, keys));
     }
 
     @Override
-    public Observable<Long> strlen(K key) {
-        return createObservable(() -> commandBuilder.strlen(key));
+    public Single<Long> strlen(K key) {
+        return createSingle(() -> commandBuilder.strlen(key));
     }
 
     @Override
-    public Observable<Long> touch(K... keys) {
-        return createObservable(() -> commandBuilder.touch(keys));
+    public Single<Long> touch(K... keys) {
+        return createSingle(() -> commandBuilder.touch(keys));
     }
 
-    public Observable<Long> touch(Iterable<K> keys) {
-        return createObservable(() -> commandBuilder.touch(keys));
-    }
-
-    @Override
-    public Observable<Long> ttl(K key) {
-        return createObservable(() -> commandBuilder.ttl(key));
+    public Single<Long> touch(Iterable<K> keys) {
+        return createSingle(() -> commandBuilder.touch(keys));
     }
 
     @Override
-    public Observable<String> type(K key) {
-        return createObservable(() -> commandBuilder.type(key));
+    public Single<Long> ttl(K key) {
+        return createSingle(() -> commandBuilder.ttl(key));
     }
 
     @Override
-    public Observable<String> watch(K... keys) {
-        return createObservable(() -> commandBuilder.watch(keys));
+    public Single<String> type(K key) {
+        return createSingle(() -> commandBuilder.type(key));
     }
 
     @Override
-    public Observable<String> unwatch() {
-        return createObservable(commandBuilder::unwatch);
+    public Single<String> watch(K... keys) {
+        return createSingle(() -> commandBuilder.watch(keys));
     }
 
     @Override
-    public Observable<Long> zadd(K key, double score, V member) {
-        return createObservable(() -> commandBuilder.zadd(key, null, score, member));
+    public Single<String> unwatch() {
+        return createSingle(commandBuilder::unwatch);
     }
 
     @Override
-    public Observable<Long> zadd(K key, Object... scoresAndValues) {
-        return createObservable(() -> commandBuilder.zadd(key, null, scoresAndValues));
+    public Single<Long> zadd(K key, double score, V member) {
+        return createSingle(() -> commandBuilder.zadd(key, null, score, member));
     }
 
     @Override
-    public Observable<Long> zadd(K key, ScoredValue<V>... scoredValues) {
-        return createObservable(() -> commandBuilder.zadd(key, null, scoredValues));
+    public Single<Long> zadd(K key, Object... scoresAndValues) {
+        return createSingle(() -> commandBuilder.zadd(key, null, scoresAndValues));
     }
 
     @Override
-    public Observable<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
-        return createObservable(() -> commandBuilder.zadd(key, zAddArgs, score, member));
+    public Single<Long> zadd(K key, ScoredValue<V>... scoredValues) {
+        return createSingle(() -> commandBuilder.zadd(key, null, scoredValues));
     }
 
     @Override
-    public Observable<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
-        return createObservable(() -> commandBuilder.zadd(key, zAddArgs, scoresAndValues));
+    public Single<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
+        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, score, member));
     }
 
     @Override
-    public Observable<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
-        return createObservable(() -> commandBuilder.zadd(key, zAddArgs, scoredValues));
+    public Single<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
+        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, scoresAndValues));
     }
 
     @Override
-    public Observable<Double> zaddincr(K key, double score, V member) {
-        return createObservable(() -> commandBuilder.zaddincr(key, score, member));
+    public Single<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
+        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, scoredValues));
     }
 
     @Override
-    public Observable<Long> zcard(K key) {
-        return createObservable(() -> commandBuilder.zcard(key));
+    public Single<Double> zaddincr(K key, double score, V member) {
+        return createSingle(() -> commandBuilder.zaddincr(key, score, member));
     }
 
     @Override
-    public Observable<Long> zcount(K key, double min, double max) {
-        return createObservable(() -> commandBuilder.zcount(key, min, max));
+    public Single<Long> zcard(K key) {
+        return createSingle(() -> commandBuilder.zcard(key));
     }
 
     @Override
-    public Observable<Long> zcount(K key, String min, String max) {
-        return createObservable(() -> commandBuilder.zcount(key, min, max));
+    public Single<Long> zcount(K key, double min, double max) {
+        return createSingle(() -> commandBuilder.zcount(key, min, max));
     }
 
     @Override
-    public Observable<Double> zincrby(K key, double amount, K member) {
-        return createObservable(() -> commandBuilder.zincrby(key, amount, member));
+    public Single<Long> zcount(K key, String min, String max) {
+        return createSingle(() -> commandBuilder.zcount(key, min, max));
     }
 
     @Override
-    public Observable<Long> zinterstore(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.zinterstore(destination, keys));
+    public Single<Double> zincrby(K key, double amount, K member) {
+        return createSingle(() -> commandBuilder.zincrby(key, amount, member));
     }
 
     @Override
-    public Observable<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        return createObservable(() -> commandBuilder.zinterstore(destination, storeArgs, keys));
+    public Single<Long> zinterstore(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.zinterstore(destination, keys));
+    }
+
+    @Override
+    public Single<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
+        return createSingle(() -> commandBuilder.zinterstore(destination, storeArgs, keys));
     }
 
     @Override
@@ -1133,82 +1135,82 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.zrange(channel, key, start, stop));
+    public Single<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.zrange(channel, key, start, stop));
     }
 
     @Override
-    public Observable<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.zrangeWithScores(channel, key, start, stop));
+    public Single<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.zrangeWithScores(channel, key, start, stop));
     }
 
     @Override
-    public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
-        return createObservable(() -> commandBuilder.zrangebyscore(channel, key, min, max));
+    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
+        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
     @Override
-    public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
-        return createObservable(() -> commandBuilder.zrangebyscore(channel, key, min, max));
+    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
+        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
     @Override
-    public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
             long count) {
-        return createObservable(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
             long count) {
-        return createObservable(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
-        return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
+    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
+        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
     @Override
-    public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
-        return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
+    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
+        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
     @Override
-    public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
-        return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
-        return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Observable<Long> zrank(K key, V member) {
-        return createObservable(() -> commandBuilder.zrank(key, member));
+    public Single<Long> zrank(K key, V member) {
+        return createSingle(() -> commandBuilder.zrank(key, member));
     }
 
     @Override
-    public Observable<Long> zrem(K key, V... members) {
-        return createObservable(() -> commandBuilder.zrem(key, members));
+    public Single<Long> zrem(K key, V... members) {
+        return createSingle(() -> commandBuilder.zrem(key, members));
     }
 
     @Override
-    public Observable<Long> zremrangebyrank(K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.zremrangebyrank(key, start, stop));
+    public Single<Long> zremrangebyrank(K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.zremrangebyrank(key, start, stop));
     }
 
     @Override
-    public Observable<Long> zremrangebyscore(K key, double min, double max) {
-        return createObservable(() -> commandBuilder.zremrangebyscore(key, min, max));
+    public Single<Long> zremrangebyscore(K key, double min, double max) {
+        return createSingle(() -> commandBuilder.zremrangebyscore(key, min, max));
     }
 
     @Override
-    public Observable<Long> zremrangebyscore(K key, String min, String max) {
-        return createObservable(() -> commandBuilder.zremrangebyscore(key, min, max));
+    public Single<Long> zremrangebyscore(K key, String min, String max) {
+        return createSingle(() -> commandBuilder.zremrangebyscore(key, min, max));
     }
 
     @Override
@@ -1262,239 +1264,239 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.zrevrange(channel, key, start, stop));
+    public Single<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.zrevrange(channel, key, start, stop));
     }
 
     @Override
-    public Observable<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createObservable(() -> commandBuilder.zrevrangeWithScores(channel, key, start, stop));
+    public Single<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createSingle(() -> commandBuilder.zrevrangeWithScores(channel, key, start, stop));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
-        return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
+    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
+        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
-        return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
+    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
+        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
-        return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
-        return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
-        return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
+    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
+        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
-        return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
+    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
+        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
-        return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
-        return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Observable<Long> zrevrank(K key, V member) {
-        return createObservable(() -> commandBuilder.zrevrank(key, member));
+    public Single<Long> zrevrank(K key, V member) {
+        return createSingle(() -> commandBuilder.zrevrank(key, member));
     }
 
     @Override
-    public Observable<Double> zscore(K key, V member) {
-        return createObservable(() -> commandBuilder.zscore(key, member));
+    public Single<Double> zscore(K key, V member) {
+        return createSingle(() -> commandBuilder.zscore(key, member));
     }
 
     @Override
-    public Observable<Long> zunionstore(K destination, K... keys) {
-        return createObservable(() -> commandBuilder.zunionstore(destination, keys));
+    public Single<Long> zunionstore(K destination, K... keys) {
+        return createSingle(() -> commandBuilder.zunionstore(destination, keys));
     }
 
     @Override
-    public Observable<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        return createObservable(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
+    public Single<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
+        return createSingle(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan() {
-        return createObservable(commandBuilder::scan);
+    public Single<KeyScanCursor<K>> scan() {
+        return createSingle(commandBuilder::scan);
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.scan(scanArgs));
+    public Single<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.scan(scanArgs));
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.scan(scanCursor, scanArgs));
+    public Single<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.scan(scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.scan(scanCursor));
+    public Single<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.scan(scanCursor));
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
-        return createObservable(() -> commandBuilder.scanStreaming(channel));
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
+        return createSingle(() -> commandBuilder.scanStreaming(channel));
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.scanStreaming(channel, scanArgs));
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.scanStreaming(channel, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.scanStreaming(channel, scanCursor));
+    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.scanStreaming(channel, scanCursor));
     }
 
     @Override
-    public Observable<ValueScanCursor<V>> sscan(K key) {
-        return createObservable(() -> commandBuilder.sscan(key));
+    public Single<ValueScanCursor<V>> sscan(K key) {
+        return createSingle(() -> commandBuilder.sscan(key));
     }
 
     @Override
-    public Observable<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.sscan(key, scanArgs));
+    public Single<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.sscan(key, scanArgs));
     }
 
     @Override
-    public Observable<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.sscan(key, scanCursor, scanArgs));
+    public Single<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.sscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.sscan(key, scanCursor));
+    public Single<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.sscan(key, scanCursor));
     }
 
     @Override
-    public Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key) {
-        return createObservable(() -> commandBuilder.sscanStreaming(channel, key));
+    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key) {
+        return createSingle(() -> commandBuilder.sscanStreaming(channel, key));
     }
 
     @Override
-    public Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.sscanStreaming(channel, key, scanArgs));
+    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.sscanStreaming(channel, key, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.sscanStreaming(channel, key, scanCursor, scanArgs));
+    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.sscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.sscanStreaming(channel, key, scanCursor));
+    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.sscanStreaming(channel, key, scanCursor));
     }
 
     @Override
-    public Observable<MapScanCursor<K, V>> hscan(K key) {
-        return createObservable(() -> commandBuilder.hscan(key));
+    public Single<MapScanCursor<K, V>> hscan(K key) {
+        return createSingle(() -> commandBuilder.hscan(key));
     }
 
     @Override
-    public Observable<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.hscan(key, scanArgs));
+    public Single<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.hscan(key, scanArgs));
     }
 
     @Override
-    public Observable<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.hscan(key, scanCursor, scanArgs));
+    public Single<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.hscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.hscan(key, scanCursor));
+    public Single<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.hscan(key, scanCursor));
     }
 
     @Override
-    public Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key) {
-        return createObservable(() -> commandBuilder.hscanStreaming(channel, key));
+    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key) {
+        return createSingle(() -> commandBuilder.hscanStreaming(channel, key));
     }
 
     @Override
-    public Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.hscanStreaming(channel, key, scanArgs));
+    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.hscanStreaming(channel, key, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
             ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.hscanStreaming(channel, key, scanCursor, scanArgs));
+        return createSingle(() -> commandBuilder.hscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.hscanStreaming(channel, key, scanCursor));
+    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.hscanStreaming(channel, key, scanCursor));
     }
 
     @Override
-    public Observable<ScoredValueScanCursor<V>> zscan(K key) {
-        return createObservable(() -> commandBuilder.zscan(key));
+    public Single<ScoredValueScanCursor<V>> zscan(K key) {
+        return createSingle(() -> commandBuilder.zscan(key));
     }
 
     @Override
-    public Observable<ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.zscan(key, scanArgs));
+    public Single<ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.zscan(key, scanArgs));
     }
 
     @Override
-    public Observable<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.zscan(key, scanCursor, scanArgs));
+    public Single<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.zscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.zscan(key, scanCursor));
+    public Single<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.zscan(key, scanCursor));
     }
 
     @Override
-    public Observable<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key) {
-        return createObservable(() -> commandBuilder.zscanStreaming(channel, key));
+    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key) {
+        return createSingle(() -> commandBuilder.zscanStreaming(channel, key));
     }
 
     @Override
-    public Observable<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.zscanStreaming(channel, key, scanArgs));
+    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return createSingle(() -> commandBuilder.zscanStreaming(channel, key, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
             ScanArgs scanArgs) {
-        return createObservable(() -> commandBuilder.zscanStreaming(channel, key, scanCursor, scanArgs));
+        return createSingle(() -> commandBuilder.zscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
     @Override
-    public Observable<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
-        return createObservable(() -> commandBuilder.zscanStreaming(channel, key, scanCursor));
+    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return createSingle(() -> commandBuilder.zscanStreaming(channel, key, scanCursor));
     }
 
     @Override
@@ -1508,75 +1510,75 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> waitForReplication(int replicas, long timeout) {
-        return createObservable(() -> commandBuilder.wait(replicas, timeout));
+    public Single<Long> waitForReplication(int replicas, long timeout) {
+        return createSingle(() -> commandBuilder.wait(replicas, timeout));
     }
 
     @Override
-    public Observable<Long> pfadd(K key, V... values) {
-        return createObservable(() -> commandBuilder.pfadd(key, values));
+    public Single<Long> pfadd(K key, V... values) {
+        return createSingle(() -> commandBuilder.pfadd(key, values));
     }
 
-    public Observable<Long> pfadd(K key, V value, V... values) {
-        return createObservable(() -> commandBuilder.pfadd(key, value, values));
-    }
-
-    @Override
-    public Observable<String> pfmerge(K destkey, K... sourcekeys) {
-        return createObservable(() -> commandBuilder.pfmerge(destkey, sourcekeys));
-    }
-
-    public Observable<String> pfmerge(K destkey, K sourceKey, K... sourcekeys) {
-        return createObservable(() -> commandBuilder.pfmerge(destkey, sourceKey, sourcekeys));
+    public Single<Long> pfadd(K key, V value, V... values) {
+        return createSingle(() -> commandBuilder.pfadd(key, value, values));
     }
 
     @Override
-    public Observable<Long> pfcount(K... keys) {
-        return createObservable(() -> commandBuilder.pfcount(keys));
+    public Single<String> pfmerge(K destkey, K... sourcekeys) {
+        return createSingle(() -> commandBuilder.pfmerge(destkey, sourcekeys));
     }
 
-    public Observable<Long> pfcount(K key, K... keys) {
-        return createObservable(() -> commandBuilder.pfcount(key, keys));
-    }
-
-    @Override
-    public Observable<String> clusterBumpepoch() {
-        return createObservable(() -> commandBuilder.clusterBumpepoch());
+    public Single<String> pfmerge(K destkey, K sourceKey, K... sourcekeys) {
+        return createSingle(() -> commandBuilder.pfmerge(destkey, sourceKey, sourcekeys));
     }
 
     @Override
-    public Observable<String> clusterMeet(String ip, int port) {
-        return createObservable(() -> commandBuilder.clusterMeet(ip, port));
+    public Single<Long> pfcount(K... keys) {
+        return createSingle(() -> commandBuilder.pfcount(keys));
+    }
+
+    public Single<Long> pfcount(K key, K... keys) {
+        return createSingle(() -> commandBuilder.pfcount(key, keys));
     }
 
     @Override
-    public Observable<String> clusterForget(String nodeId) {
-        return createObservable(() -> commandBuilder.clusterForget(nodeId));
+    public Single<String> clusterBumpepoch() {
+        return createSingle(() -> commandBuilder.clusterBumpepoch());
     }
 
     @Override
-    public Observable<String> clusterAddSlots(int... slots) {
-        return createObservable(() -> commandBuilder.clusterAddslots(slots));
+    public Single<String> clusterMeet(String ip, int port) {
+        return createSingle(() -> commandBuilder.clusterMeet(ip, port));
     }
 
     @Override
-    public Observable<String> clusterDelSlots(int... slots) {
-        return createObservable(() -> commandBuilder.clusterDelslots(slots));
+    public Single<String> clusterForget(String nodeId) {
+        return createSingle(() -> commandBuilder.clusterForget(nodeId));
     }
 
     @Override
-    public Observable<String> clusterInfo() {
-        return createObservable(commandBuilder::clusterInfo);
+    public Single<String> clusterAddSlots(int... slots) {
+        return createSingle(() -> commandBuilder.clusterAddslots(slots));
     }
 
     @Override
-    public Observable<String> clusterMyId() {
-        return createObservable(commandBuilder::clusterMyId);
+    public Single<String> clusterDelSlots(int... slots) {
+        return createSingle(() -> commandBuilder.clusterDelslots(slots));
     }
 
     @Override
-    public Observable<String> clusterNodes() {
-        return createObservable(commandBuilder::clusterNodes);
+    public Single<String> clusterInfo() {
+        return createSingle(commandBuilder::clusterInfo);
+    }
+
+    @Override
+    public Single<String> clusterMyId() {
+        return createSingle(commandBuilder::clusterMyId);
+    }
+
+    @Override
+    public Single<String> clusterNodes() {
+        return createSingle(commandBuilder::clusterNodes);
     }
 
     @Override
@@ -1585,28 +1587,28 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> clusterCountKeysInSlot(int slot) {
-        return createObservable(() -> commandBuilder.clusterCountKeysInSlot(slot));
+    public Single<Long> clusterCountKeysInSlot(int slot) {
+        return createSingle(() -> commandBuilder.clusterCountKeysInSlot(slot));
     }
 
     @Override
-    public Observable<Long> clusterCountFailureReports(String nodeId) {
-        return createObservable(() -> commandBuilder.clusterCountFailureReports(nodeId));
+    public Single<Long> clusterCountFailureReports(String nodeId) {
+        return createSingle(() -> commandBuilder.clusterCountFailureReports(nodeId));
     }
 
     @Override
-    public Observable<Long> clusterKeyslot(K key) {
-        return createObservable(() -> commandBuilder.clusterKeyslot(key));
+    public Single<Long> clusterKeyslot(K key) {
+        return createSingle(() -> commandBuilder.clusterKeyslot(key));
     }
 
     @Override
-    public Observable<String> clusterSaveconfig() {
-        return createObservable(() -> commandBuilder.clusterSaveconfig());
+    public Single<String> clusterSaveconfig() {
+        return createSingle(() -> commandBuilder.clusterSaveconfig());
     }
 
     @Override
-    public Observable<String> clusterSetConfigEpoch(long configEpoch) {
-        return createObservable(() -> commandBuilder.clusterSetConfigEpoch(configEpoch));
+    public Single<String> clusterSetConfigEpoch(long configEpoch) {
+        return createSingle(() -> commandBuilder.clusterSetConfigEpoch(configEpoch));
     }
 
     @Override
@@ -1615,48 +1617,48 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> clusterSetSlotNode(int slot, String nodeId) {
-        return createObservable(() -> commandBuilder.clusterSetSlotNode(slot, nodeId));
+    public Single<String> clusterSetSlotNode(int slot, String nodeId) {
+        return createSingle(() -> commandBuilder.clusterSetSlotNode(slot, nodeId));
     }
 
     @Override
-    public Observable<String> clusterSetSlotStable(int slot) {
-        return createObservable(() -> commandBuilder.clusterSetSlotStable(slot));
+    public Single<String> clusterSetSlotStable(int slot) {
+        return createSingle(() -> commandBuilder.clusterSetSlotStable(slot));
     }
 
     @Override
-    public Observable<String> clusterSetSlotMigrating(int slot, String nodeId) {
-        return createObservable(() -> commandBuilder.clusterSetSlotMigrating(slot, nodeId));
+    public Single<String> clusterSetSlotMigrating(int slot, String nodeId) {
+        return createSingle(() -> commandBuilder.clusterSetSlotMigrating(slot, nodeId));
     }
 
     @Override
-    public Observable<String> clusterSetSlotImporting(int slot, String nodeId) {
-        return createObservable(() -> commandBuilder.clusterSetSlotImporting(slot, nodeId));
+    public Single<String> clusterSetSlotImporting(int slot, String nodeId) {
+        return createSingle(() -> commandBuilder.clusterSetSlotImporting(slot, nodeId));
     }
 
     @Override
-    public Observable<String> clusterFailover(boolean force) {
-        return createObservable(() -> commandBuilder.clusterFailover(force));
+    public Single<String> clusterFailover(boolean force) {
+        return createSingle(() -> commandBuilder.clusterFailover(force));
     }
 
     @Override
-    public Observable<String> clusterReset(boolean hard) {
-        return createObservable(() -> commandBuilder.clusterReset(hard));
+    public Single<String> clusterReset(boolean hard) {
+        return createSingle(() -> commandBuilder.clusterReset(hard));
     }
 
     @Override
-    public Observable<String> asking() {
-        return createObservable(commandBuilder::asking);
+    public Single<String> asking() {
+        return createSingle(commandBuilder::asking);
     }
 
     @Override
-    public Observable<String> clusterReplicate(String nodeId) {
-        return createObservable(() -> commandBuilder.clusterReplicate(nodeId));
+    public Single<String> clusterReplicate(String nodeId) {
+        return createSingle(() -> commandBuilder.clusterReplicate(nodeId));
     }
 
     @Override
-    public Observable<String> clusterFlushslots() {
-        return createObservable(commandBuilder::clusterFlushslots);
+    public Single<String> clusterFlushslots() {
+        return createSingle(commandBuilder::clusterFlushslots);
     }
 
     @Override
@@ -1665,13 +1667,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> zlexcount(K key, String min, String max) {
-        return createObservable(() -> commandBuilder.zlexcount(key, min, max));
+    public Single<Long> zlexcount(K key, String min, String max) {
+        return createSingle(() -> commandBuilder.zlexcount(key, min, max));
     }
 
     @Override
-    public Observable<Long> zremrangebylex(K key, String min, String max) {
-        return createObservable(() -> commandBuilder.zremrangebylex(key, min, max));
+    public Single<Long> zremrangebylex(K key, String min, String max) {
+        return createSingle(() -> commandBuilder.zremrangebylex(key, min, max));
     }
 
     @Override
@@ -1685,13 +1687,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> geoadd(K key, double longitude, double latitude, V member) {
-        return createObservable(() -> commandBuilder.geoadd(key, longitude, latitude, member));
+    public Single<Long> geoadd(K key, double longitude, double latitude, V member) {
+        return createSingle(() -> commandBuilder.geoadd(key, longitude, latitude, member));
     }
 
     @Override
-    public Observable<Long> geoadd(K key, Object... lngLatMember) {
-        return createDissolvingObservable(() -> commandBuilder.geoadd(key, lngLatMember));
+    public Single<Long> geoadd(K key, Object... lngLatMember) {
+        return createSingle(() -> commandBuilder.geoadd(key, lngLatMember));
     }
 
     @Override
@@ -1712,9 +1714,9 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
+    public Single<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
-        return createDissolvingObservable(
+        return createSingle(
                 () -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoRadiusStoreArgs));
     }
 
@@ -1729,9 +1731,9 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Long> georadiusbymember(K key, V member, double distance, Unit unit,
+    public Single<Long> georadiusbymember(K key, V member, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
-        return createDissolvingObservable(
+        return createSingle(
                 () -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoRadiusStoreArgs));
     }
 
@@ -1741,8 +1743,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
-        return createDissolvingObservable(() -> commandBuilder.geodist(key, from, to, unit));
+    public Single<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
+        return createSingle(() -> commandBuilder.geodist(key, from, to, unit));
     }
 
     public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
@@ -1767,18 +1769,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     public <T> Observable<T> createObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Observable.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false));
+        return Observable.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false).getObservableSubscriber());
     }
 
+    protected <T> Single<T> createSingle(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+        return createSingle(() -> new Command<>(type, output, args));
+    }
+
+    public <T> Single<T> createSingle(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+        return Single.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false).getSingleSubscriber());
+    }
+    
     @SuppressWarnings("unchecked")
-    public <T, R> R createDissolvingObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return (R) Observable.create(new ReactiveCommandDispatcher<>(commandSupplier, connection, true));
+    public <T, R> Observable<R> createDissolvingObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+        return (Observable<R>) Observable.create(new ReactiveCommandDispatcher<>(commandSupplier, connection, true).getObservableSubscriber());
     }
 
     @SuppressWarnings("unchecked")
     public <T, R> R createDissolvingObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
         return (R) Observable.create(new ReactiveCommandDispatcher<K, V, T>(() -> new Command<>(type, output, args),
-                connection, true));
+                connection, true).getObservableSubscriber());
     }
 
     /**

@@ -6,21 +6,25 @@ import java.lang.reflect.Proxy;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import com.lambdaworks.redis.internal.AbstractInvocationHandler;
-import rx.Observable;
+import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
+import rx.Completable;
+import rx.Observable;
+import rx.Single;
+
 /**
  * Invocation handler for testing purposes.
+ *
  * @param <K>
  * @param <V>
  */
@@ -44,33 +48,58 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
             Object result = targetMethod.invoke(rxApi, args);
 
-            if (result == null || !(result instanceof Observable<?>)) {
+            if (result == null) {
                 return result;
             }
-            Observable<?> observable = (Observable<?>) result;
 
-            if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
-                    observable.subscribe();
-                    return null;
+            if (result instanceof Observable<?>) {
+                Observable<?> observable = (Observable<?>) result;
+
+                if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
+                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection)
+                            .isMulti()) {
+                        observable.subscribe();
+                        return null;
+                    }
+                }
+
+                List<?> value = observable.toList().toBlocking().first();
+
+                if (method.getReturnType().equals(List.class)) {
+                    return value;
+                }
+
+                if (method.getReturnType().equals(Set.class)) {
+                    return LettuceSets.newHashSet(value);
+                }
+
+                if (!value.isEmpty()) {
+                    return value.get(0);
                 }
             }
 
-            List<?> value = observable.toList().toBlocking().first();
+            if (result instanceof Single<?>) {
+                Single<?> single = (Single<?>) result;
 
-            if (method.getReturnType().equals(List.class)) {
-                return value;
+                if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
+                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
+                        single.subscribe();
+                        return null;
+                    }
+                }
+
+                return single.toBlocking().value();
             }
 
-            if (method.getReturnType().equals(Set.class)) {
-                return LettuceSets.newHashSet(value);
+            if (result instanceof Completable) {
+                Completable completable = (Completable) result;
+                completable.await(5, TimeUnit.SECONDS);
+                if (completable.get() != null) {
+                    throw completable.get();
+                }
             }
 
-            if (!value.isEmpty()) {
-                return value.get(0);
-            }
-
-            return null;
+            return result;
 
         } catch (InvocationTargetException e) {
             throw e.getTargetException();

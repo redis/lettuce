@@ -210,7 +210,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             try {
                 command.complete();
             } catch (Exception e) {
-                logger.warn("{} Unexpected exception during command completion: {}", logPrefix, e.toString(), e);
+                logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
             }
 
             if (buffer.refCnt() != 0) {
