@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster.commands.rx;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -23,7 +24,7 @@ public class KeyClusterRxCommandTest extends KeyClusterCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 

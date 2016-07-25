@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster.commands;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushDatabaseOfAllNodes;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -25,7 +26,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = RedisClusterClient.create(
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 

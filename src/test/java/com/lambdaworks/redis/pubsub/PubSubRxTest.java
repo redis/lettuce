@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -286,7 +287,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubCloseOnClientShutdown() throws Exception {
 
-        RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+        RedisClient redisClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
+
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub().sync();
         FastShutdown.shutdown(redisClient);
 

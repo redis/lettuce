@@ -28,7 +28,7 @@ import io.netty.channel.group.ChannelGroup;
 public class MasterSlaveSentinelTest extends AbstractSentinelTest {
 
     static {
-        sentinelClient = RedisClient.create(TestClientResources.create(),
+        sentinelClient = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 

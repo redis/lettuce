@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.lambdaworks.TestClientResources;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
@@ -52,8 +53,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client = RedisClient.create(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
-        clusterClient = RedisClusterClient.create(
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
                 Collections.singletonList(RedisURI.Builder.redis(host, AbstractClusterTest.port5)
                 .build()));
     }

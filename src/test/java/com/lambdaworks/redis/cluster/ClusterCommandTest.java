@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
@@ -39,8 +40,9 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(), LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
+
     }
 
     @AfterClass

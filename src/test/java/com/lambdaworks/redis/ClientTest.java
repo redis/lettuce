@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -155,7 +156,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Test
     public void connectFailure() throws Exception {
-        RedisClient client = RedisClient.create("redis://invalid");
+        RedisClient client = RedisClient.create(TestClientResources.get(), "redis://invalid");
         exception.expect(RedisException.class);
         exception.expectMessage("Unable to connect");
         client.connect();
@@ -164,7 +165,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Test
     public void connectPubSubFailure() throws Exception {
-        RedisClient client = RedisClient.create("redis://invalid");
+        RedisClient client = RedisClient.create(TestClientResources.get(), "redis://invalid");
         exception.expect(RedisException.class);
         exception.expectMessage("Unable to connect");
         client.connectPubSub();
@@ -197,7 +198,7 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test
     public void emptyClient() throws Exception {
 
-        RedisClient client = RedisClient.create();
+        RedisClient client = DefaultRedisClient.get();
         try {
             client.connect();
         } catch (IllegalStateException e) {
@@ -215,8 +216,6 @@ public class ClientTest extends AbstractRedisClientTest {
         } catch (IllegalArgumentException e) {
             assertThat(e).hasMessageContaining("RedisURI");
         }
-
-        FastShutdown.shutdown(client);
     }
 
     @Test

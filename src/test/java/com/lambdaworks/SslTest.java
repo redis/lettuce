@@ -31,7 +31,7 @@ public class SslTest extends AbstractTest {
 
     private static final String KEYSTORE = "work/keystore.jks";
     private static final String LOCALHOST_KEYSTORE = "work/keystore-localhost.jks";
-    private static final RedisClient redisClient = RedisClient.create();
+    private static final RedisClient redisClient = DefaultRedisClient.get();
 
     private static final RedisURI URI_NO_VERIFY = RedisURI.Builder.redis(host(), sslPort()) //
             .withSsl(true) //
@@ -51,11 +51,6 @@ public class SslTest extends AbstractTest {
 
         System.setProperty("javax.net.ssl.trustStore", KEYSTORE);
         redisClient.setOptions(ClientOptions.create());
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        FastShutdown.shutdown(redisClient);
     }
 
     @Test

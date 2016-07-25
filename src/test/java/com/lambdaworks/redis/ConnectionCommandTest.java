@@ -33,11 +33,10 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
                 }
 
                 RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
-                RedisClient redisClient = RedisClient.create(redisURI);
-                RedisCommands<String, String> authConnection = redisClient.connect().sync();
+                RedisClient redisClient = DefaultRedisClient.get();
+                RedisCommands<String, String> authConnection = redisClient.connect(redisURI).sync();
                 authConnection.ping();
                 authConnection.getStatefulConnection().close();
-                FastShutdown.shutdown(redisClient);
             }
         };
     }

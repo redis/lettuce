@@ -15,17 +15,6 @@ public class RedisClientFactoryTest {
 
     private final static String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
     private final static RedisURI REDIS_URI = RedisURI.create(URI);
-    private static ClientResources DEFAULT_RESOURCES;
-
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-        DEFAULT_RESOURCES = TestClientResources.create();
-    }
-
-    @AfterClass
-    public static void afterClass() throws Exception {
-        FastShutdown.shutdown(DEFAULT_RESOURCES);
-    }
 
     @Test
     public void plain() throws Exception {
@@ -54,7 +43,7 @@ public class RedisClientFactoryTest {
 
     @Test
     public void clientResources() throws Exception {
-        FastShutdown.shutdown(RedisClient.create(DEFAULT_RESOURCES));
+        FastShutdown.shutdown(RedisClient.create(TestClientResources.get()));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -64,12 +53,12 @@ public class RedisClientFactoryTest {
 
     @Test
     public void clientResourcesWithStringUri() throws Exception {
-        FastShutdown.shutdown(RedisClient.create(DEFAULT_RESOURCES, URI));
+        FastShutdown.shutdown(RedisClient.create(TestClientResources.get(), URI));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void clientResourcesWithStringUriNull() throws Exception {
-        RedisClient.create(DEFAULT_RESOURCES, (String) null);
+        RedisClient.create(TestClientResources.get(), (String) null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -79,12 +68,12 @@ public class RedisClientFactoryTest {
 
     @Test
     public void clientResourcesWithUri() throws Exception {
-        FastShutdown.shutdown(RedisClient.create(DEFAULT_RESOURCES, REDIS_URI));
+        FastShutdown.shutdown(RedisClient.create(TestClientResources.get(),  REDIS_URI));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void clientResourcesWithUriNull() throws Exception {
-        RedisClient.create(DEFAULT_RESOURCES, (RedisURI) null);
+        RedisClient.create(TestClientResources.get(), (RedisURI) null);
     }
 
     @Test(expected = IllegalArgumentException.class)

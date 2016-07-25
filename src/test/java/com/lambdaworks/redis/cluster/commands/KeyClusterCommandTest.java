@@ -56,9 +56,9 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
         redis.set("b", "value");
 
         assertThat(redis.del(key, "a", "b")).isEqualTo(3);
-        assertThat(redis.exists(key)).isFalse();
-        assertThat(redis.exists("a")).isFalse();
-        assertThat(redis.exists("b")).isFalse();
+        assertThat(redis.exists(key)).isEqualTo(0);
+        assertThat(redis.exists("a")).isEqualTo(0);
+        assertThat(redis.exists("b")).isEqualTo(0);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
         redis.set("b", "value");
 
         assertThat(redis.unlink(key, "a", "b")).isEqualTo(3);
-        assertThat(redis.exists(key)).isFalse();
+        assertThat(redis.exists(key)).isEqualTo(0);
     }
 
 }

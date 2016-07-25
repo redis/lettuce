@@ -201,6 +201,11 @@ public abstract class AbstractRedisClient {
 
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         SocketAddress redisAddress = connectionBuilder.socketAddress();
+
+        if(connectionBuilder.workerPool().isShuttingDown()){
+            throw new IllegalStateException("Cannot connect. Worker pool not running");
+        }
+
         try {
 
             logger.debug("Connecting to Redis at {}", redisAddress);

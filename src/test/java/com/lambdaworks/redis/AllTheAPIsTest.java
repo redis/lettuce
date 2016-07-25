@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -19,7 +20,8 @@ public class AllTheAPIsTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
         clusterPort = TestSettings.port(900);
-        clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), clusterPort).build());
+        clusterClient = RedisClusterClient.create(
+                TestClientResources.get(), RedisURI.Builder.redis(TestSettings.host(), clusterPort).build());
     }
 
     @BeforeClass

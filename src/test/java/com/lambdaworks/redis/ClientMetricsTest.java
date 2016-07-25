@@ -5,6 +5,7 @@ import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.metrics.CommandLatencyId;
 import com.lambdaworks.redis.metrics.CommandMetrics;
@@ -35,7 +36,7 @@ public class ClientMetricsTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
     }
 
     @Before

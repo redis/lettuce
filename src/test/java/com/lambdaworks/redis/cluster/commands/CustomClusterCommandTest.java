@@ -2,6 +2,7 @@ package com.lambdaworks.redis.cluster.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -32,7 +33,7 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = RedisClusterClient.create(
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 

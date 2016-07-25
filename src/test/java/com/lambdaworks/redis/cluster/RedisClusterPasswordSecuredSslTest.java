@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
 
     public static RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
             .withSsl(true).withVerifyPeer(false).build();
-    public static RedisClusterClient redisClient = RedisClusterClient.create(redisURI);
+    public static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
     @Before
     public void before() throws Exception {
@@ -123,7 +124,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
 
         RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
                 .build();
-        RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
         try {
             redisClusterClient.reloadPartitions();
@@ -139,7 +140,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
 
         RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
                 .build();
-        RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
         try {
             redisClusterClient.connect();

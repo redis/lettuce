@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.TestClientResources;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
@@ -48,8 +49,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(), Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass
@@ -353,7 +354,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test
     public void noClusterNodeAvailable() throws Exception {
 
-        RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(host, 40400).build());
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, 40400).build());
         try {
             clusterClient.connect();
             fail("Missing RedisException");
@@ -432,7 +433,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         sync.readWrite();
 
         assertThat(ReflectionTestUtils.getField(sync.getStatefulConnection(), "readOnly")).isEqualTo(Boolean.FALSE);
-        RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(host, 40400).build());
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, 40400).build());
         try {
             clusterClient.connect();
             fail("Missing RedisException");

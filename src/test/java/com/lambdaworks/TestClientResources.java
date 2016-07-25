@@ -15,6 +15,9 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
  */
 public class TestClientResources {
 
+    private final static TestClientResources instance = new TestClientResources();
+    private ClientResources clientResources = create();
+
     public static ClientResources create() {
         final DefaultClientResources resources = DefaultClientResources.builder().eventLoopGroupProvider(
                 new TestEventLoopGroupProvider()).build();
@@ -31,5 +34,9 @@ public class TestClientResources {
         });
 
         return resources;
+    }
+
+    public static ClientResources get() {
+        return instance.clientResources;
     }
 }

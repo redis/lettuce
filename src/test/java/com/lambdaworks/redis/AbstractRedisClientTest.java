@@ -2,6 +2,7 @@
 
 package com.lambdaworks.redis;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -20,7 +21,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     }
 
     protected static RedisClient newRedisClient() {
-        return RedisClient.create(RedisURI.Builder.redis(host, port).build());
+        return RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
     }
 
     protected RedisCommands<String, String> connect() {

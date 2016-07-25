@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
@@ -23,7 +24,8 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(
+                TestClientResources.get(), Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

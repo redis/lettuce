@@ -9,6 +9,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -76,7 +77,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWith() throws Exception {
 
-        RedisClient client = RedisClient.create(
+        RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID).withSentinel(TestSettings.host()).build());
 
         RedisSentinelCommands<String, String> sentinelConnection = client.connectSentinel().sync();
@@ -98,7 +99,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWrongMaster() throws Exception {
 
-        RedisClient client = RedisClient.create(
+        RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host()).build());
         try {
             client.connect();
@@ -112,13 +113,14 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnect() throws Exception {
 
-        RedisClient client = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        RedisClient client = DefaultRedisClient.get();
 
-        RedisSentinelCommands<String, String> connection = client.connectSentinel().sync();
+        RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
+        RedisSentinelCommands<String, String> connection = client
+                .connectSentinel(redisURI).sync();
         assertThat(connection.ping()).isEqualTo("PONG");
 
         connection.getStatefulConnection().close();
-        FastShutdown.shutdown(client);
     }
 
     @Test

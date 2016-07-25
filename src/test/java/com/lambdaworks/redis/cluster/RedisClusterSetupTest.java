@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.TestClientResources;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -58,7 +59,8 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        clusterClient = RedisClusterClient.create(
+                TestClientResources.get(), RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
     }
 
     @AfterClass
