@@ -227,6 +227,28 @@ public class RedisClusterSetupTest extends AbstractTest {
     }
 
     @Test
+    public void slotMigrationShouldUseAsking() throws Exception {
+
+        ClusterSetup.setup2Masters(clusterRule);
+
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
+
+        Partitions partitions = connection.getPartitions();
+        assertThat(partitions.getPartitionBySlot(0).getSlots().size()).isEqualTo(12000);
+        assertThat(partitions.getPartitionBySlot(16380).getSlots().size()).isEqualTo(4384);
+
+        redis1.clusterSetSlotMigrating(3300, redis2.clusterMyId());
+        redis2.clusterSetSlotImporting(3300, redis1.clusterMyId());
+
+        assertThat(sync.get("b")).isNull();
+
+        async.close();
+    }
+
+    @Test
     public void disconnectedConnectionRejectTest() throws Exception {
 
         clusterClient.setOptions(ClusterClientOptions.builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS)
