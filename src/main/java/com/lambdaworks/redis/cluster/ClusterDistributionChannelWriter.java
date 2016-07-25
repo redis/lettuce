@@ -70,11 +70,13 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) commandToSend;
             if (clusterCommand.isMoved() || clusterCommand.isAsk()) {
                 HostAndPort target;
+                boolean asking = false;
                 if (clusterCommand.isMoved()) {
                     target = getMoveTarget(clusterCommand.getError());
                     clusterEventListener.onMovedRedirection();
                 } else {
                     target = getAskTarget(clusterCommand.getError());
+                    asking = true;
                     clusterEventListener.onAskRedirection();
                 }
 
@@ -83,7 +85,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
                         .getConnection(ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
                 channelWriter = connection.getChannelWriter();
 
-                if (clusterCommand.isAsk()) {
+                if (asking) {
                     // set asking bit
                     StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
                     statefulRedisConnection.async().asking();

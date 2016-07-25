@@ -6,31 +6,21 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
-import com.lambdaworks.redis.internal.LettuceLists;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.RedisAsyncConnection;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisClusterAsyncConnection;
-import com.lambdaworks.redis.RedisClusterConnection;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ClusterCommandTest extends AbstractClusterTest {
