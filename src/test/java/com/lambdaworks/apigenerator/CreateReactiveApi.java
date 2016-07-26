@@ -25,10 +25,10 @@ import com.lambdaworks.redis.internal.LettuceSets;
 @RunWith(Parameterized.class)
 public class CreateReactiveApi {
 
-    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
+    private static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
             "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
-    private Set<String> FORCE_OBSERVABLE_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha");
+    private static Set<String> FORCE_OBSERVABLE_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
 
     private CompilationUnitFactory factory;
 
@@ -96,10 +96,15 @@ public class CreateReactiveApi {
                 return method.getType();
             }
 
+            if (method.getName().equals("sort")) {
+                System.out.println();
+            }
+
             String typeAsString = method.getType().toStringWithoutComments().trim();
+
             if (methodMatch(FORCE_OBSERVABLE_RESULT, method, classOfMethod)) {
                 typeAsString = "Observable<" + typeAsString + ">";
-            } if (typeAsString.equals("void")) {
+            } else if (typeAsString.equals("void")) {
                 typeAsString = "Completable";
             } else if (typeAsString.startsWith("List<")) {
                 typeAsString = "Observable<" + typeAsString.substring(5, typeAsString.length() - 1) + ">";

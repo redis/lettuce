@@ -152,7 +152,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      * @see RedisStringAsyncCommands#mget(Object[])
      */
-    RedisFuture<List<V>> mget(K... keys);
+    RedisFuture<List<KeyValue<K, V>>> mget(K... keys);
 
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular

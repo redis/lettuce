@@ -11,7 +11,7 @@ import com.lambdaworks.redis.ScoredValue;
  * @since 3.0
  */
 @FunctionalInterface
-public interface ScoredValueStreamingChannel<V> {
+public interface ScoredValueStreamingChannel<V> extends StreamingChannel {
     /**
      * Called on every incoming ScoredValue.
      * 

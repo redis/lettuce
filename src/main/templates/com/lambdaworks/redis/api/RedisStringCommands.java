@@ -3,9 +3,12 @@ package com.lambdaworks.redis.api;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.SetArgs;
+import com.lambdaworks.redis.Value;
 
 /**
  * ${intent} for Strings.
@@ -230,17 +233,17 @@ public interface RedisStringCommands<K, V> {
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      */
-    List<V> mget(K... keys);
+    List<KeyValue<K, V>> mget(K... keys);
 
     /**
      * Stream over the values of all the given keys.
-     * 
+     *
      * @param channel the channel
      * @param keys the keys
-     * 
+     *
      * @return Long array-reply list of values at the specified keys.
      */
-    Long mget(ValueStreamingChannel<V> channel, K... keys);
+    Long mget(KeyValueStreamingChannel<K, V> channel, K... keys);
 
     /**
      * Set multiple keys to multiple values.

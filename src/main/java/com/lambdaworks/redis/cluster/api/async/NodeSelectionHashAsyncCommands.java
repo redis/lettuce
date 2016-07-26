@@ -2,6 +2,8 @@ package com.lambdaworks.redis.cluster.api.async;
 
 import java.util.List;
 import java.util.Map;
+import com.lambdaworks.redis.KeyValue;
+import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.MapScanCursor;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
@@ -126,7 +128,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param fields the field type: key
      * @return List&lt;V&gt; array-reply list of values associated with the given fields, in the same
      */
-    AsyncExecutions<List<V>> hmget(K key, K... fields);
+    AsyncExecutions<List<KeyValue<K, V>>> hmget(K key, K... fields);
 
     /**
      * Stream over the values of all the given hash fields.
@@ -137,7 +139,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * 
      * @return Long count of the keys
      */
-    AsyncExecutions<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields);
+    AsyncExecutions<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**
      * Set multiple hash fields to multiple values.

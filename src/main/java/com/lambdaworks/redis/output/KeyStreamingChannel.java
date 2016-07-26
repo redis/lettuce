@@ -9,7 +9,7 @@ package com.lambdaworks.redis.output;
  * @since 3.0
  */
 @FunctionalInterface
-public interface KeyStreamingChannel<K> {
+public interface KeyStreamingChannel<K> extends StreamingChannel{
     /**
      * Called on every incoming key.
      * 

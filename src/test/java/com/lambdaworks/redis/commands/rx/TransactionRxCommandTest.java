@@ -5,17 +5,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Iterator;
 import java.util.List;
 
-import com.lambdaworks.util.RxSyncInvocationHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.TransactionCommandTest;
 import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 
 import rx.Observable;
 import rx.Single;
@@ -85,7 +86,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
         TestSubscriber<String> set1 = TestSubscriber.create();
         TestSubscriber<String> set2 = TestSubscriber.create();
-        TestSubscriber<String> mget = TestSubscriber.create();
+        TestSubscriber<KeyValue<String, String>> mget = TestSubscriber.create();
         TestSubscriber<Long> llen = TestSubscriber.create();
         TestSubscriber<Object> exec = TestSubscriber.create();
 
@@ -100,7 +101,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
         set1.assertValue("OK");
         set2.assertValue("OK");
-        mget.assertValues("value1", "value2");
+        mget.assertValues(KeyValue.just("key1", "value1"), KeyValue.just("key2", "value2"));
         llen.assertValue(0L);
     }
 
@@ -118,7 +119,8 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
         exec.awaitTerminalEvent();
 
-        assertThat(exec.getOnNextEvents()).hasSize(4).containsExactly("OK", "OK", list("value1", "value2"), 0L);
+        assertThat(exec.getOnNextEvents()).hasSize(4).containsExactly("OK", "OK",
+                list(kv("key1", "value1"), kv("key2", "value2")), 0L);
     }
 
     protected <T> T first(Observable<T> observable) {

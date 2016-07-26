@@ -2,10 +2,10 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.List;
 import java.util.Map;
+
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.BitFieldArgs;
-import com.lambdaworks.redis.SetArgs;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands for Strings.
@@ -231,7 +231,7 @@ public interface RedisStringAsyncCommands<K, V> {
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      */
-    RedisFuture<List<V>> mget(K... keys);
+    RedisFuture<List<KeyValue<K, V>>> mget(K... keys);
 
     /**
      * Stream over the values of all the given keys.
@@ -241,7 +241,7 @@ public interface RedisStringAsyncCommands<K, V> {
      *
      * @return Long array-reply list of values at the specified keys.
      */
-    RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys);
+    RedisFuture<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys);
 
     /**
      * Set multiple keys to multiple values.

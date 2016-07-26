@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.lambdaworks.redis.KeyValue;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -73,9 +74,9 @@ public class StringClusterRxCommandTest extends StringCommandTest {
 
         RedisAdvancedClusterReactiveCommands<String, String> reactive = clusterConnection.reactive();
 
-        Observable<String> mget = reactive.mget(key, "key1", "key2");
-        String first = mget.toBlocking().first();
-        assertThat(first).isEqualTo(value);
+        Observable<KeyValue<String, String>> mget = reactive.mget(key, "key1", "key2");
+        KeyValue<String, String> first = mget.toBlocking().first();
+        assertThat(first).isEqualTo(KeyValue.just(key, value));
     }
 
 }

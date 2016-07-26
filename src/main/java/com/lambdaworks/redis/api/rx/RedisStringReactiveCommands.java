@@ -2,9 +2,12 @@ package com.lambdaworks.redis.api.rx;
 
 import java.util.List;
 import java.util.Map;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.SetArgs;
+import com.lambdaworks.redis.Value;
 import rx.Observable;
 import rx.Single;
 import rx.Completable;
@@ -233,17 +236,17 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param keys the key
      * @return V array-reply list of values at the specified keys.
      */
-    Observable<V> mget(K... keys);
+    Observable<KeyValue<K, V>> mget(K... keys);
 
     /**
      * Stream over the values of all the given keys.
-     * 
+     *
      * @param channel the channel
      * @param keys the keys
-     * 
+     *
      * @return Long array-reply list of values at the specified keys.
      */
-    Single<Long> mget(ValueStreamingChannel<V> channel, K... keys);
+    Single<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys);
 
     /**
      * Set multiple keys to multiple values.

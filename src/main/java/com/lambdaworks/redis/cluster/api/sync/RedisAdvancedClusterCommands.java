@@ -149,7 +149,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      * @see RedisStringCommands#mget(Object[])
      */
-    List<V> mget(K... keys);
+    List<KeyValue<K, V>> mget(K... keys);
 
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular

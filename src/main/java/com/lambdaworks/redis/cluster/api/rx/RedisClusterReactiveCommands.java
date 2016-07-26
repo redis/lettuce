@@ -3,6 +3,7 @@ package com.lambdaworks.redis.cluster.api.rx;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.KeyValue;
 import rx.Observable;
 
 import com.lambdaworks.redis.api.rx.*;
@@ -290,7 +291,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * @param keys the key
      * @return Observable&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
      */
-    Observable<V> mget(K... keys);
+    Observable<KeyValue<K, V>> mget(K... keys);
 
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular

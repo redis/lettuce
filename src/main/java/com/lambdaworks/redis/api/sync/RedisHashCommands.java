@@ -2,6 +2,8 @@ package com.lambdaworks.redis.api.sync;
 
 import java.util.List;
 import java.util.Map;
+import com.lambdaworks.redis.KeyValue;
+import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.MapScanCursor;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
@@ -125,7 +127,7 @@ public interface RedisHashCommands<K, V> {
      * @param fields the field type: key
      * @return List&lt;V&gt; array-reply list of values associated with the given fields, in the same
      */
-    List<V> hmget(K key, K... fields);
+    List<KeyValue<K, V>> hmget(K key, K... fields);
 
     /**
      * Stream over the values of all the given hash fields.
@@ -136,7 +138,7 @@ public interface RedisHashCommands<K, V> {
      * 
      * @return Long count of the keys
      */
-    Long hmget(ValueStreamingChannel<V> channel, K key, K... fields);
+    Long hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**
      * Set multiple hash fields to multiple values.

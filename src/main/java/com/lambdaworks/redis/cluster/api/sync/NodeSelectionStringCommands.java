@@ -2,9 +2,13 @@ package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.List;
 import java.util.Map;
+
+import com.lambdaworks.redis.KeyValue;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.SetArgs;
+import com.lambdaworks.redis.Value;
 
 /**
  * Synchronous executed commands on a node selection for Strings.

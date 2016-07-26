@@ -122,7 +122,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         reactive.clientPause(1000).subscribe();
         Delay.delay(millis(100));
 
-        Observable<String> set = reactive.mget(key, value);
+        Observable<KeyValue<String, String>> set = reactive.mget(key, value);
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));

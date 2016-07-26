@@ -71,7 +71,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         redis.set("two", "2");
         redis.mget("one", "two");
         redis.llen(key);
-        assertThat(redis.exec()).isEqualTo(list("OK", "OK", list("1", "2"), 0L));
+        assertThat(redis.exec()).isEqualTo(list("OK", "OK", list(kv("one", "1"), kv("two", "2")), 0L));
     }
 
     @Test

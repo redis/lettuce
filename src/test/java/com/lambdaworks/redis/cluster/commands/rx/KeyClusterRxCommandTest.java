@@ -1,6 +1,7 @@
 package com.lambdaworks.redis.cluster.commands.rx;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -13,7 +14,6 @@ import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.commands.KeyClusterCommandTest;
-import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
 
 /**
  * @author Mark Paluch

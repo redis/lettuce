@@ -446,12 +446,12 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<List<V>> hmget(K key, K... fields) {
-        return dispatch(commandBuilder.hmget(key, fields));
+    public RedisFuture<List<KeyValue<K, V>>> hmget(K key, K... fields) {
+        return dispatch(commandBuilder.hmgetKeyValue(key, fields));
     }
 
     @Override
-    public RedisFuture<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
+    public RedisFuture<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
         return dispatch(commandBuilder.hmget(channel, key, fields));
     }
 
@@ -586,20 +586,20 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<List<V>> mget(K... keys) {
-        return dispatch(commandBuilder.mget(keys));
+    public RedisFuture<List<KeyValue<K, V>>> mget(K... keys) {
+        return dispatch(commandBuilder.mgetKeyValue(keys));
     }
 
-    public RedisFuture<List<V>> mget(Iterable<K> keys) {
-        return dispatch(commandBuilder.mget(keys));
+    public RedisFuture<List<KeyValue<K, V>>> mget(Iterable<K> keys) {
+        return dispatch(commandBuilder.mgetKeyValue(keys));
     }
 
     @Override
-    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+    public RedisFuture<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
         return dispatch(commandBuilder.mget(channel, keys));
     }
 
-    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+    public RedisFuture<Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
         return dispatch(commandBuilder.mget(channel, keys));
     }
 

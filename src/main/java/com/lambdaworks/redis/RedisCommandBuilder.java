@@ -4,13 +4,11 @@ import static com.lambdaworks.redis.LettuceStrings.string;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
@@ -80,6 +78,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         bitFieldArgs.build(args);
 
         return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<Value<Long>>> bitfieldValue(K key, BitFieldArgs bitFieldArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(bitFieldArgs, "BitFieldArgs must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key);
+
+        bitFieldArgs.build(args);
+
+        return createCommand(BITFIELD, (CommandOutput) new ValueValueListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> bitpos(K key, boolean state) {
@@ -571,6 +581,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HMGET, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<KeyValue<K, V>>> hmgetKeyValue(K key, K... fields) {
+        notNullKey(key);
+        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
+        return createCommand(HMGET, new KeyValueListOutput<K, V>(codec, Arrays.asList(fields)), args);
+    }
+
     public Command<K, V, Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
         notNullKey(key);
         LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
@@ -579,6 +598,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
         return createCommand(HMGET, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        notNullKey(key);
+        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addKeys(fields);
+        return createCommand(HMGET, new KeyValueStreamingOutput<K, V>(codec, channel, Arrays.asList(fields)), args);
     }
 
     public Command<K, V, String> hmset(K key, Map<K, V> map) {
@@ -784,11 +813,25 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<KeyValue<K, V>>> mgetKeyValue(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new KeyValueListOutput<K, V>(codec, Arrays.asList(keys)), args);
+    }
+
     public Command<K, V, List<V>> mget(Iterable<K> keys) {
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(MGET, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<KeyValue<K, V>>> mgetKeyValue(Iterable<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new KeyValueListOutput<K, V>(codec, keys), args);
     }
 
     public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, K... keys) {
@@ -799,12 +842,28 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
+    public Command<K, V, Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
+        notEmpty(keys);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new KeyValueStreamingOutput<K, V>(codec, channel, Arrays.asList(keys)), args);
+    }
+
     public Command<K, V, Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(MGET, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(MGET, new KeyValueStreamingOutput<K, V>(codec, channel, keys), args);
     }
 
     public Command<K, V, Boolean> move(K key, int db) {

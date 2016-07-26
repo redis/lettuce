@@ -22,6 +22,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 import rx.Completable;
@@ -121,11 +122,11 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<V> mget(K... keys) {
+    public Observable<KeyValue<K, V>> mget(K... keys) {
         return mget(Arrays.asList(keys));
     }
 
-    public Observable<V> mget(Iterable<K> keys) {
+    public Observable<KeyValue<K, V>> mget(Iterable<K> keys) {
 
         List<K> keyList = LettuceLists.newList(keys);
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
@@ -134,16 +135,16 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.mget(keyList);
         }
 
-        List<Observable<V>> observables = new ArrayList<>();
+        List<Observable<KeyValue<K, V>>> observables = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.mget(entry.getValue()));
         }
-        Observable<V> observable = Observable.concat(Observable.from(observables));
+        Observable<KeyValue<K, V>> observable = Observable.concat(Observable.from(observables));
 
-        Observable<List<V>> map = observable.toList().map(vs -> {
+        Observable<List<KeyValue<K, V>>> map = observable.toList().map(vs -> {
 
-            Object[] values = new Object[vs.size()];
+            KeyValue<K, V>[] values = new KeyValue[vs.size()];
             int offset = 0;
             for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
@@ -160,7 +161,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 offset += entry.getValue().size();
             }
 
-            List<V> objects = (List<V>) new ArrayList<>(Arrays.asList(values));
+            List<KeyValue<K, V>> objects = new ArrayList<>(Arrays.asList(values));
             return objects;
         });
 
@@ -168,12 +169,12 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Single<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+    public Single<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
         return mget(channel, Arrays.asList(keys));
     }
 
     @Override
-    public Single<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+    public Single<Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
 
         List<K> keyList = LettuceLists.newList(keys);
 

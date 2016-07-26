@@ -93,11 +93,11 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         Map<Integer, List<String>> partitioned = SlotHash.partition(new Utf8StringCodec(), RandomKeys.KEYS);
         assertThat(partitioned.size()).isGreaterThan(100);
 
-        Observable<String> observable = commands.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        List<String> result = observable.toList().toBlocking().single();
+        Observable<KeyValue<String, String>> observable = commands.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        List<KeyValue<String, String>> result = observable.toList().toBlocking().single();
 
         assertThat(result).hasSize(RandomKeys.COUNT);
-        assertThat(result).isEqualTo(RandomKeys.VALUES);
+        assertThat(result.stream().map(Value::getValue).collect(Collectors.toList())).isEqualTo(RandomKeys.VALUES);
     }
 
     @Test
@@ -105,12 +105,12 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
+        KeyValueStreamingAdapter<String, String> result = new KeyValueStreamingAdapter<>();
 
         Single<Long> single = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
         Long count = block(single);
 
-        assertThat(result.getList()).hasSize(RandomKeys.COUNT);
+        assertThat(result.getMap()).hasSize(RandomKeys.COUNT);
         assertThat(count).isEqualTo(RandomKeys.COUNT);
     }
 

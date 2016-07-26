@@ -81,7 +81,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return V array-reply list of values at the specified keys.
      * @see RedisStringReactiveCommands#mget(Object[])
      */
-    Observable<V> mget(K... keys);
+    Observable<KeyValue<K, V>> mget(K... keys);
 
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular

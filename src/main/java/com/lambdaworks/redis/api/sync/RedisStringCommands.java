@@ -2,10 +2,14 @@ package com.lambdaworks.redis.api.sync;
 
 import java.util.List;
 import java.util.Map;
+
+import com.lambdaworks.redis.KeyValue;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.SetArgs;
+import com.lambdaworks.redis.Value;
 
 /**
  * Synchronous executed commands for Strings.
@@ -231,7 +235,7 @@ public interface RedisStringCommands<K, V> {
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      */
-    List<V> mget(K... keys);
+    List<KeyValue<K, V>> mget(K... keys);
 
     /**
      * Stream over the values of all the given keys.
@@ -241,7 +245,7 @@ public interface RedisStringCommands<K, V> {
      *
      * @return Long array-reply list of values at the specified keys.
      */
-    Long mget(ValueStreamingChannel<V> channel, K... keys);
+    Long mget(KeyValueStreamingChannel<K, V> channel, K... keys);
 
     /**
      * Set multiple keys to multiple values.

@@ -12,15 +12,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.ListStreamingAdapter;
-import com.lambdaworks.redis.RedisCommandExecutionException;
-import com.lambdaworks.redis.RedisException;
 
 public class StringCommandTest extends AbstractRedisClientTest {
     @Rule
@@ -64,11 +60,11 @@ public class StringCommandTest extends AbstractRedisClientTest {
     @Test
     public void mget() throws Exception {
         setupMget();
-        assertThat(redis.mget("one", "two")).isEqualTo(list("1", "2") );
+        assertThat(redis.mget("one", "two")).isEqualTo(list(kv("one", "1"), kv("two", "2")));
     }
 
     protected void setupMget() {
-        assertThat(redis.mget(key)).isEqualTo(list((String) null));
+        assertThat(redis.mget(key)).isEqualTo(list(KeyValue.empty("key")));
         redis.set("one", "1");
         redis.set("two", "2");
     }
@@ -77,21 +73,21 @@ public class StringCommandTest extends AbstractRedisClientTest {
     public void mgetStreaming() throws Exception {
         setupMget();
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
         Long count = redis.mget(streamingAdapter, "one", "two");
         assertThat(count.intValue()).isEqualTo(2);
 
-        assertThat(streamingAdapter.getList()).isEqualTo(list("1", "2"));
+        assertThat(streamingAdapter.getMap()).containsEntry("one", "1").containsEntry("two", "2");
     }
 
     @Test
     public void mset() throws Exception {
-        assertThat(redis.mget("one", "two")).isEqualTo(list(null, null));
+        assertThat(redis.mget("one", "two")).isEqualTo(list(KeyValue.empty("one"), KeyValue.empty("two")));
         Map<String, String> map = new LinkedHashMap<>();
         map.put("one", "1");
         map.put("two", "2");
         assertThat(redis.mset(map)).isEqualTo("OK");
-        assertThat(redis.mget("one", "two")).isEqualTo(list("1", "2"));
+        assertThat(redis.mget("one", "two")).isEqualTo(list(kv("one", "1"), kv("two", "2")));
     }
 
     @Test

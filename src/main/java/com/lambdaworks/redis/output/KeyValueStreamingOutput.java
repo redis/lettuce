@@ -3,6 +3,7 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 
@@ -15,6 +16,9 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * @author Mark Paluch
  */
 public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
+
+    private Iterable<K> keys;
+    private Iterator<K> keyIterator;
     private K key;
     private KeyValueStreamingChannel<K, V> channel;
 
@@ -23,11 +27,24 @@ public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
         this.channel = channel;
     }
 
+    public KeyValueStreamingOutput(RedisCodec<K, V> codec, KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
+        super(codec, Long.valueOf(0));
+        this.channel = channel;
+        this.keys = keys;
+    }
+
     @Override
     public void set(ByteBuffer bytes) {
-        if (key == null) {
-            key = codec.decodeKey(bytes);
-            return;
+        if (keys == null) {
+            if (key == null) {
+                key = codec.decodeKey(bytes);
+                return;
+            }
+        } else {
+            if (keyIterator == null) {
+                keyIterator = keys.iterator();
+            }
+            key = keyIterator.next();
         }
 
         V value = (bytes == null) ? null : codec.decodeValue(bytes);

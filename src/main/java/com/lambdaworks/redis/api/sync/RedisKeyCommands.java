@@ -2,6 +2,7 @@ package com.lambdaworks.redis.api.sync;
 
 import java.util.Date;
 import java.util.List;
+import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.MigrateArgs;
 import com.lambdaworks.redis.ScanArgs;

@@ -112,12 +112,12 @@ public class KeyValue<K, V> extends Value<V> {
         if (!(o instanceof KeyValue))
             return false;
 
+        if (!super.equals(o))
+            return false;
+
         KeyValue<?, ?> keyValue = (KeyValue<?, ?>) o;
 
-        if (!key.equals(keyValue.key))
-            return false;
-        return getValue() != null ? getValue().equals(keyValue.getValue()) : keyValue.getValue() == null;
-
+        return key.equals(keyValue.key);
     }
 
     @Override

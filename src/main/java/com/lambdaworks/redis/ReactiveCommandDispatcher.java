@@ -156,7 +156,9 @@ public class ReactiveCommandDispatcher<K, V, T> {
                         if (dissolve && result instanceof Collection) {
                             Collection<T> collection = (Collection<T>) result;
                             for (T t : collection) {
-                                subscriber.onNext(t);
+                                if (t != null) {
+                                    subscriber.onNext(t);
+                                }
                             }
                         } else {
                             subscriber.onNext((T) result);

@@ -28,6 +28,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
@@ -124,12 +125,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<V>> mget(K... keys) {
+    public RedisFuture<List<KeyValue<K, V>>> mget(K... keys) {
         return mget(Arrays.asList(keys));
     }
 
     @Override
-    public RedisFuture<List<V>> mget(Iterable<K> keys) {
+    public RedisFuture<List<KeyValue<K, V>>> mget(Iterable<K> keys) {
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
@@ -137,21 +138,21 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
-        Map<Integer, RedisFuture<List<V>>> executions = new HashMap<>();
+        Map<Integer, RedisFuture<List<KeyValue<K, V>>>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            RedisFuture<List<V>> mget = super.mget(entry.getValue());
+            RedisFuture<List<KeyValue<K, V>>> mget = super.mget(entry.getValue());
             executions.put(entry.getKey(), mget);
         }
 
         // restore order of key
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            List<V> result = new ArrayList<>();
+            List<KeyValue<K, V>> result = new ArrayList<>();
             for (K opKey : keys) {
                 int slot = slots.get(opKey);
 
                 int position = partitioned.get(slot).indexOf(opKey);
-                RedisFuture<List<V>> listRedisFuture = executions.get(slot);
+                RedisFuture<List<KeyValue<K, V>>> listRedisFuture = executions.get(slot);
                 result.add(MultiNodeExecution.execute(() -> listRedisFuture.get().get(position)));
             }
 
@@ -160,12 +161,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+    public RedisFuture<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
        return mget(channel, Arrays.asList(keys));
     }
 
     @Override
-    public RedisFuture<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+    public RedisFuture<Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {

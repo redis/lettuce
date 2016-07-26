@@ -1,6 +1,7 @@
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
+
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -8,12 +9,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import rx.observers.TestSubscriber;
-
 import com.lambdaworks.RandomKeys;
 import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+
+import rx.observers.TestSubscriber;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
 
@@ -51,10 +54,15 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
 
         redis.mset(RandomKeys.MAP);
 
+        TestSubscriber<KeyValue<String, String>> subscriber = TestSubscriber.create();
+
         reactive.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT])).subscribe(subscriber);
         subscriber.awaitTerminalEvent();
 
-        assertThat(subscriber.getOnNextEvents()).containsAll(RandomKeys.VALUES);
+        assertThat(subscriber.getOnNextEvents().stream().map(KeyValue::getValue).collect(Collectors.toList()))
+                .containsAll(RandomKeys.VALUES);
+        assertThat(subscriber.getOnNextEvents().stream().map(KeyValue::getKey).collect(Collectors.toList()))
+                .containsAll(RandomKeys.KEYS);
     }
 
     @Test

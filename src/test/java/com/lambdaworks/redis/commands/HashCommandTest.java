@@ -5,6 +5,7 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import java.security.Key;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -130,13 +131,13 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hmget() throws Exception {
         setupHmget();
-        List<String> values = redis.hmget(key, "one", "two");
+        List<KeyValue<String, String>> values = redis.hmget(key, "one", "two");
         assertThat(values).hasSize(2);
-        assertThat(values.containsAll(list("1", "1"))).isTrue();
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2")))).isTrue();
     }
 
     private void setupHmget() {
-        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(null, null));
+        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(KeyValue.empty("one"), KeyValue.empty("two")));
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
     }
@@ -145,12 +146,12 @@ public class HashCommandTest extends AbstractRedisClientTest {
     public void hmgetStreaming() throws Exception {
         setupHmget();
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
         Long count = redis.hmget(streamingAdapter, key, "one", "two");
-        List<String> values = streamingAdapter.getList();
+        Map<String, String> values = streamingAdapter.getMap();
         assertThat(count.intValue()).isEqualTo(2);
         assertThat(values).hasSize(2);
-        assertThat(values.containsAll(list("1", "1"))).isTrue();
+        assertThat(values).containsEntry("one", "1").containsEntry("two", "2");
     }
 
     @Test
@@ -159,7 +160,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
         hash.put("one", "1");
         hash.put("two", "2");
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
-        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list("1", "2"));
+        assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(kv("one", "1"), kv("two", "2")));
     }
 
     @Test
@@ -167,11 +168,11 @@ public class HashCommandTest extends AbstractRedisClientTest {
         Map<String, String> hash = new LinkedHashMap<>();
         hash.put("one", null);
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
-        assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
+        assertThat(redis.hmget(key, "one")).isEqualTo(list(kv("one", "")));
 
         hash.put("one", "");
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
-        assertThat(redis.hmget(key, "one")).isEqualTo(list(""));
+        assertThat(redis.hmget(key, "one")).isEqualTo(list(kv("one", "")));
     }
 
     @Test

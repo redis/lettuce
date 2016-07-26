@@ -177,7 +177,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void mgetRegular() throws Exception {
 
         msetRegular();
-        List<String> result = syncCommands.mget(key);
+        List<KeyValue<String, String>> result = syncCommands.mget(key);
 
         assertThat(result).hasSize(1);
     }
@@ -187,14 +187,14 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         msetCrossSlot();
         List<String> keys = new ArrayList<>();
-        List<String> expectation = new ArrayList<>();
+        List<KeyValue<String, String>> expectation = new ArrayList<>();
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             keys.add(key);
-            expectation.add("value-" + key);
+            expectation.add(kv(key, "value-" + key));
         }
 
-        List<String> result = syncCommands.mget(keys.toArray(new String[keys.size()]));
+        List<KeyValue<String, String>> result = syncCommands.mget(keys.toArray(new String[keys.size()]));
 
         assertThat(result).hasSize(keys.size());
         assertThat(result).isEqualTo(expectation);

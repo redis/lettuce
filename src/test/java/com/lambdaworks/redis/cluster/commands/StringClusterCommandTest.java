@@ -6,15 +6,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.*;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.ListStreamingAdapter;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
@@ -69,10 +66,10 @@ public class StringClusterCommandTest extends StringCommandTest {
     public void mgetStreaming() throws Exception {
         setupMget();
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
         Long count = redis.mget(streamingAdapter, "one", "two");
 
-        assertThat(LettuceSets.newHashSet(streamingAdapter.getList())).isEqualTo(LettuceSets.newHashSet(list("1", "2")));
+        assertThat(streamingAdapter.getMap()).containsEntry("one", "1").containsEntry("two", "2");
 
         assertThat(count.intValue()).isEqualTo(2);
     }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.async.*;
 
@@ -290,7 +291,7 @@ public interface RedisClusterAsyncCommands<K, V>
      * @param keys the key
      * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
      */
-    RedisFuture<List<V>> mget(K... keys);
+    RedisFuture<List<KeyValue<K, V>>> mget(K... keys);
 
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular

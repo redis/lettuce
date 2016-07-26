@@ -449,12 +449,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<V> hmget(K key, K... fields) {
-        return createDissolvingObservable(() -> commandBuilder.hmget(key, fields));
+    public Observable<KeyValue<K, V>> hmget(K key, K... fields) {
+        return createDissolvingObservable(() -> commandBuilder.hmgetKeyValue(key, fields));
     }
 
     @Override
-    public Single<Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
+    public Single<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
         return createSingle(() -> commandBuilder.hmget(channel, key, fields));
     }
 
@@ -589,20 +589,24 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<V> mget(K... keys) {
-        return createDissolvingObservable(() -> commandBuilder.mget(keys));
+    public Observable<KeyValue<K, V>> mget(K... keys) {
+        return createDissolvingObservable(() -> commandBuilder.mgetKeyValue(keys));
     }
 
-    public Observable<V> mget(Iterable<K> keys) {
-        return createDissolvingObservable(() -> commandBuilder.mget(keys));
+    public Observable<KeyValue<K, V>> mget(Iterable<K> keys) {
+        return createDissolvingObservable(() -> commandBuilder.mgetKeyValue(keys));
     }
 
     @Override
-    public Single<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
+    public Single<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
         return createSingle(() -> commandBuilder.mget(channel, keys));
     }
 
     public Single<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+        return createSingle(() -> commandBuilder.mget(channel, keys));
+    }
+
+    public Single<Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
         return createSingle(() -> commandBuilder.mget(channel, keys));
     }
 
@@ -1031,7 +1035,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Single<Long> zadd(K key, ScoredValue<V>... scoredValues) {
-        return createSingle(() -> commandBuilder.zadd(key, null, scoredValues));
+        return createSingle(() -> commandBuilder.zadd(key, null, (Object[]) scoredValues));
     }
 
     @Override
@@ -1046,7 +1050,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Single<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
-        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, scoredValues));
+        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, (Object[]) scoredValues));
     }
 
     @Override
