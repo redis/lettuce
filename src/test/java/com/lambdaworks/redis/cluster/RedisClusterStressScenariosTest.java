@@ -13,6 +13,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.lambdaworks.TestClientResources;
 import org.junit.*;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.Duration;
@@ -42,8 +45,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     protected StatefulRedisConnection<String, String> redis5;
     protected StatefulRedisConnection<String, String> redis6;
 
-    protected RedisClusterCommands<String, String> redissync5;
-    protected RedisClusterCommands<String, String> redissync6;
+    protected RedisCommands<String, String> redissync5;
+    protected RedisCommands<String, String> redissync6;
 
     protected String key = "key";
     protected String value = "value";
@@ -86,8 +89,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     public void after() throws Exception {
         redis5.close();
 
-        redissync5.close();
-        redissync6.close();
+        redissync5.getStatefulConnection().close();
+        redissync6.getStatefulConnection().close();
     }
 
     @Test
@@ -135,7 +138,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         final RedisAsyncCommands<Object, Object> slotConnection = statefulSlotConnection.async();
 
         slotConnection.set("a", "b");
-        slotConnection.close();
+        slotConnection.getStatefulConnection().close();
 
         WaitFor.waitOrTimeout(() -> !slotConnection.isOpen(), timeout(seconds(5)));
 
@@ -152,14 +155,14 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
             assertThat(e).hasMessageContaining("Connection is closed");
         }
 
-        connection.close();
+        connection.getStatefulConnection().close();
 
     }
 
     @Test(timeout = 20000)
     public void distributedClusteredAccessAsync() throws Exception {
 
-        RedisClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
 
         List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
@@ -190,13 +193,13 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
             assertThat(setD.get()).isEqualTo("myValue3" + i);
         }
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
     public void distributedClusteredAccessSync() throws Exception {
 
-        RedisClusterCommands<String, String> connection = clusterClient.connect().sync();
+        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
 
         for (int i = 0; i < 100; i++) {
             connection.set("a" + i, "myValue1" + i);
@@ -211,7 +214,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
             assertThat(connection.get("d" + i)).isEqualTo("myValue3" + i);
         }
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
 }

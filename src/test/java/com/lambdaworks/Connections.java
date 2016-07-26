@@ -2,6 +2,7 @@ package com.lambdaworks;
 
 import java.util.Queue;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.RedisChannelHandler;
@@ -18,13 +19,23 @@ import io.netty.channel.Channel;
  */
 public class Connections {
 
+    /**
+     * Extract the {@link Channel} from a stateful connection.
+     * 
+     * @param connection
+     * @return
+     */
     public static Channel getChannel(StatefulConnection<?, ?> connection) {
         RedisChannelHandler<?, ?> channelHandler = (RedisChannelHandler<?, ?>) connection;
 
-        Channel channel = (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
-        return channel;
+        return (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
     }
 
+    /**
+     * Extract the {@link ConnectionWatchdog} from a stateful connection.
+     * @param connection
+     * @return
+     */
     public static ConnectionWatchdog getConnectionWatchdog(StatefulConnection<?, ?> connection) {
 
         Channel channel = getChannel(connection);
@@ -38,7 +49,6 @@ public class Connections {
     public static <K, V> RedisChannelWriter<K, V> getChannelWriter(StatefulConnection<K, V> connection) {
         return ((RedisChannelHandler<K, V>) connection).getChannelWriter();
     }
-
 
     public static Queue<Object> getQueue(StatefulConnection<?, ?> connection) {
         return (Queue<Object>) ReflectionTestUtils.getField(Connections.getChannelWriter(connection), "queue");

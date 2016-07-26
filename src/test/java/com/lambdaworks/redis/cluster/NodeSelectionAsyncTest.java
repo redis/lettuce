@@ -42,7 +42,7 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
-        commands.close();
+        commands.getStatefulConnection().close();
     }
 
     @Test

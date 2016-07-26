@@ -3,6 +3,7 @@
 package com.lambdaworks.redis;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.api.StatefulConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -58,7 +59,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     @After
     public void closeConnection() throws Exception {
         if (redis != null) {
-            redis.close();
+            redis.getStatefulConnection().close();
         }
     }
 

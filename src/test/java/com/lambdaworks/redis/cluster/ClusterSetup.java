@@ -77,7 +77,7 @@ public class ClusterSetup {
                             redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
                 }).waitOrTimeout();
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     /**
@@ -131,7 +131,7 @@ public class ClusterSetup {
                             redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)).count();
                 }).waitOrTimeout();
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     protected static Stream<RedisClusterNode> partitionStream(ClusterRule clusterRule) {

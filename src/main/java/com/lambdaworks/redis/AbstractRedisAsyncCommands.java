@@ -1779,11 +1779,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public void close() {
-        connection.close();
-    }
-
-    @Override
     public boolean isOpen() {
         return connection.isOpen();
     }

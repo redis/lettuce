@@ -12,7 +12,7 @@ import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.HashCommandTest;
-import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 
 /**
  * @author Mark Paluch

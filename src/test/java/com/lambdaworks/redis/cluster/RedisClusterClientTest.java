@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
@@ -39,10 +40,10 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     private StatefulRedisConnection<String, String> redis3;
     private StatefulRedisConnection<String, String> redis4;
 
-    private RedisClusterCommands<String, String> redissync1;
-    private RedisClusterCommands<String, String> redissync2;
-    private RedisClusterCommands<String, String> redissync3;
-    private RedisClusterCommands<String, String> redissync4;
+    private RedisCommands<String, String> redissync1;
+    private RedisCommands<String, String> redissync2;
+    private RedisCommands<String, String> redissync3;
+    private RedisCommands<String, String> redissync4;
 
     protected RedisAdvancedClusterCommands<String, String> sync;
 
@@ -82,27 +83,27 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
-        sync.close();
+        sync.getStatefulConnection().close();
         redis1.close();
 
-        redissync1.close();
-        redissync2.close();
-        redissync3.close();
-        redissync4.close();
+        redissync1.getStatefulConnection().close();
+        redissync2.getStatefulConnection().close();
+        redissync3.getStatefulConnection().close();
+        redissync4.getStatefulConnection().close();
     }
 
     @Test
     public void statefulConnectionFromSync() throws Exception {
         RedisAdvancedClusterCommands<String, String> sync = clusterClient.connect().sync();
         assertThat(sync.getStatefulConnection().sync()).isSameAs(sync);
-        sync.close();
+        sync.getStatefulConnection().close();
     }
 
     @Test
     public void statefulConnectionFromAsync() throws Exception {
         RedisAdvancedClusterAsyncCommands<String, String> async = clusterClient.connect().async();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test
@@ -188,14 +189,14 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         }
 
         clusterClient.reloadPartitions();
-        RedisClusterCommands<String, String> connection = clusterClient.connect().sync();
+        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
 
 
         assertThat(connection.set(KEY_A, value)).isEqualTo("OK");
         assertThat(connection.set(KEY_B, "myValue2")).isEqualTo("OK");
         assertThat(connection.set(KEY_D, "myValue2")).isEqualTo("OK");
 
-        connection.close();
+        connection.getStatefulConnection().close();
 
     }
 
@@ -223,7 +224,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         // gets redirection to node 3
         assertThat(connection.set(KEY_A, value).get()).isEqualTo("OK");
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -263,7 +264,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(setA.getError()).isNull();
         assertThat(setA.get()).isEqualTo("OK");
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -293,21 +294,20 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         setA.await(10, TimeUnit.SECONDS);
         assertThat(setA.getError()).isEqualTo("MOVED 15495 127.0.0.1:7380");
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test(expected = RedisException.class)
     public void closeConnection() throws Exception {
 
-        try (RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync()) {
+        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
 
             List<String> time = connection.time();
             assertThat(time).hasSize(2);
 
-            connection.close();
+            connection.getStatefulConnection().close();
 
             connection.time();
-        }
     }
 
     @Test
@@ -531,7 +531,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         assertThat(connection.pfcount("key8885")).isEqualTo(3);
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     private void assertTimeout(StatefulConnection<?, ?> connection, long expectedTimeout, TimeUnit expectedTimeUnit) {

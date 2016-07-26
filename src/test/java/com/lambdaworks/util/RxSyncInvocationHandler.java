@@ -1,4 +1,4 @@
-package com.lambdaworks.redis.commands.rx;
+package com.lambdaworks.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,12 +28,13 @@ import rx.Single;
  * @param <K>
  * @param <V>
  */
-public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
+public class RxSyncInvocationHandler<K, V> extends ConnectionDecoratingInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
     private final Object rxApi;
 
     public RxSyncInvocationHandler(StatefulConnection<?, ?> connection, Object rxApi) {
+        super(rxApi);
         this.connection = connection;
         this.rxApi = rxApi;
     }
@@ -44,11 +45,13 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
         try {
 
-            Method targetMethod = rxApi.getClass().getMethod(method.getName(), method.getParameterTypes());
-
-            Object result = targetMethod.invoke(rxApi, args);
+            Object result = super.handleInvocation(proxy, method, args);
 
             if (result == null) {
+                return result;
+            }
+
+            if (result instanceof StatefulConnection) {
                 return result;
             }
 

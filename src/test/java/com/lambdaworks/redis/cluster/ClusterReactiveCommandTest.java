@@ -55,7 +55,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test

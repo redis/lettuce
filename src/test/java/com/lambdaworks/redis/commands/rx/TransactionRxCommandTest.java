@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Iterator;
 import java.util.List;
 
+import com.lambdaworks.util.RxSyncInvocationHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +43,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
     @After
     public void closeConnection() throws Exception {
-        redis.close();
+        redis.getStatefulConnection().close();
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.lambdaworks.redis.commands.rx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.lambdaworks.util.RxSyncInvocationHandler;
 import org.junit.Before;
 import org.junit.Test;
 

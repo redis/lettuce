@@ -230,7 +230,7 @@ public class SentinelRule implements TestRule {
             }
         } finally {
             for (RedisCommands<String, String> commands : connections.values()) {
-                commands.close();
+                commands.getStatefulConnection().close();
             }
         }
 
@@ -312,7 +312,7 @@ public class SentinelRule implements TestRule {
             }
         } finally {
             for (RedisCommands<String, String> commands : connections.values()) {
-                commands.close();
+                commands.getStatefulConnection().close();
             }
         }
 

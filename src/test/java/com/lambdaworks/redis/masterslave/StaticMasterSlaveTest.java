@@ -79,13 +79,13 @@ public class StaticMasterSlaveTest extends AbstractRedisClientTest {
         if (connectionToNode1 != null) {
             connectionToNode1.configSet("requirepass", "");
             connectionToNode1.configSet("masterauth", "").get(1, TimeUnit.SECONDS);
-            connectionToNode1.close();
+            connectionToNode1.getStatefulConnection().close();
         }
 
         if (connectionToNode2 != null) {
             connectionToNode2.configSet("requirepass", "");
             connectionToNode2.configSet("masterauth", "").get(1, TimeUnit.SECONDS);
-            connectionToNode2.close();
+            connectionToNode2.getStatefulConnection().close();
         }
 
         if (connection != null) {

@@ -47,7 +47,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
-        commands.close();
+        commands.getStatefulConnection().close();
     }
 
     @Test
@@ -79,21 +79,6 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         Partitions partitions = commands.getStatefulConnection().getPartitions();
         assertThat(partitions).hasSize(4);
-    }
-
-    @Test
-    public void doWeirdThingsWithClusterconnections() throws Exception {
-
-        assertThat(clusterClient.getPartitions()).hasSize(4);
-
-        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterAsyncCommands<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
-
-            nodeConnection.close();
-
-            RedisClusterAsyncCommands<String, String> nextConnection = commands.getConnection(redisClusterNode.getNodeId());
-            assertThat(commands).isNotSameAs(nextConnection);
-        }
     }
 
     @Test
@@ -391,7 +376,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void routeCommandTonoAddrPartition() throws Exception {
 
-        RedisClusterCommands<String, String> sync = clusterClient.connect().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterClient.connect().sync();
         try {
 
             Partitions partitions = clusterClient.getPartitions();
@@ -406,13 +391,13 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             clusterClient.getPartitions().clear();
             clusterClient.reloadPartitions();
         }
-        sync.close();
+        sync.getStatefulConnection().close();
     }
 
     @Test
     public void routeCommandToForbiddenHostOnRedirect() throws Exception {
 
-        RedisClusterCommands<String, String> sync = clusterClient.connect().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterClient.connect().sync();
         try {
 
             Partitions partitions = clusterClient.getPartitions();
@@ -434,7 +419,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             clusterClient.getPartitions().clear();
             clusterClient.reloadPartitions();
         }
-        sync.close();
+        sync.getStatefulConnection().close();
     }
 
     @Test
@@ -461,7 +446,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void pipelining() throws Exception {
 
-        RedisClusterCommands<String, String> verificationConnection = clusterClient.connect().sync();
+        RedisAdvancedClusterCommands<String, String> verificationConnection = clusterClient.connect().sync();
 
         // preheat the first connection
         commands.get(key(0)).get();
@@ -485,7 +470,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             assertThat(verificationConnection.get(key(i))).as("Key " + key(i) + " must be " + value(i)).isEqualTo(value(i));
         }
 
-        verificationConnection.close();
+        verificationConnection.getStatefulConnection().close();
     }
 
     @Test

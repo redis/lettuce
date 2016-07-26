@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.commands.rx;
 
+import com.lambdaworks.util.RxSyncInvocationHandler;
 import org.junit.Test;
 
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;

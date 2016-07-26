@@ -63,7 +63,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -74,7 +74,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -89,7 +89,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
         List<byte[]> keys = connection.keys(key.getBytes());
         assertThat(keys).contains(key.getBytes());
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -103,7 +103,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
         List<byte[]> keys = connection.keys(key.getBytes());
         assertThat(keys).contains(key.getBytes());
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     public class SerializedObjectCodec implements RedisCodec<String, Object> {

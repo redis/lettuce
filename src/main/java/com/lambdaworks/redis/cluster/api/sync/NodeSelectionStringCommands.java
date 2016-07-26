@@ -230,17 +230,17 @@ public interface NodeSelectionStringCommands<K, V> {
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      */
-    Executions<List<V>> mget(K... keys);
+    Executions<List<KeyValue<K, V>>> mget(K... keys);
 
     /**
      * Stream over the values of all the given keys.
-     * 
+     *
      * @param channel the channel
      * @param keys the keys
-     * 
+     *
      * @return Long array-reply list of values at the specified keys.
      */
-    Executions<Long> mget(ValueStreamingChannel<V> channel, K... keys);
+    Executions<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys);
 
     /**
      * Set multiple keys to multiple values.

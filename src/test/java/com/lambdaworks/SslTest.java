@@ -59,7 +59,7 @@ public class SslTest extends AbstractTest {
         RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
         connection.set("key", "value");
         assertThat(connection.get("key")).isEqualTo("value");
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -148,7 +148,7 @@ public class SslTest extends AbstractTest {
         connection.quit();
         Thread.sleep(200);
         assertThat(connection.ping()).isEqualTo("PONG");
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test(expected = RedisConnectionException.class)
@@ -176,8 +176,8 @@ public class SslTest extends AbstractTest {
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
 
-        connection.close();
-        connection2.close();
+        connection.getStatefulConnection().close();
+        connection2.getStatefulConnection().close();
     }
 
     @Test
@@ -219,8 +219,8 @@ public class SslTest extends AbstractTest {
 
         assertThat(defectFuture.isDone()).isEqualTo(true);
 
-        connection.close();
-        connection2.close();
+        connection.getStatefulConnection().close();
+        connection2.getStatefulConnection().close();
     }
 
     private void setOptions(SslOptions sslOptions) {

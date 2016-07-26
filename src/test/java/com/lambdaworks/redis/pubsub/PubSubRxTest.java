@@ -66,8 +66,8 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
     @After
     public void closePubSubConnection() throws Exception {
-        pubsub.close();
-        pubsub2.close();
+        pubsub.getStatefulConnection().close();
+        pubsub2.getStatefulConnection().close();
     }
 
     @Test

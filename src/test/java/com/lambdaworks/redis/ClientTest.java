@@ -38,7 +38,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Test(expected = RedisException.class)
     public void close() throws Exception {
-        redis.close();
+        redis.getStatefulConnection().close();
         redis.get(key);
     }
 
@@ -51,14 +51,14 @@ public class ClientTest extends AbstractRedisClientTest {
     public void statefulConnectionFromAsync() throws Exception {
         RedisAsyncCommands<String, String> async = client.connect().async();
         assertThat(async.getStatefulConnection().async()).isSameAs(async);
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test
     public void statefulConnectionFromReactive() throws Exception {
         RedisAsyncCommands<String, String> async = client.connect().async();
         assertThat(async.getStatefulConnection().reactive().getStatefulConnection()).isSameAs(async.getStatefulConnection());
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test
@@ -84,7 +84,7 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(listener.onDisconnected).isNull();
 
         connection.set(key, value).get();
-        connection.close();
+        connection.getStatefulConnection().close();
 
         waitOrTimeout(new Condition() {
 

@@ -235,10 +235,10 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Stream over the values of all the given keys.
-     * 
+     *
      * @param channel the channel
      * @param keys the keys
-     * 
+     *
      * @return Long array-reply list of values at the specified keys.
      */
     RedisFuture<Long> mget(ValueStreamingChannel<V> channel, K... keys);

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
@@ -51,8 +52,8 @@ public class RedisClusterSetupTest extends AbstractTest {
     private static RedisClusterClient clusterClient;
     private static RedisClient client = DefaultRedisClient.get();
 
-    private RedisClusterCommands<String, String> redis1;
-    private RedisClusterCommands<String, String> redis2;
+    private RedisCommands<String, String> redis1;
+    private RedisCommands<String, String> redis2;
 
     @Rule
     public ClusterRule clusterRule = new ClusterRule(clusterClient, AbstractClusterTest.port5, AbstractClusterTest.port6);
@@ -77,8 +78,8 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     @After
     public void closeConnection() throws Exception {
-        redis1.close();
-        redis2.close();
+        redis1.getStatefulConnection().close();
+        redis2.getStatefulConnection().close();
     }
 
     @Test
@@ -180,7 +181,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         ClusterSetup.setup2Masters(clusterRule);
         assertThat(clusterClient.getPartitions()).hasSize(2);
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -226,7 +227,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         assertThat(sync.get("t")).isEqualTo("value");
         assertThat(sync.get("p")).isEqualTo("value");
 
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test
@@ -248,7 +249,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         assertThat(sync.get("b")).isNull();
 
-        async.close();
+        async.getStatefulConnection().close();
     }
 
     @Test
@@ -280,7 +281,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         } catch (ExecutionException e) {
             assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining("not connected");
         } finally {
-            clusterConnection.close();
+            clusterConnection.getStatefulConnection().close();
         }
     }
 
@@ -324,7 +325,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         assertRoutedExecution(clusterConnection);
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
 
     }
 
@@ -362,7 +363,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
         Wait.untilEquals(1, () -> clusterConnectionProvider.getConnectionCount()).waitOrTimeout();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
 
     }
 
@@ -408,7 +409,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(2);
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
 
     }
 
@@ -454,7 +455,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
         Wait.untilEquals(2L, () -> clusterConnectionProvider.getConnectionCount()).waitOrTimeout();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -472,7 +473,7 @@ public class RedisClusterSetupTest extends AbstractTest {
             assertThat(e).hasMessageContaining("Cannot determine a partition to read for slot");
         }
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -486,7 +487,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         assertThat(clusterConnection.get(key)).isEqualTo(value);
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     protected PooledClusterConnectionProvider<String, String> getPooledClusterConnectionProvider(

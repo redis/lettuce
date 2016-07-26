@@ -32,7 +32,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
 
     @After
     public void closeReactiveConnection() throws Exception {
-        reactive.close();
+        reactive.getStatefulConnection().close();
     }
 
     @Test

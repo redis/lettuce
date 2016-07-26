@@ -9,6 +9,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.util.RoutingInvocationHandler;
 
 /**
  * @author Mark Paluch
@@ -73,7 +74,9 @@ public class ClusterTestUtil {
     public static RedisCommands<String, String> redisCommandsOverCluster(
             StatefulRedisClusterConnection<String, String> connection) {
         StatefulRedisClusterConnectionImpl clusterConnection = (StatefulRedisClusterConnectionImpl) connection;
-        InvocationHandler h = clusterConnection.syncInvocationHandler();
+
+        InvocationHandler h = new RoutingInvocationHandler(connection.async(),
+                clusterConnection.syncInvocationHandler());
         return (RedisCommands<String, String>) Proxy.newProxyInstance(ClusterTestUtil.class.getClassLoader(),
                 new Class[] { RedisCommands.class }, h);
     }

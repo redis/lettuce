@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.SetArgs;
 
 /**
@@ -234,10 +235,10 @@ public interface RedisStringCommands<K, V> {
 
     /**
      * Stream over the values of all the given keys.
-     * 
+     *
      * @param channel the channel
      * @param keys the keys
-     * 
+     *
      * @return Long array-reply list of values at the specified keys.
      */
     Long mget(ValueStreamingChannel<V> channel, K... keys);

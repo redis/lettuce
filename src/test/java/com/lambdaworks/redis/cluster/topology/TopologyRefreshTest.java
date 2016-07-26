@@ -7,15 +7,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
-import io.netty.util.concurrent.ScheduledFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.BaseRedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.AbstractClusterTest;
 import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions;
@@ -23,10 +24,11 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-import org.springframework.test.util.ReflectionTestUtils;
+
+import io.netty.util.concurrent.ScheduledFuture;
 
 /**
  * Test for topology refreshing.
@@ -41,8 +43,8 @@ public class TopologyRefreshTest extends AbstractTest {
     private static RedisClient client = DefaultRedisClient.get();
 
     private RedisClusterClient clusterClient;
-    private RedisClusterCommands<String, String> redis1;
-    private RedisClusterCommands<String, String> redis2;
+    private RedisCommands<String, String> redis1;
+    private RedisCommands<String, String> redis2;
 
     @Before
     public void openConnection() throws Exception {
@@ -54,8 +56,8 @@ public class TopologyRefreshTest extends AbstractTest {
 
     @After
     public void closeConnection() throws Exception {
-        redis1.close();
-        redis2.close();
+        redis1.getStatefulConnection().close();
+        redis2.getStatefulConnection().close();
         FastShutdown.shutdown(clusterClient);
     }
 
@@ -69,8 +71,8 @@ public class TopologyRefreshTest extends AbstractTest {
 
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
-        AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils
-                .getField(clusterClient, "clusterTopologyRefreshActivated");
+        AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils.getField(clusterClient,
+                "clusterTopologyRefreshActivated");
 
         AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils
                 .getField(clusterClient, "clusterTopologyRefreshFuture");
@@ -80,7 +82,7 @@ public class TopologyRefreshTest extends AbstractTest {
 
         ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
 
         FastShutdown.shutdown(clusterClient);
 
@@ -106,7 +108,7 @@ public class TopologyRefreshTest extends AbstractTest {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -123,7 +125,7 @@ public class TopologyRefreshTest extends AbstractTest {
             assertThat(snapshot.getConnectedClients()).isNotNull().isGreaterThanOrEqualTo(0);
         }
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -141,7 +143,7 @@ public class TopologyRefreshTest extends AbstractTest {
         RedisClusterNodeSnapshot node2 = (RedisClusterNodeSnapshot) partitions.getPartitionBySlot(15000);
         assertThat(node2.getConnectedClients()).isNull();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -199,7 +201,7 @@ public class TopologyRefreshTest extends AbstractTest {
 
         assertThat(clusterClient.getPartitions()).isEmpty();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -227,7 +229,7 @@ public class TopologyRefreshTest extends AbstractTest {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -245,7 +247,7 @@ public class TopologyRefreshTest extends AbstractTest {
         Thread.sleep(500);
 
         assertThat(clusterClient.getPartitions()).isEmpty();
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -281,7 +283,7 @@ public class TopologyRefreshTest extends AbstractTest {
 
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(12000);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(4384);
-        clusterConnection.close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     private void runReconnectTest(
@@ -305,7 +307,9 @@ public class TopologyRefreshTest extends AbstractTest {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
-        closeable.close();
-        clusterConnection.close();
+        if (closeable instanceof RedisAdvancedClusterCommands) {
+            ((RedisAdvancedClusterCommands) closeable).getStatefulConnection().close();
+        }
+        clusterConnection.getStatefulConnection().close();
     }
 }

@@ -43,7 +43,7 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
-        sync.close();
+        sync.getStatefulConnection().close();
     }
 
     @Test

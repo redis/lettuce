@@ -48,7 +48,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
     @After
     public void closePubSubConnection() throws Exception {
-        pubsub.close();
+        pubsub.getStatefulConnection().close();
     }
 
     @Test
@@ -111,7 +111,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 
     @Test(timeout = 2000)

@@ -44,7 +44,7 @@ public class LettuceGeoDemo {
         GeoCoordinates weinheimGeopos = geopos.get(0);
         System.out.println("Coordinates: " + weinheimGeopos.x + "/" + weinheimGeopos.y);
 
-        redis.close();
+        redis.getStatefulConnection().close();
         redisClient.shutdown();
     }
 }

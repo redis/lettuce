@@ -42,7 +42,7 @@ public class InjectedClient {
     @PreDestroy
     public void preDestroy() {
         if (connection != null) {
-            connection.close();
+            connection.getStatefulConnection().close();
         }
     }
 }

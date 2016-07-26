@@ -14,7 +14,7 @@ import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.ListCommandTest;
-import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1828,7 +1828,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         connection.setTimeout(timeout, unit);
     }
 
-    @Override
     public void close() {
         connection.close();
     }

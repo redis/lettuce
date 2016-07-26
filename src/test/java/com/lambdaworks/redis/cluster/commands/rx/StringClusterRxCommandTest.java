@@ -19,7 +19,7 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.commands.StringCommandTest;
-import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 
 import rx.Observable;
 

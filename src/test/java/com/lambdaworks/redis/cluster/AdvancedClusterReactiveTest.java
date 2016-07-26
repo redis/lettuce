@@ -24,7 +24,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 
 import rx.Observable;
 import rx.Single;
@@ -48,7 +48,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     @After
     public void after() throws Exception {
-        commands.close();
+        commands.getStatefulConnection().close();
     }
 
     @Test(expected = RedisException.class)
@@ -60,21 +60,6 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test(expected = RedisException.class)
     public void invalidHost() throws Exception {
         commands.getConnection("invalid-host", -1);
-    }
-
-    @Test
-    public void doWeirdThingsWithClusterconnections() throws Exception {
-
-        assertThat(clusterClient.getPartitions()).hasSize(4);
-
-        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterReactiveCommands<String, String> nodeConnection = commands.getConnection(redisClusterNode.getNodeId());
-
-            nodeConnection.close();
-
-            RedisClusterReactiveCommands<String, String> nextConnection = commands.getConnection(redisClusterNode.getNodeId());
-            assertThat(commands).isNotSameAs(nextConnection);
-        }
     }
 
     @Test

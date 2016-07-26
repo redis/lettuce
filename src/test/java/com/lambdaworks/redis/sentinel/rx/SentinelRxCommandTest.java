@@ -4,7 +4,7 @@ import static com.lambdaworks.redis.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.commands.rx.RxSyncInvocationHandler;
+import com.lambdaworks.util.RxSyncInvocationHandler;
 import com.lambdaworks.redis.sentinel.SentinelCommandTest;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
