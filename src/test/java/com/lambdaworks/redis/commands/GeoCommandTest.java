@@ -275,7 +275,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
         assertThat(results).hasSize(1);
-        assertThat(results.get(0).score).isGreaterThan(99999);
+        assertThat(results.get(0).getScore()).isGreaterThan(99999);
     }
 
     @Test
@@ -305,7 +305,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
         assertThat(dist).hasSize(1);
 
-        assertThat(dist.get(0).score).isBetween(2d, 3d);
+        assertThat(dist.get(0).getScore()).isBetween(2d, 3d);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -343,7 +343,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
         assertThat(dist).hasSize(1);
 
-        assertThat(dist.get(0).score).isBetween(2d, 3d);
+        assertThat(dist.get(0).getScore()).isBetween(2d, 3d);
     }
 
     @Test

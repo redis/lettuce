@@ -40,11 +40,11 @@ public class AbstractTest {
     }
 
     public static KeyValue<String, String> kv(String key, String value) {
-        return new KeyValue<>(key, value);
+        return KeyValue.fromNullable(key, value);
     }
 
     public static ScoredValue<String> sv(double score, String value) {
-        return new ScoredValue<String>(score, value);
+        return ScoredValue.fromNullable(score, value);
     }
 
     public static Set<String> set(String... args) {

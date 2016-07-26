@@ -36,7 +36,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        subscriber.onNext(new ScoredValue<>(score, value));
+        subscriber.onNext(ScoredValue.fromNullable(score, value));
         value = null;
     }
 

@@ -13,7 +13,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
  * ValueStreamingChannels.
  * 
  * @author Mark Paluch
- * @param <T> Valu-Type.
+ * @param <T> Value-Type.
  * @since 3.0
  */
 public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T>,
@@ -37,6 +37,6 @@ public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStr
 
     @Override
     public void onValue(ScoredValue<T> value) {
-        list.add(value.value);
+        list.add(value.getValue());
     }
 }

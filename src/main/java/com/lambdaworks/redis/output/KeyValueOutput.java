@@ -29,7 +29,7 @@ public class KeyValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, V>> {
                 key = codec.decodeKey(bytes);
             } else {
                 V value = codec.decodeValue(bytes);
-                output = new KeyValue<K, V>(key, value);
+                output = KeyValue.fromNullable(key, value);
             }
         }
     }

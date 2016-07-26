@@ -1402,8 +1402,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             for (Object o : scoresAndValues) {
                 ScoredValue<V> scoredValue = (ScoredValue<V>) o;
 
-                args.add(scoredValue.score);
-                args.addValue(scoredValue.value);
+                args.add(scoredValue.getScore());
+                args.addValue(scoredValue.getValue());
             }
 
         } else {

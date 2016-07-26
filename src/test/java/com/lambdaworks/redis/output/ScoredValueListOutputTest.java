@@ -33,6 +33,6 @@ public class ScoredValueListOutputTest {
         sut.set(ByteBuffer.wrap("4.567".getBytes()));
         sut.multi(-1);
 
-        assertThat(sut.get()).contains(new ScoredValue<>(4.567, "key"));
+        assertThat(sut.get()).contains(ScoredValue.fromNullable(4.567, "key"));
     }
 }

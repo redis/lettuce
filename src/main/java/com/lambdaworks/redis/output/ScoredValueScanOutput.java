@@ -30,7 +30,7 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        output.getValues().add(new ScoredValue<V>(score, value));
+        output.getValues().add(ScoredValue.fromNullable(score, value));
         value = null;
     }
 

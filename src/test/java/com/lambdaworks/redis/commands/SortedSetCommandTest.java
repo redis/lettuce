@@ -33,20 +33,20 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     
     @Test
     public void zaddScoredValue() throws Exception {
-        assertThat(redis.zadd(key, new ScoredValue<String>(1.0, "a"))).isEqualTo(1);
-        assertThat(redis.zadd(key, new ScoredValue<String>(1.0, "a"))).isEqualTo(0);
+        assertThat(redis.zadd(key, ScoredValue.fromNullable(1.0, "a"))).isEqualTo(1);
+        assertThat(redis.zadd(key, ScoredValue.fromNullable(1.0, "a"))).isEqualTo(0);
 
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a"));
-        assertThat(redis.zadd(key, new ScoredValue<String>(2.0, "b"), new ScoredValue<String>(3.0, "c"))).isEqualTo(2);
+        assertThat(redis.zadd(key, ScoredValue.fromNullable(2.0, "b"), ScoredValue.fromNullable(3.0, "c"))).isEqualTo(2);
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "b", "c"));
     }
 
     @Test
     public void zaddnx() throws Exception {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
-        assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), new ScoredValue<String>(2.0, "a"))).isEqualTo(0);
+        assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), ScoredValue.fromNullable(2.0, "a"))).isEqualTo(0);
 
-        assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), new ScoredValue<String>(2.0, "b"))).isEqualTo(1);
+        assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), ScoredValue.fromNullable(2.0, "b"))).isEqualTo(1);
 
         assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), new Object[] { 2.0, "b", 3.0, "c" })).isEqualTo(1);
 
