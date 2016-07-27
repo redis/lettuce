@@ -4,15 +4,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-import rx.Observable;
-import rx.Subscriber;
-
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StreamingOutput;
 import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.RedisCommand;
+
+import rx.Observable;
+import rx.Subscriber;
 
 /**
  * Reactive command dispatcher.
@@ -96,41 +96,44 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         @Override
         @SuppressWarnings("unchecked")
         public void complete() {
-            if (completed) {
+            if (completed || subscriber.isUnsubscribed()) {
                 return;
             }
 
-            super.complete();
+            try {
+                super.complete();
 
-            if (getOutput() != null) {
-                Object result = getOutput().get();
-                if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
+                if (getOutput() != null) {
+                    Object result = getOutput().get();
+                    if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
 
-                    if (dissolve && result instanceof Collection) {
-                        Collection<T> collection = (Collection<T>) result;
-                        for (T t : collection) {
-                            subscriber.onNext(t);
+                        if (dissolve && result instanceof Collection) {
+                            Collection<T> collection = (Collection<T>) result;
+                            for (T t : collection) {
+                                subscriber.onNext(t);
+                            }
+                        } else {
+                            subscriber.onNext((T) result);
                         }
-                    } else {
-                        subscriber.onNext((T) result);
+                    }
+
+                    if (getOutput().hasError()) {
+                        subscriber.onError(new RedisCommandExecutionException(getOutput().getError()));
+                        completed = true;
+                        return;
                     }
                 }
 
-                if (getOutput().hasError()) {
-                    subscriber.onError(new RedisCommandExecutionException(getOutput().getError()));
-                    completed = true;
-                    return;
-                }
+                subscriber.onCompleted();
+            } finally {
+                completed = true;
             }
-
-            completed = true;
-            subscriber.onCompleted();
         }
 
         @Override
         public void cancel() {
 
-            if (completed) {
+            if (completed || subscriber.isUnsubscribed()) {
                 return;
             }
 
@@ -141,7 +144,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
         @Override
         public boolean completeExceptionally(Throwable throwable) {
-            if (completed) {
+            if (completed || subscriber.isUnsubscribed()) {
                 return false;
             }
 
@@ -162,6 +165,11 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
 
         @Override
         public void onNext(T t) {
+
+            if(subscriber.isUnsubscribed()) {
+                return;
+            }
+
             subscriber.onNext(t);
         }
     }
