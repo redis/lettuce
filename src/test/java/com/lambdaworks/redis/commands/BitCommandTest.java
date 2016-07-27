@@ -148,7 +148,7 @@ public class BitCommandTest extends AbstractRedisClientTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("bar", 1, 1);
         redis.setbit("baz", 2, 1);
-        Assertions.assertThat(redis.bitopAnd(key, "foo", "bar", "baz")).isEqualTo(1);
+        assertThat(redis.bitopAnd(key, "foo", "bar", "baz")).isEqualTo(1);
         assertThat((long) redis.bitcount(key)).isEqualTo(0);
         assertThat(bitstring.get(key)).isEqualTo("00000000");
     }
@@ -158,7 +158,7 @@ public class BitCommandTest extends AbstractRedisClientTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("foo", 2, 1);
 
-        Assertions.assertThat(redis.bitopNot(key, "foo")).isEqualTo(1);
+        assertThat(redis.bitopNot(key, "foo")).isEqualTo(1);
         assertThat((long) redis.bitcount(key)).isEqualTo(6);
         assertThat(bitstring.get(key)).isEqualTo("11111010");
     }
@@ -168,7 +168,7 @@ public class BitCommandTest extends AbstractRedisClientTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("bar", 1, 1);
         redis.setbit("baz", 2, 1);
-        Assertions.assertThat(redis.bitopOr(key, "foo", "bar", "baz")).isEqualTo(1);
+        assertThat(redis.bitopOr(key, "foo", "bar", "baz")).isEqualTo(1);
         assertThat(bitstring.get(key)).isEqualTo("00000111");
     }
 
@@ -177,22 +177,22 @@ public class BitCommandTest extends AbstractRedisClientTest {
         redis.setbit("foo", 0, 1);
         redis.setbit("bar", 0, 1);
         redis.setbit("baz", 2, 1);
-        Assertions.assertThat(redis.bitopXor(key, "foo", "bar", "baz")).isEqualTo(1);
+        assertThat(redis.bitopXor(key, "foo", "bar", "baz")).isEqualTo(1);
         assertThat(bitstring.get(key)).isEqualTo("00000100");
     }
 
     @Test
     public void getbit() throws Exception {
-        Assertions.assertThat(redis.getbit(key, 0)).isEqualTo(0);
+        assertThat(redis.getbit(key, 0)).isEqualTo(0);
         redis.setbit(key, 0, 1);
-        Assertions.assertThat(redis.getbit(key, 0)).isEqualTo(1);
+        assertThat(redis.getbit(key, 0)).isEqualTo(1);
     }
 
     @Test
     public void setbit() throws Exception {
 
-        Assertions.assertThat(redis.setbit(key, 0, 1)).isEqualTo(0);
-        Assertions.assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
+        assertThat(redis.setbit(key, 0, 1)).isEqualTo(0);
+        assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
     }
 
     public static class BitStringCodec extends Utf8StringCodec {

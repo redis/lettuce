@@ -19,8 +19,8 @@ public class SortCommandTest extends AbstractRedisClientTest {
     @Test
     public void sort() throws Exception {
         redis.rpush(key, "3", "2", "1");
-        Assertions.assertThat(redis.sort(key)).isEqualTo(list("1", "2", "3"));
-        Assertions.assertThat(redis.sort(key, asc())).isEqualTo(list("1", "2", "3"));
+        assertThat(redis.sort(key)).isEqualTo(list("1", "2", "3"));
+        assertThat(redis.sort(key, asc())).isEqualTo(list("1", "2", "3"));
     }
 
     @Test
@@ -42,7 +42,7 @@ public class SortCommandTest extends AbstractRedisClientTest {
     @Test
     public void sortAlpha() throws Exception {
         redis.rpush(key, "A", "B", "C");
-        Assertions.assertThat(redis.sort(key, alpha().desc())).isEqualTo(list("C", "B", "A"));
+        assertThat(redis.sort(key, alpha().desc())).isEqualTo(list("C", "B", "A"));
     }
 
     @Test
@@ -51,13 +51,13 @@ public class SortCommandTest extends AbstractRedisClientTest {
         redis.set("weight_foo", "8");
         redis.set("weight_bar", "4");
         redis.set("weight_baz", "2");
-        Assertions.assertThat(redis.sort(key, by("weight_*"))).isEqualTo(list("baz", "bar", "foo"));
+        assertThat(redis.sort(key, by("weight_*"))).isEqualTo(list("baz", "bar", "foo"));
     }
 
     @Test
     public void sortDesc() throws Exception {
         redis.rpush(key, "1", "2", "3");
-        Assertions.assertThat(redis.sort(key, desc())).isEqualTo(list("3", "2", "1"));
+        assertThat(redis.sort(key, desc())).isEqualTo(list("3", "2", "1"));
     }
 
     @Test
@@ -65,19 +65,19 @@ public class SortCommandTest extends AbstractRedisClientTest {
         redis.rpush(key, "1", "2");
         redis.set("obj_1", "foo");
         redis.set("obj_2", "bar");
-        Assertions.assertThat(redis.sort(key, get("obj_*"))).isEqualTo(list("foo", "bar"));
+        assertThat(redis.sort(key, get("obj_*"))).isEqualTo(list("foo", "bar"));
     }
 
     @Test
     public void sortLimit() throws Exception {
         redis.rpush(key, "3", "2", "1");
-        Assertions.assertThat(redis.sort(key, limit(1, 2))).isEqualTo(list("2", "3"));
+        assertThat(redis.sort(key, limit(1, 2))).isEqualTo(list("2", "3"));
     }
 
     @Test
     public void sortStore() throws Exception {
         redis.rpush("one", "1", "2", "3");
-        Assertions.assertThat(redis.sortStore("one", desc(), "two")).isEqualTo(3);
-        Assertions.assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("3", "2", "1"));
+        assertThat(redis.sortStore("one", desc(), "two")).isEqualTo(3);
+        assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("3", "2", "1"));
     }
 }

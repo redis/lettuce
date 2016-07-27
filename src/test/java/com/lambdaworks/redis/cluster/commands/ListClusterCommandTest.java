@@ -15,6 +15,8 @@ import com.lambdaworks.redis.cluster.RedisClusterClient;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.commands.ListCommandTest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Mark Paluch
  */
@@ -51,36 +53,36 @@ public class ListClusterCommandTest extends ListCommandTest {
 
         redis.rpush("UKPDHs8Zlp", "1", "2");
         redis.rpush("br7EPz9bbj", "3", "4");
-        Assertions.assertThat(redis.brpoplpush(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo("2");
-        Assertions.assertThat(redis.lrange("UKPDHs8Zlp", 0, -1)).isEqualTo(list("1"));
-        Assertions.assertThat(redis.lrange("br7EPz9bbj", 0, -1)).isEqualTo(list("2", "3", "4"));
+        assertThat(redis.brpoplpush(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo("2");
+        assertThat(redis.lrange("UKPDHs8Zlp", 0, -1)).isEqualTo(list("1"));
+        assertThat(redis.lrange("br7EPz9bbj", 0, -1)).isEqualTo(list("2", "3", "4"));
     }
 
     @Test
     public void brpoplpushTimeout() throws Exception {
-        Assertions.assertThat(redis.brpoplpush(1, "UKPDHs8Zlp", "br7EPz9bbj")).isNull();
+        assertThat(redis.brpoplpush(1, "UKPDHs8Zlp", "br7EPz9bbj")).isNull();
     }
 
     @Test
     public void blpop() throws Exception {
         redis.rpush("br7EPz9bbj", "2", "3");
-        Assertions.assertThat(redis.blpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "2"));
+        assertThat(redis.blpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "2"));
     }
 
     @Test
     public void brpop() throws Exception {
         redis.rpush("br7EPz9bbj", "2", "3");
-        Assertions.assertThat(redis.brpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "3"));
+        assertThat(redis.brpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "3"));
     }
 
     @Test
     public void rpoplpush() throws Exception {
-        Assertions.assertThat(redis.rpoplpush("UKPDHs8Zlp", "br7EPz9bbj")).isNull();
+        assertThat(redis.rpoplpush("UKPDHs8Zlp", "br7EPz9bbj")).isNull();
         redis.rpush("UKPDHs8Zlp", "1", "2");
         redis.rpush("br7EPz9bbj", "3", "4");
-        Assertions.assertThat(redis.rpoplpush("UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo("2");
-        Assertions.assertThat(redis.lrange("UKPDHs8Zlp", 0, -1)).isEqualTo(list("1"));
-        Assertions.assertThat(redis.lrange("br7EPz9bbj", 0, -1)).isEqualTo(list("2", "3", "4"));
+        assertThat(redis.rpoplpush("UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo("2");
+        assertThat(redis.lrange("UKPDHs8Zlp", 0, -1)).isEqualTo(list("1"));
+        assertThat(redis.lrange("br7EPz9bbj", 0, -1)).isEqualTo(list("2", "3", "4"));
     }
 
 }
