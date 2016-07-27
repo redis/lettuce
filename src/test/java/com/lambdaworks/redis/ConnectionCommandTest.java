@@ -49,19 +49,19 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void echo() throws Exception {
-        Assertions.assertThat(redis.echo("hello")).isEqualTo("hello");
+        assertThat(redis.echo("hello")).isEqualTo("hello");
     }
 
     @Test
     public void ping() throws Exception {
-        Assertions.assertThat(redis.ping()).isEqualTo("PONG");
+        assertThat(redis.ping()).isEqualTo("PONG");
     }
 
     @Test
     public void select() throws Exception {
         redis.set(key, value);
-        Assertions.assertThat(redis.select(1)).isEqualTo("OK");
-        Assertions.assertThat(redis.get(key)).isNull();
+        assertThat(redis.select(1)).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -93,13 +93,13 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         redis.select(1);
         redis.set(key, value);
         redis.quit();
-        Assertions.assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     public void isValid() throws Exception {
 
-        Assertions.assertThat(Connections.isValid(redis)).isTrue();
+        assertThat(Connections.isValid(redis)).isTrue();
         RedisAsyncCommandsImpl<String, String> asyncConnection = (RedisAsyncCommandsImpl<String, String>) client.connectAsync();
         RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) asyncConnection
                 .getStatefulConnection();
@@ -172,7 +172,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     public void getSetReconnect() throws Exception {
         redis.set(key, value);
         redis.quit();
-        Assertions.assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
