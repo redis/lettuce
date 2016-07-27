@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.api.sync;
 
-import java.util.List;
+import com.lambdaworks.redis.TransactionResult;
 
 /**
  * Synchronous executed commands for Transactions.
@@ -27,7 +27,7 @@ public interface RedisTransactionalCommands<K, V> {
      *
      *         When using {@code WATCH}, {@code EXEC} can return a
      */
-    List<Object> exec();
+    TransactionResult exec();
 
     /**
      * Mark the start of a transaction block.

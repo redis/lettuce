@@ -5,6 +5,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.util.List;
 
+import com.lambdaworks.redis.TransactionResult;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
@@ -56,7 +57,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         String response = redis.dispatch(CommandType.SET, new StatusOutput<>(utf8StringCodec),
                 new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
 
-        List<Object> exec = redis.exec();
+        TransactionResult exec = redis.exec();
 
         assertThat(response).isNull();
         assertThat(exec).hasSize(1).contains("OK");

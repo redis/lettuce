@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.api.rx;
 
 import java.util.List;
+
+import com.lambdaworks.redis.TransactionResult;
 import rx.Observable;
 import rx.Single;
 import rx.Completable;
@@ -30,7 +32,7 @@ public interface RedisTransactionalReactiveCommands<K, V> {
      *
      *         When using {@code WATCH}, {@code EXEC} can return a
      */
-    Observable<Object> exec();
+    Single<TransactionResult> exec();
 
     /**
      * Mark the start of a transaction block.

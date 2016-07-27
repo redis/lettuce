@@ -346,7 +346,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<List<Object>> exec() {
+    public RedisFuture<TransactionResult> exec() {
         return dispatch(EXEC, null);
     }
 

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Iterator;
 import java.util.List;
 
+import com.lambdaworks.redis.TransactionResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,7 +65,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
         redis.set(key, value);
 
-        assertThat(first(commands.exec())).isEqualTo("OK");
+        assertThat(block(commands.exec())).contains("OK");
         assertThat(block(commands.get(key))).isEqualTo(value);
     }
 
@@ -75,10 +76,10 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
         commands.lpop(key).subscribe(TestSubscriber.create());
         commands.get(key).subscribe(TestSubscriber.create());
 
-        List<Object> values = all(commands.exec());
-        assertThat(values.get(0)).isEqualTo("OK");
+        TransactionResult values = block(commands.exec());
+        assertThat((String) values.get(0)).isEqualTo("OK");
         assertThat(values.get(1) instanceof RedisException).isTrue();
-        assertThat(values.get(2)).isEqualTo(value);
+        assertThat((String) values.get(2)).isEqualTo(value);
     }
 
     @Test
@@ -108,7 +109,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
     @Test
     public void resultOfMultiIsContainedInExecObservable() throws Exception {
 
-        TestSubscriber<Object> exec = TestSubscriber.create();
+        TestSubscriber<TransactionResult> exec = TestSubscriber.create();
 
         commands.multi().subscribe();
         commands.set("key1", "value1").subscribe();
@@ -119,7 +120,7 @@ public class TransactionRxCommandTest extends TransactionCommandTest {
 
         exec.awaitTerminalEvent();
 
-        assertThat(exec.getOnNextEvents()).hasSize(4).containsExactly("OK", "OK",
+        assertThat(exec.getOnNextEvents().get(0)).hasSize(4).containsExactly("OK", "OK",
                 list(kv("key1", "value1"), kv("key2", "value2")), 0L);
     }
 

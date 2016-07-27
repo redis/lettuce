@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.api.async;
 
-import java.util.List;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.TransactionResult;
 
 /**
  * Asynchronous executed commands for Transactions.
@@ -28,7 +28,7 @@ public interface RedisTransactionalAsyncCommands<K, V> {
      *
      *         When using {@code WATCH}, {@code EXEC} can return a
      */
-    RedisFuture<List<Object>> exec();
+    RedisFuture<TransactionResult> exec();
 
     /**
      * Mark the start of a transaction block.

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Queue;
 
 import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.TransactionResult;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -18,12 +19,16 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
-public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
+public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
+
     private final Queue<RedisCommand<K, V, ?>> queue;
+    private List<Object> responses = new ArrayList<>();
+    private Boolean rolledBack;
 
     public MultiOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, null);
         queue = LettuceFactories.newSpScQueue();
     }
 
@@ -56,6 +61,14 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     @Override
     public void multi(int count) {
 
+        if (rolledBack == null) {
+            if (count == -1) {
+                rolledBack = true;
+            } else {
+                rolledBack = false;
+            }
+        }
+
         if (count == -1 && !queue.isEmpty()) {
             queue.peek().getOutput().multi(count);
         }
@@ -82,12 +95,17 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         if (depth == 1) {
             RedisCommand<K, V, ?> cmd = queue.remove();
             CommandOutput<K, V, ?> o = cmd.getOutput();
-            output.add(!o.hasError() ? o.get() : new RedisCommandExecutionException(o.getError()));
+            responses.add(!o.hasError() ? o.get() : new RedisCommandExecutionException(o.getError()));
             cmd.complete();
         } else if (depth == 0 && !queue.isEmpty()) {
             for (RedisCommand<K, V, ?> cmd : queue) {
                 cmd.complete();
             }
         }
+    }
+
+    @Override
+    public TransactionResult get() {
+        return new DefaultTransactionResult(rolledBack == null ? false : rolledBack, responses);
     }
 }

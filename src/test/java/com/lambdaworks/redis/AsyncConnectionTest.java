@@ -41,7 +41,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
         Future<List<String>> lrange = async.lrange("list", 0, -1);
 
         assertThat(!set.isDone() && !rpush.isDone() && !rpush.isDone()).isTrue();
-        assertThat(async.exec().get()).isEqualTo(list("OK", 2L, list("1", "2")));
+        assertThat(async.exec().get()).contains("OK", 2L, list("1", "2"));
 
         assertThat(set.get()).isEqualTo("OK");
         assertThat((long) rpush.get()).isEqualTo(2L);
@@ -57,7 +57,7 @@ public class AsyncConnectionTest extends AbstractRedisClientTest {
         async.multi();
         Future<String> set = async.set(key, value);
         Future<Long> append = async.append(key, "foo");
-        assertThat(async.exec().get()).isEqualTo(list());
+        assertThat(async.exec().get()).isEmpty();
         assertThat(set.get()).isNull();
         assertThat(append.get()).isNull();
     }

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import com.lambdaworks.redis.TransactionResult;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     public void exec() throws Exception {
         assertThat(redis.multi()).isEqualTo("OK");
         redis.set(key, value);
-        assertThat(redis.exec()).isEqualTo(list("OK"));
+        assertThat(redis.exec()).contains("OK");
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -46,7 +47,11 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
 
         redis.multi();
         redis.append(key, "foo");
-        assertThat(redis.exec()).isEqualTo(list());
+
+        TransactionResult transactionResult = redis.exec();
+
+        assertThat(transactionResult.wasRolledBack()).isTrue();
+        assertThat(transactionResult).isEmpty();
 
     }
 
@@ -57,10 +62,15 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void commandsReturnNullInMulti() throws Exception {
+
         assertThat(redis.multi()).isEqualTo("OK");
         assertThat(redis.set(key, value)).isNull();
         assertThat(redis.get(key)).isNull();
-        assertThat(redis.exec()).isEqualTo(list("OK", value));
+
+        TransactionResult exec = redis.exec();
+        assertThat(exec.wasRolledBack()).isFalse();
+        assertThat(exec).contains("OK", value);
+
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -71,7 +81,15 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         redis.set("two", "2");
         redis.mget("one", "two");
         redis.llen(key);
-        assertThat(redis.exec()).isEqualTo(list("OK", "OK", list(kv("one", "1"), kv("two", "2")), 0L));
+        assertThat(redis.exec()).contains("OK", "OK", list(kv("one", "1"), kv("two", "2")), 0L);
+    }
+
+    @Test
+    public void emptyMulti() throws Exception {
+        redis.multi();
+        TransactionResult exec = redis.exec();
+        assertThat(exec.wasRolledBack()).isFalse();
+        assertThat(exec).isEmpty();
     }
 
     @Test
@@ -80,10 +98,11 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         redis.set(key, value);
         redis.lpop(key);
         redis.get(key);
-        List<Object> values = redis.exec();
-        assertThat(values.get(0)).isEqualTo("OK");
+        TransactionResult values = redis.exec();
+        assertThat(values.wasRolledBack()).isFalse();
+        assertThat((String) values.get(0)).isEqualTo("OK");
         assertThat(values.get(1) instanceof RedisException).isTrue();
-        assertThat(values.get(2)).isEqualTo(value);
+        assertThat((String) values.get(2)).isEqualTo(value);
     }
 
     @Test
@@ -92,5 +111,4 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         exception.expectMessage("ERR EXEC without MULTI");
         redis.exec();
     }
-
 }

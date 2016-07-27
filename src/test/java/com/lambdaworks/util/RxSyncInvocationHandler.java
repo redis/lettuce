@@ -31,12 +31,10 @@ import rx.Single;
 public class RxSyncInvocationHandler<K, V> extends ConnectionDecoratingInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
-    private final Object rxApi;
 
     public RxSyncInvocationHandler(StatefulConnection<?, ?> connection, Object rxApi) {
         super(rxApi);
         this.connection = connection;
-        this.rxApi = rxApi;
     }
 
     @Override

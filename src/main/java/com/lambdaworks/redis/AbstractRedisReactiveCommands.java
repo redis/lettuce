@@ -349,8 +349,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Object> exec() {
-        return createDissolvingObservable(EXEC, null, null);
+    public Single<TransactionResult> exec() {
+        return createSingle(EXEC, null, null);
     }
 
     @Override
