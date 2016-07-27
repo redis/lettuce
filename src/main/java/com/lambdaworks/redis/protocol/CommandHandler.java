@@ -405,7 +405,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             throws Exception {
 
         if (command.isCancelled()) {
-            transportBuffer.remove(command);
+            removeFromTransportBuffer(command);
             return;
         }
 
@@ -434,7 +434,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             for (RedisCommand<K, V, ?> command : commands) {
 
                 if (command.isCancelled()) {
-                    transportBuffer.remove(command);
+                    removeFromTransportBuffer(command);
                     continue;
                 }
 
@@ -465,12 +465,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 sentTimes.put(command, new SentReceived(nanoTime()));
                 queue.add(command);
             }
-            transportBuffer.remove(command);
+            removeFromTransportBuffer(command);
         } catch (Exception e) {
             command.setException(e);
             command.cancel(true);
             promise.setFailure(e);
             throw e;
+        }
+    }
+
+    private void removeFromTransportBuffer(RedisCommand<K, V, ?> command) {
+        try {
+            writeLock.lock();
+            transportBuffer.remove(command);
+        } finally {
+            writeLock.unlock();
         }
     }
 
