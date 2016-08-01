@@ -101,8 +101,12 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        command.cancel();
-        return super.cancel(mayInterruptIfRunning);
+        try {
+            command.cancel();
+            return super.cancel(mayInterruptIfRunning);
+        } finally {
+            latch.countDown();
+        }
     }
 
     @Override
