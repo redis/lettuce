@@ -3,6 +3,7 @@ package com.lambdaworks.redis.commands;
 import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -73,6 +74,12 @@ public class AsyncCommandInternalsTest {
     public void awaitWithExecutionException() throws Exception {
         sut.completeExceptionally(new RedisException("error"));
         LettuceFutures.awaitOrCancel(sut, 1, TimeUnit.SECONDS);
+    }
+
+    @Test(expected = CancellationException.class)
+    public void awaitWithCancelledCommand() throws Exception {
+        sut.cancel();
+        LettuceFutures.awaitOrCancel(sut, 5, TimeUnit.SECONDS);
     }
 
     @Test(expected = RedisException.class)
