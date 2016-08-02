@@ -32,10 +32,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     protected TimeUnit unit;
 
     private CloseEvents closeEvents = new CloseEvents();
-    private boolean closed;
     private final RedisChannelWriter<K, V> channelWriter;
+    private volatile boolean closed;
     private volatile boolean active = true;
-    private ClientOptions clientOptions;
+    private volatile ClientOptions clientOptions;
     
     // If DEBUG level logging has been enabled at startup.
     private final boolean debugEnabled;
@@ -162,10 +162,8 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * Notification when the connection becomes active (connected).
      */
     public void activated() {
-        synchronized (this) {
-            active = true;
-            closed = false;
-        }
+        active = true;
+        closed = false;
     }
 
     /**
@@ -201,9 +199,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     public void setOptions(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
-        synchronized (this) {
-            this.clientOptions = clientOptions;
-        }
+        this.clientOptions = clientOptions;
     }
 
     public long getTimeout() {
