@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.lambdaworks.redis.cluster.SlotHash;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Cluster topology view. An instance of {@link Partitions} provides access to the partitions of a Redis Cluster. A partition is
@@ -91,6 +92,9 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     public void addPartition(RedisClusterNode partition) {
+
+        LettuceAssert.notNull(partition, "Partition must not be null");
+
         slotCache = EMPTY;
         partitions.add(partition);
     }
@@ -118,6 +122,8 @@ public class Partitions implements Collection<RedisClusterNode> {
      * @param partitions list of new partitions
      */
     public void reload(List<RedisClusterNode> partitions) {
+
+        LettuceAssert.noNullElements(partitions, "Partitions must not contain null elements");
         this.partitions.clear();
         this.partitions.addAll(partitions);
         updateCache();
@@ -135,6 +141,9 @@ public class Partitions implements Collection<RedisClusterNode> {
 
     @Override
     public boolean addAll(Collection<? extends RedisClusterNode> c) {
+
+        LettuceAssert.noNullElements(partitions, "Partitions must not contain null elements");
+
         boolean b = partitions.addAll(c);
         updateCache();
         return b;
@@ -172,6 +181,9 @@ public class Partitions implements Collection<RedisClusterNode> {
 
     @Override
     public boolean add(RedisClusterNode redisClusterNode) {
+
+        LettuceAssert.notNull(redisClusterNode, "RedisClusterNode must not be null");
+
         boolean add = getPartitions().add(redisClusterNode);
         updateCache();
         return add;

@@ -2,6 +2,8 @@ package com.lambdaworks.redis.internal;
 
 import com.lambdaworks.redis.LettuceStrings;
 
+import java.util.Collection;
+
 /**
  * Assertion utility class that assists in validating arguments. This class is part of the internal API and may change without
  * further notice.
@@ -78,6 +80,23 @@ public class LettuceAssert {
     public static void noNullElements(Object[] array, String message) {
         if (array != null) {
             for (Object element : array) {
+                if (element == null) {
+                    throw new IllegalArgumentException(message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Assert that a {@link java.util.Collection} has no null elements.
+     *
+     * @param c the collection to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the {@link Collection} contains a {@code null} element
+     */
+    public static void noNullElements(Collection<?> c, String message) {
+        if (c != null) {
+            for (Object element : c) {
                 if (element == null) {
                     throw new IllegalArgumentException(message);
                 }
