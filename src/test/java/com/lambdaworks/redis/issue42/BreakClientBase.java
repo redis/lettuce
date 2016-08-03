@@ -6,7 +6,8 @@ import static org.junit.Assert.fail;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.lambdaworks.redis.RedisCommandTimeoutException;
 import com.lambdaworks.redis.api.sync.RedisHashCommands;
@@ -22,7 +23,7 @@ public abstract class BreakClientBase {
     public static final String TEST_KEY = "taco";
     public volatile boolean sleep = false;
 
-    protected Logger log = Logger.getLogger(getClass());
+    protected Logger log = LogManager.getLogger(getClass());
 
     public void testSingle(RedisHashCommands<String, String> client) throws InterruptedException {
         populateTest(0, client);

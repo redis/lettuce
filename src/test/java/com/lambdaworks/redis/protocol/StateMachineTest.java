@@ -2,17 +2,18 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.RedisStateMachine.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.lambdaworks.redis.protocol.RedisStateMachine.State;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
-import com.lambdaworks.redis.output.CommandOutput;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,11 +22,7 @@ import org.junit.Test;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
-import com.lambdaworks.redis.output.ValueOutput;
+import com.lambdaworks.redis.output.*;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -38,14 +35,19 @@ public class StateMachineTest {
 
     @BeforeClass
     public static void beforeClass() {
-        Logger logger = LogManager.getLoggerRepository().getLogger(RedisStateMachine.class.getName());
-        logger.setLevel(Level.ALL);
+
+        LoggerContext ctx = (LoggerContext) LogManager.getContext();
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(RedisStateMachine.class.getName());
+        loggerConfig.setLevel(Level.ALL);
     }
 
     @AfterClass
     public static void afterClass() {
-        Logger logger = LogManager.getLoggerRepository().getLogger(RedisStateMachine.class.getName());
-        logger.setLevel(null);
+        LoggerContext ctx = (LoggerContext) LogManager.getContext();
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(RedisStateMachine.class.getName());
+        loggerConfig.setLevel(null);
     }
 
     @Before

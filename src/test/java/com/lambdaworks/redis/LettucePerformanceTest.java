@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.junit.*;
 
-import com.google.common.io.Resources;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
@@ -27,13 +27,17 @@ public class LettucePerformanceTest {
 
     @Before
     public void before() throws Exception {
-        LogManager.resetConfiguration();
-        LogManager.getRootLogger().setLevel(Level.WARN);
+
+        LoggerContext ctx = (LoggerContext) LogManager.getContext();
+        Configuration config = ctx.getConfiguration();
+        config.getLoggerConfig("com.lambdaworks.redis").setLevel(Level.OFF);
+        config.getLoggerConfig("com.lambdaworks.redis.protocol").setLevel(Level.OFF);
     }
 
     @After
     public void after() throws Exception {
-        PropertyConfigurator.configure(Resources.getResource("log4j.properties"));
+        LoggerContext ctx = (LoggerContext) LogManager.getContext();
+        ctx.reconfigure();
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.MINUTES);
     }

@@ -6,7 +6,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -28,7 +29,7 @@ public class LoggingTestRule implements MethodRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                Logger logger = Logger.getLogger(method.getMethod().getDeclaringClass());
+                Logger logger = LogManager.getLogger(method.getMethod().getDeclaringClass());
                 logger.info("---------------------------------------");
                 logger.info("-- Invoke method " + method.getMethod().getDeclaringClass().getSimpleName() + "."
                         + method.getName());

@@ -8,7 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -30,7 +31,7 @@ public class UnixDomainSocketTest {
     @Rule
     public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
 
-    protected Logger log = Logger.getLogger(getClass());
+    protected Logger log = LogManager.getLogger(getClass());
 
     protected String key = "key";
     protected String value = "value";

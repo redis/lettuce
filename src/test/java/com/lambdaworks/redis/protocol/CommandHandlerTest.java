@@ -11,9 +11,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -74,14 +76,18 @@ public class CommandHandlerTest {
 
     @BeforeClass
     public static void beforeClass() {
-        Logger logger = LogManager.getLoggerRepository().getLogger(CommandHandler.class.getName());
-        logger.setLevel(Level.ALL);
+        LoggerContext ctx = (LoggerContext) LogManager.getContext();
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(CommandHandler.class.getName());
+        loggerConfig.setLevel(Level.ALL);
     }
 
     @AfterClass
     public static void afterClass() {
-        Logger logger = LogManager.getLoggerRepository().getLogger(CommandHandler.class.getName());
-        logger.setLevel(null);
+        LoggerContext ctx = (LoggerContext) LogManager.getContext();
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(CommandHandler.class.getName());
+        loggerConfig.setLevel(null);
     }
 
     @Before

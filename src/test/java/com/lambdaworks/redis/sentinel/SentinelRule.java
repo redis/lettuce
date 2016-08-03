@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -42,7 +43,7 @@ public class SentinelRule implements TestRule {
     private RedisClient redisClient;
     private final boolean flushBeforeTest;
     private Map<Integer, RedisSentinelCommands<String, String>> sentinelConnections = new HashMap<>();
-    protected Logger log = Logger.getLogger(getClass());
+    protected Logger log = LogManager.getLogger(getClass());
 
     /**
      * 

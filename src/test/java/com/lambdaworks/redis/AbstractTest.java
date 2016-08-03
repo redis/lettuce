@@ -4,7 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Rule;
 
 import com.lambdaworks.LoggingTestRule;
@@ -22,7 +23,7 @@ public class AbstractTest {
     @Rule
     public LoggingTestRule loggingTestRule = new LoggingTestRule(false);
 
-    protected Logger log = Logger.getLogger(getClass());
+    protected Logger log = LogManager.getLogger(getClass());
     protected String key = "key";
     protected String value = "value";
 

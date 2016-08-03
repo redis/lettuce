@@ -2,7 +2,6 @@ package biz.paluch.redis.extensibility;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,7 +20,6 @@ public class MyExtendedRedisClientTest {
     public static final int port = TestSettings.port();
 
     protected static MyExtendedRedisClient client;
-    protected Logger log = Logger.getLogger(getClass());
     protected RedisConnection<String, String> redis;
     protected String key = "key";
     protected String value = "value";

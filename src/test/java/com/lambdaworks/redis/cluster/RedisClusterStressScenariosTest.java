@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Layout;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
@@ -34,7 +34,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     protected static RedisClient client;
     protected static RedisClusterClient clusterClient;
 
-    protected Logger log = Logger.getLogger(getClass());
+    protected Logger log = LogManager.getLogger(getClass());
 
     protected StatefulRedisConnection<String, String> redis5;
     protected StatefulRedisConnection<String, String> redis6;
@@ -91,8 +91,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     public void testClusterFailover() throws Exception {
 
         log.info("Cluster node 5 is master");
-        log.info("Cluster nodes seen from node 5:" + Layout.LINE_SEP + redissync5.clusterNodes());
-        log.info("Cluster nodes seen from node 6:" + Layout.LINE_SEP + redissync6.clusterNodes());
+        log.info("Cluster nodes seen from node 5:\n" + redissync5.clusterNodes());
+        log.info("Cluster nodes seen from node 6:\n"  + redissync6.clusterNodes());
 
         Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
         Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
@@ -103,8 +103,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
         Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
 
-        log.info("Cluster nodes seen from node 5 after clusterFailover:" + Layout.LINE_SEP + redissync5.clusterNodes());
-        log.info("Cluster nodes seen from node 6 after clusterFailover:" + Layout.LINE_SEP + redissync6.clusterNodes());
+        log.info("Cluster nodes seen from node 5 after clusterFailover:\n" + redissync5.clusterNodes());
+        log.info("Cluster nodes seen from node 6 after clusterFailover:\n" + redissync6.clusterNodes());
 
         RedisClusterNode redis5Node = getOwnPartition(redissync5);
         RedisClusterNode redis6Node = getOwnPartition(redissync6);
