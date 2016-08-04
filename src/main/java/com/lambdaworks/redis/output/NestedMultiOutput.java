@@ -8,7 +8,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandOutput;
 
@@ -37,11 +36,6 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     @Override
     public void set(ByteBuffer bytes) {
         output.add(bytes == null ? null : codec.decodeValue(bytes));
-    }
-
-    @Override
-    public void setError(ByteBuffer error) {
-        output.add(new RedisCommandExecutionException(decodeAscii(error)));
     }
 
     @Override
