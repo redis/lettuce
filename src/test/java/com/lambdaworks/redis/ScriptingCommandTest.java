@@ -65,6 +65,14 @@ public class ScriptingCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void evalshaWithMulti() throws Exception {
+        redis.scriptFlush();
+        String digest = redis.digest("return {1234, 5678}");
+        exception.expectMessage("NOSCRIPT No matching script. Please use EVAL.");
+        redis.evalsha(digest, MULTI);
+    }
+
+    @Test
     public void evalshaWithKeys() throws Exception {
         redis.scriptFlush();
         String digest = redis.scriptLoad("return {KEYS[1], KEYS[2]}");

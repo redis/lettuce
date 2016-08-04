@@ -129,7 +129,7 @@ public class CommandInternalsTest {
     public void nestedMultiError() throws Exception {
         NestedMultiOutput<String, String> output = new NestedMultiOutput<String, String>(codec);
         output.setError(buffer("Oops!"));
-        assertThat(output.get().get(0) instanceof RedisException).isTrue();
+        assertThat(output.getError()).isNotNull();
     }
 
     @Test
