@@ -188,7 +188,6 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
             @Override
             public void onNext(String s) {
-                System.out.println(s);
             }
         };
     }

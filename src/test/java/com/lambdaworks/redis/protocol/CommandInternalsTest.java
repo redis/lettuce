@@ -2,78 +2,91 @@
 
 package com.lambdaworks.redis.protocol;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.output.CommandOutput;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.*;
 
 public class CommandInternalsTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
-    protected Command<String, String, String> command;
+    protected Command<String, String, String> sut;
 
     @Before
     public final void createCommand() throws Exception {
         CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);
-        command = new Command<String, String, String>(CommandType.INFO, output, null);
+        sut = new Command<>(CommandType.INFO, output, null);
     }
 
     @Test
     public void isCancelled() throws Exception {
-        assertThat(command.isCancelled()).isFalse();
-        command.cancel();
-        assertThat(command.isCancelled()).isTrue();
-        command.cancel();
+        assertThat(sut.isCancelled()).isFalse();
+        sut.cancel();
+
+        assertThat(sut.isCancelled()).isTrue();
+        sut.cancel();
     }
 
     @Test
     public void isDone() throws Exception {
-        assertThat(command.isDone()).isFalse();
-        command.complete();
-        assertThat(command.isDone()).isTrue();
+        assertThat(sut.isDone()).isFalse();
+        sut.complete();
+        assertThat(sut.isDone()).isTrue();
     }
 
     @Test
     public void get() throws Exception {
-        command.getOutput().set(buffer("one"));
-        command.complete();
-        assertThat(command.get()).isEqualTo("one");
-        command.getOutput().toString();
+        assertThat(sut.get()).isNull();
+        sut.getOutput().set(buffer("one"));
+        assertThat(sut.get()).isEqualTo("one");
+    }
+
+    @Test
+    public void getError() throws Exception {
+        sut.getOutput().setError("error");
+        assertThat(sut.getError()).isEqualTo("error");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void setOutputAfterCompleted() throws Exception {
+        sut.complete();
+        sut.setOutput(new StatusOutput<>(codec));
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        assertThat(sut.toString()).contains("Command");
     }
 
     @Test
     public void customKeyword() throws Exception {
 
-        command = new Command<String, String, String>(MyKeywords.DUMMY, null, null);
-        command.setOutput(new StatusOutput<String, String>(codec));
+        sut = new Command<String, String, String>(MyKeywords.DUMMY, null, null);
+        sut.setOutput(new StatusOutput<String, String>(codec));
 
-        assertThat(command.toString()).contains(MyKeywords.DUMMY.name());
+        assertThat(sut.toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     public void customKeywordWithArgs() throws Exception {
-        command = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec));
-        command.getArgs().add(MyKeywords.DUMMY);
-        assertThat(command.getArgs().toString()).contains(MyKeywords.DUMMY.name());
+        sut = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec));
+        sut.getArgs().add(MyKeywords.DUMMY);
+        assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     public void getWithTimeout() throws Exception {
-        command.getOutput().set(buffer("one"));
-        command.complete();
+        sut.getOutput().set(buffer("one"));
+        sut.complete();
 
-        assertThat(command.get()).isEqualTo("one");
+        assertThat(sut.get()).isEqualTo("one");
     }
 
     @Test(expected = IllegalStateException.class)
