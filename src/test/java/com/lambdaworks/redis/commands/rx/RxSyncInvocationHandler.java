@@ -56,20 +56,18 @@ public class RxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                 }
             }
 
-            Iterable<?> objects = observable.toBlocking().toIterable();
+            List<?> value = observable.toList().toBlocking().first();
 
             if (method.getReturnType().equals(List.class)) {
-                return LettuceLists.newList(objects);
+                return value;
             }
 
             if (method.getReturnType().equals(Set.class)) {
-                return LettuceSets.newHashSet(objects);
+                return LettuceSets.newHashSet(value);
             }
 
-            Iterator<?> iterator = objects.iterator();
-
-            if (iterator.hasNext()) {
-                return iterator.next();
+            if (!value.isEmpty()) {
+                return value.get(0);
             }
 
             return null;
