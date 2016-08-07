@@ -112,13 +112,6 @@ public class CommandInternalsTest {
     }
 
     @Test
-    public void nestedMultiError() throws Exception {
-        NestedMultiOutput<String, String> output = new NestedMultiOutput<String, String>(codec);
-        output.setError(buffer("Oops!"));
-        assertThat(output.getError()).isNotNull();
-    }
-
-    @Test
     public void sillyTestsForEmmaCoverage() throws Exception {
         assertThat(CommandType.valueOf("APPEND")).isEqualTo(CommandType.APPEND);
         assertThat(CommandKeyword.valueOf("AFTER")).isEqualTo(CommandKeyword.AFTER);
