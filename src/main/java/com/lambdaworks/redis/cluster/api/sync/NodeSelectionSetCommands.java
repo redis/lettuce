@@ -1,5 +1,6 @@
 package com.lambdaworks.redis.cluster.api.sync;
 
+import java.util.List;
 import java.util.Set;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
@@ -166,7 +167,7 @@ public interface NodeSelectionSetCommands<K, V> {
      * @return Set&lt;V&gt; bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
      *         with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
-    Executions<Set<V>> srandmember(K key, long count);
+    Executions<List<V>> srandmember(K key, long count);
 
     /**
      * Get one or multiple random members from a set.

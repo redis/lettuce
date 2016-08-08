@@ -1,5 +1,6 @@
 package com.lambdaworks.redis;
 
+import java.util.List;
 import java.util.Set;
 
 import com.lambdaworks.redis.api.async.RedisSetAsyncCommands;
@@ -165,7 +166,7 @@ public interface RedisSetsAsyncConnection<K, V> {
      * @return RedisFuture&lt;Set&lt;V&gt;&gt; bulk-string-reply without the additional {@code count} argument the command
      *         returns a Bulk Reply with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
-    RedisFuture<Set<V>> srandmember(K key, long count);
+    RedisFuture<List<V>> srandmember(K key, long count);
 
     /**
      * Get one or multiple random members from a set.

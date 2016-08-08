@@ -1262,11 +1262,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SRANDMEMBER, new ValueOutput<K, V>(codec), key);
     }
 
-    public Command<K, V, Set<V>> srandmember(K key, long count) {
+    public Command<K, V, List<V>> srandmember(K key, long count) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(count);
-        return createCommand(SRANDMEMBER, new ValueSetOutput<K, V>(codec), args);
+        return createCommand(SRANDMEMBER, new ValueListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
