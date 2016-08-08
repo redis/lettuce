@@ -166,7 +166,7 @@ public interface RedisSetCommands<K, V> {
      * @return Set&lt;V&gt; bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
      *         with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
-    Set<V> srandmember(K key, long count);
+    List<V> srandmember(K key, long count);
 
     /**
      * Get one or multiple random members from a set.

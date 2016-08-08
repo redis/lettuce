@@ -5,6 +5,7 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -133,9 +134,11 @@ public class SetCommandTest extends AbstractRedisClientTest {
         redis.sadd(key, "a", "b", "c", "d");
         assertThat(set("a", "b", "c", "d").contains(redis.srandmember(key))).isTrue();
         assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c", "d"));
-        Set<String> rand = redis.srandmember(key, 3);
+        List<String> rand = redis.srandmember(key, 3);
         assertThat(rand).hasSize(3);
         assertThat(set("a", "b", "c", "d").containsAll(rand)).isTrue();
+        List<String> randWithDuplicates = redis.srandmember(key, -10);
+        assertThat(randWithDuplicates).hasSize(10);
     }
 
     @Test

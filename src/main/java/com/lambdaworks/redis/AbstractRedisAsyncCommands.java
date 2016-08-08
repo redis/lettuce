@@ -982,7 +982,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Set<V>> srandmember(K key, long count) {
+    public RedisFuture<List<V>> srandmember(K key, long count) {
         return dispatch(commandBuilder.srandmember(key, count));
     }
 
