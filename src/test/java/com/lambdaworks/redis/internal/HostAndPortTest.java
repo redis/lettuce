@@ -79,6 +79,58 @@ public class HostAndPortTest {
         checkFromStringCase("\nOMG\t", 89, "\nOMG\t", 89, false);
     }
 
+    @Test
+    public void shouldCreateHostAndPortFromParts() {
+        HostAndPort hp = HostAndPort.of("gmail.com", 81);
+        assertThat(hp.getHostText()).isEqualTo("gmail.com");
+        assertThat(hp.hasPort()).isTrue();
+        assertThat(hp.getPort()).isEqualTo(81);
+
+        try {
+            HostAndPort.of("gmail.com:80", 81);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        try {
+            HostAndPort.of("gmail.com", -1);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void shouldCompare() {
+        HostAndPort hp1 = HostAndPort.parse("foo::123");
+        HostAndPort hp2 = HostAndPort.parse("foo::123");
+        HostAndPort hp3 = HostAndPort.parse("[foo::124]");
+        HostAndPort hp4 = HostAndPort.of("[foo::123]", 80);
+        HostAndPort hp5 = HostAndPort.parse("[foo::123]:80");
+        assertThat(hp1.hashCode()).isEqualTo(hp1.hashCode());
+        assertThat(hp2.hashCode()).isEqualTo(hp1.hashCode());
+        assertThat(hp3.hashCode()).isNotEqualTo(hp1.hashCode());
+        assertThat(hp3.hashCode()).isNotEqualTo(hp4.hashCode());
+        assertThat(hp5.hashCode()).isNotEqualTo(hp4.hashCode());
+
+        assertThat(hp1.equals(hp1)).isTrue();
+        assertThat(hp1).isEqualTo(hp1);
+        assertThat(hp1.equals(hp2)).isTrue();
+        assertThat(hp1.equals(hp3)).isFalse();
+        assertThat(hp1).isNotEqualTo(hp3);
+        assertThat(hp3.equals(hp4)).isFalse();
+        assertThat(hp4.equals(hp5)).isFalse();
+        assertThat(hp1.equals(null)).isFalse();
+    }
+
+    @Test
+    public void shouldApplyCompatibilityParsing() throws Exception {
+
+        checkFromCompatCase("affe::123:6379", "affe::123", 6379);
+        checkFromCompatCase("1:2:3:4:5:6:7:8:6379", "1:2:3:4:5:6:7:8", 6379);
+        checkFromCompatCase("[affe::123]:6379", "affe::123", 6379);
+        checkFromCompatCase("127.0.0.1:6379", "127.0.0.1", 6379);
+    }
+
     private static void checkFromStringCase(String hpString, int defaultPort, String expectHost, int expectPort,
             boolean expectHasExplicitPort) {
         HostAndPort hp;
@@ -109,65 +161,11 @@ public class HostAndPortTest {
         assertThat(hp.getHostText()).isEqualTo(expectHost);
     }
 
-    @Test
-    public void testFromParts() {
-        HostAndPort hp = HostAndPort.of("gmail.com", 81);
-        assertThat(hp.getHostText()).isEqualTo("gmail.com");
-        assertThat(hp.hasPort()).isTrue();
-        assertThat(hp.getPort()).isEqualTo(81);
+    private static void checkFromCompatCase(String hpString, String expectHost, int expectPort) {
 
-        try {
-            HostAndPort.of("gmail.com:80", 81);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
-        }
+        HostAndPort hostAndPort = HostAndPort.parseCompat(hpString);
+        assertThat(hostAndPort.getHostText()).isEqualTo(expectHost);
+        assertThat(hostAndPort.getPort()).isEqualTo(expectPort);
 
-        try {
-            HostAndPort.of("gmail.com", -1);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
-        }
     }
-
-    @Test
-    public void testHashCodeAndEquals() {
-        HostAndPort hp1 = HostAndPort.parse("foo::123");
-        HostAndPort hp2 = HostAndPort.parse("foo::123");
-        HostAndPort hp3 = HostAndPort.parse("[foo::124]");
-        HostAndPort hp4 = HostAndPort.of("[foo::123]", 80);
-        HostAndPort hp5 = HostAndPort.parse("[foo::123]:80");
-        assertThat(hp1.hashCode()).isEqualTo(hp1.hashCode());
-        assertThat(hp2.hashCode()).isEqualTo(hp1.hashCode());
-        assertThat(hp3.hashCode()).isNotEqualTo(hp1.hashCode());
-        assertThat(hp3.hashCode()).isNotEqualTo(hp4.hashCode());
-        assertThat(hp5.hashCode()).isNotEqualTo(hp4.hashCode());
-
-        assertThat(hp1.equals(hp1)).isTrue();
-        assertThat(hp1).isEqualTo(hp1);
-        assertThat(hp1.equals(hp2)).isTrue();
-        assertThat(hp1.equals(hp3)).isFalse();
-        assertThat(hp1).isNotEqualTo(hp3);
-        assertThat(hp3.equals(hp4)).isFalse();
-        assertThat(hp4.equals(hp5)).isFalse();
-        assertThat(hp1.equals(null)).isFalse();
-    }
-
-    public void testToString() {
-        // With ports.
-        assertThat("" + HostAndPort.parse("foo:101")).isEqualTo("foo:101");
-        assertThat(HostAndPort.parse(":102").toString()).isEqualTo(":102");
-        assertThat(HostAndPort.of("1::2", 103).toString()).isEqualTo("[1::2]:103");
-        assertThat(HostAndPort.parse("[::1]:104").toString()).isEqualTo("[::1]:104");
-
-        // Without ports.
-        assertThat("" + HostAndPort.parse("foo")).isEqualTo("foo");
-        assertThat(HostAndPort.parse("").toString()).isEqualTo("");
-        assertThat(HostAndPort.parse("1::2").toString()).isEqualTo("[1::2]");
-        assertThat(HostAndPort.parse("[::1]").toString()).isEqualTo("[::1]");
-
-        // Garbage in, garbage out.
-        assertThat(HostAndPort.of("::]", 107).toString()).isEqualTo("[::]]:107");
-        assertThat(HostAndPort.parse("[[:]]:108").toString()).isEqualTo("[[:]]:108");
-    }
-
 }

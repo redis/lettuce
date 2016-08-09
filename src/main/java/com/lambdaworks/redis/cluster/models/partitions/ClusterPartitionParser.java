@@ -82,7 +82,7 @@ public class ClusterPartitionParser {
             hostAndPortPart = hostAndPortPart.substring(0, hostAndPortPart.indexOf('@'));
         }
 
-        HostAndPort hostAndPort = HostAndPort.parse(hostAndPortPart);
+        HostAndPort hostAndPort = HostAndPort.parseCompat(hostAndPortPart);
 
         if (LettuceStrings.isNotEmpty(hostAndPort.getHostText())) {
             uri = RedisURI.Builder.redis(hostAndPort.getHostText(), hostAndPort.getPort()).build();
