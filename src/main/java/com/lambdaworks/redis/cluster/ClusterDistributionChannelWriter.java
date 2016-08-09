@@ -131,7 +131,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         return ClusterConnectionProvider.Intent.WRITE;
     }
 
-    private HostAndPort getMoveTarget(String errorMessage) {
+    static HostAndPort getMoveTarget(String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
         LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
@@ -140,10 +140,10 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
 
-        return HostAndPort.parse(movedMessageParts[2]);
+        return HostAndPort.parseCompat(movedMessageParts[2]);
     }
 
-    private HostAndPort getAskTarget(String errorMessage) {
+    static HostAndPort getAskTarget(String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
         LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()),
@@ -152,7 +152,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
 
-        return HostAndPort.parse(movedMessageParts[2]);
+        return HostAndPort.parseCompat(movedMessageParts[2]);
     }
 
     @Override

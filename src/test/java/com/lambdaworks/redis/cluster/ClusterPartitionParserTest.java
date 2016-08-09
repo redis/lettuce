@@ -8,13 +8,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.internal.LettuceLists;
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 public class ClusterPartitionParserTest {
 
@@ -23,14 +23,18 @@ public class ClusterPartitionParserTest {
             + "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379 myself,slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 0 1 connected 0-6999 7001-7999 12001\n"
             + "5f4a2236d00008fba7ac0dd24b95762b446767bd :0 myself,master - 0 0 1 connected [5460->-5f4a2236d00008fba7ac0dd24b95762b446767bd] [5461-<-5f4a2236d00008fba7ac0dd24b95762b446767bd]";
 
+    private static String nodesWithIPv6Addresses = "c37ab8396be428403d4e55c0d317348be27ed973 affe:affe:123:34::1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+            + "3d005a179da7d8dc1adae6409d47b39c369e992b [dead:beef:dead:beef::1]:7380 master - 0 1401258245007 2 disconnected 8000-11999 [8000->-4213a8dabb94f92eb6a860f4d0729e6a25d43e0c] [5461-<-c37ab8396be428403d4e55c0d317348be27ed973]\n"
+            + "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379 myself,slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 0 1 connected 0-6999 7001-7999 12001\n"
+            + "5f4a2236d00008fba7ac0dd24b95762b446767bd :0 myself,master - 0 0 1 connected [5460->-5f4a2236d00008fba7ac0dd24b95762b446767bd] [5461-<-5f4a2236d00008fba7ac0dd24b95762b446767bd]";
 
-    private static String nodesWithBusPort = "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381@17381 slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 1454482721690 3 connected\n" +
-            "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380@17380 master - 0 1454482721690 0 connected 12000-16383\n" +
-            "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379@17379 myself,master - 0 0 1 connected 0-11999\n" +
-            "5f4a2236d00008fba7ac0dd24b95762b446767bd 127.0.0.1:7382@17382 slave 3d005a179da7d8dc1adae6409d47b39c369e992b 0 1454482721690 2 connected";
+    private static String nodesWithBusPort = "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381@17381 slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 1454482721690 3 connected\n"
+            + "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380@17380 master - 0 1454482721690 0 connected 12000-16383\n"
+            + "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379@17379 myself,master - 0 0 1 connected 0-11999\n"
+            + "5f4a2236d00008fba7ac0dd24b95762b446767bd 127.0.0.1:7382@17382 slave 3d005a179da7d8dc1adae6409d47b39c369e992b 0 1454482721690 2 connected";
 
     @Test
-    public void testParse() throws Exception {
+    public void shouldParseNodesCorrectly() throws Exception {
 
         Partitions result = ClusterPartitionParser.parse(nodes);
 
@@ -62,7 +66,7 @@ public class ClusterPartitionParserTest {
     }
 
     @Test
-    public void testParseWithBusPort() throws Exception {
+    public void shouldParseNodesWithBusPort() throws Exception {
 
         Partitions result = ClusterPartitionParser.parse(nodesWithBusPort);
 
@@ -76,7 +80,25 @@ public class ClusterPartitionParserTest {
     }
 
     @Test
-    public void getNodeByHash() throws Exception {
+    public void shouldParseNodesIPv6Address() throws Exception {
+
+        Partitions result = ClusterPartitionParser.parse(nodesWithIPv6Addresses);
+
+        assertThat(result.getPartitions()).hasSize(4);
+
+        RedisClusterNode p1 = result.getPartitions().get(0);
+
+        assertThat(p1.getUri().getHost()).isEqualTo("affe:affe:123:34::1");
+        assertThat(p1.getUri().getPort()).isEqualTo(7381);
+
+        RedisClusterNode p2 = result.getPartitions().get(1);
+
+        assertThat(p2.getUri().getHost()).isEqualTo("dead:beef:dead:beef::1");
+        assertThat(p2.getUri().getPort()).isEqualTo(7380);
+    }
+
+    @Test
+    public void getNodeByHashShouldReturnCorrectNode() throws Exception {
 
         Partitions partitions = ClusterPartitionParser.parse(nodes);
         assertThat(partitions.getPartitionBySlot(7000).getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");

@@ -28,36 +28,25 @@ public class HostAndPort {
     }
 
     /**
-     *
-     * @return {@literal true} if has a port.
+     * Create a {@link HostAndPort} of {@code host} and {@code port}
+     * 
+     * @param host the hostname
+     * @param port a valid port
+     * @return the {@link HostAndPort} of {@code host} and {@code port}
      */
-    public boolean hasPort() {
-        return port != NO_PORT;
-    }
+    public static HostAndPort of(String host, int port) {
 
-    /**
-     *
-     * @return the host text.
-     */
-    public String getHostText() {
-        return hostText;
-    }
+        LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
 
-    /**
-     *
-     * @return the port.
-     */
-    public int getPort() {
-        if(!hasPort()){
-            throw new IllegalStateException("No port present.");
-        }
-        return port;
+        HostAndPort parsedHost = parse(host);
+        LettuceAssert.isTrue(!parsedHost.hasPort(), String.format("Host has a port: %s", host));
+        return new HostAndPort(host, port);
     }
 
     /**
      * Parse a host and port string into a {@link HostAndPort}. The port is optional. Examples: {@code host:port} or
      * {@code host}
-     * 
+     *
      * @param hostPortString
      * @return
      */
@@ -99,6 +88,57 @@ public class HostAndPort {
         return new HostAndPort(host, port);
     }
 
+    /**
+     * Temporary workaround until Redis provides IPv6 addresses in bracket notation. Allows parsing of {@code 1.2.3.4:6479} and
+     * {@code dead:beef:dead:beef:affe::1:6379} into host and port. We assume the last item after the colon is a port.
+     *
+     * @param hostAndPortPart the string containing the host and port
+     * @return the parsed {@link HostAndPort}.
+     */
+    public static HostAndPort parseCompat(String hostAndPortPart) {
+
+        int firstColonIndex = hostAndPortPart.indexOf(':');
+        int lastColonIndex = hostAndPortPart.lastIndexOf(':');
+        int bracketIndex = hostAndPortPart.lastIndexOf(']');
+
+        if (firstColonIndex != lastColonIndex && lastColonIndex != -1 && bracketIndex == -1) {
+
+            String hostPart = hostAndPortPart.substring(0, lastColonIndex);
+            String portPart = hostAndPortPart.substring(lastColonIndex + 1);
+
+            return HostAndPort.of(hostPart, Integer.parseInt(portPart));
+        }
+
+        return HostAndPort.parse(hostAndPortPart);
+    }
+
+    /**
+     *
+     * @return {@literal true} if has a port.
+     */
+    public boolean hasPort() {
+        return port != NO_PORT;
+    }
+
+    /**
+     *
+     * @return the host text.
+     */
+    public String getHostText() {
+        return hostText;
+    }
+
+    /**
+     *
+     * @return the port.
+     */
+    public int getPort() {
+        if (!hasPort()) {
+            throw new IllegalStateException("No port present.");
+        }
+        return port;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -129,12 +169,13 @@ public class HostAndPort {
      * @throws IllegalArgumentException if parsing the bracketed host-port string fails.
      */
     private static String[] getHostAndPortFromBracketedHost(String hostPortString) {
-        int colonIndex = 0;
-        int closeBracketIndex = 0;
+
         LettuceAssert.isTrue(hostPortString.charAt(0) == '[',
                 String.format("Bracketed host-port string must start with a bracket: %s", hostPortString));
-        colonIndex = hostPortString.indexOf(':');
-        closeBracketIndex = hostPortString.lastIndexOf(']');
+
+        int colonIndex = hostPortString.indexOf(':');
+        int closeBracketIndex = hostPortString.lastIndexOf(']');
+
         LettuceAssert.isTrue(colonIndex > -1 && closeBracketIndex > colonIndex,
                 String.format("Invalid bracketed host/port: ", hostPortString));
 
@@ -142,6 +183,7 @@ public class HostAndPort {
         if (closeBracketIndex + 1 == hostPortString.length()) {
             return new String[] { host, "" };
         } else {
+
             LettuceAssert.isTrue(hostPortString.charAt(closeBracketIndex + 1) == ':',
                     "Only a colon may follow a close bracket: " + hostPortString);
             for (int i = closeBracketIndex + 2; i < hostPortString.length(); ++i) {
@@ -152,17 +194,23 @@ public class HostAndPort {
         }
     }
 
-    /** Return true for valid port numbers. */
+    /**
+     *
+     * @param port the port number
+     * @return {@literal true} for valid port numbers.
+     */
     private static boolean isValidPort(int port) {
         return port >= 0 && port <= 65535;
     }
 
-    public static HostAndPort of(String host, int port) {
+    @Override
+    public String toString() {
 
-        LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
-        HostAndPort parsedHost = parse(host);
-        LettuceAssert.isTrue(!parsedHost.hasPort(), String.format("Host has a port: %s", host));
-        return new HostAndPort(host, port);
+        StringBuilder sb = new StringBuilder();
+        sb.append(hostText);
+        if (hasPort()) {
+            sb.append(':').append(port);
+        }
+        return sb.toString();
     }
-
 }
