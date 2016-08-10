@@ -129,7 +129,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) connection.getStatefulConnection();
 
         connection.set("a", "b");
-        ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter) statefulConnection
+        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) statefulConnection
                 .getChannelWriter();
 
         StatefulRedisConnectionImpl<Object, Object> statefulSlotConnection = (StatefulRedisConnectionImpl) writer
@@ -157,64 +157,6 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
         connection.getStatefulConnection().close();
 
-    }
-
-    @Test(timeout = 20000)
-    public void distributedClusteredAccessAsync() throws Exception {
-
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
-
-        List<RedisFuture<?>> futures = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            futures.add(connection.set("a" + i, "myValue1" + i));
-            futures.add(connection.set("b" + i, "myValue2" + i));
-            futures.add(connection.set("d" + i, "myValue3" + i));
-        }
-
-        for (RedisFuture<?> future : futures) {
-            future.get();
-        }
-
-        for (int i = 0; i < 100; i++) {
-            RedisFuture<String> setA = connection.get("a" + i);
-            RedisFuture<String> setB = connection.get("b" + i);
-            RedisFuture<String> setD = connection.get("d" + i);
-
-            setA.get();
-            setB.get();
-            setD.get();
-
-            assertThat(setA.getError()).isNull();
-            assertThat(setB.getError()).isNull();
-            assertThat(setD.getError()).isNull();
-
-            assertThat(setA.get()).isEqualTo("myValue1" + i);
-            assertThat(setB.get()).isEqualTo("myValue2" + i);
-            assertThat(setD.get()).isEqualTo("myValue3" + i);
-        }
-
-        connection.getStatefulConnection().close();
-    }
-
-    @Test
-    public void distributedClusteredAccessSync() throws Exception {
-
-        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
-
-        for (int i = 0; i < 100; i++) {
-            connection.set("a" + i, "myValue1" + i);
-            connection.set("b" + i, "myValue2" + i);
-            connection.set("d" + i, "myValue3" + i);
-        }
-
-        for (int i = 0; i < 100; i++) {
-
-            assertThat(connection.get("a" + i)).isEqualTo("myValue1" + i);
-            assertThat(connection.get("b" + i)).isEqualTo("myValue2" + i);
-            assertThat(connection.get("d" + i)).isEqualTo("myValue3" + i);
-        }
-
-        connection.getStatefulConnection().close();
     }
 
 }

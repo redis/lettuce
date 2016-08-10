@@ -4,7 +4,6 @@ import static com.lambdaworks.redis.ConnectionEventTrigger.local;
 import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
 import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
-import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +11,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import javax.net.ssl.*;
 
@@ -22,7 +22,10 @@ import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
@@ -57,9 +60,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     @Override
     public RedisChannelInitializer build() {
 
-        final List<ChannelHandler> channelHandlers = buildHandlers();
-
-        return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), channelHandlers, redisURI,
+        return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), this::buildHandlers, redisURI,
                 clientResources().eventBus(), clientOptions().getSslOptions());
     }
 
@@ -69,13 +70,13 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
         private final boolean pingBeforeActivate;
-        private final List<ChannelHandler> handlers;
+        private final Supplier<List<ChannelHandler>> handlers;
         private final RedisURI redisURI;
         private final EventBus eventBus;
         private final SslOptions sslOptions;
         private CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
-        public SslChannelInitializer(boolean pingBeforeActivate, List<ChannelHandler> handlers, RedisURI redisURI,
+        public SslChannelInitializer(boolean pingBeforeActivate, Supplier<List<ChannelHandler>> handlers, RedisURI redisURI,
                 EventBus eventBus, SslOptions sslOptions) {
             this.pingBeforeActivate = pingBeforeActivate;
             this.handlers = handlers;
@@ -107,8 +108,6 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SSLEngine sslEngine = sslContext.newEngine(channel.alloc(), redisURI.getHost(), redisURI.getPort());
             sslEngine.setSSLParameters(sslParams);
-
-            removeIfExists(channel.pipeline(), SslHandler.class);
 
             if (channel.pipeline().get("first") == null) {
                 channel.pipeline().addFirst("first", new ChannelDuplexHandler() {
@@ -167,18 +166,12 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                                     } else {
                                         pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
                                     }
-                                    pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
+                                    pingBeforeActivate(pingCommand, initializedFuture, ctx);
                                 } else {
                                     ctx.fireChannelActive();
                                 }
                             } else {
                                 initializedFuture.completeExceptionally(event.cause());
-                            }
-                        }
-
-                        if (evt instanceof ConnectionEvents.Close) {
-                            if (ctx.channel().isOpen()) {
-                                ctx.channel().close();
                             }
                         }
 
@@ -202,8 +195,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                 });
             }
 
-            for (ChannelHandler handler : handlers) {
-                removeIfExists(channel.pipeline(), handler.getClass());
+            for (ChannelHandler handler : handlers.get()) {
                 channel.pipeline().addLast(handler);
             }
         }

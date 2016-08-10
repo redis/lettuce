@@ -1,11 +1,11 @@
 package com.lambdaworks.redis.masterslave;
 
 import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -14,7 +14,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * 
  * @author Mark Paluch
  */
-class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
+class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
 
     private MasterSlaveConnectionProvider<K, V> masterSlaveConnectionProvider;
     private boolean closed = false;
@@ -24,7 +24,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
     }
 
     @Override
-    public <T, C extends RedisCommand<K, V, T>> C write(C command) {
+    public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
         LettuceAssert.notNull(command, "Command must not be null");
 
@@ -33,7 +33,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
         }
 
         MasterSlaveConnectionProvider.Intent intent = getIntent(command.getType());
-        StatefulRedisConnection<K, V> connection = masterSlaveConnectionProvider.getConnection(intent);
+        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider.getConnection(intent);
 
         return connection.dispatch(command);
     }
@@ -68,7 +68,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
     }
 
     @Override
-    public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
+    public void setConnectionFacade(ConnectionFacade connection) {
 
     }
 

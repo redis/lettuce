@@ -13,7 +13,6 @@ import io.netty.channel.group.ChannelGroup;
  * 
  * @author Will Glozer
  */
-@ChannelHandler.Sharable
 class ChannelGroupListener extends ChannelInboundHandlerAdapter {
 
     private ChannelGroup channels;

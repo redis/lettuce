@@ -41,20 +41,9 @@ public class ConnectionEvents {
     }
 
     /**
-     * Internal event before a channel is closed.
-     */
-    public static class PrepareClose {
-        private CompletableFuture<Boolean> prepareCloseFuture = new CompletableFuture<>();
-
-        public CompletableFuture<Boolean> getPrepareCloseFuture() {
-            return prepareCloseFuture;
-        }
-    }
-
-    /**
      * Internal event when a channel is closed.
      */
-    public static class Close {
+    public static class Reset {
     }
 
     /**

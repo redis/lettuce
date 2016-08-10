@@ -2,7 +2,6 @@ package com.lambdaworks;
 
 import java.util.Queue;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.RedisChannelHandler;
@@ -10,14 +9,17 @@ import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.DefaultEndpoint;
 
 import io.netty.channel.Channel;
 
 /**
  * @author Mark Paluch
  */
-public class Connections {
+public class ConnectionTestUtil {
 
     /**
      * Extract the {@link Channel} from a stateful connection.
@@ -33,6 +35,7 @@ public class Connections {
 
     /**
      * Extract the {@link ConnectionWatchdog} from a stateful connection.
+     * 
      * @param connection
      * @return
      */
@@ -46,19 +49,42 @@ public class Connections {
         return (StatefulRedisConnectionImpl<K, V>) connection.getStatefulConnection();
     }
 
-    public static <K, V> RedisChannelWriter<K, V> getChannelWriter(StatefulConnection<K, V> connection) {
+    public static <K, V> RedisChannelWriter getChannelWriter(StatefulConnection<K, V> connection) {
         return ((RedisChannelHandler<K, V>) connection).getChannelWriter();
     }
 
     public static Queue<Object> getQueue(StatefulConnection<?, ?> connection) {
-        return (Queue<Object>) ReflectionTestUtils.getField(Connections.getChannelWriter(connection), "queue");
+
+        Channel channel = getChannel(connection);
+
+        if (channel != null) {
+            CommandHandler commandHandler = channel.pipeline().get(CommandHandler.class);
+            return (Queue) commandHandler.getQueue();
+        }
+
+        return LettuceFactories.newConcurrentQueue();
+
     }
 
     public static Queue<Object> getCommandBuffer(StatefulConnection<?, ?> connection) {
-        return (Queue<Object>) ReflectionTestUtils.getField(Connections.getChannelWriter(connection), "commandBuffer");
+
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection);
+        if (channelWriter instanceof DefaultEndpoint) {
+            return (Queue) ((DefaultEndpoint) channelWriter).getQueue();
+        }
+
+        return LettuceFactories.newConcurrentQueue();
     }
 
     public static String getConnectionState(StatefulConnection<?, ?> connection) {
-        return ReflectionTestUtils.getField(Connections.getChannelWriter(connection), "lifecycleState").toString();
+
+        Channel channel = getChannel(connection);
+
+        if (channel != null) {
+            CommandHandler commandHandler = channel.pipeline().get(CommandHandler.class);
+            return ReflectionTestUtils.getField(commandHandler, "lifecycleState").toString();
+        }
+
+        return "";
     }
 }

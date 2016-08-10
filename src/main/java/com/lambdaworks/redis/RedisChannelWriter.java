@@ -2,28 +2,28 @@ package com.lambdaworks.redis;
 
 import java.io.Closeable;
 
+import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Writer for a channel. Writers push commands on to the communication channel and maintain a state for the commands.
  * 
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Mark Paluch
  * @since 3.0
  */
-public interface RedisChannelWriter<K, V> extends Closeable {
+public interface RedisChannelWriter extends Closeable {
 
     /**
      * Write a command on the channel. The command may be changed/wrapped during write and the written instance is returned
      * after the call.
      * 
      * @param command the redis command
+     * @param <K> key type
+     * @param <V> value type
      * @param <T> result type
-     * @param <C> command type
      * @return the written redis command
      */
-    <T, C extends RedisCommand<K, V, T>> C write(C command);
+    <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
 
     @Override
     void close();
@@ -35,11 +35,11 @@ public interface RedisChannelWriter<K, V> extends Closeable {
     void reset();
 
     /**
-     * Set the corresponding connection instance in order to notify it about channel active/inactive state.
+     * Set the corresponding connection facade in order to notify it about channel active/inactive state.
      * 
-     * @param redisChannelHandler the channel handler (external connection object)
+     * @param connection the connection facade (external connection object)
      */
-    void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler);
+    void setConnectionFacade(ConnectionFacade connection);
 
     /**
      * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands

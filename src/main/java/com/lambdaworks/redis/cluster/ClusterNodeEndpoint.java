@@ -2,19 +2,15 @@ package com.lambdaworks.redis.cluster;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Queue;
-import java.util.Set;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.internal.LettuceSets;
-import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.resource.ClientResources;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -25,26 +21,22 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
-@ChannelHandler.Sharable
-class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
+class ClusterNodeEndpoint extends DefaultEndpoint {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterNodeCommandHandler.class);
-    private static final Set<LifecycleState> CHANNEL_OPEN_STATES = LettuceSets.unmodifiableSet(LifecycleState.ACTIVATING,
-            LifecycleState.ACTIVE, LifecycleState.CONNECTED);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterNodeEndpoint.class);
 
-    private final RedisChannelWriter<K, V> clusterChannelWriter;
+    private final RedisChannelWriter clusterChannelWriter;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
      * @param clientOptions client options for this connection
      * @param clientResources client resources for this connection
-     * @param queue The command queue
      * @param clusterChannelWriter top-most channel writer.
      */
-    public ClusterNodeCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
-            Queue<RedisCommand<K, V, ?>> queue, RedisChannelWriter<K, V> clusterChannelWriter) {
-        super(clientOptions, clientResources, queue);
+    public ClusterNodeEndpoint(ClientOptions clientOptions, ClientResources clientResources,
+            RedisChannelWriter clusterChannelWriter) {
+        super(clientOptions);
         this.clusterChannelWriter = clusterChannelWriter;
     }
 
@@ -72,28 +64,22 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
         logger.debug("{} close()", logPrefix());
 
         if (clusterChannelWriter != null) {
-            
-            if (isAutoReconnect() && !CHANNEL_OPEN_STATES.contains(getState())) {
-               
-                Collection<RedisCommand<K, V, ?>> commands = shiftCommands(queue);
-                retriggerCommands(commands);
-            }
 
-            Collection<RedisCommand<K, V, ?>> commands = shiftCommands(commandBuffer);
+            Collection<RedisCommand<?, ?, ?>> commands = shiftCommands(getQueue());
             retriggerCommands(commands);
         }
 
         super.close();
     }
 
-    protected void retriggerCommands(Collection<RedisCommand<K, V, ?>> commands) {
-        
-        for (RedisCommand<K, V, ?> queuedCommand : commands) {
-            
+    protected void retriggerCommands(Collection<RedisCommand<?, ?, ?>> commands) {
+
+        for (RedisCommand<?, ?, ?> queuedCommand : commands) {
+
             if (queuedCommand == null || queuedCommand.isCancelled()) {
                 continue;
             }
-            
+
             try {
                 clusterChannelWriter.write(queuedCommand);
             } catch (RedisException e) {
@@ -105,27 +91,15 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
     /**
      * Retrieve commands within a lock to prevent concurrent modification
      */
-    private Collection<RedisCommand<K, V, ?>> shiftCommands(Collection<RedisCommand<K, V, ?>> source) {
+    private Collection<RedisCommand<?, ?, ?>> shiftCommands(Collection<? extends RedisCommand<?, ?, ?>> source) {
 
-        synchronized (stateLock) {
-
+        return doExclusive(() -> {
             try {
-
-                lockWritersExclusive();
-
-                try {
-                    return new ArrayList<>(source);
-                } finally {
-                    source.clear();
-                }
-
+                return new ArrayList<>(source);
             } finally {
-                unlockWritersExclusive();
+                source.clear();
             }
-        }
+        });
     }
 
-    public boolean isAutoReconnect() {
-        return clientOptions.isAutoReconnect();
-    }
 }

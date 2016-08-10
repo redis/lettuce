@@ -4,7 +4,7 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.Connections.getStatefulConnection;
+import static com.lambdaworks.ConnectionTestUtil.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;

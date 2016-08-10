@@ -1,8 +1,8 @@
 package com.lambdaworks.redis.reliability;
 
 import static com.google.code.tempusfugit.temporal.Duration.millis;
-import static com.lambdaworks.Connections.getCommandBuffer;
-import static com.lambdaworks.Connections.getQueue;
+import static com.lambdaworks.ConnectionTestUtil.getCommandBuffer;
+import static com.lambdaworks.ConnectionTestUtil.getQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -10,15 +10,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import com.google.code.tempusfugit.temporal.Duration;
 import com.lambdaworks.Delay;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.lambdaworks.Connections;
+import com.lambdaworks.ConnectionTestUtil;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
@@ -57,7 +56,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
-        assertThat(Connections.getConnectionState(connection));
+        assertThat(ConnectionTestUtil.getConnectionState(connection));
 
         connection.close();
     }
@@ -65,12 +64,11 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     @Test
     public void noReconnectHandler() throws Exception {
 
-        RedisCommands<String, String> connection = client.connect().sync();
+        StatefulRedisConnection<String, String> connection = client.connect();
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
-        assertThat(connectionWatchdog).isNull();
+        assertThat(ConnectionTestUtil.getConnectionWatchdog(connection)).isNull();
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -121,8 +119,8 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     public void commandNotExecutedFailsOnEncode() throws Exception {
 
         StatefulRedisConnection<String, String> connection = client.connect();
-        RedisCommands<String, String> sync = connection.sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisCommands<String, String> sync = client.connect().sync();
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection);
 
         sync.set(key, "1");
         AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<String, String, String>(CommandType.INCR,
@@ -146,13 +144,13 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
         assertThat(getException(command)).isInstanceOf(EncoderException.class);
-        assertThat(getQueue(connection)).isNotEmpty();
-        getQueue(connection).clear();
+        assertThat(ConnectionTestUtil.getQueue(connection)).isNotEmpty();
+        ConnectionTestUtil.getQueue(connection).clear();
 
         assertThat(sync.get(key)).isEqualTo("2");
 
-        assertThat(getQueue(connection)).isEmpty();
-        assertThat(getCommandBuffer(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isEmpty();
 
         connection.close();
     }
@@ -165,15 +163,15 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> sync = connection.sync();
         RedisCommands<String, String> verificationConnection = client.connect().sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection);
 
         sync.set(key, "1");
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
         final CountDownLatch block = new CountDownLatch(1);
 
-        AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR,
-                new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
+        AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(
+                new Command<>(CommandType.INCR, new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -187,7 +185,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         channelWriter.write(command);
 
-        Channel channel = Connections.getChannel(connection);
+        Channel channel = ConnectionTestUtil.getChannel(connection);
         channel.unsafe().disconnect(channel.newPromise());
 
         assertThat(channel.isOpen()).isFalse();
@@ -211,13 +209,13 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> sync = connection.sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection);
         RedisCommands<String, String> verificationConnection = client.connect().sync();
 
         sync.set(key, "1");
 
-        AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.INCR, new StatusOutput<>(
-                CODEC), new CommandArgs<>(CODEC).addKey(key)));
+        AsyncCommand<String, String, String> command = new AsyncCommand<>(
+                new Command<>(CommandType.INCR, new StatusOutput<>(CODEC), new CommandArgs<>(CODEC).addKey(key)));
 
         channelWriter.write(command);
 

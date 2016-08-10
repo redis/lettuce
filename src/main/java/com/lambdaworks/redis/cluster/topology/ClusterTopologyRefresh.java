@@ -90,8 +90,8 @@ public class ClusterTopologyRefresh {
         return StreamSupport.stream(seed.spliterator(), false).collect(Collectors.toCollection(HashSet::new));
     }
 
-    NodeTopologyViews getNodeSpecificViews(Requests requestedTopology, Requests requestedClients,
-                                           long commandTimeoutNs) throws InterruptedException {
+    NodeTopologyViews getNodeSpecificViews(Requests requestedTopology, Requests requestedClients, long commandTimeoutNs)
+            throws InterruptedException {
 
         List<RedisClusterNodeSnapshot> allNodes = new ArrayList<>();
 
@@ -122,7 +122,7 @@ public class ClusterTopologyRefresh {
 
                     if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
 
-                        if(partition.getUri() == null){
+                        if (partition.getUri() == null) {
                             partition.setUri(node);
                         }
 

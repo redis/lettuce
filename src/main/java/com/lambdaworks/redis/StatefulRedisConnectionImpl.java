@@ -34,7 +34,6 @@ import io.netty.channel.ChannelHandler;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-@ChannelHandler.Sharable
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
@@ -55,7 +54,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+    public StatefulRedisConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(writer, timeout, unit);
 
         this.codec = codec;

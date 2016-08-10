@@ -109,7 +109,7 @@ public abstract class CommandOutput<K, V, T> {
     }
 
     protected String decodeAscii(ByteBuffer bytes) {
-        if(bytes == null) {
+        if (bytes == null) {
             return null;
         }
 
@@ -130,6 +130,11 @@ public abstract class CommandOutput<K, V, T> {
         return sb.toString();
     }
 
+    /**
+     * Mark the beginning of a multi sequence (array).
+     * 
+     * @param count expected number of elements in this multi sequence.
+     */
     public void multi(int count) {
 
     }

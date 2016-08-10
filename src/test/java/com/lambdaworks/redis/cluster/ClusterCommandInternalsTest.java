@@ -25,7 +25,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class ClusterCommandInternalsTest {
 
     @Mock
-    private RedisChannelWriter<String, String> writerMock;
+    private RedisChannelWriter writerMock;
 
     private ClusterCommand<String, String, String> sut;
     private Command<String, String, String> command = new Command<String, String, String>(CommandType.TYPE,

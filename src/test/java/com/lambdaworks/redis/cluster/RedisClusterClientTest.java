@@ -411,8 +411,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             redisClusterNode.setSlots(new ArrayList<>());
         }
         RedisChannelHandler rch = (RedisChannelHandler) sync.getStatefulConnection();
-        ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter<String, String>) rch
-                .getChannelWriter();
+        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) rch.getChannelWriter();
         writer.setPartitions(clusterClient.getPartitions());
         clusterClient.getPartitions().reload(clusterClient.getPartitions().getPartitions());
 

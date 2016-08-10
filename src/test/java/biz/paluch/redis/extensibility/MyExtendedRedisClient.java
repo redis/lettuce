@@ -4,10 +4,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.inject.Alternative;
 
+import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.PubSubEndpoint;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 
@@ -27,8 +28,8 @@ public class MyExtendedRedisClient extends RedisClient {
     }
 
     @Override
-    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
-            PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new MyPubSubConnection<>(commandHandler, codec, timeout, unit);
+    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        return new MyPubSubConnection<>(endpoint, channelWriter, codec, timeout, unit);
     }
 }

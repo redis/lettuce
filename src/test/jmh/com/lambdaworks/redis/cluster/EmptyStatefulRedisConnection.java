@@ -5,6 +5,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import java.util.concurrent.TimeUnit;
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Mark Paluch
  */
-public class EmptyStatefulRedisConnection implements StatefulRedisConnection {
+public class EmptyStatefulRedisConnection implements StatefulRedisConnection, ConnectionFacade {
     @Override
     public boolean isMulti() {
         return false;
@@ -61,6 +62,16 @@ public class EmptyStatefulRedisConnection implements StatefulRedisConnection {
     @Override
     public ClientOptions getOptions() {
         return null;
+    }
+
+    @Override
+    public void activated() {
+
+    }
+
+    @Override
+    public void deactivated() {
+
     }
 
     @Override

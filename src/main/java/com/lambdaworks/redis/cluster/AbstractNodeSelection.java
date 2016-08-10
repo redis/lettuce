@@ -24,7 +24,7 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
 
     protected StatefulRedisClusterConnection<K, V> globalConnection;
     private ClusterConnectionProvider.Intent intent;
-    protected ClusterDistributionChannelWriter<K, V> writer;
+    protected ClusterDistributionChannelWriter writer;
 
     public AbstractNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, ClusterConnectionProvider.Intent intent) {
         this.globalConnection = globalConnection;

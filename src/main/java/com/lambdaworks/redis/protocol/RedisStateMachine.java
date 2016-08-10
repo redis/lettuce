@@ -23,12 +23,10 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
  * Request Protocol (RESP)</a>.
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
  */
-public class RedisStateMachine<K, V> {
+public class RedisStateMachine {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
     private static final ByteBuffer QUEUED = buffer("QUEUED");
@@ -87,7 +85,7 @@ public class RedisStateMachine<K, V> {
      * @param output Current command output.
      * @return true if a complete response was read.
      */
-    public boolean decode(ByteBuf buffer, CommandOutput<K, V, ?> output) {
+    public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
         return decode(buffer, null, output);
     }
 
@@ -99,7 +97,7 @@ public class RedisStateMachine<K, V> {
      * @param output Current command output.
      * @return true if a complete response was read.
      */
-    public boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command, CommandOutput<K, V, ?> output) {
+    public boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
         int length, end;
         ByteBuffer bytes;
 
@@ -219,7 +217,7 @@ public class RedisStateMachine<K, V> {
      * Close the state machine to free resources.
      */
     public void close() {
-        if(closed.compareAndSet(false, true)) {
+        if (closed.compareAndSet(false, true)) {
             responseElementBuffer.release();
         }
     }
@@ -366,7 +364,7 @@ public class RedisStateMachine<K, V> {
      * @param integer
      * @param command
      */
-    protected void safeSet(CommandOutput<K, V, ?> output, long integer, RedisCommand<K, V, ?> command) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, long integer, RedisCommand<?, ?, ?> command) {
 
         try {
             output.set(integer);
@@ -382,7 +380,7 @@ public class RedisStateMachine<K, V> {
      * @param bytes
      * @param command
      */
-    protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
 
         try {
             output.set(bytes);
@@ -398,7 +396,7 @@ public class RedisStateMachine<K, V> {
      * @param count
      * @param command
      */
-    protected void safeMulti(CommandOutput<K, V, ?> output, int count, RedisCommand<K, V, ?> command) {
+    protected void safeMulti(CommandOutput<?, ?, ?> output, int count, RedisCommand<?, ?, ?> command) {
 
         try {
             output.multi(count);
@@ -414,7 +412,7 @@ public class RedisStateMachine<K, V> {
      * @param bytes
      * @param command
      */
-    protected void safeSetError(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+    protected void safeSetError(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
 
         try {
             output.setError(bytes);

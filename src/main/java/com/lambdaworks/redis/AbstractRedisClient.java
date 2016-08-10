@@ -13,8 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DefaultClientResources;
 
@@ -103,29 +102,15 @@ public abstract class AbstractRedisClient {
         this.unit = unit;
     }
 
-    @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisChannelHandler<K, V>> T connectAsyncImpl(final CommandHandler<K, V> handler,
-            final T connection, final Supplier<SocketAddress> socketAddressSupplier) {
-
-        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
-        connectionBuilder.clientOptions(clientOptions);
-        connectionBuilder.clientResources(clientResources);
-        connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, null);
-        channelType(connectionBuilder, null);
-        return (T) initializeChannel(connectionBuilder);
-    }
-
     /**
      * Populate connection builder with necessary resources.
      * 
-     * @param handler instance of a CommandHandler for writing redis commands
-     * @param connection implementation of a RedisConnection
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the redis instance
      */
-    protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
-            Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder, RedisURI redisURI) {
+    protected void connectionBuilder(Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+            RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 32 * 1024);
@@ -148,8 +133,7 @@ public abstract class AbstractRedisClient {
 
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
-        connectionBuilder.commandHandler(handler).socketAddressSupplier(socketAddressSupplier).connection(connection);
-        connectionBuilder.workerPool(genericWorkerPool);
+        connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
@@ -202,7 +186,7 @@ public abstract class AbstractRedisClient {
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         SocketAddress redisAddress = connectionBuilder.socketAddress();
 
-        if(connectionBuilder.workerPool().isShuttingDown()){
+        if(clientResources.eventExecutorGroup().isShuttingDown()){
             throw new IllegalStateException("Cannot connect. Worker pool not running");
         }
 
@@ -234,10 +218,10 @@ public abstract class AbstractRedisClient {
 
             return (T) connection;
         } catch (RedisException e) {
-            connectionBuilder.commandHandler().initialState();
+            connectionBuilder.endpoint().initialState();
             throw e;
         } catch (Exception e) {
-            connectionBuilder.commandHandler().initialState();
+            connectionBuilder.endpoint().initialState();
             throw new RedisConnectionException("Unable to connect to " + redisAddress, e);
         }
     }
@@ -279,14 +263,9 @@ public abstract class AbstractRedisClient {
             for (Channel c : channels) {
                 ChannelPipeline pipeline = c.pipeline();
 
-                CommandHandler<?, ?> commandHandler = pipeline.get(CommandHandler.class);
-                if (commandHandler != null && !commandHandler.isClosed()) {
-                    commandHandler.close();
-                }
-
-                PubSubCommandHandler<?, ?> psCommandHandler = pipeline.get(PubSubCommandHandler.class);
-                if (psCommandHandler != null && !psCommandHandler.isClosed()) {
-                    psCommandHandler.close();
+                ConnectionWatchdog commandHandler = pipeline.get(ConnectionWatchdog.class);
+                if (commandHandler != null) {
+                    commandHandler.setListenOnChannelInactive(false);
                 }
             }
 

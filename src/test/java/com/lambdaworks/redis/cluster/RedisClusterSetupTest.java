@@ -19,7 +19,7 @@ import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.Connections;
+import com.lambdaworks.ConnectionTestUtil;
 import com.lambdaworks.Futures;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
@@ -524,7 +524,7 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     private void suspendConnection(RedisClusterAsyncCommands<String, String> asyncCommands)
             throws InterruptedException, TimeoutException {
-        Connections.getConnectionWatchdog(((RedisAsyncCommands<?, ?>) asyncCommands).getStatefulConnection())
+        ConnectionTestUtil.getConnectionWatchdog(((RedisAsyncCommands<?, ?>) asyncCommands).getStatefulConnection())
                 .setReconnectSuspended(true);
         asyncCommands.quit();
         WaitFor.waitOrTimeout(() -> !asyncCommands.isOpen(), timeout(seconds(6)));

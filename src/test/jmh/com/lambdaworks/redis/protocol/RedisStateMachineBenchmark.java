@@ -43,7 +43,7 @@ public class RedisStateMachineBenchmark {
 
     private ByteBuf masterBuffer;
 
-    private final RedisStateMachine<byte[], byte[]> stateMachine = new RedisStateMachine<>();
+    private final RedisStateMachine stateMachine = new RedisStateMachine();
     private final byte[] payload = ("*3\r\n" + //
             "$4\r\n" + //
             "LLEN\r\n" + //

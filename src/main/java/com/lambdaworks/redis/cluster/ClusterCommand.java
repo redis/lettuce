@@ -14,7 +14,7 @@ import io.netty.buffer.ByteBuf;
  */
 class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {
 
-    private RedisChannelWriter<K, V> retry;
+    private RedisChannelWriter retry;
     private int redirections;
     private int maxRedirections;
     private boolean completed;
@@ -25,7 +25,7 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
      * @param retry
      * @param maxRedirections
      */
-    ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int maxRedirections) {
+    ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter retry, int maxRedirections) {
         super(command);
         this.retry = retry;
         this.maxRedirections = maxRedirections;

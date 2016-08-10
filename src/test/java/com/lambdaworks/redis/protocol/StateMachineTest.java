@@ -31,7 +31,7 @@ public class StateMachineTest {
     protected RedisCodec<String, String> codec = new Utf8StringCodec();
     protected Charset charset = Charset.forName("UTF-8");
     protected CommandOutput<String, String, String> output;
-    protected RedisStateMachine<String, String> rsm;
+    protected RedisStateMachine rsm;
 
     @BeforeClass
     public static void beforeClass() {
@@ -53,7 +53,7 @@ public class StateMachineTest {
     @Before
     public final void createStateMachine() throws Exception {
         output = new StatusOutput<String, String>(codec);
-        rsm = new RedisStateMachine<String, String>();
+        rsm = new RedisStateMachine();
     }
 
     @Test

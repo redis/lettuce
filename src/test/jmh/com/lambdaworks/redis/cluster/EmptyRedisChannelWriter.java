@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.cluster;
 
-import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
+import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
@@ -9,7 +9,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  */
 public class EmptyRedisChannelWriter implements RedisChannelWriter {
     @Override
-    public RedisCommand write(RedisCommand command) {
+    public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
         return null;
     }
 
@@ -24,7 +24,7 @@ public class EmptyRedisChannelWriter implements RedisChannelWriter {
     }
 
     @Override
-    public void setRedisChannelHandler(RedisChannelHandler redisChannelHandler) {
+    public void setConnectionFacade(ConnectionFacade connection) {
 
     }
 

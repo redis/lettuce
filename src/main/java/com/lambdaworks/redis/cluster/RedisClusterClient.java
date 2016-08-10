@@ -26,12 +26,12 @@ import com.lambdaworks.redis.cluster.topology.TopologyComparators;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.PubSubEndpoint;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
@@ -376,8 +376,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return A new connection
      */
-    <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
-            RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
+    <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId, RedisChannelWriter clusterWriter,
+            final Supplier<SocketAddress> socketAddressSupplier) {
 
         assertNotNull(codec);
         assertNotEmpty(initialUris);
@@ -385,14 +385,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
         logger.debug("connectNode(" + nodeId + ")");
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(), queue,
-                clusterWriter);
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
+        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, getResources(), clusterWriter);
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(endpoint, codec, timeout, unit);
 
         try {
-            connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+            connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
+                    () -> new CommandHandler(clientResources, endpoint));
 
             connection.registerCloseables(closeableResources, connection);
         } catch (RedisException e) {
@@ -420,14 +419,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
 
-        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
-                handler, clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions,
+                endpoint, clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
 
@@ -445,7 +443,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         for (int i = 0; i < connectionAttempts; i++) {
             try {
-                connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+                connectStateful(endpoint, connection, getFirstUri(), socketAddressSupplier,
+                        () -> new CommandHandler(clientResources, endpoint));
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -483,21 +482,20 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, clientResources, queue, codec);
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<K, V>(clientOptions);
 
-        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
-                handler, clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
+                clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
-        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(clusterWriter, codec,
-                timeout, unit);
+        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, clusterWriter,
+                codec, timeout, unit);
 
         clusterWriter.setPartitions(partitions);
 
@@ -507,7 +505,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         for (int i = 0; i < connectionAttempts; i++) {
             try {
-                connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
+                        () -> new PubSubCommandHandler<K, V>(clientResources, codec, endpoint));
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -534,17 +533,12 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
      * {@code connectionSettings}.
      *
-     * @param handler
-     * @param connection
-     * @param connectionSettings
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
      */
-    private <K, V> void connectStateful(CommandHandler<K, V> handler, StatefulRedisConnectionImpl<K, V> connection,
-            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
+    private <K, V> void connectStateful(StatefulRedisConnectionImpl<K, V> connection, DefaultEndpoint endpoint,
+            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
+            Supplier<CommandHandler> commandHandlerSupplier) {
 
-        connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
+        connectStateful0(connection, endpoint, connectionSettings, socketAddressSupplier, commandHandlerSupplier);
 
         if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
             connection.async().auth(new String(connectionSettings.getPassword()));
@@ -555,17 +549,12 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
      * {@code connectionSettings}.
      *
-     * @param handler
-     * @param connection
-     * @param connectionSettings
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
      */
-    private <K, V> void connectStateful(CommandHandler<K, V> handler, StatefulRedisClusterConnectionImpl<K, V> connection,
-            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
+    private <K, V> void connectStateful(DefaultEndpoint endpoint, StatefulRedisClusterConnectionImpl<K, V> connection,
+                                        RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
+                                        Supplier<CommandHandler> commandHandlerSupplier) {
 
-        connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
+        connectStateful0(connection, endpoint, connectionSettings, socketAddressSupplier, commandHandlerSupplier);
 
         if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
             connection.async().auth(new String(connectionSettings.getPassword()));
@@ -575,16 +564,10 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (SSL) from {@code
      * connectionSettings}.
-     *
-     * @param handler
-     * @param connection
-     * @param connectionSettings
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
      */
-    private <K, V> void connectStateful0(CommandHandler<K, V> handler, RedisChannelHandler<K, V> connection,
-            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
+    private <K, V> void connectStateful0(RedisChannelHandler<K, V> connection, DefaultEndpoint endpoint,
+            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
+            Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
         if (connectionSettings.isSsl()) {
@@ -597,8 +580,11 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(clusterTopologyRefreshScheduler));
         connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder.connection(connection);
         connectionBuilder.clientResources(clientResources);
-        connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, connectionSettings);
+        connectionBuilder.endpoint(endpoint);
+        connectionBuilder.commandHandler(commandHandlerSupplier);
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionSettings);
         channelType(connectionBuilder, connectionSettings);
 
         initializeChannel(connectionBuilder);
@@ -696,9 +682,8 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
 
             if (clusterTopologyRefreshActivated.compareAndSet(false, true)) {
-                ScheduledFuture<?> scheduledFuture = genericWorkerPool
-                        .scheduleAtFixedRate(clusterTopologyRefreshScheduler, options.getRefreshPeriod(),
-                                options.getRefreshPeriod(), options.getRefreshPeriodUnit());
+                ScheduledFuture<?> scheduledFuture = genericWorkerPool.scheduleAtFixedRate(clusterTopologyRefreshScheduler,
+                        options.getRefreshPeriod(), options.getRefreshPeriod(), options.getRefreshPeriodUnit());
                 clusterTopologyRefreshFuture.set(scheduledFuture);
             }
         }
@@ -768,7 +753,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     @Override
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
-        if(clusterTopologyRefreshActivated.compareAndSet(true, false)){
+        if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
 
             ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 

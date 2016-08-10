@@ -7,7 +7,7 @@ import java.util.concurrent.*;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.lambdaworks.Connections;
+import com.lambdaworks.ConnectionTestUtil;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -69,7 +69,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         try {
             RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
@@ -118,12 +118,12 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
 
             RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
 
             ReconnectionListener reconnectionListener = new ReconnectionListener() {
                 @Override
                 public void onReconnect(ConnectionEvents.Reconnect reconnect) {
-                    events.add(reconnect);
+                    events.offer(reconnect);
                 }
             };
 
@@ -167,7 +167,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         try {
             RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
                     .connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
@@ -185,7 +185,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
             assertThat(connection.getStatefulConnection().isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
-            connectionWatchdog.run(null);
+            connectionWatchdog.run(0);
             Thread.sleep(500);
             assertThat(connection.getStatefulConnection().isOpen()).isFalse();
 
@@ -224,13 +224,12 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         client.setOptions(ClientOptions.create());
 
-
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
                 .withTimeout(10, TimeUnit.MINUTES).build();
 
         StatefulRedisConnection<String, String> connection = client.connect(redisUri);
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection);
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
 
         assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();

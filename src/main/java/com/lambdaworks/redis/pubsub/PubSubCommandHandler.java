@@ -2,15 +2,11 @@
 
 package com.lambdaworks.redis.pubsub;
 
-import java.util.Queue;
-
-import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
-
 import com.lambdaworks.redis.resource.ClientResources;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -24,44 +20,54 @@ import io.netty.channel.ChannelHandlerContext;
  * 
  * @author Will Glozer
  */
-public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
+public class PubSubCommandHandler<K, V> extends CommandHandler {
+
+    private PubSubEndpoint<K, V> endpoint;
     private RedisCodec<K, V> codec;
     private PubSubOutput<K, V, V> output;
 
     /**
      * Initialize a new instance.
      * 
-     * @param clientOptions client options for the connection
      * @param clientResources client resources for this connection
-     * @param queue Command queue.
      * @param codec Codec.
+     * @param endpoint the Pub/Sub endpoint for Pub/Sub callback.
      */
-    public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
-            Queue<RedisCommand<K, V, ?>> queue, RedisCodec<K, V> codec) {
-        super(clientOptions, clientResources, queue);
+    public PubSubCommandHandler(ClientResources clientResources, RedisCodec<K, V> codec, PubSubEndpoint<K, V> endpoint) {
+
+        super(clientResources, endpoint);
+
         this.codec = codec;
         this.output = new PubSubOutput<>(codec);
+        this.endpoint = endpoint;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
-        while (output.type() == null && !queue.isEmpty()) {
-            CommandOutput<K, V, ?> currentOutput = queue.peek().getOutput();
-            if (!rsm.decode(buffer, currentOutput)) {
+
+        while (output.type() == null && !getQueue().isEmpty()) {
+            CommandOutput<?, ?, ?> currentOutput = getQueue().peek().getOutput();
+
+            if (!super.decode(buffer, currentOutput)) {
                 return;
             }
-            queue.poll().complete();
+
+            getQueue().poll().complete();
+
             buffer.discardReadBytes();
+
             if (currentOutput instanceof PubSubOutput) {
-                ctx.fireChannelRead(currentOutput);
+                endpoint.notifyMessage((PubSubOutput) currentOutput);
             }
         }
 
-        while (rsm.decode(buffer, output)) {
-            ctx.fireChannelRead(output);
-            output = new PubSubOutput<K, V, V>(codec);
+        while (super.decode(buffer, output)) {
+
+            endpoint.notifyMessage(output);
+            output = new PubSubOutput<>(codec);
+
             buffer.discardReadBytes();
         }
     }
-
 }

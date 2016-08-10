@@ -20,7 +20,7 @@ public class EmptyRedisClusterClient extends RedisClusterClient {
     }
 
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
-            RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
+            RedisChannelWriter clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
         return CONNECTION;
     }
 }

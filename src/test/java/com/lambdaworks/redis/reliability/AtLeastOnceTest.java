@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.lambdaworks.Connections;
+import com.lambdaworks.ConnectionTestUtil;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -51,7 +51,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
-        assertThat(Connections.getConnectionState(connection));
+        assertThat(ConnectionTestUtil.getConnectionState(connection)).isEqualTo("CONNECTED");
 
         connection.close();
     }
@@ -61,7 +61,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
         assertThat(connectionWatchdog).isNotNull();
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
         assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
@@ -87,8 +87,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1");
 
-        assertThat(Connections.getQueue(connection.getStatefulConnection())).isEmpty();
-        assertThat(Connections.getCommandBuffer(connection.getStatefulConnection())).isEmpty();
+        assertThat(ConnectionTestUtil.getQueue(connection.getStatefulConnection())).isEmpty();
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection.getStatefulConnection())).isEmpty();
 
         connection.getStatefulConnection().close();
     }
@@ -114,17 +114,16 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     @Test
     public void commandFailsWhenFailOnEncode() throws Exception {
 
-        StatefulRedisConnection<String, String> connection = client.connect();
-        RedisCommands<String, String> sync = connection.sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisCommands<String, String> connection = client.connect().sync();
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection.getStatefulConnection());
         RedisCommands<String, String> verificationConnection = client.connect().sync();
 
-        sync.set(key, "1");
+        connection.set(key, "1");
         AsyncCommand<String, String, String> working = new AsyncCommand<>(
                 new Command<>(CommandType.INCR, new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key)));
         channelWriter.write(working);
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(sync.get(key)).isEqualTo("2");
+        assertThat(connection.get(key)).isEqualTo("2");
 
         AsyncCommand<String, String, Object> command = new AsyncCommand(
                 new Command<>(CommandType.INCR, new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
@@ -143,9 +142,9 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(Connections.getQueue(connection)).isNotEmpty();
+        assertThat(ConnectionTestUtil.getQueue(connection.getStatefulConnection())).isNotEmpty();
 
-        sync.getStatefulConnection().close();
+        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -155,7 +154,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> verificationConnection = client.connect().sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection);
 
         RedisCommands<String, String> sync = connection.sync();
         sync.set(key, "1");
@@ -163,7 +162,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         final CountDownLatch block = new CountDownLatch(1);
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection);
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
 
         AsyncCommand<String, String, Object> command = getBlockOnEncodeCommand(block);
 
@@ -171,7 +170,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connectionWatchdog.setReconnectSuspended(true);
 
-        Channel channel = Connections.getChannel(connection);
+        Channel channel = ConnectionTestUtil.getChannel(connection);
         channel.unsafe().disconnect(channel.newPromise());
 
         assertThat(channel.isOpen()).isFalse();
@@ -184,8 +183,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
-        assertThat(Connections.getQueue(connection)).isEmpty();
-        assertThat(Connections.getCommandBuffer(connection)).isNotEmpty().contains(command);
+        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isNotEmpty().contains(command);
 
         connection.close();
     }
@@ -198,14 +197,14 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> sync = connection.sync();
         RedisCommands<String, String> verificationConnection = client.connect().sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection);
 
         sync.set(key, "1");
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
         final CountDownLatch block = new CountDownLatch(1);
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(sync.getStatefulConnection());
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(sync.getStatefulConnection());
 
         AsyncCommand<String, String, Object> command = getBlockOnEncodeCommand(block);
 
@@ -213,7 +212,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connectionWatchdog.setReconnectSuspended(true);
 
-        Channel channel = Connections.getChannel(sync.getStatefulConnection());
+        Channel channel = ConnectionTestUtil.getChannel(sync.getStatefulConnection());
         channel.unsafe().disconnect(channel.newPromise());
 
         assertThat(channel.isOpen()).isFalse();
@@ -231,8 +230,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(Connections.getQueue(sync.getStatefulConnection())).isEmpty();
-        assertThat(Connections.getCommandBuffer(sync.getStatefulConnection())).isEmpty();
+        assertThat(ConnectionTestUtil.getQueue(sync.getStatefulConnection())).isEmpty();
+        assertThat(ConnectionTestUtil.getCommandBuffer(sync.getStatefulConnection())).isEmpty();
 
         sync.getStatefulConnection().close();
         verificationConnection.getStatefulConnection().close();
@@ -256,12 +255,11 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     @Test
     public void commandFailsDuringDecode() throws Exception {
 
-        StatefulRedisConnection<String, String> connection = client.connect();
-        RedisCommands<String, String> sync = connection.sync();
-        RedisChannelWriter<String, String> channelWriter = Connections.getChannelWriter(connection);
+        RedisCommands<String, String> connection = client.connect().sync();
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection.getStatefulConnection());
         RedisCommands<String, String> verificationConnection = client.connect().sync();
 
-        sync.set(key, "1");
+        connection.set(key, "1");
 
         AsyncCommand<String, String, String> command = new AsyncCommand(
                 new Command<>(CommandType.INCR, new StatusOutput<>(CODEC), new CommandArgs<>(CODEC).addKey(key)));
@@ -274,9 +272,9 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
         assertThat(getException(command)).isInstanceOf(IllegalStateException.class);
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
-        assertThat(sync.get(key)).isEqualTo("2");
+        assertThat(connection.get(key)).isEqualTo("2");
 
-        sync.getStatefulConnection().close();
+        connection.getStatefulConnection().close();
         verificationConnection.getStatefulConnection().close();
     }
 
@@ -289,7 +287,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         sync.set(key, "1");
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(sync.getStatefulConnection());
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(sync.getStatefulConnection());
         connectionWatchdog.setListenOnChannelInactive(false);
 
         sync.quit();
@@ -303,13 +301,13 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get("key")).isEqualTo("1");
 
-        assertThat(Connections.getQueue(connection)).isEmpty();
-        assertThat(Connections.getCommandBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection).size()).isGreaterThan(0);
 
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
 
-        while (!Connections.getCommandBuffer(connection).isEmpty() || !Connections.getQueue(connection).isEmpty()) {
+        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty() || !ConnectionTestUtil.getQueue(connection).isEmpty()) {
             Thread.sleep(10);
         }
 
@@ -327,7 +325,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.sync().set(key, "1");
 
-        ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection);
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
         connectionWatchdog.setListenOnChannelInactive(false);
 
         connection.async().quit();
@@ -339,13 +337,13 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get("key")).isEqualTo("1");
 
-        assertThat(Connections.getQueue(connection)).isEmpty();
-        assertThat(Connections.getCommandBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection).size()).isGreaterThan(0);
 
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
 
-        while (!Connections.getCommandBuffer(connection).isEmpty() || !Connections.getQueue(connection).isEmpty()) {
+        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty() || !ConnectionTestUtil.getQueue(connection).isEmpty()) {
             Thread.sleep(10);
         }
 

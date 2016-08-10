@@ -9,7 +9,6 @@ import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -19,16 +18,17 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.PubSubEndpoint;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.SocketAddressResolver;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -194,18 +194,16 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
 
-        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
-
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec, timeout.timeout,
-                timeout.timeUnit);
-        connectStateful(handler, connection, redisURI);
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection((RedisChannelWriter) endpoint, codec,
+                timeout.timeout, timeout.timeUnit);
+        connectStateful(connection, redisURI, endpoint, () -> new CommandHandler(clientResources, endpoint));
         return connection;
     }
 
-    private <K, V> void connectStateful(CommandHandler<K, V> handler, StatefulRedisConnectionImpl<K, V> connection,
-            RedisURI redisURI) {
+    private <K, V> void connectStateful(StatefulRedisConnectionImpl<K, V> connection, RedisURI redisURI,
+                                        DefaultEndpoint endpoint, Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -216,9 +214,12 @@ public class RedisClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
+        connectionBuilder.connection(connection);
         connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.clientResources(clientResources);
-        connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
+        connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
+
+        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
         initializeChannel(connectionBuilder);
 
@@ -286,13 +287,12 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<K, V>(clientOptions);
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
-        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec, timeout.timeout,
-                timeout.timeUnit);
+        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint,
+                (RedisChannelWriter) endpoint, codec, timeout.timeout, timeout.timeUnit);
 
-        connectStateful(handler, connection, redisURI);
+        connectStateful(connection, redisURI, endpoint, () -> new PubSubCommandHandler(clientResources, codec, endpoint));
 
         return connection;
     }
@@ -350,20 +350,19 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
-
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
         connectionBuilder.clientResources(clientResources);
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, clientResources, queue);
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
 
-        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(commandHandler, codec,
-                timeout.timeout, timeout.timeUnit);
+        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(endpoint,
+                codec, timeout.timeout, timeout.timeUnit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
-        connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
+        connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientResources, endpoint)).connection(connection);
+        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);
@@ -408,7 +407,8 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
      *
-     * @param commandHandler the command handler
+     * @param endpoint the endpoint
+     * @param channelWriter the channel writer
      * @param codec codec
      * @param timeout default timeout
      * @param unit default timeout unit
@@ -416,15 +416,15 @@ public class RedisClient extends AbstractRedisClient {
      * @param <V> Value Type
      * @return new instance of StatefulRedisPubSubConnectionImpl
      */
-    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(
-            PubSubCommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new StatefulRedisPubSubConnectionImpl<>(commandHandler, codec, timeout, unit);
+    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        return new StatefulRedisPubSubConnectionImpl<>(endpoint, channelWriter, codec, timeout, unit);
     }
 
     /**
      * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
      *
-     * @param commandHandler the command handler
+     * @param channelWriter the channel writer
      * @param codec codec
      * @param timeout default timeout
      * @param unit default timeout unit
@@ -433,14 +433,14 @@ public class RedisClient extends AbstractRedisClient {
      * @return new instance of StatefulRedisSentinelConnectionImpl
      */
     protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
-            CommandHandler<K, V> commandHandler, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new StatefulRedisSentinelConnectionImpl<>(commandHandler, codec, timeout, unit);
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+        return new StatefulRedisSentinelConnectionImpl<>(channelWriter, codec, timeout, unit);
     }
 
     /**
      * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
      *
-     * @param commandHandler the command handler
+     * @param channelWriter the channel writer
      * @param codec codec
      * @param timeout default timeout
      * @param unit default timeout unit
@@ -448,9 +448,9 @@ public class RedisClient extends AbstractRedisClient {
      * @param <V> Value Type
      * @return new instance of StatefulRedisConnectionImpl
      */
-    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(CommandHandler<K, V> commandHandler,
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
             RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new StatefulRedisConnectionImpl<>(commandHandler, codec, timeout, unit);
+        return new StatefulRedisConnectionImpl<>(channelWriter, codec, timeout, unit);
     }
 
     private void validateUrisAreOfSameConnectionType(List<RedisURI> redisUris) {

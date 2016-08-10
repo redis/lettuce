@@ -30,13 +30,10 @@ import io.netty.util.internal.ConcurrentSet;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-@ChannelHandler.Sharable
 public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V> implements
         StatefulRedisPubSubConnection<K, V> {
 
-    protected final List<RedisPubSubListener<K, V>> listeners;
-    protected final Set<K> channels;
-    protected final Set<K> patterns;
+    private final PubSubEndpoint<K, V> endpoint;
 
     /**
      * Initialize a new connection.
@@ -46,13 +43,11 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisPubSubConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
+    public StatefulRedisPubSubConnectionImpl(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
             TimeUnit unit) {
         super(writer, codec, timeout, unit);
 
-        listeners = new CopyOnWriteArrayList<>();
-        channels = new ConcurrentSet<>();
-        patterns = new ConcurrentSet<>();
+        this.endpoint = endpoint;
     }
 
     /**
@@ -62,7 +57,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
      */
     @Override
     public void addListener(RedisPubSubListener<K, V> listener) {
-        listeners.add(listener);
+        endpoint.addListener(listener);
     }
 
     /**
@@ -72,7 +67,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
      */
     @Override
     public void removeListener(RedisPubSubListener<K, V> listener) {
-        listeners.remove(listener);
+        endpoint.removeListener(listener);
     }
 
     @Override
@@ -105,48 +100,6 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         return new RedisPubSubReactiveCommandsImpl<>(this, codec);
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void channelRead(Object msg) {
-        PubSubOutput<K, V, V> output = (PubSubOutput<K, V, V>) msg;
-
-        // drop empty messages
-        if (output.type() == null || (output.pattern() == null && output.channel() == null && output.get() == null)) {
-            return;
-        }
-
-        updateInternalState(output);
-        notifyListeners(output);
-    }
-
-    private void notifyListeners(PubSubOutput<K, V, V> output) {
-        // update listeners
-        for (RedisPubSubListener<K, V> listener : listeners) {
-            switch (output.type()) {
-                case message:
-                    listener.message(output.channel(), output.get());
-                    break;
-                case pmessage:
-                    listener.message(output.pattern(), output.channel(), output.get());
-                    break;
-                case psubscribe:
-                    listener.psubscribed(output.pattern(), output.count());
-                    break;
-                case punsubscribe:
-                    listener.punsubscribed(output.pattern(), output.count());
-                    break;
-                case subscribe:
-                    listener.subscribed(output.channel(), output.count());
-                    break;
-                case unsubscribe:
-                    listener.unsubscribed(output.channel(), output.count());
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Operation " + output.type() + " not supported");
-            }
-        }
-    }
-
     /**
      * Re-subscribe to all previously subscribed channels and patterns.
      * 
@@ -156,12 +109,12 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
         List<RedisFuture<Void>> result = new ArrayList<>();
 
-        if (!channels.isEmpty()) {
-            result.add(async().subscribe(toArray(channels)));
+        if (!endpoint.getChannels().isEmpty()) {
+            result.add(async().subscribe(toArray(endpoint.getChannels())));
         }
 
-        if (!patterns.isEmpty()) {
-            result.add(async().psubscribe(toArray(patterns)));
+        if (!endpoint.getPatterns().isEmpty()) {
+            result.add(async().psubscribe(toArray(endpoint.getPatterns())));
         }
 
         return result;
@@ -174,25 +127,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         return c.toArray(array);
     }
 
-    private void updateInternalState(PubSubOutput<K, V, V> output) {
-        // update internal state
-        switch (output.type()) {
-            case psubscribe:
-                patterns.add(output.pattern());
-                break;
-            case punsubscribe:
-                patterns.remove(output.pattern());
-                break;
-            case subscribe:
-                channels.add(output.channel());
-                break;
-            case unsubscribe:
-                channels.remove(output.channel());
-                break;
-            default:
-                break;
-        }
-    }
+
 
     @Override
     public void activated() {

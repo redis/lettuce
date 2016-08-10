@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.Connections.getChannel;
-import static com.lambdaworks.Connections.getConnectionWatchdog;
-import static com.lambdaworks.Connections.getStatefulConnection;
+import static com.lambdaworks.ConnectionTestUtil.getChannel;
+import static com.lambdaworks.ConnectionTestUtil.getConnectionWatchdog;
+import static com.lambdaworks.ConnectionTestUtil.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 

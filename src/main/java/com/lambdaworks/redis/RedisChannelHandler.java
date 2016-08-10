@@ -9,10 +9,9 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -24,7 +23,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @since 3.0
  */
-public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAdapter implements Closeable {
+public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
@@ -32,7 +31,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     protected TimeUnit unit;
 
     private CloseEvents closeEvents = new CloseEvents();
-    private final RedisChannelWriter<K, V> channelWriter;
+    private final RedisChannelWriter channelWriter;
     private volatile boolean closed;
     private volatile boolean active = true;
     private volatile ClientOptions clientOptions;
@@ -45,18 +44,13 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * @param timeout timeout value
      * @param unit unit of the timeout
      */
-    public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
+    public RedisChannelHandler(RedisChannelWriter writer, long timeout, TimeUnit unit) {
         
         this.channelWriter = writer;
         debugEnabled = logger.isDebugEnabled();
         
-        writer.setRedisChannelHandler(this);
+        writer.setConnectionFacade(this);
         setTimeout(timeout, unit);
-    }
-
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        closed = false;
     }
 
     /**
@@ -92,21 +86,6 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
             closeEvents.fireEventClosed(this);
             closeEvents = new CloseEvents();
         }
-
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        channelRead(msg);
-    }
-
-    /**
-     * Invoked on a channel read.
-     * 
-     * @param msg channel message
-     */
-    public void channelRead(Object msg) {
-
     }
 
     protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
@@ -115,7 +94,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
             logger.debug("dispatching command {}", cmd);
         }
         
-        return channelWriter.write(cmd);
+        return (C) channelWriter.write(cmd);
     }
 
     /**
@@ -177,7 +156,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * 
      * @return the channel writer
      */
-    public RedisChannelWriter<K, V> getChannelWriter() {
+    public RedisChannelWriter getChannelWriter() {
         return channelWriter;
     }
 

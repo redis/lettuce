@@ -25,13 +25,12 @@ public class JmhMain {
         // runRedisStateMachineBenchmark();
 
         // or all
-        // runBenchmarks();
+        //runBenchmarks();
     }
 
     private static void runBenchmarks() throws RunnerException {
 
         new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).build()).run();
-
     }
 
     private static void runCommandBenchmark() throws RunnerException {

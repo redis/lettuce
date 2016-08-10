@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,12 +31,12 @@ import com.lambdaworks.redis.resource.ClientResources;
  * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
-public class ClusterNodeCommandHandlerTest {
+public class ClusterNodeEndpointTest {
 
     private AsyncCommand<String, String, String> command = new AsyncCommand<>(
             new Command<>(CommandType.APPEND, new StatusOutput<String, String>(new Utf8StringCodec()), null));
 
-    private Queue<RedisCommand<String, String, ?>> queue = new LinkedBlockingQueue<>();
+    private Queue<RedisCommand<String, String, ?>> queue;
 
     @Mock
     private ClientOptions clientOptions;
@@ -46,14 +45,15 @@ public class ClusterNodeCommandHandlerTest {
     private ClientResources clientResources;
 
     @Mock
-    private RedisChannelWriter<String, String> clusterChannelWriter;
+    private RedisChannelWriter clusterChannelWriter;
 
-    private ClusterNodeCommandHandler sut;
+    private ClusterNodeEndpoint sut;
 
     @Before
     public void before() throws Exception {
 
-        sut = new ClusterNodeCommandHandler(clientOptions, clientResources, queue, clusterChannelWriter);
+        sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
+        queue = (Queue) sut.getQueue();
     }
 
     @Test

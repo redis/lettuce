@@ -3,14 +3,12 @@ package com.lambdaworks.redis;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.CommandEncoder;
-import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.ReconnectionListener;
+import com.lambdaworks.redis.protocol.*;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.bootstrap.Bootstrap;
@@ -29,17 +27,18 @@ public class ConnectionBuilder {
     private Supplier<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
     private RedisChannelHandler<?, ?> connection;
-    private CommandHandler<?, ?> commandHandler;
+    private DefaultEndpoint endpoint;
+    private Supplier<CommandHandler> commandHandlerSupplier;
     private ChannelGroup channelGroup;
     private Timer timer;
     private Bootstrap bootstrap;
     private ClientOptions clientOptions;
-    private EventExecutorGroup workerPool;
     private long timeout;
     private TimeUnit timeUnit;
     private ClientResources clientResources;
     private char[] password;
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
+    private ConnectionWatchdog connectionWatchdog;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -51,6 +50,7 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(connectionEvents != null, "ConnectionEvents must be set");
         LettuceAssert.assertState(connection != null, "Connection must be set");
         LettuceAssert.assertState(clientResources != null, "ClientResources must be set");
+        LettuceAssert.assertState(endpoint != null, "Endpoint must be set");
 
         List<ChannelHandler> handlers = new ArrayList<>();
 
@@ -58,8 +58,14 @@ public class ConnectionBuilder {
 
         handlers.add(new ChannelGroupListener(channelGroup));
         handlers.add(new CommandEncoder());
-        handlers.add(commandHandler);
-        handlers.add(connection);
+        handlers.add(commandHandlerSupplier.get());
+
+        if (clientOptions.isAutoReconnect()) {
+            handlers.add(createConnectionWatchdog());
+        } else {
+            endpoint.registerConnectionWatchdog(Optional.empty());
+        }
+
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
 
         if (clientOptions.isAutoReconnect()) {
@@ -71,19 +77,25 @@ public class ConnectionBuilder {
 
     protected ConnectionWatchdog createConnectionWatchdog() {
 
+        if (connectionWatchdog != null) {
+            return connectionWatchdog;
+        }
+
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
         LettuceAssert.assertState(timer != null, "Timer must be set for autoReconnect=true");
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap, timer,
-                workerPool, socketAddressSupplier, reconnectionListener);
+                clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection);
 
-        watchdog.setListenOnChannelInactive(true);
+        endpoint.registerConnectionWatchdog(Optional.of(watchdog));
+
+        connectionWatchdog = watchdog;
         return watchdog;
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), password(), buildHandlers(),
+        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), password(), this::buildHandlers,
                 clientResources.eventBus());
     }
 
@@ -123,11 +135,6 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public ConnectionBuilder workerPool(EventExecutorGroup workerPool) {
-        this.workerPool = workerPool;
-        return this;
-    }
-
     public ConnectionBuilder connectionEvents(ConnectionEvents connectionEvents) {
         this.connectionEvents = connectionEvents;
         return this;
@@ -143,8 +150,8 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public ConnectionBuilder commandHandler(CommandHandler<?, ?> commandHandler) {
-        this.commandHandler = commandHandler;
+    public ConnectionBuilder commandHandler(Supplier<CommandHandler> supplier) {
+        this.commandHandlerSupplier = supplier;
         return this;
     }
 
@@ -155,6 +162,11 @@ public class ConnectionBuilder {
 
     public ConnectionBuilder bootstrap(Bootstrap bootstrap) {
         this.bootstrap = bootstrap;
+        return this;
+    }
+
+    public ConnectionBuilder endpoint(DefaultEndpoint endpoint) {
+        this.endpoint = endpoint;
         return this;
     }
 
@@ -170,10 +182,6 @@ public class ConnectionBuilder {
 
     public RedisChannelHandler<?, ?> connection() {
         return connection;
-    }
-
-    public CommandHandler<?, ?> commandHandler() {
-        return commandHandler;
     }
 
     public Bootstrap bootstrap() {
@@ -192,7 +200,7 @@ public class ConnectionBuilder {
         return password;
     }
 
-    public EventExecutorGroup workerPool() {
-        return workerPool;
+    public DefaultEndpoint endpoint() {
+        return endpoint;
     }
 }

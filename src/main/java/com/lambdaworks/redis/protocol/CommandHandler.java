@@ -1,27 +1,24 @@
-// Copyright (C) 2011 - Will Glozer.  All rights reserved.
-
 package com.lambdaworks.redis.protocol;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceFactories;
-import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.internal.LettuceSets;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -29,74 +26,56 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
  */
-@ChannelHandler.Sharable
-public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
-
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
-    private static final WriteLogListener WRITE_LOG_LISTENER = new WriteLogListener();
-    private static final AtomicLong CHANNEL_COUNTER = new AtomicLong();
+public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
     /**
      * When we encounter an unexpected IOException we look for these {@link Throwable#getMessage() messages} (because we have no
      * better way to distinguish) and log them at DEBUG rather than WARN, since they are generally caused by unclean client
      * disconnects rather than an actual problem.
      */
-    private static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = LettuceSets.unmodifiableSet("Connection reset by peer",
+    static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = LettuceSets.unmodifiableSet("Connection reset by peer",
             "Broken pipe", "Connection timed out");
 
-    protected final long commandHandlerId = CHANNEL_COUNTER.incrementAndGet();
-    protected final ClientOptions clientOptions;
-    protected final ClientResources clientResources;
-    protected final Queue<RedisCommand<K, V, ?>> queue;
-    protected final AtomicLong writers = new AtomicLong();
-    protected final Object stateLock = new Object();
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+    private static final AtomicLong COMMAND_HANDLER_COUNTER = new AtomicLong();
 
-    // all access to the commandBuffer is synchronized
-    protected final Deque<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
-    protected final Deque<RedisCommand<K, V, ?>> transportBuffer = LettuceFactories.newConcurrentQueue();
-    protected final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(8192 * 8);
-    protected final RedisStateMachine<K, V> rsm = new RedisStateMachine<K, V>();
-    protected volatile Channel channel;
-    private volatile ConnectionWatchdog connectionWatchdog;
+    private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
+    private final Queue<RedisCommand<?, ?, ?>> queue = LettuceFactories.newConcurrentQueue();
+    private final RedisStateMachine rsm = new RedisStateMachine();
 
     // If TRACE level logging has been enabled at startup.
     private final boolean traceEnabled;
 
     // If DEBUG level logging has been enabled at startup.
     private final boolean debugEnabled;
-    private final Reliability reliability;
 
-    private volatile LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
-    private Thread exclusiveLockOwner;
-    private RedisChannelHandler<K, V> redisChannelHandler;
-    private Throwable connectionError;
+    private final ClientResources clientResources;
+    private final Endpoint endpoint;
+
+    private Channel channel;
+    private ByteBuf buffer;
+    private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private String logPrefix;
-    private boolean autoFlushCommands = true;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
      * @param clientResources client resources for this connection, must not be {@literal null}
-     * @param queue The command queue, must not be {@literal null}
+     * @param endpoint
      */
-    public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Queue<RedisCommand<K, V, ?>> queue) {
+    public CommandHandler(ClientResources clientResources, Endpoint endpoint) {
 
-        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         LettuceAssert.notNull(clientResources, "ClientResources must not be null");
-        LettuceAssert.notNull(queue, "Queue must not be null");
+        LettuceAssert.notNull(endpoint, "RedisEndpoint must not be null");
 
-        this.clientOptions = clientOptions;
         this.clientResources = clientResources;
-        this.queue = queue;
+        this.endpoint = endpoint;
+
         this.traceEnabled = logger.isTraceEnabled();
         this.debugEnabled = logger.isDebugEnabled();
-        this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
     }
 
     /**
@@ -109,9 +88,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             logger.debug("{} Dropping register for a closed channel", logPrefix());
         }
 
-        synchronized (stateLock) {
-            channel = ctx.channel();
-        }
+        channel = ctx.channel();
 
         if (debugEnabled) {
             logPrefix = null;
@@ -120,8 +97,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         setState(LifecycleState.REGISTERED);
 
-        buffer.clear();
+        endpoint.registerQueue(this);
+
+        buffer = ctx.alloc().directBuffer(8192 * 8);
         ctx.fireChannelRegistered();
+
     }
 
     @Override
@@ -137,15 +117,143 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return;
         }
 
-        if (isClosed()) {
-            cancelCommands("Connection closed");
-        }
+        channel = null;
+        buffer.release();
 
-        synchronized (stateLock) {
-            channel = null;
-        }
+        endpoint.unregisterQueue(this);
+
+        reset();
+
+        setState(LifecycleState.CLOSED);
+        rsm.close();
 
         ctx.fireChannelUnregistered();
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+
+        if (evt instanceof ConnectionEvents.Reset) {
+            reset();
+        }
+
+        super.userEventTriggered(ctx, evt);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+
+        InternalLogLevel logLevel = InternalLogLevel.WARN;
+
+        if (!queue.isEmpty()) {
+            RedisCommand<?, ?, ?> command = queue.poll();
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in {}", logPrefix(), command);
+            }
+            logLevel = InternalLogLevel.DEBUG;
+            command.completeExceptionally(cause);
+        }
+
+        if (channel == null || !channel.isActive() || !isConnected()) {
+
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in connectionError", logPrefix());
+            }
+
+            logLevel = InternalLogLevel.DEBUG;
+            endpoint.notifyException(cause);
+        }
+
+        if (cause instanceof IOException && logLevel.ordinal() > InternalLogLevel.INFO.ordinal()) {
+            logLevel = InternalLogLevel.INFO;
+            if (SUPPRESS_IO_EXCEPTION_MESSAGES.contains(cause.getMessage())) {
+                logLevel = InternalLogLevel.DEBUG;
+            }
+        }
+
+        logger.log(logLevel, "{} Unexpected exception during request: {}", logPrefix, cause.toString(), cause);
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        logPrefix = null;
+
+        if (debugEnabled) {
+            logger.debug("{} channelActive()", logPrefix());
+        }
+
+        setState(LifecycleState.CONNECTED);
+
+        endpoint.notifyChannelActive(ctx.channel());
+
+        super.channelActive(ctx);
+        if (channel != null) {
+            channel.eventLoop().submit(new Runnable() {
+                @Override
+                public void run() {
+                    channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Activated());
+                }
+            });
+        }
+
+        if (debugEnabled) {
+            logger.debug("{} channelActive() done", logPrefix());
+        }
+    }
+
+    /**
+     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelInactive(io.netty.channel.ChannelHandlerContext)
+     */
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+
+        if (debugEnabled) {
+            logger.debug("{} channelInactive()", logPrefix());
+        }
+
+        if (channel != null && ctx.channel() != channel) {
+            logger.debug("{} My channel and ctx.channel mismatch. Propagating event to other listeners.", logPrefix());
+            super.channelInactive(ctx);
+            return;
+        }
+
+        setState(LifecycleState.DISCONNECTED);
+
+        setState(LifecycleState.DEACTIVATING);
+        endpoint.notifyChannelInactive(ctx.channel());
+        endpoint.notifyDrainQueuedCommands(this);
+
+        setState(LifecycleState.DEACTIVATED);
+
+        rsm.reset();
+
+        if (debugEnabled) {
+            logger.debug("{} channelInactive() done", logPrefix());
+        }
+        super.channelInactive(ctx);
+    }
+
+    /**
+     * @see io.netty.channel.ChannelDuplexHandler#write(io.netty.channel.ChannelHandlerContext, java.lang.Object,
+     *      io.netty.channel.ChannelPromise)
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+        if (debugEnabled) {
+            logger.debug("{} write(ctx, {}, promise)", logPrefix(), msg);
+        }
+
+        if (msg instanceof RedisCommand) {
+            writeSingleCommand(ctx, (RedisCommand<?, ?, ?>) msg, promise);
+            return;
+        }
+
+        if (msg instanceof Collection) {
+            writeBatch(ctx, (Collection<RedisCommand<?, ?, ?>>) msg, promise);
+        }
     }
 
     /**
@@ -192,7 +300,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         while (!queue.isEmpty()) {
 
-            RedisCommand<K, V, ?> command = queue.peek();
+            RedisCommand<?, ?, ?> command = queue.peek();
             if (debugEnabled) {
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
@@ -219,11 +327,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    private WithLatency getWithLatency(RedisCommand<K, V, ?> command) {
+    private WithLatency getWithLatency(RedisCommand<?, ?, ?> command) {
         WithLatency withLatency = null;
 
         if (clientResources.commandLatencyCollector().isEnabled()) {
-            RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+            RedisCommand<?, ?, ?> unwrappedCommand = CommandWrapper.unwrap(command);
             if (unwrappedCommand instanceof WithLatency) {
                 withLatency = (WithLatency) unwrappedCommand;
                 if (withLatency.getFirstResponse() == -1) {
@@ -231,7 +339,12 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 }
             }
         }
+
         return withLatency;
+    }
+
+    protected boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
+        return rsm.decode(buffer, output);
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
@@ -258,280 +371,15 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return LocalAddress.ANY;
     }
 
-    @Override
-    public <T, C extends RedisCommand<K, V, T>> C write(C command) {
-
-        LettuceAssert.notNull(command, "Command must not be null");
-
-        try {
-            incrementWriters();
-
-            if (lifecycleState == LifecycleState.CLOSED) {
-                throw new RedisException("Connection is closed");
-            }
-
-            if (clientOptions.getRequestQueueSize() != Integer.MAX_VALUE
-                    && commandBuffer.size() + queue.size() >= clientOptions.getRequestQueueSize()) {
-                throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
-                        + ". Commands are not accepted until the queue size drops.");
-            }
-
-            if ((channel == null || !isConnected()) && isRejectCommand()) {
-                throw new RedisException("Currently not connected. Commands are rejected.");
-            }
-
-            /**
-             * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
-             * than without a lock and all threads are hammering towards writeAndFlush.
-             */
-            Channel channel = this.channel;
-            if (autoFlushCommands) {
-
-                if (channel != null && isConnected() && channel.isActive()) {
-                    writeToChannel(command, channel);
-                } else {
-                    writeToBuffer(command);
-                }
-
-            } else {
-                bufferCommand(command);
-            }
-        } finally {
-            decrementWriters();
-            if (debugEnabled) {
-                logger.debug("{} write() done", logPrefix());
-            }
-        }
-
-        return command;
-    }
-
-    protected <C extends RedisCommand<K, V, T>, T> void writeToBuffer(C command) {
-
-        if (commandBuffer.contains(command) || queue.contains(command)) {
-            return;
-        }
-
-        if (connectionError != null) {
-            if (debugEnabled) {
-                logger.debug("{} writeToBuffer() Completing command {} due to connection error", logPrefix(), command);
-            }
-            command.completeExceptionally(connectionError);
-
-            return;
-        }
-
-        bufferCommand(command);
-    }
-
-    protected <C extends RedisCommand<K, V, T>, T> void writeToChannel(C command, Channel channel) {
-
-        if (reliability == Reliability.AT_MOST_ONCE) {
-            // cancel on exceptions and remove from queue, because there is no housekeeping
-            writeAndFlush(command).addListener(new AtMostOnceWriteListener(command, queue));
-        }
-
-        if (reliability == Reliability.AT_LEAST_ONCE) {
-            // commands are ok to stay within the queue, reconnect will retrigger them
-            writeAndFlush(command).addListener(WRITE_LOG_LISTENER);
-        }
-    }
-
-    protected void bufferCommand(RedisCommand<K, V, ?> command) {
-
-        if (debugEnabled) {
-            logger.debug("{} write() buffering command {}", logPrefix(), command);
-        }
-
-        commandBuffer.add(command);
-    }
-
-    /**
-     * Wait for stateLock and increment writers. Will wait if stateLock is locked and if writer counter is negative.
-     */
-    protected void incrementWriters() {
-
-        if (exclusiveLockOwner == Thread.currentThread()) {
-            return;
-        }
-
-        synchronized (stateLock) {
-            for (;;) {
-
-                if (writers.get() >= 0) {
-                    writers.incrementAndGet();
-                    return;
-                }
-            }
-        }
-    }
-
-    /**
-     * Decrement writers without any wait.
-     */
-    protected void decrementWriters() {
-
-        if (exclusiveLockOwner == Thread.currentThread()) {
-            return;
-        }
-
-        writers.decrementAndGet();
-    }
-
-    /**
-     * Wait for stateLock and no writers. Must be used in an outer {@code synchronized} block to prevent interleaving with other
-     * methods using writers. Sets writers to a negative value to create a lock for {@link #incrementWriters()}.
-     */
-    protected void lockWritersExclusive() {
-
-        if (exclusiveLockOwner == Thread.currentThread()) {
-            writers.decrementAndGet();
-            return;
-        }
-
-        synchronized (stateLock) {
-            for (;;) {
-
-                if (writers.compareAndSet(0, -1)) {
-                    exclusiveLockOwner = Thread.currentThread();
-                    return;
-                }
-            }
-        }
-    }
-
-    /**
-     * Unlock writers.
-     */
-    protected void unlockWritersExclusive() {
-
-        if (exclusiveLockOwner == Thread.currentThread()) {
-            if (writers.incrementAndGet() == 0) {
-                exclusiveLockOwner = null;
-            }
-        }
-    }
-
-    private boolean isRejectCommand() {
-
-        if (clientOptions == null) {
-            return false;
-        }
-
-        switch (clientOptions.getDisconnectedBehavior()) {
-            case REJECT_COMMANDS:
-                return true;
-
-            case ACCEPT_COMMANDS:
-                return false;
-
-            default:
-            case DEFAULT:
-                if (!clientOptions.isAutoReconnect()) {
-                    return true;
-                }
-
-                return false;
-        }
-    }
-
     boolean isConnected() {
         return lifecycleState.ordinal() >= LifecycleState.CONNECTED.ordinal()
                 && lifecycleState.ordinal() < LifecycleState.DISCONNECTED.ordinal();
     }
 
-    @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void flushCommands() {
-
-        if (debugEnabled) {
-            logger.debug("{} flushCommands()", logPrefix());
-        }
-
-        if (channel != null && isConnected()) {
-            List<RedisCommand<K, V, ?>> queuedCommands;
-
-            synchronized (stateLock) {
-                try {
-                    lockWritersExclusive();
-
-                    if (commandBuffer.isEmpty()) {
-                        return;
-                    }
-
-                    queuedCommands = new ArrayList<>(commandBuffer.size());
-                    RedisCommand<K, V, ?> cmd;
-                    while ((cmd = commandBuffer.poll()) != null) {
-                        queuedCommands.add(cmd);
-                    }
-                } finally {
-                    unlockWritersExclusive();
-                }
-            }
-
-            if (debugEnabled) {
-                logger.debug("{} flushCommands() Flushing {} commands", logPrefix(), queuedCommands.size());
-            }
-
-            if (reliability == Reliability.AT_MOST_ONCE) {
-                // cancel on exceptions and remove from queue, because there is no housekeeping
-                writeAndFlush(queuedCommands).addListener(new AtMostOnceWriteListener(queuedCommands, this.queue));
-            }
-
-            if (reliability == Reliability.AT_LEAST_ONCE) {
-                // commands are ok to stay within the queue, reconnect will retrigger them
-                writeAndFlush(queuedCommands).addListener(WRITE_LOG_LISTENER);
-            }
-        }
-    }
-
-    private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(List<C> commands) {
-
-        if (debugEnabled) {
-            logger.debug("{} write() writeAndFlush commands {}", logPrefix(), commands);
-        }
-
-        transportBuffer.addAll(commands);
-        return channel.writeAndFlush(commands);
-    }
-
-    private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(C command) {
-
-        if (debugEnabled) {
-            logger.debug("{} write() writeAndFlush command {}", logPrefix(), command);
-        }
-
-        transportBuffer.add(command);
-        return channel.writeAndFlush(command);
-    }
-
-    /**
-     * @see io.netty.channel.ChannelDuplexHandler#write(io.netty.channel.ChannelHandlerContext, java.lang.Object,
-     *      io.netty.channel.ChannelPromise)
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-
-        if (debugEnabled) {
-            logger.debug("{} write(ctx, {}, promise)", logPrefix(), msg);
-        }
-
-        if (msg instanceof RedisCommand) {
-            writeSingleCommand(ctx, (RedisCommand<K, V, ?>) msg, promise);
-            return;
-        }
-
-        if (msg instanceof Collection) {
-            writeBatch(ctx, (Collection<RedisCommand<K, V, ?>>) msg, promise);
-        }
-    }
-
-    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command, ChannelPromise promise)
+    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command, ChannelPromise promise)
             throws Exception {
 
         if (command.isCancelled()) {
-            transportBuffer.remove(command);
             return;
         }
 
@@ -539,14 +387,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         ctx.write(command, promise);
     }
 
-    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<K, V, ?>> msg, ChannelPromise promise)
+    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<?, ?, ?>> batch, ChannelPromise promise)
             throws Exception {
 
-        Collection<RedisCommand<K, V, ?>> commands = msg;
-        Collection<RedisCommand<K, V, ?>> toWrite = commands;
+        Collection<RedisCommand<?, ?, ?>> toWrite = batch;
 
         boolean cancelledCommands = false;
-        for (RedisCommand<K, V, ?> command : commands) {
+        for (RedisCommand<?, ?, ?> command : batch) {
             if (command.isCancelled()) {
                 cancelledCommands = true;
                 break;
@@ -555,12 +402,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (cancelledCommands) {
 
-            toWrite = new ArrayList<>(commands.size());
+            toWrite = new ArrayList<>(batch.size());
 
-            for (RedisCommand<K, V, ?> command : commands) {
+            for (RedisCommand<?, ?, ?> command : batch) {
 
                 if (command.isCancelled()) {
-                    transportBuffer.remove(command);
                     continue;
                 }
 
@@ -569,7 +415,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
         } else {
 
-            for (RedisCommand<K, V, ?> command : toWrite) {
+            for (RedisCommand<?, ?, ?> command : toWrite) {
                 queueCommand(command, promise);
             }
         }
@@ -579,7 +425,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    private void queueCommand(RedisCommand<K, V, ?> command, ChannelPromise promise) throws Exception {
+    private void queueCommand(RedisCommand<?, ?, ?> command, ChannelPromise promise) throws Exception {
 
         try {
 
@@ -591,7 +437,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 queue.add(command);
 
                 if (clientResources.commandLatencyCollector().isEnabled()) {
-                    RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+                    RedisCommand<?, ?, ?> unwrappedCommand = CommandWrapper.unwrap(command);
                     if (unwrappedCommand instanceof WithLatency) {
                         WithLatency withLatency = (WithLatency) unwrappedCommand;
                         withLatency.firstResponse(-1);
@@ -599,7 +445,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     }
                 }
             }
-            transportBuffer.remove(command);
         } catch (Exception e) {
             command.completeExceptionally(e);
             promise.setFailure(e);
@@ -611,177 +456,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return System.nanoTime();
     }
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
-        logPrefix = null;
-        connectionWatchdog = null;
-
-        if (debugEnabled) {
-            logger.debug("{} channelActive()", logPrefix());
-        }
-
-        if (ctx != null && ctx.pipeline() != null) {
-
-            Map<String, ChannelHandler> map = ctx.pipeline().toMap();
-
-            for (ChannelHandler handler : map.values()) {
-                if (handler instanceof ConnectionWatchdog) {
-                    connectionWatchdog = (ConnectionWatchdog) handler;
-                }
-            }
-        }
-
-        synchronized (stateLock) {
-            try {
-                lockWritersExclusive();
-                setState(LifecycleState.CONNECTED);
-
-                try {
-                    // Move queued commands to buffer before issuing any commands because of connection activation.
-                    // That's necessary to prepend queued commands first as some commands might get into the queue
-                    // after the connection was disconnected. They need to be prepended to the command buffer
-                    moveQueuedCommandsToCommandBuffer();
-                    activateCommandHandlerAndExecuteBufferedCommands(ctx);
-                } catch (Exception e) {
-
-                    if (debugEnabled) {
-                        logger.debug("{} channelActive() ran into an exception", logPrefix());
-                    }
-
-                    if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                        reset();
-                    }
-
-                    throw e;
-                }
-            } finally {
-                unlockWritersExclusive();
-            }
-        }
-
-        super.channelActive(ctx);
-        if (channel != null) {
-            channel.eventLoop().submit(new Runnable() {
-                @Override
-                public void run() {
-                    channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Activated());
-                }
-            });
-        }
-
-        if (debugEnabled) {
-            logger.debug("{} channelActive() done", logPrefix());
-        }
-    }
-
-    private void moveQueuedCommandsToCommandBuffer() {
-
-        List<RedisCommand<K, V, ?>> queuedCommands = drainCommands(queue);
-        Collections.reverse(queuedCommands);
-
-        List<RedisCommand<K, V, ?>> transportBufferCommands = drainCommands(transportBuffer);
-        Collections.reverse(transportBufferCommands);
-
-        // Queued commands first because they reached the queue before commands that are still in the transport buffer.
-        queuedCommands.addAll(transportBufferCommands);
-
-        logger.debug("{} moveQueuedCommandsToCommandBuffer {} command(s) added to buffer", logPrefix(), queuedCommands.size());
-        for (RedisCommand<K, V, ?> command : queuedCommands) {
-            commandBuffer.addFirst(command);
-        }
-    }
-
-    private List<RedisCommand<K, V, ?>> drainCommands(Collection<RedisCommand<K, V, ?>> source) {
-
-        List<RedisCommand<K, V, ?>> target = new ArrayList<>(source.size());
-        target.addAll(source);
-        source.removeAll(target);
-        return target;
-    }
-
-    protected void activateCommandHandlerAndExecuteBufferedCommands(ChannelHandlerContext ctx) {
-
-        connectionError = null;
-
-        if (debugEnabled) {
-            logger.debug("{} activateCommandHandlerAndExecuteBufferedCommands {} command(s) buffered", logPrefix(),
-                    commandBuffer.size());
-        }
-
-        channel = ctx.channel();
-
-        if (redisChannelHandler != null) {
-
-            if (debugEnabled) {
-                logger.debug("{} activating channel handler", logPrefix());
-            }
-
-            setState(LifecycleState.ACTIVATING);
-            redisChannelHandler.activated();
-        }
-        setState(LifecycleState.ACTIVE);
-
-        flushCommands();
-    }
-
-    /**
-     * @see io.netty.channel.ChannelInboundHandlerAdapter#channelInactive(io.netty.channel.ChannelHandlerContext)
-     */
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
-        if (debugEnabled) {
-            logger.debug("{} channelInactive()", logPrefix());
-        }
-
-        if (channel != null && ctx.channel() != channel) {
-            logger.debug("{} My channel and ctx.channel mismatch. Propagating event to other listeners.", logPrefix());
-            super.channelInactive(ctx);
-            return;
-        }
-
-        synchronized (stateLock) {
-            try {
-                lockWritersExclusive();
-                setState(LifecycleState.DISCONNECTED);
-
-                if (redisChannelHandler != null) {
-
-                    if (debugEnabled) {
-                        logger.debug("{} deactivating channel handler", logPrefix());
-                    }
-
-                    setState(LifecycleState.DEACTIVATING);
-                    redisChannelHandler.deactivated();
-                }
-
-                setState(LifecycleState.DEACTIVATED);
-
-                // Shift all commands to the commandBuffer so the queue is empty.
-                // Allows to run onConnect commands before executing buffered commands
-                commandBuffer.addAll(queue);
-                queue.removeAll(commandBuffer);
-
-            } finally {
-                unlockWritersExclusive();
-            }
-        }
-
-        rsm.reset();
-
-        if (debugEnabled) {
-            logger.debug("{} channelInactive() done", logPrefix());
-        }
-        super.channelInactive(ctx);
-    }
-
     protected void setState(LifecycleState lifecycleState) {
 
         if (this.lifecycleState != LifecycleState.CLOSED) {
-            synchronized (stateLock) {
-                this.lifecycleState = lifecycleState;
-            }
+            this.lifecycleState = lifecycleState;
         }
     }
 
@@ -793,164 +471,20 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return lifecycleState == LifecycleState.CLOSED;
     }
 
-    private void cancelCommands(String message) {
-
-        List<RedisCommand<K, V, ?>> toCancel;
-        synchronized (stateLock) {
-            try {
-                lockWritersExclusive();
-                toCancel = prepareReset();
-            } finally {
-                unlockWritersExclusive();
-            }
-        }
-
-        for (RedisCommand<K, V, ?> cmd : toCancel) {
-            if (cmd.getOutput() != null) {
-                cmd.getOutput().setError(message);
-            }
-            cmd.cancel();
-        }
-    }
-
-    protected List<RedisCommand<K, V, ?>> prepareReset() {
-
-        int size = 0;
-        if (queue != null) {
-            size += queue.size();
-        }
-
-        if (commandBuffer != null) {
-            size += commandBuffer.size();
-        }
-
-        List<RedisCommand<K, V, ?>> toCancel = new ArrayList<>(size);
-
-        if (queue != null) {
-            toCancel.addAll(queue);
-            queue.clear();
-        }
-
-        if (commandBuffer != null) {
-            toCancel.addAll(commandBuffer);
-            commandBuffer.clear();
-        }
-        return toCancel;
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
-        InternalLogLevel logLevel = InternalLogLevel.WARN;
-
-        if (!queue.isEmpty()) {
-            RedisCommand<K, V, ?> command = queue.poll();
-            if (debugEnabled) {
-                logger.debug("{} Storing exception in {}", logPrefix(), command);
-            }
-            logLevel = InternalLogLevel.DEBUG;
-            command.completeExceptionally(cause);
-        }
-
-        if (channel == null || !channel.isActive() || !isConnected()) {
-            if (debugEnabled) {
-                logger.debug("{} Storing exception in connectionError", logPrefix());
-            }
-            logLevel = InternalLogLevel.DEBUG;
-            connectionError = cause;
-        }
-
-        if (cause instanceof IOException && logLevel.ordinal() > InternalLogLevel.INFO.ordinal()) {
-            logLevel = InternalLogLevel.INFO;
-            if (SUPPRESS_IO_EXCEPTION_MESSAGES.contains(cause.getMessage())) {
-                logLevel = InternalLogLevel.DEBUG;
-            }
-        }
-
-        logger.log(logLevel, "{} Unexpected exception during request: {}", logPrefix, cause.toString(), cause);
-    }
-
-    /**
-     * Close the connection.
-     */
-    @Override
-    public void close() {
-
-        if (debugEnabled) {
-            logger.debug("{} close()", logPrefix());
-        }
-
-        if (isClosed()) {
-            return;
-        }
-
-        setState(LifecycleState.CLOSED);
-        Channel currentChannel = this.channel;
-        if (currentChannel != null) {
-            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
-            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
-
-            ChannelFuture close = currentChannel.pipeline().close();
-            if (currentChannel.isOpen()) {
-                close.syncUninterruptibly();
-            }
-        } else if (connectionWatchdog != null) {
-            connectionWatchdog.prepareClose(new ConnectionEvents.PrepareClose());
-        }
-
-        rsm.close();
-
-        if (buffer.refCnt() > 0) {
-            buffer.release();
-        }
-    }
-
-    /**
-     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
-     * internal state machine gets out of sync with the connection.
-     */
-    @Override
-    public void reset() {
-
-        if (debugEnabled) {
-            logger.debug("{} reset()", logPrefix());
-        }
-
-        cancelCommands("Reset");
+    private void reset() {
 
         rsm.reset();
 
+        RedisCommand<?, ?, ?> cmd;
+        while ((cmd = queue.poll()) != null) {
+            if (cmd.getOutput() != null) {
+                cmd.getOutput().setError("Reset");
+            }
+            cmd.cancel();
+        }
+
         if (buffer.refCnt() > 0) {
             buffer.clear();
-        }
-    }
-
-    /**
-     * Reset the command-handler to the initial not-connected state.
-     */
-    public void initialState() {
-
-        setState(LifecycleState.NOT_CONNECTED);
-        queue.clear();
-        commandBuffer.clear();
-
-        Channel currentChannel = this.channel;
-        if (currentChannel != null) {
-            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.PrepareClose());
-            currentChannel.pipeline().fireUserEventTriggered(new ConnectionEvents.Close());
-            currentChannel.pipeline().close();
-        }
-    }
-
-    @Override
-    public void setRedisChannelHandler(RedisChannelHandler<K, V> redisChannelHandler) {
-        this.redisChannelHandler = redisChannelHandler;
-    }
-
-    @Override
-    public void setAutoFlushCommands(boolean autoFlush) {
-        synchronized (stateLock) {
-            this.autoFlushCommands = autoFlush;
         }
     }
 
@@ -960,68 +494,18 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return logPrefix;
         }
 
-        StringBuffer buffer = new StringBuffer(64);
+        StringBuilder buffer = new StringBuilder(64);
         buffer.append('[').append("chid=0x").append(Long.toHexString(commandHandlerId)).append(", ")
                 .append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return logPrefix = buffer.toString();
     }
 
+    @Override
+    public Queue<RedisCommand<?, ?, ?>> getQueue() {
+        return queue;
+    }
+
     public enum LifecycleState {
         NOT_CONNECTED, REGISTERED, CONNECTED, ACTIVATING, ACTIVE, DISCONNECTED, DEACTIVATING, DEACTIVATED, CLOSED,
-    }
-
-    private enum Reliability {
-        AT_MOST_ONCE, AT_LEAST_ONCE;
-    }
-
-    private static class AtMostOnceWriteListener<K, V, T> implements ChannelFutureListener {
-
-        private final Collection<RedisCommand<K, V, T>> sentCommands;
-        private final Queue<?> queue;
-
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public AtMostOnceWriteListener(RedisCommand<K, V, T> sentCommand, Queue<?> queue) {
-            this((Collection) LettuceLists.newList(sentCommand), queue);
-        }
-
-        public AtMostOnceWriteListener(Collection<RedisCommand<K, V, T>> sentCommand, Queue<?> queue) {
-            this.sentCommands = sentCommand;
-            this.queue = queue;
-        }
-
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-            future.await();
-            if (future.cause() != null) {
-
-                for (RedisCommand<?, ?, ?> sentCommand : sentCommands) {
-                    sentCommand.completeExceptionally(future.cause());
-                }
-
-                queue.removeAll(sentCommands);
-            }
-        }
-    }
-
-    /**
-     * A generic future listener which logs unsuccessful writes.
-     */
-    static class WriteLogListener implements GenericFutureListener<Future<Void>> {
-
-        @Override
-        public void operationComplete(Future<Void> future) throws Exception {
-            Throwable cause = future.cause();
-            if (!future.isSuccess() && !(cause instanceof ClosedChannelException)) {
-
-                String message = "Unexpected exception during request: {}";
-                InternalLogLevel logLevel = InternalLogLevel.WARN;
-
-                if (cause instanceof IOException && SUPPRESS_IO_EXCEPTION_MESSAGES.contains(cause.getMessage())) {
-                    logLevel = InternalLogLevel.DEBUG;
-                }
-
-                logger.log(logLevel, message, cause.toString(), cause);
-            }
-        }
     }
 }

@@ -15,7 +15,6 @@ import io.netty.channel.ChannelHandler;
 /**
  * @author Mark Paluch
  */
-@ChannelHandler.Sharable
 public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
         StatefulRedisSentinelConnection<K, V> {
 
@@ -24,7 +23,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     protected final RedisSentinelAsyncCommands<K, V> async;
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
-    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
+    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
             TimeUnit unit) {
         super(writer, timeout, unit);
 

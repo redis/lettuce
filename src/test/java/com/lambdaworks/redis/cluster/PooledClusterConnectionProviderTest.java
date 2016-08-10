@@ -42,7 +42,7 @@ public class PooledClusterConnectionProviderTest {
     private RedisClusterClient clientMock;
 
     @Mock
-    private RedisChannelWriter<String, String> writerMock;
+    private RedisChannelWriter writerMock;
 
     @Mock
     StatefulRedisConnection<String, String> nodeConnectionMock;

@@ -44,7 +44,6 @@ import io.netty.channel.ChannelHandler;
  * @author Mark Paluch
  * @since 4.0
  */
-@ChannelHandler.Sharable
 public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         implements StatefulRedisClusterConnection<K, V> {
 
@@ -66,7 +65,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisClusterConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
+    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
             TimeUnit unit) {
         super(writer, timeout, unit);
         this.codec = codec;
@@ -126,8 +125,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                 .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
-    public ClusterDistributionChannelWriter<K, V> getClusterDistributionChannelWriter() {
-        return (ClusterDistributionChannelWriter<K, V>) super.getChannelWriter();
+    public ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
+        return (ClusterDistributionChannelWriter) super.getChannelWriter();
     }
 
     @Override

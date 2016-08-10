@@ -19,7 +19,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * 
  * @author Mark Paluch
  */
-@ChannelHandler.Sharable
 public class CommandEncoder extends MessageToByteEncoder<Object> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandEncoder.class);
@@ -101,7 +100,7 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     }
 
     private String logPrefix(Channel channel) {
-        StringBuffer buffer = new StringBuffer(64);
+        StringBuilder buffer = new StringBuilder(64);
         buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return buffer.toString();
     }

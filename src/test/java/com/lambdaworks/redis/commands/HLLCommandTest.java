@@ -3,6 +3,7 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
+import com.lambdaworks.redis.cluster.SlotHash;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -80,4 +81,14 @@ public class HLLCommandTest extends AbstractRedisClientTest {
         commands().pfcount();
     }
 
+    @Test
+    public void pfaddPfmergePfCount() throws Exception {
+
+        commands().pfadd("key2660", "rand", "mat");
+        commands().pfadd("key7112", "mat", "perrin");
+
+        commands().pfmerge("key8885", "key2660", "key7112");
+
+        assertThat(commands().pfcount("key8885")).isEqualTo(3);
+    }
 }
