@@ -140,6 +140,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (isClosed()) {
             cancelCommands("Connection closed");
         }
+
         synchronized (stateLock) {
             channel = null;
         }
@@ -175,11 +176,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 return;
             }
 
-            buffer.writeBytes(input);
-
             if (traceEnabled) {
                 logger.trace("{} Buffer: {}", logPrefix(), input.toString(Charset.defaultCharset()).trim());
             }
+
+            buffer.writeBytes(input);
 
             decode(ctx, buffer);
         } finally {
@@ -196,31 +197,41 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
 
-            WithLatency withLatency = null;
-
-            if (clientResources.commandLatencyCollector().isEnabled()) {
-                RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
-                if (unwrappedCommand instanceof WithLatency) {
-                    withLatency = (WithLatency) unwrappedCommand;
-                    if (withLatency.getFirstResponse() == -1) {
-                        withLatency.firstResponse(nanoTime());
-                    }
-                }
-            }
+            WithLatency withLatency = getWithLatency(command);
 
             if (!rsm.decode(buffer, command, command.getOutput())) {
                 return;
             }
 
-            command = queue.poll();
             recordLatency(withLatency, command.getType());
 
-            command.complete();
+            queue.poll();
+
+            try {
+                command.complete();
+            } catch (Exception e) {
+                command.completeExceptionally(e);
+            }
 
             if (buffer.refCnt() != 0) {
                 buffer.discardReadBytes();
             }
         }
+    }
+
+    private WithLatency getWithLatency(RedisCommand<K, V, ?> command) {
+        WithLatency withLatency = null;
+
+        if (clientResources.commandLatencyCollector().isEnabled()) {
+            RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+            if (unwrappedCommand instanceof WithLatency) {
+                withLatency = (WithLatency) unwrappedCommand;
+                if (withLatency.getFirstResponse() == -1) {
+                    withLatency.firstResponse(nanoTime());
+                }
+            }
+        }
+        return withLatency;
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {

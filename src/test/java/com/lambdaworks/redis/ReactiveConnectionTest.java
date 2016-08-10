@@ -4,7 +4,9 @@ import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -14,17 +16,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import rx.Observable;
-import rx.Subscriber;
-
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
+import rx.Observable;
+import rx.Subscriber;
+import rx.observers.TestSubscriber;
+import rx.schedulers.Schedulers;
+
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
-	private RedisReactiveCommands<String, String> reactive;
+    private RedisReactiveCommands<String, String> reactive;
 
     @Rule
     public ExpectedException exception = ExpectedException.none();
@@ -115,7 +119,6 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         assertThat(redis.get(key)).isEqualTo("4");
     }
 
-
     @Test
     public void transactional() throws Exception {
 
@@ -135,6 +138,59 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
         String result = redis.get(key);
         assertThat(result).isEqualTo("2");
+    }
+
+    @Test
+    public void reactiveChain() throws Exception {
+
+        Map<String, String> map = new HashMap<>();
+        map.put(key, value);
+        map.put("key1", "value1");
+
+        reactive.mset(map).toBlocking().first();
+
+        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).toList().subscribeOn(Schedulers.immediate())
+                .toBlocking().first();
+
+        assertThat(values).hasSize(2).contains(value, "value1");
+    }
+
+    @Test
+    public void auth() throws Exception {
+        List<Throwable> errors = new ArrayList<>();
+        reactive.auth("error").doOnError(errors::add).subscribe(new TestSubscriber<>());
+        Delay.delay(millis(50));
+        assertThat(errors).hasSize(1);
+    }
+
+    @Test
+    public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws Exception {
+
+        Observable.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).toBlocking().last();
+
+        reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
+        reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
+
+        String valueB = reactive.get("keyB").toBlocking().toFuture().get();
+        assertThat(valueB).isEqualTo("valueB");
+    }
+
+    private static Subscriber<String> createSubscriberWithExceptionOnComplete() {
+        return new Subscriber<String>() {
+            @Override
+            public void onCompleted() {
+                throw new RuntimeException("throwing something");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+            }
+
+            @Override
+            public void onNext(String s) {
+                System.out.println(s);
+            }
+        };
     }
 
     private static class CompletionSubscriber extends Subscriber<Object> {
