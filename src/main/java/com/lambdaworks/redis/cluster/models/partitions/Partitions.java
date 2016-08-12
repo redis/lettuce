@@ -34,9 +34,12 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public class Partitions implements Collection<RedisClusterNode> {
 
-    private List<RedisClusterNode> partitions = new ArrayList<>();
+    private final List<RedisClusterNode> partitions = new ArrayList<>();
     private final static RedisClusterNode[] EMPTY = new RedisClusterNode[SlotHash.SLOT_COUNT];
+    private final static RedisClusterNode[] NO_NODES = new RedisClusterNode[0];
+
     private volatile RedisClusterNode slotCache[] = EMPTY;
+    private volatile RedisClusterNode nodes[] = NO_NODES;
 
     /**
      * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
@@ -55,7 +58,9 @@ public class Partitions implements Collection<RedisClusterNode> {
      * @return RedisClusterNode or {@literal null}
      */
     public RedisClusterNode getPartitionByNodeId(String nodeId) {
-        for (RedisClusterNode partition : partitions) {
+
+        RedisClusterNode nodes[] = this.nodes;
+        for (RedisClusterNode partition : nodes) {
             if (partition.getNodeId().equals(nodeId)) {
                 return partition;
             }
@@ -66,20 +71,29 @@ public class Partitions implements Collection<RedisClusterNode> {
     /**
      * Update the partition cache. Updates are necessary after the partition details have changed.
      */
-    public synchronized void updateCache() {
+    public void updateCache() {
 
-        if(partitions.isEmpty()) {
-            this.slotCache = EMPTY;
-            return;
-        }
-
-        RedisClusterNode[] slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
-        for (RedisClusterNode partition : partitions) {
-            for (Integer integer : partition.getSlots()) {
-                slotCache[integer.intValue()] = partition;
+        synchronized (partitions) {
+            if (partitions.isEmpty()) {
+                this.slotCache = EMPTY;
+                return;
             }
+
+            RedisClusterNode[] slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
+            RedisClusterNode[] nodes = new RedisClusterNode[partitions.size()];
+
+            int i = 0;
+            for (RedisClusterNode partition : partitions) {
+
+                nodes[i++] = partition;
+                for (Integer integer : partition.getSlots()) {
+                    slotCache[integer.intValue()] = partition;
+                }
+            }
+
+            this.slotCache = slotCache;
+            this.nodes = nodes;
         }
-        this.slotCache = slotCache;
     }
 
     @Override
@@ -95,16 +109,10 @@ public class Partitions implements Collection<RedisClusterNode> {
 
         LettuceAssert.notNull(partition, "Partition must not be null");
 
-        slotCache = EMPTY;
-        partitions.add(partition);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" ").append(partitions);
-        return sb.toString();
+        synchronized (this) {
+            slotCache = EMPTY;
+            partitions.add(partition);
+        }
     }
 
     @Override
@@ -113,7 +121,7 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     public RedisClusterNode getPartition(int index) {
-        return getPartitions().get(index);
+        return partitions.get(index);
     }
 
     /**
@@ -124,9 +132,12 @@ public class Partitions implements Collection<RedisClusterNode> {
     public void reload(List<RedisClusterNode> partitions) {
 
         LettuceAssert.noNullElements(partitions, "Partitions must not contain null elements");
-        this.partitions.clear();
-        this.partitions.addAll(partitions);
-        updateCache();
+
+        synchronized (partitions) {
+            this.partitions.clear();
+            this.partitions.addAll(partitions);
+            updateCache();
+        }
     }
 
     @Override
@@ -144,60 +155,90 @@ public class Partitions implements Collection<RedisClusterNode> {
 
         LettuceAssert.noNullElements(partitions, "Partitions must not contain null elements");
 
-        boolean b = partitions.addAll(c);
-        updateCache();
-        return b;
+        synchronized (partitions) {
+            boolean b = partitions.addAll(c);
+            updateCache();
+            return b;
+        }
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        boolean b = getPartitions().removeAll(c);
-        updateCache();
-        return b;
+
+        synchronized (partitions) {
+            boolean b = getPartitions().removeAll(c);
+            updateCache();
+            return b;
+        }
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        boolean b = getPartitions().retainAll(c);
-        updateCache();
-        return b;
+
+        synchronized (partitions) {
+            boolean b = getPartitions().retainAll(c);
+            updateCache();
+            return b;
+        }
     }
 
     @Override
     public void clear() {
-        getPartitions().clear();
-        updateCache();
+
+        synchronized (partitions) {
+            getPartitions().clear();
+            updateCache();
+        }
     }
 
     @Override
     public Object[] toArray() {
-        return getPartitions().toArray();
+
+        synchronized (partitions) {
+            return getPartitions().toArray();
+        }
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return getPartitions().toArray(a);
+
+        synchronized (partitions) {
+            return getPartitions().toArray(a);
+        }
     }
 
     @Override
     public boolean add(RedisClusterNode redisClusterNode) {
 
-        LettuceAssert.notNull(redisClusterNode, "RedisClusterNode must not be null");
+        synchronized (partitions) {
+            LettuceAssert.notNull(redisClusterNode, "RedisClusterNode must not be null");
 
-        boolean add = getPartitions().add(redisClusterNode);
-        updateCache();
-        return add;
+            boolean add = getPartitions().add(redisClusterNode);
+            updateCache();
+            return add;
+        }
     }
 
     @Override
     public boolean remove(Object o) {
-        boolean remove = getPartitions().remove(o);
-        updateCache();
-        return remove;
+
+        synchronized (partitions) {
+            boolean remove = getPartitions().remove(o);
+            updateCache();
+            return remove;
+        }
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
         return getPartitions().containsAll(c);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" ").append(partitions);
+        return sb.toString();
     }
 }
