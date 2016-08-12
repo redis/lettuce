@@ -17,6 +17,7 @@ import com.lambdaworks.redis.internal.LettuceLists;
  * @since 3.0
  */
 public class ClusterPartitionParser {
+
     public static final String CONNECTED = "connected";
 
     private static final String TOKEN_SLOT_IN_TRANSITION = "[";
@@ -65,7 +66,6 @@ public class ClusterPartitionParser {
             throw new RedisException("Cannot parse " + nodes, e);
         }
 
-        result.updateCache();
         return result;
     }
 
