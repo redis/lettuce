@@ -152,6 +152,7 @@ public class ClusterTopologyRefresh {
 
         for (NodeTopologyView view : views) {
             Collections.sort(view.getPartitions().getPartitions(), TopologyComparators.LatencyComparator.INSTANCE);
+            view.getPartitions().updateCache();
         }
 
         return new NodeTopologyViews(views);

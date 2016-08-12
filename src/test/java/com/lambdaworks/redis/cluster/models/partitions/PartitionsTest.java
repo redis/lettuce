@@ -4,6 +4,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import org.junit.Test;
 
@@ -30,6 +31,17 @@ public class PartitionsTest {
     }
 
     @Test
+    public void containsUsesReadView() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.getPartitions().add(node1);
+
+        assertThat(partitions.contains(node1)).isFalse();
+        partitions.updateCache();
+        assertThat(partitions.contains(node1)).isTrue();
+    }
+
+    @Test
     public void containsAll() throws Exception {
 
         Partitions partitions = new Partitions();
@@ -37,6 +49,17 @@ public class PartitionsTest {
         partitions.add(node2);
 
         assertThat(partitions.containsAll(Arrays.asList(node1, node2))).isTrue();
+    }
+
+    @Test
+    public void containsAllUsesReadView() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.getPartitions().add(node1);
+
+        assertThat(partitions.containsAll(Arrays.asList(node1))).isFalse();
+        partitions.updateCache();
+        assertThat(partitions.containsAll(Arrays.asList(node1))).isTrue();
     }
 
     @Test
@@ -134,10 +157,34 @@ public class PartitionsTest {
     }
 
     @Test
+    public void toArrayUsesReadView() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.getPartitions().addAll(Arrays.asList(node1, node2));
+
+        assertThat(partitions.toArray()).doesNotContain(node1, node2);
+        partitions.updateCache();
+        assertThat(partitions.toArray()).contains(node1, node2);
+    }
+
+    @Test
     public void toArray2() throws Exception {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
+
+        assertThat(partitions.toArray(new RedisClusterNode[2])).contains(node1, node2);
+    }
+
+    @Test
+    public void toArray2UsesReadView() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.getPartitions().addAll(Arrays.asList(node1, node2));
+
+        assertThat(partitions.toArray(new RedisClusterNode[2])).doesNotContain(node1, node2);
+
+        partitions.updateCache();
 
         assertThat(partitions.toArray(new RedisClusterNode[2])).contains(node1, node2);
     }
@@ -196,6 +243,19 @@ public class PartitionsTest {
     }
 
     @Test
+    public void sizeUsesReadView() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.getPartitions().add(node1);
+
+        assertThat(partitions.size()).isEqualTo(0);
+
+        partitions.updateCache();
+
+        assertThat(partitions.size()).isEqualTo(1);
+    }
+
+    @Test
     public void getPartition() throws Exception {
 
         Partitions partitions = new Partitions();
@@ -211,6 +271,42 @@ public class PartitionsTest {
         partitions.add(node1);
 
         assertThat(partitions.iterator().next()).isEqualTo(node1);
+    }
+
+    @Test
+    public void iteratorUsesReadView() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.getPartitions().add(node1);
+
+        assertThat(partitions.iterator().hasNext()).isFalse();
+        partitions.updateCache();
+
+        assertThat(partitions.iterator().hasNext()).isTrue();
+    }
+
+    @Test
+    public void iteratorIsSafeDuringUpdate() throws Exception {
+
+        Partitions partitions = new Partitions();
+        partitions.add(node1);
+        partitions.add(node2);
+
+        Iterator<RedisClusterNode> iterator = partitions.iterator();
+
+        partitions.remove(node2);
+
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo(node1);
+        assertThat(iterator.next()).isEqualTo(node2);
+
+        iterator = partitions.iterator();
+
+        partitions.remove(node2);
+
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo(node1);
+        assertThat(iterator.hasNext()).isFalse();
     }
 
     @Test

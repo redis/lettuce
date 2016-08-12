@@ -205,7 +205,9 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     }
 
     public void setPartitions(Partitions partitions) {
-        clusterConnectionProvider.setPartitions(partitions);
+        if(clusterConnectionProvider != null) {
+            clusterConnectionProvider.setPartitions(partitions);
+        }
     }
 
     /**

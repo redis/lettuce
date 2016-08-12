@@ -54,6 +54,8 @@ public class RoundRobinSocketAddressSupplierTest {
                 new RedisClusterNode(hap2, "2", true, "", 0, 0, 0, new ArrayList<>(), new HashSet<>()));
         partitions.addPartition(
                 new RedisClusterNode(hap3, "3", true, "", 0, 0, 0, new ArrayList<>(), new HashSet<>()));
+
+        partitions.updateCache();
     }
 
     @Test
@@ -79,7 +81,7 @@ public class RoundRobinSocketAddressSupplierTest {
         assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
         assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
 
-        partitions.addPartition(
+        partitions.add(
                 new RedisClusterNode(hap4, "4", true, "", 0, 0, 0, new ArrayList<>(), new HashSet<>()));
 
         assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
