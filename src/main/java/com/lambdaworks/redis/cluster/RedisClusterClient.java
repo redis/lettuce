@@ -701,8 +701,6 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
             }
 
-            this.partitions.getPartitions().clear();
-            this.partitions.getPartitions().addAll(loadedPartitions.getPartitions());
             this.partitions.reload(loadedPartitions.getPartitions());
         }
 

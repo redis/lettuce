@@ -153,7 +153,7 @@ public class Partitions implements Collection<RedisClusterNode> {
     @Override
     public boolean addAll(Collection<? extends RedisClusterNode> c) {
 
-        LettuceAssert.noNullElements(partitions, "Partitions must not contain null elements");
+        LettuceAssert.noNullElements(c, "Partitions must not contain null elements");
 
         synchronized (partitions) {
             boolean b = partitions.addAll(c);
