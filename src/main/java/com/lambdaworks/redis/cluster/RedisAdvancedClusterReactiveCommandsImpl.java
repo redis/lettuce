@@ -83,6 +83,24 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Observable<Long> exists(K... keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+
+        if (partitioned.size() < 2) {
+            return super.exists(keys);
+        }
+
+        List<Observable<Long>> observables = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            observables.add(super.exists(entry.getValue()));
+        }
+
+        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
     public Observable<V> mget(K... keys) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
@@ -254,6 +272,24 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         Map<String, Observable<Success>> observables = executeOnNodes(commands -> commands.shutdown(save),
                 redisClusterNode -> true);
         return Observable.merge(observables.values()).onErrorReturn(throwable -> null).last();
+    }
+
+    @Override
+    public Observable<Long> touch(K... keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+
+        if (partitioned.size() < 2) {
+            return super.touch(keys);
+        }
+
+        List<Observable<Long>> observables = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            observables.add(super.touch(entry.getValue()));
+        }
+
+        return Observable.merge(observables).reduce((accu, next) -> accu + next);
     }
 
     /**

@@ -138,6 +138,14 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
     RedisFuture<Long> unlink(K... keys);
 
     /**
+     * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
+     * @return Long integer-reply specifically: Number of existing keys
+     */
+    RedisFuture<Long> exists(K... keys);
+
+    /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
      *
@@ -332,4 +340,13 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
      * @see RedisKeyAsyncCommands#scan(ScanCursor, ScanArgs)
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+
+    /**
+     * Touch one or more keys with pipelining. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
+     * Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
+     * @return Long integer-reply the number of found keys.
+     */
+    RedisFuture<Long> touch(K... keys);
 }

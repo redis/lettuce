@@ -101,6 +101,28 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<Long> exists(K... keys) {
+        return exists(Arrays.asList(keys));
+    }
+
+    public RedisFuture<Long> exists(Iterable<K> keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
+
+        if (partitioned.size() < 2) {
+            return super.exists(keys);
+        }
+
+        Map<Integer, RedisFuture<Long>> executions = new HashMap<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            RedisFuture<Long> exists = super.exists(entry.getValue());
+            executions.put(entry.getKey(), exists);
+        }
+
+        return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    @Override
     public RedisFuture<List<V>> mget(K... keys) {
         return mget(Arrays.asList(keys));
     }
@@ -326,6 +348,28 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             async.complete();
             return async;
         }, redisClusterNode -> true);
+    }
+
+    @Override
+    public RedisFuture<Long> touch(K... keys) {
+        return touch(Arrays.asList(keys));
+    }
+
+    public RedisFuture<Long> touch(Iterable<K> keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
+
+        if (partitioned.size() < 2) {
+            return super.touch(keys);
+        }
+
+        Map<Integer, RedisFuture<Long>> executions = new HashMap<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            RedisFuture<Long> touch = super.touch(entry.getValue());
+            executions.put(entry.getKey(), touch);
+        }
+
+        return MultiNodeExecution.aggregateAsync(executions);
     }
 
     /**
