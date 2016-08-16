@@ -352,6 +352,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXISTS, new IntegerOutput<K, V>(codec), new CommandArgs<K, V>(codec).addKeys(keys));
     }
 
+    public Command<K, V, Long> exists(Iterable<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+
+        return createCommand(EXISTS, new IntegerOutput<K, V>(codec), new CommandArgs<K, V>(codec).addKeys(keys));
+    }
+
     public Command<K, V, Boolean> expire(K key, long seconds) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(seconds);
         return createCommand(EXPIRE, new BooleanOutput<K, V>(codec), args);
@@ -1032,6 +1038,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, Long> touch(K... keys) {
 
         LettuceAssert.notEmpty(keys, "keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
+        return createCommand(TOUCH, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> touch(Iterable<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys);
         return createCommand(TOUCH, new IntegerOutput<K, V>(codec), args);

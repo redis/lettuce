@@ -336,6 +336,10 @@ public abstract class AbstractRedisAsyncCommands<K, V>
         return dispatch(commandBuilder.exists(keys));
     }
 
+    public RedisFuture<Long> exists(Iterable<K> keys) {
+        return dispatch(commandBuilder.exists(keys));
+    }
+
     @Override
     public RedisFuture<Boolean> expire(K key, long seconds) {
         return dispatch(commandBuilder.expire(key, seconds));
@@ -1013,6 +1017,10 @@ public abstract class AbstractRedisAsyncCommands<K, V>
 
     @Override
     public RedisFuture<Long> touch(K... keys) {
+        return dispatch(commandBuilder.touch(keys));
+    }
+
+    public RedisFuture<Long> touch(Iterable<K> keys) {
         return dispatch(commandBuilder.touch(keys));
     }
 

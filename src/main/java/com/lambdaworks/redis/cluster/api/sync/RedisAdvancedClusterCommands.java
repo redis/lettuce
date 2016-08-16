@@ -4,10 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import com.lambdaworks.redis.KeyScanCursor;
-import com.lambdaworks.redis.ScanArgs;
-import com.lambdaworks.redis.ScanCursor;
-import com.lambdaworks.redis.StreamScanCursor;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisKeyCommands;
 import com.lambdaworks.redis.api.sync.RedisScriptingCommands;
 import com.lambdaworks.redis.api.sync.RedisServerCommands;
@@ -136,6 +133,14 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @see RedisKeyCommands#unlink(Object[])
      */
     Long unlink(K... keys);
+
+    /**
+     * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
+     * @return Long integer-reply specifically: Number of existing keys
+     */
+    Long exists(K... keys);
 
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
@@ -332,4 +337,13 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @see RedisKeyCommands#scan(ScanCursor, ScanArgs)
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+
+    /**
+     * Touch one or more keys with pipelining. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
+     * Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param keys the keys
+     * @return Long integer-reply the number of found keys.
+     */
+    Long touch(K... keys);
 }

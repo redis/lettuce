@@ -327,6 +327,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createObservable(() -> commandBuilder.exists(keys));
     }
 
+    public Observable<Long> exists(Iterable<K> keys) {
+        return createObservable(() -> commandBuilder.exists(keys));
+    }
+
     @Override
     public Observable<Boolean> expire(K key, long seconds) {
         return createObservable(() -> commandBuilder.expire(key, seconds));
@@ -991,6 +995,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Long> touch(K... keys) {
+        return createObservable(() -> commandBuilder.touch(keys));
+    }
+
+    public Observable<Long> touch(Iterable<K> keys) {
         return createObservable(() -> commandBuilder.touch(keys));
     }
 
