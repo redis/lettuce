@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.redis.internal.LettuceLists;
 import rx.Observable;
 
 import com.lambdaworks.redis.*;
@@ -48,8 +49,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<Long> del(K... keys) {
+        return del(Arrays.asList(keys));
+    }
 
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    @Override
+    public Observable<Long> del(Iterable<K> keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.del(keys);
@@ -66,8 +72,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<Long> unlink(K... keys) {
+        return unlink(Arrays.asList(keys));
+    }
 
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    @Override
+    public Observable<Long> unlink(Iterable<K> keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.unlink(keys);
@@ -84,8 +95,12 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<Long> exists(K... keys) {
+        return exists(Arrays.asList(keys));
+    }
 
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    public Observable<Long> exists(Iterable<K> keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
             return super.exists(keys);
@@ -102,11 +117,16 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<V> mget(K... keys) {
+        return mget(Arrays.asList(keys));
+    }
 
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    public Observable<V> mget(Iterable<K> keys) {
+
+        List<K> keyList = LettuceLists.newList(keys);
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
         if (partitioned.size() < 2) {
-            return super.mget(keys);
+            return super.mget(keyList);
         }
 
         List<Observable<V>> observables = new ArrayList<>();
@@ -122,9 +142,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             int offset = 0;
             for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
-                for (int i = 0; i < keys.length; i++) {
+                for (int i = 0; i < keyList.size(); i++) {
 
-                    int index = entry.getValue().indexOf(keys[i]);
+                    int index = entry.getValue().indexOf(keyList.get(i));
                     if (index == -1) {
                         continue;
                     }
@@ -144,10 +164,16 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<Long> mget(ValueStreamingChannel<V> channel, K... keys) {
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+        return mget(channel, Arrays.asList(keys));
+    }
+
+    public Observable<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+
+        List<K> keyList = LettuceLists.newList(keys);
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
         if (partitioned.size() < 2) {
-            return super.mget(channel, keys);
+            return super.mget(channel, keyList);
         }
 
         List<Observable<Long>> observables = new ArrayList<>();
@@ -276,11 +302,16 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<Long> touch(K... keys) {
+        return touch(Arrays.asList(keys));
+    }
 
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+    public Observable<Long> touch(Iterable<K> keys) {
+
+        List<K> keyList = LettuceLists.newList(keys);
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
         if (partitioned.size() < 2) {
-            return super.touch(keys);
+            return super.touch(keyList);
         }
 
         List<Observable<Long>> observables = new ArrayList<>();
