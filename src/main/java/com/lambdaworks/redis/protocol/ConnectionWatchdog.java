@@ -102,15 +102,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-
-        if(commandHandler == null) {
-            this.commandHandler = ctx.pipeline().get(CommandHandler.class);
-        }
-        super.channelRegistered(ctx);
-    }
-
-    @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
         logger.debug("{} userEventTriggered({}, {})", commandHandler.logPrefix(), ctx, evt);
@@ -139,6 +130,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        if(commandHandler == null) {
+            this.commandHandler = ctx.pipeline().get(CommandHandler.class);
+        }
 
         channel = ctx.channel();
         logger.debug("{} channelActive({})", commandHandler.logPrefix(), ctx);
