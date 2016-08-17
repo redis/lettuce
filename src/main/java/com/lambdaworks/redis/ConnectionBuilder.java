@@ -53,9 +53,6 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(clientResources != null, "clientResources must be set");
 
         List<ChannelHandler> handlers = new ArrayList<>();
-        if (clientOptions.isAutoReconnect()) {
-            handlers.add(createConnectionWatchdog());
-        }
 
         connection.setOptions(clientOptions);
 
@@ -64,6 +61,10 @@ public class ConnectionBuilder {
         handlers.add(commandHandler);
         handlers.add(connection);
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
+
+        if (clientOptions.isAutoReconnect()) {
+            handlers.add(createConnectionWatchdog());
+        }
 
         return handlers;
     }
