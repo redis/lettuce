@@ -124,7 +124,11 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
                     }
                 }
 
-                subscriber.onCompleted();
+                try {
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                   completeExceptionally(e);
+                }
             } finally {
                 completed = true;
             }
