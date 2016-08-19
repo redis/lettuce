@@ -42,16 +42,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private final EventExecutorGroup reconnectWorkers;
     private final ReconnectionHandler reconnectionHandler;
     private final ReconnectionListener reconnectionListener;
-    private boolean listenOnChannelInactive;
 
     private Channel channel;
     private final Timer timer;
 
     private SocketAddress remoteAddress;
-    private int attempts;
     private long lastReconnectionLogging = -1;
     private CommandHandler<?, ?> commandHandler;
 
+    private volatile int attempts;
+    private volatile boolean armed;
+    private volatile boolean listenOnChannelInactive;
+    private volatile Timeout reconnectScheduleTimeout;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -135,6 +137,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             this.commandHandler = ctx.pipeline().get(CommandHandler.class);
         }
 
+        reconnectScheduleTimeout = null;
         channel = ctx.channel();
         logger.debug("{} channelActive({})", commandHandler.logPrefix(), ctx);
         remoteAddress = channel.remoteAddress();
@@ -167,7 +170,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     /**
      * Schedule reconnect if channel is not available/not active.
      */
-    public void scheduleReconnect() {
+    public synchronized void scheduleReconnect() {
 
         logger.debug("{} scheduleReconnect()", commandHandler.logPrefix());
 
@@ -181,12 +184,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             return;
         }
 
-        if (channel == null || !channel.isActive()) {
+        if ((channel == null || !channel.isActive()) && reconnectScheduleTimeout == null) {
             attempts++;
 
-            int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempts));
-            logger.debug("{} Reconnect attempt {}, delay {}ms", commandHandler.logPrefix(), attempts, timeout);
-            timer.newTimeout(new TimerTask() {
+            final int attempt = attempts;
+            int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
+            logger.debug("Reconnect attempt {}, delay {}ms", attempt, timeout);
+            this.reconnectScheduleTimeout = timer.newTimeout(new TimerTask() {
                 @Override
                 public void run(final Timeout timeout) throws Exception {
 
@@ -211,11 +215,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * the same handler instances contained in the old channel's pipeline.
      * 
      * @param timeout Timer task handle.
-     * 
+     *
      * @throws Exception when reconnection fails.
      */
     @Override
     public void run(Timeout timeout) throws Exception {
+
+        reconnectScheduleTimeout = null;
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");

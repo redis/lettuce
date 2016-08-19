@@ -110,7 +110,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         RandomResponseServer ts = getRandomResponseServer();
 
-        RedisURI redisUri = defaultRedisUri;
+        RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
         redisUri.setTimeout(5);
         redisUri.setUnit(TimeUnit.SECONDS);
 
@@ -162,7 +162,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         RandomResponseServer ts = getRandomResponseServer();
 
-        RedisURI redisUri = defaultRedisUri;
+        RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
 
         try {
             RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
