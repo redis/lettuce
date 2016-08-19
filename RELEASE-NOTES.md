@@ -37,6 +37,8 @@ Other
 * Add workaround for IPv6 parsing #332
 * Provide multi-key-routing for exists and unlink commands using Redis Cluster #334
 * Add ConnectionWatchdog as last handler #335
+* Upgrade netty to 4.0.40.Final #336
+* Upgrade rxjava to 1.1.9 #337
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
