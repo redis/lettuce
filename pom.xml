@@ -111,7 +111,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
-            <version>1.1.33.Fork17</version>
+            <version>1.1.33.Fork20</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>provided</scope>
             <optional>true</optional>
