@@ -20,8 +20,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
-
 import com.lambdaworks.redis.resource.SocketAddressResolver;
+
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -53,8 +53,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             RedisCodec<K, V> redisCodec) {
         this.redisClusterClient = redisClusterClient;
         this.debugEnabled = logger.isDebugEnabled();
-        this.connections = CacheBuilder.newBuilder().build(
-                new ConnectionFactory<K, V>(redisClusterClient, redisCodec, clusterWriter));
+        this.connections = CacheBuilder.newBuilder()
+                .build(new ConnectionFactory<K, V>(redisClusterClient, redisCodec, clusterWriter));
     }
 
     @Override
@@ -109,8 +109,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         if (readerCandidates == null) {
             RedisClusterNode master = partitions.getPartitionBySlot(slot);
             if (master == null) {
-                throw new RedisException("Cannot determine a partition to read for slot " + slot + " (Partitions: "
-                        + partitions + ")");
+                throw new RedisException(
+                        "Cannot determine a partition to read for slot " + slot + " (Partitions: " + partitions + ")");
             }
 
             List<RedisNodeDescription> candidates = getReadCandidates(master);
@@ -127,8 +127,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             });
 
             if (selection.isEmpty()) {
-                throw new RedisException("Cannot determine a partition to read for slot " + slot + " (Partitions: "
-                        + partitions + ") with setting " + readFrom);
+                throw new RedisException("Cannot determine a partition to read for slot " + slot + " (Partitions: " + partitions
+                        + ") with setting " + readFrom);
             }
 
             readerCandidates = getReadFromConnections(selection);
@@ -159,8 +159,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             RedisNodeDescription redisClusterNode = selection.get(i);
 
             RedisURI uri = redisClusterNode.getUri();
-            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
-                    : Intent.READ, uri.getHost(), uri.getPort());
+            ConnectionKey key = new ConnectionKey(
+                    redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE : Intent.READ, uri.getHost(),
+                    uri.getPort());
 
             readerCandidates[i] = connections.get(key);
         }
@@ -256,7 +257,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     @Override
     public void setPartitions(Partitions partitions) {
         boolean reconfigurePartitions = false;
-        
+
         synchronized (stateLock) {
             if (this.partitions != null) {
                 reconfigurePartitions = true;
@@ -264,13 +265,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             this.partitions = partitions;
         }
 
-        if(reconfigurePartitions){
+        if (reconfigurePartitions) {
             reconfigurePartitions();
         }
     }
 
     private void reconfigurePartitions() {
-        
+
         if (!redisClusterClient.expireStaleConnections()) {
             return;
         }
@@ -396,8 +397,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private RuntimeException invalidConnectionPoint(String message) {
-        return new IllegalArgumentException("Connection to " + message
-                + " not allowed. This connection point is not known in the cluster view");
+        return new IllegalArgumentException(
+                "Connection to " + message + " not allowed. This connection point is not known in the cluster view");
     }
 
     private Supplier<SocketAddress> getSocketAddressSupplier(final ConnectionKey connectionKey) {
@@ -408,7 +409,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 return socketAddress;
             }
             SocketAddress socketAddress = new InetSocketAddress(connectionKey.host, connectionKey.port);
-            logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host, connectionKey.port);
+            logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host,
+                    connectionKey.port);
             return socketAddress;
         };
     }
@@ -495,6 +497,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         public StatefulRedisConnection<K, V> load(ConnectionKey key) throws Exception {
 
             StatefulRedisConnection<K, V> connection = null;
+
             if (key.nodeId != null) {
                 if (partitions.getPartitionByNodeId(key.nodeId) == null) {
                     throw invalidConnectionPoint("node id " + key.nodeId);
@@ -517,12 +520,17 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                         getSocketAddressSupplier(key));
             }
 
-            if (key.intent == Intent.READ) {
-                connection.sync().readOnly();
-            }
+            try {
+                if (key.intent == Intent.READ) {
+                    connection.sync().readOnly();
+                }
 
-            synchronized (stateLock) {
-                connection.setAutoFlushCommands(autoFlushCommands);
+                synchronized (stateLock) {
+                    connection.setAutoFlushCommands(autoFlushCommands);
+                }
+            } catch (RuntimeException e) {
+                connection.close();
+                throw e;
             }
 
             return connection;
