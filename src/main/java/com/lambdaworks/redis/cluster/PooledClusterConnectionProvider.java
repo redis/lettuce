@@ -4,7 +4,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -490,6 +489,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         public StatefulRedisConnection<K, V> apply(ConnectionKey key) {
 
             StatefulRedisConnection<K, V> connection = null;
+
             if (key.nodeId != null) {
                 if (partitions.getPartitionByNodeId(key.nodeId) == null) {
                     throw invalidConnectionPoint("node id " + key.nodeId);
@@ -512,12 +512,17 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                         getSocketAddressSupplier(key));
             }
 
-            if (key.intent == Intent.READ) {
-                connection.sync().readOnly();
-            }
+            try {
+                if (key.intent == Intent.READ) {
+                    connection.sync().readOnly();
+                }
 
-            synchronized (stateLock) {
-                connection.setAutoFlushCommands(autoFlushCommands);
+                synchronized (stateLock) {
+                    connection.setAutoFlushCommands(autoFlushCommands);
+                }
+            } catch (RuntimeException e) {
+                connection.close();
+                throw e;
             }
 
             return connection;
