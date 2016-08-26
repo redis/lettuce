@@ -1,10 +1,6 @@
 package com.lambdaworks.redis.cluster;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandWrapper;
@@ -19,27 +15,38 @@ import io.netty.buffer.ByteBuf;
 class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {
 
     private RedisChannelWriter<K, V> retry;
-    private int executions;
-    private int executionLimit;
+    private int redirections;
+    private int maxRedirections;
     private boolean completed;
 
-    ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int executionLimit) {
+    /**
+     *
+     * @param command
+     * @param retry
+     * @param maxRedirections
+     */
+    ClusterCommand(RedisCommand<K, V, T> command, RedisChannelWriter<K, V> retry, int maxRedirections) {
         super(command);
         this.retry = retry;
-        this.executionLimit = executionLimit;
+        this.maxRedirections = maxRedirections;
     }
 
     @Override
     public void complete() {
-        executions++;
 
-        if (executions < executionLimit && (isMoved() || isAsk())) {
-            try {
-                retry.write(this);
-            } catch (Exception e) {
-                completeExceptionally(e);
+        if (isMoved() || isAsk()) {
+
+            boolean retryCommand = maxRedirections > redirections;
+            redirections++;
+
+            if(retryCommand) {
+                try {
+                    retry.write(this);
+                } catch (Exception e) {
+                    completeExceptionally(e);
+                }
+                return;
             }
-            return;
         }
         super.complete();
         completed = true;
@@ -86,10 +93,6 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         return completed;
     }
 
-    public int getExecutions() {
-        return executions;
-    }
-
     @Override
     public boolean isDone() {
         return isCompleted();
@@ -107,7 +110,8 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [command=").append(command);
-        sb.append(", executions=").append(executions);
+        sb.append(", redirections=").append(redirections);
+        sb.append(", maxRedirections=").append(maxRedirections);
         sb.append(']');
         return sb.toString();
     }
