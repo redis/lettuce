@@ -37,7 +37,6 @@ public class ClusterCommandTest extends AbstractClusterTest {
     public static void setupClient() throws Exception {
         client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
         clusterClient = RedisClusterClient.create(LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
-
     }
 
     @AfterClass
