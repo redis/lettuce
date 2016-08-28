@@ -47,7 +47,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public abstract class AbstractRedisClient {
 
-    protected static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
 
     /**
@@ -141,7 +140,7 @@ public abstract class AbstractRedisClient {
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 32 * 1024);
         redisBootstrap.option(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 8 * 1024);
-        redisBootstrap.option(ChannelOption.ALLOCATOR, BUF_ALLOCATOR);
+        redisBootstrap.option(ChannelOption.ALLOCATOR, clientResources.byteBufAllocator());
 
         SocketOptions socketOptions = getOptions().getSocketOptions();
 

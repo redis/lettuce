@@ -6,6 +6,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
@@ -121,4 +122,10 @@ public interface ClientResources {
      */
     Delay reconnectDelay();
 
+    /**
+     * Returns the {@link ByteBufAllocator} used for allocating memory.
+     *
+     * @return the byte buffer allocator.
+     */
+    ByteBufAllocator byteBufAllocator();
 }
