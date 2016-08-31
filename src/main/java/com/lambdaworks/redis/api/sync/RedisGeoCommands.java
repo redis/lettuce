@@ -1,9 +1,7 @@
 package com.lambdaworks.redis.api.sync;
 
-import com.lambdaworks.redis.GeoArgs;
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.GeoRadiusStoreArgs;
-import com.lambdaworks.redis.GeoWithin;
+import com.lambdaworks.redis.*;
+
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +41,7 @@ public interface RedisGeoCommands<K, V> {
      * @param members the members
      * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
      */
-    List<String> geohash(K key, V... members);
+    List<Value<String>> geohash(K key, V... members);
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
@@ -71,7 +69,7 @@ public interface RedisGeoCommands<K, V> {
     List<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadius(Object, double, double, double, Unit, GeoArgs)} query and store the results in a sorted set.
+     * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a sorted set.
      *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
@@ -132,7 +130,7 @@ public interface RedisGeoCommands<K, V> {
      * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
      *         missing elements {@literal null} is returned.
      */
-    List<GeoCoordinates> geopos(K key, V... members);
+    List<Value<GeoCoordinates>> geopos(K key, V... members);
 
     /**
      *

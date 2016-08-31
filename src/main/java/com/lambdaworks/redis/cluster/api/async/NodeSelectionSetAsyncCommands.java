@@ -7,7 +7,6 @@ import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.ValueScanCursor;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands on a node selection for Sets.

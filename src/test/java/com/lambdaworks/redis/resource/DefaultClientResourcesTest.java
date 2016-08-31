@@ -1,7 +1,5 @@
 package com.lambdaworks.redis.resource;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.redis.event.Event;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
@@ -22,7 +18,7 @@ import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import rx.observers.TestSubscriber;
+import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch
@@ -128,21 +124,17 @@ public class DefaultClientResourcesTest {
 
         EventBus eventBus = sut.eventBus();
 
-        final TestSubscriber<Event> subject = new TestSubscriber<Event>();
+        final TestSubscriber<Event> testSubscriber = TestSubscriber.create();
 
-        eventBus.get().subscribe(subject);
+        eventBus.get().subscribe(testSubscriber);
 
         Event event = mock(Event.class);
         eventBus.publish(event);
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return !subject.getOnNextEvents().isEmpty();
-            }
-        }, timeout(seconds(2)));
+        testSubscriber.awaitAndAssertNextValuesWith(receivedEvent -> {
+            assertThat(receivedEvent).isEqualTo(event);
+        });
 
-        assertThat(subject.getOnNextEvents()).contains(event);
         assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 

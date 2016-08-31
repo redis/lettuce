@@ -1,12 +1,9 @@
 package com.lambdaworks.redis.api.async;
 
-import com.lambdaworks.redis.GeoArgs;
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.GeoRadiusStoreArgs;
-import com.lambdaworks.redis.GeoWithin;
+import com.lambdaworks.redis.*;
+
 import java.util.List;
 import java.util.Set;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands for the Geo-API.
@@ -44,7 +41,7 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @param members the members
      * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
      */
-    RedisFuture<List<String>> geohash(K key, V... members);
+    RedisFuture<List<Value<String>>> geohash(K key, V... members);
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
@@ -133,7 +130,7 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
      *         missing elements {@literal null} is returned.
      */
-    RedisFuture<List<GeoCoordinates>> geopos(K key, V... members);
+    RedisFuture<List<Value<GeoCoordinates>>> geopos(K key, V... members);
 
     /**
      *

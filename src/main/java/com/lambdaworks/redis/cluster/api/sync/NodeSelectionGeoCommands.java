@@ -1,9 +1,7 @@
 package com.lambdaworks.redis.cluster.api.sync;
 
-import com.lambdaworks.redis.GeoArgs;
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.GeoRadiusStoreArgs;
-import com.lambdaworks.redis.GeoWithin;
+import com.lambdaworks.redis.*;
+
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +41,7 @@ public interface NodeSelectionGeoCommands<K, V> {
      * @param members the members
      * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
      */
-    Executions<List<String>> geohash(K key, V... members);
+    Executions<List<Value<String>>> geohash(K key, V... members);
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
@@ -132,7 +130,7 @@ public interface NodeSelectionGeoCommands<K, V> {
      * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
      *         missing elements {@literal null} is returned.
      */
-    Executions<List<GeoCoordinates>> geopos(K key, V... members);
+    Executions<List<Value<GeoCoordinates>>> geopos(K key, V... members);
 
     /**
      *

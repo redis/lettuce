@@ -40,8 +40,8 @@ public class LettuceGeoDemo {
         System.out.println("Distance: " + weinheim.distance);
         System.out.println("Coordinates: " + weinheim.coordinates.x + "/" + weinheim.coordinates.y);
 
-        List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "Train station");
-        GeoCoordinates weinheimGeopos = geopos.get(0);
+        List<Value<GeoCoordinates>> geopos = redis.geopos(key, "Weinheim", "Train station");
+        GeoCoordinates weinheimGeopos = geopos.get(0).getValue();
         System.out.println("Coordinates: " + weinheimGeopos.x + "/" + weinheimGeopos.y);
 
         redis.getStatefulConnection().close();

@@ -1690,7 +1690,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<List<String>> geohash(K key, V... members) {
+    public RedisFuture<List<Value<String>>> geohash(K key, V... members) {
         return dispatch(commandBuilder.geohash(key, members));
     }
 
@@ -1729,7 +1729,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<List<GeoCoordinates>> geopos(K key, V... members) {
+    public RedisFuture<List<Value<GeoCoordinates>>> geopos(K key, V... members) {
         return dispatch(commandBuilder.geopos(key, members));
     }
 

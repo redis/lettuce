@@ -22,7 +22,7 @@ import org.junit.Test;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
-import rx.observers.TestSubscriber;
+import reactor.test.TestSubscriber;
 
 public class CustomCodecTest extends AbstractRedisClientTest {
 
@@ -41,16 +41,14 @@ public class CustomCodecTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void testJavaSerializerRx() throws Exception {
+    public void testJavaSerializerReactive() throws Exception {
         StatefulRedisConnection<String, Object> redisConnection = client.connect(new SerializedObjectCodec());
         List<String> list = list("one", "two");
 
         TestSubscriber<String> subscriber = TestSubscriber.create();
 
         redisConnection.reactive().set(key, list, SetArgs.Builder.ex(1)).subscribe(subscriber);
-        subscriber.awaitTerminalEvent(1, TimeUnit.SECONDS);
-        subscriber.assertCompleted();
-        subscriber.assertValue("OK");
+        subscriber.awaitAndAssertNextValues("OK").assertComplete().assertNoError();
 
         redisConnection.close();
     }

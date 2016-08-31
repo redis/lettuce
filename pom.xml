@@ -73,11 +73,10 @@
     <dependencies>
 
         <!-- Start of Core Dependencies -->
-
         <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>1.1.9</version>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>3.0.0.RC1</version>
         </dependency>
 
         <!-- Netty -->
@@ -484,10 +483,9 @@
                 <configuration>
                     <level>public</level>
                     <links>
-                        <link>http://netty.io/4.0/api/</link>
+                        <link>http://netty.io/4.1/api/</link>
                         <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
-                        <link>http://reactivex.io/RxJava/javadoc/</link>
+                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
                     <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax</additionalparam>
                     <tags>
@@ -622,20 +620,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <filters>
-                                <filter>
-                                    <artifact>com.google.guava:guava</artifact>
-                                    <excludes>
-                                        <exclude>com/google/common/escape/**</exclude>
-                                        <exclude>com/google/common/eventbus/**</exclude>
-                                        <exclude>com/google/common/hash/**</exclude>
-                                        <exclude>com/google/common/html/**</exclude>
-                                        <exclude>com/google/common/math/**</exclude>
-                                        <exclude>com/google/common/xml/**</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-
                             <relocations>
                                 <relocation>
                                     <pattern>rx</pattern>

@@ -2,17 +2,17 @@ package com.lambdaworks.redis.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.api.Condition;
 import org.junit.Test;
 
-import rx.Subscription;
-import rx.observers.TestSubscriber;
-
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.event.connection.*;
+
+import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch
@@ -23,19 +23,19 @@ public class ConnectionEventsTriggeredTest extends AbstractRedisClientTest {
     public void testConnectionEvents() throws Exception {
 
         TestSubscriber<Object> subscriber = TestSubscriber.create();
+        List<Object> events = new ArrayList<>();
 
-        Subscription subscription = client.getResources().eventBus().get().filter(
-                event -> event instanceof ConnectionEvent)
+        client.getResources().eventBus().get().filter(event -> event instanceof ConnectionEvent).doOnNext(events::add)
                 .subscribe(subscriber);
 
         try {
+            subscriber.request(10);
             client.connect().close();
-            Wait.untilTrue(() -> subscriber.getOnNextEvents().size() > 3).waitOrTimeout();
+            Wait.untilTrue(() -> events.size() > 4).waitOrTimeout();
         } finally {
-            subscription.unsubscribe();
+            subscriber.cancel();
         }
 
-        List<Object> events = subscriber.getOnNextEvents();
         assertThat(events).areAtLeast(1, new ExpectedClassCondition(ConnectedEvent.class));
         assertThat(events).areAtLeast(1, new ExpectedClassCondition(ConnectionActivatedEvent.class));
         assertThat(events).areAtLeast(1, new ExpectedClassCondition(DisconnectedEvent.class));

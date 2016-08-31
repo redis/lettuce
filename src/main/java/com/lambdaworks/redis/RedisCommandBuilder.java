@@ -2438,13 +2438,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOADD, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<String>> geohash(K key, V... members) {
+    public Command<K, V, List<Value<String>>> geohash(K key, V... members) {
         notNullKey(key);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
-        return createCommand(GEOHASH, new StringListOutput<K, V>(codec), args);
+        return createCommand(GEOHASH, new StringValueListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Set<V>> georadius(K key, double longitude, double latitude, double distance, String unit) {
@@ -2527,7 +2527,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, List<GeoCoordinates>> geopos(K key, V[] members) {
+    public Command<K, V, List<Value<GeoCoordinates>>> geopos(K key, V[] members) {
         notNullKey(key);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);

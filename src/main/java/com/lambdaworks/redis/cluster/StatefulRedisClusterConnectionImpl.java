@@ -19,7 +19,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.NodeSelection;
 import com.lambdaworks.redis.cluster.api.sync.NodeSelectionCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;

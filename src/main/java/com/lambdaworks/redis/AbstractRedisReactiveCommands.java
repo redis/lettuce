@@ -7,19 +7,16 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.*;
-import rx.Completable;
-import rx.Observable;
-import rx.Single;
-import rx.Subscriber;
-
 import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulConnection;
-import com.lambdaworks.redis.api.rx.*;
-import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import com.lambdaworks.redis.api.reactive.*;
+import com.lambdaworks.redis.cluster.api.reactive.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -53,128 +50,128 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Single<Long> append(K key, V value) {
-        return createSingle(() -> commandBuilder.append(key, value));
+    public Mono<Long> append(K key, V value) {
+        return createMono(() -> commandBuilder.append(key, value));
     }
 
     @Override
-    public Single<String> auth(String password) {
-        return createSingle(() -> commandBuilder.auth(password));
+    public Mono<String> auth(String password) {
+        return createMono(() -> commandBuilder.auth(password));
 
     }
 
     @Override
-    public Single<String> bgrewriteaof() {
-        return createSingle(commandBuilder::bgrewriteaof);
+    public Mono<String> bgrewriteaof() {
+        return createMono(commandBuilder::bgrewriteaof);
     }
 
     @Override
-    public Single<String> bgsave() {
-        return createSingle(commandBuilder::bgsave);
+    public Mono<String> bgsave() {
+        return createMono(commandBuilder::bgsave);
     }
 
     @Override
-    public Single<Long> bitcount(K key) {
-        return createSingle(() -> commandBuilder.bitcount(key));
+    public Mono<Long> bitcount(K key) {
+        return createMono(() -> commandBuilder.bitcount(key));
     }
 
     @Override
-    public Single<Long> bitcount(K key, long start, long end) {
-        return createSingle(() -> commandBuilder.bitcount(key, start, end));
+    public Mono<Long> bitcount(K key, long start, long end) {
+        return createMono(() -> commandBuilder.bitcount(key, start, end));
     }
 
     @Override
-    public Observable<Long> bitfield(K key, BitFieldArgs args) {
-        return createDissolvingObservable(() -> commandBuilder.bitfield(key, args));
+    public Flux<Long> bitfield(K key, BitFieldArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.bitfield(key, args));
     }
 
     @Override
-    public Single<Long> bitpos(K key, boolean state) {
-        return createSingle(() -> commandBuilder.bitpos(key, state));
+    public Mono<Long> bitpos(K key, boolean state) {
+        return createMono(() -> commandBuilder.bitpos(key, state));
     }
 
     @Override
-    public Single<Long> bitpos(K key, boolean state, long start, long end) {
-        return createSingle(() -> commandBuilder.bitpos(key, state, start, end));
+    public Mono<Long> bitpos(K key, boolean state, long start, long end) {
+        return createMono(() -> commandBuilder.bitpos(key, state, start, end));
     }
 
     @Override
-    public Single<Long> bitopAnd(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.bitopAnd(destination, keys));
+    public Mono<Long> bitopAnd(K destination, K... keys) {
+        return createMono(() -> commandBuilder.bitopAnd(destination, keys));
     }
 
     @Override
-    public Single<Long> bitopNot(K destination, K source) {
-        return createSingle(() -> commandBuilder.bitopNot(destination, source));
+    public Mono<Long> bitopNot(K destination, K source) {
+        return createMono(() -> commandBuilder.bitopNot(destination, source));
     }
 
     @Override
-    public Single<Long> bitopOr(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.bitopOr(destination, keys));
+    public Mono<Long> bitopOr(K destination, K... keys) {
+        return createMono(() -> commandBuilder.bitopOr(destination, keys));
     }
 
     @Override
-    public Single<Long> bitopXor(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.bitopXor(destination, keys));
+    public Mono<Long> bitopXor(K destination, K... keys) {
+        return createMono(() -> commandBuilder.bitopXor(destination, keys));
     }
 
     @Override
-    public Single<KeyValue<K, V>> blpop(long timeout, K... keys) {
-        return createSingle(() -> commandBuilder.blpop(timeout, keys));
+    public Mono<KeyValue<K, V>> blpop(long timeout, K... keys) {
+        return createMono(() -> commandBuilder.blpop(timeout, keys));
     }
 
     @Override
-    public Single<KeyValue<K, V>> brpop(long timeout, K... keys) {
-        return createSingle(() -> commandBuilder.brpop(timeout, keys));
+    public Mono<KeyValue<K, V>> brpop(long timeout, K... keys) {
+        return createMono(() -> commandBuilder.brpop(timeout, keys));
     }
 
     @Override
-    public Single<V> brpoplpush(long timeout, K source, K destination) {
-        return createSingle(() -> commandBuilder.brpoplpush(timeout, source, destination));
+    public Mono<V> brpoplpush(long timeout, K source, K destination) {
+        return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
     }
 
     @Override
-    public Single<K> clientGetname() {
-        return createSingle(commandBuilder::clientGetname);
+    public Mono<K> clientGetname() {
+        return createMono(commandBuilder::clientGetname);
     }
 
     @Override
-    public Single<String> clientSetname(K name) {
-        return createSingle(() -> commandBuilder.clientSetname(name));
+    public Mono<String> clientSetname(K name) {
+        return createMono(() -> commandBuilder.clientSetname(name));
     }
 
     @Override
-    public Single<String> clientKill(String addr) {
-        return createSingle(() -> commandBuilder.clientKill(addr));
+    public Mono<String> clientKill(String addr) {
+        return createMono(() -> commandBuilder.clientKill(addr));
     }
 
     @Override
-    public Single<Long> clientKill(KillArgs killArgs) {
-        return createSingle(() -> commandBuilder.clientKill(killArgs));
+    public Mono<Long> clientKill(KillArgs killArgs) {
+        return createMono(() -> commandBuilder.clientKill(killArgs));
     }
 
     @Override
-    public Single<String> clientPause(long timeout) {
-        return createSingle(() -> commandBuilder.clientPause(timeout));
+    public Mono<String> clientPause(long timeout) {
+        return createMono(() -> commandBuilder.clientPause(timeout));
     }
 
     @Override
-    public Single<String> clientList() {
-        return createSingle(commandBuilder::clientList);
+    public Mono<String> clientList() {
+        return createMono(commandBuilder::clientList);
     }
 
     @Override
-    public Observable<Object> command() {
-        return createDissolvingObservable(commandBuilder::command);
+    public Flux<Object> command() {
+        return createDissolvingFlux(commandBuilder::command);
     }
 
     @Override
-    public Observable<Object> commandInfo(String... commands) {
-        return createDissolvingObservable(() -> commandBuilder.commandInfo(commands));
+    public Flux<Object> commandInfo(String... commands) {
+        return createDissolvingFlux(() -> commandBuilder.commandInfo(commands));
     }
 
     @Override
-    public Observable<Object> commandInfo(CommandType... commands) {
+    public Flux<Object> commandInfo(CommandType... commands) {
         String[] stringCommands = new String[commands.length];
         for (int i = 0; i < commands.length; i++) {
             stringCommands[i] = commands[i].name();
@@ -184,1323 +181,1323 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Single<Long> commandCount() {
-        return createSingle(commandBuilder::commandCount);
+    public Mono<Long> commandCount() {
+        return createMono(commandBuilder::commandCount);
     }
 
     @Override
-    public Observable<String> configGet(String parameter) {
-        return createDissolvingObservable(() -> commandBuilder.configGet(parameter));
+    public Flux<String> configGet(String parameter) {
+        return createDissolvingFlux(() -> commandBuilder.configGet(parameter));
     }
 
     @Override
-    public Single<String> configResetstat() {
-        return createSingle(commandBuilder::configResetstat);
+    public Mono<String> configResetstat() {
+        return createMono(commandBuilder::configResetstat);
     }
 
     @Override
-    public Single<String> configSet(String parameter, String value) {
-        return createSingle(() -> commandBuilder.configSet(parameter, value));
+    public Mono<String> configSet(String parameter, String value) {
+        return createMono(() -> commandBuilder.configSet(parameter, value));
     }
 
     @Override
-    public Single<String> configRewrite() {
-        return createSingle(commandBuilder::configRewrite);
+    public Mono<String> configRewrite() {
+        return createMono(commandBuilder::configRewrite);
     }
 
     @Override
-    public Single<Long> dbsize() {
-        return createSingle(commandBuilder::dbsize);
+    public Mono<Long> dbsize() {
+        return createMono(commandBuilder::dbsize);
     }
 
     @Override
-    public Single<String> debugCrashAndRecover(Long delay) {
-        return createSingle(() -> (commandBuilder.debugCrashAndRecover(delay)));
+    public Mono<String> debugCrashAndRecover(Long delay) {
+        return createMono(() -> (commandBuilder.debugCrashAndRecover(delay)));
     }
 
     @Override
-    public Single<String> debugHtstats(int db) {
-        return createSingle(() -> commandBuilder.debugHtstats(db));
+    public Mono<String> debugHtstats(int db) {
+        return createMono(() -> commandBuilder.debugHtstats(db));
     }
 
     @Override
-    public Single<String> debugObject(K key) {
-        return createSingle(() -> commandBuilder.debugObject(key));
+    public Mono<String> debugObject(K key) {
+        return createMono(() -> commandBuilder.debugObject(key));
     }
 
     @Override
-    public Completable debugOom() {
-        return Completable.fromObservable(createObservable(commandBuilder::debugOom));
+    public Mono<Void> debugOom() {
+        return createMono(commandBuilder::debugOom).then();
     }
 
     @Override
-    public Single<String> debugReload() {
-        return createSingle(() -> (commandBuilder.debugReload()));
+    public Mono<String> debugReload() {
+        return createMono(() -> (commandBuilder.debugReload()));
     }
 
     @Override
-    public Single<String> debugRestart(Long delay) {
-        return createSingle(() -> (commandBuilder.debugRestart(delay)));
+    public Mono<String> debugRestart(Long delay) {
+        return createMono(() -> (commandBuilder.debugRestart(delay)));
     }
 
     @Override
-    public Single<String> debugSdslen(K key) {
-        return createSingle(() -> (commandBuilder.debugSdslen(key)));
+    public Mono<String> debugSdslen(K key) {
+        return createMono(() -> (commandBuilder.debugSdslen(key)));
     }
 
     @Override
-    public Completable debugSegfault() {
-        return Completable.fromObservable(createObservable(commandBuilder::debugSegfault));
+    public Mono<Void> debugSegfault() {
+        return createFlux(commandBuilder::debugSegfault).then();
     }
 
     @Override
-    public Single<Long> decr(K key) {
-        return createSingle(() -> commandBuilder.decr(key));
+    public Mono<Long> decr(K key) {
+        return createMono(() -> commandBuilder.decr(key));
     }
 
     @Override
-    public Single<Long> decrby(K key, long amount) {
-        return createSingle(() -> commandBuilder.decrby(key, amount));
+    public Mono<Long> decrby(K key, long amount) {
+        return createMono(() -> commandBuilder.decrby(key, amount));
     }
 
     @Override
-    public Single<Long> del(K... keys) {
-        return createSingle(() -> commandBuilder.del(keys));
+    public Mono<Long> del(K... keys) {
+        return createMono(() -> commandBuilder.del(keys));
     }
 
-    public Single<Long> del(Iterable<K> keys) {
-        return createSingle(() -> commandBuilder.del(keys));
-    }
-
-    @Override
-    public Single<Long> unlink(K... keys) {
-        return createSingle(() -> commandBuilder.unlink(keys));
-    }
-
-    public Single<Long> unlink(Iterable<K> keys) {
-        return createSingle(() -> commandBuilder.unlink(keys));
+    public Mono<Long> del(Iterable<K> keys) {
+        return createMono(() -> commandBuilder.del(keys));
     }
 
     @Override
-    public Single<String> discard() {
-        return createSingle(commandBuilder::discard);
+    public Mono<Long> unlink(K... keys) {
+        return createMono(() -> commandBuilder.unlink(keys));
+    }
+
+    public Mono<Long> unlink(Iterable<K> keys) {
+        return createMono(() -> commandBuilder.unlink(keys));
     }
 
     @Override
-    public Single<byte[]> dump(K key) {
-        return createSingle(() -> commandBuilder.dump(key));
+    public Mono<String> discard() {
+        return createMono(commandBuilder::discard);
     }
 
     @Override
-    public Single<V> echo(V msg) {
-        return createSingle(() -> commandBuilder.echo(msg));
+    public Mono<byte[]> dump(K key) {
+        return createMono(() -> commandBuilder.dump(key));
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> Observable<T> eval(String script, ScriptOutputType type, K... keys) {
-        return (Observable<T>) createObservable(() -> commandBuilder.eval(script, type, keys));
+    public Mono<V> echo(V msg) {
+        return createMono(() -> commandBuilder.echo(msg));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Observable<T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
-        return (Observable<T>) createObservable(() -> commandBuilder.eval(script, type, keys, values));
+    public <T> Flux<T> eval(String script, ScriptOutputType type, K... keys) {
+        return (Flux<T>) createFlux(() -> commandBuilder.eval(script, type, keys));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Observable<T> evalsha(String digest, ScriptOutputType type, K... keys) {
-        return (Observable<T>) createObservable(() -> commandBuilder.evalsha(digest, type, keys));
+    public <T> Flux<T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
+        return (Flux<T>) createFlux(() -> commandBuilder.eval(script, type, keys, values));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Observable<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
-        return (Observable<T>) createObservable(() -> commandBuilder.evalsha(digest, type, keys, values));
-    }
-
-    public Single<Boolean> exists(K key) {
-        return createSingle(() -> commandBuilder.exists(key));
+    public <T> Flux<T> evalsha(String digest, ScriptOutputType type, K... keys) {
+        return (Flux<T>) createFlux(() -> commandBuilder.evalsha(digest, type, keys));
     }
 
     @Override
-    public Single<Long> exists(K... keys) {
-        return createSingle(() -> commandBuilder.exists(keys));
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
+        return (Flux<T>) createFlux(() -> commandBuilder.evalsha(digest, type, keys, values));
     }
 
-    public Single<Long> exists(Iterable<K> keys) {
-        return createSingle(() -> commandBuilder.exists(keys));
-    }
-
-    @Override
-    public Single<Boolean> expire(K key, long seconds) {
-        return createSingle(() -> commandBuilder.expire(key, seconds));
+    public Mono<Boolean> exists(K key) {
+        return createMono(() -> commandBuilder.exists(key));
     }
 
     @Override
-    public Single<Boolean> expireat(K key, long timestamp) {
-        return createSingle(() -> commandBuilder.expireat(key, timestamp));
+    public Mono<Long> exists(K... keys) {
+        return createMono(() -> commandBuilder.exists(keys));
+    }
+
+    public Mono<Long> exists(Iterable<K> keys) {
+        return createMono(() -> commandBuilder.exists(keys));
     }
 
     @Override
-    public Single<Boolean> expireat(K key, Date timestamp) {
+    public Mono<Boolean> expire(K key, long seconds) {
+        return createMono(() -> commandBuilder.expire(key, seconds));
+    }
+
+    @Override
+    public Mono<Boolean> expireat(K key, long timestamp) {
+        return createMono(() -> commandBuilder.expireat(key, timestamp));
+    }
+
+    @Override
+    public Mono<Boolean> expireat(K key, Date timestamp) {
         return expireat(key, timestamp.getTime() / 1000);
     }
 
     @Override
-    public Single<TransactionResult> exec() {
-        return createSingle(EXEC, null, null);
+    public Mono<TransactionResult> exec() {
+        return createMono(EXEC, null, null);
     }
 
     @Override
-    public Single<String> flushall() {
-        return createSingle(commandBuilder::flushall);
+    public Mono<String> flushall() {
+        return createMono(commandBuilder::flushall);
     }
 
     @Override
-    public Single<String> flushallAsync() {
-        return createSingle(commandBuilder::flushallAsync);
+    public Mono<String> flushallAsync() {
+        return createMono(commandBuilder::flushallAsync);
     }
 
     @Override
-    public Single<String> flushdb() {
-        return createSingle(commandBuilder::flushdb);
+    public Mono<String> flushdb() {
+        return createMono(commandBuilder::flushdb);
     }
 
     @Override
-    public Single<String> flushdbAsync() {
-        return createSingle(commandBuilder::flushdbAsync);
+    public Mono<String> flushdbAsync() {
+        return createMono(commandBuilder::flushdbAsync);
     }
 
     @Override
-    public Single<V> get(K key) {
-        return createSingle(() -> commandBuilder.get(key));
+    public Mono<V> get(K key) {
+        return createMono(() -> commandBuilder.get(key));
     }
 
     @Override
-    public Single<Long> getbit(K key, long offset) {
-        return createSingle(() -> commandBuilder.getbit(key, offset));
+    public Mono<Long> getbit(K key, long offset) {
+        return createMono(() -> commandBuilder.getbit(key, offset));
     }
 
     @Override
-    public Single<V> getrange(K key, long start, long end) {
-        return createSingle(() -> commandBuilder.getrange(key, start, end));
+    public Mono<V> getrange(K key, long start, long end) {
+        return createMono(() -> commandBuilder.getrange(key, start, end));
     }
 
     @Override
-    public Single<V> getset(K key, V value) {
-        return createSingle(() -> commandBuilder.getset(key, value));
+    public Mono<V> getset(K key, V value) {
+        return createMono(() -> commandBuilder.getset(key, value));
     }
 
     @Override
-    public Single<Long> hdel(K key, K... fields) {
-        return createSingle(() -> commandBuilder.hdel(key, fields));
+    public Mono<Long> hdel(K key, K... fields) {
+        return createMono(() -> commandBuilder.hdel(key, fields));
     }
 
     @Override
-    public Single<Boolean> hexists(K key, K field) {
-        return createSingle(() -> commandBuilder.hexists(key, field));
+    public Mono<Boolean> hexists(K key, K field) {
+        return createMono(() -> commandBuilder.hexists(key, field));
     }
 
     @Override
-    public Single<V> hget(K key, K field) {
-        return createSingle(() -> commandBuilder.hget(key, field));
+    public Mono<V> hget(K key, K field) {
+        return createMono(() -> commandBuilder.hget(key, field));
     }
 
     @Override
-    public Single<Long> hincrby(K key, K field, long amount) {
-        return createSingle(() -> commandBuilder.hincrby(key, field, amount));
+    public Mono<Long> hincrby(K key, K field, long amount) {
+        return createMono(() -> commandBuilder.hincrby(key, field, amount));
     }
 
     @Override
-    public Single<Double> hincrbyfloat(K key, K field, double amount) {
-        return createSingle(() -> commandBuilder.hincrbyfloat(key, field, amount));
+    public Mono<Double> hincrbyfloat(K key, K field, double amount) {
+        return createMono(() -> commandBuilder.hincrbyfloat(key, field, amount));
     }
 
     @Override
-    public Single<Map<K, V>> hgetall(K key) {
-        return createSingle(() -> commandBuilder.hgetall(key));
+    public Mono<Map<K, V>> hgetall(K key) {
+        return createMono(() -> commandBuilder.hgetall(key));
     }
 
     @Override
-    public Single<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
-        return createSingle(() -> commandBuilder.hgetall(channel, key));
+    public Mono<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
+        return createMono(() -> commandBuilder.hgetall(channel, key));
     }
 
     @Override
-    public Observable<K> hkeys(K key) {
-        return createDissolvingObservable(() -> commandBuilder.hkeys(key));
+    public Flux<K> hkeys(K key) {
+        return createDissolvingFlux(() -> commandBuilder.hkeys(key));
     }
 
     @Override
-    public Single<Long> hkeys(KeyStreamingChannel<K> channel, K key) {
-        return createSingle(() -> commandBuilder.hkeys(channel, key));
+    public Mono<Long> hkeys(KeyStreamingChannel<K> channel, K key) {
+        return createMono(() -> commandBuilder.hkeys(channel, key));
     }
 
     @Override
-    public Single<Long> hlen(K key) {
-        return createSingle(() -> commandBuilder.hlen(key));
+    public Mono<Long> hlen(K key) {
+        return createMono(() -> commandBuilder.hlen(key));
     }
 
     @Override
-    public Single<Long> hstrlen(K key, K field) {
-        return createSingle(() -> commandBuilder.hstrlen(key, field));
+    public Mono<Long> hstrlen(K key, K field) {
+        return createMono(() -> commandBuilder.hstrlen(key, field));
     }
 
     @Override
-    public Observable<KeyValue<K, V>> hmget(K key, K... fields) {
-        return createDissolvingObservable(() -> commandBuilder.hmgetKeyValue(key, fields));
+    public Flux<KeyValue<K, V>> hmget(K key, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hmgetKeyValue(key, fields));
     }
 
     @Override
-    public Single<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
-        return createSingle(() -> commandBuilder.hmget(channel, key, fields));
+    public Mono<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        return createMono(() -> commandBuilder.hmget(channel, key, fields));
     }
 
     @Override
-    public Single<String> hmset(K key, Map<K, V> map) {
-        return createSingle(() -> commandBuilder.hmset(key, map));
+    public Mono<String> hmset(K key, Map<K, V> map) {
+        return createMono(() -> commandBuilder.hmset(key, map));
     }
 
     @Override
-    public Single<Boolean> hset(K key, K field, V value) {
-        return createSingle(() -> commandBuilder.hset(key, field, value));
+    public Mono<Boolean> hset(K key, K field, V value) {
+        return createMono(() -> commandBuilder.hset(key, field, value));
     }
 
     @Override
-    public Single<Boolean> hsetnx(K key, K field, V value) {
-        return createSingle(() -> commandBuilder.hsetnx(key, field, value));
+    public Mono<Boolean> hsetnx(K key, K field, V value) {
+        return createMono(() -> commandBuilder.hsetnx(key, field, value));
     }
 
     @Override
-    public Observable<V> hvals(K key) {
-        return createDissolvingObservable(() -> commandBuilder.hvals(key));
+    public Flux<V> hvals(K key) {
+        return createDissolvingFlux(() -> commandBuilder.hvals(key));
     }
 
     @Override
-    public Single<Long> hvals(ValueStreamingChannel<V> channel, K key) {
-        return createSingle(() -> commandBuilder.hvals(channel, key));
+    public Mono<Long> hvals(ValueStreamingChannel<V> channel, K key) {
+        return createMono(() -> commandBuilder.hvals(channel, key));
     }
 
     @Override
-    public Single<Long> incr(K key) {
-        return createSingle(() -> commandBuilder.incr(key));
+    public Mono<Long> incr(K key) {
+        return createMono(() -> commandBuilder.incr(key));
     }
 
     @Override
-    public Single<Long> incrby(K key, long amount) {
-        return createSingle(() -> commandBuilder.incrby(key, amount));
+    public Mono<Long> incrby(K key, long amount) {
+        return createMono(() -> commandBuilder.incrby(key, amount));
     }
 
     @Override
-    public Single<Double> incrbyfloat(K key, double amount) {
-        return createSingle(() -> commandBuilder.incrbyfloat(key, amount));
+    public Mono<Double> incrbyfloat(K key, double amount) {
+        return createMono(() -> commandBuilder.incrbyfloat(key, amount));
     }
 
     @Override
-    public Single<String> info() {
-        return createSingle(commandBuilder::info);
+    public Mono<String> info() {
+        return createMono(commandBuilder::info);
     }
 
     @Override
-    public Single<String> info(String section) {
-        return createSingle(() -> commandBuilder.info(section));
+    public Mono<String> info(String section) {
+        return createMono(() -> commandBuilder.info(section));
     }
 
     @Override
-    public Observable<K> keys(K pattern) {
-        return createDissolvingObservable(() -> commandBuilder.keys(pattern));
+    public Flux<K> keys(K pattern) {
+        return createDissolvingFlux(() -> commandBuilder.keys(pattern));
     }
 
     @Override
-    public Single<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
-        return createSingle(() -> commandBuilder.keys(channel, pattern));
+    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        return createMono(() -> commandBuilder.keys(channel, pattern));
     }
 
     @Override
-    public Single<Date> lastsave() {
-        return createSingle(commandBuilder::lastsave);
+    public Mono<Date> lastsave() {
+        return createMono(commandBuilder::lastsave);
     }
 
     @Override
-    public Single<V> lindex(K key, long index) {
-        return createSingle(() -> commandBuilder.lindex(key, index));
+    public Mono<V> lindex(K key, long index) {
+        return createMono(() -> commandBuilder.lindex(key, index));
     }
 
     @Override
-    public Single<Long> linsert(K key, boolean before, V pivot, V value) {
-        return createSingle(() -> commandBuilder.linsert(key, before, pivot, value));
+    public Mono<Long> linsert(K key, boolean before, V pivot, V value) {
+        return createMono(() -> commandBuilder.linsert(key, before, pivot, value));
     }
 
     @Override
-    public Single<Long> llen(K key) {
-        return createSingle(() -> commandBuilder.llen(key));
+    public Mono<Long> llen(K key) {
+        return createMono(() -> commandBuilder.llen(key));
     }
 
     @Override
-    public Single<V> lpop(K key) {
-        return createSingle(() -> commandBuilder.lpop(key));
+    public Mono<V> lpop(K key) {
+        return createMono(() -> commandBuilder.lpop(key));
     }
 
     @Override
-    public Single<Long> lpush(K key, V... values) {
-        return createSingle(() -> commandBuilder.lpush(key, values));
+    public Mono<Long> lpush(K key, V... values) {
+        return createMono(() -> commandBuilder.lpush(key, values));
     }
 
     @Override
-    public Single<Long> lpushx(K key, V... values) {
-        return createSingle(() -> commandBuilder.lpushx(key, values));
+    public Mono<Long> lpushx(K key, V... values) {
+        return createMono(() -> commandBuilder.lpushx(key, values));
     }
 
     @Override
-    public Observable<V> lrange(K key, long start, long stop) {
-        return createDissolvingObservable(() -> commandBuilder.lrange(key, start, stop));
+    public Flux<V> lrange(K key, long start, long stop) {
+        return createDissolvingFlux(() -> commandBuilder.lrange(key, start, stop));
     }
 
     @Override
-    public Single<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.lrange(channel, key, start, stop));
+    public Mono<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createMono(() -> commandBuilder.lrange(channel, key, start, stop));
     }
 
     @Override
-    public Single<Long> lrem(K key, long count, V value) {
-        return createSingle(() -> commandBuilder.lrem(key, count, value));
+    public Mono<Long> lrem(K key, long count, V value) {
+        return createMono(() -> commandBuilder.lrem(key, count, value));
     }
 
     @Override
-    public Single<String> lset(K key, long index, V value) {
-        return createSingle(() -> commandBuilder.lset(key, index, value));
+    public Mono<String> lset(K key, long index, V value) {
+        return createMono(() -> commandBuilder.lset(key, index, value));
     }
 
     @Override
-    public Single<String> ltrim(K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.ltrim(key, start, stop));
+    public Mono<String> ltrim(K key, long start, long stop) {
+        return createMono(() -> commandBuilder.ltrim(key, start, stop));
     }
 
     @Override
-    public Single<String> migrate(String host, int port, K key, int db, long timeout) {
-        return createSingle(() -> commandBuilder.migrate(host, port, key, db, timeout));
+    public Mono<String> migrate(String host, int port, K key, int db, long timeout) {
+        return createMono(() -> commandBuilder.migrate(host, port, key, db, timeout));
     }
 
     @Override
-    public Single<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
-        return createSingle(() -> commandBuilder.migrate(host, port, db, timeout, migrateArgs));
+    public Mono<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs) {
+        return createMono(() -> commandBuilder.migrate(host, port, db, timeout, migrateArgs));
     }
 
     @Override
-    public Observable<KeyValue<K, V>> mget(K... keys) {
-        return createDissolvingObservable(() -> commandBuilder.mgetKeyValue(keys));
+    public Flux<KeyValue<K, V>> mget(K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.mgetKeyValue(keys));
     }
 
-    public Observable<KeyValue<K, V>> mget(Iterable<K> keys) {
-        return createDissolvingObservable(() -> commandBuilder.mgetKeyValue(keys));
-    }
-
-    @Override
-    public Single<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
-        return createSingle(() -> commandBuilder.mget(channel, keys));
-    }
-
-    public Single<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
-        return createSingle(() -> commandBuilder.mget(channel, keys));
-    }
-
-    public Single<Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
-        return createSingle(() -> commandBuilder.mget(channel, keys));
+    public Flux<KeyValue<K, V>> mget(Iterable<K> keys) {
+        return createDissolvingFlux(() -> commandBuilder.mgetKeyValue(keys));
     }
 
     @Override
-    public Single<Boolean> move(K key, int db) {
-        return createSingle(() -> commandBuilder.move(key, db));
+    public Mono<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
+        return createMono(() -> commandBuilder.mget(channel, keys));
+    }
+
+    public Mono<Long> mget(ValueStreamingChannel<V> channel, Iterable<K> keys) {
+        return createMono(() -> commandBuilder.mget(channel, keys));
+    }
+
+    public Mono<Long> mget(KeyValueStreamingChannel<K, V> channel, Iterable<K> keys) {
+        return createMono(() -> commandBuilder.mget(channel, keys));
     }
 
     @Override
-    public Single<String> multi() {
-        return createSingle(commandBuilder::multi);
+    public Mono<Boolean> move(K key, int db) {
+        return createMono(() -> commandBuilder.move(key, db));
     }
 
     @Override
-    public Single<String> mset(Map<K, V> map) {
-        return createSingle(() -> commandBuilder.mset(map));
+    public Mono<String> multi() {
+        return createMono(commandBuilder::multi);
     }
 
     @Override
-    public Single<Boolean> msetnx(Map<K, V> map) {
-        return createSingle(() -> commandBuilder.msetnx(map));
+    public Mono<String> mset(Map<K, V> map) {
+        return createMono(() -> commandBuilder.mset(map));
     }
 
     @Override
-    public Single<String> objectEncoding(K key) {
-        return createSingle(() -> commandBuilder.objectEncoding(key));
+    public Mono<Boolean> msetnx(Map<K, V> map) {
+        return createMono(() -> commandBuilder.msetnx(map));
     }
 
     @Override
-    public Single<Long> objectIdletime(K key) {
-        return createSingle(() -> commandBuilder.objectIdletime(key));
+    public Mono<String> objectEncoding(K key) {
+        return createMono(() -> commandBuilder.objectEncoding(key));
     }
 
     @Override
-    public Single<Long> objectRefcount(K key) {
-        return createSingle(() -> commandBuilder.objectRefcount(key));
+    public Mono<Long> objectIdletime(K key) {
+        return createMono(() -> commandBuilder.objectIdletime(key));
     }
 
     @Override
-    public Single<Boolean> persist(K key) {
-        return createSingle(() -> commandBuilder.persist(key));
+    public Mono<Long> objectRefcount(K key) {
+        return createMono(() -> commandBuilder.objectRefcount(key));
     }
 
     @Override
-    public Single<Boolean> pexpire(K key, long milliseconds) {
-        return createSingle(() -> commandBuilder.pexpire(key, milliseconds));
+    public Mono<Boolean> persist(K key) {
+        return createMono(() -> commandBuilder.persist(key));
     }
 
     @Override
-    public Single<Boolean> pexpireat(K key, Date timestamp) {
+    public Mono<Boolean> pexpire(K key, long milliseconds) {
+        return createMono(() -> commandBuilder.pexpire(key, milliseconds));
+    }
+
+    @Override
+    public Mono<Boolean> pexpireat(K key, Date timestamp) {
         return pexpireat(key, timestamp.getTime());
     }
 
     @Override
-    public Single<Boolean> pexpireat(K key, long timestamp) {
-        return createSingle(() -> commandBuilder.pexpireat(key, timestamp));
+    public Mono<Boolean> pexpireat(K key, long timestamp) {
+        return createMono(() -> commandBuilder.pexpireat(key, timestamp));
     }
 
     @Override
-    public Single<String> ping() {
-        return createSingle(commandBuilder::ping);
+    public Mono<String> ping() {
+        return createMono(commandBuilder::ping);
     }
 
     @Override
-    public Single<String> readOnly() {
-        return createSingle(commandBuilder::readOnly);
+    public Mono<String> readOnly() {
+        return createMono(commandBuilder::readOnly);
     }
 
     @Override
-    public Single<String> readWrite() {
-        return createSingle(commandBuilder::readWrite);
+    public Mono<String> readWrite() {
+        return createMono(commandBuilder::readWrite);
     }
 
     @Override
-    public Single<Long> pttl(K key) {
-        return createSingle(() -> commandBuilder.pttl(key));
+    public Mono<Long> pttl(K key) {
+        return createMono(() -> commandBuilder.pttl(key));
     }
 
     @Override
-    public Single<Long> publish(K channel, V message) {
-        return createSingle(() -> commandBuilder.publish(channel, message));
+    public Mono<Long> publish(K channel, V message) {
+        return createMono(() -> commandBuilder.publish(channel, message));
     }
 
     @Override
-    public Observable<K> pubsubChannels() {
-        return createDissolvingObservable(commandBuilder::pubsubChannels);
+    public Flux<K> pubsubChannels() {
+        return createDissolvingFlux(commandBuilder::pubsubChannels);
     }
 
     @Override
-    public Observable<K> pubsubChannels(K channel) {
-        return createDissolvingObservable(() -> commandBuilder.pubsubChannels(channel));
+    public Flux<K> pubsubChannels(K channel) {
+        return createDissolvingFlux(() -> commandBuilder.pubsubChannels(channel));
     }
 
     @Override
-    public Single<Map<K, Long>> pubsubNumsub(K... channels) {
-        return createSingle(() -> commandBuilder.pubsubNumsub(channels));
+    public Mono<Map<K, Long>> pubsubNumsub(K... channels) {
+        return createMono(() -> commandBuilder.pubsubNumsub(channels));
     }
 
     @Override
-    public Single<Long> pubsubNumpat() {
-        return createSingle(commandBuilder::pubsubNumpat);
+    public Mono<Long> pubsubNumpat() {
+        return createMono(commandBuilder::pubsubNumpat);
     }
 
     @Override
-    public Single<String> quit() {
-        return createSingle(commandBuilder::quit);
+    public Mono<String> quit() {
+        return createMono(commandBuilder::quit);
     }
 
     @Override
-    public Observable<Object> role() {
-        return createDissolvingObservable(commandBuilder::role);
+    public Flux<Object> role() {
+        return createDissolvingFlux(commandBuilder::role);
     }
 
     @Override
-    public Single<V> randomkey() {
-        return createSingle(commandBuilder::randomkey);
+    public Mono<V> randomkey() {
+        return createMono(commandBuilder::randomkey);
     }
 
     @Override
-    public Single<String> rename(K key, K newKey) {
-        return createSingle(() -> commandBuilder.rename(key, newKey));
+    public Mono<String> rename(K key, K newKey) {
+        return createMono(() -> commandBuilder.rename(key, newKey));
     }
 
     @Override
-    public Single<Boolean> renamenx(K key, K newKey) {
-        return createSingle(() -> commandBuilder.renamenx(key, newKey));
+    public Mono<Boolean> renamenx(K key, K newKey) {
+        return createMono(() -> commandBuilder.renamenx(key, newKey));
     }
 
     @Override
-    public Single<String> restore(K key, long ttl, byte[] value) {
-        return createSingle(() -> commandBuilder.restore(key, ttl, value));
+    public Mono<String> restore(K key, long ttl, byte[] value) {
+        return createMono(() -> commandBuilder.restore(key, ttl, value));
     }
 
     @Override
-    public Single<V> rpop(K key) {
-        return createSingle(() -> commandBuilder.rpop(key));
+    public Mono<V> rpop(K key) {
+        return createMono(() -> commandBuilder.rpop(key));
     }
 
     @Override
-    public Single<V> rpoplpush(K source, K destination) {
-        return createSingle(() -> commandBuilder.rpoplpush(source, destination));
+    public Mono<V> rpoplpush(K source, K destination) {
+        return createMono(() -> commandBuilder.rpoplpush(source, destination));
     }
 
     @Override
-    public Single<Long> rpush(K key, V... values) {
-        return createSingle(() -> commandBuilder.rpush(key, values));
+    public Mono<Long> rpush(K key, V... values) {
+        return createMono(() -> commandBuilder.rpush(key, values));
     }
 
     @Override
-    public Single<Long> rpushx(K key, V... values) {
-        return createSingle(() -> commandBuilder.rpushx(key, values));
+    public Mono<Long> rpushx(K key, V... values) {
+        return createMono(() -> commandBuilder.rpushx(key, values));
     }
 
     @Override
-    public Single<Long> sadd(K key, V... members) {
-        return createSingle(() -> commandBuilder.sadd(key, members));
+    public Mono<Long> sadd(K key, V... members) {
+        return createMono(() -> commandBuilder.sadd(key, members));
     }
 
     @Override
-    public Single<String> save() {
-        return createSingle(commandBuilder::save);
+    public Mono<String> save() {
+        return createMono(commandBuilder::save);
     }
 
     @Override
-    public Single<Long> scard(K key) {
-        return createSingle(() -> commandBuilder.scard(key));
+    public Mono<Long> scard(K key) {
+        return createMono(() -> commandBuilder.scard(key));
     }
 
     @Override
-    public Observable<Boolean> scriptExists(String... digests) {
-        return createDissolvingObservable(() -> commandBuilder.scriptExists(digests));
+    public Flux<Boolean> scriptExists(String... digests) {
+        return createDissolvingFlux(() -> commandBuilder.scriptExists(digests));
     }
 
     @Override
-    public Single<String> scriptFlush() {
-        return createSingle(commandBuilder::scriptFlush);
+    public Mono<String> scriptFlush() {
+        return createMono(commandBuilder::scriptFlush);
     }
 
     @Override
-    public Single<String> scriptKill() {
-        return createSingle(commandBuilder::scriptKill);
+    public Mono<String> scriptKill() {
+        return createMono(commandBuilder::scriptKill);
     }
 
     @Override
-    public Single<String> scriptLoad(V script) {
-        return createSingle(() -> commandBuilder.scriptLoad(script));
+    public Mono<String> scriptLoad(V script) {
+        return createMono(() -> commandBuilder.scriptLoad(script));
     }
 
     @Override
-    public Observable<V> sdiff(K... keys) {
-        return createDissolvingObservable(() -> commandBuilder.sdiff(keys));
+    public Flux<V> sdiff(K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.sdiff(keys));
     }
 
     @Override
-    public Single<Long> sdiff(ValueStreamingChannel<V> channel, K... keys) {
-        return createSingle(() -> commandBuilder.sdiff(channel, keys));
+    public Mono<Long> sdiff(ValueStreamingChannel<V> channel, K... keys) {
+        return createMono(() -> commandBuilder.sdiff(channel, keys));
     }
 
     @Override
-    public Single<Long> sdiffstore(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.sdiffstore(destination, keys));
+    public Mono<Long> sdiffstore(K destination, K... keys) {
+        return createMono(() -> commandBuilder.sdiffstore(destination, keys));
     }
 
-    public Single<String> select(int db) {
-        return createSingle(() -> commandBuilder.select(db));
+    public Mono<String> select(int db) {
+        return createMono(() -> commandBuilder.select(db));
     }
 
     @Override
-    public Single<String> set(K key, V value) {
-        return createSingle(() -> commandBuilder.set(key, value));
+    public Mono<String> set(K key, V value) {
+        return createMono(() -> commandBuilder.set(key, value));
     }
 
     @Override
-    public Single<String> set(K key, V value, SetArgs setArgs) {
-        return createSingle(() -> commandBuilder.set(key, value, setArgs));
+    public Mono<String> set(K key, V value, SetArgs setArgs) {
+        return createMono(() -> commandBuilder.set(key, value, setArgs));
     }
 
     @Override
-    public Single<Long> setbit(K key, long offset, int value) {
-        return createSingle(() -> commandBuilder.setbit(key, offset, value));
+    public Mono<Long> setbit(K key, long offset, int value) {
+        return createMono(() -> commandBuilder.setbit(key, offset, value));
     }
 
     @Override
-    public Single<String> setex(K key, long seconds, V value) {
-        return createSingle(() -> commandBuilder.setex(key, seconds, value));
+    public Mono<String> setex(K key, long seconds, V value) {
+        return createMono(() -> commandBuilder.setex(key, seconds, value));
     }
 
     @Override
-    public Single<String> psetex(K key, long milliseconds, V value) {
-        return createSingle(() -> commandBuilder.psetex(key, milliseconds, value));
+    public Mono<String> psetex(K key, long milliseconds, V value) {
+        return createMono(() -> commandBuilder.psetex(key, milliseconds, value));
     }
 
     @Override
-    public Single<Boolean> setnx(K key, V value) {
-        return createSingle(() -> commandBuilder.setnx(key, value));
+    public Mono<Boolean> setnx(K key, V value) {
+        return createMono(() -> commandBuilder.setnx(key, value));
     }
 
     @Override
-    public Single<Long> setrange(K key, long offset, V value) {
-        return createSingle(() -> commandBuilder.setrange(key, offset, value));
+    public Mono<Long> setrange(K key, long offset, V value) {
+        return createMono(() -> commandBuilder.setrange(key, offset, value));
     }
 
     @Override
-    public Completable shutdown(boolean save) {
-        return Completable.fromObservable(createObservable(() -> commandBuilder.shutdown(save)));
+    public Mono<Void> shutdown(boolean save) {
+        return createMono(() -> commandBuilder.shutdown(save)).then();
     }
 
     @Override
-    public Observable<V> sinter(K... keys) {
-        return createDissolvingObservable(() -> commandBuilder.sinter(keys));
+    public Flux<V> sinter(K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.sinter(keys));
     }
 
     @Override
-    public Single<Long> sinter(ValueStreamingChannel<V> channel, K... keys) {
-        return createSingle(() -> commandBuilder.sinter(channel, keys));
+    public Mono<Long> sinter(ValueStreamingChannel<V> channel, K... keys) {
+        return createMono(() -> commandBuilder.sinter(channel, keys));
     }
 
     @Override
-    public Single<Long> sinterstore(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.sinterstore(destination, keys));
+    public Mono<Long> sinterstore(K destination, K... keys) {
+        return createMono(() -> commandBuilder.sinterstore(destination, keys));
     }
 
     @Override
-    public Single<Boolean> sismember(K key, V member) {
-        return createSingle(() -> commandBuilder.sismember(key, member));
+    public Mono<Boolean> sismember(K key, V member) {
+        return createMono(() -> commandBuilder.sismember(key, member));
     }
 
     @Override
-    public Single<Boolean> smove(K source, K destination, V member) {
-        return createSingle(() -> commandBuilder.smove(source, destination, member));
+    public Mono<Boolean> smove(K source, K destination, V member) {
+        return createMono(() -> commandBuilder.smove(source, destination, member));
     }
 
     @Override
-    public Single<String> slaveof(String host, int port) {
-        return createSingle(() -> commandBuilder.slaveof(host, port));
+    public Mono<String> slaveof(String host, int port) {
+        return createMono(() -> commandBuilder.slaveof(host, port));
     }
 
     @Override
-    public Single<String> slaveofNoOne() {
-        return createSingle(() -> commandBuilder.slaveofNoOne());
+    public Mono<String> slaveofNoOne() {
+        return createMono(() -> commandBuilder.slaveofNoOne());
     }
 
     @Override
-    public Observable<Object> slowlogGet() {
-        return createDissolvingObservable(() -> commandBuilder.slowlogGet());
+    public Flux<Object> slowlogGet() {
+        return createDissolvingFlux(() -> commandBuilder.slowlogGet());
     }
 
     @Override
-    public Observable<Object> slowlogGet(int count) {
-        return createDissolvingObservable(() -> commandBuilder.slowlogGet(count));
+    public Flux<Object> slowlogGet(int count) {
+        return createDissolvingFlux(() -> commandBuilder.slowlogGet(count));
     }
 
     @Override
-    public Single<Long> slowlogLen() {
-        return createSingle(() -> commandBuilder.slowlogLen());
+    public Mono<Long> slowlogLen() {
+        return createMono(() -> commandBuilder.slowlogLen());
     }
 
     @Override
-    public Single<String> slowlogReset() {
-        return createSingle(() -> commandBuilder.slowlogReset());
+    public Mono<String> slowlogReset() {
+        return createMono(() -> commandBuilder.slowlogReset());
     }
 
     @Override
-    public Observable<V> smembers(K key) {
-        return createDissolvingObservable(() -> commandBuilder.smembers(key));
+    public Flux<V> smembers(K key) {
+        return createDissolvingFlux(() -> commandBuilder.smembers(key));
     }
 
     @Override
-    public Single<Long> smembers(ValueStreamingChannel<V> channel, K key) {
-        return createSingle(() -> commandBuilder.smembers(channel, key));
+    public Mono<Long> smembers(ValueStreamingChannel<V> channel, K key) {
+        return createMono(() -> commandBuilder.smembers(channel, key));
     }
 
     @Override
-    public Observable<V> sort(K key) {
-        return createDissolvingObservable(() -> commandBuilder.sort(key));
+    public Flux<V> sort(K key) {
+        return createDissolvingFlux(() -> commandBuilder.sort(key));
     }
 
     @Override
-    public Single<Long> sort(ValueStreamingChannel<V> channel, K key) {
-        return createSingle(() -> commandBuilder.sort(channel, key));
+    public Mono<Long> sort(ValueStreamingChannel<V> channel, K key) {
+        return createMono(() -> commandBuilder.sort(channel, key));
     }
 
     @Override
-    public Observable<V> sort(K key, SortArgs sortArgs) {
-        return createDissolvingObservable(() -> commandBuilder.sort(key, sortArgs));
+    public Flux<V> sort(K key, SortArgs sortArgs) {
+        return createDissolvingFlux(() -> commandBuilder.sort(key, sortArgs));
     }
 
     @Override
-    public Single<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
-        return createSingle(() -> commandBuilder.sort(channel, key, sortArgs));
+    public Mono<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        return createMono(() -> commandBuilder.sort(channel, key, sortArgs));
     }
 
     @Override
-    public Single<Long> sortStore(K key, SortArgs sortArgs, K destination) {
-        return createSingle(() -> commandBuilder.sortStore(key, sortArgs, destination));
+    public Mono<Long> sortStore(K key, SortArgs sortArgs, K destination) {
+        return createMono(() -> commandBuilder.sortStore(key, sortArgs, destination));
     }
 
     @Override
-    public Single<V> spop(K key) {
-        return createSingle(() -> commandBuilder.spop(key));
+    public Mono<V> spop(K key) {
+        return createMono(() -> commandBuilder.spop(key));
     }
 
     @Override
-    public Observable<V> spop(K key, long count) {
-        return createDissolvingObservable(() -> commandBuilder.spop(key, count));
+    public Flux<V> spop(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.spop(key, count));
     }
 
     @Override
-    public Single<V> srandmember(K key) {
-        return createSingle(() -> commandBuilder.srandmember(key));
+    public Mono<V> srandmember(K key) {
+        return createMono(() -> commandBuilder.srandmember(key));
     }
 
     @Override
-    public Observable<V> srandmember(K key, long count) {
-        return createDissolvingObservable(() -> commandBuilder.srandmember(key, count));
+    public Flux<V> srandmember(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.srandmember(key, count));
     }
 
     @Override
-    public Single<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
-        return createSingle(() -> commandBuilder.srandmember(channel, key, count));
+    public Mono<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count) {
+        return createMono(() -> commandBuilder.srandmember(channel, key, count));
     }
 
     @Override
-    public Single<Long> srem(K key, V... members) {
-        return createSingle(() -> commandBuilder.srem(key, members));
+    public Mono<Long> srem(K key, V... members) {
+        return createMono(() -> commandBuilder.srem(key, members));
     }
 
     @Override
-    public Observable<V> sunion(K... keys) {
-        return createDissolvingObservable(() -> commandBuilder.sunion(keys));
+    public Flux<V> sunion(K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.sunion(keys));
     }
 
     @Override
-    public Single<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
-        return createSingle(() -> commandBuilder.sunion(channel, keys));
+    public Mono<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
+        return createMono(() -> commandBuilder.sunion(channel, keys));
     }
 
     @Override
-    public Single<Long> sunionstore(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.sunionstore(destination, keys));
+    public Mono<Long> sunionstore(K destination, K... keys) {
+        return createMono(() -> commandBuilder.sunionstore(destination, keys));
     }
 
     @Override
-    public Single<Long> strlen(K key) {
-        return createSingle(() -> commandBuilder.strlen(key));
+    public Mono<Long> strlen(K key) {
+        return createMono(() -> commandBuilder.strlen(key));
     }
 
     @Override
-    public Single<Long> touch(K... keys) {
-        return createSingle(() -> commandBuilder.touch(keys));
+    public Mono<Long> touch(K... keys) {
+        return createMono(() -> commandBuilder.touch(keys));
     }
 
-    public Single<Long> touch(Iterable<K> keys) {
-        return createSingle(() -> commandBuilder.touch(keys));
+    public Mono<Long> touch(Iterable<K> keys) {
+        return createMono(() -> commandBuilder.touch(keys));
     }
 
     @Override
-    public Single<Long> ttl(K key) {
-        return createSingle(() -> commandBuilder.ttl(key));
+    public Mono<Long> ttl(K key) {
+        return createMono(() -> commandBuilder.ttl(key));
     }
 
     @Override
-    public Single<String> type(K key) {
-        return createSingle(() -> commandBuilder.type(key));
+    public Mono<String> type(K key) {
+        return createMono(() -> commandBuilder.type(key));
     }
 
     @Override
-    public Single<String> watch(K... keys) {
-        return createSingle(() -> commandBuilder.watch(keys));
+    public Mono<String> watch(K... keys) {
+        return createMono(() -> commandBuilder.watch(keys));
     }
 
     @Override
-    public Single<String> unwatch() {
-        return createSingle(commandBuilder::unwatch);
+    public Mono<String> unwatch() {
+        return createMono(commandBuilder::unwatch);
     }
 
     @Override
-    public Single<Long> zadd(K key, double score, V member) {
-        return createSingle(() -> commandBuilder.zadd(key, null, score, member));
+    public Mono<Long> zadd(K key, double score, V member) {
+        return createMono(() -> commandBuilder.zadd(key, null, score, member));
     }
 
     @Override
-    public Single<Long> zadd(K key, Object... scoresAndValues) {
-        return createSingle(() -> commandBuilder.zadd(key, null, scoresAndValues));
+    public Mono<Long> zadd(K key, Object... scoresAndValues) {
+        return createMono(() -> commandBuilder.zadd(key, null, scoresAndValues));
     }
 
     @Override
-    public Single<Long> zadd(K key, ScoredValue<V>... scoredValues) {
-        return createSingle(() -> commandBuilder.zadd(key, null, (Object[]) scoredValues));
+    public Mono<Long> zadd(K key, ScoredValue<V>... scoredValues) {
+        return createMono(() -> commandBuilder.zadd(key, null, (Object[]) scoredValues));
     }
 
     @Override
-    public Single<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
-        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, score, member));
+    public Mono<Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
+        return createMono(() -> commandBuilder.zadd(key, zAddArgs, score, member));
     }
 
     @Override
-    public Single<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
-        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, scoresAndValues));
+    public Mono<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues) {
+        return createMono(() -> commandBuilder.zadd(key, zAddArgs, scoresAndValues));
     }
 
     @Override
-    public Single<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
-        return createSingle(() -> commandBuilder.zadd(key, zAddArgs, (Object[]) scoredValues));
+    public Mono<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
+        return createMono(() -> commandBuilder.zadd(key, zAddArgs, (Object[]) scoredValues));
     }
 
     @Override
-    public Single<Double> zaddincr(K key, double score, V member) {
-        return createSingle(() -> commandBuilder.zaddincr(key, score, member));
+    public Mono<Double> zaddincr(K key, double score, V member) {
+        return createMono(() -> commandBuilder.zaddincr(key, score, member));
     }
 
     @Override
-    public Single<Long> zcard(K key) {
-        return createSingle(() -> commandBuilder.zcard(key));
+    public Mono<Long> zcard(K key) {
+        return createMono(() -> commandBuilder.zcard(key));
     }
 
     @Override
-    public Single<Long> zcount(K key, double min, double max) {
-        return createSingle(() -> commandBuilder.zcount(key, min, max));
+    public Mono<Long> zcount(K key, double min, double max) {
+        return createMono(() -> commandBuilder.zcount(key, min, max));
     }
 
     @Override
-    public Single<Long> zcount(K key, String min, String max) {
-        return createSingle(() -> commandBuilder.zcount(key, min, max));
+    public Mono<Long> zcount(K key, String min, String max) {
+        return createMono(() -> commandBuilder.zcount(key, min, max));
     }
 
     @Override
-    public Single<Double> zincrby(K key, double amount, K member) {
-        return createSingle(() -> commandBuilder.zincrby(key, amount, member));
+    public Mono<Double> zincrby(K key, double amount, K member) {
+        return createMono(() -> commandBuilder.zincrby(key, amount, member));
     }
 
     @Override
-    public Single<Long> zinterstore(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.zinterstore(destination, keys));
+    public Mono<Long> zinterstore(K destination, K... keys) {
+        return createMono(() -> commandBuilder.zinterstore(destination, keys));
     }
 
     @Override
-    public Single<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        return createSingle(() -> commandBuilder.zinterstore(destination, storeArgs, keys));
+    public Mono<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
+        return createMono(() -> commandBuilder.zinterstore(destination, storeArgs, keys));
     }
 
     @Override
-    public Observable<V> zrange(K key, long start, long stop) {
-        return createDissolvingObservable(() -> commandBuilder.zrange(key, start, stop));
+    public Flux<V> zrange(K key, long start, long stop) {
+        return createDissolvingFlux(() -> commandBuilder.zrange(key, start, stop));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrangeWithScores(K key, long start, long stop) {
-        return createDissolvingObservable(() -> commandBuilder.zrangeWithScores(key, start, stop));
+    public Flux<ScoredValue<V>> zrangeWithScores(K key, long start, long stop) {
+        return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, start, stop));
     }
 
     @Override
-    public Observable<V> zrangebyscore(K key, double min, double max) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, min, max));
+    public Flux<V> zrangebyscore(K key, double min, double max) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max));
     }
 
     @Override
-    public Observable<V> zrangebyscore(K key, String min, String max) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, min, max));
+    public Flux<V> zrangebyscore(K key, String min, String max) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max));
     }
 
     @Override
-    public Observable<V> zrangebyscore(K key, double min, double max, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
+    public Flux<V> zrangebyscore(K key, double min, double max, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
     @Override
-    public Observable<V> zrangebyscore(K key, String min, String max, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
+    public Flux<V> zrangebyscore(K key, String min, String max, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
+    public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
+    public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
+    public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
+    public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
     @Override
-    public Single<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.zrange(channel, key, start, stop));
+    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createMono(() -> commandBuilder.zrange(channel, key, start, stop));
     }
 
     @Override
-    public Single<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.zrangeWithScores(channel, key, start, stop));
+    public Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createMono(() -> commandBuilder.zrangeWithScores(channel, key, start, stop));
     }
 
     @Override
-    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
-        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max));
+    public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
+        return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
     @Override
-    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
-        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max));
+    public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
+        return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
     @Override
-    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+    public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
             long count) {
-        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+        return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Single<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+    public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
             long count) {
-        return createSingle(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+        return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
-        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
+    public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
+        return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
     @Override
-    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
-        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
+    public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
+        return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
     @Override
-    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+    public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
-        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+        return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Single<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+    public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
-        return createSingle(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+        return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
     @Override
-    public Single<Long> zrank(K key, V member) {
-        return createSingle(() -> commandBuilder.zrank(key, member));
+    public Mono<Long> zrank(K key, V member) {
+        return createMono(() -> commandBuilder.zrank(key, member));
     }
 
     @Override
-    public Single<Long> zrem(K key, V... members) {
-        return createSingle(() -> commandBuilder.zrem(key, members));
+    public Mono<Long> zrem(K key, V... members) {
+        return createMono(() -> commandBuilder.zrem(key, members));
     }
 
     @Override
-    public Single<Long> zremrangebyrank(K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.zremrangebyrank(key, start, stop));
+    public Mono<Long> zremrangebyrank(K key, long start, long stop) {
+        return createMono(() -> commandBuilder.zremrangebyrank(key, start, stop));
     }
 
     @Override
-    public Single<Long> zremrangebyscore(K key, double min, double max) {
-        return createSingle(() -> commandBuilder.zremrangebyscore(key, min, max));
+    public Mono<Long> zremrangebyscore(K key, double min, double max) {
+        return createMono(() -> commandBuilder.zremrangebyscore(key, min, max));
     }
 
     @Override
-    public Single<Long> zremrangebyscore(K key, String min, String max) {
-        return createSingle(() -> commandBuilder.zremrangebyscore(key, min, max));
+    public Mono<Long> zremrangebyscore(K key, String min, String max) {
+        return createMono(() -> commandBuilder.zremrangebyscore(key, min, max));
     }
 
     @Override
-    public Observable<V> zrevrange(K key, long start, long stop) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrange(key, start, stop));
+    public Flux<V> zrevrange(K key, long start, long stop) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrange(key, start, stop));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangeWithScores(key, start, stop));
+    public Flux<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangeWithScores(key, start, stop));
     }
 
     @Override
-    public Observable<V> zrevrangebyscore(K key, double max, double min) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min));
+    public Flux<V> zrevrangebyscore(K key, double max, double min) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min));
     }
 
     @Override
-    public Observable<V> zrevrangebyscore(K key, String max, String min) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min));
+    public Flux<V> zrevrangebyscore(K key, String max, String min) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min));
     }
 
     @Override
-    public Observable<V> zrevrangebyscore(K key, double max, double min, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
+    public Flux<V> zrevrangebyscore(K key, double max, double min, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
     @Override
-    public Observable<V> zrevrangebyscore(K key, String max, String min, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
+    public Flux<V> zrevrangebyscore(K key, String max, String min, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min));
+    public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min));
+    public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
+    public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     @Override
-    public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
+    public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     @Override
-    public Single<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.zrevrange(channel, key, start, stop));
+    public Mono<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createMono(() -> commandBuilder.zrevrange(channel, key, start, stop));
     }
 
     @Override
-    public Single<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
-        return createSingle(() -> commandBuilder.zrevrangeWithScores(channel, key, start, stop));
+    public Mono<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
+        return createMono(() -> commandBuilder.zrevrangeWithScores(channel, key, start, stop));
     }
 
     @Override
-    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
-        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
+        return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
     @Override
-    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
-        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
+        return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
     @Override
-    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
-        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+        return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Single<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
-        return createSingle(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+        return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
-        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
+    public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
+        return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
     @Override
-    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
-        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
+    public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
+        return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
     @Override
-    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+    public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
-        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+        return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Single<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+    public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
-        return createSingle(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+        return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Single<Long> zrevrank(K key, V member) {
-        return createSingle(() -> commandBuilder.zrevrank(key, member));
+    public Mono<Long> zrevrank(K key, V member) {
+        return createMono(() -> commandBuilder.zrevrank(key, member));
     }
 
     @Override
-    public Single<Double> zscore(K key, V member) {
-        return createSingle(() -> commandBuilder.zscore(key, member));
+    public Mono<Double> zscore(K key, V member) {
+        return createMono(() -> commandBuilder.zscore(key, member));
     }
 
     @Override
-    public Single<Long> zunionstore(K destination, K... keys) {
-        return createSingle(() -> commandBuilder.zunionstore(destination, keys));
+    public Mono<Long> zunionstore(K destination, K... keys) {
+        return createMono(() -> commandBuilder.zunionstore(destination, keys));
     }
 
     @Override
-    public Single<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        return createSingle(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
+    public Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
+        return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
     }
 
     @Override
-    public Single<KeyScanCursor<K>> scan() {
-        return createSingle(commandBuilder::scan);
+    public Mono<KeyScanCursor<K>> scan() {
+        return createMono(commandBuilder::scan);
     }
 
     @Override
-    public Single<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.scan(scanArgs));
+    public Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.scan(scanArgs));
     }
 
     @Override
-    public Single<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.scan(scanCursor, scanArgs));
+    public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.scan(scanCursor, scanArgs));
     }
 
     @Override
-    public Single<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.scan(scanCursor));
+    public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.scan(scanCursor));
     }
 
     @Override
-    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
-        return createSingle(() -> commandBuilder.scanStreaming(channel));
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
+        return createMono(() -> commandBuilder.scanStreaming(channel));
     }
 
     @Override
-    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.scanStreaming(channel, scanArgs));
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.scanStreaming(channel, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.scanStreaming(channel, scanCursor));
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.scanStreaming(channel, scanCursor));
     }
 
     @Override
-    public Single<ValueScanCursor<V>> sscan(K key) {
-        return createSingle(() -> commandBuilder.sscan(key));
+    public Mono<ValueScanCursor<V>> sscan(K key) {
+        return createMono(() -> commandBuilder.sscan(key));
     }
 
     @Override
-    public Single<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.sscan(key, scanArgs));
+    public Mono<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.sscan(key, scanArgs));
     }
 
     @Override
-    public Single<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.sscan(key, scanCursor, scanArgs));
+    public Mono<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.sscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.sscan(key, scanCursor));
+    public Mono<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.sscan(key, scanCursor));
     }
 
     @Override
-    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key) {
-        return createSingle(() -> commandBuilder.sscanStreaming(channel, key));
+    public Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key) {
+        return createMono(() -> commandBuilder.sscanStreaming(channel, key));
     }
 
     @Override
-    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.sscanStreaming(channel, key, scanArgs));
+    public Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.sscanStreaming(channel, key, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.sscanStreaming(channel, key, scanCursor, scanArgs));
+    public Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.sscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.sscanStreaming(channel, key, scanCursor));
+    public Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.sscanStreaming(channel, key, scanCursor));
     }
 
     @Override
-    public Single<MapScanCursor<K, V>> hscan(K key) {
-        return createSingle(() -> commandBuilder.hscan(key));
+    public Mono<MapScanCursor<K, V>> hscan(K key) {
+        return createMono(() -> commandBuilder.hscan(key));
     }
 
     @Override
-    public Single<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.hscan(key, scanArgs));
+    public Mono<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscan(key, scanArgs));
     }
 
     @Override
-    public Single<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.hscan(key, scanCursor, scanArgs));
+    public Mono<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.hscan(key, scanCursor));
+    public Mono<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.hscan(key, scanCursor));
     }
 
     @Override
-    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key) {
-        return createSingle(() -> commandBuilder.hscanStreaming(channel, key));
+    public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key) {
+        return createMono(() -> commandBuilder.hscanStreaming(channel, key));
     }
 
     @Override
-    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.hscanStreaming(channel, key, scanArgs));
+    public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+    public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
             ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.hscanStreaming(channel, key, scanCursor, scanArgs));
+        return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.hscanStreaming(channel, key, scanCursor));
+    public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanCursor));
     }
 
     @Override
-    public Single<ScoredValueScanCursor<V>> zscan(K key) {
-        return createSingle(() -> commandBuilder.zscan(key));
+    public Mono<ScoredValueScanCursor<V>> zscan(K key) {
+        return createMono(() -> commandBuilder.zscan(key));
     }
 
     @Override
-    public Single<ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.zscan(key, scanArgs));
+    public Mono<ScoredValueScanCursor<V>> zscan(K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.zscan(key, scanArgs));
     }
 
     @Override
-    public Single<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.zscan(key, scanCursor, scanArgs));
+    public Mono<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.zscan(key, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.zscan(key, scanCursor));
+    public Mono<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.zscan(key, scanCursor));
     }
 
     @Override
-    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key) {
-        return createSingle(() -> commandBuilder.zscanStreaming(channel, key));
+    public Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key) {
+        return createMono(() -> commandBuilder.zscanStreaming(channel, key));
     }
 
     @Override
-    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.zscanStreaming(channel, key, scanArgs));
+    public Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.zscanStreaming(channel, key, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+    public Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
             ScanArgs scanArgs) {
-        return createSingle(() -> commandBuilder.zscanStreaming(channel, key, scanCursor, scanArgs));
+        return createMono(() -> commandBuilder.zscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
     @Override
-    public Single<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
-        return createSingle(() -> commandBuilder.zscanStreaming(channel, key, scanCursor));
+    public Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.zscanStreaming(channel, key, scanCursor));
     }
 
     @Override
@@ -1509,323 +1506,282 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<V> time() {
-        return createDissolvingObservable(commandBuilder::time);
+    public Flux<V> time() {
+        return createDissolvingFlux(commandBuilder::time);
     }
 
     @Override
-    public Single<Long> waitForReplication(int replicas, long timeout) {
-        return createSingle(() -> commandBuilder.wait(replicas, timeout));
+    public Mono<Long> waitForReplication(int replicas, long timeout) {
+        return createMono(() -> commandBuilder.wait(replicas, timeout));
     }
 
     @Override
-    public Single<Long> pfadd(K key, V... values) {
-        return createSingle(() -> commandBuilder.pfadd(key, values));
+    public Mono<Long> pfadd(K key, V... values) {
+        return createMono(() -> commandBuilder.pfadd(key, values));
     }
 
-    public Single<Long> pfadd(K key, V value, V... values) {
-        return createSingle(() -> commandBuilder.pfadd(key, value, values));
-    }
-
-    @Override
-    public Single<String> pfmerge(K destkey, K... sourcekeys) {
-        return createSingle(() -> commandBuilder.pfmerge(destkey, sourcekeys));
-    }
-
-    public Single<String> pfmerge(K destkey, K sourceKey, K... sourcekeys) {
-        return createSingle(() -> commandBuilder.pfmerge(destkey, sourceKey, sourcekeys));
+    public Mono<Long> pfadd(K key, V value, V... values) {
+        return createMono(() -> commandBuilder.pfadd(key, value, values));
     }
 
     @Override
-    public Single<Long> pfcount(K... keys) {
-        return createSingle(() -> commandBuilder.pfcount(keys));
+    public Mono<String> pfmerge(K destkey, K... sourcekeys) {
+        return createMono(() -> commandBuilder.pfmerge(destkey, sourcekeys));
     }
 
-    public Single<Long> pfcount(K key, K... keys) {
-        return createSingle(() -> commandBuilder.pfcount(key, keys));
-    }
-
-    @Override
-    public Single<String> clusterBumpepoch() {
-        return createSingle(() -> commandBuilder.clusterBumpepoch());
+    public Mono<String> pfmerge(K destkey, K sourceKey, K... sourcekeys) {
+        return createMono(() -> commandBuilder.pfmerge(destkey, sourceKey, sourcekeys));
     }
 
     @Override
-    public Single<String> clusterMeet(String ip, int port) {
-        return createSingle(() -> commandBuilder.clusterMeet(ip, port));
+    public Mono<Long> pfcount(K... keys) {
+        return createMono(() -> commandBuilder.pfcount(keys));
+    }
+
+    public Mono<Long> pfcount(K key, K... keys) {
+        return createMono(() -> commandBuilder.pfcount(key, keys));
     }
 
     @Override
-    public Single<String> clusterForget(String nodeId) {
-        return createSingle(() -> commandBuilder.clusterForget(nodeId));
+    public Mono<String> clusterBumpepoch() {
+        return createMono(() -> commandBuilder.clusterBumpepoch());
     }
 
     @Override
-    public Single<String> clusterAddSlots(int... slots) {
-        return createSingle(() -> commandBuilder.clusterAddslots(slots));
+    public Mono<String> clusterMeet(String ip, int port) {
+        return createMono(() -> commandBuilder.clusterMeet(ip, port));
     }
 
     @Override
-    public Single<String> clusterDelSlots(int... slots) {
-        return createSingle(() -> commandBuilder.clusterDelslots(slots));
+    public Mono<String> clusterForget(String nodeId) {
+        return createMono(() -> commandBuilder.clusterForget(nodeId));
     }
 
     @Override
-    public Single<String> clusterInfo() {
-        return createSingle(commandBuilder::clusterInfo);
+    public Mono<String> clusterAddSlots(int... slots) {
+        return createMono(() -> commandBuilder.clusterAddslots(slots));
     }
 
     @Override
-    public Single<String> clusterMyId() {
-        return createSingle(commandBuilder::clusterMyId);
+    public Mono<String> clusterDelSlots(int... slots) {
+        return createMono(() -> commandBuilder.clusterDelslots(slots));
     }
 
     @Override
-    public Single<String> clusterNodes() {
-        return createSingle(commandBuilder::clusterNodes);
+    public Mono<String> clusterInfo() {
+        return createMono(commandBuilder::clusterInfo);
     }
 
     @Override
-    public Observable<K> clusterGetKeysInSlot(int slot, int count) {
-        return createDissolvingObservable(() -> commandBuilder.clusterGetKeysInSlot(slot, count));
+    public Mono<String> clusterMyId() {
+        return createMono(commandBuilder::clusterMyId);
     }
 
     @Override
-    public Single<Long> clusterCountKeysInSlot(int slot) {
-        return createSingle(() -> commandBuilder.clusterCountKeysInSlot(slot));
+    public Mono<String> clusterNodes() {
+        return createMono(commandBuilder::clusterNodes);
     }
 
     @Override
-    public Single<Long> clusterCountFailureReports(String nodeId) {
-        return createSingle(() -> commandBuilder.clusterCountFailureReports(nodeId));
+    public Flux<K> clusterGetKeysInSlot(int slot, int count) {
+        return createDissolvingFlux(() -> commandBuilder.clusterGetKeysInSlot(slot, count));
     }
 
     @Override
-    public Single<Long> clusterKeyslot(K key) {
-        return createSingle(() -> commandBuilder.clusterKeyslot(key));
+    public Mono<Long> clusterCountKeysInSlot(int slot) {
+        return createMono(() -> commandBuilder.clusterCountKeysInSlot(slot));
     }
 
     @Override
-    public Single<String> clusterSaveconfig() {
-        return createSingle(() -> commandBuilder.clusterSaveconfig());
+    public Mono<Long> clusterCountFailureReports(String nodeId) {
+        return createMono(() -> commandBuilder.clusterCountFailureReports(nodeId));
     }
 
     @Override
-    public Single<String> clusterSetConfigEpoch(long configEpoch) {
-        return createSingle(() -> commandBuilder.clusterSetConfigEpoch(configEpoch));
+    public Mono<Long> clusterKeyslot(K key) {
+        return createMono(() -> commandBuilder.clusterKeyslot(key));
     }
 
     @Override
-    public Observable<Object> clusterSlots() {
-        return createDissolvingObservable(commandBuilder::clusterSlots);
+    public Mono<String> clusterSaveconfig() {
+        return createMono(() -> commandBuilder.clusterSaveconfig());
     }
 
     @Override
-    public Single<String> clusterSetSlotNode(int slot, String nodeId) {
-        return createSingle(() -> commandBuilder.clusterSetSlotNode(slot, nodeId));
+    public Mono<String> clusterSetConfigEpoch(long configEpoch) {
+        return createMono(() -> commandBuilder.clusterSetConfigEpoch(configEpoch));
     }
 
     @Override
-    public Single<String> clusterSetSlotStable(int slot) {
-        return createSingle(() -> commandBuilder.clusterSetSlotStable(slot));
+    public Flux<Object> clusterSlots() {
+        return createDissolvingFlux(commandBuilder::clusterSlots);
     }
 
     @Override
-    public Single<String> clusterSetSlotMigrating(int slot, String nodeId) {
-        return createSingle(() -> commandBuilder.clusterSetSlotMigrating(slot, nodeId));
+    public Mono<String> clusterSetSlotNode(int slot, String nodeId) {
+        return createMono(() -> commandBuilder.clusterSetSlotNode(slot, nodeId));
     }
 
     @Override
-    public Single<String> clusterSetSlotImporting(int slot, String nodeId) {
-        return createSingle(() -> commandBuilder.clusterSetSlotImporting(slot, nodeId));
+    public Mono<String> clusterSetSlotStable(int slot) {
+        return createMono(() -> commandBuilder.clusterSetSlotStable(slot));
     }
 
     @Override
-    public Single<String> clusterFailover(boolean force) {
-        return createSingle(() -> commandBuilder.clusterFailover(force));
+    public Mono<String> clusterSetSlotMigrating(int slot, String nodeId) {
+        return createMono(() -> commandBuilder.clusterSetSlotMigrating(slot, nodeId));
     }
 
     @Override
-    public Single<String> clusterReset(boolean hard) {
-        return createSingle(() -> commandBuilder.clusterReset(hard));
+    public Mono<String> clusterSetSlotImporting(int slot, String nodeId) {
+        return createMono(() -> commandBuilder.clusterSetSlotImporting(slot, nodeId));
     }
 
     @Override
-    public Single<String> asking() {
-        return createSingle(commandBuilder::asking);
+    public Mono<String> clusterFailover(boolean force) {
+        return createMono(() -> commandBuilder.clusterFailover(force));
     }
 
     @Override
-    public Single<String> clusterReplicate(String nodeId) {
-        return createSingle(() -> commandBuilder.clusterReplicate(nodeId));
+    public Mono<String> clusterReset(boolean hard) {
+        return createMono(() -> commandBuilder.clusterReset(hard));
     }
 
     @Override
-    public Single<String> clusterFlushslots() {
-        return createSingle(commandBuilder::clusterFlushslots);
+    public Mono<String> asking() {
+        return createMono(commandBuilder::asking);
     }
 
     @Override
-    public Observable<String> clusterSlaves(String nodeId) {
-        return createDissolvingObservable(() -> commandBuilder.clusterSlaves(nodeId));
+    public Mono<String> clusterReplicate(String nodeId) {
+        return createMono(() -> commandBuilder.clusterReplicate(nodeId));
     }
 
     @Override
-    public Single<Long> zlexcount(K key, String min, String max) {
-        return createSingle(() -> commandBuilder.zlexcount(key, min, max));
+    public Mono<String> clusterFlushslots() {
+        return createMono(commandBuilder::clusterFlushslots);
     }
 
     @Override
-    public Single<Long> zremrangebylex(K key, String min, String max) {
-        return createSingle(() -> commandBuilder.zremrangebylex(key, min, max));
+    public Flux<String> clusterSlaves(String nodeId) {
+        return createDissolvingFlux(() -> commandBuilder.clusterSlaves(nodeId));
     }
 
     @Override
-    public Observable<V> zrangebylex(K key, String min, String max) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, min, max));
+    public Mono<Long> zlexcount(K key, String min, String max) {
+        return createMono(() -> commandBuilder.zlexcount(key, min, max));
     }
 
     @Override
-    public Observable<V> zrangebylex(K key, String min, String max, long offset, long count) {
-        return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
+    public Mono<Long> zremrangebylex(K key, String min, String max) {
+        return createMono(() -> commandBuilder.zremrangebylex(key, min, max));
     }
 
     @Override
-    public Single<Long> geoadd(K key, double longitude, double latitude, V member) {
-        return createSingle(() -> commandBuilder.geoadd(key, longitude, latitude, member));
+    public Flux<V> zrangebylex(K key, String min, String max) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, min, max));
     }
 
     @Override
-    public Single<Long> geoadd(K key, Object... lngLatMember) {
-        return createSingle(() -> commandBuilder.geoadd(key, lngLatMember));
+    public Flux<V> zrangebylex(K key, String min, String max, long offset, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
     }
 
     @Override
-    public Observable<String> geohash(K key, V... members) {
-        return createDissolvingObservable(() -> commandBuilder.geohash(key, members));
+    public Mono<Long> geoadd(K key, double longitude, double latitude, V member) {
+        return createMono(() -> commandBuilder.geoadd(key, longitude, latitude, member));
     }
 
     @Override
-    public Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return createDissolvingObservable(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
+    public Mono<Long> geoadd(K key, Object... lngLatMember) {
+        return createMono(() -> commandBuilder.geoadd(key, lngLatMember));
     }
 
     @Override
-    public Observable<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+    public Flux<Value<String>> geohash(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.geohash(key, members));
+    }
+
+    @Override
+    public Flux<V> georadius(K key, double longitude, double latitude, double distance, Unit unit) {
+        return createDissolvingFlux(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoArgs geoArgs) {
-        return createDissolvingObservable(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(),
+        return createDissolvingFlux(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(),
                 geoArgs));
     }
 
     @Override
-    public Single<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
+    public Mono<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
-        return createSingle(
+        return createMono(
                 () -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoRadiusStoreArgs));
     }
 
     @Override
-    public Observable<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+    public Flux<V> georadiusbymember(K key, V member, double distance, Unit unit) {
+        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name()));
     }
 
     @Override
-    public Observable<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
-        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
+        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
     }
 
     @Override
-    public Single<Long> georadiusbymember(K key, V member, double distance, Unit unit,
+    public Mono<Long> georadiusbymember(K key, V member, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
-        return createSingle(
+        return createMono(
                 () -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoRadiusStoreArgs));
     }
 
     @Override
-    public Observable<GeoCoordinates> geopos(K key, V... members) {
-        return createDissolvingObservable(() -> commandBuilder.geopos(key, members));
+    public Flux<Value<GeoCoordinates>> geopos(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.geopos(key, members));
     }
 
     @Override
-    public Single<Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
-        return createSingle(() -> commandBuilder.geodist(key, from, to, unit));
+    public Mono<Double> geodist(K key, V from, V to, Unit unit) {
+        return createMono(() -> commandBuilder.geodist(key, from, to, unit));
     }
 
-    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
         LettuceAssert.notNull(output, "CommandOutput type must not be null");
 
-        return createDissolvingObservable(() -> new Command<>(type, output));
+        return (Flux) createFlux(() -> new Command<>(type, output));
     }
 
-    public <T> Observable<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
         LettuceAssert.notNull(output, "CommandOutput type must not be null");
         LettuceAssert.notNull(args, "CommandArgs type must not be null");
 
-        return createDissolvingObservable(() -> new Command<>(type, output, args));
+        return (Flux) createFlux(() -> new Command<>(type, output, args));
     }
 
-    protected <T> Observable<T> createObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        return createObservable(() -> new Command<>(type, output, args));
+    public <T> Flux<T> createFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+        return Flux.from(new RedisPublisher(commandSupplier, connection, false));
     }
 
-    public <T> Observable<T> createObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Observable.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false).getObservableSubscriber());
+    protected <T> Mono<T> createMono(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+        return createMono(() -> new Command<>(type, output, args));
     }
 
-    protected <T> Single<T> createSingle(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        return createSingle(() -> new Command<>(type, output, args));
-    }
-
-    public <T> Single<T> createSingle(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Single.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false).getSingleSubscriber());
+    public <T> Mono<T> createMono(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+        return Mono.from(new RedisPublisher(commandSupplier, connection, false));
     }
     
     @SuppressWarnings("unchecked")
-    public <T, R> Observable<R> createDissolvingObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return (Observable<R>) Observable.create(new ReactiveCommandDispatcher<>(commandSupplier, connection, true).getObservableSubscriber());
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T, R> R createDissolvingObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        return (R) Observable.create(new ReactiveCommandDispatcher<K, V, T>(() -> new Command<>(type, output, args),
-                connection, true).getObservableSubscriber());
-    }
-
-    /**
-     * Emits just {@link Success#Success} or the {@link Throwable} after the inner observable is completed.
-     *
-     * @param observable inner observable
-     * @param <T> used for type inference
-     * @return Success observable
-     */
-    protected <T> Observable<Success> getSuccessObservable(final Observable<T> observable) {
-        return Observable.create(new Observable.OnSubscribe<Success>() {
-            @Override
-            public void call(Subscriber<? super Success> subscriber) {
-
-                observable.subscribe(new Subscriber<Object>() {
-                    @Override
-                    public void onCompleted() {
-                        subscriber.onNext(Success.Success);
-                        subscriber.onCompleted();
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        subscriber.onError(throwable);
-                    }
-
-                    @Override
-                    public void onNext(Object k) {
-
-                    }
-                });
-            }
-        });
+    public <T, R> Flux<R> createDissolvingFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+        return (Flux<R>) Flux.from(new RedisPublisher(commandSupplier, connection, true));
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

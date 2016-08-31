@@ -122,12 +122,12 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
+        List<Value<GeoCoordinates>> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
-        assertThat(geopos.get(1)).isNull();
-        assertThat(geopos.get(2)).isNotNull();
+        assertThat(geopos.get(0).getValue().x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(1).hasValue()).isFalse();
+        assertThat(geopos.get(2).hasValue()).isTrue();
     }
 
     @Test
@@ -138,12 +138,12 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         redis.multi();
         redis.geopos(key, "Weinheim", "foobar", "Bahn");
         redis.geopos(key, "Weinheim", "foobar", "Bahn");
-        List<GeoCoordinates> geopos = (List) redis.exec().get(1);
+        List<Value<GeoCoordinates>> geopos = redis.exec().get(1);
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
-        assertThat(geopos.get(1)).isNull();
-        assertThat(geopos.get(2)).isNotNull();
+        assertThat(geopos.get(0).getValue().x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(1).hasValue()).isFalse();
+        assertThat(geopos.get(2).hasValue()).isTrue();
     }
 
     @Test
@@ -219,9 +219,9 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<String> geohash = redis.geohash(key, "Weinheim", "Bahn", "dunno");
+        List<Value<String>> geohash = redis.geohash(key, "Weinheim", "Bahn", "dunno");
 
-        assertThat(geohash).containsSequence("u0y1v0kffz0", "u0y1vhvuvm0", null);
+        assertThat(geohash).containsSequence(Value.just("u0y1v0kffz0"), Value.just("u0y1vhvuvm0"), Value.empty());
     }
 
     @Test
@@ -229,7 +229,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<String> geohash = redis.geohash("dunno", "member");
+        List<Value<String>> geohash = redis.geohash("dunno", "member");
 
         assertThat(geohash).isEmpty();
     }
@@ -244,9 +244,9 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         redis.geohash(key, "Weinheim", "Bahn", "dunno");
         TransactionResult exec = redis.exec();
 
-        List<String> geohash = exec.get(1);
+        List<Value<String>> geohash = exec.get(1);
 
-        assertThat(geohash).containsSequence("u0y1v0kffz0", "u0y1vhvuvm0", null);
+        assertThat(geohash).containsSequence(Value.just("u0y1v0kffz0"), Value.just("u0y1vhvuvm0"), Value.empty());
     }
 
     @Test

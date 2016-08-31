@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
+import com.lambdaworks.redis.Value;
 import org.junit.Test;
 
 import com.lambdaworks.redis.GeoCoordinates;
@@ -33,6 +34,6 @@ public class GeoCoordinatesListOutputTest {
 		sut.set(ByteBuffer.wrap("4.567".getBytes()));
 		sut.multi(-1);
 
-		assertThat(sut.get()).contains(new GeoCoordinates(1.234, 4.567));
+		assertThat(sut.get()).contains(Value.just(new GeoCoordinates(1.234, 4.567)));
 	}
 }

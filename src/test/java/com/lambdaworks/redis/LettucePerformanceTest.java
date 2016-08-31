@@ -12,12 +12,10 @@ import org.junit.*;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 
-import rx.Observable;
-import rx.Single;
-
-import javax.annotation.Resources;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -149,7 +147,7 @@ public class LettucePerformanceTest {
      * @throws Exception
      */
     @Test
-    public void testObservablePerformance() throws Exception {
+    public void testReactivePerformance() throws Exception {
 
         // TWEAK ME
         int threads = 4;
@@ -162,25 +160,26 @@ public class LettucePerformanceTest {
 
         executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(totalCalls));
 
-        List<Future<List<Single<String>>>> futurama = new ArrayList<>();
+        List<Future<List<Mono<String>>>> futurama = new ArrayList<>();
 
         preheat(threads);
         final int callsPerThread = totalCalls / threads;
 
-        submitObservableTasks(threads, futurama, callsPerThread, connectionPerThread);
+        submitFluxTasks(threads, futurama, callsPerThread, connectionPerThread);
         Thread.sleep(800);
 
         long start = System.currentTimeMillis();
         latch.countDown();
 
-        for (Future<List<Single<String>>> listFuture : futurama) {
-            for (Single<String> future : listFuture.get()) {
-                if (waitForCompletion) {
-                    future.toBlocking().value();
-                } else {
-                    future.subscribe();
+        for (Future<List<Mono<String>>> listFuture : futurama) {
+
+            if (waitForCompletion) {
+                Flux.concat(listFuture.get()).last().subscribe().request(Long.MAX_VALUE);
+
+            } else
+                for (Mono<String> mono : listFuture.get()) {
+                    mono.subscribe().request(Long.MAX_VALUE);
                 }
-            }
         }
 
         long end = System.currentTimeMillis();
@@ -193,7 +192,7 @@ public class LettucePerformanceTest {
 
     }
 
-    protected void submitObservableTasks(int threads, List<Future<List<Single<String>>>> futurama, final int callsPerThread,
+    protected void submitFluxTasks(int threads, List<Future<List<Mono<String>>>> futurama, final int callsPerThread,
             final boolean connectionPerThread) {
         final StatefulRedisConnection<String, String> sharedConnection;
         if (!connectionPerThread) {
@@ -203,7 +202,7 @@ public class LettucePerformanceTest {
         }
 
         for (int i = 0; i < threads; i++) {
-            Future<List<Single<String>>> submit = executor.submit(() -> {
+            Future<List<Mono<String>>> submit = executor.submit(() -> {
 
                 StatefulRedisConnection<String, String> connection = sharedConnection;
                 if (connectionPerThread) {
@@ -213,13 +212,13 @@ public class LettucePerformanceTest {
 
                 connection.sync().ping();
 
-                List<Single<String>> observables = new ArrayList<>(callsPerThread);
+                List<Mono<String>> monos = new ArrayList<>(callsPerThread);
                 latch.await();
                 for (int i1 = 0; i1 < callsPerThread; i1++) {
-                    observables.add(reactive.ping());
+                    monos.add(reactive.ping());
                 }
 
-                return observables;
+                return monos;
             });
 
             futurama.add(submit);

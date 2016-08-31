@@ -3,21 +3,15 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.util.List;
-
-import com.lambdaworks.redis.TransactionResult;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.TransactionResult;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
-
-import rx.Observable;
 
 /**
  * @author Mark Paluch
@@ -83,19 +77,6 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         getStandaloneConnection().dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 
-    }
-
-    @Test
-    public void standaloneReactivePing() throws Exception {
-
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(new Utf8StringCodec()),
-                null);
-        ReactiveCommandDispatcher<String, String, String> dispatcher = new ReactiveCommandDispatcher<>(command,
-                getStandaloneConnection(), false);
-
-        String result = Observable.create(dispatcher.getObservableSubscriber()).toBlocking().first();
-
-        assertThat(result).isEqualTo("PONG");
     }
 
     private StatefulRedisConnection<String, String> getStandaloneConnection() {

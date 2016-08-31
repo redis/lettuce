@@ -8,10 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
-import rx.schedulers.TestScheduler;
+import reactor.core.scheduler.Schedulers;
+import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch
@@ -24,16 +22,30 @@ public class DefaultEventBusTest {
 
     @Test
     public void publishToSubscriber() throws Exception {
-        TestScheduler testScheduler = Schedulers.test();
-        EventBus sut = new DefaultEventBus(testScheduler);
 
-        TestSubscriber<Event> subscriber = new TestSubscriber<Event>();
+        EventBus sut = new DefaultEventBus(Schedulers.immediate());
+
+        TestSubscriber<Event> subscriber = TestSubscriber.create();
         sut.get().subscribe(subscriber);
 
         sut.publish(event);
 
-        testScheduler.advanceTimeBy(1, TimeUnit.SECONDS);
+        subscriber.awaitAndAssertNextValues(event);
+    }
 
-        assertThat(subscriber.getOnNextEvents()).hasSize(1).contains(event);
+    @Test
+    public void publishToMultipleSubscribers() throws Exception {
+
+        EventBus sut = new DefaultEventBus(Schedulers.immediate());
+
+        TestSubscriber<Event> subscriber1 = TestSubscriber.create();
+        TestSubscriber<Event> subscriber2 = TestSubscriber.create();
+        sut.get().subscribe(subscriber1);
+        sut.get().subscribe(subscriber2);
+
+        sut.publish(event);
+
+        subscriber1.awaitAndAssertNextValues(event);
+        subscriber2.awaitAndAssertNextValues(event);
     }
 }

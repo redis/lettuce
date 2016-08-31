@@ -1,8 +1,8 @@
 package com.lambdaworks.redis;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
+import com.lambdaworks.redis.cluster.api.reactive.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**

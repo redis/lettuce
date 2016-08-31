@@ -66,8 +66,7 @@ Using lettuce on your classpath
     netty-transport-${netty-version}.jar
     netty-transport-native-epoll-${netty-version}.jar
     netty-handler-${netty-version}.jar
-    guava-17.0.jar
-    rxjava-1.1.9.jar
+    reactor-3.0.0.RELEASE.jar
     LatencyUtils-2.0.3.jar
     HdrHistogram-2.1.8.jar
     commons-pool2-2.4.2.jar

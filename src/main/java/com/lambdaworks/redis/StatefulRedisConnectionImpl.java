@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;

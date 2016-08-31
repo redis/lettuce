@@ -1,9 +1,8 @@
 package com.lambdaworks.redis.event;
 
-import rx.Observable;
-import rx.Scheduler;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.TopicProcessor;
+import reactor.core.scheduler.Scheduler;
 
 /**
  * Default implementation for an {@link EventBus}. Events are published using a {@link Scheduler}.
@@ -13,23 +12,21 @@ import rx.subjects.Subject;
  */
 public class DefaultEventBus implements EventBus {
 
-    private final Subject<Event, Event> bus;
+    private final TopicProcessor<Event> bus;
     private final Scheduler scheduler;
 
     public DefaultEventBus(Scheduler scheduler) {
-        this.bus = PublishSubject.<Event> create().toSerialized();
+        this.bus = TopicProcessor.create();
         this.scheduler = scheduler;
     }
 
     @Override
-    public Observable<Event> get() {
-        return bus.onBackpressureDrop().observeOn(scheduler);
+    public Flux<Event> get() {
+        return bus.onBackpressureDrop().publishOn(scheduler);
     }
 
     @Override
     public void publish(Event event) {
-        if (bus.hasObservers()) {
-            bus.onNext(event);
-        }
+        bus.onNext(event);
     }
 }

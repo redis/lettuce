@@ -8,7 +8,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
+import com.lambdaworks.redis.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 import io.netty.channel.ChannelHandler;
 

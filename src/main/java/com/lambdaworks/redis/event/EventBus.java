@@ -1,6 +1,6 @@
 package com.lambdaworks.redis.event;
 
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 /**
  * Interface for an EventBus. Events can be published over the bus that are delivered to the subscribers.
@@ -11,11 +11,11 @@ import rx.Observable;
 public interface EventBus {
 
     /**
-     * Subscribe to the event bus and {@link Event}s. The {@link Observable} drops events on backpressure to avoid contention.
+     * Subscribe to the event bus and {@link Event}s. The {@link Flux} drops events on backpressure to avoid contention.
      *
      * @return the observable to obtain events.
      */
-    Observable<Event> get();
+    Flux<Event> get();
 
     /**
      * Publish a {@link Event} to the bus.

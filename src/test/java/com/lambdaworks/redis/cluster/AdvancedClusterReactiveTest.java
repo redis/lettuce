@@ -18,16 +18,16 @@ import org.junit.Test;
 import com.lambdaworks.RandomKeys;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.reactive.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.util.RxSyncInvocationHandler;
+import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
-import rx.Observable;
-import rx.Single;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -43,7 +43,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Before
     public void before() throws Exception {
         commands = clusterClient.connect().reactive();
-        syncCommands = RxSyncInvocationHandler.sync(commands.getStatefulConnection());
+        syncCommands = ReactiveSyncInvocationHandler.sync(commands.getStatefulConnection());
     }
 
     @After
@@ -65,7 +65,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test
     public void msetCrossSlot() throws Exception {
 
-        Single<String> mset = commands.mset(RandomKeys.MAP);
+        Mono<String> mset = commands.mset(RandomKeys.MAP);
         assertThat(block(mset)).isEqualTo("OK");
 
         for (String mykey : RandomKeys.KEYS) {
@@ -93,8 +93,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         Map<Integer, List<String>> partitioned = SlotHash.partition(new Utf8StringCodec(), RandomKeys.KEYS);
         assertThat(partitioned.size()).isGreaterThan(100);
 
-        Observable<KeyValue<String, String>> observable = commands.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        List<KeyValue<String, String>> result = observable.toList().toBlocking().single();
+        Flux<KeyValue<String, String>> flux = commands.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        List<KeyValue<String, String>> result = flux.collectList().block();
 
         assertThat(result).hasSize(RandomKeys.COUNT);
         assertThat(result.stream().map(Value::getValue).collect(Collectors.toList())).isEqualTo(RandomKeys.VALUES);
@@ -107,8 +107,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         KeyValueStreamingAdapter<String, String> result = new KeyValueStreamingAdapter<>();
 
-        Single<Long> single = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        Long count = block(single);
+        Mono<Long> mono = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long count = block(mono);
 
         assertThat(result.getMap()).hasSize(RandomKeys.COUNT);
         assertThat(count).isEqualTo(RandomKeys.COUNT);
@@ -119,8 +119,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Single<Long> single = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        Long result = block(single);
+        Mono<Long> mono = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long result = block(mono);
 
         assertThat(result).isEqualTo(RandomKeys.COUNT);
 
@@ -135,8 +135,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Single<Long> single = commands.unlink(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
-        Long result = block(single);
+        Mono<Long> mono = commands.unlink(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Long result = block(mono);
 
         assertThat(result).isEqualTo(RandomKeys.COUNT);
 
@@ -203,7 +203,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         writeKeysToTwoNodes();
 
-        List<String> result = commands.keys("*").toList().toBlocking().single();
+        List<String> result = commands.keys("*").collectList().block();
 
         assertThat(result).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
     }
@@ -251,7 +251,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         NodeSelectionAsyncTest.waitForReplication(commands.getStatefulConnection().async(), key, port4);
 
         AtomicBoolean error = new AtomicBoolean();
-        connection.get(key).doOnError(throwable -> error.set(true)).toBlocking().toFuture().get();
+        connection.get(key).doOnError(throwable -> error.set(true)).block();
 
         assertThat(error.get()).isFalse();
 
@@ -356,8 +356,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     }
 
-    private <T> T block(Single<T> single) {
-        return single.toBlocking().value();
+    private <T> T block(Mono<T> mono) {
+        return mono.block();
     }
 
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.GeoCoordinates;
+import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -15,10 +16,10 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<GeoCoordinates>> implements StreamingOutput<GeoCoordinates> {
+public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>> implements StreamingOutput<Value<GeoCoordinates>> {
 
     private Double x;
-	private Subscriber<GeoCoordinates> subscriber;
+	private Subscriber<Value<GeoCoordinates>> subscriber;
 
 	public GeoCoordinatesListOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<>());
@@ -35,25 +36,25 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
             return;
         }
 
-        subscriber.onNext(new GeoCoordinates(x, value));
+        subscriber.onNext(Value.fromNullable(new GeoCoordinates(x, value)));
         x = null;
     }
 
     @Override
     public void multi(int count) {
         if (count == -1) {
-            subscriber.onNext(null);
+            subscriber.onNext(Value.empty());
         }
     }
 
 	@Override
-	public void setSubscriber(Subscriber<GeoCoordinates> subscriber) {
+	public void setSubscriber(Subscriber<Value<GeoCoordinates>> subscriber) {
         LettuceAssert.notNull(subscriber, "Subscriber must not be null");
 		this.subscriber = subscriber;
 	}
 
 	@Override
-	public Subscriber<GeoCoordinates> getSubscriber() {
+	public Subscriber<Value<GeoCoordinates>> getSubscriber() {
 		return subscriber;
 	}
 }

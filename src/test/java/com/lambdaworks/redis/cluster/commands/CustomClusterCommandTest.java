@@ -19,9 +19,6 @@ import com.lambdaworks.redis.commands.CustomCommandTest;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
 
-import rx.Observable;
-import rx.Single;
-
 /**
  * @author Mark Paluch
  */
@@ -94,19 +91,6 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
         redisClusterConnection.dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 
-    }
-
-    @Test
-    public void standaloneReactivePing() throws Exception {
-
-        RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING,
-                new StatusOutput<>(new Utf8StringCodec()), null);
-        ReactiveCommandDispatcher<String, String, String> dispatcher = new ReactiveCommandDispatcher<>(command,
-                redisClusterConnection, false);
-
-        String result = Single.create(dispatcher.getSingleSubscriber()).toBlocking().value();
-
-        assertThat(result).isEqualTo("PONG");
     }
 
     public enum MyCommands implements ProtocolKeyword {

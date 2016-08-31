@@ -72,8 +72,8 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
   
   <exclusions>
     <exclusion>
-      <groupId>io.reactivex</groupId>
-      <artifactId>rxjava</artifactId>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
     </exclusion>
     <exclusion>
       <groupId>org.latencyutils</groupId>
@@ -94,10 +94,6 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
     <exclusion>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
     </exclusion>
     <exclusion>
       <groupId>io.netty</groupId>

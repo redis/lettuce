@@ -16,21 +16,18 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import rx.Observable;
-import rx.Single;
-import rx.Subscriber;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
-import rx.observers.TestSubscriber;
+import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.test.TestSubscriber;
 
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
@@ -53,7 +50,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void doNotFireCommandUntilObservation() throws Exception {
-        Single<String> set = reactive.set(key, value);
+        Mono<String> set = reactive.set(key, value);
         Delay.delay(millis(200));
         assertThat(redis.get(key)).isNull();
         set.subscribe();
@@ -64,7 +61,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void fireCommandAfterObserve() throws Exception {
-        assertThat(reactive.set(key, value).toBlocking().value()).isEqualTo("OK");
+        assertThat(reactive.set(key, value).block()).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -89,53 +86,53 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         Delay.delay(millis(100));
 
         reactive.reset();
-        assertThat(result).hasSize(1).hasOnlyElementsOfType(CancellationException.class);
+        assertThat(result).isEmpty();
     }
 
     @Test
     public void testEcho() throws Exception {
-        String result = reactive.echo("echo").toBlocking().value();
+        String result = reactive.echo("echo").block();
         assertThat(result).isEqualTo("echo");
     }
 
     @Test
-    public void testSingleMultiCancel() throws Exception {
+    public void testMonoMultiCancel() throws Exception {
 
         List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
         Delay.delay(millis(100));
 
-        Single<String> set = reactive.set(key, value);
+        Mono<String> set = reactive.set(key, value);
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         Delay.delay(millis(100));
 
         reactive.reset();
-        assertThat(result).hasSize(3);
+        assertThat(result).isEmpty();
     }
 
     @Test
-    public void testObservableMultiCancel() throws Exception {
+    public void testFluxCancel() throws Exception {
 
         List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
         Delay.delay(millis(100));
 
-        Observable<KeyValue<String, String>> set = reactive.mget(key, value);
+        Flux<KeyValue<String, String>> set = reactive.mget(key, value);
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         Delay.delay(millis(100));
 
         reactive.reset();
-        assertThat(result).hasSize(3);
+        assertThat(result).isEmpty();
     }
 
     @Test
     public void multiSubscribe() throws Exception {
         reactive.set(key, "1").subscribe();
-        Single<Long> incr = reactive.incr(key);
+        Mono<Long> incr = reactive.incr(key);
         incr.subscribe();
         incr.subscribe();
         incr.subscribe();
@@ -173,10 +170,10 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         map.put(key, value);
         map.put("key1", "value1");
 
-        reactive.mset(map).toBlocking().value();
+        reactive.mset(map).block();
 
-        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s).toObservable()).toList().subscribeOn(Schedulers.immediate())
-                .toBlocking().first();
+        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).collectList().subscribeOn(Schedulers.immediate())
+                .block();
 
         assertThat(values).hasSize(2).contains(value, "value1");
     }
@@ -184,7 +181,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void auth() throws Exception {
         List<Throwable> errors = new ArrayList<>();
-        reactive.auth("error").doOnError(errors::add).subscribe(new TestSubscriber<>());
+        reactive.auth("error").doOnError(errors::add).subscribe(TestSubscriber.create());
         Delay.delay(millis(50));
         assertThat(errors).hasSize(1);
     }
@@ -192,19 +189,25 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     @Test
     public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws Exception {
 
-        Single.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).toBlocking().last();
+        Flux.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).collectList().block();
 
         reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
         reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
 
-        String valueB = reactive.get("keyB").toBlocking().toFuture().get();
+        String valueB = reactive.get("keyB").block();
         assertThat(valueB).isEqualTo("valueB");
     }
 
     private static Subscriber<String> createSubscriberWithExceptionOnComplete() {
         return new Subscriber<String>() {
+
             @Override
-            public void onCompleted() {
+            public void onSubscribe(Subscription s) {
+                s.request(1000);
+            }
+
+            @Override
+            public void onComplete() {
                 throw new RuntimeException("throwing something");
             }
 
@@ -218,7 +221,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         };
     }
 
-    private static class CompletionSubscriber extends Subscriber<Object> {
+    private static class CompletionSubscriber implements Subscriber<Object> {
 
         private final List<Object> result;
 
@@ -227,7 +230,12 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
         }
 
         @Override
-        public void onCompleted() {
+        public void onSubscribe(Subscription s) {
+            s.request(1000);
+        }
+
+        @Override
+        public void onComplete() {
             result.add("completed");
         }
 

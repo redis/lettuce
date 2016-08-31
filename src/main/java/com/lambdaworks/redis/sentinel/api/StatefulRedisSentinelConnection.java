@@ -3,7 +3,7 @@ package com.lambdaworks.redis.sentinel.api;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
+import com.lambdaworks.redis.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 /**
@@ -27,14 +27,14 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
     RedisSentinelCommands<K, V> sync();
 
     /**
-     * Returns the {@link RedisSentinelAsyncCommands} API for the current connection. Does not create a new connection. *
+     * Returns the {@link RedisSentinelAsyncCommands} API for the current connection. Does not create a new connection.
      * 
      * @return the asynchronous API for the underlying connection.
      */
     RedisSentinelAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisSentinelReactiveCommands} API for the current connection. Does not create a new connection. *
+     * Returns the {@link RedisSentinelReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
      */

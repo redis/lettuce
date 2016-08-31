@@ -14,7 +14,7 @@ import com.lambdaworks.redis.StatefulRedisConnectionImpl;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
-import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
+import com.lambdaworks.redis.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 import io.netty.channel.ChannelHandler;

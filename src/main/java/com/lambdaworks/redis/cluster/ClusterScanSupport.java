@@ -10,9 +10,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
-import rx.Observable;
-import rx.Single;
-import rx.functions.Func1;
+import reactor.core.publisher.Mono;
 
 /**
  * Methods to support a Cluster-wide SCAN operation over multiple hosts.
@@ -54,18 +52,18 @@ class ClusterScanSupport {
     };
 
     /**
-     * Map a {@link Single} of {@link KeyScanCursor} to a {@link Observable} of {@link ClusterKeyScanCursor}.
+     * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of {@link ClusterKeyScanCursor}.
      */
-    final static ScanCursorMapper<Single<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds, currentNodeId,
+    final static ScanCursorMapper<Mono<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds, currentNodeId,
             cursor) -> cursor.map(keyScanCursor -> new ClusterKeyScanCursor<>(nodeIds, currentNodeId, keyScanCursor));
 
     /**
-     * Map a {@link Single} of {@link StreamScanCursor} to a {@link Observable} of {@link ClusterStreamScanCursor}.
+     * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of {@link ClusterStreamScanCursor}.
      */
-    final static ScanCursorMapper<Single<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
-            cursor) -> cursor.map(new Func1<StreamScanCursor, StreamScanCursor>() {
+    final static ScanCursorMapper<Mono<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
+            cursor) -> cursor.map(new Function<StreamScanCursor, StreamScanCursor>() {
                 @Override
-                public StreamScanCursor call(StreamScanCursor streamScanCursor) {
+                public StreamScanCursor apply(StreamScanCursor streamScanCursor) {
                     return new ClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor);
                 }
             });
@@ -190,11 +188,11 @@ class ClusterScanSupport {
         return futureStreamScanCursorMapper;
     }
 
-    static <K> ScanCursorMapper<Single<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
+    static <K> ScanCursorMapper<Mono<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
         return (ScanCursorMapper) reactiveKeyScanCursorMapper;
     }
 
-    static ScanCursorMapper<Single<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
+    static ScanCursorMapper<Mono<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
         return reactiveStreamScanCursorMapper;
     }
 

@@ -13,12 +13,12 @@ import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.reactive.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 import com.lambdaworks.redis.internal.LettuceLists;
 
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -111,7 +111,7 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @Test
     public void testClusterSlots() throws Exception {
 
-        List<Object> reply = reactive.clusterSlots().toList().toBlocking().first();
+        List<Object> reply = reactive.clusterSlots().collectList().block();
         assertThat(reply.size()).isGreaterThan(1);
 
         List<ClusterSlotRange> parse = ClusterSlotsParser.parse(reply);
@@ -128,13 +128,13 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     public void clusterSlaves() throws Exception {
 
         String nodeId = getNodeId(async.getStatefulConnection().sync());
-        List<String> result = reactive.clusterSlaves(nodeId).toList().toBlocking().first();
+        List<String> result = reactive.clusterSlaves(nodeId).collectList().block();
 
         assertThat(result.size()).isGreaterThan(0);
     }
 
-    private <T> T block(Single<T> single) {
-        return single.toBlocking().value();
+    private <T> T block(Mono<T> mono) {
+        return mono.block();
     }
 
 }

@@ -6,7 +6,7 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
+import com.lambdaworks.redis.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 

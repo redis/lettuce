@@ -2,7 +2,7 @@ package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
-import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
+import com.lambdaworks.redis.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 /**

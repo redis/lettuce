@@ -1,7 +1,7 @@
 package com.lambdaworks.redis.api;
 
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 
