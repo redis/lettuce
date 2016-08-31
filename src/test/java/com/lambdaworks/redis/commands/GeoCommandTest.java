@@ -122,12 +122,12 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<Value<GeoCoordinates>> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
+        List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).getValue().x.doubleValue()).isEqualTo(8.6638, offset(0.001));
-        assertThat(geopos.get(1).hasValue()).isFalse();
-        assertThat(geopos.get(2).hasValue()).isTrue();
+        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(1)).isNull();
+        assertThat(geopos.get(2)).isNotNull();
     }
 
     @Test
@@ -138,12 +138,12 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         redis.multi();
         redis.geopos(key, "Weinheim", "foobar", "Bahn");
         redis.geopos(key, "Weinheim", "foobar", "Bahn");
-        List<Value<GeoCoordinates>> geopos = redis.exec().get(1);
+        List<GeoCoordinates> geopos = redis.exec().get(1);
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).getValue().x.doubleValue()).isEqualTo(8.6638, offset(0.001));
-        assertThat(geopos.get(1).hasValue()).isFalse();
-        assertThat(geopos.get(2).hasValue()).isTrue();
+        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(1)).isNull();
+        assertThat(geopos.get(2)).isNotNull();
     }
 
     @Test

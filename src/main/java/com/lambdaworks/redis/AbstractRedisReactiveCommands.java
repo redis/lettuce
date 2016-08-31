@@ -1740,7 +1740,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Flux<Value<GeoCoordinates>> geopos(K key, V... members) {
-        return createDissolvingFlux(() -> commandBuilder.geopos(key, members));
+        return createDissolvingFlux(() -> commandBuilder.geoposValues(key, members));
     }
 
     @Override

@@ -16,14 +16,12 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>> implements StreamingOutput<Value<GeoCoordinates>> {
+public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<GeoCoordinates>>  {
 
     private Double x;
-	private Subscriber<Value<GeoCoordinates>> subscriber;
 
 	public GeoCoordinatesListOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<>());
-		setSubscriber(ListSubscriber.of(output));
 	}
 
     @Override
@@ -36,25 +34,14 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Val
             return;
         }
 
-        subscriber.onNext(Value.fromNullable(new GeoCoordinates(x, value)));
+        output.add(new GeoCoordinates(x, value));
         x = null;
     }
 
     @Override
     public void multi(int count) {
         if (count == -1) {
-            subscriber.onNext(Value.empty());
+            output.add(null);
         }
     }
-
-	@Override
-	public void setSubscriber(Subscriber<Value<GeoCoordinates>> subscriber) {
-        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
-		this.subscriber = subscriber;
-	}
-
-	@Override
-	public Subscriber<Value<GeoCoordinates>> getSubscriber() {
-		return subscriber;
-	}
 }

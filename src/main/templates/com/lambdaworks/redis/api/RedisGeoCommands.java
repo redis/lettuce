@@ -132,7 +132,7 @@ public interface RedisGeoCommands<K, V> {
      * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
      *         missing elements {@literal null} is returned.
      */
-    List<Value<GeoCoordinates>> geopos(K key, V... members);
+    List<GeoCoordinates> geopos(K key, V... members);
 
     /**
      *

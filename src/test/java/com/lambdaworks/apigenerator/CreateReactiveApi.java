@@ -3,6 +3,7 @@ package com.lambdaworks.apigenerator;
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.junit.Test;
@@ -29,6 +30,7 @@ public class CreateReactiveApi {
             "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     private static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
+    private static Map<String, String> RESULT_SPEC = Collections.singletonMap("geopos", "Flux<Value<GeoCoordinates>>");
 
     private CompilationUnitFactory factory;
 
@@ -101,8 +103,9 @@ public class CreateReactiveApi {
             }
 
             String typeAsString = method.getType().toStringWithoutComments().trim();
-
-            if (methodMatch(FORCE_FLUX_RESULT, method, classOfMethod)) {
+            if(getResultType(method, classOfMethod) != null){
+                typeAsString = getResultType(method, classOfMethod);
+            }else if (methodMatch(FORCE_FLUX_RESULT, method, classOfMethod)) {
                 typeAsString = "Flux<" + typeAsString + ">";
             } else if (typeAsString.equals("void")) {
                 typeAsString = "Mono<Void>";
@@ -122,6 +125,24 @@ public class CreateReactiveApi {
             ClassOrInterfaceDeclaration classOfMethod) {
         return methodNames.contains(method.getName()) || methodNames.contains(classOfMethod.getName() + "." + method.getName());
     }
+
+
+    private String getResultType(MethodDeclaration method,
+            ClassOrInterfaceDeclaration classOfMethod) {
+
+        if(RESULT_SPEC.containsKey(method.getName())){
+            return RESULT_SPEC.get(method.getName());
+        }
+
+        String key = classOfMethod.getName() + "." + method.getName();
+
+        if(RESULT_SPEC.containsKey(key)){
+            return RESULT_SPEC.get(key);
+        }
+
+        return null;
+    }
+
 
     /**
      * Supply additional imports.

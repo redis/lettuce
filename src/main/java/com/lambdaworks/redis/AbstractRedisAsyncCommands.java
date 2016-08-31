@@ -1729,7 +1729,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<List<Value<GeoCoordinates>>> geopos(K key, V... members) {
+    public RedisFuture<List<GeoCoordinates>> geopos(K key, V... members) {
         return dispatch(commandBuilder.geopos(key, members));
     }
 

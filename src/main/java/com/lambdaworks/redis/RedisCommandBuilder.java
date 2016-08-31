@@ -2527,13 +2527,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Command<K, V, List<Value<GeoCoordinates>>> geopos(K key, V[] members) {
+    public Command<K, V, List<GeoCoordinates>> geopos(K key, V[] members) {
         notNullKey(key);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
 
         return (Command) createCommand(GEOPOS, new GeoCoordinatesListOutput<K, V>(codec), args);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public Command<K, V, List<Value<GeoCoordinates>>> geoposValues(K key, V[] members) {
+        notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
+
+        return (Command) createCommand(GEOPOS, new GeoCoordinatesValueListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {

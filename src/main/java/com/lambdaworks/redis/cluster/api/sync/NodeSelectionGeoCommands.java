@@ -130,7 +130,7 @@ public interface NodeSelectionGeoCommands<K, V> {
      * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
      *         missing elements {@literal null} is returned.
      */
-    Executions<List<Value<GeoCoordinates>>> geopos(K key, V... members);
+    Executions<List<GeoCoordinates>> geopos(K key, V... members);
 
     /**
      *
