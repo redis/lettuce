@@ -51,18 +51,18 @@ public abstract class AbstractRedisClient {
     protected static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
 
-    protected EventExecutorGroup genericWorkerPool;
-
     protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+    protected final ConnectionEvents connectionEvents = new ConnectionEvents();
+    protected final Set<Closeable> closeableResources = new ConcurrentSet<>();
+    protected final EventExecutorGroup genericWorkerPool;
     protected final HashedWheelTimer timer;
     protected final ChannelGroup channels;
     protected final ClientResources clientResources;
-    protected long timeout = 60;
-    protected TimeUnit unit;
-    protected ConnectionEvents connectionEvents = new ConnectionEvents();
-    protected Set<Closeable> closeableResources = new ConcurrentSet<>();
 
     protected volatile ClientOptions clientOptions = ClientOptions.builder().build();
+
+    protected long timeout = 60;
+    protected TimeUnit unit;
 
     private final boolean sharedResources;
     private final AtomicBoolean shutdown = new AtomicBoolean();
@@ -84,7 +84,6 @@ public abstract class AbstractRedisClient {
         }
 
         unit = TimeUnit.SECONDS;
-
         genericWorkerPool = this.clientResources.eventExecutorGroup();
         channels = new DefaultChannelGroup(genericWorkerPool.next());
         timer = new HashedWheelTimer();

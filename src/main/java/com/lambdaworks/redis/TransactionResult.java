@@ -37,6 +37,7 @@ public interface TransactionResult extends Iterable<Object> {
      * Returns the element at the specified position in this {@link TransactionResult}.
      *
      * @param index index of the element to return
+     * @param <T> inferred type
      * @return the element at the specified position in this {@link TransactionResult}
      * @throws IndexOutOfBoundsException if the index is out of range (<tt>index &lt; 0 || index &gt;= size()</tt>)
      */

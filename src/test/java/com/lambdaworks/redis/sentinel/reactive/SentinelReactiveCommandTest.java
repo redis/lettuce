@@ -12,7 +12,7 @@ import com.lambdaworks.redis.sentinel.api.reactive.RedisSentinelReactiveCommands
 /**
  * @author Mark Paluch
  */
-public class SentinelRxCommandTest extends SentinelCommandTest {
+public class SentinelReactiveCommandTest extends SentinelCommandTest {
 
     @Override
     public void openConnection() throws Exception {

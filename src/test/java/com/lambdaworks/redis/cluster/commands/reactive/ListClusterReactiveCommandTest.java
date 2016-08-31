@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Mark Paluch
  */
-public class ListClusterRxCommandTest extends ListCommandTest {
+public class ListClusterReactiveCommandTest extends ListCommandTest {
     private static RedisClusterClient redisClusterClient;
     private StatefulRedisClusterConnection<String, String> clusterConnection;
 

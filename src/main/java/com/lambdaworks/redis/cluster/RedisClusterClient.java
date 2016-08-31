@@ -27,6 +27,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceLists;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.protocol.CommandHandler;
@@ -53,7 +54,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  * <p>
  * The Redis cluster client provides a {@link RedisAdvancedClusterCommands sync}, {@link RedisAdvancedClusterAsyncCommands
- * async} and {@link com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands reactive} API.
+ * async} and {@link com.lambdaworks.redis.cluster.api.reactive.RedisAdvancedClusterReactiveCommands reactive} API.
  * </p>
  *
  * <p>
@@ -70,7 +71,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>{@link RedisAdvancedClusterAsyncCommands#del(Object[]) DEL}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#unlink(Object[]) UNLINK}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#mget(Object[]) MGET}</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#mget(ValueStreamingChannel, Object[]) MGET with streaming}</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#mget(KeyValueStreamingChannel, Object[])} ) MGET with streaming}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#mset(Map) MSET}</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#msetnx(Map) MSETNX}</li>
  * </ul>

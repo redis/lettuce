@@ -103,11 +103,12 @@ public interface BaseNodeSelectionCommands<K, V> {
      *
      * @param autoFlush state of autoFlush.
      */
-    Executions<Void> setAutoFlushCommands(boolean autoFlush);
+    void setAutoFlushCommands(boolean autoFlush);
 
     /**
      * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
      * achieve batching. No-op if channel is not connected.
+     *
      */
-    Executions<Void> flushCommands();
+    void flushCommands();
 }

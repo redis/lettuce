@@ -38,7 +38,8 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     /**
      * Initialize a new connection.
      *
-     * @param writer the channel writer
+     * @param endpoint the {@link PubSubEndpoint}
+     * @param writer the writer used to write commands
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.

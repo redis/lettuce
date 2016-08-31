@@ -71,7 +71,7 @@ public interface RedisGeoReactiveCommands<K, V> {
     Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadius(Object, double, double, double, Unit, GeoArgs)} query and store the results in a sorted set.
+     * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a sorted set.
      *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
@@ -111,7 +111,7 @@ public interface RedisGeoReactiveCommands<K, V> {
     Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadiusbymember(Object, Object, double, Unit, GeoArgs)} query and store the results in a sorted set.
+     * Perform a {@link #georadiusbymember(Object, Object, double, GeoArgs.Unit, GeoArgs)} query and store the results in a sorted set.
      *
      * @param key the key of the geo set
      * @param member reference member

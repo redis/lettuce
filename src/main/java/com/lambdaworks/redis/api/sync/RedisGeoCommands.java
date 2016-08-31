@@ -109,7 +109,7 @@ public interface RedisGeoCommands<K, V> {
     List<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadiusbymember(Object, Object, double, Unit, GeoArgs)} query and store the results in a sorted set.
+     * Perform a {@link #georadiusbymember(Object, Object, double, GeoArgs.Unit, GeoArgs)} query and store the results in a sorted set.
      *
      * @param key the key of the geo set
      * @param member reference member

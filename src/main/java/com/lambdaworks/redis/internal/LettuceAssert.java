@@ -122,6 +122,7 @@ public class LettuceAssert {
      * calling method.
      *
      * @param condition a boolean expression
+     * @param message the exception message to use if the assertion fails
      * @throws IllegalStateException if {@code expression} is false
      */
     public static void assertState(boolean condition, String message) {
