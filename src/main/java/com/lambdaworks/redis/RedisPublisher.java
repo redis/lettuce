@@ -116,6 +116,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         private final AtomicLong demand = new AtomicLong();
         private final Queue<T> data = new ConcurrentLinkedQueue<T>();
         private final AtomicBoolean dispatched = new AtomicBoolean();
+        private volatile boolean allDataRead = false;
 
         private final StatefulConnection<?, ?> connection;
         private final RedisCommand<?, ?, T> command;
@@ -142,7 +143,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          */
         void subscribe(Subscriber<? super T> subscriber) {
 
-            LettuceAssert.notNull(subscriber, "Subscriber must not be null");
+            if (subscriber == null) {
+                throw new NullPointerException("Subscriber must not be null");
+            }
 
             if (traceEnabled) {
                 LOG.trace("{} subscribe: {}@{}", state(), subscriber.getClass().getName(), Objects.hashCode(subscriber));
@@ -219,6 +222,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             if (traceEnabled) {
                 LOG.trace("{} onAllDataRead()", state());
             }
+
+            allDataRead = true;
             this.state.get().onAllDataRead(this);
         }
 
@@ -376,19 +381,32 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 if (subscription.changeState(this, READING)) {
 
                     try {
-
                         boolean demandAvailable = subscription.readAndPublish();
                         if (demandAvailable) {
                             subscription.changeState(READING, DEMAND);
                             subscription.checkOnDataAvailable();
                         } else {
-                            subscription.changeState(READING, NO_DEMAND);
+
+                            if (subscription.allDataRead && subscription.data.isEmpty()) {
+                                subscription.onAllDataRead();
+                            } else {
+                                subscription.changeState(READING, NO_DEMAND);
+                            }
                         }
                     } catch (IOException ex) {
                         subscription.onError(ex);
                     }
                 }
             }
+
+            @Override
+            void request(RedisSubscription<?> subscription, long n) {
+
+                if (BackpressureUtils.checkRequest(n, subscription.subscriber)) {
+                    BackpressureUtils.addAndGet(subscription.demand, n);
+                }
+            }
+
         },
 
         READING {
@@ -447,7 +465,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void onAllDataRead(RedisSubscription<?> subscription) {
 
-            if (subscription.changeState(this, COMPLETED)) {
+            subscription.allDataRead = true;
+
+            if (subscription.data.isEmpty() && subscription.changeState(this, COMPLETED)) {
                 if (subscription.subscriber != null) {
                     subscription.subscriber.onComplete();
                 }
