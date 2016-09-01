@@ -4,6 +4,7 @@ package com.lambdaworks.redis;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,7 +16,6 @@ import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import org.springframework.test.util.ReflectionTestUtils;
-import reactor.test.TestSubscriber;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 

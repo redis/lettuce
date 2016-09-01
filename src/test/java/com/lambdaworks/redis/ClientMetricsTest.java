@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,8 +23,6 @@ import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
 import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
 import com.lambdaworks.redis.metrics.CommandLatencyId;
 import com.lambdaworks.redis.metrics.CommandMetrics;
-
-import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch

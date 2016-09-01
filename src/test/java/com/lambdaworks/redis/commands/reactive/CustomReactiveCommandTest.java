@@ -1,9 +1,6 @@
 package com.lambdaworks.redis.commands.reactive;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
-
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
@@ -16,7 +13,6 @@ import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
 import reactor.core.publisher.Flux;
-import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch

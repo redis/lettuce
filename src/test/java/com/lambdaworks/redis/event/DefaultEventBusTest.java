@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import reactor.core.scheduler.Schedulers;
-import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch

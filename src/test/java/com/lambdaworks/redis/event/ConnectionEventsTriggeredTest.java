@@ -5,14 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.assertj.core.api.Condition;
 import org.junit.Test;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.event.connection.*;
-
-import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch

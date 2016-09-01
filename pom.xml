@@ -76,7 +76,7 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
-            <version>3.0.0.RC1</version>
+            <version>3.0.1.BUILD-SNAPSHOT</version>
         </dependency>
 
         <!-- Netty -->
@@ -700,4 +700,15 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <repositories>
+    <repository>
+        <id>spring-snapshots</id>
+        <name>Spring Snapshots</name>
+        <url>https://repo.spring.io/libs-snapshot</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
 </project>

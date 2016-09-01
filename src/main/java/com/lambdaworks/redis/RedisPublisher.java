@@ -24,6 +24,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Operators;
 
 /**
  * Reactive command {@link Publisher} using ReactiveStreams.
@@ -359,8 +360,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (BackpressureUtils.checkRequest(n, subscription.subscriber)) {
-                    BackpressureUtils.addAndGet(subscription.demand, n);
+                if (Operators.checkRequest(n, subscription.subscriber)) {
+                    Operators.addAndGet(subscription.demand, n);
 
                     if (subscription.changeState(this, DEMAND)) {
                         subscription.checkCommandDispatch();
@@ -402,8 +403,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (BackpressureUtils.checkRequest(n, subscription.subscriber)) {
-                    BackpressureUtils.addAndGet(subscription.demand, n);
+                if (Operators.checkRequest(n, subscription.subscriber)) {
+                    Operators.addAndGet(subscription.demand, n);
                 }
             }
 
@@ -413,8 +414,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (BackpressureUtils.checkRequest(n, subscription.subscriber)) {
-                    BackpressureUtils.addAndGet(subscription.demand, n);
+                if (Operators.checkRequest(n, subscription.subscriber)) {
+                    Operators.addAndGet(subscription.demand, n);
                 }
             }
         },

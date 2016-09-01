@@ -12,17 +12,16 @@ import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
-import reactor.test.TestSubscriber;
 
 public class CustomCodecTest extends AbstractRedisClientTest {
 

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 
 import com.lambdaworks.redis.event.Event;
@@ -18,7 +19,6 @@ import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import reactor.test.TestSubscriber;
 
 /**
  * @author Mark Paluch
