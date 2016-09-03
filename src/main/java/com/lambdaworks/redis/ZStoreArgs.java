@@ -17,6 +17,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * @author Will Glozer
  */
 public class ZStoreArgs {
+
     private static enum Aggregate {
         SUM, MIN, MAX
     }

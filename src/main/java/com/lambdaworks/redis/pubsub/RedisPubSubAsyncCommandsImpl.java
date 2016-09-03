@@ -27,7 +27,7 @@ import java.util.Map;
 public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubConnection<K, V>,
         RedisPubSubAsyncCommands<K, V> {
 
-    private PubSubCommandBuilder<K, V> commandBuilder;
+    private final PubSubCommandBuilder<K, V> commandBuilder;
 
     /**
      * Initialize a new connection.

@@ -41,16 +41,12 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [");
-        appendConnectionId(sb);
-        sb.append(']');
-        return sb.toString();
-    }
-
-    void appendConnectionId(StringBuffer sb) {
         sb.append(local);
         sb.append(" -> ").append(remote);
+        sb.append(']');
+        return sb.toString();
     }
 }

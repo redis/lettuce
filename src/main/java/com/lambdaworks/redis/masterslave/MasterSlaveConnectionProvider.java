@@ -30,7 +30,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class MasterSlaveConnectionProvider<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterSlaveConnectionProvider.class);
-    private final boolean debugEnabled;
+    private final boolean debugEnabled = logger.isDebugEnabled();
 
     // Contains HostAndPort-identified connections.
     private final Map<ConnectionKey, StatefulRedisConnection<K, V>> connections = new ConcurrentHashMap<>();
@@ -46,8 +46,8 @@ public class MasterSlaveConnectionProvider<K, V> {
     @Deprecated
     public MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec,
             StatefulRedisConnection<K, V> masterConnection, RedisURI initialRedisUri) {
+
         this.initialRedisUri = initialRedisUri;
-        this.debugEnabled = logger.isDebugEnabled();
         this.connectionFactory = new ConnectionFactory<>(redisClient, redisCodec);
         connections.put(toConnectionKey(initialRedisUri), masterConnection);
     }
@@ -56,7 +56,6 @@ public class MasterSlaveConnectionProvider<K, V> {
             Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 
         this.initialRedisUri = initialRedisUri;
-        this.debugEnabled = logger.isDebugEnabled();
         this.connectionFactory = new ConnectionFactory<>(redisClient, redisCodec);
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<K, V>> entry : initialConnections.entrySet()) {

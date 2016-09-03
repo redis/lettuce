@@ -45,8 +45,8 @@ import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
  */
 public class RedisClient extends AbstractRedisClient {
 
-    private final static RedisURI EMPTY_URI = new RedisURI();
-    private final static boolean POOL_AVAILABLE = isPresent("org.apache.commons.pool2.impl.GenericObjectPool");
+    private static final RedisURI EMPTY_URI = new RedisURI();
+    private static final boolean POOL_AVAILABLE = isPresent("org.apache.commons.pool2.impl.GenericObjectPool");
 
     private final RedisURI redisURI;
 

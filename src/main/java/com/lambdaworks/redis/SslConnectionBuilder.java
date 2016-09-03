@@ -35,15 +35,16 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
  * @author Mark Paluch
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
-    private RedisURI redisURI;
 
-    public static SslConnectionBuilder sslConnectionBuilder() {
-        return new SslConnectionBuilder();
-    }
+    private RedisURI redisURI;
 
     public SslConnectionBuilder ssl(RedisURI redisURI) {
         this.redisURI = redisURI;
         return this;
+    }
+
+    public static SslConnectionBuilder sslConnectionBuilder() {
+        return new SslConnectionBuilder();
     }
 
     @Override

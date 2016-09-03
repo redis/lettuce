@@ -13,6 +13,7 @@ import com.lambdaworks.redis.event.Event;
  * @since 3.4
  */
 public class ClusterTopologyChangedEvent implements Event {
+
     private final List<RedisClusterNode> before;
     private final List<RedisClusterNode> after;
 
@@ -47,7 +48,7 @@ public class ClusterTopologyChangedEvent implements Event {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [before=").append(before.size());
         sb.append(", after=").append(after.size());

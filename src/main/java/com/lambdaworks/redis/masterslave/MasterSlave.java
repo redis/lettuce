@@ -72,7 +72,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public class MasterSlave {
 
-    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(MasterSlave.class);
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MasterSlave.class);
 
     /**
      * Open a new connection to a Redis Master-Slave server/servers using the supplied {@link RedisURI} and the supplied

@@ -24,13 +24,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public class MasterSlaveTopologyProvider implements TopologyProvider {
 
-    public final static Pattern ROLE_PATTERN = Pattern.compile("^role\\:([a-z]+)$", Pattern.MULTILINE);
-    public final static Pattern SLAVE_PATTERN = Pattern.compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$", Pattern.MULTILINE);
-    public final static Pattern MASTER_HOST_PATTERN = Pattern.compile("^master_host\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$",
+    public static final Pattern ROLE_PATTERN = Pattern.compile("^role\\:([a-z]+)$", Pattern.MULTILINE);
+    public static final Pattern SLAVE_PATTERN = Pattern.compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$", Pattern.MULTILINE);
+    public static final Pattern MASTER_HOST_PATTERN = Pattern.compile("^master_host\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$",
             Pattern.MULTILINE);
-    public final static Pattern MASTER_PORT_PATTERN = Pattern.compile("^master_port\\:(\\d+)$", Pattern.MULTILINE);
-    public final static Pattern IP_PATTERN = Pattern.compile("ip\\=([a-zA-Z\\d\\.\\:]+)");
-    public final static Pattern PORT_PATTERN = Pattern.compile("port\\=([\\d]+)");
+    public static final Pattern MASTER_PORT_PATTERN = Pattern.compile("^master_port\\:(\\d+)$", Pattern.MULTILINE);
+    public static final Pattern IP_PATTERN = Pattern.compile("ip\\=([a-zA-Z\\d\\.\\:]+)");
+    public static final Pattern PORT_PATTERN = Pattern.compile("port\\=([\\d]+)");
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterSlaveTopologyProvider.class);
 

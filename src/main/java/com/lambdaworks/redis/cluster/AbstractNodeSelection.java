@@ -22,9 +22,10 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSupport<API, CMD> {
 
-    protected StatefulRedisClusterConnection<K, V> globalConnection;
-    private ClusterConnectionProvider.Intent intent;
     protected ClusterDistributionChannelWriter<K, V> writer;
+    protected StatefulRedisClusterConnection<K, V> globalConnection;
+
+    private ClusterConnectionProvider.Intent intent;
 
     public AbstractNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, ClusterConnectionProvider.Intent intent) {
         this.globalConnection = globalConnection;

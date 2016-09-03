@@ -12,6 +12,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * @author Vincent Rischmann
  */
 public class SetArgs {
+
     private Long ex;
     private Long px;
     private boolean nx = false;

@@ -25,7 +25,8 @@ import io.netty.channel.ChannelHandlerContext;
  * @author Will Glozer
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
-    private RedisCodec<K, V> codec;
+
+    private final RedisCodec<K, V> codec;
     private PubSubOutput<K, V, V> output;
 
     /**

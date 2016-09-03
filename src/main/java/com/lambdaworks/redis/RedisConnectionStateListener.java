@@ -7,6 +7,7 @@ package com.lambdaworks.redis;
  * @author ze
  */
 public interface RedisConnectionStateListener {
+
     /**
      * Event handler for successful connection event.
      * 

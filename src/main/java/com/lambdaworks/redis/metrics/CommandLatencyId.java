@@ -113,7 +113,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("[").append(localAddress);
         sb.append(" -> ").append(remoteAddress);
         sb.append(", commandType=").append(commandType);

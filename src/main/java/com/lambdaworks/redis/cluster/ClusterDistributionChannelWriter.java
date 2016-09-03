@@ -16,7 +16,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * Channel writer for cluster operation. This writer looks up the right partition by hash/slot for the operation.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -28,11 +28,9 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     private final ClusterEventListener clusterEventListener;
     private final EventExecutorGroup eventExecutors;
     private final int executionLimit;
+
     private ClusterConnectionProvider clusterConnectionProvider;
     private boolean closed = false;
-
-    long p20, p21, p22, p23, p24, p25, p26;
-    long p30, p31, p32, p33, p34, p35, p36, p37;
 
     ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter<K, V> defaultWriter,
             ClusterEventListener clusterEventListener, EventExecutorGroup eventExecutors) {

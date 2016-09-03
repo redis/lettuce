@@ -17,6 +17,7 @@ import io.netty.channel.local.LocalAddress;
  */
 @ChannelHandler.Sharable
 class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
+
     private final ConnectionEvents connectionEvents;
     private final RedisChannelHandler<?, ?> connection;
     private final EventBus eventBus;

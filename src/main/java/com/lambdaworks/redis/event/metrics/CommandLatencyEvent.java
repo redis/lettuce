@@ -30,7 +30,7 @@ public class CommandLatencyEvent implements Event {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(latencies);
         return sb.toString();
     }

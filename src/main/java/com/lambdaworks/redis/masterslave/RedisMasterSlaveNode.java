@@ -57,7 +57,7 @@ class RedisMasterSlaveNode implements RedisNodeDescription {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [redisURI=").append(redisURI);
         sb.append(", role=").append(role);

@@ -11,6 +11,7 @@ import io.netty.util.internal.ConcurrentSet;
  * @since 3.0
  */
 class CloseEvents {
+
     private Set<CloseListener> listeners = new ConcurrentSet<CloseListener>();
 
     public void fireEventClosed(Object resource) {

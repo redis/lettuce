@@ -23,13 +23,15 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
+    private static final Method NULL_MARKER_METHOD;
+
+    private final Map<Method, Method> nodeSelectionMethods = new ConcurrentHashMap<>();
+    private final Map<Method, Method> connectionMethod = new ConcurrentHashMap<>();
+
     private AbstractNodeSelection<?, ?, ?, ?> selection;
     private boolean sync;
     private long timeout;
     private TimeUnit unit;
-    private final Map<Method, Method> nodeSelectionMethods = new ConcurrentHashMap<>();
-    private final Map<Method, Method> connectionMethod = new ConcurrentHashMap<>();
-    public final static Method NULL_MARKER_METHOD;
 
     static {
         try {
@@ -44,7 +46,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         this(selection, false, 0, null);
     }
 
-    public NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, boolean sync, long timeout, TimeUnit unit) {
+    public NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, boolean sync, long timeout,
+            TimeUnit unit) {
         if (sync) {
             LettuceAssert.isTrue(timeout > 0, "Timeout must be greater 0 when using sync mode");
             LettuceAssert.notNull(unit, "Unit must not be null when using sync mode");

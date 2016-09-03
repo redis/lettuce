@@ -24,15 +24,8 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandEncoder.class);
 
-    /**
-     * If TRACE level logging has been enabled at startup.
-     */
-    private final boolean traceEnabled;
-
-    /**
-     * If DEBUG level logging has been enabled at startup.
-     */
-    private final boolean debugEnabled;
+    private final boolean traceEnabled = logger.isTraceEnabled();
+    private final boolean debugEnabled = logger.isDebugEnabled();
 
     public CommandEncoder() {
         this(true);
@@ -40,8 +33,6 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
 
     public CommandEncoder(boolean preferDirect) {
         super(preferDirect);
-        traceEnabled = logger.isTraceEnabled();
-        debugEnabled = logger.isDebugEnabled();
     }
 
     @Override

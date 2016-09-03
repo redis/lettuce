@@ -23,7 +23,7 @@ class ClusterScanSupport {
     /**
      * Map a {@link RedisFuture} of {@link KeyScanCursor} to a {@link RedisFuture} of {@link ClusterKeyScanCursor}.
      */
-    final static ScanCursorMapper<RedisFuture<KeyScanCursor<?>>> futureKeyScanCursorMapper = new ScanCursorMapper<RedisFuture<KeyScanCursor<?>>>() {
+    static final ScanCursorMapper<RedisFuture<KeyScanCursor<?>>> futureKeyScanCursorMapper = new ScanCursorMapper<RedisFuture<KeyScanCursor<?>>>() {
         @Override
         public RedisFuture<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId,
                 RedisFuture<KeyScanCursor<?>> cursor) {
@@ -39,7 +39,7 @@ class ClusterScanSupport {
     /**
      * Map a {@link RedisFuture} of {@link StreamScanCursor} to a {@link RedisFuture} of {@link ClusterStreamScanCursor}.
      */
-    final static ScanCursorMapper<RedisFuture<StreamScanCursor>> futureStreamScanCursorMapper = new ScanCursorMapper<RedisFuture<StreamScanCursor>>() {
+    static final ScanCursorMapper<RedisFuture<StreamScanCursor>> futureStreamScanCursorMapper = new ScanCursorMapper<RedisFuture<StreamScanCursor>>() {
         @Override
         public RedisFuture<StreamScanCursor> map(List<String> nodeIds, String currentNodeId,
                 RedisFuture<StreamScanCursor> cursor) {

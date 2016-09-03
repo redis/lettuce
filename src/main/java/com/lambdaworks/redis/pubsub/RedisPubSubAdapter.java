@@ -11,6 +11,7 @@ package com.lambdaworks.redis.pubsub;
  * @author Will Glozer
  */
 public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
+
     @Override
     public void message(K channel, V message) {
         // empty adapter method

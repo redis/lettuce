@@ -165,7 +165,7 @@ class MasterSlaveTopologyRefresh {
      */
     static class RedisUriComparator implements Comparator<RedisURI> {
 
-        public final static RedisUriComparator INSTANCE = new RedisUriComparator();
+        public static final RedisUriComparator INSTANCE = new RedisUriComparator();
 
         @Override
         public int compare(RedisURI o1, RedisURI o2) {

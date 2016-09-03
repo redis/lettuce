@@ -36,8 +36,9 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public class Partitions implements Collection<RedisClusterNode> {
 
+    private static final RedisClusterNode[] EMPTY = new RedisClusterNode[SlotHash.SLOT_COUNT];
+
     private final List<RedisClusterNode> partitions = new ArrayList<>();
-    private final static RedisClusterNode[] EMPTY = new RedisClusterNode[SlotHash.SLOT_COUNT];
 
     private volatile RedisClusterNode slotCache[] = EMPTY;
     private volatile Collection<RedisClusterNode> nodeReadView = Collections.emptyList();

@@ -42,21 +42,18 @@ public class RedisStateMachine<K, V> {
         int count = -1;
     }
 
-    private final State[] stack;
-    private int stackElements;
-
-    // If DEBUG level logging has been enabled at startup.
-    private final boolean debugEnabled;
+    private final State[] stack = new State[32];
+    private final boolean debugEnabled = logger.isDebugEnabled();
     private final LongProcessor longProcessor;
     private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
     private final AtomicBoolean closed = new AtomicBoolean();
+
+    private int stackElements;
 
     /**
      * Initialize a new instance.
      */
     public RedisStateMachine() {
-        stack = new State[32];
-        debugEnabled = logger.isDebugEnabled();
 
         Version nettyBufferVersion = Version.identify().get("netty-buffer");
 

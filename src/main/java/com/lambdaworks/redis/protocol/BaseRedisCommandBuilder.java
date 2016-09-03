@@ -10,6 +10,7 @@ import com.lambdaworks.redis.output.*;
  * @since 3.0
  */
 public class BaseRedisCommandBuilder<K, V> {
+
     protected RedisCodec<K, V> codec;
 
     public BaseRedisCommandBuilder(RedisCodec<K, V> codec) {

@@ -22,10 +22,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
+
     private final Collection<RedisClusterNode> partitions;
     private final Collection<RedisClusterNode> clusterNodes = new ArrayList<>();
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction;
     private final ClientResources clientResources;
+
     private RoundRobin<? extends RedisClusterNode> roundRobin;
 
     public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,

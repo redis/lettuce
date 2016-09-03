@@ -13,12 +13,12 @@ public class ScanCursor {
     /**
      * Finished cursor.
      */
-    public final static ScanCursor FINISHED = new ImmutableScanCursor("0", true);
+    public static final ScanCursor FINISHED = new ImmutableScanCursor("0", true);
 
     /**
      * Initial cursor.
      */
-    public final static ScanCursor INITIAL = new ImmutableScanCursor("0", false);
+    public static final ScanCursor INITIAL = new ImmutableScanCursor("0", false);
 
     private String cursor;
     private boolean finished;

@@ -19,6 +19,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class ClusterSlotRange implements Serializable {
+
     private int from;
     private int to;
 

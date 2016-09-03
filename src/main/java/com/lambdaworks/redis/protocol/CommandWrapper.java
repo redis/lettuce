@@ -14,8 +14,8 @@ import io.netty.buffer.ByteBuf;
  */
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
-    protected RedisCommand<K, V, T> command;
-    private List<Consumer<? super T>> onComplete = new ArrayList<>();
+    protected final RedisCommand<K, V, T> command;
+    private final List<Consumer<? super T>> onComplete = new ArrayList<>();
 
     public CommandWrapper(RedisCommand<K, V, T> command) {
         this.command = command;

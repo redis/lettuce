@@ -42,7 +42,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncConnection<K, V>, RedisAdvancedClusterAsyncCommands<K, V> {
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
     /**
      * Initialize a new connection.

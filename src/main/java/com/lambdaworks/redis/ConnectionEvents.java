@@ -12,6 +12,7 @@ import io.netty.util.internal.ConcurrentSet;
  * @since 3.0
  */
 public class ConnectionEvents {
+
     private final Set<RedisConnectionStateListener> listeners = new ConcurrentSet<>();
 
     protected void fireEventRedisConnected(RedisChannelHandler<?, ?> connection) {
