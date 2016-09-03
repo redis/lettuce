@@ -32,14 +32,14 @@ public class LettuceGeoDemo {
         // ordered descending by distance and containing distance/coordinates
         GeoWithin<String> weinheim = georadiusWithArgs.get(0);
 
-        System.out.println("Member: " + weinheim.member);
-        System.out.println("Geo hash: " + weinheim.geohash);
-        System.out.println("Distance: " + weinheim.distance);
-        System.out.println("Coordinates: " + weinheim.coordinates.x + "/" + weinheim.coordinates.y);
+        System.out.println("Member: " + weinheim.getMember());
+        System.out.println("Geo hash: " + weinheim.getGeohash());
+        System.out.println("Distance: " + weinheim.getDistance());
+        System.out.println("Coordinates: " + weinheim.getCoordinates().getX() + "/" + weinheim.getCoordinates().getY());
 
         List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "Train station");
         GeoCoordinates weinheimGeopos = geopos.get(0);
-        System.out.println("Coordinates: " + weinheimGeopos.x + "/" + weinheimGeopos.y);
+        System.out.println("Coordinates: " + weinheimGeopos.getX() + "/" + weinheimGeopos.getY());
 
         redis.close();
         redisClient.shutdown();

@@ -125,7 +125,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(0).getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
         assertThat(geopos.get(1)).isNull();
         assertThat(geopos.get(2)).isNotNull();
     }
@@ -141,7 +141,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         List<GeoCoordinates> geopos = (List) redis.exec().get(1);
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(0).getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
         assertThat(geopos.get(1)).isNull();
         assertThat(geopos.get(2)).isNotNull();
     }
@@ -158,23 +158,23 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         GeoWithin<String> weinheim = result.get(0);
 
-        assertThat(weinheim.member).isEqualTo("Weinheim");
-        assertThat(weinheim.geohash).isEqualTo(3666615932941099L);
+        assertThat(weinheim.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheim.getGeohash()).isEqualTo(3666615932941099L);
 
-        assertThat(weinheim.distance).isEqualTo(2.7882, offset(0.5));
-        assertThat(weinheim.coordinates.x.doubleValue()).isEqualTo(8.663875, offset(0.5));
-        assertThat(weinheim.coordinates.y.doubleValue()).isEqualTo(49.52825, offset(0.5));
+        assertThat(weinheim.getDistance()).isEqualTo(2.7882, offset(0.5));
+        assertThat(weinheim.getCoordinates().getX().doubleValue()).isEqualTo(8.663875, offset(0.5));
+        assertThat(weinheim.getCoordinates().getY().doubleValue()).isEqualTo(49.52825, offset(0.5));
 
         result = redis.georadius(key, 8.665351, 49.553302, 1, GeoArgs.Unit.km, new GeoArgs());
         assertThat(result).hasSize(1);
 
         GeoWithin<String> bahn = result.get(0);
 
-        assertThat(bahn.member).isEqualTo("Bahn");
-        assertThat(bahn.geohash).isNull();
+        assertThat(bahn.getMember()).isEqualTo("Bahn");
+        assertThat(bahn.getGeohash()).isNull();
 
-        assertThat(bahn.distance).isNull();
-        assertThat(bahn.coordinates).isNull();
+        assertThat(bahn.getDistance()).isNull();
+        assertThat(bahn.getCoordinates()).isNull();
     }
 
     @Test
@@ -195,23 +195,23 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         GeoWithin<String> weinheim = result.get(0);
 
-        assertThat(weinheim.member).isEqualTo("Weinheim");
-        assertThat(weinheim.geohash).isEqualTo(3666615932941099L);
+        assertThat(weinheim.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheim.getGeohash()).isEqualTo(3666615932941099L);
 
-        assertThat(weinheim.distance).isEqualTo(2.7882, offset(0.5));
-        assertThat(weinheim.coordinates.x.doubleValue()).isEqualTo(8.663875, offset(0.5));
-        assertThat(weinheim.coordinates.y.doubleValue()).isEqualTo(49.52825, offset(0.5));
+        assertThat(weinheim.getDistance()).isEqualTo(2.7882, offset(0.5));
+        assertThat(weinheim.getCoordinates().getX().doubleValue()).isEqualTo(8.663875, offset(0.5));
+        assertThat(weinheim.getCoordinates().getY().doubleValue()).isEqualTo(49.52825, offset(0.5));
 
         result = redis.georadius(key, 8.665351, 49.553302, 1, GeoArgs.Unit.km, new GeoArgs());
         assertThat(result).hasSize(1);
 
         GeoWithin<String> bahn = result.get(0);
 
-        assertThat(bahn.member).isEqualTo("Bahn");
-        assertThat(bahn.geohash).isNull();
+        assertThat(bahn.getMember()).isEqualTo("Bahn");
+        assertThat(bahn.getGeohash()).isNull();
 
-        assertThat(bahn.distance).isNull();
-        assertThat(bahn.coordinates).isNull();
+        assertThat(bahn.getDistance()).isNull();
+        assertThat(bahn.getCoordinates()).isNull();
     }
 
     @Test
@@ -360,30 +360,30 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(withDistanceAndCoordinates).hasSize(2);
 
         GeoWithin<String> weinheim = withDistanceAndCoordinates.get(0);
-        assertThat(weinheim.member).isEqualTo("Weinheim");
-        assertThat(weinheim.geohash).isNull();
-        assertThat(weinheim.distance).isNotNull();
-        assertThat(weinheim.coordinates).isNotNull();
+        assertThat(weinheim.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheim.getGeohash()).isNull();
+        assertThat(weinheim.getDistance()).isNotNull();
+        assertThat(weinheim.getCoordinates()).isNotNull();
 
         List<GeoWithin<String>> withDistanceAndHash = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
                 new GeoArgs().withDistance().withHash().desc());
         assertThat(withDistanceAndHash).hasSize(2);
 
         GeoWithin<String> weinheimDistanceHash = withDistanceAndHash.get(0);
-        assertThat(weinheimDistanceHash.member).isEqualTo("Weinheim");
-        assertThat(weinheimDistanceHash.geohash).isNotNull();
-        assertThat(weinheimDistanceHash.distance).isNotNull();
-        assertThat(weinheimDistanceHash.coordinates).isNull();
+        assertThat(weinheimDistanceHash.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheimDistanceHash.getGeohash()).isNotNull();
+        assertThat(weinheimDistanceHash.getDistance()).isNotNull();
+        assertThat(weinheimDistanceHash.getCoordinates()).isNull();
 
         List<GeoWithin<String>> withCoordinates = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
                 new GeoArgs().withCoordinates().desc());
         assertThat(withCoordinates).hasSize(2);
 
         GeoWithin<String> weinheimCoordinates = withCoordinates.get(0);
-        assertThat(weinheimCoordinates.member).isEqualTo("Weinheim");
-        assertThat(weinheimCoordinates.geohash).isNull();
-        assertThat(weinheimCoordinates.distance).isNull();
-        assertThat(weinheimCoordinates.coordinates).isNotNull();
+        assertThat(weinheimCoordinates.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheimCoordinates.getGeohash()).isNull();
+        assertThat(weinheimCoordinates.getDistance()).isNull();
+        assertThat(weinheimCoordinates.getCoordinates()).isNotNull();
     }
 
     @Test
@@ -407,28 +407,28 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(withDistanceAndCoordinates).hasSize(2);
 
         GeoWithin<String> weinheim = withDistanceAndCoordinates.get(0);
-        assertThat(weinheim.member).isEqualTo("Weinheim");
-        assertThat(weinheim.geohash).isNull();
-        assertThat(weinheim.distance).isNotNull();
-        assertThat(weinheim.coordinates).isNotNull();
+        assertThat(weinheim.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheim.getGeohash()).isNull();
+        assertThat(weinheim.getDistance()).isNotNull();
+        assertThat(weinheim.getCoordinates()).isNotNull();
 
         List<GeoWithin<String>> withDistanceAndHash = (List) exec.get(2);
         assertThat(withDistanceAndHash).hasSize(2);
 
         GeoWithin<String> weinheimDistanceHash = withDistanceAndHash.get(0);
-        assertThat(weinheimDistanceHash.member).isEqualTo("Weinheim");
-        assertThat(weinheimDistanceHash.geohash).isNotNull();
-        assertThat(weinheimDistanceHash.distance).isNotNull();
-        assertThat(weinheimDistanceHash.coordinates).isNull();
+        assertThat(weinheimDistanceHash.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheimDistanceHash.getGeohash()).isNotNull();
+        assertThat(weinheimDistanceHash.getDistance()).isNotNull();
+        assertThat(weinheimDistanceHash.getCoordinates()).isNull();
 
         List<GeoWithin<String>> withCoordinates = (List) exec.get(3);
         assertThat(withCoordinates).hasSize(2);
 
         GeoWithin<String> weinheimCoordinates = withCoordinates.get(0);
-        assertThat(weinheimCoordinates.member).isEqualTo("Weinheim");
-        assertThat(weinheimCoordinates.geohash).isNull();
-        assertThat(weinheimCoordinates.distance).isNull();
-        assertThat(weinheimCoordinates.coordinates).isNotNull();
+        assertThat(weinheimCoordinates.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheimCoordinates.getGeohash()).isNull();
+        assertThat(weinheimCoordinates.getDistance()).isNull();
+        assertThat(weinheimCoordinates.getCoordinates()).isNotNull();
     }
 
     @Test(expected = IllegalArgumentException.class)

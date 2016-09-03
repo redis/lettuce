@@ -19,11 +19,52 @@ public class GeoWithin<V> {
     public final Long geohash;
     public final GeoCoordinates coordinates;
 
+    /**
+     * Creates a new {@link GeoWithin}.
+     *
+     * @param member the member.
+     * @param distance the distance, may be {@literal null}.
+     * @param geohash the geohash, may be {@literal null}.
+     * @param coordinates the coordinates, may be {@literal null}.
+     */
     public GeoWithin(V member, Double distance, Long geohash, GeoCoordinates coordinates) {
+
         this.member = member;
         this.distance = distance;
         this.geohash = geohash;
         this.coordinates = coordinates;
+    }
+
+    /**
+     *
+     * @return the member within the Geo set.
+     */
+    public V getMember() {
+        return member;
+    }
+
+    /**
+     *
+     * @return distance if requested otherwise {@literal null}.
+     */
+    public Double getDistance() {
+        return distance;
+    }
+
+    /**
+     *
+     * @return geohash if requested otherwise {@literal null}.
+     */
+    public Long getGeohash() {
+        return geohash;
+    }
+
+    /**
+     *
+     * @return coordinates if requested otherwise {@literal null}.
+     */
+    public GeoCoordinates getCoordinates() {
+        return coordinates;
     }
 
     @Override
