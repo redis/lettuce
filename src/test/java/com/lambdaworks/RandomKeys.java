@@ -36,15 +36,19 @@ public class RandomKeys {
         List<String> keys = new ArrayList<>();
         List<String> values = new ArrayList<>();
         Map<String, String> map = new HashMap<>();
+        Set<String> uniqueKeys = new HashSet<>();
 
-        for (int i = 0; i < COUNT; i++) {
+        while (map.size() < COUNT) {
 
             String key = RandomStringUtils.random(10, true, true);
             String value = RandomStringUtils.random(10, true, true);
 
-            keys.add(key);
-            values.add(value);
-            map.put(key, value);
+            if (uniqueKeys.add(key)) {
+
+                keys.add(key);
+                values.add(value);
+                map.put(key, value);
+            }
         }
 
         KEYS = Collections.unmodifiableList(keys);
