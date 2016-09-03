@@ -32,7 +32,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private static final long LOGGING_QUIET_TIME_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
-
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionWatchdog.class);
 
     private final Delay reconnectDelay;

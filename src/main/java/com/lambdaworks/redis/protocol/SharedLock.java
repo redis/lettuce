@@ -20,7 +20,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 class SharedLock {
 
     private final AtomicLong writers = new AtomicLong();
-    private Thread exclusiveLockOwner;
+    private volatile Thread exclusiveLockOwner;
 
     /**
      * Wait for stateLock and increment writers. Will wait if stateLock is locked and if writer counter is negative.

@@ -96,7 +96,7 @@ public class GeoWithin<V> {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [member=").append(member);
         sb.append(", distance=").append(distance);

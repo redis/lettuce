@@ -45,12 +45,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
     private final ClientOptions clientOptions;
 
     private final QueuedCommands queuedCommands = new QueuedCommands();
-
-    // If TRACE level logging has been enabled at startup.
-    private final boolean traceEnabled;
-
-    // If DEBUG level logging has been enabled at startup.
-    private final boolean debugEnabled;
+    private final boolean traceEnabled = logger.isTraceEnabled();
+    private final boolean debugEnabled = logger.isDebugEnabled();
 
     protected volatile Channel channel;
     private String logPrefix;
@@ -71,8 +67,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
 
         this.clientOptions = clientOptions;
-        this.traceEnabled = logger.isTraceEnabled();
-        this.debugEnabled = logger.isDebugEnabled();
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
         this.queuedCommands.register(this);
     }

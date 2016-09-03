@@ -22,7 +22,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public class Value<V> implements Serializable {
 
-    private final static Value<Object> EMPTY = new Value<>(null);
+    private static final Value<Object> EMPTY = new Value<>(null);
 
     private final V value;
 

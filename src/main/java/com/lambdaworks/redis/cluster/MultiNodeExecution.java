@@ -24,6 +24,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @author Mark Paluch
  */
 class MultiNodeExecution {
+
     static <T> T execute(Callable<T> function) {
         try {
             return function.call();

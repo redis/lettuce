@@ -18,6 +18,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
  * @author Will Glozer
  */
 public class SortArgs {
+
     private String by;
     private Long offset, count;
     private List<String> get;

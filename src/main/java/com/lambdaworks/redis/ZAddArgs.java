@@ -9,6 +9,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * @author Mark Paluch
  */
 public class ZAddArgs {
+
     private boolean nx = false;
     private boolean xx = false;
     private boolean ch = false;

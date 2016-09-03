@@ -438,7 +438,7 @@ public class CommandArgs<K, V> {
 
     static class IntegerCache {
 
-        final static IntegerArgument cache[];
+        static final IntegerArgument cache[];
 
         static {
             int high = Integer.getInteger("biz.paluch.redis.CommandArgs.IntegerCache", 128);
@@ -578,9 +578,9 @@ public class CommandArgs<K, V> {
      * This codec writes directly {@code byte[]} to the target buffer without wrapping it in a {@link ByteBuffer} to reduce GC
      * pressure.
      */
-    public final static class ExperimentalByteArrayCodec extends ByteArrayCodec {
+    public static final class ExperimentalByteArrayCodec extends ByteArrayCodec {
 
-        public final static ExperimentalByteArrayCodec INSTANCE = new ExperimentalByteArrayCodec();
+        public static final ExperimentalByteArrayCodec INSTANCE = new ExperimentalByteArrayCodec();
 
         private ExperimentalByteArrayCodec() {
 

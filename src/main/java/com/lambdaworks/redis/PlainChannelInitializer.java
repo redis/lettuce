@@ -24,12 +24,13 @@ import io.netty.channel.ChannelPipeline;
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-    final static RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
+    static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
             new Utf8StringCodec());
+
+    protected final char[] password;
 
     private boolean pingBeforeActivate;
     private CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
-    protected final char[] password;
     private final Supplier<List<ChannelHandler>> handlers;
     private final EventBus eventBus;
 

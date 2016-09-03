@@ -45,12 +45,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
     private final Queue<RedisCommand<?, ?, ?>> queue = LettuceFactories.newConcurrentQueue();
     private final RedisStateMachine rsm = new RedisStateMachine();
-
-    // If TRACE level logging has been enabled at startup.
-    private final boolean traceEnabled;
-
-    // If DEBUG level logging has been enabled at startup.
-    private final boolean debugEnabled;
+    private final boolean traceEnabled = logger.isTraceEnabled();
+    private final boolean debugEnabled = logger.isDebugEnabled();
 
     private final ClientResources clientResources;
     private final Endpoint endpoint;
@@ -73,9 +69,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         this.clientResources = clientResources;
         this.endpoint = endpoint;
-
-        this.traceEnabled = logger.isTraceEnabled();
-        this.debugEnabled = logger.isDebugEnabled();
     }
 
     /**

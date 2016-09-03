@@ -26,7 +26,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 class SentinelTopologyRefresh implements Closeable {
 
-    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelTopologyRefresh.class);
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelTopologyRefresh.class);
 
     private final List<StatefulRedisPubSubConnection<String, String>> pubSubConnections = new ArrayList<>();
     private final RedisClient redisClient;

@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
         implements RedisAdvancedClusterReactiveCommands<K, V> {
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
     /**
      * Initialize a new connection.

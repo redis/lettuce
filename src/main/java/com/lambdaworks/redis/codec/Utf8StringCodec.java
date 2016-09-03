@@ -18,7 +18,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  */
 public class Utf8StringCodec implements RedisCodec<String, String> {
 
-    private final static byte[] EMPTY = new byte[0];
+    private static final byte[] EMPTY = new byte[0];
 
     private Charset charset;
     private CharsetDecoder decoder;

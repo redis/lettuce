@@ -19,7 +19,7 @@ import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
  */
 public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubAsyncCommands<K, V> {
 
-    private PubSubCommandBuilder<K, V> commandBuilder;
+    private final PubSubCommandBuilder<K, V> commandBuilder;
 
     /**
      * Initialize a new connection.

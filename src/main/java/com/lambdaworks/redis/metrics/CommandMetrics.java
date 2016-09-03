@@ -56,7 +56,7 @@ public class CommandMetrics {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("[count=").append(count);
         sb.append(", timeUnit=").append(timeUnit);
         sb.append(", firstResponse=").append(firstResponse);
@@ -102,7 +102,7 @@ public class CommandMetrics {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("[min=").append(min);
             sb.append(", max=").append(max);
             sb.append(", percentiles=").append(percentiles);

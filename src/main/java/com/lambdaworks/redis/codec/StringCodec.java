@@ -24,10 +24,10 @@ import io.netty.util.CharsetUtil;
  */
 public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder<String, String> {
 
-    public final static StringCodec UTF8 = new StringCodec(LettuceCharsets.UTF8);
-    public final static StringCodec ASCII = new StringCodec(LettuceCharsets.ASCII);
+    public static final StringCodec UTF8 = new StringCodec(LettuceCharsets.UTF8);
+    public static final StringCodec ASCII = new StringCodec(LettuceCharsets.ASCII);
 
-    private final static byte[] EMPTY = new byte[0];
+    private static final byte[] EMPTY = new byte[0];
 
     private final Charset charset;
     private final boolean ascii;

@@ -36,8 +36,8 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public class DirContextDnsResolver implements DnsResolver, Closeable {
 
-    final static String PREFER_IPV4_KEY = "java.net.preferIPv4Stack";
-    final static String PREFER_IPV6_KEY = "java.net.preferIPv6Stack";
+    static final String PREFER_IPV4_KEY = "java.net.preferIPv4Stack";
+    static final String PREFER_IPV6_KEY = "java.net.preferIPv6Stack";
 
     private static final int IPV4_PART_COUNT = 4;
     private static final int IPV6_PART_COUNT = 8;
@@ -280,7 +280,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
     /**
      * Stack preference utility.
      */
-    private final static class StackPreference {
+    private static final class StackPreference {
 
         final boolean preferIpv4;
         final boolean preferIpv6;

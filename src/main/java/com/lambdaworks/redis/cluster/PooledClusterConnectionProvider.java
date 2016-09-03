@@ -34,12 +34,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider {
+
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
 
     // Contains NodeId-identified and HostAndPort-identified connections.
     private final Map<ConnectionKey, StatefulRedisConnection<K, V>> connections = new ConcurrentHashMap<>();
     private final Object stateLock = new Object();
-    private final boolean debugEnabled;
+    private final boolean debugEnabled = logger.isDebugEnabled();
     private final StatefulRedisConnection<K, V> writers[] = new StatefulRedisConnection[SlotHash.SLOT_COUNT];
     private final StatefulRedisConnection<K, V> readers[][] = new StatefulRedisConnection[SlotHash.SLOT_COUNT][];
     private final RedisClusterClient redisClusterClient;
@@ -51,8 +52,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec) {
+
         this.redisClusterClient = redisClusterClient;
-        this.debugEnabled = logger.isDebugEnabled();
         this.connectionFactory = new ConnectionFactory(redisClusterClient, redisCodec, clusterWriter);
     }
 

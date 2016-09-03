@@ -16,7 +16,7 @@ import com.lambdaworks.redis.RedisFuture;
  */
 class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFuture<V> {
 
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
 
     public PipelinedRedisFuture(CompletionStage<V> completionStage, Function<V, V> converter) {
         completionStage.thenAccept(v -> complete(converter.apply(v)))

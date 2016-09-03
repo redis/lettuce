@@ -11,6 +11,7 @@ import java.util.Collection;
 class RoundRobin<V> {
 
     protected final Collection<? extends V> collection;
+
     protected V offset;
 
     public RoundRobin(Collection<? extends V> collection) {

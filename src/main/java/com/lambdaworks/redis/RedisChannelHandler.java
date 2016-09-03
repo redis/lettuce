@@ -27,17 +27,16 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
-    protected long timeout;
-    protected TimeUnit unit;
-
+    private long timeout;
+    private TimeUnit unit;
     private CloseEvents closeEvents = new CloseEvents();
+
     private final RedisChannelWriter channelWriter;
+    private final boolean debugEnabled = logger.isDebugEnabled();
+
     private volatile boolean closed;
     private volatile boolean active = true;
     private volatile ClientOptions clientOptions;
-    
-    // If DEBUG level logging has been enabled at startup.
-    private final boolean debugEnabled;
 
     /**
      * @param writer the channel writer
@@ -47,8 +46,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     public RedisChannelHandler(RedisChannelWriter writer, long timeout, TimeUnit unit) {
         
         this.channelWriter = writer;
-        debugEnabled = logger.isDebugEnabled();
-        
+
         writer.setConnectionFacade(this);
         setTimeout(timeout, unit);
     }
@@ -60,6 +58,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      * @param unit Unit of time for the timeout.
      */
     public void setTimeout(long timeout, TimeUnit unit) {
+
         this.timeout = timeout;
         this.unit = unit;
     }

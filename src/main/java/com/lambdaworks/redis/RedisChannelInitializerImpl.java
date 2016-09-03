@@ -7,5 +7,5 @@ import io.netty.channel.ChannelDuplexHandler;
  * 
  * @author Mark Paluch
  */
-public abstract class RedisChannelInitializerImpl extends ChannelDuplexHandler implements RedisChannelInitializer {
+abstract class RedisChannelInitializerImpl extends ChannelDuplexHandler implements RedisChannelInitializer {
 }

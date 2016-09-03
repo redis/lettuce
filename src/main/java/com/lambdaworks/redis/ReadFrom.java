@@ -15,22 +15,22 @@ public abstract class ReadFrom {
     /**
      * Setting to read from the master only.
      */
-    public final static ReadFrom MASTER = new ReadFromImpl.ReadFromMaster();
+    public static final ReadFrom MASTER = new ReadFromImpl.ReadFromMaster();
 
     /**
      * Setting to read preferred from the master and fall back to a slave if the master is not available.
      */
-    public final static ReadFrom MASTER_PREFERRED = new ReadFromImpl.ReadFromMasterPreferred();
+    public static final ReadFrom MASTER_PREFERRED = new ReadFromImpl.ReadFromMasterPreferred();
 
     /**
      * Setting to read from the slave only.
      */
-    public final static ReadFrom SLAVE = new ReadFromImpl.ReadFromSlave();
+    public static final ReadFrom SLAVE = new ReadFromImpl.ReadFromSlave();
 
     /**
      * Setting to read from the nearest node.
      */
-    public final static ReadFrom NEAREST = new ReadFromImpl.ReadFromNearest();
+    public static final ReadFrom NEAREST = new ReadFromImpl.ReadFromNearest();
 
     /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.

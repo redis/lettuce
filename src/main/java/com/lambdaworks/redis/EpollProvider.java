@@ -23,9 +23,10 @@ public class EpollProvider {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(EpollProvider.class);
 
-    public final static Class<EventLoopGroup> epollEventLoopGroupClass;
-    public final static Class<Channel> epollDomainSocketChannelClass;
-    public final static Class<SocketAddress> domainSocketAddressClass;
+    public static final Class<EventLoopGroup> epollEventLoopGroupClass;
+    public static final Class<Channel> epollDomainSocketChannelClass;
+    public static final Class<SocketAddress> domainSocketAddressClass;
+
     static {
 
         epollEventLoopGroupClass = getClass("io.netty.channel.epoll.EpollEventLoopGroup");

@@ -25,8 +25,8 @@ import io.netty.buffer.ByteBuf;
 public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
         CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
-    protected RedisCommand<K, V, T> command;
     protected CountDownLatch latch = new CountDownLatch(1);
+    protected RedisCommand<K, V, T> command;
 
     /**
      * 

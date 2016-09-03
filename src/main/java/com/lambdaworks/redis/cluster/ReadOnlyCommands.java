@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  */
 class ReadOnlyCommands {
 
-    public final static ProtocolKeyword READ_ONLY_COMMANDS[];
+    static final ProtocolKeyword READ_ONLY_COMMANDS[];
 
     static {
 

@@ -221,7 +221,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>(RedisClusterCommands.class.getMethods().length, 1);
         private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>(5, 1);
 
-        private final static Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
+        private static final Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
 
         static {
             try {

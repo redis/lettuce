@@ -114,15 +114,15 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
 
-    protected AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
-    protected AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = new AtomicReference<>();
+    protected final AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
+    protected final AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = new AtomicReference<>();
 
     private final ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(new NodeConnectionFactoryImpl(), getResources());
     private final ClusterTopologyRefreshScheduler clusterTopologyRefreshScheduler = new ClusterTopologyRefreshScheduler(this,
             getResources());
+    private final Iterable<RedisURI> initialUris;
 
     private Partitions partitions;
-    private final Iterable<RedisURI> initialUris;
 
     private RedisClusterClient() {
 

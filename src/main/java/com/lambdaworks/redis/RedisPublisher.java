@@ -41,7 +41,7 @@ import reactor.core.publisher.Operators;
  */
 class RedisPublisher<K, V, T> implements Publisher<T> {
 
-    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
 
     private final boolean traceEnabled = LOG.isTraceEnabled();
 
@@ -111,7 +111,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      */
     private static class RedisSubscription<T> implements Subscription, StreamingOutput.Subscriber<T> {
 
-        private final static InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
+        private static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
         private final boolean traceEnabled = LOG.isTraceEnabled();
 
         private final AtomicLong demand = new AtomicLong();

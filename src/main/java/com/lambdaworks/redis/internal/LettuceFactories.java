@@ -21,7 +21,7 @@ public class LettuceFactories {
      * @param <T>
      * @return a new, empty {@link ConcurrentLinkedDeque}.
      */
-    public final static <T> Deque<T> newConcurrentQueue() {
+    public static final <T> Deque<T> newConcurrentQueue() {
         return new ConcurrentLinkedDeque<T>();
     }
 
@@ -31,7 +31,7 @@ public class LettuceFactories {
      * @param <T>
      * @return a new, empty {@link ArrayDeque}.
      */
-    public final static <T> Deque<T> newSpScQueue() {
+    public static final <T> Deque<T> newSpScQueue() {
         return new ArrayDeque<>();
     }
 

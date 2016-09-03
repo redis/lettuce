@@ -14,7 +14,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public class ScoredValue<V> extends Value<V> {
 
-    private final static ScoredValue<Object> EMPTY = new ScoredValue<>(0, null);
+    private static final ScoredValue<Object> EMPTY = new ScoredValue<>(0, null);
 
     private final double score;
 

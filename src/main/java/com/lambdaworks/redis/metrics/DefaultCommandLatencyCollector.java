@@ -206,7 +206,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     private static class PauseDetectorWrapper {
-        public final static AtomicLong counter = new AtomicLong();
+        public static final AtomicLong counter = new AtomicLong();
         PauseDetector pauseDetector;
 
         public void initialize() {

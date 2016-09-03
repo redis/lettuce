@@ -22,7 +22,7 @@ class ClusterScanSupport {
     /**
      * Map a {@link RedisFuture} of {@link KeyScanCursor} to a {@link RedisFuture} of {@link ClusterKeyScanCursor}.
      */
-    final static ScanCursorMapper<RedisFuture<KeyScanCursor<?>>> futureKeyScanCursorMapper = new ScanCursorMapper<RedisFuture<KeyScanCursor<?>>>() {
+    static final ScanCursorMapper<RedisFuture<KeyScanCursor<?>>> futureKeyScanCursorMapper = new ScanCursorMapper<RedisFuture<KeyScanCursor<?>>>() {
         @Override
         public RedisFuture<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId,
                 RedisFuture<KeyScanCursor<?>> cursor) {
@@ -38,7 +38,7 @@ class ClusterScanSupport {
     /**
      * Map a {@link RedisFuture} of {@link StreamScanCursor} to a {@link RedisFuture} of {@link ClusterStreamScanCursor}.
      */
-    final static ScanCursorMapper<RedisFuture<StreamScanCursor>> futureStreamScanCursorMapper = new ScanCursorMapper<RedisFuture<StreamScanCursor>>() {
+    static final ScanCursorMapper<RedisFuture<StreamScanCursor>> futureStreamScanCursorMapper = new ScanCursorMapper<RedisFuture<StreamScanCursor>>() {
         @Override
         public RedisFuture<StreamScanCursor> map(List<String> nodeIds, String currentNodeId,
                 RedisFuture<StreamScanCursor> cursor) {
@@ -54,13 +54,13 @@ class ClusterScanSupport {
     /**
      * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of {@link ClusterKeyScanCursor}.
      */
-    final static ScanCursorMapper<Mono<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds, currentNodeId,
+    static final ScanCursorMapper<Mono<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds, currentNodeId,
             cursor) -> cursor.map(keyScanCursor -> new ClusterKeyScanCursor<>(nodeIds, currentNodeId, keyScanCursor));
 
     /**
      * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of {@link ClusterStreamScanCursor}.
      */
-    final static ScanCursorMapper<Mono<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
+    static final ScanCursorMapper<Mono<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
             cursor) -> cursor.map(new Function<StreamScanCursor, StreamScanCursor>() {
                 @Override
                 public StreamScanCursor apply(StreamScanCursor streamScanCursor) {
