@@ -1,17 +1,16 @@
 package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.millis;
+import static com.lambdaworks.redis.ClientOptions.DisconnectedBehavior.REJECT_COMMANDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,6 +23,7 @@ import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
+import com.lambdaworks.redis.reactive.TestSubscriber;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -196,6 +196,27 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
         String valueB = reactive.get("keyB").block();
         assertThat(valueB).isEqualTo("valueB");
+    }
+
+    @Test
+    public void subscribeWithDisconnectedClient() throws Exception {
+
+        client.setOptions(ClientOptions.builder().disconnectedBehavior(REJECT_COMMANDS).autoReconnect(false).build());
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+
+            connection.async().quit();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+            Mono<String> ping = connection.reactive().ping();
+
+            ping.subscribeWith(TestSubscriber.create()).assertErrorWith(throwable -> {
+
+                assertThat(throwable).isInstanceOf(RedisException.class)
+                        .hasMessageContaining("not connected. Commands are rejected");
+
+            }).await();
+        }
     }
 
     private static Subscriber<String> createSubscriberWithExceptionOnComplete() {

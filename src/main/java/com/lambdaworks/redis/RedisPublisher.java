@@ -364,7 +364,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     Operators.addAndGet(subscription.demand, n);
 
                     if (subscription.changeState(this, DEMAND)) {
-                        subscription.checkCommandDispatch();
+                        try {
+                            subscription.checkCommandDispatch();
+                        } catch (Exception ex) {
+                            subscription.onError(ex);
+                        }
                         subscription.checkOnDataAvailable();
                     }
                 }
