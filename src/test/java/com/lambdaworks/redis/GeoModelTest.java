@@ -83,15 +83,4 @@ public class GeoModelTest {
         assertThat(sut.toString()).isNotEqualTo(slightlyDifferent.toString());
 
     }
-
-    @Test
-    public void geoCoordinatesEmpty() throws Exception {
-
-        GeoCoordinates sut = new GeoCoordinates(null, null);
-        GeoCoordinates equalsToSut = new GeoCoordinates(null, null);
-
-        assertThat(sut).isEqualTo(equalsToSut);
-        assertThat(sut.hashCode()).isEqualTo(equalsToSut.hashCode());
-    }
-
 }

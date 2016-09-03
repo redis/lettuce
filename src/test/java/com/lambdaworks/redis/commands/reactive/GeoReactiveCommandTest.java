@@ -32,7 +32,7 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
         List<Value<GeoCoordinates>> geopos = reactive.geopos(key, "Weinheim", "foobar", "Bahn").collectList().block();
 
         assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).getValue().x.doubleValue()).isEqualTo(8.6638, offset(0.001));
+        assertThat(geopos.get(0).getValue().getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
         assertThat(geopos.get(1).hasValue()).isFalse();
         assertThat(geopos.get(2).hasValue()).isTrue();
     }

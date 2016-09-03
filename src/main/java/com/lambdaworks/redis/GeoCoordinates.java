@@ -1,6 +1,6 @@
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.output.DoubleOutput;
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * A tuple consisting of numerical geo data points to describe geo coordinates.
@@ -9,13 +9,37 @@ import com.lambdaworks.redis.output.DoubleOutput;
  */
 public class GeoCoordinates {
 
-    public final Number x;
-    public final Number y;
+    private final Number x;
+    private final Number y;
 
+    /**
+     * Creates new {@link GeoCoordinates}.
+     * @param x the longitude, must not be {@literal null}.
+     * @param y the latitude, must not be {@literal null}.
+     */
     public GeoCoordinates(Number x, Number y) {
+
+        LettuceAssert.notNull(x, "X must not be null");
+        LettuceAssert.notNull(y, "Y must not be null");
 
         this.x = x;
         this.y = y;
+    }
+
+    /**
+     *
+     * @return the longitude.
+     */
+    public Number getX() {
+        return x;
+    }
+
+    /**
+     *
+     * @return the latitude.
+     */
+    public Number getY() {
+        return y;
     }
 
     @Override
@@ -41,8 +65,6 @@ public class GeoCoordinates {
 
     @Override
     public String toString() {
-
-        return String.format("(%s, %s)", x, y);
+        return String.format("(%s, %s)", getX(), getY());
     }
-
 }
