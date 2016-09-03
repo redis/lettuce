@@ -4,7 +4,6 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.ConnectionTestUtil.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
@@ -76,7 +75,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
-        StatefulRedisConnection<String, String> statefulRedisConnection = getStatefulConnection(connection);
+        StatefulRedisConnection<String, String> statefulRedisConnection = connection.getStatefulConnection();
 
         waitOrTimeout(() -> listener.onConnected != null, Timeout.timeout(seconds(2)));
 

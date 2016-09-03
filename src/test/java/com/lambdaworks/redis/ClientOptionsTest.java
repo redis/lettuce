@@ -2,7 +2,6 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.ConnectionTestUtil.getChannel;
 import static com.lambdaworks.ConnectionTestUtil.getConnectionWatchdog;
-import static com.lambdaworks.ConnectionTestUtil.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -51,18 +50,20 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     @Test
     public void variousClientOptions() throws Exception {
 
-        RedisAsyncCommands<String, String> plain = client.connect().async();
+        StatefulRedisConnection<String, String> connection1 = client.connect();
 
-        assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
+        assertThat(connection1.getOptions().isAutoReconnect()).isTrue();
+        connection1.close();
 
         client.setOptions(ClientOptions.builder().autoReconnect(false).build());
-        RedisAsyncCommands<String, String> connection = client.connect().async();
-        assertThat(getStatefulConnection(connection).getOptions().isAutoReconnect()).isFalse();
 
-        assertThat(getStatefulConnection(plain).getOptions().isAutoReconnect()).isTrue();
+        StatefulRedisConnection<String, String> connection2 = client.connect();
+        assertThat(connection2.getOptions().isAutoReconnect()).isFalse();
 
-        plain.getStatefulConnection().close();
-        connection.getStatefulConnection().close();
+        assertThat(connection1.getOptions().isAutoReconnect()).isTrue();
+
+        connection1.close();
+        connection2.close();
     }
 
     @Test
