@@ -1768,7 +1768,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     public <T> Flux<T> createFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Flux.from(new RedisPublisher(commandSupplier, connection, false));
+        return Flux.from(new RedisPublisher<>(commandSupplier, connection, false));
     }
 
     protected <T> Mono<T> createMono(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
@@ -1776,12 +1776,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     public <T> Mono<T> createMono(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Mono.from(new RedisPublisher(commandSupplier, connection, false));
+        return Mono.from(new RedisPublisher<>(commandSupplier, connection, false));
     }
     
     @SuppressWarnings("unchecked")
     public <T, R> Flux<R> createDissolvingFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return (Flux<R>) Flux.from(new RedisPublisher(commandSupplier, connection, true));
+        return (Flux<R>) Flux.from(new RedisPublisher<>(commandSupplier, connection, true));
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

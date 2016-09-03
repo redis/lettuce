@@ -286,7 +286,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             }
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         private void dispatchCommand() {
             if (command.getOutput() instanceof StreamingOutput<?>) {
                 StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();

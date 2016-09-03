@@ -290,9 +290,9 @@ public class RedisClient extends AbstractRedisClient {
         PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<K, V>(clientOptions);
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint,
-                (RedisChannelWriter) endpoint, codec, timeout.timeout, timeout.timeUnit);
+                endpoint, codec, timeout.timeout, timeout.timeUnit);
 
-        connectStateful(connection, redisURI, endpoint, () -> new PubSubCommandHandler(clientResources, codec, endpoint));
+        connectStateful(connection, redisURI, endpoint, () -> new PubSubCommandHandler<>(clientResources, codec, endpoint));
 
         return connection;
     }
