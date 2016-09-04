@@ -42,7 +42,6 @@ import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 public class RedisClient extends AbstractRedisClient {
 
     private static final RedisURI EMPTY_URI = new RedisURI();
-    private static final boolean POOL_AVAILABLE = isPresent("org.apache.commons.pool2.impl.GenericObjectPool");
 
     private final RedisURI redisURI;
 
@@ -566,11 +565,6 @@ public class RedisClient extends AbstractRedisClient {
         LettuceAssert.assertState(this.redisURI != EMPTY_URI,
                 "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
-    }
-
-    private void checkPoolDependency() {
-        LettuceAssert.assertState(POOL_AVAILABLE,
-                "Cannot use connection pooling without the optional Apache commons-pool2 library on the class path");
     }
 
     /**
