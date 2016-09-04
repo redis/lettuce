@@ -10,7 +10,9 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * 
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
  */
+@Deprecated
 public class PoolingProxyFactory {
 
     /**

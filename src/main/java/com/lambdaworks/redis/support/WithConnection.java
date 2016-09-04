@@ -9,7 +9,9 @@ import com.lambdaworks.redis.RedisConnectionPool;
  * @param <T> Connection type.
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
  */
+@Deprecated
 public abstract class WithConnection<T> {
 
     /**

@@ -7,7 +7,6 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
-import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.protocol.CommandHandler;
@@ -20,6 +19,7 @@ import com.lambdaworks.redis.resource.SocketAddressResolver;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.support.ConnectionPoolSupport;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -191,7 +191,9 @@ public class RedisClient extends AbstractRedisClient {
      * dependency.
      * 
      * @return a new {@link RedisConnectionPool} instance
+     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
+    @Deprecated
     public RedisConnectionPool<RedisCommands<String, String>> pool() {
         return pool(5, 20);
     }
@@ -203,7 +205,9 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
+     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
+    @Deprecated
     public RedisConnectionPool<RedisCommands<String, String>> pool(int maxIdle, int maxActive) {
         return pool(newStringStringCodec(), maxIdle, maxActive);
     }
@@ -218,8 +222,10 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key type
      * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
+     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
     @SuppressWarnings("unchecked")
+    @Deprecated
     public <K, V> RedisConnectionPool<RedisCommands<K, V>> pool(final RedisCodec<K, V> codec, int maxIdle, int maxActive) {
 
         checkPoolDependency();
@@ -258,7 +264,9 @@ public class RedisClient extends AbstractRedisClient {
      * dependency.
      *
      * @return a new {@link RedisConnectionPool} instance
+     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
+    @Deprecated
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool() {
         return asyncPool(5, 20);
     }
@@ -270,7 +278,9 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
+     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
+    @Deprecated
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool(int maxIdle, int maxActive) {
         return asyncPool(newStringStringCodec(), maxIdle, maxActive);
     }
@@ -285,7 +295,9 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key type
      * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
+     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
+    @Deprecated
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
             int maxActive) {
 

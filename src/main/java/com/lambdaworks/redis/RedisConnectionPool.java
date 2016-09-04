@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import com.lambdaworks.redis.internal.AbstractInvocationHandler;
+import com.lambdaworks.redis.support.ConnectionPoolSupport;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
@@ -21,7 +22,9 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
  * @author Mark Paluch
  * @param <T> Connection type.
  * @since 3.0
+ * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
  */
+@Deprecated
 public class RedisConnectionPool<T> implements Closeable {
 
     private final RedisConnectionProvider<T> redisConnectionProvider;

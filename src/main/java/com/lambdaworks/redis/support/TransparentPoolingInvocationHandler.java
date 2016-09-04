@@ -11,7 +11,9 @@ import com.lambdaworks.redis.internal.AbstractInvocationHandler;
  * 
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
  */
+@Deprecated
 public class TransparentPoolingInvocationHandler<T> extends AbstractInvocationHandler {
 
     private RedisConnectionPool<T> pool;
