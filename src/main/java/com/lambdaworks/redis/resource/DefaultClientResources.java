@@ -17,6 +17,8 @@ import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.util.concurrent.*;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -78,6 +80,7 @@ public class DefaultClientResources implements ClientResources {
     private final MetricEventPublisher metricEventPublisher;
     private final DnsResolver dnsResolver;
     private final Delay reconnectDelay;
+    private final ByteBufAllocator byteBufAllocator;
 
     private volatile boolean shutdownCalled = false;
 
@@ -159,6 +162,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         reconnectDelay = builder.reconnectDelay;
+        byteBufAllocator = builder.byteBufAllocator;
     }
 
     /**
@@ -194,6 +198,7 @@ public class DefaultClientResources implements ClientResources {
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
         private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
         private Delay reconnectDelay = DEFAULT_RECONNECT_DELAY;
+        private ByteBufAllocator byteBufAllocator = PooledByteBufAllocator.DEFAULT;
 
         /**
          * @deprecated Use {@link DefaultClientResources#builder()}
@@ -331,6 +336,22 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
+         * Sets the {@link ByteBufAllocator} that can be used across different instances of the RedisClient, by default
+         * the default pooled allocator will be used. This is an advanced configuration that should only be used if
+         * you know what you are doing.
+         *
+         * @param byteBufAllocator the byte buffer allocator tho be used, must not be {@literal null}.
+         * @return this
+         */
+        public Builder byteBufAllocator(ByteBufAllocator byteBufAllocator) {
+
+            LettuceAssert.notNull(reconnectDelay, "ByteBufAllocator must not be null");
+
+            this.byteBufAllocator = byteBufAllocator;
+            return this;
+        }
+
+        /**
          *
          * @return a new instance of {@link DefaultClientResources}.
          */
@@ -459,5 +480,10 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public Delay reconnectDelay() {
         return reconnectDelay;
+    }
+
+    @Override
+    public ByteBufAllocator byteBufAllocator() {
+        return byteBufAllocator;
     }
 }
