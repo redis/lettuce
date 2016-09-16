@@ -657,7 +657,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             throw new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + topologyRefreshSource);
         }
 
-        Partitions loadedPartitions = partitions.values().iterator().next();
+        Partitions loadedPartitions = determinePartitions(this.partitions, partitions);
         RedisURI viewedBy = refresh.getViewedBy(partitions, loadedPartitions);
 
         for (RedisClusterNode partition : loadedPartitions) {
@@ -670,6 +670,22 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         return loadedPartitions;
+    }
+
+    /**
+     * Determines a {@link Partitions topology view} based on the current and the obtain topology views.
+     * 
+     * @param current the current topology view. May be {@literal null} if {@link RedisClusterClient} has no topology view yet.
+     * @param topologyViews the obtain topology views
+     * @return the {@link Partitions topology view} to use.
+     */
+    protected Partitions determinePartitions(Partitions current, Map<RedisURI, Partitions> topologyViews) {
+
+        if (current == null) {
+            return PartitionsConsensus.HEALTHY_MAJORITY.getPartitions(null, topologyViews);
+        }
+
+        return PartitionsConsensus.KNOWN_MAJORITY.getPartitions(current, topologyViews);
     }
 
     private void activateTopologyRefreshIfNeeded() {

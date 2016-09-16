@@ -276,13 +276,17 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.setSlots(new ArrayList<>());
-            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+
+            if (partition.getSlots().contains(15495)) {
+                partition.setSlots(new ArrayList<>());
+            } else {
+                partition.setSlots(new ArrayList<>());
                 int[] slots = createSlots(0, 16384);
                 for (int i = 0; i < slots.length; i++) {
                     partition.getSlots().add(i);
                 }
             }
+
         }
         partitions.updateCache();
 

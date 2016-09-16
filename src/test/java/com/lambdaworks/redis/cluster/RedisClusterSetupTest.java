@@ -511,15 +511,6 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     private void waitUntilOnlyOnePartition() throws InterruptedException, TimeoutException {
         Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
-        Wait.untilTrue(() -> {
-            for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-                if (redisClusterNode.getSlots().size() > 16380) {
-                    return true;
-                }
-            }
-
-            return false;
-        }).waitOrTimeout();
     }
 
     private void suspendConnection(RedisClusterAsyncCommands<String, String> asyncCommands)
