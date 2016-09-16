@@ -1,0 +1,37 @@
+package com.lambdaworks.redis.cluster;
+
+import java.util.*;
+
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
+import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+
+/**
+ * @author Mark Paluch
+ */
+class PartitionsConsensusTestSupport {
+
+    static RedisClusterNode createNode(int nodeId) {
+        return new RedisClusterNode(RedisURI.create("localhost", 6379 + nodeId), "" + nodeId, true, "", 0, 0, 0,
+                Collections.emptyList(), new HashSet<>());
+    }
+
+    static Partitions createPartitions(RedisClusterNode... nodes) {
+
+        Partitions partitions = new Partitions();
+        partitions.addAll(Arrays.asList(nodes));
+        return partitions;
+    }
+
+    static Map<RedisURI, Partitions> createMap(Partitions... partitionses) {
+
+        Map<RedisURI, Partitions> partitionsMap = new HashMap<>();
+
+        int counter = 0;
+        for (Partitions partitions : partitionses) {
+            partitionsMap.put(createNode(counter++).getUri(), partitions);
+        }
+
+        return partitionsMap;
+    }
+}
