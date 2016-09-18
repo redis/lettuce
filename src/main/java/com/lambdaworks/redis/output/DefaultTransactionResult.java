@@ -65,4 +65,15 @@ class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
     public Stream<Object> stream() {
         return result.stream();
     }
+
+    @Override
+    public String toString() {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [wasRolledBack=").append(wasRolledBack);
+        sb.append(", responses=").append(size());
+        sb.append(']');
+        return sb.toString();
+    }
 }
