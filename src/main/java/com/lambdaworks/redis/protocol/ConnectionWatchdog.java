@@ -10,8 +10,8 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
-
 import com.lambdaworks.redis.resource.Delay;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
@@ -50,9 +50,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private CommandHandler<?, ?> commandHandler;
 
     private volatile int attempts;
-    private volatile boolean armed;
     private volatile boolean listenOnChannelInactive;
     private volatile Timeout reconnectScheduleTimeout;
+    private volatile String logPrefix;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -105,7 +105,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
-        logger.debug("{} userEventTriggered({}, {})", commandHandler.logPrefix(), ctx, evt);
+        logger.debug("{} userEventTriggered({}, {})", logPrefix(), ctx, evt);
 
         if (evt instanceof ConnectionEvents.PrepareClose) {
 
@@ -132,13 +132,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        if(commandHandler == null) {
+        if (commandHandler == null) {
             this.commandHandler = ctx.pipeline().get(CommandHandler.class);
         }
 
         reconnectScheduleTimeout = null;
         channel = ctx.channel();
-        logger.debug("{} channelActive({})", commandHandler.logPrefix(), ctx);
+        logger.debug("{} channelActive({})", logPrefix(), ctx);
         remoteAddress = channel.remoteAddress();
 
         super.channelActive(ctx);
@@ -147,9 +147,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
-        logger.debug("{} channelInactive({})", commandHandler.logPrefix(), ctx);
+        logger.debug("{} channelInactive({})", logPrefix(), ctx);
         channel = null;
-
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
             RedisChannelHandler<?, ?> channelHandler = ctx.pipeline().get(RedisChannelHandler.class);
@@ -160,7 +159,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
             scheduleReconnect();
         } else {
-            logger.debug("{} Reconnect scheduling disabled", commandHandler.logPrefix(), ctx);
+            logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
         }
 
         super.channelInactive(ctx);
@@ -171,14 +170,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      */
     public synchronized void scheduleReconnect() {
 
-        logger.debug("{} scheduleReconnect()", commandHandler.logPrefix());
+        logger.debug("{} scheduleReconnect()", logPrefix());
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");
             return;
         }
 
-        if (commandHandler.isClosed()) {
+        if (commandHandler != null && commandHandler.isClosed()) {
             logger.debug("Skip reconnect scheduling, CommandHandler is closed");
             return;
         }
@@ -188,7 +187,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
             final int attempt = attempts;
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
-            logger.debug("Reconnect attempt {}, delay {}ms", attempt, timeout);
+            logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempt, timeout);
             this.reconnectScheduleTimeout = timer.newTimeout(new TimerTask() {
                 @Override
                 public void run(final Timeout timeout) throws Exception {
@@ -205,7 +204,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 }
             }, timeout, TimeUnit.MILLISECONDS);
         } else {
-            logger.debug("{} Skipping scheduleReconnect() because I have an active channel", commandHandler.logPrefix());
+            logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
         }
     }
 
@@ -227,7 +226,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             return;
         }
 
-        if (commandHandler.isClosed()) {
+        if (commandHandler != null && commandHandler.isClosed()) {
             logger.debug("Skip reconnect scheduling, CommandHandler is closed");
             return;
         }
@@ -311,5 +310,17 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     ReconnectionHandler getReconnectionHandler() {
         return reconnectionHandler;
+    }
+
+    private String logPrefix() {
+
+        if (logPrefix != null) {
+            return logPrefix;
+        }
+
+        StringBuilder buffer = new StringBuilder(64);
+        buffer.append('[').append("Last known addr=").append(remoteAddress).append(", ")
+                .append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
+        return logPrefix = buffer.toString();
     }
 }
