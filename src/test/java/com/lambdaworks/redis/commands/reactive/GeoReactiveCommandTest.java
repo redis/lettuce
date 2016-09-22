@@ -1,18 +1,19 @@
 package com.lambdaworks.redis.commands.reactive;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.offset;
+
+import java.util.List;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.GeoCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
-import org.junit.Ignore;
-import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
 public class GeoReactiveCommandTest extends GeoCommandTest {
 
@@ -41,5 +42,10 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
     @Ignore("API differences")
     @Override
     public void geoposWithTransaction() throws Exception {
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void geodistMissingElements() throws Exception {
+        super.geodistMissingElements();
     }
 }

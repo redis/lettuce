@@ -103,6 +103,17 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
     }
 
+    // See https://github.com/antirez/redis/issues/3512 and https://github.com/mp911de/lettuce/issues/362
+    @Test(expected = RedisException.class)
+    public void geodistMissingElements() throws Exception {
+
+        prepareGeo();
+
+        assertThat(redis.geodist("Unknown", "Unknown", "Bahn", GeoArgs.Unit.km)).isNull();
+        assertThat(redis.geodist(key, "Unknown", "Bahn", GeoArgs.Unit.km)).isNull();
+        assertThat(redis.geodist(key, "Weinheim", "Unknown", GeoArgs.Unit.km)).isNull();
+    }
+
     @Test
     public void geodistWithTransaction() throws Exception {
 
@@ -114,7 +125,6 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         // 10 mins with the bike
         assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
-
     }
 
     @Test
