@@ -13,18 +13,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.lambdaworks.TestClientResources;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.ConnectionTestUtil;
 import com.lambdaworks.Futures;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
@@ -47,7 +47,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     private static final String host = TestSettings.hostAddr();
 
     private static final ClusterTopologyRefreshOptions PERIODIC_REFRESH_ENABLED = ClusterTopologyRefreshOptions.builder()
-            .enablePeriodicRefresh(1, TimeUnit.SECONDS).build();
+            .enablePeriodicRefresh(1, TimeUnit.SECONDS).dynamicRefreshSources(false).build();
 
     private static RedisClusterClient clusterClient;
     private static RedisClient client = DefaultRedisClient.get();
@@ -60,8 +60,8 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = RedisClusterClient.create(
-                TestClientResources.get(), RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
     }
 
     @AfterClass
