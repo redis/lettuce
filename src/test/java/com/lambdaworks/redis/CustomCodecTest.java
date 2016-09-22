@@ -4,24 +4,21 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.protocol.CommandArgs;
 import org.junit.Test;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.CommandArgs;
+
 import rx.observers.TestSubscriber;
 
 public class CustomCodecTest extends AbstractRedisClientTest {
@@ -57,8 +54,11 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
     @Test
     public void testDeflateCompressedJavaSerializer() throws Exception {
-        RedisCommands<String, Object> connection = client.connect(
-                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE)).sync();
+        RedisCommands<String, Object> connection = client
+                .connect(
+                        CompressionCodec
+                                .valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE))
+                .sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -68,8 +68,10 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
     @Test
     public void testGzipompressedJavaSerializer() throws Exception {
-        RedisCommands<String, Object> connection = client.connect(
-                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP)).sync();
+        RedisCommands<String, Object> connection = client
+                .connect(CompressionCodec
+                        .valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP))
+                .sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -93,8 +95,31 @@ public class CustomCodecTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void testByteBufferCodec() throws Exception {
+
+        RedisCommands<ByteBuffer, ByteBuffer> connection = client.connect(new ByteBufferCodec()).sync();
+        String value = "üöäü+#";
+
+        ByteBuffer wrap = ByteBuffer.wrap(value.getBytes());
+
+        connection.set(wrap, wrap);
+
+        List<ByteBuffer> keys = connection.keys(wrap);
+        assertThat(keys).hasSize(1);
+        ByteBuffer byteBuffer = keys.get(0);
+        byte[] bytes = new byte[byteBuffer.remaining()];
+        byteBuffer.get(bytes);
+
+        assertThat(new String(bytes)).isEqualTo(value);
+
+        connection.close();
+    }
+
+    @Test
     public void testExperimentalByteCodec() throws Exception {
-        RedisCommands<byte[], byte[]> connection = client.connect(CommandArgs.ExperimentalByteArrayCodec.INSTANCE).sync();
+
+        RedisCommands<byte[], byte[]> connection = client.connect(CommandArgs.ExperimentalByteArrayCodec.INSTANCE)
+                .sync();
         String value = "üöäü+#";
         connection.set(key.getBytes(), value.getBytes());
         assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());
@@ -107,6 +132,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
     }
 
     public class SerializedObjectCodec implements RedisCodec<String, Object> {
+
         private Charset charset = Charset.forName("UTF-8");
 
         @Override
@@ -141,6 +167,35 @@ public class CustomCodecTest extends AbstractRedisClientTest {
             } catch (IOException e) {
                 return null;
             }
+        }
+    }
+
+    public class ByteBufferCodec implements RedisCodec<ByteBuffer, ByteBuffer> {
+
+        @Override
+        public ByteBuffer decodeKey(ByteBuffer bytes) {
+
+            ByteBuffer decoupled = ByteBuffer.allocate(bytes.remaining());
+            decoupled.put(bytes);
+            return (ByteBuffer) decoupled.flip();
+        }
+
+        @Override
+        public ByteBuffer decodeValue(ByteBuffer bytes) {
+
+            ByteBuffer decoupled = ByteBuffer.allocate(bytes.remaining());
+            decoupled.put(bytes);
+            return (ByteBuffer) decoupled.flip();
+        }
+
+        @Override
+        public ByteBuffer encodeKey(ByteBuffer key) {
+            return key.asReadOnlyBuffer();
+        }
+
+        @Override
+        public ByteBuffer encodeValue(ByteBuffer value) {
+            return value.asReadOnlyBuffer();
         }
     }
 }
