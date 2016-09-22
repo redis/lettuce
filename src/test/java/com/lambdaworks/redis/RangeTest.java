@@ -75,7 +75,7 @@ public class RangeTest {
         assertThat(lt.getLower().getValue()).isNull();
         assertThat(lt.getUpper().isIncluding()).isFalse();
         assertThat(lt.getUpper().getValue()).isEqualTo("zero");
-        assertThat(lt.toString()).isEqualTo("Range [[unbounded] to zero]");
+        assertThat(lt.toString()).isEqualTo("Range [[unbounded] to (zero]");
     }
 
     @Test
