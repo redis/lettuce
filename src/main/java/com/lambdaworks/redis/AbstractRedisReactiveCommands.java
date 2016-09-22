@@ -1081,6 +1081,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zcount(K key, Range<? extends Number> range) {
+        return createMono(() -> commandBuilder.zcount(key, range));
+    }
+
+    @Override
     public Mono<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return createMono(() -> commandBuilder.zinterstore(destination, storeArgs, keys));
     }
@@ -1116,6 +1121,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zrangebyscore(K key, Range<? extends Number> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
@@ -1123,6 +1133,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
+    }
+
+    @Override
+    public Flux<V> zrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, range, limit));
     }
 
     @Override
@@ -1136,6 +1151,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
         return createMono(() -> commandBuilder.zrange(channel, key, start, stop));
     }
@@ -1143,6 +1163,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
         return createMono(() -> commandBuilder.zrangeWithScores(channel, key, start, stop));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, range, limit));
     }
 
     @Override
@@ -1162,9 +1187,19 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createMono(() -> commandBuilder.zrangebyscore(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
             long count) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        return createMono(() -> commandBuilder.zrangebyscore(channel, key, range, limit));
     }
 
     @Override
@@ -1178,6 +1213,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
@@ -1187,6 +1227,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
+        return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, range, limit));
     }
 
     @Override
@@ -1215,6 +1261,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zremrangebyscore(K key, Range<? extends Number> range) {
+        return createMono(() -> commandBuilder.zremrangebyscore(key, range));
+    }
+
+    @Override
     public Flux<V> zrevrange(K key, long start, long stop) {
         return createDissolvingFlux(() -> commandBuilder.zrevrange(key, start, stop));
     }
@@ -1235,6 +1286,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zrevrangebyscore(K key, Range<? extends Number> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Flux<V> zrevrangebyscore(K key, double max, double min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
@@ -1242,6 +1298,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Flux<V> zrevrangebyscore(K key, String max, String min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
+    }
+
+    @Override
+    public Flux<V> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, range, limit));
     }
 
     @Override
@@ -1255,6 +1316,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
@@ -1262,6 +1328,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, range, limit));
     }
 
     @Override
@@ -1285,6 +1356,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
@@ -1294,6 +1370,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, range, limit));
     }
 
     @Override
@@ -1307,6 +1388,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
@@ -1316,6 +1402,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
+        return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, limit));
     }
 
     @Override
@@ -1673,8 +1765,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zlexcount(K key, Range<? extends V> range) {
+        return createMono(() -> commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
     public Mono<Long> zremrangebylex(K key, String min, String max) {
         return createMono(() -> commandBuilder.zremrangebylex(key, min, max));
+    }
+
+    @Override
+    public Mono<Long> zremrangebylex(K key, Range<? extends V> range) {
+        return createMono(() -> commandBuilder.zremrangebylex(key, range));
     }
 
     @Override
@@ -1683,8 +1785,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zrangebylex(K key, Range<? extends V> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Flux<V> zrangebylex(K key, String min, String max, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
+    @Override
+    public Flux<V> zrangebylex(K key, Range<? extends V> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, range, limit));
     }
 
     @Override
@@ -1778,7 +1890,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public <T> Mono<T> createMono(Supplier<RedisCommand<K, V, T>> commandSupplier) {
         return Mono.from(new RedisPublisher<>(commandSupplier, connection, false));
     }
-    
+
     @SuppressWarnings("unchecked")
     public <T, R> Flux<R> createDissolvingFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
         return (Flux<R>) Flux.from(new RedisPublisher<>(commandSupplier, connection, true));

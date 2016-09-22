@@ -1,7 +1,11 @@
 package com.lambdaworks.redis.commands;
 
+import static com.lambdaworks.redis.protocol.CommandType.ZRANGEBYLEX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -11,6 +15,7 @@ import com.lambdaworks.redis.TransactionResult;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.output.ValueListOutput;
 import com.lambdaworks.redis.protocol.*;
 
 /**
