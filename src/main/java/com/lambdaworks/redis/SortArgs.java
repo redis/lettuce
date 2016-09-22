@@ -8,6 +8,7 @@ import static com.lambdaworks.redis.protocol.CommandType.GET;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
@@ -20,7 +21,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 public class SortArgs {
 
     private String by;
-    private Long offset, count;
+    private Limit limit = Limit.unlimited();
     private List<String> get;
     private CommandKeyword order;
     private boolean alpha;
@@ -67,8 +68,14 @@ public class SortArgs {
     }
 
     public SortArgs limit(long offset, long count) {
-        this.offset = offset;
-        this.count = count;
+        return limit(Limit.create(offset, count));
+    }
+
+    public SortArgs limit(Limit limit) {
+
+        LettuceAssert.notNull(limit, "Limit must not be null");
+
+        this.limit = limit;
         return this;
     }
 
@@ -109,10 +116,10 @@ public class SortArgs {
             }
         }
 
-        if (offset != null) {
+        if (limit != null && limit.isLimited()) {
             args.add(LIMIT);
-            args.add(offset);
-            args.add(count);
+            args.add(limit.getOffset());
+            args.add(limit.getCount());
         }
 
         if (order != null) {
