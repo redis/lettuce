@@ -103,6 +103,17 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
     }
 
+    // See https://github.com/antirez/redis/issues/3512 and https://github.com/mp911de/lettuce/issues/362
+    @Test(expected = RedisException.class)
+    public void geodistMissingElements() throws Exception {
+
+        prepareGeo();
+
+        assertThat(redis.geodist("Unknown", "Unknown", "Bahn", GeoArgs.Unit.km)).isNull();
+        assertThat(redis.geodist(key, "Unknown", "Bahn", GeoArgs.Unit.km)).isNull();
+        assertThat(redis.geodist(key, "Weinheim", "Unknown", GeoArgs.Unit.km)).isNull();
+    }
+
     @Test
     public void geodistWithTransaction() throws Exception {
 
@@ -114,7 +125,6 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         // 10 mins with the bike
         assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
-
     }
 
     @Test
@@ -269,8 +279,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1)
-                .desc().withStore(resultKey));
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStore(resultKey));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
@@ -298,8 +308,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1)
-                .desc().withStoreDist("38o54"));
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -336,8 +346,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1).desc()
-                .withStoreDist("38o54"));
+        Long result = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
