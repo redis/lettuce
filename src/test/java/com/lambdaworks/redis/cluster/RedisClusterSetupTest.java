@@ -284,8 +284,11 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void atLeastOnceForgetNodeFailover() throws Exception {
 
+        ClusterTopologyRefreshOptions refreshOptions = ClusterTopologyRefreshOptions.builder()
+                .enablePeriodicRefresh(1, TimeUnit.SECONDS).dynamicRefreshSources(false)
+                .build();
         clusterClient.setOptions(
-                ClusterClientOptions.builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS).build());
+                ClusterClientOptions.builder().topologyRefreshOptions(refreshOptions).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
         clusterClient.setOptions(ClusterClientOptions.builder().refreshClusterView(false).build());
         ClusterSetup.setup2Masters(clusterRule);
@@ -315,7 +318,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         redis1.clusterForget(partition2.getNodeId());
         redis2.clusterForget(partition1.getNodeId());
 
-        clusterClient.setOptions(ClusterClientOptions.builder().refreshClusterView(true).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(refreshOptions).build());
         waitUntilOnlyOnePartition();
 
         Wait.untilTrue(() -> Futures.areAllCompleted(futures)).waitOrTimeout();
