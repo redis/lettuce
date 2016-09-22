@@ -1083,6 +1083,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zcount(K key, Range<? extends Number> range) {
+        return createObservable(() -> commandBuilder.zcount(key, range));
+    }
+
+    @Override
     public Observable<Double> zincrby(K key, double amount, K member) {
         return createObservable(() -> commandBuilder.zincrby(key, amount, member));
     }
@@ -1118,6 +1123,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<V> zrangebyscore(K key, Range<? extends Number> range) {
+        return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<V> zrangebyscore(K key, double min, double max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
@@ -1125,6 +1135,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<V> zrangebyscore(K key, String min, String max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
+    }
+
+    @Override
+    public Observable<V> zrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.zrangebyscore(key, range, limit));
     }
 
     @Override
@@ -1138,6 +1153,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range) {
+        return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
@@ -1145,6 +1165,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
+    }
+
+    @Override
+    public Observable<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.zrangebyscoreWithScores(key, range, limit));
     }
 
     @Override
@@ -1168,6 +1193,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createObservable(() -> commandBuilder.zrangebyscore(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
             long count) {
         return createObservable(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
@@ -1177,6 +1207,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
             long count) {
         return createObservable(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public Observable<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        return createObservable(() -> commandBuilder.zrangebyscore(channel, key, range, limit));
     }
 
     @Override
@@ -1190,6 +1225,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
         return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
@@ -1199,6 +1239,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
         return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public Observable<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
+        return createObservable(() -> commandBuilder.zrangebyscoreWithScores(channel, key, range, limit));
     }
 
     @Override
@@ -1227,6 +1273,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zremrangebyscore(K key, Range<? extends Number> range) {
+        return createObservable(() -> commandBuilder.zremrangebyscore(key, range));
+    }
+
+    @Override
     public Observable<V> zrevrange(K key, long start, long stop) {
         return createDissolvingObservable(() -> commandBuilder.zrevrange(key, start, stop));
     }
@@ -1247,6 +1298,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<V> zrevrangebyscore(K key, Range<? extends Number> range) {
+        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<V> zrevrangebyscore(K key, double max, double min, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
@@ -1254,6 +1310,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<V> zrevrangebyscore(K key, String max, String min, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
+    }
+
+    @Override
+    public Observable<V> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, range, limit));
     }
 
     @Override
@@ -1267,6 +1328,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range) {
+        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
@@ -1274,6 +1340,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
+    }
+
+    @Override
+    public Observable<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.zrevrangebyscoreWithScores(key, range, limit));
     }
 
     @Override
@@ -1297,6 +1368,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
         return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
@@ -1306,6 +1382,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
         return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public Observable<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        return createObservable(() -> commandBuilder.zrevrangebyscore(channel, key, range, limit));
     }
 
     @Override
@@ -1319,6 +1400,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
         return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
@@ -1328,6 +1414,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
         return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public Observable<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
+        return createObservable(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, limit));
     }
 
     @Override
@@ -1685,8 +1777,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> zlexcount(K key, Range<? extends V> range) {
+        return createObservable(() -> commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
     public Observable<Long> zremrangebylex(K key, String min, String max) {
         return createObservable(() -> commandBuilder.zremrangebylex(key, min, max));
+    }
+
+    @Override
+    public Observable<Long> zremrangebylex(K key, Range<? extends V> range) {
+        return createObservable(() -> commandBuilder.zremrangebylex(key, range));
     }
 
     @Override
@@ -1695,8 +1797,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<V> zrangebylex(K key, Range<? extends V> range) {
+        return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public Observable<V> zrangebylex(K key, String min, String max, long offset, long count) {
         return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
+    @Override
+    public Observable<V> zrangebylex(K key, Range<? extends V> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.zrangebylex(key, range, limit));
     }
 
     @Override

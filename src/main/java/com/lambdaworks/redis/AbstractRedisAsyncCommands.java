@@ -1105,6 +1105,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zcount(K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zcount(key, range));
+    }
+
+    @Override
     public RedisFuture<Double> zincrby(K key, double amount, K member) {
         return dispatch(commandBuilder.zincrby(key, amount, member));
     }
@@ -1140,6 +1145,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<List<V>> zrangebyscore(K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrangebyscore(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<List<V>> zrangebyscore(K key, double min, double max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
@@ -1147,6 +1157,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrangebyscore(key, range, limit));
     }
 
     @Override
@@ -1160,6 +1175,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
@@ -1167,6 +1187,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(key, range, limit));
     }
 
     @Override
@@ -1190,6 +1215,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrangebyscore(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
             long count) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
@@ -1199,6 +1229,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
             long count) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrangebyscore(channel, key, range, limit));
     }
 
     @Override
@@ -1212,6 +1247,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
@@ -1221,6 +1261,12 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+           Limit limit) {
+        return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, range, limit));
     }
 
     @Override
@@ -1249,6 +1295,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zremrangebyscore(K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zremrangebyscore(key, range));
+    }
+
+    @Override
     public RedisFuture<List<V>> zrevrange(K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrange(key, start, stop));
     }
@@ -1269,6 +1320,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<List<V>> zrevrangebyscore(K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrevrangebyscore(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
@@ -1276,6 +1332,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrevrangebyscore(key, range, limit));
     }
 
     @Override
@@ -1289,6 +1350,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
@@ -1296,6 +1362,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, range, limit));
     }
 
     @Override
@@ -1319,6 +1390,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrevrangebyscore(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
@@ -1328,6 +1404,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrevrangebyscore(channel, key, range, limit));
     }
 
     @Override
@@ -1341,6 +1422,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
@@ -1350,6 +1436,12 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
+        return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, range, limit));
     }
 
     @Override
@@ -1710,8 +1802,18 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> zlexcount(K key, Range<? extends V> range) {
+        return dispatch(commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
     public RedisFuture<Long> zremrangebylex(K key, String min, String max) {
         return dispatch(commandBuilder.zremrangebylex(key, min, max));
+    }
+
+    @Override
+    public RedisFuture<Long> zremrangebylex(K key, Range<? extends V> range) {
+        return dispatch(commandBuilder.zremrangebylex(key, range));
     }
 
     @Override
@@ -1720,8 +1822,18 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<List<V>> zrangebylex(K key, Range<? extends V> range) {
+        return dispatch(commandBuilder.zrangebylex(key, range, Limit.unlimited()));
+    }
+
+    @Override
     public RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebylex(key, min, max, offset, count));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrangebylex(K key, Range<? extends V> range, Limit limit) {
+        return dispatch(commandBuilder.zrangebylex(key, range, limit));
     }
 
     @Override

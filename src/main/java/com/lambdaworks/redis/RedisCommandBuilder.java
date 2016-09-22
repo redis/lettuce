@@ -4,6 +4,7 @@ import static com.lambdaworks.redis.LettuceStrings.string;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
     static final String MUST_NOT_BE_EMPTY = "must not be empty";
     static final String MUST_NOT_BE_NULL = "must not be null";
+
+    private static final byte[] MINUS_BYTES = {'-'};
+    private static final byte[] PLUS_BYTES = {'+'};
 
     public RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -1454,6 +1458,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZCOUNT, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> zcount(K key, Range<? extends Number> range) {
+        notNullKey(key);
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min(range)).add(max(range));
+        return createCommand(ZCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Double> zincrby(K key, double amount, K member) {
         notNullKey(key);
 
@@ -1517,6 +1529,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, List<V>> zrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(min(range)).add(max(range));
+
+        if(limit.isLimited()) {
+            args.add(LIMIT).add(limit.getOffset()).add(limit.getCount());
+        }
+        return createCommand(ZRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max) {
         return zrangebyscoreWithScores(key, string(min), string(max));
     }
@@ -1539,7 +1564,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullMinMax(min, max);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(WITHSCORES).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(min).add(max).add(WITHSCORES), Limit.create(offset, count));
+        return createCommand(ZRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(min(range)).add(max(range)).add(WITHSCORES), limit);
         return createCommand(ZRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
     }
 
@@ -1582,7 +1617,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(channel, "ScoredValueStreamingChannel " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(min).add(max), Limit.create(offset, count));
+        return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+        LettuceAssert.notNull(channel, "ScoredValueStreamingChannel " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(min(range)).add(max(range)), limit);
         return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
@@ -1612,7 +1658,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(WITHSCORES).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(min).add(max).add(WITHSCORES), Limit.create(offset, count));
+        return createCommand(ZRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(min(range)).add(max(range)).add(WITHSCORES), limit);
         return createCommand(ZRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
     }
 
@@ -1646,6 +1703,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullMinMax(min, max);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min).add(max);
+        return createCommand(ZREMRANGEBYSCORE, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> zremrangebyscore(K key, Range<? extends Number> range) {
+        notNullKey(key);
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(min(range)).add(max(range));
         return createCommand(ZREMRANGEBYSCORE, new IntegerOutput<K, V>(codec), args);
     }
 
@@ -1685,7 +1750,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullMinMax(min, max);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(max).add(min), Limit.create(offset, count));
+        return createCommand(ZREVRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<V>> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(max(range)).add(min(range)), limit);
         return createCommand(ZREVRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
     }
 
@@ -1713,7 +1788,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullMinMax(min, max);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(WITHSCORES).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(max).add(min).add(WITHSCORES), Limit.create(offset, count));
+        return createCommand(ZREVRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(max(range)).add(min(range)).add(WITHSCORES), limit);
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
     }
 
@@ -1759,7 +1844,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(max).add(min), Limit.create(offset, count));
+        return createCommand(ZREVRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(max(range)).add(min(range)), limit);
         return createCommand(ZREVRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
@@ -1795,7 +1891,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(max).add(min).add(WITHSCORES).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(max).add(min).add(WITHSCORES), Limit.create(offset, count));
+        return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
+    }
+
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(max(range)).add(min(range)).add(WITHSCORES), limit);
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
     }
 
@@ -1836,12 +1944,30 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZLEXCOUNT, new IntegerOutput<K, V>(codec), args);
     }
 
+    public RedisCommand<K, V, Long> zlexcount(K key, Range<? extends V> range) {
+        notNullKey(key);
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(minValue(range)).add(maxValue(range));
+        return createCommand(ZLEXCOUNT, new IntegerOutput<K, V>(codec), args);
+    }
+
     public RedisCommand<K, V, Long> zremrangebylex(K key, String min, String max) {
         notNullKey(key);
         notNullMinMax(min, max);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.addKey(key).add(min).add(max);
+        return createCommand(ZREMRANGEBYLEX, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public RedisCommand<K, V, Long> zremrangebylex(K key, Range<? extends V> range) {
+        notNullKey(key);
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        args.addKey(key).add(minValue(range)).add(maxValue(range));
         return createCommand(ZREMRANGEBYLEX, new IntegerOutput<K, V>(codec), args);
     }
 
@@ -1859,7 +1985,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullMinMax(min, max);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(min).add(max).add(LIMIT).add(offset).add(count);
+        addLimit(args.addKey(key).add(min).add(max), Limit.create(offset, count));
+        return createCommand(ZRANGEBYLEX, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public RedisCommand<K, V, List<V>> zrangebylex(K key, Range<? extends V> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(minValue(range)).add(maxValue(range)), limit);
         return createCommand(ZRANGEBYLEX, new ValueListOutput<K, V>(codec), args);
     }
 
@@ -2516,6 +2652,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
     }
 
+    private void notNullRange(Range<?> range) {
+        LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
+    }
+
+    private void notNullLimit(Limit limit) {
+        LettuceAssert.notNull(limit, "Limit " + MUST_NOT_BE_NULL);
+    }
+
     public void notNullMinMax(String min, String max) {
         LettuceAssert.notNull(min, "Min " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(max, "Max " + MUST_NOT_BE_NULL);
@@ -2539,5 +2683,72 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     private void notEmptySlots(int[] slots) {
         LettuceAssert.notNull(slots, "Slots " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(slots, "Slots " + MUST_NOT_BE_EMPTY);
+    }
+
+    private void addLimit(CommandArgs<K, V> args, Limit limit) {
+
+        if(limit.isLimited()){
+            args.add(LIMIT).add(limit.getOffset()).add(limit.getCount());
+        }
+    }
+
+    private String min(Range<? extends Number> range) {
+
+        Range.Boundary<? extends Number> lower = range.getLower();
+
+        if(lower.getValue() == null || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY){
+            return "-inf";
+        }
+
+        if(!lower.isIncluding()){
+            return "(" + lower.getValue();
+        }
+
+        return lower.getValue().toString();
+    }
+
+    private String max(Range<? extends Number> range) {
+
+        Range.Boundary<? extends Number> upper = range.getUpper();
+
+        if(upper.getValue() == null || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY){
+            return "+inf";
+        }
+
+        if(!upper.isIncluding()){
+            return "(" + upper.getValue();
+        }
+
+        return upper.getValue().toString();
+    }
+
+    private byte[] minValue(Range<? extends V> range) {
+
+        Range.Boundary<? extends V> lower = range.getLower();
+
+        if(lower.getValue() == null){
+            return MINUS_BYTES;
+        }
+
+        ByteBuffer encoded = codec.encodeValue(lower.getValue());
+        ByteBuffer allocated = ByteBuffer.allocate(encoded.remaining() + 1);
+        allocated.put(lower.isIncluding() ? (byte) '[' : (byte) '(').put(encoded);
+
+        return allocated.array();
+    }
+
+    private byte[] maxValue(Range<? extends V> range) {
+
+        Range.Boundary<? extends V> upper = range.getUpper();
+
+        if(upper.getValue() == null){
+            return PLUS_BYTES;
+        }
+
+        ByteBuffer encoded = codec.encodeValue(upper.getValue());
+        ByteBuffer allocated = ByteBuffer.allocate(encoded.remaining() + 1);
+        allocated.put(upper.isIncluding() ? (byte) '[' : (byte) '(').put(encoded);
+
+        return allocated.array();
     }
 }

@@ -49,11 +49,9 @@ public class CompilationUnitFactory {
     ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
-                                  Function<String, String> typeDocFunction,
-                                  Function<MethodDeclaration, Type> methodReturnTypeFunction,
-                                  Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
-                                  Consumer<ClassOrInterfaceDeclaration> typeMutator,
-                                  Function<Comment, Comment> methodCommentMutator) {
+            Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
+            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
+            Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
 
         this.templateFile = templateFile;
         this.sources = sources;
@@ -132,9 +130,9 @@ public class CompilationUnitFactory {
 
             MethodDeclaration method = new MethodDeclaration(n.getModifiers(), methodReturnTypeFunction.apply(n), n.getName());
 
-            if(methodCommentMutator != null){
+            if (methodCommentMutator != null) {
                 method.setComment(methodCommentMutator.apply(n.getComment()));
-            }else {
+            } else {
                 method.setComment(n.getComment());
             }
 
@@ -150,9 +148,11 @@ public class CompilationUnitFactory {
                 method.getTypeParameters().addAll(n.getTypeParameters());
             }
 
-            ASTHelper.addMember(resultType, method);
+            if (n.getAnnotations() != null) {
+                method.setAnnotations(n.getAnnotations());
+            }
 
+            ASTHelper.addMember(resultType, method);
         }
     }
-
 }
