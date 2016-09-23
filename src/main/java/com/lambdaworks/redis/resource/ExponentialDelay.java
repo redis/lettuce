@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
  */
 class ExponentialDelay extends Delay {
 
-    private final long lower;
-    private final long upper;
+    protected final long lower;
+    protected final long upper;
     private final int powersOf;
 
     ExponentialDelay(long lower, long upper, TimeUnit unit, int powersOf) {
@@ -43,37 +43,24 @@ class ExponentialDelay extends Delay {
             delay = calculateAlternatePower(attempt);
         }
 
-        return applyBounds(delay);
+        return applyBounds(delay, lower, upper);
     }
 
     private long calculateAlternatePower(long attempt) {
 
         // round will cap at Long.MAX_VALUE and pow should prevent overflows
-        double step = Math.pow(this.powersOf, attempt - 1); // attempt > 0
+        double step = Math.pow(powersOf, attempt - 1); // attempt > 0
         return Math.round(step);
     }
 
     // fastpath with bitwise operator
-    private long calculatePowerOfTwo(long attempt) {
-
-        long step;
-        if (attempt >= 64) { // safeguard against overflow in the bitshift operation
-            step = Long.MAX_VALUE;
+    protected static long calculatePowerOfTwo(long attempt) {
+        if (attempt <= 0) { // safeguard against underflow
+            return 0L;
+        } else if (attempt >= 64) { // safeguard against overflow in the bitshift operation
+            return Long.MAX_VALUE;
         } else {
-            step = (1L << (attempt - 1));
+            return 1L << (attempt - 1);
         }
-        // round will cap at Long.MAX_VALUE
-        return Math.round(step);
-    }
-
-    private long applyBounds(long calculatedValue) {
-
-        if (calculatedValue < lower) {
-            return lower;
-        }
-        if (calculatedValue > upper) {
-            return upper;
-        }
-        return calculatedValue;
     }
 }

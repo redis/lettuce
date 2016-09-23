@@ -3,6 +3,7 @@ package com.lambdaworks.redis.resource;
 import static com.lambdaworks.redis.resource.Futures.toBooleanPromise;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import com.lambdaworks.redis.event.DefaultEventBus;
 import com.lambdaworks.redis.event.DefaultEventPublisherOptions;
@@ -16,6 +17,7 @@ import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.CommandLatencyCollectorOptions;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
+import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 
 import io.netty.util.concurrent.*;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -55,7 +57,7 @@ public class DefaultClientResources implements ClientResources {
     public static final int DEFAULT_IO_THREADS;
     public static final int DEFAULT_COMPUTATION_THREADS;
 
-    public static final Delay DEFAULT_RECONNECT_DELAY = Delay.exponential();
+    public static final Supplier<Delay> DEFAULT_RECONNECT_DELAY = () -> Delay.exponential();
 
     static {
         int threads = Math.max(1, SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
@@ -78,7 +80,7 @@ public class DefaultClientResources implements ClientResources {
     private final EventPublisherOptions commandLatencyPublisherOptions;
     private final MetricEventPublisher metricEventPublisher;
     private final DnsResolver dnsResolver;
-    private final Delay reconnectDelay;
+    private final Supplier<Delay> reconnectDelay;
 
     private volatile boolean shutdownCalled = false;
 
@@ -194,7 +196,7 @@ public class DefaultClientResources implements ClientResources {
         private CommandLatencyCollector commandLatencyCollector;
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
         private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
-        private Delay reconnectDelay = DEFAULT_RECONNECT_DELAY;
+        private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
 
         private Builder() {
         }
@@ -313,13 +315,27 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped at
+         * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped at
          * {@literal 30 SECONDS}.
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this
          */
         public Builder reconnectDelay(Delay reconnectDelay) {
+            if (reconnectDelay instanceof StatefulDelay) {
+                throw new IllegalArgumentException("Delay must be a stateless instance.");
+            }
+            return reconnectDelay(() -> reconnectDelay);
+        }
+
+        /**
+         * Sets the stateful reconnect {@link Supplier<Delay>} to delay reconnect attempts. Defaults to binary exponential delay capped at
+         * {@literal 30 SECONDS}.
+         *
+         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @return this
+         */
+        public Builder reconnectDelay(Supplier<Delay> reconnectDelay) {
 
             LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
 
@@ -455,6 +471,6 @@ public class DefaultClientResources implements ClientResources {
 
     @Override
     public Delay reconnectDelay() {
-        return reconnectDelay;
+        return reconnectDelay.get();
     }
 }

@@ -10,6 +10,7 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.resource.Delay;
+import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -77,6 +78,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
 
         this.reconnectDelay = reconnectDelay;
+        resetReconnectDelay();
         this.bootstrap = bootstrap;
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
@@ -101,6 +103,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier,
                 connectionFacade);
+    }
+
+    private void resetReconnectDelay() {
+        if (reconnectDelay instanceof StatefulDelay) {
+            ((StatefulDelay) reconnectDelay).reset();
+        }
     }
 
     @Override
@@ -129,6 +137,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = ctx.channel();
         reconnectScheduleTimeout = null;
         remoteAddress = channel.remoteAddress();
+        resetReconnectDelay();
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
 
