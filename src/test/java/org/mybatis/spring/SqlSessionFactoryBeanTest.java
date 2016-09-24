@@ -406,6 +406,7 @@ public final class SqlSessionFactoryBeanTest {
   private void assertDefaultConfig(SqlSessionFactory factory) {
     assertConfig(factory, SqlSessionFactoryBean.class.getSimpleName(),
         org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
+    assertEquals(0, factory.getConfiguration().getVariables().size());
   }
 
   private void assertConfig(SqlSessionFactory factory, Class<? extends TransactionFactory> transactionFactoryClass) {
