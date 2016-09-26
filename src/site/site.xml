@@ -9,6 +9,7 @@
     <body>
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
+            <item name="Getting Started" href="https://github.com/mp911de/lettuce/wiki/Getting-started"/>
             <item name="Downloads" href="download.html" collapse="true">
                 <item name="Archive" href="https://github.com/mp911de/lettuce/wiki/Download"/>
             </item>
@@ -20,6 +21,7 @@
             <item name="JavaDoc (3.x)" href="docs/api/releases/latest-3.x/index.html"/>
             <item name="JavaDoc (4.x)" href="docs/api/releases/latest-4.x/index.html"/>
             <item name="JavaDoc (archive)" href="docs/api/releases/"/>
+            <item name="Wiki" href="https://github.com/mp911de/lettuce/wiki"/>
         </menu>
 
         <menu ref="reports"/>
