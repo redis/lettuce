@@ -6,6 +6,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+/**
+ * @author Jongyeol Choi
+ */
 public class FullJitterDelayTest {
 
     @Test(expected = IllegalArgumentException.class)

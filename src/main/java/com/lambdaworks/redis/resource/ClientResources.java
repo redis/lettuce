@@ -115,10 +115,9 @@ public interface ClientResources {
     DnsResolver dnsResolver();
 
     /**
-     * Returns the {@link Delay} for reconnect attempts. Each connection uses its own attempt counter.
+     * Returns the {@link Delay} for reconnect attempts. May return a different instance on each call.
      *
      * @return the reconnect {@link Delay}.
      */
     Delay reconnectDelay();
-
 }

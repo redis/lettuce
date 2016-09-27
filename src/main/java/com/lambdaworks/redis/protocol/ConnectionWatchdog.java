@@ -10,7 +10,6 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
-
 import com.lambdaworks.redis.resource.Delay;
 import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 
@@ -80,11 +79,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
 
         this.reconnectDelay = reconnectDelay;
-        resetReconnectDelay();
         this.bootstrap = bootstrap;
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
         this.reconnectionListener = reconnectionListener;
+
         Supplier<SocketAddress> wrappedSocketAddressSupplier = new Supplier<SocketAddress>() {
             @Override
             public SocketAddress get() {
@@ -103,6 +102,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         };
 
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
+
+        resetReconnectDelay();
     }
 
     private void resetReconnectDelay() {
@@ -124,6 +125,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         if (evt instanceof ConnectionEvents.Activated) {
             attempts = 0;
+            resetReconnectDelay();
         }
 
         super.userEventTriggered(ctx, evt);
@@ -141,7 +143,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        if(commandHandler == null) {
+        if (commandHandler == null) {
             this.commandHandler = ctx.pipeline().get(CommandHandler.class);
         }
 
@@ -149,7 +151,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         channel = ctx.channel();
         logger.debug("{} channelActive({})", logPrefix(), ctx);
         remoteAddress = channel.remoteAddress();
-        resetReconnectDelay();
 
         super.channelActive(ctx);
     }
@@ -159,7 +160,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         logger.debug("{} channelInactive({})", logPrefix(), ctx);
         channel = null;
-
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
             RedisChannelHandler<?, ?> channelHandler = ctx.pipeline().get(RedisChannelHandler.class);

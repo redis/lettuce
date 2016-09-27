@@ -8,10 +8,16 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Base class for delays and factory class to create particular instances. {@link Delay} can be subclassed to create custom
- * delay implementations based on attempts. Attempts start with {@value 1}.
+ * delay implementations based on attempts. Attempts start with {@code 1}.
+ * <p>
+ * Delays are usually stateless instances that can be shared amongst multiple users (such as connections). Stateful
+ * {@link Delay} implementations must implement {@link StatefulDelay} to reset their internal state after the delay is not
+ * required anymore.
  * 
  * @author Mark Paluch
+ * @author Jongyeol Choi
  * @since 4.2
+ * @see StatefulDelay
  */
 public abstract class Delay {
 
@@ -21,14 +27,17 @@ public abstract class Delay {
     private static TimeUnit DEFAULT_TIMEUNIT = TimeUnit.MILLISECONDS;
 
     /**
-     * Additional interface for stateful {@link Delay}.
+     * Interface to be implemented by stateful {@link Delay}s. Stateful delays can get reset once a condition (such as
+     * successful reconnect) is met. Stateful delays should not be shared by multiple connections but each connection should use
+     * its own instance.
+     * 
+     * @see Supplier
+     * @see com.lambdaworks.redis.resource.DefaultClientResources.Builder#reconnectDelay(Supplier)
      */
     public interface StatefulDelay {
 
         /**
-         * Reset this delay.
-         *
-         * This method is to be implemented by the implementations.
+         * Reset this delay state. Resetting prepares a stateful delay for its next usage.
          */
         void reset();
     }
@@ -169,22 +178,22 @@ public abstract class Delay {
     }
 
     /**
-     * Creates a new {@link DecorrelatedJitterDelay} supplier with default boundaries.
+     * Creates a {@link Supplier} that constructs new {@link DecorrelatedJitterDelay} instances with default boundaries.
      *
-     * @return a created {@link Supplier<DecorrelatedJitterDelay>}.
+     * @return a {@link Supplier} of {@link DecorrelatedJitterDelay}.
      */
     public static Supplier<Delay> decorrelatedJitter() {
         return decorrelatedJitter(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, 0L, DEFAULT_TIMEUNIT);
     }
 
     /**
-     * Creates a new {@link DecorrelatedJitterDelay} supplier.
+     * Creates a {@link Supplier} that constructs new {@link DecorrelatedJitterDelay} instances.
      *
      * @param lower the lower boundary, must be non-negative
      * @param upper the upper boundary, must be greater than the lower boundary
      * @param base the base, must be greater or equal to 0
      * @param unit the unit of the delay.
-     * @return a created {@link Supplier<DecorrelatedJitterDelay>}.
+     * @return a new {@link Supplier} of {@link DecorrelatedJitterDelay}.
      */
     public static Supplier<Delay> decorrelatedJitter(long lower, long upper, long base, TimeUnit unit) {
 
@@ -192,10 +201,18 @@ public abstract class Delay {
         LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
         LettuceAssert.isTrue(base >= 0, "Base must be greater or equal to 0");
 
-        // It'll create new Delay everytime because it has state.
+        // Create new Delay because it has state.
         return () -> new DecorrelatedJitterDelay(lower, upper, base, unit);
     }
 
+    /**
+     * Generates a random long value within {@code min} and {@code max} boundaries.
+     * 
+     * @param min
+     * @param max
+     * @return a random value
+     * @see ThreadLocalRandom#nextLong(long, long)
+     */
     protected static long randomBetween(long min, long max) {
         if (min == max) {
             return min;
@@ -208,9 +225,11 @@ public abstract class Delay {
         if (calculatedValue < lower) {
             return lower;
         }
+
         if (calculatedValue > upper) {
             return upper;
         }
+
         return calculatedValue;
     }
 }
