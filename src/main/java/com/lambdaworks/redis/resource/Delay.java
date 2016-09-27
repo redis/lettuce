@@ -1,6 +1,8 @@
 package com.lambdaworks.redis.resource;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -13,6 +15,24 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public abstract class Delay {
 
+    private static long DEFAULT_LOWER_BOUND = 0;
+    private static long DEFAULT_UPPER_BOUND = TimeUnit.SECONDS.toMillis(30);
+    private static int DEFAULT_POWER_OF = 2;
+    private static TimeUnit DEFAULT_TIMEUNIT = TimeUnit.MILLISECONDS;
+
+    /**
+     * Additional interface for stateful {@link Delay}.
+     */
+    public interface StatefulDelay {
+
+        /**
+         * Reset this delay.
+         *
+         * This method is to be implemented by the implementations.
+         */
+        void reset();
+    }
+
     /**
      * The time unit of the delay.
      */
@@ -23,7 +43,7 @@ public abstract class Delay {
      *
      * @param timeUnit the time unit.
      */
-    Delay(TimeUnit timeUnit) {
+    protected Delay(TimeUnit timeUnit) {
 
         LettuceAssert.notNull(timeUnit, "TimeUnit must not be null");
 
@@ -55,7 +75,7 @@ public abstract class Delay {
      *
      * @param delay the delay, must be greater or equal to 0
      * @param timeUnit the unit of the delay.
-     * @return a created {@link ExponentialDelay}.
+     * @return a created {@link ConstantDelay}.
      */
     public static Delay constant(int delay, TimeUnit timeUnit) {
 
@@ -71,7 +91,7 @@ public abstract class Delay {
      * @return a created {@link ExponentialDelay}.
      */
     public static Delay exponential() {
-        return exponential(0, TimeUnit.SECONDS.toMillis(30), TimeUnit.MILLISECONDS, 2);
+        return exponential(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, DEFAULT_TIMEUNIT, DEFAULT_POWER_OF);
     }
 
     /**
@@ -92,5 +112,105 @@ public abstract class Delay {
         LettuceAssert.isTrue(powersOf > 1, "PowersOf must be greater than 1");
 
         return new ExponentialDelay(lower, upper, unit, powersOf);
+    }
+
+    /**
+     * Creates a new {@link EqualJitterDelay} with default boundaries.
+     *
+     * @return a created {@link EqualJitterDelay}.
+     */
+    public static Delay equalJitter() {
+        return equalJitter(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, 1L, DEFAULT_TIMEUNIT);
+    }
+
+    /**
+     * Creates a new {@link EqualJitterDelay}.
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param base the base, must be greater or equal to 1
+     * @param unit the unit of the delay.
+     * @return a created {@link EqualJitterDelay}.
+     */
+    public static Delay equalJitter(long lower, long upper, long base, TimeUnit unit) {
+
+        LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(base >= 1, "Base must be greater or equal to 1");
+
+        return new EqualJitterDelay(lower, upper, base, unit);
+    }
+
+    /**
+     * Creates a new {@link FullJitterDelay} with default boundaries.
+     *
+     * @return a created {@link FullJitterDelay}.
+     */
+    public static Delay fullJitter() {
+        return fullJitter(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, 1L, DEFAULT_TIMEUNIT);
+    }
+
+    /**
+     * Creates a new {@link FullJitterDelay}.
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param base the base, must be greater or equal to 1
+     * @param unit the unit of the delay.
+     * @return a created {@link FullJitterDelay}.
+     */
+    public static Delay fullJitter(long lower, long upper, long base, TimeUnit unit) {
+
+        LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(base >= 1, "Base must be greater or equal to 1");
+
+        return new FullJitterDelay(lower, upper, base, unit);
+    }
+
+    /**
+     * Creates a new {@link DecorrelatedJitterDelay} supplier with default boundaries.
+     *
+     * @return a created {@link Supplier<DecorrelatedJitterDelay>}.
+     */
+    public static Supplier<Delay> decorrelatedJitter() {
+        return decorrelatedJitter(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, 0L, DEFAULT_TIMEUNIT);
+    }
+
+    /**
+     * Creates a new {@link DecorrelatedJitterDelay} supplier.
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param base the base, must be greater or equal to 0
+     * @param unit the unit of the delay.
+     * @return a created {@link Supplier<DecorrelatedJitterDelay>}.
+     */
+    public static Supplier<Delay> decorrelatedJitter(long lower, long upper, long base, TimeUnit unit) {
+
+        LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(base >= 0, "Base must be greater or equal to 0");
+
+        // It'll create new Delay everytime because it has state.
+        return () -> new DecorrelatedJitterDelay(lower, upper, base, unit);
+    }
+
+    protected static long randomBetween(long min, long max) {
+        if (min == max) {
+            return min;
+        }
+        return ThreadLocalRandom.current().nextLong(min, max);
+    }
+
+    protected static long applyBounds(long calculatedValue, long lower, long upper) {
+
+        if (calculatedValue < lower) {
+            return lower;
+        }
+        if (calculatedValue > upper) {
+            return upper;
+        }
+        return calculatedValue;
     }
 }
