@@ -49,7 +49,7 @@ public interface RedisSortedSetCommands<K, V> {
      *         updated.
      */
     Long zadd(K key, Object... scoresAndValues);
-    
+
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 
@@ -89,7 +89,7 @@ public interface RedisSortedSetCommands<K, V> {
      *         updated.
      */
     Long zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues);
-    
+
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
      * 
@@ -104,17 +104,28 @@ public interface RedisSortedSetCommands<K, V> {
     Long zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues);
 
     /**
-     * ZADD acts like ZINCRBY
+     * Add one or more members to a sorted set, or update its score if it already exists applying the {@code INCR} option. ZADD
+     * acts like ZINCRBY.
      *
      * @param key the key
      * @param score the score
      * @param member the member
-     *
-     * @return Long integer-reply specifically:
-     *
-     *         The total number of elements changed
+     * @return Long integer-reply specifically: The total number of elements changed
      */
     Double zaddincr(K key, double score, V member);
+
+    /**
+     * Add one or more members to a sorted set, or update its score if it already exists applying the {@code INCR} option. ZADD
+     * acts like ZINCRBY.
+     *
+     * @param key the key
+     * @param zAddArgs arguments for zadd
+     * @param score the score
+     * @param member the member
+     * @return Long integer-reply specifically: The total number of elements changed
+     * @since 4.3
+     */
+    Double zaddincr(K key, ZAddArgs zAddArgs, double score, V member);
 
     /**
      * Get the number of members in a sorted set.
@@ -505,7 +516,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -520,7 +532,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -916,7 +929,7 @@ public interface RedisSortedSetCommands<K, V> {
      */
     @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
-                                    long count);
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -932,7 +945,7 @@ public interface RedisSortedSetCommands<K, V> {
      */
     @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
-                                    long count);
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.

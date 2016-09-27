@@ -10,6 +10,7 @@ import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
+import static sun.security.krb5.Confounder.longValue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -76,8 +77,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     @Test
     public void zaddch() throws Exception {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
-        assertThat(redis.zadd(key, ZAddArgs.Builder.ch(), 2.0, "a")).isEqualTo(1);
-
+        assertThat(redis.zadd(key, ZAddArgs.Builder.ch().xx(), 2.0, "a")).isEqualTo(1);
         assertThat(redis.zadd(key, ZAddArgs.Builder.ch(), 2.0, "b")).isEqualTo(1);
 
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a"), sv(2.0, "b")));
@@ -91,6 +91,19 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zaddincr(key, 2.0, "b").longValue()).isEqualTo(2);
 
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "b"), sv(3.0, "a")));
+    }
+
+    @Test
+    public void zaddincrnx() throws Exception {
+        assertThat(redis.zaddincr(key, ZAddArgs.Builder.nx(), 2.0, "a").longValue()).isEqualTo(2);
+        assertThat(redis.zaddincr(key, ZAddArgs.Builder.nx(), 2.0, "a")).isNull();
+    }
+
+    @Test
+    public void zaddincrxx() throws Exception {
+        assertThat(redis.zaddincr(key, ZAddArgs.Builder.xx(), 2.0, "a")).isNull();
+        assertThat(redis.zaddincr(key, ZAddArgs.Builder.nx(), 2.0, "a").longValue()).isEqualTo(2);
+        assertThat(redis.zaddincr(key, ZAddArgs.Builder.xx(), 2.0, "a").longValue()).isEqualTo(4);
     }
 
     @Test

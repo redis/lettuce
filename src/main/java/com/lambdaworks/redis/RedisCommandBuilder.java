@@ -1441,10 +1441,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZADD, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Double> zaddincr(K key, double score, V member) {
+    public Command<K, V, Double> zaddincr(K key, ZAddArgs zAddArgs, double score, V member) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+
+        if (zAddArgs != null) {
+            zAddArgs.build(args);
+        }
+
         args.add(INCR);
         args.add(score).addValue(member);
 

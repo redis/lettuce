@@ -1052,7 +1052,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Mono<Double> zaddincr(K key, double score, V member) {
-        return createMono(() -> commandBuilder.zaddincr(key, score, member));
+        return createMono(() -> commandBuilder.zaddincr(key, null, score, member));
+    }
+
+    @Override
+    public Mono<Double> zaddincr(K key, ZAddArgs zAddArgs, double score, V member) {
+        return createMono(() -> commandBuilder.zaddincr(key, zAddArgs, score, member));
     }
 
     @Override
@@ -1060,7 +1065,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createMono(() -> commandBuilder.zcard(key));
     }
 
-    @Override
     public Mono<Long> zcount(K key, double min, double max) {
         return createMono(() -> commandBuilder.zcount(key, min, max));
     }

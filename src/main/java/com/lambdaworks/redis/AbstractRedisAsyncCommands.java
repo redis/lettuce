@@ -1056,7 +1056,12 @@ public abstract class AbstractRedisAsyncCommands<K, V>
 
     @Override
     public RedisFuture<Double> zaddincr(K key, double score, V member) {
-        return dispatch(commandBuilder.zaddincr(key, score, member));
+        return dispatch(commandBuilder.zaddincr(key, null, score, member));
+    }
+
+    @Override
+    public RedisFuture<Double> zaddincr(K key, ZAddArgs zAddArgs, double score, V member) {
+        return dispatch(commandBuilder.zaddincr(key, zAddArgs, score, member));
     }
 
     @Override
