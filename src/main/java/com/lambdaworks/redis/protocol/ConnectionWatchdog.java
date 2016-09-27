@@ -78,7 +78,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
 
         this.reconnectDelay = reconnectDelay;
-        resetReconnectDelay();
         this.bootstrap = bootstrap;
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
@@ -103,12 +102,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier,
                 connectionFacade);
-    }
 
-    private void resetReconnectDelay() {
-        if (reconnectDelay instanceof StatefulDelay) {
-            ((StatefulDelay) reconnectDelay).reset();
-        }
+        resetReconnectDelay();
     }
 
     @Override
@@ -118,6 +113,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         if (evt instanceof ConnectionEvents.Activated) {
             attempts = 0;
+            resetReconnectDelay();
         }
 
         super.userEventTriggered(ctx, evt);
@@ -137,7 +133,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = ctx.channel();
         reconnectScheduleTimeout = null;
         remoteAddress = channel.remoteAddress();
-        resetReconnectDelay();
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
 
@@ -316,6 +311,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     ReconnectionHandler getReconnectionHandler() {
         return reconnectionHandler;
+    }
+
+    private void resetReconnectDelay() {
+        if (reconnectDelay instanceof StatefulDelay) {
+            ((StatefulDelay) reconnectDelay).reset();
+        }
     }
 
     private String logPrefix() {

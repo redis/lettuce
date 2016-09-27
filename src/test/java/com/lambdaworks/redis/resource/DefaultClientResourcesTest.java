@@ -8,13 +8,14 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.event.Event;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
+import com.lambdaworks.redis.reactive.TestSubscriber;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -138,4 +139,35 @@ public class DefaultClientResourcesTest {
         assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void delayInstanceShouldRejectStatefulDelay() throws Exception {
+
+        DefaultClientResources.builder().reconnectDelay(Delay.decorrelatedJitter().get());
+    }
+
+    @Test
+    public void reconnectDelayCreatesNewForStatefulDelays() throws Exception {
+
+        DefaultClientResources resources = DefaultClientResources.builder().reconnectDelay(Delay.decorrelatedJitter()).build();
+
+        Delay delay1 = resources.reconnectDelay();
+        Delay delay2 = resources.reconnectDelay();
+
+        assertThat(delay1).isNotSameAs(delay2);
+
+        FastShutdown.shutdown(resources);
+    }
+
+    @Test
+    public void reconnectDelayReturnsSameInstanceForStatelessDelays() throws Exception {
+
+        DefaultClientResources resources = DefaultClientResources.builder().reconnectDelay(Delay.exponential()).build();
+
+        Delay delay1 = resources.reconnectDelay();
+        Delay delay2 = resources.reconnectDelay();
+
+        assertThat(delay1).isSameAs(delay2);
+
+        FastShutdown.shutdown(resources);
+    }
 }

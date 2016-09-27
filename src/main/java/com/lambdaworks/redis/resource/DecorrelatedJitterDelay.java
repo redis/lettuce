@@ -5,21 +5,30 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 
 /**
- * Delay that increases using decorrelated jitter strategy.
+ * Stateful delay that increases using decorrelated jitter strategy.
  *
  * <p>
- * Considering retry attempts start at 1, attempt 0 would be the initial call and will always yield 0 (or the lower).
- * Then, each retry step will by default yield <code>min(cap, randomBetween(base, prevDelay * 3))</code>.
+ * Considering retry attempts start at 1, attempt 0 would be the initial call and will always yield 0 (or the lower). Then, each
+ * retry step will by default yield {@code min(cap, randomBetween(base, prevDelay * 3))}.
  *
- * This strategy is based on <a href="https://www.awsarchitectureblog.com/2015/03/backoff.html">Exponential Backoff And Jitter</a>.
+ * This strategy is based on <a href="https://www.awsarchitectureblog.com/2015/03/backoff.html">Exponential Backoff and
+ * Jitter</a>.
  * </p>
+ * 
+ * @author Jongyeol Choi
+ * @since 4.2
+ * @see StatefulDelay
  */
 class DecorrelatedJitterDelay extends Delay implements StatefulDelay {
 
     private final long lower;
     private final long upper;
     private final long base;
-    private long prevDelay;
+
+    /*
+     * Delays may be used by different threads, this one is volatile to prevent visibility issues
+     */
+    private volatile long prevDelay;
 
     DecorrelatedJitterDelay(long lower, long upper, long base, TimeUnit unit) {
         super(unit);

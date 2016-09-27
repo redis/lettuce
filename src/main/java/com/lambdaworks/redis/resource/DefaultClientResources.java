@@ -316,15 +316,16 @@ public class DefaultClientResources implements ClientResources {
 
         /**
          * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped at
-         * {@literal 30 SECONDS}.
+         * {@literal 30 SECONDS}. {@code reconnectDelay} must be a stateless {@link Delay}.
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this
          */
         public Builder reconnectDelay(Delay reconnectDelay) {
-            if (reconnectDelay instanceof StatefulDelay) {
-                throw new IllegalArgumentException("Delay must be a stateless instance.");
-            }
+
+            LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
+            LettuceAssert.isTrue(!(reconnectDelay instanceof StatefulDelay), "Delay must be a stateless instance.");
+
             return reconnectDelay(() -> reconnectDelay);
         }
 
