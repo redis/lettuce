@@ -72,17 +72,28 @@ public interface RedisSortedSetsAsyncConnection<K, V> {
     RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, Object... scoresAndValues);
 
     /**
-     * ZADD acts like ZINCRBY
+     * Add one or more members to a sorted set, or update its score if it already exists applying the {@code INCR} option. ZADD
+     * acts like ZINCRBY.
      *
      * @param key the key
      * @param score the score
      * @param member the member
-     *
-     * @return RedisFuture&lt;Long&gt; integer-reply specifically:
-     *
-     *         The total number of elements changed
+     * @return Long integer-reply specifically: The total number of elements changed
      */
     RedisFuture<Double> zaddincr(K key, double score, V member);
+
+    /**
+     * Add one or more members to a sorted set, or update its score if it already exists applying the {@code INCR} option. ZADD
+     * acts like ZINCRBY.
+     *
+     * @param key the key
+     * @param zAddArgs arguments for zadd
+     * @param score the score
+     * @param member the member
+     * @return Long integer-reply specifically: The total number of elements changed
+     * @since 4.3
+     */
+    RedisFuture<Double> zaddincr(K key, ZAddArgs zAddArgs, double score, V member);
 
     /**
      * Get the number of members in a sorted set.

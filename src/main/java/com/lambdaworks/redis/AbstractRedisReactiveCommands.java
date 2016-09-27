@@ -1064,7 +1064,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Double> zaddincr(K key, double score, V member) {
-        return createObservable(() -> commandBuilder.zaddincr(key, score, member));
+        return createObservable(() -> commandBuilder.zaddincr(key, null, score, member));
+    }
+
+    @Override
+    public Observable<Double> zaddincr(K key, ZAddArgs zAddArgs, double score, V member) {
+        return createObservable(() -> commandBuilder.zaddincr(key, zAddArgs, score, member));
     }
 
     @Override

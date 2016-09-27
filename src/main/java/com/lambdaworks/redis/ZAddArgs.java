@@ -15,6 +15,7 @@ public class ZAddArgs {
     private boolean ch = false;
 
     public static class Builder {
+
         /**
          * Utility constructor.
          */
@@ -35,17 +36,17 @@ public class ZAddArgs {
         }
     }
 
-    private ZAddArgs nx() {
+    public ZAddArgs nx() {
         this.nx = true;
         return this;
     }
 
-    private ZAddArgs ch() {
+    public ZAddArgs ch() {
         this.ch = true;
         return this;
     }
 
-    private ZAddArgs xx() {
+    public ZAddArgs xx() {
         this.xx = true;
         return this;
     }
