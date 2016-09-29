@@ -203,8 +203,30 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
 
     /**
+     * Count the number of members in a sorted set between a given lexicographical range.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @return Long integer-reply the number of elements in the specified score range.
+     * @deprecated Use {@link #zlexcount(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Mono<Long> zlexcount(K key, String min, String max);
+
+    /**
+     * Count the number of members in a sorted set between a given lexicographical range.
+     *
+     * @param key the key
+     * @param range the range
+     * @return Long integer-reply the number of elements in the specified score range.
+     * @since 4.3
+     */
+    Mono<Long> zlexcount(K key, Range<? extends V> range);
+
+    /**
      * Return a range of members in a sorted set, by index.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -213,8 +235,19 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Flux<V> zrange(K key, long start, long stop);
 
     /**
+     * Return a range of members in a sorted set, by index.
+     *
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
+     */
+    Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    /**
      * Return a range of members with scores in a sorted set, by index.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -223,8 +256,66 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Flux<ScoredValue<V>> zrangeWithScores(K key, long start, long stop);
 
     /**
+     * Stream over a range of members with scores in a sorted set, by index.
+     *
+     * @param channel streaming channel that receives a call for every value
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
+     */
+    Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical range.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @return V array-reply list of elements in the specified range.
+     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Flux<V> zrangebylex(K key, String min, String max);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical range.
+     *
+     * @param key the key
+     * @param range the range
+     * @return V array-reply list of elements in the specified range.
+     * @since 4.3
+     */
+    Flux<V> zrangebylex(K key, Range<? extends V> range);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical range.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @param offset the offset
+     * @param count the count
+     * @return V array-reply list of elements in the specified range.
+     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Flux<V> zrangebylex(K key, String min, String max, long offset, long count);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical range.
+     *
+     * @param key the key
+     * @param range the range
+     * @param limit the limit
+     * @return V array-reply list of elements in the specified range.
+     * @since 4.3
+     */
+    Flux<V> zrangebylex(K key, Range<? extends V> range, Limit limit);
+
+    /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -236,7 +327,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -258,7 +349,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -272,7 +363,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -294,100 +385,6 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @since 4.3
      */
     Flux<V> zrangebyscore(K key, Range<? extends Number> range, Limit limit);
-
-    /**
-     * Return a range of members with score in a sorted set, by score.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max);
-
-    /**
-     * Return a range of members with score in a sorted set, by score.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max);
-
-    /**
-     * Return a range of members with score in a sorted set, by score.
-     *
-     * @param key the key
-     * @param range the range
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @since 4.3
-     */
-    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range);
-
-    /**
-     * Return a range of members with score in a sorted set, by score.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @param offset the offset
-     * @param count the count
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit limit)}
-     */
-    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
-
-    /**
-     * Return a range of members with score in a sorted set, by score.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @param offset the offset
-     * @param count the count
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
-
-    /**
-     * Return a range of members with score in a sorted set, by score.
-     *
-     * @param key the key
-     * @param range the range
-     * @param limit the limit
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @since 4.3
-     */
-    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
-
-    /**
-     * Return a range of members in a sorted set, by index.
-     * 
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param start the start
-     * @param stop the stop
-     * @return Long count of elements in the specified range.
-     */
-    Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
-
-    /**
-     * Stream over a range of members with scores in a sorted set, by index.
-     * 
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param start the start
-     * @param stop the stop
-     * @return Long count of elements in the specified range.
-     */
-    Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
      * Stream over a range of members in a sorted set, by score.
@@ -469,8 +466,80 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
+     * Return a range of members with score in a sorted set, by score.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max);
+
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max);
+
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     *
+     * @param key the key
+     * @param range the range
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range);
+
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @param offset the offset
+     * @param count the count
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit limit)}
+     */
+    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
+
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @param offset the offset
+     * @param count the count
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
+
+    /**
+     * Return a range of members with score in a sorted set, by score.
+     *
+     * @param key the key
+     * @param range the range
+     * @param limit the limit
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
+
+    /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -483,7 +552,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -507,7 +576,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -522,7 +591,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -549,7 +618,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Determine the index of a member in a sorted set.
-     * 
+     *
      * @param key the key
      * @param member the member type: value
      * @return Long integer-reply the rank of {@code member}. If {@code member} does not exist in the sorted set or {@code key}
@@ -559,18 +628,40 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Remove one or more members from a sorted set.
-     * 
+     *
      * @param key the key
      * @param members the member type: value
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of members removed from the sorted set, not including non existing members.
      */
     Mono<Long> zrem(K key, V... members);
 
     /**
+     * Remove all members in a sorted set between the given lexicographical range.
+     *
+     * @param key the key
+     * @param min min score
+     * @param max max score
+     * @return Long integer-reply the number of elements removed.
+     * @deprecated Use {@link #zremrangebylex(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Mono<Long> zremrangebylex(K key, String min, String max);
+
+    /**
+     * Remove all members in a sorted set between the given lexicographical range.
+     *
+     * @param key the key
+     * @param range the range
+     * @return Long integer-reply the number of elements removed.
+     * @since 4.3
+     */
+    Mono<Long> zremrangebylex(K key, Range<? extends V> range);
+
+    /**
      * Remove all members in a sorted set within the given indexes.
-     * 
+     *
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
@@ -580,7 +671,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Remove all members in a sorted set within the given scores.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -592,7 +683,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Remove all members in a sorted set within the given scores.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -614,7 +705,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by index, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -623,14 +714,36 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Flux<V> zrevrange(K key, long start, long stop);
 
     /**
+     * Stream over a range of members in a sorted set, by index, with scores ordered from high to low.
+     *
+     * @param channel streaming channel that receives a call for every scored value
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
+     */
+    Mono<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
+
+    /**
      * Return a range of members with scores in a sorted set, by index, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
      * @return V array-reply list of elements in the specified range.
      */
     Flux<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
+
+    /**
+     * Stream over a range of members with scores in a sorted set, by index, with scores ordered from high to low.
+     *
+     * @param channel streaming channel that receives a call for every scored value
+     * @param key the key
+     * @param start the start
+     * @param stop the stop
+     * @return Long count of elements in the specified range.
+     */
+    Mono<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
      * Return a range of members in a sorted set, by lexicographical range ordered from high to low.
@@ -655,7 +768,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -667,7 +780,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -689,7 +802,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -703,7 +816,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -727,103 +840,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Flux<V> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
-     * @param key the key
-     * @param max max score
-     * @param min min score
-     * @return V array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min);
-
-    /**
-     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
-     * @param key the key
-     * @param max max score
-     * @param min min score
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min);
-
-    /**
-     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     *
-     * @param key the key
-     * @param range the range
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @since 4.3
-     */
-    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range);
-
-    /**
-     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
-     * @param key the key
-     * @param max max score
-     * @param min min score
-     * @param offset the offset
-     * @param count the count
-     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
-
-    /**
-     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
-     * @param key the key
-     * @param max max score
-     * @param min min score
-     * @param offset the offset
-     * @param count the count
-     * @return V array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}
-     */
-    @Deprecated
-    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
-
-    /**
-     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     *
-     * @param key the key
-     * @param range the range
-     * @param limit limit
-     * @return V array-reply list of elements in the specified score range.
-     * @since 4.3
-     */
-    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
-
-    /**
-     * Stream over a range of members in a sorted set, by index, with scores ordered from high to low.
-     * 
-     * @param channel streaming channel that receives a call for every scored value
-     * @param key the key
-     * @param start the start
-     * @param stop the stop
-     * @return Long count of elements in the specified range.
-     */
-    Mono<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
-
-    /**
-     * Stream over a range of members with scores in a sorted set, by index, with scores ordered from high to low.
-     * 
-     * @param channel streaming channel that receives a call for every scored value
-     * @param key the key
-     * @param start the start
-     * @param stop the stop
-     * @return Long count of elements in the specified range.
-     */
-    Mono<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
-
-    /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param max max score
@@ -836,7 +854,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -860,7 +878,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -875,7 +893,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -901,8 +919,81 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     *
+     * @param key the key
+     * @param max max score
+     * @param min min score
+     * @return V array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     *
+     * @param key the key
+     * @param max max score
+     * @param min min score
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     *
+     * @param key the key
+     * @param range the range
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     *
+     * @param key the key
+     * @param max max score
+     * @param min min score
+     * @param offset the offset
+     * @param count the count
+     * @return ScoredValue&lt;V&gt; array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     *
+     * @param key the key
+     * @param max max score
+     * @param min min score
+     * @param offset the offset
+     * @param count the count
+     * @return V array-reply list of elements in the specified score range.
+     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}
+     */
+    @Deprecated
+    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
+     *
+     * @param key the key
+     * @param range the range
+     * @param limit limit
+     * @return V array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
+
+    /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -915,7 +1006,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -938,7 +1029,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -953,7 +1044,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -980,42 +1071,13 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param member the member type: value
      * @return Long integer-reply the rank of {@code member}. If {@code member} does not exist in the sorted set or {@code key}
      *         does not exist,
      */
     Mono<Long> zrevrank(K key, V member);
-
-    /**
-     * Get the score associated with the given member in a sorted set.
-     * 
-     * @param key the key
-     * @param member the member type: value
-     * @return Double bulk-string-reply the score of {@code member} (a double precision floating point number), represented as
-     *         string.
-     */
-    Mono<Double> zscore(K key, V member);
-
-    /**
-     * Add multiple sorted sets and store the resulting sorted set in a new key.
-     *
-     * @param destination destination key
-     * @param keys source keys
-     * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
-     */
-    Mono<Long> zunionstore(K destination, K... keys);
-
-    /**
-     * Add multiple sorted sets and store the resulting sorted set in a new key.
-     * 
-     * @param destination the destination
-     * @param storeArgs the storeArgs
-     * @param keys the keys
-     * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
-     */
-    Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.
@@ -1074,7 +1136,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
@@ -1094,93 +1156,31 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 
     /**
-     * Count the number of members in a sorted set between a given lexicographical range.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @return Long integer-reply the number of elements in the specified score range.
-     * @deprecated Use {@link #zlexcount(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Mono<Long> zlexcount(K key, String min, String max);
-
-    /**
-     * Count the number of members in a sorted set between a given lexicographical range.
+     * Get the score associated with the given member in a sorted set.
      *
      * @param key the key
-     * @param range the range
-     * @return Long integer-reply the number of elements in the specified score range.
-     * @since 4.3
+     * @param member the member type: value
+     * @return Double bulk-string-reply the score of {@code member} (a double precision floating point number), represented as
+     *         string.
      */
-    Mono<Long> zlexcount(K key, Range<? extends V> range);
+    Mono<Double> zscore(K key, V member);
 
     /**
-     * Remove all members in a sorted set between the given lexicographical range.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @return Long integer-reply the number of elements removed.
-     * @deprecated Use {@link #zremrangebylex(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Mono<Long> zremrangebylex(K key, String min, String max);
-
-    /**
-     * Remove all members in a sorted set between the given lexicographical range.
+     * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
-     * @param key the key
-     * @param range the range
-     * @return Long integer-reply the number of elements removed.
-     * @since 4.3
+     * @param destination destination key
+     * @param keys source keys
+     * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
-    Mono<Long> zremrangebylex(K key, Range<? extends V> range);
+    Mono<Long> zunionstore(K destination, K... keys);
 
     /**
-     * Return a range of members in a sorted set, by lexicographical range.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @return V array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Flux<V> zrangebylex(K key, String min, String max);
-
-    /**
-     * Return a range of members in a sorted set, by lexicographical range.
+     * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
-     * @param key the key
-     * @param range the range
-     * @return V array-reply list of elements in the specified range.
-     * @since 4.3
+     * @param destination the destination
+     * @param storeArgs the storeArgs
+     * @param keys the keys
+     * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
-    Flux<V> zrangebylex(K key, Range<? extends V> range);
-
-    /**
-     * Return a range of members in a sorted set, by lexicographical range.
-     * 
-     * @param key the key
-     * @param min min score
-     * @param max max score
-     * @param offset the offset
-     * @param count the count
-     * @return V array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
-     */
-    @Deprecated
-    Flux<V> zrangebylex(K key, String min, String max, long offset, long count);
-
-    /**
-     * Return a range of members in a sorted set, by lexicographical range.
-     *
-     * @param key the key
-     * @param range the range
-     * @param limit the limit
-     * @return V array-reply list of elements in the specified range.
-     * @since 4.3
-     */
-    Flux<V> zrangebylex(K key, Range<? extends V> range, Limit limit);
+    Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
 }

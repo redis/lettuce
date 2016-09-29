@@ -111,7 +111,7 @@ public class CreateSyncNodeSelectionClusterApi {
     }
 
     /**
-     * Supply addititional imports.
+     * Supply additional imports.
      *
      * @return
      */

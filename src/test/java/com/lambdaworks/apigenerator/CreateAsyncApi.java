@@ -97,7 +97,7 @@ public class CreateAsyncApi {
     }
 
     /**
-     * Supply addititional imports.
+     * Supply additional imports.
      *
      * @return
      */

@@ -7,7 +7,8 @@ import java.io.File;
  */
 class Constants {
 
-    public final static String[] TEMPLATE_NAMES = { "RedisSortedSetCommands",
+    public final static String[] TEMPLATE_NAMES = { "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands",
+            "RedisListCommands", "RedisScriptingCommands", "RedisServerCommands", "RedisSetCommands", "RedisSortedSetCommands",
             "RedisStringCommands", "RedisTransactionalCommands", "RedisSentinelCommands", "BaseRedisCommands",
             "RedisGeoCommands" };
 
