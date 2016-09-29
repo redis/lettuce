@@ -1293,6 +1293,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<V> zrevrangebylex(K key, Range<? extends V> range) {
+        return createDissolvingObservable(() -> commandBuilder.zrevrangebylex(key, range, Limit.unlimited()));
+    }
+
+    @Override
+    public Observable<V> zrevrangebylex(K key, Range<? extends V> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.zrevrangebylex(key, range, limit));
+    }
+
+    @Override
     public Observable<V> zrevrangebyscore(K key, double max, double min) {
         return createDissolvingObservable(() -> commandBuilder.zrevrangebyscore(key, max, min));
     }

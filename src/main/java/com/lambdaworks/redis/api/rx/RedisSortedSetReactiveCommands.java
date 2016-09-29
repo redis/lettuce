@@ -632,6 +632,27 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Observable<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
 
     /**
+     * Return a range of members in a sorted set, by lexicographical range ordered from high to low.
+     *
+     * @param key the key
+     * @param range the range
+     * @return V array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    Observable<V> zrevrangebylex(K key, Range<? extends V> range);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical range ordered from high to low.
+     *
+     * @param key the key
+     * @param range the range
+     * @param limit the limit
+     * @return V array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    Observable<V> zrevrangebylex(K key, Range<? extends V> range, Limit limit);
+
+    /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
      * @param key the key
@@ -1121,7 +1142,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return V array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified range.
      * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
      */
     @Deprecated
@@ -1132,7 +1153,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      *
      * @param key the key
      * @param range the range
-     * @return V array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified range.
      * @since 4.3
      */
     Observable<V> zrangebylex(K key, Range<? extends V> range);
@@ -1145,7 +1166,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return V array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified range.
      * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
      */
     @Deprecated
@@ -1157,7 +1178,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key
      * @param range the range
      * @param limit the limit
-     * @return V array-reply list of elements in the specified score range.
+     * @return V array-reply list of elements in the specified range.
      * @since 4.3
      */
     Observable<V> zrangebylex(K key, Range<? extends V> range, Limit limit);
