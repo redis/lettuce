@@ -1285,6 +1285,16 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<List<V>> zrevrangebylex(K key, Range<? extends V> range) {
+        return dispatch(commandBuilder.zrevrangebylex(key, range, Limit.unlimited()));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrevrangebylex(K key, Range<? extends V> range, Limit limit) {
+        return dispatch(commandBuilder.zrevrangebylex(key, range, limit));
+    }
+
+    @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min));
     }

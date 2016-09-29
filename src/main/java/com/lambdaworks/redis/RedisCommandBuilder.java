@@ -25,15 +25,15 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <V>
  * @author Mark Paluch
  */
-@SuppressWarnings({"unchecked", "Convert2Diamond", "WeakerAccess", "varargs"})
+@SuppressWarnings({ "unchecked", "Convert2Diamond", "WeakerAccess", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
     static final String MUST_NOT_BE_EMPTY = "must not be empty";
     static final String MUST_NOT_BE_NULL = "must not be null";
 
-    private static final byte[] MINUS_BYTES = {'-'};
-    private static final byte[] PLUS_BYTES = {'+'};
+    private static final byte[] MINUS_BYTES = { '-' };
+    private static final byte[] PLUS_BYTES = { '+' };
 
     public RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -1059,7 +1059,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(RPUSHX, new IntegerOutput<K, V>(codec), args);
     }
 
-
     public Command<K, V, Long> sadd(K key, V... members) {
         notNullKey(key);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
@@ -1599,7 +1598,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
         args.addKey(key).add(min(range)).add(max(range));
 
-        if(limit.isLimited()) {
+        if (limit.isLimited()) {
             args.add(LIMIT).add(limit.getOffset()).add(limit.getCount());
         }
         return createCommand(ZRANGEBYSCORE, new ValueListOutput<K, V>(codec), args);
@@ -1684,7 +1683,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
         notNullKey(key);
         notNullRange(range);
         notNullLimit(limit);
@@ -1725,7 +1725,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+    public Command<K, V, Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range, Limit limit) {
         notNullKey(key);
         notNullRange(range);
         notNullLimit(limit);
@@ -1782,6 +1783,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(start).add(stop);
         return createCommand(ZREVRANGE, new ValueListOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, List<V>> zrevrangebylex(K key, Range<? extends V> range, Limit limit) {
+        notNullKey(key);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        addLimit(args.addKey(key).add(maxValue(range)).add(minValue(range)), limit);
+        return createCommand(ZREVRANGEBYLEX, new ValueListOutput<K, V>(codec), args);
     }
 
     public Command<K, V, List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop) {
@@ -1911,7 +1922,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZREVRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+    public Command<K, V, Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
         notNullKey(key);
         notNullRange(range);
         notNullLimit(limit);
@@ -1958,8 +1970,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
-            Limit limit) {
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range, Limit limit) {
         notNullKey(key);
         notNullRange(range);
         notNullLimit(limit);
@@ -2760,7 +2772,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private void addLimit(CommandArgs<K, V> args, Limit limit) {
 
-        if(limit.isLimited()){
+        if (limit.isLimited()) {
             args.add(LIMIT).add(limit.getOffset()).add(limit.getCount());
         }
     }
@@ -2769,11 +2781,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
-        if(lower.getValue() == null || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY){
+        if (lower.getValue() == null
+                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
             return "-inf";
         }
 
-        if(!lower.isIncluding()){
+        if (!lower.isIncluding()) {
             return "(" + lower.getValue();
         }
 
@@ -2784,11 +2797,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
-        if(upper.getValue() == null || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY){
+        if (upper.getValue() == null
+                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
             return "+inf";
         }
 
-        if(!upper.isIncluding()){
+        if (!upper.isIncluding()) {
             return "(" + upper.getValue();
         }
 
@@ -2799,7 +2813,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends V> lower = range.getLower();
 
-        if(lower.getValue() == null){
+        if (lower.getValue() == null) {
             return MINUS_BYTES;
         }
 
@@ -2814,7 +2828,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends V> upper = range.getUpper();
 
-        if(upper.getValue() == null){
+        if (upper.getValue() == null) {
             return PLUS_BYTES;
         }
 

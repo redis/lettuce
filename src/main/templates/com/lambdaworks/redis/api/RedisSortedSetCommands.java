@@ -633,6 +633,27 @@ public interface RedisSortedSetCommands<K, V> {
     List<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
 
     /**
+     * Return a range of members in a sorted set, by lexicographical range ordered from high to low.
+     *
+     * @param key the key
+     * @param range the range
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    List<V> zrevrangebylex(K key, Range<? extends V> range);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical range ordered from high to low.
+     *
+     * @param key the key
+     * @param range the range
+     * @param limit the limit
+     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @since 4.3
+     */
+    List<V> zrevrangebylex(K key, Range<? extends V> range, Limit limit);
+
+    /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
      * 
      * @param key the key
@@ -1124,7 +1145,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param key the key
      * @param min min score
      * @param max max score
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
      */
     @Deprecated
@@ -1135,7 +1156,7 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param key the key
      * @param range the range
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
      */
     List<V> zrangebylex(K key, Range<? extends V> range);
@@ -1148,7 +1169,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param max max score
      * @param offset the offset
      * @param count the count
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}
      */
     @Deprecated
@@ -1160,7 +1181,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param key the key
      * @param range the range
      * @param limit the limit
-     * @return List&lt;V&gt; array-reply list of elements in the specified score range.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
      */
     List<V> zrangebylex(K key, Range<? extends V> range, Limit limit);

@@ -1280,6 +1280,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zrevrangebylex(K key, Range<? extends V> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebylex(key, range, Limit.unlimited()));
+    }
+
+    @Override
+    public Flux<V> zrevrangebylex(K key, Range<? extends V> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.zrevrangebylex(key, range, limit));
+    }
+
+    @Override
     public Flux<V> zrevrangebyscore(K key, double max, double min) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min));
     }

@@ -30,7 +30,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zadd(key, 2.0, "b", 3.0, "c")).isEqualTo(2);
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "b", "c"));
     }
-    
+
     @Test
     public void zaddScoredValue() throws Exception {
         assertThat(redis.zadd(key, ScoredValue.fromNullable(1.0, "a"))).isEqualTo(1);
@@ -357,6 +357,18 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void zrevrangebylex() throws Exception {
+
+        setup100KeyValues(new HashSet<>());
+
+        assertThat(redis.zrevrangebylex(key, Range.unbounded())).hasSize(100);
+        assertThat(redis.zrevrangebylex(key, Range.create("value", "zzz"))).hasSize(100);
+        assertThat(redis.zrevrangebylex(key, Range.from(Boundary.including("value98"), Boundary.including("value99")))).containsSequence("value99", "value98");
+        assertThat(redis.zrevrangebylex(key, Range.from(Boundary.including("value99"), Boundary.unbounded()))).hasSize(1);
+        assertThat(redis.zrevrangebylex(key, Range.from(Boundary.excluding("value99"), Boundary.unbounded()))).hasSize(0);
+    }
+
+    @Test
     public void zrevrangebyscore() throws Exception {
 
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
@@ -640,6 +652,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
         assertThat(redis.zrangebylex(key, Range.unbounded())).hasSize(100);
         assertThat(redis.zrangebylex(key, Range.create("value", "zzz"))).hasSize(100);
+        assertThat(redis.zrangebylex(key, Range.from(Boundary.including("value98"), Boundary.including("value99")))).containsSequence("value98", "value99");
         assertThat(redis.zrangebylex(key, Range.from(Boundary.including("value99"), Boundary.unbounded()))).hasSize(1);
         assertThat(redis.zrangebylex(key, Range.from(Boundary.excluding("value99"), Boundary.unbounded()))).hasSize(0);
     }
