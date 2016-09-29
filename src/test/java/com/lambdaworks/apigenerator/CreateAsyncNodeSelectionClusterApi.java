@@ -108,7 +108,7 @@ public class CreateAsyncNodeSelectionClusterApi {
     }
 
     /**
-     * Supply addititional imports.
+     * Supply additional imports.
      *
      * @return
      */

@@ -75,7 +75,7 @@ public class CreateSyncApi {
     }
 
     /**
-     * Supply addititional imports.
+     * Supply additional imports.
      * 
      * @return
      */

@@ -111,7 +111,7 @@ public class CreateReactiveApi {
     }
 
     /**
-     * Supply addititional imports.
+     * Supply additional imports.
      * 
      * @return
      */
