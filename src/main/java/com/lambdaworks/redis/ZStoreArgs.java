@@ -10,8 +10,8 @@ import java.util.List;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
- * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and <a
- * href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
+ * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and
+ * <a href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
  * chain the method calls: {@code weights(1, 2).max()}.
  * 
  * @author Will Glozer
@@ -22,7 +22,7 @@ public class ZStoreArgs {
         SUM, MIN, MAX
     }
 
-    private List<Long> weights;
+    private List<Double> weights;
     private Aggregate aggregate;
 
     /**
@@ -37,7 +37,12 @@ public class ZStoreArgs {
 
         }
 
-        public static ZStoreArgs weights(long... weights) {
+        @Deprecated
+        public static ZStoreArgs weights(long[] weights) {
+            return new ZStoreArgs().weights(toDoubleArray(weights));
+        }
+
+        public static ZStoreArgs weights(double... weights) {
             return new ZStoreArgs().weights(weights);
         }
 
@@ -54,9 +59,15 @@ public class ZStoreArgs {
         }
     }
 
-    public ZStoreArgs weights(long... weights) {
+    @Deprecated
+    public static ZStoreArgs weights(long[] weights) {
+        return new ZStoreArgs().weights(toDoubleArray(weights));
+    }
+
+    public ZStoreArgs weights(double... weights) {
         this.weights = new ArrayList<>(weights.length);
-        for (long weight : weights) {
+
+        for (double weight : weights) {
             this.weights.add(weight);
         }
         return this;
@@ -77,10 +88,20 @@ public class ZStoreArgs {
         return this;
     }
 
+    private static double[] toDoubleArray(long[] weights) {
+        double result[] = new double[weights.length];
+        for (int i = 0; i < weights.length; i++) {
+            result[i] = weights[i];
+        }
+        return result;
+    }
+
     <K, V> void build(CommandArgs<K, V> args) {
+
         if (weights != null) {
+
             args.add(WEIGHTS);
-            for (long weight : weights) {
+            for (double weight : weights) {
                 args.add(weight);
             }
         }

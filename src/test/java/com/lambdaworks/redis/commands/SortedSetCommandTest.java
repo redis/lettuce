@@ -10,15 +10,14 @@ import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static sun.security.krb5.Confounder.longValue;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import com.lambdaworks.redis.Range.Boundary;
 import org.junit.Test;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.Range.Boundary;
 
 public class SortedSetCommandTest extends AbstractRedisClientTest {
 
@@ -465,7 +464,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "c", "b"));
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(3.0, "a"), sv(4.0, "c"), sv(5.0, "b")));
 
-        assertThat(redis.zunionstore(key, weights(2, 3), "zset1", "zset2")).isEqualTo(3);
+        assertThat(redis.zunionstore(key, weights(new long[] { 2, 3 }), "zset1", "zset2")).isEqualTo(3);
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(8.0, "a"), sv(12.0, "c"), sv(13.0, "b")));
 
         assertThat(redis.zunionstore(key, weights(2, 3).sum(), "zset1", "zset2")).isEqualTo(3);
@@ -493,7 +492,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zinterstore(key, max(), "zset1", "zset2")).isEqualTo(2);
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a"), sv(3.0, "b")));
 
-        assertThat(redis.zinterstore(key, weights(2, 3), "zset1", "zset2")).isEqualTo(2);
+        assertThat(redis.zinterstore(key, weights(new long[] { 2, 3 }), "zset1", "zset2")).isEqualTo(2);
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(8.0, "a"), sv(13.0, "b")));
 
         assertThat(redis.zinterstore(key, weights(2, 3).sum(), "zset1", "zset2")).isEqualTo(2);
