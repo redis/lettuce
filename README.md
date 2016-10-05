@@ -111,9 +111,9 @@ Basic Usage
 -----------
 
 ```java
-RedisClient client = RedisClient.create("redis://localhost")
-RedisStringsConnection<String, String> connection = client.connect()
-String value = connection.get("key")
+RedisClient client = RedisClient.create("redis://localhost");
+RedisStringsConnection<String, String> connection = client.connect();
+String value = connection.get("key");
 ```
 
 Each Redis command is implemented by one or more methods with names identical
@@ -129,13 +129,13 @@ Asynchronous API
 ```java
 StatefulRedisConnection<String, String> connection = client.connect();
 RedisStringAsyncCommands<String, String> async = connection.async();
-RedisFuture<String> set = async.set("key", "value")
-RedisFuture<String> get = async.get("key")
+RedisFuture<String> set = async.set("key", "value");
+RedisFuture<String> get = async.get("key");
 
-async.awaitAll(set, get) == true
+async.awaitAll(set, get) == true;
 
-set.get() == "OK"
-get.get() == "value"
+set.get() == "OK";
+get.get() == "value";
 ```
 
 See [Asynchronous API](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) for further details.
@@ -146,12 +146,12 @@ Reactive API
 ```java
 StatefulRedisConnection<String, String> connection = client.connect();
 RedisStringReactiveCommands<String, String> reactive = connection.reactive();
-Observable<String> set = reactive.set("key", "value")
-Observable<String> get = reactive.get("key")
+Observable<String> set = reactive.set("key", "value");
+Observable<String> get = reactive.get("key");
 
 set.subscribe();
 
-get.toBlocking().single() == "value"
+get.toBlocking().single() == "value";
 ```
 
 See [Reactive API](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) for further details.
@@ -161,8 +161,8 @@ Pub/Sub
 
 ```java
 RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
-connection.addListener(new RedisPubSubListener<String, String>() { ... })
-connection.subscribe("channel")
+connection.addListener(new RedisPubSubListener<String, String>() { ... });
+connection.subscribe("channel");
 ```
 
 Building
