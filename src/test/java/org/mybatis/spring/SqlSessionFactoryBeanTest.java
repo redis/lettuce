@@ -116,12 +116,24 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testNullConfiguration() throws Exception {
+  public void testDefaultConfiguration() throws Exception {
     setupFactoryBean();
 
-    factoryBean.setConfigLocation(null);
-
     assertDefaultConfig(factoryBean.getObject());
+  }
+
+  @Test
+  public void testDefaultConfigurationWithConfigurationProperties() throws Exception {
+    setupFactoryBean();
+
+    Properties configurationProperties = new Properties();
+    configurationProperties.put("username", "dev");
+    factoryBean.setConfigurationProperties(configurationProperties);
+
+    SqlSessionFactory factory = factoryBean.getObject();
+    assertConfig(factory, SpringManagedTransactionFactory.class);
+    assertEquals(1, factory.getConfiguration().getVariables().size());
+    assertEquals("dev", factory.getConfiguration().getVariables().get("username"));
   }
 
   @Test
