@@ -185,7 +185,7 @@ public class ConnectionCommandTest extends AbstractCommandTest {
             async.select(1024);
             fail("Selected invalid db index");
         } catch (RedisException e) {
-            assertThat(e.getMessage()).isEqualTo("ERR invalid DB index");
+            assertThat(e.getMessage()).startsWith("ERR");
             Field f = async.getClass().getDeclaredField("db");
             f.setAccessible(true);
             assertThat(f.get(async)).isEqualTo(0);
