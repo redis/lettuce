@@ -200,7 +200,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
             async.select(1024);
             fail("Selected invalid db index");
         } catch (RedisException e) {
-            assertThat(e.getMessage()).isEqualTo("ERR invalid DB index");
+            assertThat(e.getMessage()).startsWith("ERR");
             StatefulRedisConnection<String, String> statefulRedisConnection = (StatefulRedisConnection<String, String>) ReflectionTestUtils
                     .getField(async, "connection");
             assertThat(ReflectionTestUtils.getField(statefulRedisConnection, "db")).isEqualTo(0);
