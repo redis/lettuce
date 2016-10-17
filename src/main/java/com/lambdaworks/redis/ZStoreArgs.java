@@ -16,7 +16,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * 
  * @author Will Glozer
  */
-public class ZStoreArgs {
+public class ZStoreArgs implements CompositeArgument {
 
     private static enum Aggregate {
         SUM, MIN, MAX
@@ -96,7 +96,7 @@ public class ZStoreArgs {
         return result;
     }
 
-    <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
         if (weights != null) {
 

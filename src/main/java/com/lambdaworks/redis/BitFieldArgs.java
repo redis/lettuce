@@ -16,7 +16,7 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  * @author Mark Paluch
  * @since 4.2
  */
-public class BitFieldArgs {
+public class BitFieldArgs implements CompositeArgument {
 
     private List<SubCommand> commands;
 
@@ -528,7 +528,7 @@ public class BitFieldArgs {
         abstract <K, V> void build(CommandArgs<K, V> args);
     }
 
-    <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
         for (SubCommand command : commands) {
             command.build(args);

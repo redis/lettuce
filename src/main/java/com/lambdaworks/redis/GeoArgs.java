@@ -9,7 +9,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
  * 
  * @author Mark Paluch
  */
-public class GeoArgs {
+public class GeoArgs implements CompositeArgument {
 
     private boolean withdistance;
     private boolean withcoordinates;

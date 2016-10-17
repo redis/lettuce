@@ -10,7 +10,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
  *
  * @author Mark Paluch
  */
-public class GeoRadiusStoreArgs<K> {
+public class GeoRadiusStoreArgs<K> implements CompositeArgument {
 
     private K storeKey;
     private K storeDistKey;

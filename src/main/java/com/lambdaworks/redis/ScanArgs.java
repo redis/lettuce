@@ -1,6 +1,7 @@
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MATCH;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -12,7 +13,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * @author Mark Paluch
  * @since 3.0
  */
-public class ScanArgs {
+public class ScanArgs implements CompositeArgument {
 
     private Long count;
     private String match;
@@ -73,7 +74,7 @@ public class ScanArgs {
         return this;
     }
 
-    <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {
             args.add(MATCH).add(match);
@@ -84,5 +85,4 @@ public class ScanArgs {
         }
 
     }
-
 }

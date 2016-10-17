@@ -4,12 +4,14 @@ package com.lambdaworks.redis.protocol;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
-import com.lambdaworks.redis.codec.ToByteBufEncoder;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.codec.ToByteBufEncoder;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.buffer.ByteBuf;
@@ -372,6 +374,11 @@ public class CommandArgs<K, V> {
             buffer.writeBytes(value);
             buffer.writeBytes(CRLF);
         }
+
+        @Override
+        public String toString() {
+            return Base64.getEncoder().encodeToString(val);
+        }
     }
 
     static class ByteBufferArgument {
@@ -421,6 +428,11 @@ public class CommandArgs<K, V> {
             StringArgument.writeString(target, Long.toString(val));
         }
 
+        @Override
+        public String toString() {
+            return "" + val;
+        }
+
         static void writeInteger(ByteBuf target, long value) {
 
             if (value < 10) {
@@ -465,6 +477,11 @@ public class CommandArgs<K, V> {
         void encode(ByteBuf target) {
             StringArgument.writeString(target, Double.toString(val));
         }
+
+        @Override
+        public String toString() {
+            return "" + val;
+        }
     }
 
     static class StringArgument extends SingularArgument {
@@ -495,6 +512,11 @@ public class CommandArgs<K, V> {
                 target.writeByte((byte) value.charAt(i));
             }
             target.writeBytes(CRLF);
+        }
+
+        @Override
+        public String toString() {
+            return val;
         }
     }
 
@@ -534,6 +556,11 @@ public class CommandArgs<K, V> {
 
             ByteBufferArgument.writeByteBuffer(target, codec.encodeKey(key));
         }
+
+        @Override
+        public String toString() {
+            return String.format("key<%s>", new StringCodec().decodeKey(codec.encodeKey(key)));
+        }
     }
 
     static class ValueArgument<K, V> extends SingularArgument {
@@ -571,6 +598,11 @@ public class CommandArgs<K, V> {
             }
 
             ByteBufferArgument.writeByteBuffer(target, codec.encodeValue(val));
+        }
+
+        @Override
+        public String toString() {
+            return String.format("value<%s>", new StringCodec().decodeValue(codec.encodeValue(val)));
         }
     }
 

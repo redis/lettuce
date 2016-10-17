@@ -395,8 +395,8 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped
-         * at {@literal 30 SECONDS}.
+         * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped at
+         * {@literal 30 SECONDS}.
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this

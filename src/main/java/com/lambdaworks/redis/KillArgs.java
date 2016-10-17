@@ -13,7 +13,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
  * @author Mark Paluch
  * @since 3.0
  */
-public class KillArgs {
+public class KillArgs implements CompositeArgument {
 
     private static enum Type {
         NORMAL, SLAVE, PUBSUB
@@ -86,7 +86,7 @@ public class KillArgs {
         return this;
     }
 
-    <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
         if (skipme != null) {
             args.add(SKIPME).add(skipme.booleanValue() ? "yes" : "no");

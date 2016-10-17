@@ -15,7 +15,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  *
  * @author Mark Paluch
  */
-public class MigrateArgs<K> {
+public class MigrateArgs<K> implements CompositeArgument {
 
     private boolean copy = false;
     private boolean replace = false;

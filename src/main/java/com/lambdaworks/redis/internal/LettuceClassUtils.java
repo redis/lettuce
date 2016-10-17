@@ -1,5 +1,10 @@
 package com.lambdaworks.redis.internal;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
+import org.springframework.util.TypeUtils;
+
 import com.lambdaworks.redis.JavaRuntime;
 
 /**
@@ -9,6 +14,32 @@ import com.lambdaworks.redis.JavaRuntime;
  * @since 4.2
  */
 public class LettuceClassUtils {
+
+    /** The CGLIB class separator character "$$" */
+    public static final String CGLIB_CLASS_SEPARATOR = "$$";
+
+    /**
+     * Map with primitive wrapper type as key and corresponding primitive type as value, for example: Integer.class ->
+     * int.class.
+     */
+    private static final Map<Class<?>, Class<?>> primitiveWrapperTypeMap = new IdentityHashMap<Class<?>, Class<?>>(9);
+
+    /**
+     * Map with primitive type as key and corresponding wrapper type as value, for example: int.class -> Integer.class.
+     */
+    private static final Map<Class<?>, Class<?>> primitiveTypeToWrapperMap = new IdentityHashMap<Class<?>, Class<?>>(9);
+
+    static {
+        primitiveWrapperTypeMap.put(Boolean.class, boolean.class);
+        primitiveWrapperTypeMap.put(Byte.class, byte.class);
+        primitiveWrapperTypeMap.put(Character.class, char.class);
+        primitiveWrapperTypeMap.put(Double.class, double.class);
+        primitiveWrapperTypeMap.put(Float.class, float.class);
+        primitiveWrapperTypeMap.put(Integer.class, int.class);
+        primitiveWrapperTypeMap.put(Long.class, long.class);
+        primitiveWrapperTypeMap.put(Short.class, short.class);
+        primitiveWrapperTypeMap.put(Void.class, void.class);
+    }
 
     /**
      * Determine whether the {@link Class} identified by the supplied name is present and can be loaded. Will return
@@ -30,6 +61,20 @@ public class LettuceClassUtils {
     /**
      * Loads a class using the {@link #getDefaultClassLoader()}.
      * 
+     * @param className
+     * @return
+     */
+    public static Class<?> findClass(String className) {
+        try {
+            return forName(className, getDefaultClassLoader());
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Loads a class using the {@link #getDefaultClassLoader()}.
+     *
      * @param className
      * @return
      * @throws ClassNotFoundException
@@ -74,5 +119,37 @@ public class LettuceClassUtils {
             cl = JavaRuntime.class.getClassLoader();
         }
         return cl;
+    }
+
+    /**
+     * Check if the right-hand side type may be assigned to the left-hand side type, assuming setting by reflection. Considers
+     * primitive wrapper classes as assignable to the corresponding primitive types.
+     * 
+     * @param lhsType the target type
+     * @param rhsType the value type that should be assigned to the target type
+     * @return if the target type is assignable from the value type
+     * @see TypeUtils#isAssignable
+     */
+    public static boolean isAssignable(Class<?> lhsType, Class<?> rhsType) {
+
+        LettuceAssert.notNull(lhsType, "Left-hand side type must not be null");
+        LettuceAssert.notNull(rhsType, "Right-hand side type must not be null");
+
+        if (lhsType.isAssignableFrom(rhsType)) {
+            return true;
+        }
+
+        if (lhsType.isPrimitive()) {
+            Class<?> resolvedPrimitive = primitiveWrapperTypeMap.get(rhsType);
+            if (lhsType == resolvedPrimitive) {
+                return true;
+            }
+        } else {
+            Class<?> resolvedWrapper = primitiveTypeToWrapperMap.get(rhsType);
+            if (resolvedWrapper != null && lhsType.isAssignableFrom(resolvedWrapper)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
