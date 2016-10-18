@@ -57,8 +57,9 @@ public class StringClusterCommandTest extends StringCommandTest {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("one", "1");
         map.put("two", "2");
-        assertThat(redis.msetnx(map)).isTrue();
+        assertThat(redis.msetnx(map)).isFalse();
         redis.del("one");
+        redis.del("two"); // probably set on a different node
         assertThat(redis.msetnx(map)).isTrue();
         assertThat(redis.get("two")).isEqualTo("2");
     }

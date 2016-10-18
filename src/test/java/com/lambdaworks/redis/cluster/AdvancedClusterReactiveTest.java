@@ -3,10 +3,7 @@ package com.lambdaworks.redis.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -93,13 +90,17 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test
     public void msetnxCrossSlot() throws Exception {
 
-        List<Boolean> result = LettuceLists.newList(commands.msetnx(RandomKeys.MAP).toBlocking().toIterable());
+        Map<String, String> mset = prepareMset();
 
-        assertThat(result).hasSize(1).contains(true);
+        String key = mset.keySet().iterator().next();
+        Map<String, String> submap = Collections.singletonMap(key, mset.get(key));
 
-        for (String mykey : RandomKeys.KEYS) {
+        assertThat(LettuceLists.newList(commands.msetnx(submap).toBlocking().toIterable())).hasSize(1).contains(true);
+        assertThat(LettuceLists.newList(commands.msetnx(mset).toBlocking().toIterable())).hasSize(1).contains(false);
+
+        for (String mykey : mset.keySet()) {
             String s1 = syncCommands.get(mykey);
-            assertThat(s1).isEqualTo(RandomKeys.MAP.get(mykey));
+            assertThat(s1).isEqualTo(mset.get(mykey));
         }
     }
 
@@ -381,5 +382,14 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     private void writeKeysToTwoNodes() {
         syncCommands.set(KEY_ON_NODE_1, value);
         syncCommands.set(KEY_ON_NODE_2, value);
+    }
+    
+    protected Map<String, String> prepareMset() {
+        Map<String, String> mset = new HashMap<>();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            mset.put(key, "value-" + key);
+        }
+        return mset;
     }
 }

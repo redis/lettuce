@@ -163,23 +163,16 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         }
     }
 
-    protected Map<String, String> prepareMset() {
-        Map<String, String> mset = new HashMap<>();
-        for (char c = 'a'; c < 'z'; c++) {
-            String key = new String(new char[] { c, c, c });
-            mset.put(key, "value-" + key);
-        }
-        return mset;
-    }
-
     @Test
     public void msetnxCrossSlot() throws Exception {
 
         Map<String, String> mset = prepareMset();
 
-        RedisFuture<Boolean> result = commands.msetnx(mset);
-
-        assertThat(result.get()).isTrue();
+        String key = mset.keySet().iterator().next();
+        Map<String, String> submap = Collections.singletonMap(key, mset.get(key));
+        
+        assertThat(commands.msetnx(submap).get()).isTrue();
+        assertThat(commands.msetnx(mset).get()).isFalse();
 
         for (String mykey : mset.keySet()) {
             String s1 = commands.get(mykey).get();
@@ -611,6 +604,15 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     private void writeKeysToTwoNodes() {
         syncCommands.set(KEY_ON_NODE_1, value);
         syncCommands.set(KEY_ON_NODE_2, value);
+    }
+    
+    protected Map<String, String> prepareMset() {
+        Map<String, String> mset = new HashMap<>();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            mset.put(key, "value-" + key);
+        }
+        return mset;
     }
 
 }

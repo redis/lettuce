@@ -189,7 +189,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Observable<Boolean> msetnx(Map<K, V> map) {
 
         return pipeliningWithMap(map, kvMap -> super.msetnx(kvMap),
-                booleanObservable -> booleanObservable.reduce((accu, next) -> accu || next));
+                booleanObservable -> booleanObservable.reduce((accu, next) -> accu && next));
     }
 
     @Override
