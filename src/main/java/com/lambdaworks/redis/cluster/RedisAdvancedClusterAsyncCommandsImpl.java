@@ -225,14 +225,15 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            
             for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
                 Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
-                if (b != null && b) {
-                    return true;
+                if (b == null ||  !b) {
+                    return false;
                 }
             }
 
-            return false;
+            return !executions.isEmpty();
         });
     }
 
