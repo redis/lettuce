@@ -1,10 +1,13 @@
 package com.lambdaworks.redis.commands.rx;
 
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.commands.GeoCommandTest;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.commands.GeoCommandTest;
+
+/**
+ * @author Mark Paluch
+ */
 public class GeoRxCommandTest extends GeoCommandTest {
 
     @Override

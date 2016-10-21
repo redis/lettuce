@@ -1,14 +1,20 @@
 package com.lambdaworks.redis.commands.rx;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.Test;
+
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.StringCommandTest;
-import org.junit.Test;
+
 import rx.Observable;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+/**
+ * @author Mark Paluch
+ */
 public class StringRxCommandTest extends StringCommandTest {
+
     @Override
     protected RedisCommands<String, String> connect() {
         return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());

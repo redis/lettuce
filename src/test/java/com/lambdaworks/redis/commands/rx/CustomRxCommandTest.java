@@ -56,5 +56,4 @@ public class CustomRxCommandTest extends CustomCommandTest {
         testSubscriber.assertCompleted();
         testSubscriber.assertValues("a", "b", "c");
     }
-
 }

@@ -25,7 +25,10 @@ public class Range<T> {
     /**
      * Create a new range from {@code lower} and {@code upper} boundary values. Both values are included (greater than or equals
      * and less than or equals).
-     * 
+     *
+     * @param lower lower boundary, must not be {@literal null}.
+     * @param upper upper boundary, must not be {@literal null}.
+     * @param <T> value type
      * @return new {@link Range}
      */
     public static <T> Range<T> create(T lower, T upper) {
@@ -37,6 +40,7 @@ public class Range<T> {
      * 
      * @param lower lower boundary, must not be {@literal null}.
      * @param upper upper boundary, must not be {@literal null}.
+     * @param <T> value type.
      * @return new {@link Range}
      */
     public static <T> Range<T> from(Boundary<T> lower, Boundary<T> upper) {
@@ -44,6 +48,7 @@ public class Range<T> {
     }
 
     /**
+     * @param <T> value type.
      * @return new {@link Range} with {@code lower} and {@code upper} set to {@link Boundary#unbounded()}.
      */
     public static <T> Range<T> unbounded() {
@@ -56,7 +61,7 @@ public class Range<T> {
      * @param lower the lower boundary value.
      * @return {@code this} {@link Range} with {@code lower} applied.
      */
-    public Range gte(T lower) {
+    public Range<T> gte(T lower) {
 
         this.lower = Boundary.including(lower);
         return this;
@@ -68,7 +73,7 @@ public class Range<T> {
      * @param lower the lower boundary value.
      * @return {@code this} {@link Range} with {@code lower} applied.
      */
-    public Range gt(T lower) {
+    public Range<T> gt(T lower) {
 
         this.lower = Boundary.excluding(lower);
         return this;
@@ -139,6 +144,7 @@ public class Range<T> {
          * Creates an unbounded (infinite) boundary that marks the beginning/end of the range.
          * 
          * @return the unbounded boundary.
+         * @param <T> inferred type.
          */
         @SuppressWarnings("unchecked")
         public static <T> Boundary<T> unbounded() {
@@ -150,7 +156,7 @@ public class Range<T> {
          * equals, less or equals. but not Greater or equal, less or equal to {@code value}.
          * 
          * @param value must not be {@literal null}.
-         * @param <T> value type
+         * @param <T> value type.
          * @return the {@link Boundary}.
          */
         public static <T> Boundary<T> including(T value) {
@@ -165,7 +171,7 @@ public class Range<T> {
          * to {@code value} but not greater or equal, less or equal.
          *
          * @param value must not be {@literal null}.
-         * @param <T> value type
+         * @param <T> value type.
          * @return the {@link Boundary}.
          */
         public static <T> Boundary<T> excluding(T value) {

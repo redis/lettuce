@@ -3,6 +3,9 @@ package com.lambdaworks.redis.commands.rx;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.HLLCommandTest;
 
+/**
+ * @author Mark Paluch
+ */
 public class HLLRxCommandTest extends HLLCommandTest {
 
     @Override
