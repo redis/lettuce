@@ -62,15 +62,11 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     public void multi(int count) {
 
         if (rolledBack == null) {
-            if (count == -1) {
-                rolledBack = true;
-            } else {
-                rolledBack = false;
+            rolledBack = count == -1;
+        } else {
+            if (!queue.isEmpty()) {
+                queue.peek().getOutput().multi(count);
             }
-        }
-
-        if (count == -1 && !queue.isEmpty()) {
-            queue.peek().getOutput().multi(count);
         }
     }
 
