@@ -20,7 +20,9 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @author Will Glozer
  */
 public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
+
     private final Queue<RedisCommand<K, V, ?>> queue;
+    private Integer expectedResults = null;
 
     public MultiOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<>());
@@ -56,8 +58,17 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     @Override
     public void multi(int count) {
 
-        if (count == -1 && !queue.isEmpty()) {
-            queue.peek().getOutput().multi(count);
+        if (expectedResults == null) {
+            expectedResults = count;
+
+            if (count == -1 && !queue.isEmpty()) {
+                queue.peek().getOutput().multi(count);
+            }
+
+        } else {
+            if (!queue.isEmpty()) {
+                queue.peek().getOutput().multi(count);
+            }
         }
     }
 
