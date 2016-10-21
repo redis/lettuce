@@ -4,7 +4,11 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.NumericCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
+/**
+ * @author Mark Paluch
+ */
 public class NumericReactiveCommandTest extends NumericCommandTest {
+
     @Override
     protected RedisCommands<String, String> connect() {
         return ReactiveSyncInvocationHandler.sync(client.connect());

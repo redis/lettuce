@@ -2,16 +2,21 @@ package com.lambdaworks.redis.commands.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.lambdaworks.redis.KeyValue;
-import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 import org.junit.Test;
 
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.StringCommandTest;
+import com.lambdaworks.util.ReactiveSyncInvocationHandler;
+
 import reactor.core.publisher.Flux;
 
+/**
+ * @author Mark Paluch
+ */
 public class StringReactiveCommandTest extends StringCommandTest {
+
     @Override
     protected RedisCommands<String, String> connect() {
         return ReactiveSyncInvocationHandler.sync(client.connect());

@@ -2,14 +2,17 @@ package com.lambdaworks.redis.commands.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.ServerCommandTest;
+import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
+/**
+ * @author Mark Paluch
+ */
 public class ServerReactiveCommandTest extends ServerCommandTest {
 
     private RedisReactiveCommands<String, String> reactive;

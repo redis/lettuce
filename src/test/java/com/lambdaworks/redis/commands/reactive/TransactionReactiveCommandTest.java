@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,11 +16,15 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.TransactionCommandTest;
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * @author Mark Paluch
+ */
 public class TransactionReactiveCommandTest extends TransactionCommandTest {
 
     private RedisReactiveCommands<String, String> commands;

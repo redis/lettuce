@@ -4,8 +4,10 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.ScriptingCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
+/**
+ * @author Mark Paluch
+ */
 public class ScriptingReactiveCommandTest extends ScriptingCommandTest {
-
 
     @Override
     protected RedisCommands<String, String> connect() {

@@ -4,11 +4,13 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.SetCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
+/**
+ * @author Mark Paluch
+ */
 public class SetReactiveCommandTest extends SetCommandTest {
 
     @Override
     protected RedisCommands<String, String> connect() {
         return ReactiveSyncInvocationHandler.sync(client.connect());
     }
-
 }

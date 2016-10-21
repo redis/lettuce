@@ -15,6 +15,9 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.GeoCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
+/**
+ * @author Mark Paluch
+ */
 public class GeoReactiveCommandTest extends GeoCommandTest {
 
     @Override

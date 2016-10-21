@@ -4,6 +4,9 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.HLLCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
+/**
+ * @author Mark Paluch
+ */
 public class HLLReactiveCommandTest extends HLLCommandTest {
 
     @Override

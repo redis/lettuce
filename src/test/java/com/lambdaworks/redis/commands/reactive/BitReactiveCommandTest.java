@@ -8,10 +8,10 @@ import com.lambdaworks.util.ReactiveSyncInvocationHandler;
  * @author Mark Paluch
  */
 public class BitReactiveCommandTest extends BitCommandTest {
+
     @Override
     protected RedisCommands<String, String> connect() {
         bitstring = ReactiveSyncInvocationHandler.sync(client.connect(new BitStringCodec()));
         return ReactiveSyncInvocationHandler.sync(client.connect());
     }
-
 }

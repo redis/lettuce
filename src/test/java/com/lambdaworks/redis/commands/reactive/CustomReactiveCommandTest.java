@@ -1,6 +1,5 @@
 package com.lambdaworks.redis.commands.reactive;
 
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
@@ -10,6 +9,7 @@ import com.lambdaworks.redis.output.ValueListOutput;
 import com.lambdaworks.redis.output.ValueOutput;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.reactive.TestSubscriber;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
 
 import reactor.core.publisher.Flux;
@@ -49,5 +49,4 @@ public class CustomReactiveCommandTest extends CustomCommandTest {
         TestSubscriber<String> testSubscriber = TestSubscriber.subscribe(flux);
         testSubscriber.awaitAndAssertNextValues("a", "b", "c").assertComplete().assertNoError();
     }
-
 }
