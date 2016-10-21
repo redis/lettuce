@@ -110,7 +110,7 @@ public class CustomCodecTest extends AbstractRedisClientTest {
         byte[] bytes = new byte[byteBuffer.remaining()];
         byteBuffer.get(bytes);
 
-        assertThat(new String(bytes)).isEqualTo(value);
+        assertThat(bytes).isEqualTo(value.getBytes());
 
         connection.close();
     }
