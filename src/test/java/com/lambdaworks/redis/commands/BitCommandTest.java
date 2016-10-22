@@ -2,15 +2,16 @@
 
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.BitFieldArgs.OverflowType.WRAP;
+import static com.lambdaworks.redis.BitFieldArgs.offset;
 import static com.lambdaworks.redis.BitFieldArgs.signed;
 import static com.lambdaworks.redis.BitFieldArgs.unsigned;
+import static com.lambdaworks.redis.BitFieldArgs.typeWidthBasedOffset;
+import static com.lambdaworks.redis.BitFieldArgs.OverflowType.WRAP;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
@@ -74,6 +75,16 @@ public class BitCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void bitfieldArgsTest() throws Exception {
+
+        assertThat(signed(5).toString()).isEqualTo("i5");
+        assertThat(unsigned(5).toString()).isEqualTo("u5");
+
+        assertThat(offset(5).toString()).isEqualTo("5");
+        assertThat(typeWidthBasedOffset(5).toString()).isEqualTo("#5");
+    }
+
+    @Test
     public void bitfield() throws Exception {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).set(5, 1).incrBy(2, 3).get().get(2);
@@ -82,6 +93,17 @@ public class BitCommandTest extends AbstractRedisClientTest {
 
         assertThat(values).containsExactly(0L, 32L, 3L, 0L, 3L);
         assertThat(bitstring.get(key)).isEqualTo("0000000000010011");
+    }
+
+    @Test
+    public void bitfieldGetWithOffset() throws Exception {
+
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).get(signed(2), typeWidthBasedOffset(1));
+
+        List<Long> values = redis.bitfield(key, bitFieldArgs);
+
+        assertThat(values).containsExactly(0L, 0L);
+        assertThat(bitstring.get(key)).isEqualTo("10000000");
     }
 
     @Test
@@ -96,6 +118,17 @@ public class BitCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void bitfieldWithOffsetSet() throws Exception {
+
+        redis.bitfield(key, BitFieldArgs.Builder.set(signed(8), typeWidthBasedOffset(2), 5));
+        assertThat(bitstring.get(key)).isEqualTo("000000000000000010100000");
+
+        redis.del(key);
+        redis.bitfield(key, BitFieldArgs.Builder.set(signed(8), offset(2), 5));
+        assertThat(bitstring.get(key)).isEqualTo("1000000000000010");
+    }
+
+    @Test
     public void bitfieldIncrBy() throws Exception {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).incrBy(1);
@@ -104,6 +137,17 @@ public class BitCommandTest extends AbstractRedisClientTest {
 
         assertThat(values).containsExactly(0L, 6L);
         assertThat(bitstring.get(key)).isEqualTo("01100000");
+    }
+
+    @Test
+    public void bitfieldWithOffsetIncrBy() throws Exception {
+
+        redis.bitfield(key, BitFieldArgs.Builder.incrBy(signed(8), typeWidthBasedOffset(2), 1));
+        assertThat(bitstring.get(key)).isEqualTo("000000000000000010000000");
+
+        redis.del(key);
+        redis.bitfield(key, BitFieldArgs.Builder.incrBy(signed(8), offset(2), 1));
+        assertThat(bitstring.get(key)).isEqualTo("0000000000000010");
     }
 
     @Test

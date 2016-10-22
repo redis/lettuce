@@ -42,7 +42,7 @@ public class BitFieldArgs {
         }
 
         /**
-         * Adds a new {@link Get} subcommand.
+         * Create a new {@link Get} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
@@ -53,7 +53,19 @@ public class BitFieldArgs {
         }
 
         /**
-         * Adds a new {@link Set} subcommand.
+         * Create a new {@link Get} subcommand.
+         *
+         * @param bitFieldType the bit field type, must not be {@literal null}.
+         * @param offset bitfield offset, must not be {@literal null}.
+         * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+         * @since 4.3
+         */
+        public static BitFieldArgs get(BitFieldType bitFieldType, Offset offset) {
+            return new BitFieldArgs().get(bitFieldType, offset);
+        }
+
+        /**
+         * Create a new {@link Set} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
@@ -65,7 +77,20 @@ public class BitFieldArgs {
         }
 
         /**
-         * Adds a new {@link IncrBy} subcommand.
+         * Create a new {@link Set} subcommand.
+         *
+         * @param bitFieldType the bit field type, must not be {@literal null}.
+         * @param offset bitfield offset, must not be {@literal null}.
+         * @param value the value
+         * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+         * @since 4.3
+         */
+        public static BitFieldArgs set(BitFieldType bitFieldType, Offset offset, long value) {
+            return new BitFieldArgs().set(bitFieldType, offset, value);
+        }
+
+        /**
+         * Create a new {@link IncrBy} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
@@ -73,6 +98,19 @@ public class BitFieldArgs {
          * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
          */
         public static BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
+            return new BitFieldArgs().incrBy(bitFieldType, offset, value);
+        }
+
+        /**
+         * Create a new {@link IncrBy} subcommand.
+         *
+         * @param bitFieldType the bit field type, must not be {@literal null}.
+         * @param offset bitfield offset, must not be {@literal null}.
+         * @param value the value
+         * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+         * @since 4.3
+         */
+        public static BitFieldArgs incrBy(BitFieldType bitFieldType, Offset offset, long value) {
             return new BitFieldArgs().incrBy(bitFieldType, offset, value);
         }
 
@@ -92,8 +130,8 @@ public class BitFieldArgs {
      *
      * Redis allows up to {@code 64} bits for unsigned integers.
      *
-     * @param bits
-     * @return
+     * @param bits number of bits to define the integer type width.
+     * @return the {@link BitFieldType}.
      */
     public static BitFieldType signed(int bits) {
         return new BitFieldType(true, bits);
@@ -103,19 +141,43 @@ public class BitFieldArgs {
      * Creates a new unsigned {@link BitFieldType} for the given number of {@code bits}. Redis allows up to {@code 63} bits for
      * unsigned integers.
      *
-     * @param bits
-     * @return
+     * @param bits number of bits to define the integer type width.
+     * @return the {@link BitFieldType}.
      */
     public static BitFieldType unsigned(int bits) {
         return new BitFieldType(false, bits);
     }
 
     /**
+     * Creates a new {@link Offset} for the given {@code offset}.
+     *
+     * @param offset zero-based offset.
+     * @return the {@link Offset}.
+     * @since 4.3
+     */
+    public static Offset offset(int offset) {
+        return new Offset(false, offset);
+    }
+
+    /**
+     * Creates a new {@link Offset} for the given {@code offset} that is multiplied by the integer type width used in the sub
+     * command.
+     *
+     * @param offset offset to be multiplied by the integer type width.
+     * @return the {@link Offset}.
+     * @since 4.3
+     */
+    public static Offset typeWidthBasedOffset(int offset) {
+        return new Offset(true, offset);
+    }
+
+    /**
      * Adds a new {@link SubCommand} to the {@code BITFIELD} execution.
      *
-     * @param subCommand
+     * @param subCommand must not be {@literal null}.
      */
     private BitFieldArgs addSubCommand(SubCommand subCommand) {
+
         LettuceAssert.notNull(subCommand, "SubCommand must not be null");
         commands.add(subCommand);
         return this;
@@ -149,7 +211,22 @@ public class BitFieldArgs {
      * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
      */
     public BitFieldArgs get(BitFieldType bitFieldType, int offset) {
-        return addSubCommand(new Get(bitFieldType, offset));
+        return addSubCommand(new Get(bitFieldType, false, offset));
+    }
+
+    /**
+     * Adds a new {@link Get} subcommand.
+     *
+     * @param bitFieldType the bit field type, must not be {@literal null}.
+     * @param offset bitfield offset
+     * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+     * @since 4.3
+     */
+    public BitFieldArgs get(BitFieldType bitFieldType, Offset offset) {
+
+        LettuceAssert.notNull(offset, "BitFieldOffset must not be null");
+
+        return addSubCommand(new Get(bitFieldType, offset.isMultiplyByTypeWidth(), offset.getOffset()));
     }
 
     /**
@@ -206,7 +283,23 @@ public class BitFieldArgs {
      * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs set(BitFieldType bitFieldType, int offset, long value) {
-        return addSubCommand(new Set(bitFieldType, offset, value));
+        return addSubCommand(new Set(bitFieldType, false, offset, value));
+    }
+
+    /**
+     * Adds a new {@link Set} subcommand.
+     *
+     * @param bitFieldType the bit field type, must not be {@literal null}.
+     * @param offset bitfield offset, must not be {@literal null}.
+     * @param value the value
+     * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @since 4.3
+     */
+    public BitFieldArgs set(BitFieldType bitFieldType, Offset offset, long value) {
+
+        LettuceAssert.notNull(offset, "BitFieldOffset must not be null");
+
+        return addSubCommand(new Set(bitFieldType, offset.isMultiplyByTypeWidth(), offset.getOffset(), value));
     }
 
     /**
@@ -252,7 +345,23 @@ public class BitFieldArgs {
      * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
-        return addSubCommand(new IncrBy(bitFieldType, offset, value));
+        return addSubCommand(new IncrBy(bitFieldType, false, offset, value));
+    }
+
+    /**
+     * Adds a new {@link IncrBy} subcommand.
+     *
+     * @param bitFieldType the bit field type, must not be {@literal null}.
+     * @param offset bitfield offset, must not be {@literal null}.
+     * @param value the value
+     * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @since 4.3
+     */
+    public BitFieldArgs incrBy(BitFieldType bitFieldType, Offset offset, long value) {
+
+        LettuceAssert.notNull(offset, "BitFieldOffset must not be null");
+
+        return addSubCommand(new IncrBy(bitFieldType, offset.isMultiplyByTypeWidth(), offset.getOffset(), value));
     }
 
     /**
@@ -294,22 +403,33 @@ public class BitFieldArgs {
     private static class Set extends SubCommand {
 
         private final BitFieldType bitFieldType;
+        private final boolean bitOffset;
         private final long offset;
         private final long value;
 
-        private Set(BitFieldType bitFieldType, int offset, long value) {
+        private Set(BitFieldType bitFieldType, boolean bitOffset, int offset, long value) {
 
             LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
             LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
-            this.offset = offset;
             this.bitFieldType = bitFieldType;
+            this.bitOffset = bitOffset;
+            this.offset = offset;
             this.value = value;
         }
 
         @Override
         <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandType.SET).add(bitFieldType.asString()).add(offset).add(value);
+
+            args.add(CommandType.SET).add(bitFieldType.asString());
+
+            if (bitOffset) {
+                args.add(String.format("#%d", offset));
+            } else {
+                args.add(offset);
+            }
+
+            args.add(value);
         }
     }
 
@@ -319,20 +439,29 @@ public class BitFieldArgs {
     private static class Get extends SubCommand {
 
         private final BitFieldType bitFieldType;
-        private final long offset;
+        private final boolean bitOffset;
+        private final int offset;
 
-        private Get(BitFieldType bitFieldType, int offset) {
+        private Get(BitFieldType bitFieldType, boolean bitOffset, int offset) {
 
             LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
             LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
-            this.offset = offset;
             this.bitFieldType = bitFieldType;
+            this.bitOffset = bitOffset;
+            this.offset = offset;
         }
 
         @Override
         <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandType.GET).add(bitFieldType.asString()).add(offset);
+
+            args.add(CommandType.GET).add(bitFieldType.asString());
+
+            if (bitOffset) {
+                args.add(String.format("#%d", offset));
+            } else {
+                args.add(offset);
+            }
         }
     }
 
@@ -342,22 +471,34 @@ public class BitFieldArgs {
     private static class IncrBy extends SubCommand {
 
         private final BitFieldType bitFieldType;
+        private final boolean bitOffset;
         private final long offset;
         private final long value;
 
-        private IncrBy(BitFieldType bitFieldType, int offset, long value) {
+        private IncrBy(BitFieldType bitFieldType, boolean offsetWidthMultiplier, int offset, long value) {
 
             LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
             LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
-            this.offset = offset;
             this.bitFieldType = bitFieldType;
+            this.bitOffset = offsetWidthMultiplier;
+            this.offset = offset;
             this.value = value;
         }
 
         @Override
         <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandType.INCRBY).add(bitFieldType.asString()).add(offset).add(value);
+
+            args.add(CommandType.INCRBY).add(bitFieldType.asString());
+
+            if (bitOffset) {
+                args.add(String.format("#%d", offset));
+            } else {
+                args.add(offset);
+            }
+
+            args.add(value);
+
         }
     }
 
@@ -403,7 +544,7 @@ public class BitFieldArgs {
 
         public final byte[] bytes;
 
-        private OverflowType() {
+        OverflowType() {
             bytes = name().getBytes(LettuceCharsets.ASCII);
         }
 
@@ -451,8 +592,52 @@ public class BitFieldArgs {
             return bits;
         }
 
-		private String asString() {
-            return (signed ? "i" : "u") + bits;
+        private String asString() {
+            return String.format("%s%d", (signed ? "i" : "u"), bits);
+        }
+
+        @Override
+        public String toString() {
+            return asString();
+        }
+    }
+
+    /**
+     * Represents a bit field offset. See also <a href="http://redis.io/commands/bitfield#bits-and-positional-offsets">Bits and
+     * positional offsets</a>
+     * 
+     * @since 4.3
+     */
+    public static class Offset {
+
+        private final boolean multiplyByTypeWidth;
+        private final int offset;
+
+        private Offset(boolean multiplyByTypeWidth, int offset) {
+
+            this.multiplyByTypeWidth = multiplyByTypeWidth;
+            this.offset = offset;
+        }
+
+        /**
+         * @return {@literal true} if the offset should be multiplied by integer width that is represented with a leading hash
+         *         ({@code #}) when constructing the command
+         */
+        public boolean isMultiplyByTypeWidth() {
+            return multiplyByTypeWidth;
+        }
+
+        /**
+         *
+         * @return the offset.
+         */
+        public int getOffset() {
+            return offset;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s%d", (multiplyByTypeWidth ? "#" : ""), offset);
         }
     }
 }
