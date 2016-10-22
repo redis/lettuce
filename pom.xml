@@ -139,6 +139,7 @@
 
     <!-- Test dependencies -->
 
+    <!-- Using version 4.0.3, versions higher require only jdk7 -->
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
