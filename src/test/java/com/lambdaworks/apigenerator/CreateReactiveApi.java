@@ -30,7 +30,16 @@ public class CreateReactiveApi {
             "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     private static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
-    private static Map<String, String> RESULT_SPEC = Collections.singletonMap("geopos", "Flux<Value<GeoCoordinates>>");
+    private static final Map<String, String> RESULT_SPEC;
+
+    static {
+
+        Map<String, String> resultSpec = new HashMap<>();
+        resultSpec.put("geopos", "Flux<Value<GeoCoordinates>>");
+        resultSpec.put("bitfield", "Flux<Value<Long>>");
+
+        RESULT_SPEC = resultSpec;
+    }
 
     private CompilationUnitFactory factory;
 

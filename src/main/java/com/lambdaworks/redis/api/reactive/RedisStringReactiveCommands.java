@@ -1,9 +1,7 @@
 package com.lambdaworks.redis.api.reactive;
 
-import java.util.List;
 import java.util.Map;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.SetArgs;
@@ -59,7 +57,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * 
      * @return Long bulk-reply the results from the bitfield commands.
      */
-    Flux<Long> bitfield(K key, BitFieldArgs bitFieldArgs);
+    Flux<Value<Long>> bitfield(K key, BitFieldArgs bitFieldArgs);
 
     /**
      * Find first bit set or clear in a string.
@@ -111,7 +109,6 @@ public interface RedisStringReactiveCommands<K, V> {
     Mono<Long> bitpos(K key, boolean state, long start, long end);
 
     /**
-     * Perform bitwise AND between strings.
      * 
      * @param destination result key of the operation
      * @param keys operation input key names

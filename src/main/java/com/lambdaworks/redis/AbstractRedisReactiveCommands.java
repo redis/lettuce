@@ -81,8 +81,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Flux<Long> bitfield(K key, BitFieldArgs args) {
-        return createDissolvingFlux(() -> commandBuilder.bitfield(key, args));
+    public Flux<Value<Long>> bitfield(K key, BitFieldArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.bitfieldValue(key, args));
     }
 
     @Override
