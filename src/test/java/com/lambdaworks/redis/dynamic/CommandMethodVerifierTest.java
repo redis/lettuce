@@ -6,6 +6,8 @@ import static org.assertj.core.api.Fail.fail;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import com.lambdaworks.redis.GeoCoordinates;
+import com.lambdaworks.redis.KeyValue;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,8 +30,10 @@ public class CommandMethodVerifierTest {
         CommandDetail mget = new CommandDetail("mget", -2, null, 0, 0, 0);
         CommandDetail randomkey = new CommandDetail("randomkey", 1, null, 0, 0, 0);
         CommandDetail rpop = new CommandDetail("rpop", 2, null, 0, 0, 0);
+        CommandDetail set = new CommandDetail("set", 3, null, 0, 0, 0);
+        CommandDetail geoadd = new CommandDetail("geoadd", -4, null, 0, 0, 0);
 
-        sut = new CommandMethodVerifier(LettuceLists.newList(mget, randomkey, rpop));
+        sut = new CommandMethodVerifier(LettuceLists.newList(mget, randomkey, rpop, set, geoadd));
     }
 
     @Test
@@ -39,7 +43,7 @@ public class CommandMethodVerifierTest {
             validateMethod("megt");
             fail("Missing CommandMethodSyntaxException");
         } catch (CommandMethodSyntaxException e) {
-            assertThat(e).hasMessageContaining("Command megt does not exist. Did you mean: MGET?");
+            assertThat(e).hasMessageContaining("Command megt does not exist. Did you mean: MGET, SET?");
         }
     }
 
@@ -61,6 +65,8 @@ public class CommandMethodVerifierTest {
         validateMethod("mget", String.class);
         validateMethod("randomkey");
         validateMethod("rpop", String.class);
+        validateMethod("set", KeyValue.class);
+        validateMethod("geoadd", String.class, String.class, GeoCoordinates.class);
     }
 
     @Test
@@ -102,6 +108,10 @@ public class CommandMethodVerifierTest {
         void mget(String key);
 
         void mget(String key1, String key2);
+
+        void set(KeyValue<String, String> keyValue);
+
+        void geoadd(String key, String member, GeoCoordinates geoCoordinates);
 
         void randomkey();
 

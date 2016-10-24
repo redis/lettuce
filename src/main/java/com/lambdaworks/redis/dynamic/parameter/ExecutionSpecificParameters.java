@@ -4,7 +4,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
-import com.lambdaworks.redis.dynamic.domain.FlushMode;
 import com.lambdaworks.redis.dynamic.domain.Timeout;
 
 /**
@@ -17,9 +16,8 @@ import com.lambdaworks.redis.dynamic.domain.Timeout;
  */
 public class ExecutionSpecificParameters extends Parameters<ExecutionSpecificParameters.ExecutionAwareParameter> {
 
-    private static final List<Class<?>> TYPES = Arrays.asList(FlushMode.class, Timeout.class);
+    private static final List<Class<?>> TYPES = Arrays.asList(Timeout.class);
 
-    private final int flushModeIndex;
     private final int timeoutIndex;
 
     /**
@@ -31,7 +29,6 @@ public class ExecutionSpecificParameters extends Parameters<ExecutionSpecificPar
 
         super(method);
 
-        int flushModeIndex = -1;
         int timeoutIndex = -1;
 
         List<ExecutionAwareParameter> parameters = getParameters();
@@ -44,19 +41,10 @@ public class ExecutionSpecificParameters extends Parameters<ExecutionSpecificPar
                 if (methodParameter.isAssignableTo(Timeout.class)) {
                     timeoutIndex = i;
                 }
-
-                if (methodParameter.isAssignableTo(FlushMode.class)) {
-                    flushModeIndex = i;
-                }
             }
         }
 
-        this.flushModeIndex = flushModeIndex;
         this.timeoutIndex = timeoutIndex;
-    }
-
-    public int getFlushModeIndex() {
-        return flushModeIndex;
     }
 
     public int getTimeoutIndex() {

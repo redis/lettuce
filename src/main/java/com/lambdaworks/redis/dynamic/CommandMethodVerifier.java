@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.LettuceStrings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.dynamic.parameter.Parameter;
 import com.lambdaworks.redis.dynamic.segment.CommandSegments;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -60,7 +60,7 @@ class CommandMethodVerifier {
 
         List<? extends Parameter> bindableParameters = commandMethod.getParameters().getBindableParameters();
 
-        int availableParameterCount = bindableParameters.size() + commandSegments.size();
+        int availableParameterCount = calculateAvailableParameterCount(commandSegments, bindableParameters);
 
         // exact parameter count
         if (commandDetail.getArity() - 1 == availableParameterCount) {
@@ -92,6 +92,31 @@ class CommandMethodVerifier {
         }
 
         throw new CommandMethodSyntaxException(commandMethod, message);
+    }
+
+    private int calculateAvailableParameterCount(CommandSegments commandSegments,
+            List<? extends Parameter> bindableParameters) {
+
+        int count = commandSegments.size();
+
+        for (Parameter bindableParameter : bindableParameters) {
+
+            if (bindableParameter.isAssignableTo(KeyValue.class) || bindableParameter.isAssignableTo(ScoredValue.class)) {
+                count++;
+            }
+
+            if (bindableParameter.isAssignableTo(GeoCoordinates.class) || bindableParameter.isAssignableTo(Range.class)) {
+                count++;
+            }
+
+            if (bindableParameter.isAssignableTo(Limit.class)) {
+                count += 2;
+            }
+
+            count++;
+        }
+
+        return count;
     }
 
     private CommandMethodSyntaxException syntaxException(String commandName, CommandMethod commandMethod) {
@@ -131,7 +156,7 @@ class CommandMethodVerifier {
                             command.toLowerCase()) <= DEFAULT_MAX_DISTANCE)
                     .map(CommandDetail::getName) //
                     .map(String::toUpperCase) //
-                    .sorted((o1, o2) -> calculateStringDistance(o1, o2)).collect(Collectors.toList());
+                    .sorted(CommandMatches::calculateStringDistance).collect(Collectors.toList());
         }
 
         public boolean hasMatches() {

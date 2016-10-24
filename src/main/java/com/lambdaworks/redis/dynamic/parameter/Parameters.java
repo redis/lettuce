@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.dynamic.parameter;
 
+import com.lambdaworks.redis.internal.LettuceAssert;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,6 +23,8 @@ public abstract class Parameters<P extends Parameter> implements Iterable<P> {
      * @param method must not be {@literal null}.
      */
     public Parameters(Method method) {
+
+        LettuceAssert.notNull(method, "Method must not be null");
 
         this.parameters = new ArrayList<>(method.getParameterCount());
 
@@ -89,4 +93,5 @@ public abstract class Parameters<P extends Parameter> implements Iterable<P> {
     public Iterator<P> iterator() {
         return getBindableParameters().iterator();
     }
+
 }

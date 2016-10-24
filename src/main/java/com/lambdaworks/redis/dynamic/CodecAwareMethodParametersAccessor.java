@@ -90,4 +90,9 @@ public class CodecAwareMethodParametersAccessor implements MethodParametersAcces
     public int resolveParameterIndex(String name) {
         return delegate.resolveParameterIndex(name);
     }
+
+    @Override
+    public boolean isBindableNullValue(int index) {
+        return delegate.isBindableNullValue(index);
+    }
 }

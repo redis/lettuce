@@ -14,6 +14,7 @@ public class GeoCoordinates {
 
     /**
      * Creates new {@link GeoCoordinates}.
+     * 
      * @param x the longitude, must not be {@literal null}.
      * @param y the latitude, must not be {@literal null}.
      */
@@ -24,6 +25,17 @@ public class GeoCoordinates {
 
         this.x = x;
         this.y = y;
+    }
+
+    /**
+     * Creates new {@link GeoCoordinates}.
+     * 
+     * @param x the longitude, must not be {@literal null}.
+     * @param y the latitude, must not be {@literal null}.
+     * @return {@literal {@link GeoCoordinates}.
+     */
+    public static GeoCoordinates create(Number x, Number y) {
+        return new GeoCoordinates(x, y);
     }
 
     /**

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.dynamic.annotation.Key;
 import com.lambdaworks.redis.dynamic.annotation.Value;
 import com.lambdaworks.redis.dynamic.parameter.MethodParametersAccessor;
@@ -22,11 +23,13 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
     private final Parameters parameters;
     private final List<Object> values;
 
-    public DefaultMethodParametersAccessor(Parameters parameters, Object[] values) {
+    public DefaultMethodParametersAccessor(Parameters parameters, Object... values) {
+
+        LettuceAssert.notNull(parameters, "Parameters must not be null");
+        LettuceAssert.notNull(values, "Values must not be null");
 
         this.parameters = parameters;
         this.values = Arrays.asList(values);
-
     }
 
     public int getParameterCount() {
@@ -69,6 +72,20 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
 
     public Parameters getParameters() {
         return parameters;
+    }
+
+    @Override
+    public boolean isBindableNullValue(int index) {
+
+        Parameter bindableParameter = parameters.getBindableParameter(index);
+
+        if (bindableParameter.isAssignableTo(Limit.class) || bindableParameter.isAssignableTo(com.lambdaworks.redis.Value.class)
+                || bindableParameter.isAssignableTo(KeyValue.class) || bindableParameter.isAssignableTo(ScoredValue.class)
+                || bindableParameter.isAssignableTo(GeoCoordinates.class) || bindableParameter.isAssignableTo(Range.class)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -126,15 +126,7 @@ public class CommandSegmentCommandFactoryTest {
         StringBuilder builder = new StringBuilder();
 
         builder.append(command.getType().name());
-
-        CommandArgs<?, ?> args = command.getArgs();
-        if (args != null) {
-            List<Object> argList = (List) ReflectionTestUtils.getField(args, "singularArguments");
-
-            for (Object o : argList) {
-                builder.append(' ').append(o);
-            }
-        }
+        builder.append(' ').append(command.getArgs().toCommandString());
 
         return builder.toString();
     }

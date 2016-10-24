@@ -32,6 +32,12 @@ public class Range<T> {
      * @return new {@link Range}
      */
     public static <T> Range<T> create(T lower, T upper) {
+
+        LettuceAssert.isTrue(!(lower instanceof Boundary),
+                "Lower must not be a Boundary. Use #from(Boundary, Boundary) instead");
+        LettuceAssert.isTrue(!(upper instanceof Boundary),
+                "Upper must not be a Boundary. Use #from(Boundary, Boundary) instead");
+
         return new Range<T>(Boundary.including(lower), Boundary.including(upper));
     }
 

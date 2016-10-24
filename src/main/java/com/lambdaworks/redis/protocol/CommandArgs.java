@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
@@ -240,7 +241,7 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(CommandKeyword keyword) {
 
         LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
-        return add(keyword.bytes);
+        return add((ProtocolKeyword) keyword);
     }
 
     /**
@@ -284,6 +285,17 @@ public class CommandArgs<K, V> {
         buffer.release();
 
         return sb.toString();
+    }
+
+    /**
+     * Returns a command string representation of {@link CommandArgs} with annotated key and value parameters.
+     *
+     * {@code args.addKey("mykey").add(2.0)} will return {@code key<mykey> 2.0}.
+     * 
+     * @return the command string representation.
+     */
+    public String toCommandString() {
+        return LettuceStrings.collectionToDelimitedString(singularArguments, " ", "", "");
     }
 
     /**
