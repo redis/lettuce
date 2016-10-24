@@ -57,6 +57,23 @@ public class MasterSlaveTopologyProviderTest {
     }
 
     @Test
+    public void shouldParseMasterHostname() throws Exception {
+
+        String info = "# Replication\r\n" + "role:slave\r\n" + "connected_slaves:1\r\n" + "master_host:my.Host-name.COM\r\n"
+                + "master_port:1234\r\n" + "master_repl_offset:56276\r\n" + "repl_backlog_active:1\r\n";
+
+        List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
+        assertThat(result).hasSize(2);
+
+        RedisNodeDescription slave = result.get(0);
+        assertThat(slave.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
+
+        RedisNodeDescription master = result.get(1);
+        assertThat(master.getRole()).isEqualTo(RedisInstance.Role.MASTER);
+        assertThat(master.getUri().getHost()).isEqualTo("my.Host-name.COM");
+    }
+
+    @Test
     public void shouldParseIPv6MasterAddress() throws Exception {
 
         String info = "# Replication\r\n" + "role:slave\r\n" + "connected_slaves:1\r\n" + "master_host:::20f8:1400:0:0\r\n"
