@@ -811,6 +811,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createMono(() -> commandBuilder.select(db));
     }
 
+    public Mono<String> swapdb(int db1, int db2) {
+        return createMono(() -> commandBuilder.swapdb(db1, db2));
+    }
+
     @Override
     public Mono<String> set(K key, V value) {
         return createMono(() -> commandBuilder.set(key, value));

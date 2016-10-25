@@ -2,6 +2,7 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 
@@ -42,6 +43,16 @@ public interface RedisAsyncCommands<K, V> extends RedisHashAsyncCommands<K, V>, 
      * @return String simple-string-reply
      */
     String select(int db);
+
+    /**
+     * Swap two Redis databases, so that immediately all the clients connected to a given DB will see the data of the other DB,
+     * and the other way around
+     *
+     * @param db1 the first database number
+     * @param db2 the second database number
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> swapdb(int db1, int db2);
 
     /**
      * @return the underlying connection.

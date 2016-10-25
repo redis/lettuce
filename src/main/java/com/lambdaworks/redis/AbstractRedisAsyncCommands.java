@@ -815,6 +815,10 @@ public abstract class AbstractRedisAsyncCommands<K, V>
         return dispatch(commandBuilder.select(db));
     }
 
+    public RedisFuture<String> swapdb(int db1, int db2) {
+        return dispatch(commandBuilder.swapdb(db1, db2));
+    }
+
     @Override
     public RedisFuture<String> set(K key, V value) {
         return dispatch(commandBuilder.set(key, value));
