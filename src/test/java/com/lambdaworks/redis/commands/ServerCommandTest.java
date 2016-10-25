@@ -328,4 +328,22 @@ public class ServerCommandTest extends AbstractRedisClientTest {
 
         redis.configSet("slowlog-log-slower-than", "10000");
     }
+
+    @Test
+    public void swapdb() {
+
+        redis.select(1);
+        redis.set(key, "value1");
+
+        redis.select(2);
+        redis.set(key, "value2");
+        assertThat(redis.get(key)).isEqualTo("value2");
+
+        redis.swapdb(1, 2);
+        redis.select(1);
+        assertThat(redis.get(key)).isEqualTo("value2");
+
+        redis.select(2);
+        assertThat(redis.get(key)).isEqualTo("value1");
+    }
 }

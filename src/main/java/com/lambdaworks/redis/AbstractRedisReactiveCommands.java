@@ -818,6 +818,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createObservable(() -> commandBuilder.select(db));
     }
 
+    public Observable<String> swapdb(int db1, int db2) {
+        return createObservable(() -> commandBuilder.swapdb(db1, db2));
+    }
+
     @Override
     public Observable<String> set(K key, V value) {
         return createObservable(() -> commandBuilder.set(key, value));

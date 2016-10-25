@@ -10,7 +10,7 @@ package com.lambdaworks.redis.protocol;
 public enum CommandType implements ProtocolKeyword {
     // Connection
 
-    AUTH, ECHO, PING, QUIT, READONLY, READWRITE, SELECT,
+    AUTH, ECHO, PING, QUIT, READONLY, READWRITE, SELECT, SWAPDB,
 
     // Server
 

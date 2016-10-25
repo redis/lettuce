@@ -46,6 +46,16 @@ public interface RedisReactiveCommands<K, V> extends RedisHashReactiveCommands<K
     Observable<String> select(int db);
 
     /**
+     * Swap two Redis databases, so that immediately all the clients connected to a given DB will see the data of the other DB,
+     * and the other way around
+     *
+     * @param db1 the first database number
+     * @param db2 the second database number
+     * @return String simple-string-reply
+     */
+    Observable<String> swapdb(int db1, int db2);
+
+    /**
      * @return the underlying connection.
      */
     StatefulRedisConnection<K, V> getStatefulConnection();

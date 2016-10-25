@@ -1071,6 +1071,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SELECT, new StatusOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, String> swapdb(int db1, int db2) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(db1).add(db2);
+        return createCommand(SWAPDB, new StatusOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, String> set(K key, V value) {
         notNullKey(key);
 
