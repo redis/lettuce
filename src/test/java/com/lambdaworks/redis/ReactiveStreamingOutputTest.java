@@ -10,7 +10,7 @@ import org.junit.rules.ExpectedException;
 
 import rx.observers.TestSubscriber;
 
-import com.lambdaworks.RandomKeys;
+import com.lambdaworks.KeysAndValues;
 import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
@@ -38,23 +38,23 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     @Test
     public void keyListCommandShouldReturnAllElements() throws Exception {
 
-        redis.mset(RandomKeys.MAP);
+        redis.mset(KeysAndValues.MAP);
 
         reactive.keys("*").subscribe(subscriber);
         subscriber.awaitTerminalEvent();
 
-        assertThat(subscriber.getOnNextEvents()).containsAll(RandomKeys.KEYS);
+        assertThat(subscriber.getOnNextEvents()).containsAll(KeysAndValues.KEYS);
     }
 
     @Test
     public void valueListCommandShouldReturnAllElements() throws Exception {
 
-        redis.mset(RandomKeys.MAP);
+        redis.mset(KeysAndValues.MAP);
 
-        reactive.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT])).subscribe(subscriber);
+        reactive.mget(KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT])).subscribe(subscriber);
         subscriber.awaitTerminalEvent();
 
-        assertThat(subscriber.getOnNextEvents()).containsAll(RandomKeys.VALUES);
+        assertThat(subscriber.getOnNextEvents()).containsAll(KeysAndValues.VALUES);
     }
 
     @Test

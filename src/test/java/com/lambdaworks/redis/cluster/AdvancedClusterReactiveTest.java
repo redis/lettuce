@@ -14,7 +14,7 @@ import org.junit.Test;
 
 import rx.Observable;
 
-import com.lambdaworks.RandomKeys;
+import com.lambdaworks.KeysAndValues;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
@@ -77,13 +77,13 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     @Test
     public void msetCrossSlot() throws Exception {
 
-        Observable<String> mset = commands.mset(RandomKeys.MAP);
+        Observable<String> mset = commands.mset(KeysAndValues.MAP);
         List<String> result = LettuceLists.newList(mset.toBlocking().toIterable());
         assertThat(result).hasSize(1).contains("OK");
 
-        for (String mykey : RandomKeys.KEYS) {
+        for (String mykey : KeysAndValues.KEYS) {
             String s1 = syncCommands.get(mykey);
-            assertThat(s1).isEqualTo(RandomKeys.MAP.get(mykey));
+            assertThat(s1).isEqualTo(KeysAndValues.MAP.get(mykey));
         }
     }
 
@@ -109,14 +109,14 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Map<Integer, List<String>> partitioned = SlotHash.partition(new Utf8StringCodec(), RandomKeys.KEYS);
+        Map<Integer, List<String>> partitioned = SlotHash.partition(new Utf8StringCodec(), KeysAndValues.KEYS);
         assertThat(partitioned.size()).isGreaterThan(100);
 
-        Observable<String> observable = commands.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Observable<String> observable = commands.mget(KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT]));
         List<String> result = observable.toList().toBlocking().single();
 
-        assertThat(result).hasSize(RandomKeys.COUNT);
-        assertThat(result).isEqualTo(RandomKeys.VALUES);
+        assertThat(result).hasSize(KeysAndValues.COUNT);
+        assertThat(result).isEqualTo(KeysAndValues.VALUES);
     }
 
     @Test
@@ -126,11 +126,11 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
 
-        Observable<Long> observable = commands.mget(result, RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Observable<Long> observable = commands.mget(result, KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT]));
         Long count = getSingle(observable);
 
-        assertThat(result.getList()).hasSize(RandomKeys.COUNT);
-        assertThat(count).isEqualTo(RandomKeys.COUNT);
+        assertThat(result.getList()).hasSize(KeysAndValues.COUNT);
+        assertThat(count).isEqualTo(KeysAndValues.COUNT);
     }
 
     @Test
@@ -138,12 +138,12 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Observable<Long> observable = commands.del(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Observable<Long> observable = commands.del(KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT]));
         Long result = getSingle(observable);
 
-        assertThat(result).isEqualTo(RandomKeys.COUNT);
+        assertThat(result).isEqualTo(KeysAndValues.COUNT);
 
-        for (String mykey : RandomKeys.KEYS) {
+        for (String mykey : KeysAndValues.KEYS) {
             String s1 = syncCommands.get(mykey);
             assertThat(s1).isNull();
         }
@@ -154,12 +154,12 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         msetCrossSlot();
 
-        Observable<Long> observable = commands.unlink(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT]));
+        Observable<Long> observable = commands.unlink(KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT]));
         Long result = getSingle(observable);
 
-        assertThat(result).isEqualTo(RandomKeys.COUNT);
+        assertThat(result).isEqualTo(KeysAndValues.COUNT);
 
-        for (String mykey : RandomKeys.KEYS) {
+        for (String mykey : KeysAndValues.KEYS) {
             String s1 = syncCommands.get(mykey);
             assertThat(s1).isNull();
         }
@@ -288,7 +288,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     public void clusterScan() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
 
@@ -303,7 +303,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
 
-        assertThat(allKeys).containsAll(RandomKeys.KEYS);
+        assertThat(allKeys).containsAll(KeysAndValues.KEYS);
 
     }
 
@@ -311,7 +311,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     public void clusterScanWithArgs() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
 
@@ -326,7 +326,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
 
-        assertThat(allKeys).containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(allKeys)
+                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 
@@ -334,7 +335,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     public void clusterScanStreaming() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -348,7 +349,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList()).containsAll(RandomKeys.KEYS);
+        assertThat(adapter.getList()).containsAll(KeysAndValues.KEYS);
 
     }
 
@@ -356,7 +357,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     public void clusterScanStreamingWithArgs() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -371,7 +372,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         } while (!scanCursor.isFinished());
 
         assertThat(adapter.getList()).containsAll(
-                RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+                KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 
