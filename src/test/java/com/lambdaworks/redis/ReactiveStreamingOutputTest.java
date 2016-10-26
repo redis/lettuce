@@ -11,7 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.lambdaworks.RandomKeys;
+import com.lambdaworks.KeysAndValues;
 import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
@@ -42,12 +42,12 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     @Test
     public void keyListCommandShouldReturnAllElements() throws Exception {
 
-        redis.mset(RandomKeys.MAP);
+        redis.mset(KeysAndValues.MAP);
 
         reactive.keys("*").subscribe(subscriber);
         subscriber.await();
 
-        assertThat(getValues()).containsAll(RandomKeys.KEYS);
+        assertThat(getValues()).containsAll(KeysAndValues.KEYS);
     }
 
     public  List<String> getValues() {
@@ -61,17 +61,17 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     @Test
     public void valueListCommandShouldReturnAllElements() throws Exception {
 
-        redis.mset(RandomKeys.MAP);
+        redis.mset(KeysAndValues.MAP);
 
         TestSubscriber<KeyValue<String, String>> subscriber = TestSubscriber.create();
 
-        reactive.mget(RandomKeys.KEYS.toArray(new String[RandomKeys.COUNT])).subscribe(subscriber);
+        reactive.mget(KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT])).subscribe(subscriber);
         subscriber.await();
 
         assertThat(getValues(subscriber).stream().map(KeyValue::getValue).collect(Collectors.toList()))
-                .containsAll(RandomKeys.VALUES);
+                .containsAll(KeysAndValues.VALUES);
         assertThat(getValues(subscriber).stream().map(KeyValue::getKey).collect(Collectors.toList()))
-                .containsAll(RandomKeys.KEYS);
+                .containsAll(KeysAndValues.KEYS);
     }
 
     @Test

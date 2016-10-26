@@ -11,7 +11,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.lambdaworks.RandomKeys;
+import com.lambdaworks.KeysAndValues;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -470,7 +470,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void clusterScan() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
 
@@ -485,7 +485,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
 
-        assertThat(allKeys).containsAll(RandomKeys.KEYS);
+        assertThat(allKeys).containsAll(KeysAndValues.KEYS);
 
     }
 
@@ -493,7 +493,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void clusterScanWithArgs() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
 
@@ -508,7 +508,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
 
-        assertThat(allKeys).containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(allKeys)
+                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 
@@ -516,7 +517,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void clusterScanStreaming() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -530,7 +531,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList()).containsAll(RandomKeys.KEYS);
+        assertThat(adapter.getList()).containsAll(KeysAndValues.KEYS);
 
     }
 
@@ -538,7 +539,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     public void clusterScanStreamingWithArgs() throws Exception {
 
         RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
-        sync.mset(RandomKeys.MAP);
+        sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -552,7 +553,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         } while (!scanCursor.isFinished());
 
         assertThat(adapter.getList())
-                .containsAll(RandomKeys.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 
