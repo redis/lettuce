@@ -148,7 +148,7 @@ work/cluster-node-7385.conf:
 	@echo appendonly no >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-7385 >> $@
 	@echo cluster-enabled yes >> $@
-	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-node-timeout 150 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7385.conf >> $@
 	@echo requirepass foobared >> $@
 
@@ -163,7 +163,7 @@ work/cluster-node-7479.conf:
 	@echo save \"\" >> $@
 	@echo appendonly no >> $@
 	@echo cluster-enabled yes >> $@
-	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-node-timeout 150 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7479.conf >> $@
 	@echo cluster-announce-port 7443 >> $@
 	@echo requirepass foobared >> $@
@@ -179,7 +179,7 @@ work/cluster-node-7480.conf:
 	@echo save \"\" >> $@
 	@echo appendonly no >> $@
 	@echo cluster-enabled yes >> $@
-	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-node-timeout 150 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7480.conf >> $@
 	@echo cluster-announce-port 7444 >> $@
 	@echo requirepass foobared >> $@
@@ -195,7 +195,7 @@ work/cluster-node-7481.conf:
 	@echo save \"\" >> $@
 	@echo appendonly no >> $@
 	@echo cluster-enabled yes >> $@
-	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-node-timeout 150 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7481.conf >> $@
 	@echo cluster-announce-port 7445 >> $@
 	@echo requirepass foobared >> $@
@@ -213,7 +213,7 @@ work/cluster-node-%.conf:
 	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo cluster-enabled yes >> $@
-	@echo cluster-node-timeout 50 >> $@
+	@echo cluster-node-timeout 150 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-$*.conf >> $@
 
 work/cluster-node-%.pid: work/cluster-node-%.conf work/redis-git/src/redis-server
