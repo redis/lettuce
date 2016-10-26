@@ -21,7 +21,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -86,7 +85,7 @@ public abstract class AbstractRedisClient {
         unit = TimeUnit.SECONDS;
         genericWorkerPool = this.clientResources.eventExecutorGroup();
         channels = new DefaultChannelGroup(genericWorkerPool.next());
-        timer = new HashedWheelTimer();
+        timer = (HashedWheelTimer) this.clientResources.timer();
     }
 
     /**
@@ -245,8 +244,6 @@ public abstract class AbstractRedisClient {
 
         if (shutdown.compareAndSet(false, true)) {
 
-            timer.stop();
-
             while (!closeableResources.isEmpty()) {
                 Closeable closeableResource = closeableResources.iterator().next();
                 try {
@@ -268,8 +265,11 @@ public abstract class AbstractRedisClient {
                 }
             }
 
-            ChannelGroupFuture closeFuture = channels.close();
-            closeFutures.add(closeFuture);
+            try {
+                closeFutures.add(channels.close());
+            } catch (Exception e) {
+                logger.debug("Cannot close channels", e);
+            }
 
             if (!sharedResources) {
                 clientResources.shutdown(quietPeriod, timeout, timeUnit);

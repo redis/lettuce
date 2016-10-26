@@ -19,6 +19,8 @@ import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.*;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -42,6 +44,7 @@ import reactor.core.scheduler.Schedulers;
  * <li>a {@code commandLatencyCollector} which is a provided instance of
  * {@link com.lambdaworks.redis.metrics.CommandLatencyCollector}.</li>
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
+ * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -74,6 +77,8 @@ public class DefaultClientResources implements ClientResources {
     private final EventLoopGroupProvider eventLoopGroupProvider;
     private final boolean sharedEventExecutor;
     private final EventExecutorGroup eventExecutorGroup;
+    private final Timer timer;
+    private final boolean sharedTimer;
     private final EventBus eventBus;
     private final CommandLatencyCollector commandLatencyCollector;
     private final boolean sharedCommandLatencyCollector;
@@ -118,6 +123,14 @@ public class DefaultClientResources implements ClientResources {
         } else {
             sharedEventExecutor = true;
             eventExecutorGroup = builder.eventExecutorGroup;
+        }
+
+        if (builder.timer == null) {
+            timer = new HashedWheelTimer(new DefaultThreadFactory("lettuce-timer"));
+            sharedTimer = false;
+        } else {
+            timer = builder.timer;
+            sharedTimer = true;
         }
 
         if (builder.eventBus == null) {
@@ -191,6 +204,7 @@ public class DefaultClientResources implements ClientResources {
         private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
         private EventExecutorGroup eventExecutorGroup;
         private EventLoopGroupProvider eventLoopGroupProvider;
+        private Timer timer;
         private EventBus eventBus;
         private CommandLatencyCollectorOptions commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.create();
         private CommandLatencyCollector commandLatencyCollector;
@@ -215,9 +229,9 @@ public class DefaultClientResources implements ClientResources {
 
         /**
          * Sets a shared {@link EventLoopGroupProvider event executor provider} that can be used across different instances of
-         * the RedisClient. The provided {@link EventLoopGroupProvider} instance will not be shut down when shutting down the
-         * client resources. You have to take care of that. This is an advanced configuration that should only be used if you
-         * know what you are doing.
+         * {@link com.lambdaworks.redis.RedisClient} and {@link com.lambdaworks.redis.cluster.RedisClusterClient}. The provided
+         * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
+         * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
          * @param eventLoopGroupProvider the shared eventLoopGroupProvider
          * @return this
@@ -240,16 +254,30 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets a shared {@link EventExecutorGroup event executor group} that can be used across different instances of the
-         * RedisClient. The provided {@link EventExecutorGroup} instance will not be shut down when shutting down the client
-         * resources. You have to take care of that. This is an advanced configuration that should only be used if you know what
-         * you are doing.
+         * Sets a shared {@link EventExecutorGroup event executor group} that can be used across different instances of
+         * {@link com.lambdaworks.redis.RedisClient} and {@link com.lambdaworks.redis.cluster.RedisClusterClient}. The provided
+         * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
+         * care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
          * @param eventExecutorGroup the shared eventExecutorGroup
          * @return this
          */
         public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
             this.eventExecutorGroup = eventExecutorGroup;
+            return this;
+        }
+
+        /**
+         * Sets a shared {@link Timer} that can be used across different instances of {@link com.lambdaworks.redis.RedisClient}
+         * and {@link com.lambdaworks.redis.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut
+         * down when shutting down the client resources. You have to take care of that. This is an advanced configuration that
+         * should only be used if you know what you are doing.
+         *
+         * @param timer the shared {@link Timer}.
+         * @return this
+         */
+        public Builder timer(Timer timer) {
+            this.timer = timer;
             return this;
         }
 
@@ -315,8 +343,8 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped at
-         * {@literal 30 SECONDS}. {@code reconnectDelay} must be a stateless {@link Delay}.
+         * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped
+         * at {@literal 30 SECONDS}. {@code reconnectDelay} must be a stateless {@link Delay}.
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this
@@ -406,6 +434,10 @@ public class DefaultClientResources implements ClientResources {
             metricEventPublisher.shutdown();
         }
 
+        if (!sharedTimer) {
+            timer.stop();
+        }
+
         if (!sharedEventLoopGroupProvider) {
             Future<Boolean> shutdown = eventLoopGroupProvider.shutdown(quietPeriod, timeout, timeUnit);
             if (shutdown instanceof Promise) {
@@ -453,6 +485,11 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public EventBus eventBus() {
         return eventBus;
+    }
+
+    @Override
+    public Timer timer() {
+        return timer;
     }
 
     @Override

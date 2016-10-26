@@ -6,6 +6,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 
+import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
@@ -85,6 +86,15 @@ public interface ClientResources {
      * @return the pool size (number of threads to use).
      */
     int computationThreadPoolSize();
+
+    /**
+     * Returns the {@link Timer} to schedule events. A timer object may run single- or multi-threaded but must be used for
+     * scheduling of short-running jobs only. Long-running jobs should be scheduled and executed using
+     * {@link #eventExecutorGroup()}.
+     * 
+     * @return the timer.
+     */
+    Timer timer();
 
     /**
      * Returns the event bus used to publish events.
