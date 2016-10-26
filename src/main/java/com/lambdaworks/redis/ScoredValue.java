@@ -139,7 +139,7 @@ public class ScoredValue<V> extends Value<V> {
      * @return the new {@link ScoredValue}
      */
     @SuppressWarnings("unchecked")
-    <R> ScoredValue<R> map(Function<? super V, ? extends R> mapper) {
+    public <R> ScoredValue<R> map(Function<? super V, ? extends R> mapper) {
 
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 
@@ -158,7 +158,7 @@ public class ScoredValue<V> extends Value<V> {
      * @return the new {@link ScoredValue}
      */
     @SuppressWarnings("unchecked")
-    ScoredValue<V> mapScore(Function<? super Number, ? extends Number> mapper) {
+    public ScoredValue<V> mapScore(Function<? super Number, ? extends Number> mapper) {
 
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 

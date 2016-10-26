@@ -149,7 +149,7 @@ public class KeyValue<K, V> extends Value<V> {
      * @return the new {@link KeyValue}
      */
     @SuppressWarnings("unchecked")
-    <R> KeyValue<K, R> map(Function<? super V, ? extends R> mapper) {
+    public <R> KeyValue<K, R> map(Function<? super V, ? extends R> mapper) {
 
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 

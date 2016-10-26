@@ -212,7 +212,8 @@ public class Value<V> implements Serializable {
      * @return the new {@link Value}
      */
     @SuppressWarnings("unchecked")
-    <R> Value<R> map(Function<? super V, ? extends R> mapper) {
+    public <R> Value<R> map(Function<? super V, ? extends R> mapper) {
+
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 
         if (hasValue()) {
