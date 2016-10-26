@@ -3,6 +3,7 @@ package com.lambdaworks.redis;
 import java.io.Serializable;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -221,6 +222,34 @@ public class Value<V> implements Serializable {
         }
 
         return (Value<R>) this;
+    }
+
+    /**
+     * If a value is present, invoke the specified {@link java.util.function.Consumer} with the value, otherwise do nothing.
+     *
+     * @param consumer block to be executed if a value is present, must not be {@literal null}.
+     */
+    public void ifHasValue(Consumer<? super V> consumer) {
+
+        LettuceAssert.notNull(consumer, "Consumer must not be null");
+
+        if (hasValue()) {
+            consumer.accept(getValue());
+        }
+    }
+
+    /**
+     * If no value is present, invoke the specified {@link Runnable}, otherwise do nothing.
+     *
+     * @param runnable block to be executed if no value value is present, must not be {@literal null}.
+     */
+    public void ifEmpty(Runnable runnable) {
+
+        LettuceAssert.notNull(runnable, "Runnable must not be null");
+
+        if (!hasValue()) {
+            runnable.run();
+        }
     }
 
     /**

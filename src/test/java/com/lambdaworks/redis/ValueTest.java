@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
@@ -146,6 +147,46 @@ public class ValueTest {
         Value<String> value = Value.from(Optional.of("hello"));
 
         assertThat(value.map(s -> s + "-world").getValue()).isEqualTo("hello-world");
+    }
+
+    @Test
+    public void ifHasValueShouldExecuteCallback() {
+
+        Value<String> value = Value.just("hello");
+        AtomicBoolean atomicBoolean = new AtomicBoolean();
+        value.ifHasValue(s -> atomicBoolean.set(true));
+
+        assertThat(atomicBoolean.get()).isTrue();
+    }
+
+    @Test
+    public void emptyValueShouldNotExecuteIfHasValueCallback() {
+
+        Value<String> value = Value.empty();
+        AtomicBoolean atomicBoolean = new AtomicBoolean();
+        value.ifHasValue(s -> atomicBoolean.set(true));
+
+        assertThat(atomicBoolean.get()).isFalse();
+    }
+
+    @Test
+    public void ifEmptyShouldExecuteCallback() {
+
+        Value<String> value = Value.empty();
+        AtomicBoolean atomicBoolean = new AtomicBoolean();
+        value.ifEmpty(() -> atomicBoolean.set(true));
+
+        assertThat(atomicBoolean.get()).isTrue();
+    }
+
+    @Test
+    public void valueShouldNotExecuteIfEmptyCallback() {
+
+        Value<String> value = Value.just("hello");
+        AtomicBoolean atomicBoolean = new AtomicBoolean();
+        value.ifEmpty(() -> atomicBoolean.set(true));
+
+        assertThat(atomicBoolean.get()).isFalse();
     }
 
     @Test
