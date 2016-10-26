@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.util.concurrent.TimeUnit;
 
+import io.netty.util.Timer;
 import org.junit.Test;
 
 import com.lambdaworks.redis.FastShutdown;
@@ -84,21 +85,25 @@ public class DefaultClientResourcesTest {
 
         EventExecutorGroup executorMock = mock(EventExecutorGroup.class);
         EventLoopGroupProvider groupProviderMock = mock(EventLoopGroupProvider.class);
+        Timer timerMock = mock(Timer.class);
         EventBus eventBusMock = mock(EventBus.class);
         CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
 
         DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
-                .eventLoopGroupProvider(groupProviderMock).eventBus(eventBusMock).commandLatencyCollector(latencyCollectorMock)
+                .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
+                .commandLatencyCollector(latencyCollectorMock)
                 .build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
+        assertThat(sut.timer()).isSameAs(timerMock);
         assertThat(sut.eventBus()).isSameAs(eventBusMock);
 
         assertThat(sut.shutdown().get()).isTrue();
 
         verifyZeroInteractions(executorMock);
         verifyZeroInteractions(groupProviderMock);
+        verifyZeroInteractions(timerMock);
         verify(latencyCollectorMock).isEnabled();
         verifyNoMoreInteractions(latencyCollectorMock);
     }

@@ -54,13 +54,23 @@ public class DefaultClientResources implements ClientResources {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultClientResources.class);
 
+    /**
+     * Minimum number of I/O threads.
+     */
     public static final int MIN_IO_THREADS = 3;
+
+    /**
+     * Minimum number of computation threads.
+     */
     public static final int MIN_COMPUTATION_THREADS = 3;
 
     public static final int DEFAULT_IO_THREADS;
     public static final int DEFAULT_COMPUTATION_THREADS;
 
-    public static final Supplier<Delay> DEFAULT_RECONNECT_DELAY = () -> Delay.exponential();
+    /**
+     * Default delay {@link Supplier} for {@link Delay#exponential()} delay.
+     */
+    public static final Supplier<Delay> DEFAULT_RECONNECT_DELAY = Delay::exponential;
 
     static {
         int threads = Math.max(1, SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
@@ -219,10 +229,13 @@ public class DefaultClientResources implements ClientResources {
          * Sets the thread pool size (number of threads to use) for I/O operations (default value is the number of CPUs). The
          * thread pool size is only effective if no {@code eventLoopGroupProvider} is provided.
          *
-         * @param ioThreadPoolSize the thread pool size
+         * @param ioThreadPoolSize the thread pool size, must be greater {@code 0}.
          * @return this
          */
         public Builder ioThreadPoolSize(int ioThreadPoolSize) {
+
+            LettuceAssert.isTrue(ioThreadPoolSize > 0, "I/O thread pool size must be greater zero");
+
             this.ioThreadPoolSize = ioThreadPoolSize;
             return this;
         }
@@ -233,10 +246,13 @@ public class DefaultClientResources implements ClientResources {
          * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
          * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
-         * @param eventLoopGroupProvider the shared eventLoopGroupProvider
+         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@literal null}.
          * @return this
          */
         public Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider) {
+
+            LettuceAssert.notNull(eventLoopGroupProvider, "EventLoopGroupProvider must not be null");
+
             this.eventLoopGroupProvider = eventLoopGroupProvider;
             return this;
         }
@@ -245,10 +261,13 @@ public class DefaultClientResources implements ClientResources {
          * Sets the thread pool size (number of threads to use) for computation operations (default value is the number of
          * CPUs). The thread pool size is only effective if no {@code eventExecutorGroup} is provided.
          *
-         * @param computationThreadPoolSize the thread pool size
+         * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
          * @return this
          */
         public Builder computationThreadPoolSize(int computationThreadPoolSize) {
+
+            LettuceAssert.isTrue(computationThreadPoolSize > 0, "Computation thread pool size must be greater zero");
+
             this.computationThreadPoolSize = computationThreadPoolSize;
             return this;
         }
@@ -259,10 +278,13 @@ public class DefaultClientResources implements ClientResources {
          * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
          * care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
-         * @param eventExecutorGroup the shared eventExecutorGroup
+         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@literal null}.
          * @return this
          */
         public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
+
+            LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
+
             this.eventExecutorGroup = eventExecutorGroup;
             return this;
         }
@@ -273,10 +295,13 @@ public class DefaultClientResources implements ClientResources {
          * down when shutting down the client resources. You have to take care of that. This is an advanced configuration that
          * should only be used if you know what you are doing.
          *
-         * @param timer the shared {@link Timer}.
+         * @param timer the shared {@link Timer}, must not be {@literal null}.
          * @return this
          */
         public Builder timer(Timer timer) {
+
+            LettuceAssert.notNull(timer, "Timer must not be null");
+
             this.timer = timer;
             return this;
         }
@@ -284,10 +309,13 @@ public class DefaultClientResources implements ClientResources {
         /**
          * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
          *
-         * @param eventBus the event bus
+         * @param eventBus the event bus, must not be {@literal null}.
          * @return this
          */
         public Builder eventBus(EventBus eventBus) {
+
+            LettuceAssert.notNull(eventBus, "EventBus must not be null");
+
             this.eventBus = eventBus;
             return this;
         }
@@ -296,10 +324,13 @@ public class DefaultClientResources implements ClientResources {
          * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus}.
          *
          * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
-         *        {@link EventBus}.
+         *        {@link EventBus}, must not be {@literal null}.
          * @return this
          */
         public Builder commandLatencyPublisherOptions(EventPublisherOptions commandLatencyPublisherOptions) {
+
+            LettuceAssert.notNull(commandLatencyPublisherOptions, "EventPublisherOptions must not be null");
+
             this.commandLatencyPublisherOptions = commandLatencyPublisherOptions;
             return this;
         }
@@ -308,10 +339,13 @@ public class DefaultClientResources implements ClientResources {
          * Sets the {@link CommandLatencyCollectorOptions} that can that can be used across different instances of the
          * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
          *
-         * @param commandLatencyCollectorOptions the command latency collector options
+         * @param commandLatencyCollectorOptions the command latency collector options, must not be {@link null}.
          * @return this
          */
         public Builder commandLatencyCollectorOptions(CommandLatencyCollectorOptions commandLatencyCollectorOptions) {
+
+            LettuceAssert.notNull(commandLatencyCollectorOptions, "CommandLatencyCollectorOptions must not be null");
+
             this.commandLatencyCollectorOptions = commandLatencyCollectorOptions;
             return this;
         }
@@ -319,10 +353,13 @@ public class DefaultClientResources implements ClientResources {
         /**
          * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
          *
-         * @param commandLatencyCollector the command latency collector
+         * @param commandLatencyCollector the command latency collector, must not be {@literal null}.
          * @return this
          */
         public Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector) {
+
+            LettuceAssert.notNull(commandLatencyCollector, "CommandLatencyCollector must not be null");
+
             this.commandLatencyCollector = commandLatencyCollector;
             return this;
         }
@@ -336,7 +373,7 @@ public class DefaultClientResources implements ClientResources {
          */
         public Builder dnsResolver(DnsResolver dnsResolver) {
 
-            LettuceAssert.notNull(dnsResolver, "DNSResolver must not be null");
+            LettuceAssert.notNull(dnsResolver, "DnsResolver must not be null");
 
             this.dnsResolver = dnsResolver;
             return this;
