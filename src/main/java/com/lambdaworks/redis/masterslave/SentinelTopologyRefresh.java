@@ -262,6 +262,12 @@ class SentinelTopologyRefresh implements Closeable {
                 }
             }
 
+            if (channel.equals("+convert-to-slave") || channel.equals("+role-change")) {
+                if (message.contains(String.format("@ %s ", masterId))) {
+                    return true;
+                }
+            }
+
             return PROCESSING_CHANNELS.contains(channel);
         }
     }

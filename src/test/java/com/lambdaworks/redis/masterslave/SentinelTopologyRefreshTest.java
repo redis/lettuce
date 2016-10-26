@@ -224,6 +224,30 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
+    public void shouldProcessConvertToSlave() throws Exception {
+
+        RedisPubSubAdapter<String, String> adapter = getAdapter();
+
+        adapter.message("*", "+convert-to-slave", "@ mymaster 127.0.0.1");
+
+        verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+        verify(refreshRunnable, times(1)).run();
+    }
+
+    @Test
+    public void shouldProcessRoleChange() throws Exception {
+
+        RedisPubSubAdapter<String, String> adapter = getAdapter();
+
+        adapter.message("*", "+role-change", "@ mymaster 127.0.0.1");
+
+        verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+        verify(refreshRunnable, times(1)).run();
+    }
+
+    @Test
     public void shouldProcessFailoverEnd() throws Exception {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
