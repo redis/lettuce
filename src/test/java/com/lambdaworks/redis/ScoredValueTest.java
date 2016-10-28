@@ -41,7 +41,7 @@ public class ScoredValueTest {
     public void shouldCreateEmptyValue() {
 
         ScoredValue<String> value = ScoredValue.empty();
-
+        
         assertThat(value.hasValue()).isFalse();
     }
 

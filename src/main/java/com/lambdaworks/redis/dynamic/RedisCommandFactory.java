@@ -179,7 +179,7 @@ public class RedisCommandFactory {
      * @param commandInterface must not be {@literal null}.
      * @return the implemented Redis Commands interface.
      */
-    public <T> T getCommands(Class<T> commandInterface) {
+    public <T extends Commands> T getCommands(Class<T> commandInterface) {
 
         LettuceAssert.notNull(commandInterface, "Redis Command Interface must not be null");
 

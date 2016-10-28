@@ -91,7 +91,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
     }
 
-    static interface TestInterface {
+    static interface TestInterface extends Commands {
 
         String get(String key);
 
@@ -107,13 +107,13 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
         Mono<String> setReactive(String key, String value);
     }
 
-    static interface TooFewParameters {
+    static interface TooFewParameters extends Commands {
 
         String get();
 
     }
 
-    static interface WithTypo {
+    static interface WithTypo extends Commands {
 
         String gat(String key);
 
