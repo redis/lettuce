@@ -423,6 +423,7 @@ Other
 * Update license/author headers #387
 * Upgrade to netty 4.0.42.Final/4.1.6.Final 390
 * Upgrade to Project Reactor 3.0.3 #395
+* Disable shaded jar #396
 
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously

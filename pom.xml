@@ -436,7 +436,7 @@
                                     <classpathScope>test</classpathScope>
                                     <arguments>
                                         <argument>-classpath</argument>
-                                        <classpath/>
+                                        <classpath />
                                         <argument>org.openjdk.jmh.Main</argument>
                                         <argument>.*</argument>
                                     </arguments>
@@ -621,55 +621,6 @@
                     <pubScmUrl>scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
                     <excludes>apidocs/**</excludes>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>rx</pattern>
-                                    <shadedPattern>com.lambdaworks.rx</shadedPattern>
-                                </relocation>
-
-                                <relocation>
-                                    <pattern>com.google</pattern>
-                                    <shadedPattern>com.lambdaworks.com.google</shadedPattern>
-                                </relocation>
-
-                                <relocation>
-                                    <pattern>org.HdrHistogram</pattern>
-                                    <shadedPattern>com.lambdaworks.org.HdrHistogram</shadedPattern>
-                                </relocation>
-
-                                <relocation>
-                                    <pattern>org.LatencyUtils</pattern>
-                                    <shadedPattern>com.lambdaworks.org.LatencyUtils</shadedPattern>
-                                </relocation>
-
-                                <relocation>
-                                    <pattern>org.apache.commons.pool2</pattern>
-                                    <shadedPattern>com.lambdaworks.org.apache.commons.pool2</shadedPattern>
-                                </relocation>
-
-                                <relocation>
-                                    <pattern>io</pattern>
-                                    <shadedPattern>com.lambdaworks.io</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <minimizeJar>false</minimizeJar>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

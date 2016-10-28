@@ -13,7 +13,6 @@
         <dependencySet>
             <includes>
                 <include>biz.paluch.redis:lettuce:jar:${project.version}</include>
-                <include>biz.paluch.redis:lettuce:jar:shaded:${project.version}</include>
             </includes>
             <outputDirectory></outputDirectory>
             <unpack>false</unpack>
@@ -30,9 +29,9 @@
         </dependencySet>
         <dependencySet>
             <includes>
-                <include>io.reactivex:*</include>
                 <include>io.netty:*</include>
-                <include>com.google.guava:*</include>
+                <include>io.projectreactor:*</include>
+                <include>org.reactivestreams:reactive-streams:*</include>
                 <include>org.apache.commons:*</include>
                 <include>org.latencyutils:*</include>
                 <include>org.hdrhistogram:*</include>
