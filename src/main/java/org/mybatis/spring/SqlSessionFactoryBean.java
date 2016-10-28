@@ -407,7 +407,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       configuration = xmlConfigBuilder.getConfiguration();
     } else {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Property `configuration` or 'configLocation' not specified, using default MyBatis Configuration");
+        LOGGER.debug("Property 'configuration' or 'configLocation' not specified, using default MyBatis Configuration");
       }
       configuration = new Configuration();
       if (this.configurationProperties != null) {
