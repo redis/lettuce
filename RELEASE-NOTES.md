@@ -1,206 +1,335 @@
-lettuce 4.2.0 RELEASE NOTES
-===========================
+lettuce 5.0.0 Beta 1 RELEASE NOTES
+==================================
 
-That's the zero behind 4.2? Well, that's to not break OSGi support.  Now let's
-talk about the more interesting things. Lettuce 4.2.0 is a major release and
-completes development of several notable enhancements.
+This is a major release coming with several breaking changes and new interesting
+features. It's similar to the simultaneously released version 4.3.0 but 
+comes with major changes.
 
-This release comes with SSL support, Publish/Subscribe and adaptive topology
-refreshing for Redis Cluster. It features a major refactoring of the command
-handling and several improvements for Cloud-based Redis services and
-improvements to the Master/Slave API.
+Lettuce 5.0 removes deprecated interfaces RedisConnection and RedisAsyncConnection
+and their segregated interfaces in favor of StatefulRedisConnection and RedisCommands et al.
 
-The usage of Guava was reduced for the most parts. Only the `LoadingCache`,
-`InetAddresses` and `HostAndPort` components are still in use.  A future lettuce
-5.0 version will eliminate the use of Guava completely.
+This release removes dependencies to Guava. Lettuce requires only Netty and Project Reactor
+which brings us to the next change. The reactive API is based on Reactive Streams by using 
+Project Reactor types `Mono` and `Flux` instead of RxJava 1 and `Observable`.
+Existing users can convert `Mono` and `Flux` by using `rxjava-reactive-streams`.
 
-**Important note for users of connection-pooling and latency tracking**
+Finally, this release introduces the dynamic Redis Commands API. This programming
+model enables you to declare command methods and invoke commands to your needs and
+support Redis Modules without waiting for lettuce to support new commands.
 
-Dependencies were streamlined with this release. Apache's `commons-pool2` and
-`latencyutils` are now _optional_ dependencies. If you use connection-pooling or
-latency tracking, please include these dependencies explicitly otherwise these
-features will be disabled.
+This beta/candidate release is to give you a chance to try out new features, 
+get feedback and improve for the final release.
 
-Lettuce 4.2.0 was verified with several Cloud-based Redis services. It works
-with different AWS ElastiCache usage patterns and is known to work with the
-Azure Redis Cluster service supporting SSL and authentication (see below).
+You will find the full change log at the end of this document.
 
-lettuce 4.2.0 is fully binary compatible with the last release and can be used
-as a drop-in replacement for 4.1.x.  This update is strongly recommended for
-lettuce 4.x users as it fixes some critical connection synchronization bugs.
+Thanks to all contributors that made lettuce 5.0.0 possible.
 
-Thanks to all contributors that made lettuce 4.2.0 possible.
-
-lettuce 4.2.0 requires Java 8 and cannot be used with Java 6 or 7.
+lettuce 5.0.0 requires Java 8 and cannot be used with Java 6 or 7.
 
 
-Redis Cluster Publish/Subscribe
--------------------------------
-Redis Cluster
-provides Publish/Subscribe features to broadcast messages across the cluster.
-Using the standalone client allows using Publish/Subscribe with Redis Cluster
-but comes with the limitation of high-availability/failover.
+Good bye, Guava
+---------------
 
-If a node goes down, the connection is lost until the node is available again.
-lettuce addresses this issue with Redis Cluster Publish/Subscribe and provides a
-failover mechanism.
+Lettuce 5.0 no longer uses Google's Guava library. Guava was a good friend
+back in the Java 6-compatible days where `Future` synchronization and callbacks
+were no fun to use. That changed with Java 8 and `CompletableFuture`.
 
-Publish/Subscribe messages and subscriptions are operated on the default cluster
-connection. The default connection is established with the node with the least
-client connections to achieve a homogeneous connection distribution. It also
-uses the cluster topology to failover if the currently connected node is down.
-
-Publishing a message using the regular cluster connection is still possible
-(since 4.0). The regular cluster connection calculates a slot-hash from the
-channel (which is the key in this case). Publishing always connects to the
-master node which is responsible for the slot although `PUBLISH` is not affected
-by the keyspace/slot-hash rule.
-
-Read more: https://github.com/mp911de/lettuce/wiki/Pub-Sub-%284.0%29
+Other uses like `HostAndPort` or `LoadingCache` could be either inlined or
+replaced by Java 8's Collection framework.
 
 
-Redis Cluster and SSL
----------------------
-Redis introduces an option to announce a specific IP address/port using
-`cluster-announce-ip` and `cluster-announce-port`. This is useful for
-Docker and NAT'ed setups. Furthermore, you can "hide" your Redis Cluster nodes
-behind any other proxy like `stunnel`. A Redis Cluster node will announce the
-specified port/IP which can map to `stunnel`, and you get an SSL-protected
-Redis Cluster. Please note that `cluster-announce-ip` is not part of Redis 3.2
-but will be released in future versions.
+Removal of deprecated interfaces and methods
+--------------------------------------------
 
-Redis Cluster SSL works pretty much the same as Redis Standalone with SSL. You
-can configure SSL and other SSL/TLS options using `RedisURI`.
-
-```java
-RedisURI redisURI = RedisURI.Builder.redis(host(), 7443)
-                                .withSsl(true)
-                                .withVerifyPeer(false)
-                                .build();
-
-RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
-StatefulRedisClusterConnection<String, String> connection = redisClusterClient.connect();
-```
-
-You should disable the `verifyPeer` option if the SSL endpoints cannot provide a
-valid certificate. When creating a `RedisClusterClient` using
-`RedisClusterClientFactoryBean` the `verifyPeer` option is disabled by default.
-
-Lettuce was successfully tested with Azure Redis with SSL and authentication.
-
-Read more: https://github.com/mp911de/lettuce/wiki/Redis-Cluster-%284.0%29
+This release removes deprecated interfaces `RedisConnection` and `RedisAsyncConnection`
+and their segregated interfaces in favor of `StatefulRedisConnection` and `RedisCommands`.
+ 
+You will notice slight differences when using that API. Transactional commands and 
+database selection are no longer available through the Redis Cluster API as the 
+old API was derived from the standalone API. `RedisCommands` and `RedisAsyncCommands`
+are no longer `Closeable`. Please use `commands.getStatefulConnection().close()` to 
+close a connection. This change removes ambiguity over closing the commands interface
+over closing the connection.
 
 
-Redis Cluster Topology Discovery and Refreshing
-----------------------------------------------
-The lettuce Redis Cluster Client
-allows regular topology updates. lettuce 4.2.0 improves the existing topology
-updates with adaptive refreshing and dynamic/static topology discovery.
+Migration to Reactive Streams (Project Reactor)
+-----------------------------------------------
 
-Adaptive refresh initiates topology view updates based on events happened during
-Redis Cluster operations. Adaptive triggers lead to an immediate topology
-refresh. Adaptive updates are rate-limited using a timeout since events can
-happen on a large scale. Adaptive refresh triggers are disabled by default and
-can be enabled selectively:
+Lettuce 4.0 introduced a reactive API based on RxJava 1 and `Observable`.
+This was the beginning of reactive Redis support. Lettuce used `Observable`
+all over the place as other reactive types like `Single` and `Completable` were
+still beta or in development.
 
-* `MOVED_REDIRECT`
-* `ASK_REDIRECT`
-* `PERSISTENT_RECONNECTS`
+Since that time, a lot changed in the reactive space. RxJava 2 is still in the
+works towards a final release supporting Reactive Streams, while other composition
+libraries are already available and polish on sharp edges. This means, 
+it was just a matter of time that lettuce adopts Reactive Streams.
 
-Dynamic/static topology discovery sources are the second change to topology
-refresh. lettuce uses by default dynamic discovery. Dynamic discovery retrieves
-the initial topology from the seed nodes and determines additional nodes to
-request their topology view. That is to reduce split-brain views by choosing the
-view which is shared by the majority of cluster nodes.
+This also means, no `null` values and usage of dedicated value types to express
+value multiplicity (`0|1` and `0|1|N`) on the API.
 
-Dynamic topology discovery also provides latency data and client count for each
-node in the cluster. These details are useful for calculating the nearest node
-or the least used node.
+With lettuce 5.0, the reactive API uses Project Reactor, `Mono` and `Flux`.
 
-Dynamic topology discovery can get expensive when running large Redis Clusters
-as all nodes from the topology are queried for their view. Static topology
-refresh sources limit the nodes to the initial seed node set. Limiting nodes is
-friendly to large clusters but it will provide latency and client count only for
-the seed nodes.
-
-Read more: https://github.com/mp911de/lettuce/wiki/Client-options#adaptive-cluster-topology-refresh
-
-
-Redis Modules
--------------
-
-Redis module support is a very young feature. lettuce provides a custom command
-API to dispatch own commands. `StatefulConnection` already allows sending of
-commands but requires wrapping of commands into the appropriate synchronization
-wrapper (Future, Reactive, Fire+Forget).
-
-lettuce provides with 4.2.0 `dispatch(…)` methods on each API type to provide a
-simpler interface.
+**4.3 and earlier**
 
 ```java
-RedisCodec<String, String> codec = new Utf8StringCodec();
+Observable<Long> del(K... keys);
 
-String response = redis.dispatch(CommandType.SET,
-        new StatusOutput<>(codec),
-        new CommandArgs<>(codec)
-                .addKey(key)
-                .addValue(value));
+Observable<K> keys(K pattern);
+
+Observable<V> mget(K... keys);
+
 ```
 
-Calls to `dispatch(…)` on the synchronous API are blocking calls, calls on the
-asynchronous API return a `RedisFuture<T>` and calls on the Reactive API return
-an `Observable<T>` which flat-maps collection responses.
+**5.0**
 
-Using `dispatch(…)` allows to invoke arbitrary commands and works together
-within transactions and Redis Cluster. Exposing this API also allows choosing a
-different `RedisCodec` for particular operations.
+```java
+Mono<Long> del(K... keys);
 
-Read more: https://github.com/mp911de/lettuce/wiki/Custom-commands%2C-outputs-and-command-mechanics
+Flux<K> keys(K pattern);
+
+Flux<KeyValue<K, V>> mget(K... keys);
+```
+
+Switching from RxJava 1 to Project Reactor use requires switching the library. Most
+operators use similar or even same names. If you're required to stick to RxJava 1,
+the use `rxjava-reactive-streams` to adopt reactive types (RxJava 1 <-> Reactive Streams).
+
+Migrating to Reactive Streams requires value wrapping to indicate absence of values.
+You will find differences in comparison to the previous API and to the sync/async API
+in cases where commands can return `null` values. Lettuce 5.0 comes with
+new `Value` types that are monads encapsulating a value (or their absence).
+
+See also: https://github.com/mp911de/lettuce/wiki/Reactive-API-%285.0%29
 
 
-CommandHandler refactoring
+Value, KeyValue, and other value types
+--------------------------------------
+
+This release enhances existing value types and introduces new types
+to reduce `null` usage and facilitate functional programming. 
+
+Value types are based on `Value` and `KeyValue`/`ScoredValue` extend from there.
+Value is a wrapper type encapsulating a value or its absence. A `Value` can
+be created in different ways:
+
+```java
+Value<String> value = Value.from(Optional.of("hello"));
+
+Value<String> value = Value.fromNullable(null);
+
+Value<String> value = Value.just("hello");
+
+KeyValue<Long, String> value = KeyValue.from(1L, Optional.of("hello"));
+ 
+KeyValue<String, String> value = KeyValue.just("key", "hello");
+```
+
+It transforms to `Optional` and `Stream` to integrate with other 
+functional uses and allows value mapping.
+
+```java
+Value.just("hello").stream().filter(…).count();
+
+KeyValue.just("hello").optional().isPresent();
+
+Value.from(Optional.of("hello")).map(s -> s + "-world").getValue();
+
+ScoredValue.just(42, "hello").mapScore(number -> number.doubleValue() * 3.14d).getScore();
+```
+
+You will also find that all public fields of value types are encapsulated with
+getters and these fields are no longer accessible.
+
+
+Dynamic Redis Commands API
 --------------------------
-Command sending, buffering, encoding and receiving was refactored on a large scale.
-Command encoding is performed in a separate handler and outside of `CommandHandler`.
-It does not longer allocate an additional buffer to encode its arguments, but
-arguments are directly written to the command buffer that is used to encode
-single command/batch of commands. Fewer memory allocations help improving
-performance and do not duplicate data.
 
-Synchronization and locking were reworked as well. The critical path used for
-writing commands is no longer locked exclusively but uses a shared locking with
-almost lock-free synchronization.
+The Redis Command Interface abstraction provides a dynamic way for typesafe Redis 
+command invocation. It allows you to declare an interface with command methods to 
+significantly reduce boilerplate code required to invoke a Redis command.
+
+Redis is a data store supporting over 190 documented commands and over 450 command permutations. 
+Command growth and keeping track with upcoming modules are challenging for client 
+developers and Redis user as there is no full command coverage for each module in a single Redis client.
+
+Invoking a custom command with lettuce several lines of code to define command structures
+pass in arguments and specify the return type.
+
+```java
+RedisCodec<String, String> codec = new StringCodec();
+RedisCommands<String, String> commands = ...
+
+String response = redis.dispatch(CommandType.SET, new StatusOutput<>(codec),
+                new CommandArgs<>(codec)
+                       .addKey(key)
+                       .addValue(value));
+```
+
+The central interface in lettuce Command Interface abstraction is `Commands`. 
+This interface acts primarily as a marker interface to help you to discover 
+interfaces that extend this one. You can declare your own command interfaces 
+and argument sequences where the command name is derived from the method name or 
+provided with `@Command`. Introduction of new commands does not require you 
+to wait for a new lettuce release but they can invoke commands through own declaration. 
+That interface could be also supporting different key and value types, depending on the use-case.
+
+Commands are executed applying synchronization, asynchronous and in a reactive fashion, 
+depending on the method declaration.
+
+```java
+public interface MyRedisCommands extends Commands {
+
+    String get(String key); // Synchronous Execution of GET
+
+    @Command("GET")
+    byte[] getAsBytes(String key); // Synchronous Execution of GET returning data as byte array
+
+    @Command("SET") // synchronous execution applying a Timeout
+    String setSync(String key, String value, Timeout timeout);
+
+    Future<String> set(String key, String value); // asynchronous SET execution
+
+    @Command("SET")
+    Mono<String> setReactive(String key, String value); // reactive SET execution using SetArgs
+
+    @CommandNaming(split = DOT) // support for Redis Module command notation -> NR.RUN
+    double nrRun(String key, int... indexes);
+}
+
+RedisCommandFactory factory = new RedisCommandFactory(connection);
+
+MyRedisCommands commands = factory.getCommands(MyRedisCommands.class);
+
+String value = commands.get("key");
+```
+
+You get a whole lot new possibilities with Redis Command Interfaces. This release
+provides initial support. Future versions are likely to support RxJava 1/2 reactive
+types so RxJava 1 users have a migration path that allows using native types without
+further conversion.
+
+See also: https://github.com/mp911de/lettuce/wiki/Redis-Command-Interfaces
 
 
-Improvements to Master/Slave connections
+Backoff/Delay strategies
+------------------------
+
+_Thanks to @jongyeol_
+
+When running cloud-based services with a multitude of services that use Redis,
+then network partitions impact Redis server connection heavily once 
+the partition ends. A network partition impacts all disconnected applications 
+at the same time and all nodes start reconnecting more or less at the same time.
+
+As soon as the partition ends, the majority of applications reconnect at the same time.
+Jitter backoff strategies leverage the impact as the time of reconnecting is randomized.
+
+Lettuce comes with various backoff implementations:
+
+* Equal Jitter
+* Full Jitter
+* Decorrelated Jitter
+
+These are configured in `ClientResources`:
+
+```java
+DefaultClientResources.builder()
+        .reconnectDelay(Delay.decorrelatedJitter())
+        .build();
+
+DefaultClientResources.builder()
+        .reconnectDelay(Delay.equalJitter())
+        .build();
+```
+
+See also: https://www.awsarchitectureblog.com/2015/03/backoff.html and
+https://github.com/mp911de/lettuce/wiki/Configuring-Client-resources
+
+
+New API for Z...RANGE commands
+-------------------------------
+
+Sorted Sets range commands come with a streamlined API regarding method overloads.
+Commands like `ZRANGEBYSCORE`, `ZRANGEBYLEX`, `ZREMRANGEBYLEX` and several others
+now declare methods accepting `Range` and `Limit` objects instead of an growing
+parameter list. The new `Range` allows score and value types applying the proper
+binary encoding.
+
+**4.2 and earlier**
+
+```java
+commands.zcount(key, 1.0, 3.0)
+
+commands.zrangebyscore(key, "-inf", "+inf")
+
+commands.zrangebyscoreWithScores(key, "[1.0", "(4.0")
+
+commands.zrangebyscoreWithScores(key, "-inf", "+inf", 2, 2)
+```
+
+**Since 4.3**
+
+```java
+commands.zcount(key, Range.create(1.0, 3.0));
+
+commands.zrangebyscore(key, Range.unbounded());
+
+commands.zrangebyscoreWithScores(key, Range.from(Boundary.including(1.0), Boundary.excluding(4.0));
+
+commands.zrangebyscoreWithScores(key, Range.unbounded(), Limit.create(2, 2));
+```
+
+
+Connection pooling deprecation
+------------------------------
+
+It took quite a while but 4.3 finally deprecates Lettuce's existing connection pooling
+support. That are in particular `RedisClient.pool(…)` and `RedisClient.asyncPool(…)`. 
+These methods are removed with lettuce 5.0.
+
+Connection pooling had very limited support and would require additional overloads
+that clutter the API to expose pooling for all supported connections.
+This release brings a replacement, that is customizable
+and does not pollute the API. `ConnectionPoolSupport` provides methods to
+create a connection pool accepting a factory method and pool configuration.
+
+Returned connection objects are proxies that return the connection to its pool
+when calling `close()`. `StatefulConnection` implement `Closeable` to
+allow usage of try-with-resources.
+
+```java
+GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+        .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig());
+
+
+try(StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
+    // Work
+}
+
+
+pool.close();
+```
+
+
+Redis Cluster topology refresh consensus
 ----------------------------------------
-lettuce introduced with 4.1 a Master/Slave API which is now more dynamic. It's
-no longer required to connect to a Master node when using Master/Slave without
-Sentinel as the Master/Slave API will discover the master by itself. Providing
-one seed node enables dynamic lookup. The API is internally prepared for dynamic
-updates which are used with Redis Sentinel.
 
-A Sentinel-managed Master/Slave setup discovers configuration changes based on
-Sentinel events and updates its topology accordingly.
+Cluster topology refreshing can lead in some cases (dynamic topology sources)
+to orphaning. This can happen if a cluster node is removed from the cluster and
+lettuce decides to accept the topology view of that removed node. Lettuce 
+gets stuck with that node and is not able to use the remaining cluster.
 
-Another change is the broader support of AWS ElastiCache Master/Slave setups.
-AWS ElastiCache allows various patterns for usage. One of them is the automatic
-failover. AWS ElastiCache exposes a connection point hostname and updates the
-DNS record to point to the current master node. Since the JVM has a built-in
-cache it's not trivial to adjust the DNS lookup and caching to the special needs
-which are valid only for AWS ElastiCache connections. lettuce exposes a DNS
-Lookup API that defaults to the JVM lookup. Lettuce ships also with
-`DirContextDnsResolver` that allows own DNS lookups using either the
-system-configured DNS or external DNS servers. This implementation comes without
-caching and is suitable for AWS ElastiCache.
+This release introduces `PartitionsConsensus` strategies to determine the most
+appropriate topology view if multiple views are acquired. The strategy can be
+customized by overriding 
+`RedisClusterClient.determinePartitions(Partitions, Map<RedisURI, Partitions>)`.
 
-Another pattern is using AWS ElastiCache slaves. Before 4.2.0, a static setup
-was required. Clients had to point to the appropriate node. The Master/Slave API
-allows specifying a set of nodes which form a static Master/Slave setup. Lettuce
-discovers the roles from the provided nodes and routes read/write commands
-according to `ReadFrom` settings.
-
-Read more: https://github.com/mp911de/lettuce/wiki/Master-Slave
+Lettuce defaults choosing the topology view with the majority of previously known
+cluster nodes. This helps lettuce to stick with the cluster that consists of the
+most nodes.
+ 
+See also: https://github.com/mp911de/lettuce/issues/355
 
 
 If you need any support, meet lettuce at:
@@ -212,71 +341,88 @@ If you need any support, meet lettuce at:
 
 Commands
 --------
-* Add support for CLUSTER BUMPEPOCH command #179
-* Support extended MIGRATE syntax #197
-* Add support for GEORADIUS STORE and STOREDIST options #199
-* Support SCAN in RedisCluster #201
-* Add support for BITFIELD command #206
-* Add zadd method accepting ScoredValue #210
-* Add support for SPOP key count #235
-* Add support for GEOHASH command #239
-* Add simple interface for custom command invocation for sync/async/reactive APIs #245
+* Add support for TOUCH command #270
+* Add support for variadic LPUSHX and RPUSHX #267
+* Provide a more conceise API for Sorted Set query operations using Range/Limit #363
+* Add support for ZREVRANGEBYLEX command #369 (Thanks to @christophstrobl)
+* Add support for SWAPDB #375
 
 Enhancements
 ------------
-* Cluster pub/sub and resilient subscriptions #138 (Thanks to @jpennell)
-* Reactive API: Emit items during command processing #178
-* Allow configuration of max redirect count for cluster connections #191
-* Improve SCAN API #208
-* Support Redis Cluster with SSL #209
-* Improve CommandHandler locking #211
-* Improve command encoding of singular commands and command batches #212 (Thanks to @cwolfinger)
-* Add log statement for resolved address #218 (Thanks to @mzapletal)
-* Apply configured password/database number in MasterSlave connection #220
-* Improve command draining in flushCommands #228 (Thanks to @CodingFabian)
-* Support dynamic master/slave connections #233
-* Expose DNS Resolver #236
-* Make latencyutils and commons-pool2 dependencies optional #237
-* Support adaptive cluster topology refreshing and static refresh sources #240 (Thanks to @RahulBabbar)
-* Add static builder() methods to builders enhancement #248
-* Add factory for reconnection delay enhancement #250
-* Add integer cache for CommandArgs enhancement #251
+* Remove deprecated interfaces and methods #156
+* Remove Google Guava usage #217
+* Add SocketOptions to ClientOptions #269
+* Add support for OpenSSL as SSL provider #249
+* Replacement support for connection pooling #264
+* Add ToByteBufEncoder and improved StringCodec #275
+* Allow configuration of a trust store password #292
+* Replace Guava Cache by ConcurrentHashMap #300
+* Eager initialization of API wrappers in stateful connections #302 (Thanks to @jongyeol)
+* Change MethodTranslator's loadfactor to 1.0 for sync APIs performance #305 (Thanks to @jongyeol)
+* Reattempt initially failed Sentinel connections in Master/Slave API #306
+* Decouple CommandHandler #317
+* Use TransactionResult for transaction results #320
+* Replace synchronized setters with volatile fields #326 (Thanks to @guperrot)
+* Add workaround for IPv6 parsing #332
+* Provide multi-key-routing for exists and unlink commands using Redis Cluster #334
+* Migrate lettuce reactive API to Reactive Streams #349
+* Provide Value types #350
+* Add ConnectionWatchdog as last handler #335
+* Provide Timer as part of ClientResources #354 (Thanks to @plokhotnyuk)
+* Add support for topology consensus #355
+* Use Limit in SortArgs #364
+* Add jitter backoff strategies for spreading reconnection timing #365 (Thanks to @jongyeol)
+* Add EVAL and EVALSHA to ReadOnlyCommands #366 (Thanks to @amilnarski)
+* Add support for ZADD INCR with ZAddArgs #367 (Thanks to @christophstrobl)
+* Accept double in ZStoreArgs.weights #368 (Thanks to @christophstrobl)
+* Consider role changes as trigger for update using MasterSlave connections #370
+* Provide a dynamic Redis Command API #371
+* Support lettuce parameter types #381
+* Expose Value.map methods #386 
 
 Fixes
 -----
-* pfmerge invokes PFADD instead of PFMERGE #158 (Thanks to @christophstrobl)
-* Fix NPE in when command output is null #187 (Thanks to @rovarghe)
-* Set interrupted bit after catching InterruptedException #192
-* Lettuce fails sometimes at shutdown: DefaultClientResources.shutdown #194
-* Extensive calls to PooledClusterConnectionProvider.closeStaleConnections #195
-* Shared resources are closed altough still users are present #196
-* Lettuce 4.1 does not repackage new dependencies #198 (Thanks to @    CodingFabian)
-* Fix NPE in CommandHandler.write (Thanks to @cinnom) #213
-* Gracefully shutdown DefaultCommandLatencyCollector.PAUSE_DETECTOR #223 (Thanks to @sf-git and @johnou)
-* RedisClient.connect(RedisURI) fails for unix socket based URIs #229 (Thanks to @nivekastoreth)
-* HdrHistogram and LatencyUtils are not included in binary distribution #231
-* Cache update in Partitions is not thread-safe #234
-* GEORADIUSBYMEMBER, GEORADIUS and GEOPOS run into NPE when using Redis Transactions #241
-* LettuceFutures.awaitAll throws RedisCommandInterruptedException when awaiting failed commands #242
-* Fix command sequence on connection activation #253 (Thanks to @long-xuan-nguyen)
-* Cluster topology refresh: Failed connections are not closed bug #255
-* Cluster topology refresh tries to connect twice for failed connection attempts #256
-* Connection lifecycle state DISCONNECTED is considered a connected sate #257
-* Writing commands while a disconnect is in progress leads to a race-condition #258
-* Canceled commands lead to connection desynchronization #262 (Thanks to @long-xuan-nguyen)
+* Fix JavaDoc for blocking list commands #272
+* Guard key parameters against null values #287
+* CommandArgs.ExperimentalByteArrayCodec fails to encode bulk string #288
+* Guard value parameters against null values #291 (Thanks to @christophstrobl)
+* Allow MasterSlave connection using Sentinel if some Sentinels are not available #304 (Thanks to @RahulBabbar)
+* Allow coordinated cross-slot execution using Iterable #303 (Thanks to @agodet)
+* Use at least 3 Threads when configuring default thread count #309
+* Replace own partition host and port only if the reported connection point is empty #312
+* Lettuce RedisClusterClient calls AUTH twice #313
+* CommandHandler notifications called out of order #315
+* Disable SYNC command #319
+* Record sent-time on command queueing #314 (Thanks to @HaloFour)
+* ASK bit not set on ASK redirection #321 (Thanks to @kaibaemon)
+* Check for isUnsubscribed() before calling subscriber methods #323 (Thanks to @vleushin)
+* Avoid timeouts for cancelling command #325 (Thanks to @jongyeol)
+* Guard command completion against exceptions #331
+* Store error at output-level when using NestedMultiOutput #328 (Thanks to @jongyeol)
+* Fix master and slave address parsing for IPv6 addresses #329 (Thanks to @maksimlikharev)
+* Fix srandmember return type from Set to List #330 (Thanks to @jongyeol)
+* Add synchronization to Partitions/Use read-view for consistent Partition usage during Partitions updates #333 (Thanks to @OutOfBrain)
+* Run cluster command redirects on event executor threads #340 (Thanks to @oklahomer)
+* Close connections in PooledClusterConnectionProvider on connection failures #343
+* Consider number of redirections instead of executions for cluster commands #344 (Thanks to @Spikhalskiy)
+* Ensure unique reconnect scheduling #346
+* Guard ConnectionWatchdog against NPE from missing CommandHandler #358
+* Fix RedisAdvancedClusterAsyncCommandsImpl.msetnx return value #376 (Thanks to @mjaow)
+* Allow hostnames in MasterSlaveTopologyProvider when parsing in master_host #377 (Thanks to @szabowexler)
+* Allow empty values in BITFIELD using the reactive API #378
+* Support integer width multiplied offsets in BITFIELD #379 (Thanks to @christophstrobl)
+* Propagate array sizes in MultiOutput #380 (Thanks to @christophstrobl)
 
 Other
 ------
-* Switch remaining tests to AssertJ #13
-* Promote 4.x branch to main branch #155
-* Add Wiki documentation for disconnectedBehavior option in ClientOptions #188
-* Switch travis-ci to container build #203
-* Refactor Makefile #207
-* Code cleanups #215
-* Reduce Google Guava usage #217
-* Improve contribution assets #219
-* Ensure OSGi compatibility #232
-* Upgrade netty to 4.0.36.Final #238
+* Improve test synchronization #216
+* Upgrade to stunnel 5.33 #290
+* Upgrade logging to log4j2 for tests #316
+* Upgrade to AssertJ 3.5.2 #352
+* Add test to verify behavior of GEODIST if a geoset is unknown #362
+* Update license/author headers #387
+* Upgrade to netty 4.0.42.Final/4.1.6.Final 390
+
 
 lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
