@@ -29,6 +29,16 @@ lettuce 4.x
 | lettuce binary (tar.gz) | [lettuce-${lettuce-release-version}-bin.tar.gz](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.tar.gz)|[lettuce-${lettuce-release-version}-bin.tar.gz.md5](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.tar.gz.md5)|[lettuce-${lettuce-release-version}-bin.tar.gz.asc](https://github.com/mp911de/lettuce/releases/download/${lettuce-release-version}/lettuce-${lettuce-release-version}-bin.tar.gz.asc)|
 
 
+lettuce 5.x
+-----------
+
+|                   | Download     | Checksum     | Signature    |
+| ----------------- |:-------------|:-------------|:-------------|
+| lettuce (jar) | [lettuce-${lettuce5-release-version}.jar](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce5-release-version}/lettuce-${lettuce5-release-version}.jar)|[lettuce-${lettuce5-release-version}.jar.md5](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce5-release-version}/lettuce-${lettuce5-release-version}.jar.md5)|[lettuce-${lettuce5-release-version}.jar.asc](http://search.maven.org/remotecontent?filepath=biz/paluch/redis/lettuce/${lettuce5-release-version}/lettuce-${lettuce5-release-version}.jar.asc)|
+| lettuce binary (zip) | [lettuce-${lettuce5-release-version}-bin.zip](https://github.com/mp911de/lettuce/releases/download/${lettuce5-release-version}/lettuce-${lettuce5-release-version}-bin.zip)|[lettuce-${lettuce5-release-version}-bin.zip.md5](https://github.com/mp911de/lettuce/releases/download/${lettuce5-release-version}/lettuce-${lettuce5-release-version}-bin.zip.md5)|[lettuce-${lettuce5-release-version}-bin.zip.asc](https://github.com/mp911de/lettuce/releases/download/${lettuce5-release-version}/lettuce-${lettuce5-release-version}-bin.zip.asc)|
+| lettuce binary (tar.gz) | [lettuce-${lettuce5-release-version}-bin.tar.gz](https://github.com/mp911de/lettuce/releases/download/${lettuce5-release-version}/lettuce-${lettuce5-release-version}-bin.tar.gz)|[lettuce-${lettuce5-release-version}-bin.tar.gz.md5](https://github.com/mp911de/lettuce/releases/download/${lettuce5-release-version}/lettuce-${lettuce5-release-version}-bin.tar.gz.md5)|[lettuce-${lettuce5-release-version}-bin.tar.gz.asc](https://github.com/mp911de/lettuce/releases/download/${lettuce5-release-version}/lettuce-${lettuce5-release-version}-bin.tar.gz.asc)|
+
+
 
 It is essential that you verify the integrity of the downloaded files using the PGP or MD5 signatures.
 
@@ -67,7 +77,26 @@ Using lettuce on your classpath
     netty-transport-native-epoll-${netty-version}.jar
     netty-handler-${netty-version}.jar
     guava-17.0.jar
-    rxjava-1.1.9.jar
+    rxjava-1.2.1.jar
+    LatencyUtils-2.0.3.jar
+    HdrHistogram-2.1.8.jar
+    commons-pool2-2.4.2.jar
+
+
+Using lettuce 5 on your classpath
+-----------------
+
+  To use lettuce in your application make sure that the jars are in the application's classpath. Add
+  the dependencies listed below to your classpath.
+
+    lettuce-${lettuce-release-version}.jar
+    netty-buffer-${netty-version}.jar
+    netty-codec-${netty-version}.Final.jar
+    netty-common-${netty-version}.Final.jar
+    netty-transport-${netty-version}.jar
+    netty-transport-native-epoll-${netty-version}.jar
+    netty-handler-${netty-version}.jar
+    reactor-core-3.0.3.RELEASE.jar
     LatencyUtils-2.0.3.jar
     HdrHistogram-2.1.8.jar
     commons-pool2-2.4.2.jar
