@@ -15,9 +15,11 @@
  */
 package com.lambdaworks.redis.support;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
+import java.util.Collection;
+import java.util.Iterator;
 
 import org.junit.Test;
 
@@ -49,8 +51,8 @@ public class RedisClusterClientFactoryBeanTest {
 
         sut.setUri(URI.create(RedisURI.URI_SCHEME_REDIS + "://password@host"));
         sut.afterPropertiesSet();
-        assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
-        assertThat(sut.getRedisURI().getPassword()).isEqualTo("password".toCharArray());
+        assertThat(getRedisURI().getHost()).isEqualTo("host");
+        assertThat(getRedisURI().getPassword()).isEqualTo("password".toCharArray());
     }
 
     @Test
@@ -60,18 +62,65 @@ public class RedisClusterClientFactoryBeanTest {
         sut.setPassword("thepassword");
 
         sut.afterPropertiesSet();
-        assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
-        assertThat(sut.getRedisURI().getPassword()).isEqualTo("thepassword".toCharArray());
+        assertThat(getRedisURI().getHost()).isEqualTo("host");
+        assertThat(getRedisURI().getPassword()).isEqualTo("thepassword".toCharArray());
     }
-    
+
+    @Test
+    public void multiNodeUri() throws Exception {
+
+        sut.setUri(URI.create(RedisURI.URI_SCHEME_REDIS + "://password@host1,host2"));
+        sut.afterPropertiesSet();
+
+        Collection<RedisURI> redisUris = sut.getRedisURIs();
+        assertThat(redisUris).hasSize(2);
+
+        Iterator<RedisURI> iterator = redisUris.iterator();
+        RedisURI host1 = iterator.next();
+        RedisURI host2 = iterator.next();
+
+        assertThat(host1.getHost()).isEqualTo("host1");
+        assertThat(host1.getPassword()).isEqualTo("password".toCharArray());
+
+        assertThat(host2.getHost()).isEqualTo("host2");
+        assertThat(host2.getPassword()).isEqualTo("password".toCharArray());
+    }
+
+    @Test
+    public void multiNodeUriPasswordOverride() throws Exception {
+
+        sut.setUri(URI.create(RedisURI.URI_SCHEME_REDIS + "://password@host1,host2"));
+        sut.setPassword("thepassword");
+
+        sut.afterPropertiesSet();
+
+        Collection<RedisURI> redisUris = sut.getRedisURIs();
+        assertThat(redisUris).hasSize(2);
+
+        Iterator<RedisURI> iterator = redisUris.iterator();
+        RedisURI host1 = iterator.next();
+        RedisURI host2 = iterator.next();
+
+        assertThat(host1.getHost()).isEqualTo("host1");
+        assertThat(host1.getPassword()).isEqualTo("thepassword".toCharArray());
+
+        assertThat(host2.getHost()).isEqualTo("host2");
+        assertThat(host2.getPassword()).isEqualTo("thepassword".toCharArray());
+    }
+
     @Test
     public void supportsSsl() throws Exception {
 
         sut.setUri(URI.create(RedisURI.URI_SCHEME_REDIS_SECURE + "://password@host"));
         sut.afterPropertiesSet();
-        assertThat(sut.getRedisURI().getHost()).isEqualTo("host");
-        assertThat(sut.getRedisURI().getPassword()).isEqualTo("password".toCharArray());
-        assertThat(sut.getRedisURI().isVerifyPeer()).isFalse();
-        assertThat(sut.getRedisURI().isSsl()).isTrue();
+
+        assertThat(getRedisURI().getHost()).isEqualTo("host");
+        assertThat(getRedisURI().getPassword()).isEqualTo("password".toCharArray());
+        assertThat(getRedisURI().isVerifyPeer()).isFalse();
+        assertThat(getRedisURI().isSsl()).isTrue();
+    }
+
+    private RedisURI getRedisURI() {
+        return sut.getRedisURIs().iterator().next();
     }
 }

@@ -31,7 +31,7 @@ import org.junit.Test;
 public class RedisURITest {
 
     @Test
-    public void equalsTest() throws Exception {
+    public void equalsTest() {
 
         RedisURI redisURI1 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
@@ -46,7 +46,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void setUsage() throws Exception {
+    public void setUsage() {
 
         RedisURI redisURI1 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
@@ -58,7 +58,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void mapUsage() throws Exception {
+    public void mapUsage() {
 
         RedisURI redisURI1 = RedisURI.create("redis://auth@localhost:1234/5");
         RedisURI redisURI2 = RedisURI.create("redis://auth@localhost:1234/5");
@@ -70,25 +70,31 @@ public class RedisURITest {
     }
 
     @Test
-    public void simpleUriTest() throws Exception {
+    public void simpleUriTest() {
         RedisURI redisURI = RedisURI.create("redis://localhost:6379");
         assertThat(redisURI.toURI().toString()).isEqualTo("redis://localhost");
     }
 
     @Test
-    public void sslUriTest() throws Exception {
+    public void sslUriTest() {
         RedisURI redisURI = RedisURI.create("redis+ssl://localhost:6379");
         assertThat(redisURI.toURI().toString()).isEqualTo("rediss://localhost:6379");
     }
 
     @Test
-    public void tlsUriTest() throws Exception {
+    public void tlsUriTest() {
         RedisURI redisURI = RedisURI.create("redis+tls://localhost:6379");
         assertThat(redisURI.toURI().toString()).isEqualTo("redis+tls://localhost:6379");
     }
 
     @Test
-    public void sentinelEqualsTest() throws Exception {
+    public void multipleClusterNodesTest() {
+        RedisURI redisURI = RedisURI.create("redis+ssl://password@host1:6379,host2:6380");
+        assertThat(redisURI.toURI().toString()).isEqualTo("rediss://password@host1:6379,host2:6380");
+    }
+
+    @Test
+    public void sentinelEqualsTest() {
 
         RedisURI redisURI1 = RedisURI.create("redis-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
         RedisURI redisURI2 = RedisURI.create("redis-sentinel://auth@h1:222,h2,h3:1234/5#masterId");
@@ -103,7 +109,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void sentinelUriTest() throws Exception {
+    public void sentinelUriTest() {
 
         RedisURI redisURI = RedisURI.create("redis-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
         assertThat(redisURI.getSentinelMasterId()).isEqualTo("masterId");
@@ -117,7 +123,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void socketEqualsTest() throws Exception {
+    public void socketEqualsTest() {
 
         RedisURI redisURI1 = RedisURI.create("redis-socket:///var/tmp/socket");
         RedisURI redisURI2 = RedisURI.create("redis-socket:///var/tmp/socket");
@@ -132,7 +138,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void socketUriTest() throws Exception {
+    public void socketUriTest() {
 
         RedisURI redisURI = RedisURI.create("redis-socket:///var/tmp/other-socket?db=2");
 
@@ -142,7 +148,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void socketAltUriTest() throws Exception {
+    public void socketAltUriTest() {
 
         RedisURI redisURI = RedisURI.create("redis+socket:///var/tmp/other-socket?db=2");
 
@@ -152,7 +158,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void timeoutParsingTest() throws Exception {
+    public void timeoutParsingTest() {
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5000", 5000, TimeUnit.MILLISECONDS);
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5000ms", 5000, TimeUnit.MILLISECONDS);
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5s", 5, TimeUnit.SECONDS);
@@ -172,7 +178,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void queryStringDecodingTest() throws Exception {
+    public void queryStringDecodingTest() {
         String timeout = "%74%69%6D%65%6F%75%74";
         String eq = "%3d";
         String s = "%73";
@@ -180,7 +186,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void timeoutParsingWithJunkParamTest() throws Exception {
+    public void timeoutParsingWithJunkParamTest() {
         RedisURI redisURI1 = RedisURI.create("redis-sentinel://auth@localhost:1234/5?timeout=5s;junkparam=#master-instance");
         assertThat(redisURI1.getTimeout()).isEqualTo(5);
         assertThat(redisURI1.getUnit()).isEqualTo(TimeUnit.SECONDS);
@@ -195,7 +201,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void databaseParsingTest() throws Exception {
+    public void databaseParsingTest() {
         RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/?database=5");
         assertThat(redisURI.getDatabase()).isEqualTo(5);
 
@@ -203,7 +209,7 @@ public class RedisURITest {
     }
 
     @Test
-    public void parsingWithInvalidValuesTest() throws Exception {
+    public void parsingWithInvalidValuesTest() {
         RedisURI redisURI = RedisURI
                 .create("redis://@host:1234/?database=AAA&database=&timeout=&timeout=XYZ&sentinelMasterId=");
         assertThat(redisURI.getDatabase()).isEqualTo(0);
@@ -211,5 +217,4 @@ public class RedisURITest {
 
         assertThat(redisURI.toURI().toString()).isEqualTo("redis://host:1234");
     }
-
 }

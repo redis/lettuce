@@ -18,19 +18,23 @@ package com.lambdaworks.redis.support;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
 
 import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
+import com.lambdaworks.redis.cluster.RedisClusterURIUtil;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input and allows
  * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format: {@code
- *     redis://[password@]host[:port]
+ *     redis://[password@]host[:port][,host2[:port2]]
  * }
  * 
  * {@code
- *     rediss://[password@]host[:port]
+ *     rediss://[password@]host[:port][,host2[:port2]]
  * }
  *
  * @see RedisURI
@@ -41,32 +45,52 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<RedisClusterClient> {
 
     private boolean verifyPeer = false;
+    private Collection<RedisURI> redisURIs;
 
     @Override
     public void afterPropertiesSet() throws Exception {
 
-        if (getRedisURI() == null) {
-            URI uri = getUri();
+        if (redisURIs == null) {
 
-            LettuceAssert.isTrue(!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL),
-                    "Sentinel mode not supported when using RedisClusterClient");
+            if (getUri() != null) {
+                URI uri = getUri();
 
-            RedisURI redisURI = RedisURI.create(uri);
-            if (isNotEmpty(getPassword())) {
-                redisURI.setPassword(getPassword());
+                LettuceAssert.isTrue(!uri.getScheme().equals(RedisURI.URI_SCHEME_REDIS_SENTINEL),
+                        "Sentinel mode not supported when using RedisClusterClient");
+
+                List<RedisURI> redisURIs = RedisClusterURIUtil.toRedisURIs(uri);
+
+                for (RedisURI redisURI : redisURIs) {
+                    applyProperties(uri.getScheme(), redisURI);
+                }
+
+                this.redisURIs = redisURIs;
+            } else {
+
+                URI uri = getRedisURI().toURI();
+                RedisURI redisURI = RedisURI.create(uri);
+                applyProperties(uri.getScheme(), redisURI);
+                this.redisURIs = Collections.singleton(redisURI);
             }
-
-            if (RedisURI.URI_SCHEME_REDIS_SECURE.equals(uri.getScheme())
-                    || RedisURI.URI_SCHEME_REDIS_SECURE_ALT.equals(uri.getScheme())
-                    || RedisURI.URI_SCHEME_REDIS_TLS_ALT.equals(uri.getScheme())) {
-                redisURI.setVerifyPeer(verifyPeer);
-            }
-
-            setRedisURI(redisURI);
         }
 
         super.afterPropertiesSet();
+    }
 
+    private void applyProperties(String scheme, RedisURI redisURI) {
+
+        if (isNotEmpty(getPassword())) {
+            redisURI.setPassword(getPassword());
+        }
+
+        if (RedisURI.URI_SCHEME_REDIS_SECURE.equals(scheme) || RedisURI.URI_SCHEME_REDIS_SECURE_ALT.equals(scheme)
+                || RedisURI.URI_SCHEME_REDIS_TLS_ALT.equals(scheme)) {
+            redisURI.setVerifyPeer(verifyPeer);
+        }
+    }
+
+    protected Collection<RedisURI> getRedisURIs() {
+        return redisURIs;
     }
 
     @Override
@@ -83,9 +107,10 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
     protected RedisClusterClient createInstance() throws Exception {
 
         if (getClientResources() != null) {
-            return RedisClusterClient.create(getClientResources(), getRedisURI());
+            return RedisClusterClient.create(getClientResources(), redisURIs);
         }
-        return RedisClusterClient.create(getRedisURI());
+
+        return RedisClusterClient.create(redisURIs);
     }
 
     public boolean isVerifyPeer() {
