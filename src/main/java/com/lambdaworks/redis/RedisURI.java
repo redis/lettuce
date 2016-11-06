@@ -535,16 +535,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private String getAuthority(final String scheme) {
 
         String authority = null;
+
         if (host != null) {
-            authority = urlEncode(host) + getPortPart(port, scheme);
+            if (host.contains(",")) {
+                authority = host;
+            } else {
+                authority = urlEncode(host) + getPortPart(port, scheme);
+            }
         }
 
         if (sentinels.size() != 0) {
-            String joinedSentinels = sentinels.stream()
+
+            authority = sentinels.stream()
                     .map(redisURI -> urlEncode(redisURI.getHost()) + getPortPart(redisURI.getPort(), scheme))
                     .collect(Collectors.joining(","));
-
-            authority = joinedSentinels;
         }
 
         if (socket != null) {
@@ -772,7 +776,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     private static Builder configureStandalone(URI uri) {
-        Builder builder;
+
+        Builder builder = null;
         Set<String> allowedSchemes = LettuceSets.unmodifiableSet(URI_SCHEME_REDIS, URI_SCHEME_REDIS_SECURE,
                 URI_SCHEME_REDIS_SOCKET, URI_SCHEME_REDIS_SOCKET_ALT, URI_SCHEME_REDIS_SECURE_ALT, URI_SCHEME_REDIS_TLS_ALT);
 
@@ -783,10 +788,24 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (URI_SCHEME_REDIS_SOCKET.equals(uri.getScheme()) || URI_SCHEME_REDIS_SOCKET_ALT.equals(uri.getScheme())) {
             builder = Builder.socket(uri.getPath());
         } else {
-            if (uri.getPort() > 0) {
-                builder = Builder.redis(uri.getHost(), uri.getPort());
+
+            if (isNotEmpty(uri.getHost())) {
+
+                if (uri.getPort() > 0) {
+                    builder = Builder.redis(uri.getHost(), uri.getPort());
+                } else {
+                    builder = Builder.redis(uri.getHost());
+                }
             } else {
-                builder = Builder.redis(uri.getHost());
+
+                if (isNotEmpty(uri.getAuthority())) {
+                    String authority = uri.getAuthority();
+                    if (authority.indexOf('@') > -1) {
+                        authority = authority.substring(authority.indexOf('@') + 1);
+                    }
+
+                    builder = Builder.redis(authority);
+                }
             }
         }
 

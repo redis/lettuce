@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -219,7 +220,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Create a new client that connects to the supplied {@link RedisURI uri} with default {@link ClientResources}. You can
      * connect to different Redis servers but you must supply a {@link RedisURI} on connecting.
      *
-     * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty
+     * @param redisURIs one or more Redis URI, must not be {@literal null} and not empty.
      * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(Iterable<RedisURI> redisURIs) {
@@ -232,12 +233,12 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Create a new client that connects to the supplied uri with default {@link ClientResources}. You can connect to different
      * Redis servers but you must supply a {@link RedisURI} on connecting.
      *
-     * @param uri the Redis URI, must not be {@literal null}
+     * @param uri the Redis URI, must not be empty or {@literal null}.
      * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(String uri) {
-        LettuceAssert.notNull(uri, "URI must not be null");
-        return create(RedisURI.create(uri));
+        LettuceAssert.notEmpty(uri, "URI must not be empty");
+        return create(RedisClusterURIUtil.toRedisURIs(URI.create(uri)));
     }
 
     /**
@@ -261,13 +262,13 @@ public class RedisClusterClient extends AbstractRedisClient {
      * supply a {@link RedisURI} on connecting.
      *
      * @param clientResources the client resources, must not be {@literal null}
-     * @param uri the Redis URI, must not be {@literal null}
+     * @param uri the Redis URI, must not be empty or {@literal null}.
      * @return a new instance of {@link RedisClusterClient}
      */
     public static RedisClusterClient create(ClientResources clientResources, String uri) {
         assertNotNull(clientResources);
-        LettuceAssert.notNull(uri, "URI must not be null");
-        return create(clientResources, RedisURI.create(uri));
+        LettuceAssert.notEmpty(uri, "URI must not be empty");
+        return create(clientResources, RedisClusterURIUtil.toRedisURIs(URI.create(uri)));
     }
 
     /**
@@ -678,7 +679,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (RedisClusterNode partition : loadedPartitions) {
             if (viewedBy != null) {
                 RedisURI uri = partition.getUri();
-                applyUriConnectionSettings(viewedBy, uri);
+                RedisClusterURIUtil.applyUriConnectionSettings(viewedBy, uri);
             }
         }
 
@@ -839,19 +840,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     boolean expireStaleConnections() {
         return getClusterClientOptions() == null || getClusterClientOptions().isCloseStaleConnections();
-    }
-
-    static void applyUriConnectionSettings(RedisURI from, RedisURI to) {
-
-        if (from.getPassword() != null && from.getPassword().length != 0) {
-            to.setPassword(new String(from.getPassword()));
-        }
-
-        to.setTimeout(from.getTimeout());
-        to.setUnit(from.getUnit());
-        to.setSsl(from.isSsl());
-        to.setStartTls(from.isStartTls());
-        to.setVerifyPeer(from.isVerifyPeer());
     }
 
     private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
