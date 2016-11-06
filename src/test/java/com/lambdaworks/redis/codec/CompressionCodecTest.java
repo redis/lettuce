@@ -28,8 +28,8 @@ import org.junit.Test;
 public class CompressionCodecTest {
 
     private String key = "key";
-    private byte[] keyGzipBytes = new byte[] { 31, -117, 8, 0, 0, 0, 0, 0, 0, 0, -53, 78, -83, 4, 0, -87, -85, -112, -118, 3,
-            0, 0, 0 };
+    private byte[] keyGzipBytes = new byte[] { 31, -117, 8, 0, 0, 0, 0, 0, 0, 0, -53, 78, -83, 4, 0, -87, -85, -112, -118, 3, 0,
+            0, 0 };
     private byte[] keyDeflateBytes = new byte[] { 120, -100, -53, 78, -83, 4, 0, 2, -121, 1, 74 };
     private String value = "value";
 
@@ -80,13 +80,8 @@ public class CompressionCodecTest {
     }
 
     private byte[] toBytes(ByteBuffer buffer) {
-        byte[] bytes;
-        if (buffer.hasArray()) {
-            bytes = buffer.array();
-        } else {
-            bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
-        }
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
         return bytes;
     }
 }
