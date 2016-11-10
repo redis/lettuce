@@ -74,7 +74,7 @@ public class CommandMethod {
         TypeInformation<?> actualReturnType = this.returnType;
 
         while (Future.class.isAssignableFrom(actualReturnType.getType())
-                || Publisher.class.isAssignableFrom(actualReturnType.getType())) {
+                || ReactiveTypes.supports(actualReturnType.getType())) {
             actualReturnType = actualReturnType.getComponentType();
         }
 
@@ -153,7 +153,7 @@ public class CommandMethod {
      * @return {@literal true} if the method uses reactive execution declaring {@link Publisher} as result type.
      */
     public boolean isReactiveExecution() {
-        return ReactiveWrappers.supports(getReturnType().getType());
+        return ReactiveTypes.supports(getReturnType().getType());
     }
 
     @Override

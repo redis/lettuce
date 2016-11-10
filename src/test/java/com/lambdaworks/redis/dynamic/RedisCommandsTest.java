@@ -42,7 +42,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         TestInterface api = factory.getCommands(TestInterface.class);
 
-        api.setSync("key", "value", Timeout.create(10, TimeUnit.SECONDS));
+        api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
         assertThat(api.get("key")).isEqualTo("value");
         assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
     }
@@ -54,9 +54,9 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         TestInterface api = factory.getCommands(TestInterface.class);
 
-        Future<String> key = api.set("key", "value");
-        assertThat(key).isInstanceOf(CompletableFuture.class);
-        key.get();
+        Future<String> set = api.set(key, value);
+        assertThat(set).isInstanceOf(CompletableFuture.class);
+        set.get();
     }
 
     @Test
@@ -66,8 +66,8 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         TestInterface api = factory.getCommands(TestInterface.class);
 
-        Mono<String> key = api.setReactive("key", "value");
-        assertThat(key.block()).isEqualTo("OK");
+        Mono<String> set = api.setReactive(key, value);
+        assertThat(set.block()).isEqualTo("OK");
     }
 
     @Test

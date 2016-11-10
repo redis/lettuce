@@ -219,7 +219,7 @@ public class RedisCommandFactory {
 
             for (Method method : redisCommandsMetadata.getMethods()) {
 
-                if (ReactiveWrappers.supports(method.getReturnType())) {
+                if (ReactiveTypes.supports(method.getReturnType())) {
                     continue;
                 }
 
@@ -289,15 +289,17 @@ public class RedisCommandFactory {
 
         private final Map<Method, ReactiveCommandSegmentCommandFactory> commandFactories = new ConcurrentHashMap<>();
         private final AbstractRedisReactiveCommands<?, ?> redisReactiveCommands;
+        private final ConversionService conversionService = new ConversionService();
 
         public ReactiveCommandFactoryExecutorMethodInterceptor(RedisCommandsMetadata redisCommandsMetadata,
                 BaseRedisReactiveCommands<?, ?> redisReactiveCommands) {
 
+            ReactiveTypeAdapters.registerIn(this.conversionService);
             ReactiveRedisCommandFactoryResolver lookupStrategy = new ReactiveRedisCommandFactoryResolver(redisCodecs);
 
             for (Method method : redisCommandsMetadata.getMethods()) {
 
-                if (ReactiveWrappers.supports(method.getReturnType())) {
+                if (ReactiveTypes.supports(method.getReturnType())) {
 
                     ReactiveCommandSegmentCommandFactory commandFactory = lookupStrategy.resolveRedisCommandFactory(method,
                             redisCommandsMetadata);
@@ -318,19 +320,28 @@ public class RedisCommandFactory {
 
                 ReactiveCommandSegmentCommandFactory commandFactory = commandFactories.get(method);
 
-                if (ReactiveWrappers.isSingle(method.getReturnType())) {
-                    return redisReactiveCommands.createMono(() -> commandFactory.createCommand(arguments));
+                Object result = dispatch(method, arguments, commandFactory);
+
+                if (method.getReturnType().isAssignableFrom(result.getClass())) {
+                    return result;
                 }
 
-                if (commandFactory.isStreamingExecution()) {
-
-                    return redisReactiveCommands.createDissolvingFlux(() -> commandFactory.createCommand(arguments));
-                }
-
-                return redisReactiveCommands.createFlux(() -> commandFactory.createCommand(arguments));
+                return conversionService.convert(result, method.getReturnType());
             }
 
             return invocation.proceed();
+        }
+
+        protected Object dispatch(Method method, Object[] arguments, ReactiveCommandSegmentCommandFactory commandFactory) {
+            if (ReactiveTypes.isSingleValueType(method.getReturnType())) {
+                return redisReactiveCommands.createMono(() -> commandFactory.createCommand(arguments));
+            }
+
+            if (commandFactory.isStreamingExecution()) {
+                return redisReactiveCommands.createDissolvingFlux(() -> commandFactory.createCommand(arguments));
+            }
+
+            return redisReactiveCommands.createFlux(() -> commandFactory.createCommand(arguments));
         }
 
         private boolean hasFactoryFor(Method method) {
