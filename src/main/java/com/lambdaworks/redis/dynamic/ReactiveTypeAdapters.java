@@ -202,7 +202,7 @@ class ReactiveTypeAdapters {
 
         @Override
         public Mono<?> apply(Single<?> source) {
-            return Mono.defer(() -> Mono.from(RxReactiveStreams.toPublisher(source)));
+            return Mono.defer(() -> Mono.from((Publisher<?>) RxReactiveStreams.toPublisher(source)));
         }
     }
 
@@ -267,7 +267,7 @@ class ReactiveTypeAdapters {
 
         @Override
         public Mono<?> apply(Observable<?> source) {
-            return Mono.defer(() -> Mono.from(RxReactiveStreams.toPublisher(source)));
+            return Mono.defer(() -> Mono.from((Publisher<?>) RxReactiveStreams.toPublisher(source)));
         }
     }
 
@@ -280,7 +280,7 @@ class ReactiveTypeAdapters {
 
         @Override
         public Flux<?> apply(Observable<?> source) {
-            return Flux.defer(() -> Flux.from(RxReactiveStreams.toPublisher(source)));
+            return Flux.defer(() -> Flux.from((Publisher<?>) RxReactiveStreams.toPublisher(source)));
         }
     }
 

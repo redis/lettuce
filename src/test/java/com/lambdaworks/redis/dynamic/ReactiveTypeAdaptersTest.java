@@ -113,7 +113,7 @@ public class ReactiveTypeAdaptersTest {
     public void toWrapperShouldCastRxJava2FlowableToPublisher() {
 
         io.reactivex.Flowable<String> foo = io.reactivex.Flowable.just("foo");
-        assertThat(conversionService.convert(foo, Publisher.class)).isInstanceOf(Flux.class);
+        assertThat(conversionService.convert(foo, Publisher.class)).isInstanceOf(Flowable.class);
     }
 
     @Test
