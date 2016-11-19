@@ -105,7 +105,7 @@
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <spring.version>4.3.3.RELEASE</spring.version>
+    <spring.version>4.3.4.RELEASE</spring.version>
   </properties>
 
   <dependencies>
@@ -157,7 +157,7 @@
     <dependency>
       <groupId>ognl</groupId>
       <artifactId>ognl</artifactId>
-      <version>3.1.11</version>
+      <version>3.1.12</version>
       <scope>test</scope>
     </dependency>
 
