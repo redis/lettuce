@@ -15,14 +15,13 @@
  */
 package com.lambdaworks.redis.cluster;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -33,39 +32,25 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @param <CMD> Command command interface type to invoke multi-node operations.
  * @param <K> Key type.
  * @param <V> Value type.
+ * @since 4.1
  * @author Mark Paluch
  */
 abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSupport<API, CMD> {
 
-    protected ClusterDistributionChannelWriter<K, V> writer;
-    protected StatefulRedisClusterConnection<K, V> globalConnection;
+    @Override
+    public Map<RedisClusterNode, API> asMap() {
 
-    private ClusterConnectionProvider.Intent intent;
+        List<RedisClusterNode> list = nodes().stream().collect(Collectors.toList());
+        Map<RedisClusterNode, API> map = new HashMap<>();
 
-    public AbstractNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, ClusterConnectionProvider.Intent intent) {
-        this.globalConnection = globalConnection;
-        this.intent = intent;
-        writer = ((StatefulRedisClusterConnectionImpl) globalConnection).getClusterDistributionChannelWriter();
+        list.forEach((key) -> map.put(key, getApi(key)));
+
+        return map;
     }
-
-    protected StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
-        RedisURI uri = redisClusterNode.getUri();
-        return writer.getClusterConnectionProvider().getConnection(intent, uri.getHost(), uri.getPort());
-    }
-
-    /**
-     * @return List of involved nodes
-     */
-    protected abstract List<RedisClusterNode> nodes();
 
     @Override
     public int size() {
         return nodes().size();
-    }
-
-    public Map<RedisClusterNode, StatefulRedisConnection<K, V>> statefulMap() {
-        return nodes().stream().collect(
-                Collectors.toMap(redisClusterNode -> redisClusterNode, redisClusterNode1 -> getConnection(redisClusterNode1)));
     }
 
     @Override
@@ -73,4 +58,43 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
         return nodes().get(index);
     }
 
+    // This method is never called, the value is supplied by AOP magic.
+    @Override
+    public CMD commands() {
+        return null;
+    }
+
+    @Override
+    public API commands(int index) {
+        return getApi(node(index));
+    }
+
+    /**
+     *
+     * @return {@link Map} between a {@link RedisClusterNode} to its actual {@link StatefulRedisConnection}.
+     */
+    protected  Map<RedisClusterNode, ? extends StatefulRedisConnection<K, V>> statefulMap() {
+        return nodes().stream().collect(Collectors.toMap(redisClusterNode -> redisClusterNode, this::getConnection));
+    }
+
+    /**
+     * Template method to be implemented by implementing classes to obtain a {@link StatefulRedisConnection}.
+     *
+     * @param redisClusterNode must not be {@literal null}.
+     * @return
+     */
+    protected abstract StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode);
+
+    /**
+     * Template method to be implemented by implementing classes to obtain a the API object given a {@link RedisClusterNode}.
+     *
+     * @param redisClusterNode must not be {@literal null}.
+     * @return
+     */
+    protected  abstract API getApi(RedisClusterNode redisClusterNode);
+
+    /**
+     * @return List of involved nodes
+     */
+    protected abstract List<RedisClusterNode> nodes();
 }

@@ -26,6 +26,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author Mark Paluch
+ * TODO: Add timeout handling
  */
 class SyncExecutionsImpl<T> implements Executions<T> {
 

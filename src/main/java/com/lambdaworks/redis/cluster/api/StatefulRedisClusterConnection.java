@@ -26,7 +26,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 
 /**
- * A stateful cluster connection providing. Advanced cluster connections provide transparent command routing based on the first
+ * A stateful cluster connection. Advanced cluster connections provide transparent command routing based on the first
  * command key.
  * 
  * @param <K> Key type.

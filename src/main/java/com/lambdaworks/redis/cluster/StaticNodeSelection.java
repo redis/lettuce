@@ -16,10 +16,12 @@
 package com.lambdaworks.redis.cluster;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -31,16 +33,33 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-abstract class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD, K, V> {
+class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD, K, V> {
 
+    private final ClusterDistributionChannelWriter<K, V> writer;
+    private final ClusterConnectionProvider.Intent intent;
     private final List<RedisClusterNode> redisClusterNodes;
+    private final Function<StatefulRedisConnection<K, V>, API> apiExtractor;
 
-    public StaticNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, Predicate<RedisClusterNode> selector,
-            ClusterConnectionProvider.Intent intent) {
-        super(globalConnection, intent);
+    public StaticNodeSelection(ClusterDistributionChannelWriter<K, V> writer, Predicate<RedisClusterNode> selector,
+            ClusterConnectionProvider.Intent intent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
 
-        this.redisClusterNodes = globalConnection.getPartitions().getPartitions().stream().filter(selector)
-                .collect(Collectors.toList());
+        this.writer = writer;
+        this.intent = intent;
+        this.apiExtractor = apiExtractor;
+
+        this.redisClusterNodes = writer.getPartitions().getPartitions().stream().filter(selector).collect(Collectors.toList());
+    }
+
+    @Override
+    protected StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+
+        RedisURI uri = redisClusterNode.getUri();
+        return writer.getClusterConnectionProvider().getConnection(intent, uri.getHost(), uri.getPort());
+    }
+
+    @Override
+    protected API getApi(RedisClusterNode redisClusterNode) {
+        return apiExtractor.apply(getConnection(redisClusterNode));
     }
 
     @Override

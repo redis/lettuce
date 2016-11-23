@@ -46,6 +46,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
     private ClusterConnectionProvider clusterConnectionProvider;
     private boolean closed = false;
+    private volatile Partitions partitions;
 
     ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter<K, V> defaultWriter,
             ClusterEventListener clusterEventListener, EventExecutorGroup eventExecutors) {
@@ -234,9 +235,16 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     }
 
     public void setPartitions(Partitions partitions) {
+
+        this.partitions = partitions;
+
         if (clusterConnectionProvider != null) {
             clusterConnectionProvider.setPartitions(partitions);
         }
+    }
+
+    public Partitions getPartitions(){
+        return partitions;
     }
 
     /**
