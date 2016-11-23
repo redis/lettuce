@@ -61,7 +61,7 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
 这两个框架还有和它们有关的术语,本手册中不会提供二者的基本内容,安装和配置教程。
     </p>
     <p>
-      MyBatis-Spring requires Java 5 or higher and the following MyBatis and Spring versions:
+      MyBatis-Spring要求Java5及以上版本还有下面列出的MyBatis和Spring版本：
     </p>
 	<table>
 		<thead>
@@ -80,13 +80,13 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
 		<tbody>
 			<tr>
 				<td>
-					1.0.0 and 1.0.1
+					1.0.0 或 1.0.1
 				</td>
 				<td>
-					3.0.1 to 3.0.5
+					3.0.1 到 3.0.5
 				</td>
 				<td>
-					3.0.0 or higher
+					3.0.0 或以上
 				</td>
 			</tr>
 			<tr>
@@ -97,7 +97,7 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
 					3.0.6
 				</td>
 				<td>
-					3.0.0 or higher
+					3.0.0 或以上
 				</td>
 			</tr>
 			<tr>
@@ -105,10 +105,10 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
 					1.1.0
 				</td>
 				<td>
-					3.1.0 or higher
+					3.1.0 或以上
 				</td>
 				<td>
-					3.0.0 or higher
+					3.0.0 或以上
 				</td>
 			</tr>
 		</tbody>
@@ -128,18 +128,16 @@ Giovanni Cuccu,Raj Nagappan和Tomas Pinos的贡献;而Simone Tripodi发现了这
   
 	<subsection name="Help make this documentation better…">
 		<p>
-			If you find this documentation lacking in any way, or missing
-			documentation for a feature, then the best thing to do is learn
-			about it and then write the documentation yourself!
+			如果你以任何方式发现文档的缺失，或者文档缺少某一个功能点，最好的方式是你学习它
+			并自己写文档！
 		</p>
 		<p>
-            Sources of this manual are available in xdoc format at
+            手册的xdoc方式的来源可用地址：
             <a href="https://github.com/mybatis/spring/tree/master/src/site">project's Git </a>
-            Fork the repository, update them and send a pull request.
+            Fork仓库，更新它并提交合并的请求吧。
 		</p>
 		<p>
-			You’re the best author of this documentation, people like you have
-			to read it!
+			你是该文档最好的作者，像你一样大家都要阅读它！
 		</p>
 	</subsection>
 </section>  
